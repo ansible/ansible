@@ -145,38 +145,6 @@
       - '"{{ "hash" | hash("sha1") }}" == "2346ad27d7568ba9896f1b7da6b5991251debdf2"'
       - '"{{ "café" | hash("sha1") }}" == "f424452a9673918c6f09b0cdd35b20be8e6ae7d7"'
 
-- debug:
-    var: "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit"
-    verbosity: 1
-  tags: debug
-
-- name: Test urlsplit filter
-  assert:
-    that:
-      - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('fragment') == 'fragment'"
-      - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('hostname') == 'www.acme.com'"
-      - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('netloc') == 'mary:MySecret@www.acme.com:9000'"
-      - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('path') == '/dir/index.html'"
-      - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('port') == 9000"
-      - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('query') == 'query=term'"
-      - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('scheme') == 'http'"
-      - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('username') == 'mary'"
-      - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit('password') == 'MySecret'"
-      - "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit == { 'fragment': 'fragment', 'hostname': 'www.acme.com', 'netloc': 'mary:MySecret@www.acme.com:9000', 'password': 'MySecret', 'path': '/dir/index.html', 'port': 9000, 'query': 'query=term', 'scheme': 'http', 'username': 'mary' }"
-
-
-- name: Test urlsplit filter bad argument
-  debug:
-    var: "'http://www.acme.com:9000/dir/index.html' | urlsplit('bad_filter')"
-  register: _bad_urlsplit_filter
-  ignore_errors: yes
-
-- name: Verify urlsplit filter showed an error message
-  assert:
-    that:
-      - _bad_urlsplit_filter is failed
-      - "'unknown URL component' in _bad_urlsplit_filter.msg"
-
 - name: Test urldecode filter
   set_fact:
     urldecoded_string: key="@{}é&%£ foo bar '(;\<>""°)
