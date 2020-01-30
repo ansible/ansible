@@ -238,7 +238,7 @@ network_info:
   returned: always
   type: list
   sample:
-    "network_info": [
+    "network_data": [
         {
             "mac_address": "00:50:56:AA:AA:AA",
             "allow_guest_ctl": true,
@@ -721,7 +721,7 @@ def main():
         )
         diff, changed, network_info = pyv._deprectated_list_config()
 
-    module.exit_json(changed=changed, network_info=network_info, diff=diff)
+    module.exit_json(changed=changed, network_data=network_info, diff=diff)
 
 
 if __name__ == '__main__':
