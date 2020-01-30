@@ -1,0 +1,23 @@
+- name: Test ipaddr filter
+  assert:
+    that:
+      - "'192.168.0.1/32' | ipaddr('netmask') == '255.255.255.255'"
+      - "'192.168.0.1/24' | ipaddr('netmask') == '255.255.255.0'"
+      - "not '192.168.0.1/31' | ipaddr('broadcast')"
+      - "'192.168.0.1/24' | ipaddr('broadcast') == '192.168.0.255'"
+      - "'192.168.0.1/24' | ipaddr('prefix') == 24"
+      - "'192.168.0.1/24' | ipaddr('address') == '192.168.0.1'"
+      - "'192.168.0.1/24' | ipaddr('network') == '192.168.0.0'"
+      - "'fe80::dead:beef/64' | ipaddr('broadcast') == 'fe80::ffff:ffff:ffff:ffff'"
+      - "'::1/120' | ipaddr('netmask') == 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00'"
+      - "{{ subnets | ipaddr(1) }} == ['10.1.1.1/24', '10.1.2.1/24']"
+      - "{{ subnets | ipaddr('1') }}  == ['10.1.1.1/24', '10.1.2.1/24']"
+      - "{{ subnets | ipaddr(-1) }} == ['10.1.1.255/24', '10.1.2.255/24']"
+      - "{{ subnets | ipaddr('-1') }} == ['10.1.1.255/24', '10.1.2.255/24']"
+      - "'{{ prefix | ipaddr(1) }}'  == '10.1.1.1/24'"
+      - "'{{ prefix | ipaddr('1') }}' == '10.1.1.1/24'"
+      - "'{{ prefix | ipaddr('network') }}' == '10.1.1.0'"
+      - "'{{ prefix | ipaddr('-1') }}' == '10.1.1.255/24'"
+  vars:
+    subnets: ['10.1.1.0/24', '10.1.2.0/24']
+    prefix: '10.1.1.0/24'
