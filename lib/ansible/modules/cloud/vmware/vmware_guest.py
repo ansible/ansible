@@ -1826,14 +1826,20 @@ class PyVmomiHelper(PyVmomi):
             globalip.dnsServerList = self.params['customization']['dns_servers']
 
         # TODO: Maybe list the different domains from the interfaces here by default ?
+        dns_suffixes = []
         if 'dns_suffix' in self.params['customization']:
             dns_suffix = self.params['customization']['dns_suffix']
-            if isinstance(dns_suffix, list):
-                globalip.dnsSuffixList = " ".join(dns_suffix)
-            else:
-                globalip.dnsSuffixList = dns_suffix
-        elif 'domain' in self.params['customization']:
-            globalip.dnsSuffixList = self.params['customization']['domain']
+            if dns_suffix:
+                if isinstance(dns_suffix, list):
+                    dns_suffixes += dns_suffix
+                else:
+                    dns_suffixes.append(dns_suffix)
+
+                globalip.dnsSuffixList = dns_suffixes
+
+        if 'domain' in self.params['customization']:
+            dns_suffixes.insert(0, self.params['customization']['domain'])
+            globalip.dnsSuffixList = dns_suffixes
 
         if self.params['guest_id']:
             guest_id = self.params['guest_id']
