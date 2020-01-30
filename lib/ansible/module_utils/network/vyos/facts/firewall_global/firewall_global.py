@@ -72,7 +72,7 @@ class Firewall_globalFacts(object):
         :rtype: dictionary
         :returns: The generated config
         """
-        conf = '\n'.join(filter(lambda x:('firewall ipv6-name' and 'firewall name' not in x), conf))
+        conf = '\n'.join(filter(lambda x: ('firewall ipv6-name' and 'firewall name' not in x), conf))
 
         a_lst = ['config_trap', 'validation', 'log_martians', 'syn_cookies', 'twa_hazards_protection']
         firewall = self.parse_attr(conf, a_lst)
@@ -149,7 +149,7 @@ class Firewall_globalFacts(object):
         """
         sp_lst = []
         attrib = 'state-policy'
-        policies = findall(r'^set firewall ' + attrib +' (\S+)', conf, M)
+        policies = findall(r'^set firewall ' + attrib + ' (\\S+)', conf, M)
 
         if policies:
             rules_lst = []
@@ -197,7 +197,7 @@ class Firewall_globalFacts(object):
         """
         g_lst = []
 
-        groups = findall(r'^set firewall group ' + type +' (\S+)', conf, M)
+        groups = findall(r'^set firewall group ' + type + ' (\\S+)', conf, M)
         if groups:
             rules_lst = []
             for gr in set(groups):
@@ -236,7 +236,7 @@ class Firewall_globalFacts(object):
         :return: generated member list configuration.
         """
         l_lst = []
-        attribs = findall(r'^.*' + name + ' ' + key + ' (\S+)', conf, M)
+        attribs = findall(r'^.*' + name + ' ' + key + ' (\\S+)', conf, M)
         if attribs:
             for attr in attribs:
                 l_lst.append(attr.strip("'"))

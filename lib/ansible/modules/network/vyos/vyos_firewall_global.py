@@ -38,7 +38,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: vyos_firewall_global
-version_added: 2.10
+version_added: '2.10'
 short_description: Manage global policies or configurations for firewall on VyOS devices.
 description: This module manage global policies or configurations for firewall on VyOS devices.
 notes:
@@ -209,6 +209,18 @@ options:
             description:
               - Enable logging of packets part of an established connection.
             type: bool
+  running_config:
+    description:
+      - The module, by default, will connect to the remote device and
+        retrieve the current running-config to use as a base for comparing
+        against the contents of source. There are times when it is not
+        desirable to have the task get the current running-config for
+        every task in a playbook.  The I(running_config) argument allows the
+        implementer to pass in the configuration to use as the base
+        config for comparison. This value of this option should be the
+        output received from device by executing command
+        C(show configuration commands | grep 'firewall')
+    type: str
   state:
     description:
       - The state the configuration should be left in.
@@ -228,46 +240,46 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# vyos@vyos# run show  configuration commands | grep firewall 
-# 
+# vyos@vyos# run show  configuration commands | grep firewall
+#
 #
 - name: Merge the provided configuration with the exisiting running configuration
-      vyos_firewall_global:
-        config:
-          validation: strict
-          config_trap: True
-          log_martians: True
-          syn_cookies: True
-          twa_hazards_protection: True
-          ping:
-           all: True
-           broadcast: True
-          state_policy:
-            - connection_type: 'established'
-              action: 'accept'
-              log: True
-            - connection_type: 'invalid'
-              action: 'reject'
-          route_redirects:
-            - afi: 'ipv4'
-              ip_src_route: True
-              icmp_redirects:
-                send: True
-                receive: False  
-          group:
-            address_group: 
-              - name: 'MGMT-HOSTS'
-                description: 'This group has the Management hosts address list'
-                address:
-                  - 192.0.1.1   
-                  - 192.0.1.3   
-                  - 192.0.1.5   
-            network_group: 
-              - name: 'MGMT'
-                description: 'This group has the Management network addresses'
-                address:
-                  - 192.0.1.0/24
-        state: merged
+  vyos_firewall_global:
+    config:
+      validation: strict
+      config_trap: True
+      log_martians: True
+      syn_cookies: True
+      twa_hazards_protection: True
+      ping:
+        all: True
+        broadcast: True
+      state_policy:
+        - connection_type: 'established'
+          action: 'accept'
+          log: True
+        - connection_type: 'invalid'
+          action: 'reject'
+      route_redirects:
+        - afi: 'ipv4'
+          ip_src_route: True
+          icmp_redirects:
+            send: True
+            receive: False
+      group:
+        address_group:
+          - name: 'MGMT-HOSTS'
+            description: 'This group has the Management hosts address list'
+            address:
+              - 192.0.1.1
+              - 192.0.1.3
+              - 192.0.1.5
+        network_group:
+          - name: 'MGMT'
+            description: 'This group has the Management network addresses'
+            address:
+            - 192.0.1.0/24
+    state: merged
 #
 #
 # -------------------------
@@ -378,15 +390,15 @@ EXAMPLES = """
 # set firewall state-policy invalid action 'reject'
 # set firewall syn-cookies 'enable'
 # set firewall twa-hazards-protection 'enable'
-
-
+#
+#
 # Using parsed
 #
 #
 - name: Render the commands for provided  configuration
-      vyos_firewall_global:
-        running_config: 
-         "set firewall all-ping 'enable'
+  vyos_firewall_global:
+    running_config:
+      "set firewall all-ping 'enable'
   set firewall broadcast-ping 'enable'
   set firewall config-trap 'enable'
   set firewall group address-group ENG-HOSTS address '192.0.3.1'
@@ -408,7 +420,7 @@ EXAMPLES = """
   set firewall state-policy invalid action 'reject'
   set firewall syn-cookies 'enable'
   set firewall twa-hazards-protection 'enable'"
-        state: parsed
+    state: parsed
 #
 #
 # -------------------------
@@ -479,8 +491,8 @@ EXAMPLES = """
 #        "validation": "strict"
 #    }
 # }
-
-
+#
+#
 # Using deleted
 #
 # Before state
@@ -507,18 +519,18 @@ EXAMPLES = """
 # set firewall syn-cookies 'enable'
 # set firewall twa-hazards-protection 'enable'
 - name: Delete attributes of firewall.
-      vyos_firewall_global:
-        config:
-          state_policy:
-          config_trap:
-          log_martians:        
-          syn_cookies:
-          twa_hazards_protection:
-          route_redirects:
-          state_policy:        
-          ping:
-          group:
-        state: deleted
+  vyos_firewall_global:
+    config:
+      state_policy:
+      config_trap:
+      log_martians:
+      syn_cookies:
+      twa_hazards_protection:
+      route_redirects:
+      state_policy:
+      ping:
+      group:
+    state: deleted
 #
 #
 # ------------------------
@@ -599,8 +611,8 @@ EXAMPLES = """
 # ------------
 # vyos@192# run show configuration commands | grep firewall
 # set  'firewall'
-
-
+#
+#
 # Using replaced
 #
 # Before state:
@@ -628,47 +640,47 @@ EXAMPLES = """
 # set firewall twa-hazards-protection 'enable'
 #
 - name: Replace firewall global attributes configuration.
-      vyos_firewall_global:
-        config:
-          validation: strict
-          config_trap: True
-          log_martians: True
-          syn_cookies: True
-          twa_hazards_protection: True
-          ping:
-           all: True
-           broadcast: True
-          state_policy:
-            - connection_type: 'established'
-              action: 'accept'
-              log: True
-            - connection_type: 'invalid'
-              action: 'reject'
-          route_redirects:
-            - afi: 'ipv4'
-              ip_src_route: True
-              icmp_redirects:
-                send: True
-                receive: False  
-          group:
-            address_group: 
-              - name: 'SALES-HOSTS'
-                description: 'Sales office hosts address list'
-                address:
-                  - 192.0.2.1   
-                  - 192.0.2.2   
-                  - 192.0.2.3   
-              - name: 'ENG-HOSTS'
-                description: 'Sales office hosts address list'
-                address:
-                  - 192.0.3.1   
-                  - 192.0.3.2   
-            network_group: 
-              - name: 'MGMT'
-                description: 'This group has the Management network addresses'
-                address:
-                  - 192.0.1.0/24
-        state: replaced
+  vyos_firewall_global:
+    config:
+      validation: strict
+      config_trap: True
+      log_martians: True
+      syn_cookies: True
+      twa_hazards_protection: True
+      ping:
+      all: True
+      broadcast: True
+      state_policy:
+        - connection_type: 'established'
+          action: 'accept'
+          log: True
+        - connection_type: 'invalid'
+          action: 'reject'
+      route_redirects:
+        - afi: 'ipv4'
+          ip_src_route: True
+          icmp_redirects:
+            send: True
+            receive: False
+      group:
+        address_group:
+          - name: 'SALES-HOSTS'
+            description: 'Sales office hosts address list'
+            address:
+              - 192.0.2.1
+              - 192.0.2.2
+              - 192.0.2.3
+          - name: 'ENG-HOSTS'
+            description: 'Sales office hosts address list'
+            address:
+              - 192.0.3.1
+              - 192.0.3.2
+        network_group:
+          - name: 'MGMT'
+            description: 'This group has the Management network addresses'
+            address:
+              - 192.0.1.0/24
+    state: replaced
 #
 #
 # -------------------------
@@ -805,7 +817,7 @@ EXAMPLES = """
 #        "twa_hazards_protection": true,
 #        "validation": "strict"
 #    }
-# 
+#
 # After state:
 # -------------
 #
@@ -832,8 +844,8 @@ EXAMPLES = """
 # set firewall state-policy invalid action 'reject'
 # set firewall syn-cookies 'enable'
 # set firewall twa-hazards-protection 'enable'
-
-
+#
+#
 # Using gathered
 #
 # Before state:
@@ -864,9 +876,9 @@ EXAMPLES = """
 # set firewall twa-hazards-protection 'enable'
 #
 - name: Gather firewall global config with provided configurations
-      vyos_firewall_global:
-          config:
-          state: gathered
+  vyos_firewall_global:
+    config:
+    state: gathered
 #
 #
 # -------------------------
@@ -969,47 +981,47 @@ EXAMPLES = """
 #
 #
 - name: Render the commands for provided  configuration
-      vyos_firewall_global:
-        config:
-          validation: strict
-          config_trap: True
-          log_martians: True
-          syn_cookies: True
-          twa_hazards_protection: True
-          ping:
-           all: True
-           broadcast: True
-          state_policy:
-            - connection_type: 'established'
-              action: 'accept'
-              log: True
-            - connection_type: 'invalid'
-              action: 'reject'
-          route_redirects:
-            - afi: 'ipv4'
-              ip_src_route: True
-              icmp_redirects:
-                send: True
-                receive: False  
-          group:
-            address_group: 
-              - name: 'SALES-HOSTS'
-                description: 'Sales office hosts address list'
-                address:
-                  - 192.0.2.1   
-                  - 192.0.2.2   
-                  - 192.0.2.3   
-              - name: 'ENG-HOSTS'
-                description: 'Sales office hosts address list'
-                address:
-                  - 192.0.3.1   
-                  - 192.0.3.2   
-            network_group: 
-              - name: 'MGMT'
-                description: 'This group has the Management network addresses'
-                address:
-                  - 192.0.1.0/24
-        state: rendered
+  vyos_firewall_global:
+    config:
+      validation: strict
+      config_trap: True
+      log_martians: True
+      syn_cookies: True
+      twa_hazards_protection: True
+      ping:
+      all: True
+      broadcast: True
+      state_policy:
+        - connection_type: 'established'
+          action: 'accept'
+          log: True
+        - connection_type: 'invalid'
+          action: 'reject'
+      route_redirects:
+        - afi: 'ipv4'
+          ip_src_route: True
+          icmp_redirects:
+          send: True
+          receive: False
+      group:
+        address_group: 
+          - name: 'SALES-HOSTS'
+            description: 'Sales office hosts address list'
+            address:
+              - 192.0.2.1
+              - 192.0.2.2
+              - 192.0.2.3
+          - name: 'ENG-HOSTS'
+            description: 'Sales office hosts address list'
+            address:
+              - 192.0.3.1
+              - 192.0.3.2
+        network_group:
+          - name: 'MGMT'
+            description: 'This group has the Management network addresses'
+            address:
+              - 192.0.1.0/24
+    state: rendered
 #
 #
 # -------------------------
@@ -1044,19 +1056,21 @@ EXAMPLES = """
 #        "set firewall syn-cookies 'enable'",
 #        "set firewall source-validation 'strict'"
 #    ]
-
-
+#
+#
 """
 RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
@@ -1080,10 +1094,10 @@ def main():
 
     :returns: the result form module invocation
     """
-    required_if = [('state','merged',('config',)),
-                   ('state','replaced',('config',)),
-                   ('state','parsed',('running_config',))]
-    mutually_exclusive = [('config','running_config')]
+    required_if = [('state', 'merged', ('config',)),
+                   ('state', 'replaced', ('config',)),
+                   ('state', 'parsed', ('running_config',))]
+    mutually_exclusive = [('config', 'running_config')]
     module = AnsibleModule(argument_spec=Firewall_globalArgs.argument_spec,
                            required_if=required_if,
                            supports_check_mode=True,

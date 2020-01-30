@@ -398,7 +398,7 @@ class Firewall_global(ConfigBase):
                                     if key == 'action':
                                         commands.append(self._form_attr_cmd(attr=attr + ' ' + w['connection_type'], opr=opr))
                                     else:
-                                        commands.append(self._form_attr_cmd(attr=attr + ' ' + w['connection_type'],val=self._bool_to_str(val), opr=opr))
+                                        commands.append(self._form_attr_cmd(attr=attr + ' ' + w['connection_type'], val=self._bool_to_str(val), opr=opr))
         return commands
 
     def _render_route_redirects(self, attr, w, h, opr):
@@ -513,7 +513,7 @@ class Firewall_global(ConfigBase):
         :param val: bool value.
         :return: enable/disable.
         """
-        return 'enable' if val == True else 'disable' if val == False else val
+        return 'enable' if str(val) == 'True' else 'disable' if str(val) == 'False' else val
 
     def _grp_type(self, val):
         """
