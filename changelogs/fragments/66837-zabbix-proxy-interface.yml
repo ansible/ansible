@@ -1,0 +1,2 @@
+minor_changes:
+  - zabbix_proxy - ``interface`` sub-options ``type`` and ``main`` are now deprecated and will be removed in Ansible 2.14. Also, the values passed to ``interface`` are now checked for correct types and unexpected keys.

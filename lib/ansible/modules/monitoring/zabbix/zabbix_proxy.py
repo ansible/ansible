@@ -109,11 +109,51 @@ options:
         type: str
     interface:
         description:
-            - Dictionary with params for the interface when proxy is in passive mode
-            - 'Available values are: dns, ip, main, port, type and useip.'
-            - Please review the interface documentation for more information on the supported properties
-            - U(https://www.zabbix.com/documentation/3.2/manual/api/reference/proxy/object#proxy_interface)
+            - Dictionary with params for the interface when proxy is in passive mode.
+            - For more information, review proxy interface documentation at
+            - U(https://www.zabbix.com/documentation/4.0/manual/api/reference/proxy/object#proxy_interface).
         required: false
+        suboptions:
+            useip:
+                type: int
+                description:
+                    - Connect to proxy interface with IP address instead of DNS name.
+                    - 0 (don't use ip), 1 (use ip).
+                default: 0
+                choices: [0, 1]
+            ip:
+                type: str
+                description:
+                    - IP address used by proxy interface.
+                    - Required if I(useip=1).
+                default: ''
+            dns:
+                type: str
+                description:
+                    - DNS name of the proxy interface.
+                    - Required if I(useip=0).
+                default: ''
+            port:
+                type: str
+                description:
+                    - Port used by proxy interface.
+                default: '10051'
+            type:
+                type: int
+                description:
+                    - Interface type to add.
+                    - This suboption is currently ignored for Zabbix proxy.
+                    - This suboption is deprecated since Ansible 2.10 and will eventually be removed in 2.14.
+                required: false
+                default: 0
+            main:
+                type: int
+                description:
+                    - Whether the interface is used as default.
+                    - This suboption is currently ignored for Zabbix proxy.
+                    - This suboption is deprecated since Ansible 2.10 and will eventually be removed in 2.14.
+                required: false
+                default: 0
         default: {}
         type: dict
 
@@ -134,7 +174,7 @@ EXAMPLES = r'''
     state: present
     proxy_address: ExampleProxy.local
 
-- name: Create or update a proxy with proxy type passive
+- name: Create a new passive proxy using only it's IP
   local_action:
     module: zabbix_proxy
     server_url: http://monitor.example.com
@@ -145,12 +185,23 @@ EXAMPLES = r'''
     status: passive
     state: present
     interface:
-      type: 0
-      main: 1
       useip: 1
-      ip: 10.xx.xx.xx
-      dns: ""
-      port: 10050
+      ip: 10.1.1.2
+      port: 10051
+
+- name: Create a new passive proxy using only it's DNS
+  local_action:
+    module: zabbix_proxy
+    server_url: http://monitor.example.com
+    login_user: username
+    login_password: password
+    proxy_name: ExampleProxy
+    description: ExampleProxy
+    status: passive
+    state: present
+    interface:
+      dns: proxy.example.com
+      port: 10051
 '''
 
 RETURN = r''' # '''
@@ -230,6 +281,9 @@ class Proxy(object):
            len(self.existing_data['interface']) > 0:
             old_interface = self.existing_data['interface']
 
+        for item in ['type', 'main']:
+            new_interface.pop(item, False)
+
         final_interface = old_interface.copy()
         final_interface.update(new_interface)
         final_interface = dict((k, str(v)) for k, v in final_interface.items())
@@ -302,7 +356,19 @@ def main():
             tls_psk_identity=dict(type='str', required=False, default=None),
             tls_psk=dict(type='str', required=False, default=None),
             timeout=dict(type='int', default=10),
-            interface=dict(type='dict', required=False, default={})
+            interface=dict(
+                type='dict',
+                required=False,
+                default={},
+                options=dict(
+                    useip=dict(type='int', choices=[0, 1], default=0),
+                    ip=dict(type='str', default=''),
+                    dns=dict(type='str', default=''),
+                    port=dict(type='str', default='10051'),
+                    type=dict(type='int', default=0, removed_in_version='2.14'),
+                    main=dict(type='int', default=0, removed_in_version='2.14')
+                ),
+            )
         ),
         supports_check_mode=True
     )
