@@ -1264,7 +1264,7 @@ class ModuleValidator(Validator):
                     _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
                 try:
                     with CaptureStd():
-                        _ = _type_checker(value)
+                        dummy = _type_checker(value)
                 except (Exception, SystemExit):
                     msg = "required_if"
                     if context:
