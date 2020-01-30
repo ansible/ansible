@@ -97,7 +97,7 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
 
     start = time.time()
 
-    with tarfile.TarFile.gzopen(dst_path, mode='w', compresslevel=4) as tar:
+    with tarfile.TarFile.open(dst_path, mode='w:gz', compresslevel=4, format=tarfile.GNU_FORMAT) as tar:
         for src, dst in files:
             display.info('%s -> %s' % (src, dst), verbosity=4)
             tar.add(src, dst, filter=filters.get(dst))
