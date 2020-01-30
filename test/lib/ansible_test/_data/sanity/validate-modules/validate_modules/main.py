@@ -1196,7 +1196,7 @@ class ModuleValidator(Validator):
                 msg = "required_if"
                 if context:
                     msg += " found in %s" % " -> ".join(context)
-                msg += " must have forth value omitted or of type bool; got type %s" % type(check[3])
+                msg += " must have forth value omitted or of type bool; got %r" % (check[3], )
                 self.reporter.error(
                     path=self.object_path,
                     code='required_if-is_one_of-type',
@@ -1207,7 +1207,7 @@ class ModuleValidator(Validator):
                 msg = "required_if"
                 if context:
                     msg += " found in %s" % " -> ".join(context)
-                msg += " must have third value (requirements) being a list or tuple; got type %s" % type(requirements)
+                msg += " must have third value (requirements) being a list or tuple; got type %r" % (requirements, )
                 self.reporter.error(
                     path=self.object_path,
                     code='required_if-requirements-type',
@@ -1238,7 +1238,7 @@ class ModuleValidator(Validator):
                 msg = "required_if"
                 if context:
                     msg += " found in %s" % " -> ".join(context)
-                msg += " must have its key %s in argument_spec" % type(key)
+                msg += " must have its key %s in argument_spec" % key
                 self.reporter.error(
                     path=self.object_path,
                     code='required_if-unknown-key',
