@@ -29,6 +29,10 @@ options:
     - Unsupported values are ignored.
     type: list
     elements: str
+  schema:
+    description:
+    - Restrict the output by certain schema.
+    type: str
   db:
     description:
     - Name of database to connect.
@@ -87,6 +91,7 @@ from ansible.module_utils.six import iteritems
 # PostgreSQL module specific support methods.
 #
 
+
 class PgUserObjStatInfo():
     """Class to collect information about PostgreSQL user objects.
 
@@ -100,6 +105,7 @@ class PgUserObjStatInfo():
         executed_queries (list): List of executed queries.
         info (dict): Statistics dictionary.
         obj_func_mapping (dict): Mapping of object types to corresponding functions.
+        schema (str): Name of a schema to restrict stat collecting.
     """
 
     def __init__(self, module, cursor):
@@ -115,16 +121,21 @@ class PgUserObjStatInfo():
             'indexes': self.get_idx_stat,
             'tables': self.get_tbl_stat,
         }
+        self.schema = None
 
-    def collect(self, filter_=False):
+    def collect(self, filter_=None, schema=None):
         """Collect statistics information of user objects.
 
         Kwargs:
             filter_ (list): List of subsets which need to be collected.
+            schema (str): Restrict stat collecting by certain schema.
 
         Returns:
             ``self.info``.
         """
+        if schema:
+            self.set_schema(schema)
+
         if filter_:
             for obj_type in filter_:
                 self.obj_func_mapping.get(obj_type.strip())()
@@ -137,7 +148,13 @@ class PgUserObjStatInfo():
 
     def get_func_stat(self):
         """Get function statistics and fill out self.info dictionary."""
-        result = exec_sql(self, "SELECT * FROM pg_stat_user_functions", add_to_executed=False)
+        if not self.schema:
+            query = "SELECT * FROM pg_stat_user_functions"
+            result = exec_sql(self, query, add_to_executed=False)
+        else:
+            query = "SELECT * FROM pg_stat_user_functions WHERE schemaname = %s"
+            result = exec_sql(self, query, query_params=(self.schema,),
+                              add_to_executed=False)
 
         if not result:
             return
@@ -149,7 +166,13 @@ class PgUserObjStatInfo():
 
     def get_idx_stat(self):
         """Get index statistics and fill out self.info dictionary."""
-        result = exec_sql(self, "SELECT * FROM pg_stat_user_indexes", add_to_executed=False)
+        if not self.schema:
+            query = "SELECT * FROM pg_stat_user_indexes"
+            result = exec_sql(self, query, add_to_executed=False)
+        else:
+            query = "SELECT * FROM pg_stat_user_indexes WHERE schemaname = %s"
+            result = exec_sql(self, query, query_params=(self.schema,),
+                              add_to_executed=False)
 
         if not result:
             return
@@ -161,7 +184,13 @@ class PgUserObjStatInfo():
 
     def get_tbl_stat(self):
         """Get table statistics and fill out self.info dictionary."""
-        result = exec_sql(self, "SELECT * FROM pg_stat_user_tables", add_to_executed=False)
+        if not self.schema:
+            query = "SELECT * FROM pg_stat_user_tables"
+            result = exec_sql(self, query, add_to_executed=False)
+        else:
+            query = "SELECT * FROM pg_stat_user_tables WHERE schemaname = %s"
+            result = exec_sql(self, query, query_params=(self.schema,),
+                              add_to_executed=False)
 
         if not result:
             return
@@ -191,15 +220,41 @@ class PgUserObjStatInfo():
 
             if info_key in ('tables', 'indexes'):
                 relname = elem[name_key]
-                result = exec_sql(self, "SELECT pg_relation_size ('%s')" % relname,
-                                  add_to_executed=False)
+                if not self.schema:
+                    result = exec_sql(self, "SELECT pg_relation_size (%s)" % relname,
+                                      add_to_executed=False)
+                else:
+                    relname = '%s.%s' % (self.schema, relname)
+                    result = exec_sql(self, "SELECT pg_relation_size (%s)",
+                                      query_params=(relname,),
+                                      add_to_executed=False)
+
                 self.info[info_key][elem[schema_key]][elem[name_key]]['size'] = result[0][0]
 
                 if info_key == 'tables':
                     relname = elem[name_key]
-                    result = exec_sql(self, "SELECT pg_total_relation_size ('%s')" % relname,
-                                      add_to_executed=False)
-                    self.info[info_key][elem[schema_key]][elem[name_key]]['total_size'] = result[0][0]
+                    if not self.schema:
+                        result = exec_sql(self, "SELECT pg_total_relation_size (%s)" % relname,
+                                          add_to_executed=False)
+                    else:
+                        relname = '%s.%s' % (self.schema, relname)
+                        result = exec_sql(self, "SELECT pg_total_relation_size (%s)",
+                                          query_params=(relname,),
+                                          add_to_executed=False)
+
+                        self.info[info_key][elem[schema_key]][elem[name_key]]['total_size'] = result[0][0]
+
+    def set_schema(self, schema):
+        """If schema exists, sets self.schema, otherwise fails."""
+        query = ("SELECT 1 FROM information_schema.schemata "
+                 "WHERE schema_name = %s")
+        result = exec_sql(self, query, query_params=(schema,),
+                          add_to_executed=False)
+
+        if result and result[0][0]:
+            self.schema = schema
+        else:
+            self.module.fail_json(msg="Schema '%s' does not exist" % (schema))
 
 
 # ===========================================
@@ -212,6 +267,7 @@ def main():
         db=dict(type='str', aliases=['login_db']),
         filter=dict(type='list', elements='str'),
         session_role=dict(type='str'),
+        schema=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -219,6 +275,7 @@ def main():
     )
 
     filter_ = module.params["filter"]
+    schema = module.params["schema"]
 
     # Connect to DB and make cursor object:
     pg_conn_params = get_conn_params(module, module.params)
@@ -230,7 +287,7 @@ def main():
     # Create object and do work:
     pg_obj_info = PgUserObjStatInfo(module, cursor)
 
-    info_dict = pg_obj_info.collect(filter_)
+    info_dict = pg_obj_info.collect(filter_, schema)
 
     # Clean up:
     cursor.close()
