@@ -276,4 +276,4 @@ autoclass_content = 'both'
 # location for the mappning to live) will confuse it.
 intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2.inv')),
                        'python3': ('https://docs.python.org/3/', (None, '../python3.inv')),
-                       'jinja': ('http://jinja.palletsprojects.com/', (None, '../jinja.inv'))}
+                       'jinja2': ('http://jinja.palletsprojects.com/', (None, '../jinja2.inv'))}
