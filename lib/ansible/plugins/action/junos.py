@@ -40,11 +40,12 @@ class ActionModule(ActionNetworkModule):
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'junos_config' else False
         persistent_connection = self._play_context.connection.split('.')[-1]
+        warnings = []
 
         if self._play_context.connection == 'local':
             provider = load_provider(junos_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
-            pc.network_os = 'junos'
+            pc.network_os = 'junipernetworks.junos.junos'
             pc.remote_addr = provider['host'] or self._play_context.remote_addr
 
             if provider['transport'] == 'cli' and module_name not in CLI_SUPPORTED_MODULES:
@@ -53,18 +54,30 @@ class ActionModule(ActionNetworkModule):
                                                % (provider['transport'], module_name)}
 
             if module_name == 'junos_netconf' or (provider['transport'] == 'cli' and module_name == 'junos_command'):
-                pc.connection = 'network_cli'
+                pc.connection = 'ansible.netcommon.network_cli'
                 pc.port = int(provider['port'] or self._play_context.port or 22)
             else:
-                pc.connection = 'netconf'
+                pc.connection = 'ansible.netcommon.netconf'
                 pc.port = int(provider['port'] or self._play_context.port or 830)
 
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
 
+            connection = self._shared_loader_obj.connection_loader.get('ansible.netcommon.persistent', pc, sys.stdin,
+                                                                       task_uuid=self._task._uuid)
+
+            # TODO: Remove below code after ansible minimal is cut out
+            if connection is None:
+                pc.network_os = 'junos'
+                if pc.connection.split('.')[-1] == 'netconf':
+                    pc.connection = 'netconf'
+                else:
+                    pc.connection = 'network_cli'
+
+                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
+
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
 
             command_timeout = int(provider['timeout']) if provider['timeout'] else connection.get_option('persistent_command_timeout')
             connection.set_options(direct={'persistent_command_timeout': command_timeout})
@@ -77,6 +90,7 @@ class ActionModule(ActionNetworkModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
+            warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14, use connection %s' % pc.connection])
         elif persistent_connection in ('netconf', 'network_cli'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
@@ -93,4 +107,9 @@ class ActionModule(ActionNetworkModule):
                                                % (self._play_context.connection, module_name)}
 
         result = super(ActionModule, self).run(task_vars=task_vars)
+        if warnings:
+            if 'warnings' in result:
+                result['warnings'].extend(warnings)
+            else:
+                result['warnings'] = warnings
         return result

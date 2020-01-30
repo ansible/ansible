@@ -41,6 +41,24 @@
         that:
             - "'msg' in dnf_result"
     # ============================================================================
+    - name: Install dinginessentail again (noop, module is idempotent)
+      dnf:
+        name: dinginessentail
+        state: present
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            # No upgrade happened to 1.1.1
+            - "not dnf_result.changed"
+            # Old version still installed
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+    # ============================================================================
     - name: Install dinginessentail-1:1.0-2
       dnf:
         name: "dinginessentail-1:1.0-2.{{ ansible_architecture }}"

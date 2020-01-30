@@ -78,6 +78,7 @@
     login_host:  '{{(test_fixture == "user")|ternary("localhost", omit)}}'
     login_password: '{{(test_fixture == "user")|ternary("password", omit)}}'
     state: dump
+    dump_extra_args: --exclude-table=fake
   register: result
   become_user: "{{ pg_user }}"
   become: yes
@@ -86,6 +87,7 @@
   assert:
     that:
        - result is changed
+       - result.executed_commands[0] is search("--exclude-table=fake")
 
 - name: assert database was backed up successfully
   command: file {{ db_file_name }}

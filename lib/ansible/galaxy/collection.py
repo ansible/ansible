@@ -94,6 +94,11 @@ class CollectionRequirement:
         return u"%s.%s" % (self.namespace, self.name)
 
     @property
+    def metadata(self):
+        self._get_metadata()
+        return self._metadata
+
+    @property
     def latest_version(self):
         try:
             return max([v for v in self.versions if v != '*'], key=LooseVersion)
@@ -423,7 +428,7 @@ def install_collections(collections, output_path, apis, validate_certs, ignore_e
     :param force: Re-install a collection if it has already been installed.
     :param force_deps: Re-install a collection as well as its dependencies if they have already been installed.
     """
-    existing_collections = _find_existing_collections(output_path)
+    existing_collections = find_existing_collections(output_path)
 
     with _tempdir() as b_temp_path:
         display.display("Process install dependency map")
@@ -459,6 +464,19 @@ def validate_collection_name(name):
                        "name must be in the format <namespace>.<collection>. "
                        "Please make sure namespace and collection name contains "
                        "characters from [a-zA-Z0-9_] only." % name)
+
+
+def validate_collection_path(collection_path):
+    """ Ensure a given path ends with 'ansible_collections'
+
+    :param collection_path: The path that should end in 'ansible_collections'
+    :return: collection_path ending in 'ansible_collections' if it does not already.
+    """
+
+    if os.path.split(collection_path)[1] != 'ansible_collections':
+        return os.path.join(collection_path, 'ansible_collections')
+
+    return collection_path
 
 
 @contextmanager
@@ -755,7 +773,7 @@ def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, fi
         display.display('Created collection for %s at %s' % (collection_name, to_text(b_tar_path)))
 
 
-def _find_existing_collections(path):
+def find_existing_collections(path):
     collections = []
 
     b_path = to_bytes(path, errors='surrogate_or_strict')

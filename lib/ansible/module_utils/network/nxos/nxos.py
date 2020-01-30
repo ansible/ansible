@@ -81,7 +81,7 @@ nxos_provider_spec = {
     'transport': dict(type='str', default='cli', choices=['cli', 'nxapi'])
 }
 nxos_argument_spec = {
-    'provider': dict(type='dict', options=nxos_provider_spec),
+    'provider': dict(type='dict', options=nxos_provider_spec, removed_in_version=2.14),
 }
 
 

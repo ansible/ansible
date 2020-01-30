@@ -18,13 +18,28 @@ $spec = @{
         checksum = @{ type='str' }
         checksum_algorithm = @{ type='str'; default='sha1'; choices = @("md5", "sha1", "sha256", "sha384", "sha512") }
         checksum_url = @{ type='str' }
+
+       # Defined for the alias backwards compatibility, remove once aliases are removed
+       url_username = @{
+           aliases = @("user", "username")
+           deprecated_aliases = @(
+               @{ name = "user"; version = "2.14" },
+               @{ name = "username"; version = "2.14" }
+           )
+       }
+       url_password = @{
+           aliases = @("password")
+           deprecated_aliases = @(
+               @{ name = "password"; version = "2.14" }
+           )
+       }
     }
     mutually_exclusive = @(
         ,@('checksum', 'checksum_url')
     )
     supports_check_mode = $true
 }
-$spec.options += $ansible_web_request_options
+$spec = Merge-WebRequestSpec -ModuleSpec $spec
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 

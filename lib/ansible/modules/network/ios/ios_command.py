@@ -111,6 +111,7 @@ tasks:
       wait_for:
         - result[0] contains IOS
         - result[1] contains Loopback0
+
   - name: run commands that require answering a prompt
     ios_command:
       commands:

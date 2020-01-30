@@ -31,7 +31,7 @@ No notable changes
 Deprecated
 ==========
 
-No notable changes
+* Windows Server 2008 and 2008 R2 will no longer be supported or tested in the next Ansible release, see :ref:`windows_faq_server2008`.
 
 
 Modules
@@ -71,6 +71,7 @@ The following functionality will be removed in Ansible 2.14. Please update updat
 * :ref:`iam_policy <iam_policy_module>`: the ``policy_document`` option will be removed. To maintain the existing behavior use the ``policy_json`` option and read the file with the ``lookup`` plugin.
 * :ref:`redfish_config <redfish_config_module>`: the ``bios_attribute_name`` and ``bios_attribute_value`` options will be removed. To maintain the existing behavior use the ``bios_attributes`` option instead.
 * :ref:`clc_aa_policy <clc_aa_policy_module>`: the ``wait`` parameter will be removed. It has always been ignored by the module.
+* :ref:`redfish_config <redfish_config_module>`, :ref:`redfish_command <redfish_command_module>`: the behavior to select the first System, Manager, or Chassis resource to modify when multiple are present will be removed. Use the new ``resource_id`` option to specify target resource to modify.
 
 
 
@@ -81,7 +82,7 @@ The following functionality will change in Ansible 2.14. Please update update yo
 * :ref:`iam_policy <iam_policy_module>`: the default value for the ``skip_duplicates`` option will change from ``true`` to ``false``.  To maintain the existing behavior explicitly set it to ``true``.
 * :ref:`iam_role <iam_role_module>`: the ``purge_policies`` option (also know as ``purge_policy``) default value will change from ``true`` to ``false``
 * :ref:`elb_network_lb <elb_network_lb_module>`: the default behaviour for the ``state`` option will change from ``absent`` to ``present``.  To maintain the existing behavior explicitly set state to ``absent``.
-
+* :ref:`vmware_tag_info <vmware_tag_info_module>`: the module will not return ``tag_facts`` since it does not return multiple tags with the same name and different category id. To maintain the existing behavior use ``tag_info`` which is a list of tag metadata.
 
 The following modules will be removed in Ansible 2.14. Please update your playbooks accordingly.
 
@@ -109,6 +110,10 @@ Noteworthy module changes
 Plugins
 =======
 
+Lookup plugin names case-sensitivity
+------------------------------------
+
+* Prior to Ansible ``2.10`` lookup plugin names passed in as an argument to the ``lookup()`` function were treated as case-insensitive as opposed to lookups invoked via ``with_<lookup_name>``. ``2.10`` brings consistency to ``lookup()`` and ``with_`` to be both case-sensitive.
 
 Noteworthy plugin changes
 -------------------------

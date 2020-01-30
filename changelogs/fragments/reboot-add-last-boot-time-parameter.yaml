@@ -1,0 +1,5 @@
+bugfixes:
+  - >-
+    reboot, win_reboot - add ``boot_time_command`` parameter to override the default command used to
+    determine whether or not a system was rebooted
+    (https://github.com/ansible/ansible/issues/58868)

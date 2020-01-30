@@ -46,6 +46,7 @@
   assert:
     that:
         - cluster_result.clusters
+        - cluster_result.clusters[ccr1].hosts is defined
         - not cluster_result.changed
 
 - <<: *vc_cluster_data

@@ -298,7 +298,7 @@ class GalaxyAPI:
             done = (data.get('next_link', None) is None)
 
             # https://github.com/ansible/ansible/issues/64355
-            # api_server contains part of the API path but next_link includes the the /api part so strip it out.
+            # api_server contains part of the API path but next_link includes the /api part so strip it out.
             url_info = urlparse(self.api_server)
             base_url = "%s://%s/" % (url_info.scheme, url_info.netloc)
 
@@ -523,7 +523,7 @@ class GalaxyAPI:
         :return: CollectionVersionMetadata about the collection at the version requested.
         """
         api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
-        url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version]
+        url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version, '/']
 
         n_collection_url = _urljoin(*url_paths)
         error_context_msg = 'Error when getting collection version metadata for %s.%s:%s from %s (%s)' \
@@ -552,7 +552,7 @@ class GalaxyAPI:
             results_key = 'results'
             pagination_path = ['next']
 
-        n_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions')
+        n_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/')
 
         error_context_msg = 'Error when getting available collection versions for %s.%s from %s (%s)' \
                             % (namespace, name, self.name, self.api_server)

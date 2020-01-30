@@ -104,6 +104,12 @@ options:
     choices: [0, 1, 2]
     default: 0
     version_added: '2.10'
+  skip_lock_tables:
+    description:
+      - Skip locking tables for read. Used when I(state=dump), ignored otherwise.
+    required: no
+    type: bool
+    default: no
   dump_extra_args:
     description:
       - Provide additional arguments for mysqldump.
@@ -296,7 +302,7 @@ def db_delete(cursor, db):
 def db_dump(module, host, user, password, db_name, target, all_databases, port,
             config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
             single_transaction=None, quick=None, ignore_tables=None, hex_blob=None,
-            encoding=None, force=False, master_data=0, dump_extra_args=None):
+            encoding=None, force=False, master_data=0, skip_lock_tables=False, dump_extra_args=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -320,7 +326,9 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port,
     if all_databases:
         cmd += " --all-databases"
     else:
-        cmd += " --databases {0} --skip-lock-tables".format(' '.join(db_name))
+        cmd += " --databases {0}".format(' '.join(db_name))
+    if skip_lock_tables:
+        cmd += " --skip-lock-tables"
     if (encoding is not None) and (encoding != ""):
         cmd += " --default-character-set=%s" % shlex_quote(encoding)
     if single_transaction:
@@ -466,6 +474,7 @@ def main():
             hex_blob=dict(default=False, type='bool'),
             force=dict(type='bool', default=False),
             master_data=dict(type='int', default=0, choices=[0, 1, 2]),
+            skip_lock_tables=dict(type='bool', default=False),
             dump_extra_args=dict(type='str', default=''),
         ),
         supports_check_mode=True,
@@ -505,6 +514,7 @@ def main():
     force = module.params["force"]
     master_data = module.params["master_data"]
     dump_extra_args = module.params["dump_extra_args"]
+    skip_lock_tables = module.params["skip_lock_tables"]
 
     if len(db) > 1 and state == 'import':
         module.fail_json(msg="Multiple databases are not supported with state=import")
@@ -520,8 +530,8 @@ def main():
         if db == ['all']:
             module.fail_json(msg="name is not allowed to equal 'all' unless state equals import, or dump.")
     try:
-        cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca,
-                               connect_timeout=connect_timeout)
+        cursor, db_conn = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca,
+                                        connect_timeout=connect_timeout)
     except Exception as e:
         if os.path.exists(config_file):
             module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
@@ -571,7 +581,9 @@ def main():
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
                                      ssl_ca, single_transaction, quick, ignore_tables,
-                                     hex_blob, encoding, force, master_data, dump_extra_args)
+                                     hex_blob, encoding, force, master_data, skip_lock_tables,
+                                     dump_extra_args)
+
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout,

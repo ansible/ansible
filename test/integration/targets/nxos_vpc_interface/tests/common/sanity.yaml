@@ -1,13 +1,10 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vpc_interface sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - block:
   - name: enable feature vpc
     nxos_feature:
       feature: vpc
-      provider: "{{ connection }}"
       state: enabled
 
   - name: create port-channel10
@@ -16,7 +13,6 @@
         - interface port-channel10
         - switchport
       match: none
-      provider: "{{ connection }}"
 
   - name: create port-channel11
     nxos_config:
@@ -24,11 +20,9 @@
         - interface port-channel11
         - switchport
       match: none
-      provider: "{{ connection }}"
 
   - name: configure vpc
     nxos_vpc:
-      provider: "{{ connection }}"
       state: present
       domain: 100
       role_priority: 32667
@@ -42,7 +36,6 @@
     nxos_vpc_interface: &conf
       portchannel: 10
       vpc: 10
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -64,7 +57,6 @@
     nxos_vpc_interface: &conf1
       portchannel: 11
       peer_link: True
-      provider: "{{ connection }}"
     register: result
     when: image_version != "7.0(3)I5(1)"
 
@@ -83,7 +75,6 @@
     nxos_vpc_interface: &conf2
       portchannel: 11
       peer_link: False
-      provider: "{{ connection }}"
     register: result
     when: image_version != "7.0(3)I5(1)"
 
@@ -102,7 +93,6 @@
     nxos_vpc_interface: &remove
       portchannel: 10
       vpc: 10
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -117,7 +107,6 @@
   always:
   - name: remove vpc
     nxos_vpc:
-      provider: "{{ connection }}"
       state: absent
       domain: 100
       role_priority: 32667
@@ -132,7 +121,6 @@
     nxos_vpc_interface:
       portchannel: 10
       vpc: 10
-      provider: "{{ connection }}"
       state: absent
     ignore_errors: yes
 
@@ -142,13 +130,11 @@
         - no interface port-channel10
         - no interface port-channel11
       match: none
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: disable feature vpc
     nxos_feature:
       feature: vpc
-      provider: "{{ connection }}"
       state: disabled
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vpc_interface sanity test"

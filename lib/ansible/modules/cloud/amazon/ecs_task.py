@@ -221,12 +221,12 @@ task:
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.basic import missing_required_lib
-from ansible.module_utils.ec2 import ec2_argument_spec, get_ec2_security_group_ids_from_names, ansible_dict_to_boto3_tag_list
+from ansible.module_utils.ec2 import get_ec2_security_group_ids_from_names, ansible_dict_to_boto3_tag_list
 
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 class EcsExecManager:
@@ -340,8 +340,7 @@ class EcsExecManager:
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         operation=dict(required=True, choices=['run', 'start', 'stop']),
         cluster=dict(required=False, type='str'),  # R S P
         task_definition=dict(required=False, type='str'),  # R* S*
@@ -353,7 +352,7 @@ def main():
         network_configuration=dict(required=False, type='dict'),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         tags=dict(required=False, type='dict')
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True,
                               required_if=[('launch_type', 'FARGATE', ['network_configuration'])])

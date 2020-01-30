@@ -11,7 +11,6 @@
       - 50 permit ip 192.0.2.5/32 any log
     parents: ip access-list test
     match: none
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: configure sub level command using exact match
@@ -25,7 +24,6 @@
     before: no ip access-list test
     match: exact
     replace: block
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -47,7 +45,6 @@
       - 40 permit ip 192.0.2.4/32 any log
     parents: ip access-list test
     match: exact
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -58,6 +55,5 @@
   nxos_config:
     lines: no ip access-list test
     match: none
-    provider: "{{ connection }}"
 
 - debug: msg="END nxapi/sublevel_exact.yaml"

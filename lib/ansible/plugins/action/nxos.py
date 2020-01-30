@@ -25,6 +25,7 @@ import sys
 
 from ansible import constants as C
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
+from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.nxos.nxos import nxos_provider_spec
 from ansible.utils.display import Display
@@ -40,8 +41,9 @@ class ActionModule(ActionNetworkModule):
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'nxos_config' else False
         persistent_connection = self._play_context.connection.split('.')[-1]
+        warnings = []
 
-        if (persistent_connection == 'httpapi' or self._task.args.get('provider', {}).get('transport') == 'nxapi') \
+        if (self._play_context.connection in ('httpapi', 'local') or self._task.args.get('provider', {}).get('transport') == 'nxapi') \
                 and module_name in ('nxos_file_copy', 'nxos_nxapi'):
             return {'failed': True, 'msg': "Transport type 'nxapi' is not valid for '%s' module." % (module_name)}
 
@@ -80,6 +82,15 @@ class ActionModule(ActionNetworkModule):
                 display.warning('transport is unnecessary when using %s and will be ignored' % self._play_context.connection)
                 del self._task.args['transport']
 
+            if module_name == 'nxos_gir':
+                conn = Connection(self._connection.socket_path)
+                persistent_command_timeout = conn.get_option('persistent_command_timeout')
+                gir_timeout = 200
+                if persistent_command_timeout < gir_timeout:
+                    conn.set_option('persistent_command_timeout', gir_timeout)
+                    msg = "timeout value extended to %ss for nxos_gir" % gir_timeout
+                    display.warning(msg)
+
         elif self._play_context.connection == 'local':
             provider = load_provider(nxos_provider_spec, self._task.args)
             transport = provider['transport'] or 'cli'
@@ -88,8 +99,8 @@ class ActionModule(ActionNetworkModule):
 
             if transport == 'cli':
                 pc = copy.deepcopy(self._play_context)
-                pc.connection = 'network_cli'
-                pc.network_os = 'nxos'
+                pc.connection = 'ansible.netcommon.network_cli'
+                pc.network_os = 'cisco.nxos.nxos'
                 pc.remote_addr = provider['host'] or self._play_context.remote_addr
                 pc.port = int(provider['port'] or self._play_context.port or 22)
                 pc.remote_user = provider['username'] or self._play_context.connection_user
@@ -100,8 +111,16 @@ class ActionModule(ActionNetworkModule):
                     pc.become_method = 'enable'
                 pc.become_pass = provider['auth_pass']
 
+                connection = self._shared_loader_obj.connection_loader.get('ansible.netcommon.persistent', pc, sys.stdin,
+                                                                           task_uuid=self._task._uuid)
+
+                # TODO: Remove below code after ansible minimal is cut out
+                if connection is None:
+                    pc.connection = 'network_cli'
+                    pc.network_os = 'nxos'
+                    connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
+
                 display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
 
                 command_timeout = int(provider['timeout']) if provider['timeout'] else connection.get_option('persistent_command_timeout')
                 connection.set_options(direct={'persistent_command_timeout': command_timeout})
@@ -117,10 +136,17 @@ class ActionModule(ActionNetworkModule):
 
             else:
                 self._task.args['provider'] = ActionModule.nxapi_implementation(provider, self._play_context)
+                warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14,'
+                                 ' use connection either httpapi or ansible.netcommon.httpapi (whichever is applicable)'])
         else:
             return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
         result = super(ActionModule, self).run(task_vars=task_vars)
+        if warnings:
+            if 'warnings' in result:
+                result['warnings'].extend(warnings)
+            else:
+                result['warnings'] = warnings
         return result
 
     @staticmethod

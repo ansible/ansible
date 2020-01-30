@@ -111,13 +111,12 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info,
-                                      ec2_argument_spec, camel_dict_to_snake_dict)
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 try:
     from botocore.exceptions import ClientError, ParamValidationError
 except ImportError:
-    pass  # caught by imported AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def _parse_response(response):
@@ -160,29 +159,19 @@ def assume_role_policy(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            role_arn=dict(required=True),
-            role_session_name=dict(required=True),
-            duration_seconds=dict(required=False, default=None, type='int'),
-            external_id=dict(required=False, default=None),
-            policy=dict(required=False, default=None),
-            mfa_serial_number=dict(required=False, default=None),
-            mfa_token=dict(required=False, default=None)
-        )
+    argument_spec = dict(
+        role_arn=dict(required=True),
+        role_session_name=dict(required=True),
+        duration_seconds=dict(required=False, default=None, type='int'),
+        external_id=dict(required=False, default=None),
+        policy=dict(required=False, default=None),
+        mfa_serial_number=dict(required=False, default=None),
+        mfa_token=dict(required=False, default=None)
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        connection = boto3_conn(module, conn_type='client', resource='sts',
-                                region=region, endpoint=ec2_url, **aws_connect_kwargs)
-
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = module.client('sts')
 
     assume_role_policy(connection, module)
 

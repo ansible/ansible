@@ -237,14 +237,15 @@ def install_command_requirements(args, python_version=None):
             raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
                                    '\n'.join((' '.join(cmd_quote(c) for c in cmd) for cmd in changes)))
 
-    # ask pip to check for conflicts between installed packages
-    try:
-        run_command(args, pip + ['check', '--disable-pip-version-check'], capture=True)
-    except SubprocessError as ex:
-        if ex.stderr.strip() == 'ERROR: unknown command "check"':
-            display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
-        else:
-            raise
+    if args.pip_check:
+        # ask pip to check for conflicts between installed packages
+        try:
+            run_command(args, pip + ['check', '--disable-pip-version-check'], capture=True)
+        except SubprocessError as ex:
+            if ex.stderr.strip() == 'ERROR: unknown command "check"':
+                display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
+            else:
+                raise
 
 
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
@@ -290,6 +291,15 @@ def generate_egg_info(args):
     :type args: EnvironmentConfig
     """
     if args.explain:
+        return
+
+    ansible_version = get_ansible_version()
+
+    # inclusion of the version number in the path is optional
+    # see: https://setuptools.readthedocs.io/en/latest/formats.html#filename-embedded-metadata
+    egg_info_path = ANSIBLE_LIB_ROOT + '-%s.egg-info' % ansible_version
+
+    if os.path.exists(egg_info_path):
         return
 
     egg_info_path = ANSIBLE_LIB_ROOT + '.egg-info'

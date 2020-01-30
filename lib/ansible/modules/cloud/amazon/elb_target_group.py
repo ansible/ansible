@@ -373,10 +373,10 @@ import time
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict, ec2_argument_spec,
+from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict,
                                       compare_aws_tags, ansible_dict_to_boto3_tag_list)
 from distutils.version import LooseVersion
 
@@ -802,34 +802,31 @@ def delete_target_group(connection, module):
 def main():
     protocols_list = ['http', 'https', 'tcp', 'tls', 'udp', 'tcp_udp', 'HTTP',
                       'HTTPS', 'TCP', 'TLS', 'UDP', 'TCP_UDP']
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            deregistration_delay_timeout=dict(type='int'),
-            health_check_protocol=dict(choices=protocols_list),
-            health_check_port=dict(),
-            health_check_path=dict(),
-            health_check_interval=dict(type='int'),
-            health_check_timeout=dict(type='int'),
-            healthy_threshold_count=dict(type='int'),
-            modify_targets=dict(default=True, type='bool'),
-            name=dict(required=True),
-            port=dict(type='int'),
-            protocol=dict(choices=protocols_list),
-            purge_tags=dict(default=True, type='bool'),
-            stickiness_enabled=dict(type='bool'),
-            stickiness_type=dict(default='lb_cookie'),
-            stickiness_lb_cookie_duration=dict(type='int'),
-            state=dict(required=True, choices=['present', 'absent']),
-            successful_response_codes=dict(),
-            tags=dict(default={}, type='dict'),
-            target_type=dict(default='instance', choices=['instance', 'ip', 'lambda']),
-            targets=dict(type='list'),
-            unhealthy_threshold_count=dict(type='int'),
-            vpc_id=dict(),
-            wait_timeout=dict(type='int', default=200),
-            wait=dict(type='bool', default=False)
-        )
+    argument_spec = dict(
+        deregistration_delay_timeout=dict(type='int'),
+        health_check_protocol=dict(choices=protocols_list),
+        health_check_port=dict(),
+        health_check_path=dict(),
+        health_check_interval=dict(type='int'),
+        health_check_timeout=dict(type='int'),
+        healthy_threshold_count=dict(type='int'),
+        modify_targets=dict(default=True, type='bool'),
+        name=dict(required=True),
+        port=dict(type='int'),
+        protocol=dict(choices=protocols_list),
+        purge_tags=dict(default=True, type='bool'),
+        stickiness_enabled=dict(type='bool'),
+        stickiness_type=dict(default='lb_cookie'),
+        stickiness_lb_cookie_duration=dict(type='int'),
+        state=dict(required=True, choices=['present', 'absent']),
+        successful_response_codes=dict(),
+        tags=dict(default={}, type='dict'),
+        target_type=dict(default='instance', choices=['instance', 'ip', 'lambda']),
+        targets=dict(type='list'),
+        unhealthy_threshold_count=dict(type='int'),
+        vpc_id=dict(),
+        wait_timeout=dict(type='int', default=200),
+        wait=dict(type='bool', default=False)
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, required_if=[

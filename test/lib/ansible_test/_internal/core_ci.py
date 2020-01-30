@@ -68,6 +68,7 @@ class AnsibleCoreCI:
         self.instance_id = None
         self.endpoint = None
         self.max_threshold = 1
+        self.retries = 3
         self.name = name if name else '%s-%s' % (self.platform, self.version)
         self.ci_key = os.path.expanduser('~/.ansible-core-ci.key')
         self.resource = 'jobs'
@@ -88,6 +89,10 @@ class AnsibleCoreCI:
             ),
             azure=(
                 'azure',
+            ),
+            ibmcloud=(
+                'aix',
+                'ibmi',
             ),
             parallels=(
                 'osx',
@@ -114,7 +119,7 @@ class AnsibleCoreCI:
 
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
-        if self.provider in ('aws', 'azure'):
+        if self.provider in ('aws', 'azure', 'ibmcloud'):
             if self.provider != 'aws':
                 self.resource = self.provider
 
@@ -141,6 +146,12 @@ class AnsibleCoreCI:
                 self.port = 5986
             else:
                 self.port = 22
+
+            if self.provider == 'ibmcloud':
+                # Additional retries are neededed to accommodate images transitioning
+                # to the active state in the IBM cloud. This operation can take up to
+                # 90 seconds
+                self.retries = 7
         elif self.provider == 'parallels':
             self.endpoints = self._get_parallels_endpoints()
             self.max_threshold = 6
@@ -151,7 +162,6 @@ class AnsibleCoreCI:
             self.ssh_key = SshKey(args)
             self.endpoints = ['https://access.ws.testing.ansible.com']
             self.max_threshold = 1
-
         else:
             raise ApplicationError('Unsupported platform: %s' % platform)
 
@@ -423,7 +433,7 @@ class AnsibleCoreCI:
         :type threshold: int
         :rtype: HttpResponse | None
         """
-        tries = 3
+        tries = self.retries
         sleep = 15
 
         data['threshold'] = threshold

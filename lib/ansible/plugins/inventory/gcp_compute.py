@@ -27,10 +27,14 @@ DOCUMENTATION = """
           description: A list of regions in which to describe GCE instances.
                        If none provided, it defaults to all zones available to a given project.
           type: list
+        folders:
+          description: A folder that contains many projects
+          type: list
+          required: False
         projects:
           description: A list of projects in which to describe GCE instances.
           type: list
-          required: True
+          required: False
         filters:
           description: >
             A list of filter value pairs. Available filters are listed here
@@ -329,16 +333,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         resp = self._return_if_object(
             self.fake_module, self.auth_session.get(link, params={"filter": query})
         )
-        lists.append(resp.get("items"))
-        while resp.get("nextPageToken"):
-            resp = self._return_if_object(
-                self.fake_module,
-                self.auth_session.get(
-                    link,
-                    params={"filter": query, "pageToken": resp.get("nextPageToken")},
-                ),
-            )
+        if resp:
             lists.append(resp.get("items"))
+            while resp.get("nextPageToken"):
+                resp = self._return_if_object(
+                    self.fake_module,
+                    self.auth_session.get(
+                        link,
+                        params={"filter": query, "pageToken": resp.get("nextPageToken")},
+                    ),
+                )
+                lists.append(resp.get("items"))
         return self.build_list(lists)
 
     def build_list(self, lists):
@@ -498,6 +503,24 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return self._project_disks
 
+    def fetch_projects(self, params, link, query):
+        module = GcpMockModule(params)
+        auth = GcpSession(module, 'cloudresourcemanager')
+        response = auth.get(link, params={'filter': query})
+        return self._return_if_object(module, response)
+
+    def projects_for_folder(self, config_data, folder):
+        link = 'https://cloudresourcemanager.googleapis.com/v1/projects'.format()
+        query = 'parent.id = {0}'.format(folder)
+        projects = []
+        config_data['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
+        projects_response = self.fetch_projects(config_data, link, query)
+
+        if 'projects' in projects_response:
+            for item in projects_response.get('projects'):
+                projects.append(item['name'])
+        return projects
+
     def parse(self, inventory, loader, path, cache=True):
 
         if not HAS_GOOGLE_LIBRARIES:
@@ -520,6 +543,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         params = {
             "filters": self.get_option("filters"),
             "projects": self.get_option("projects"),
+            "folders": self.get_option("folders"),
             "scopes": self.get_option("scopes"),
             "zones": self.get_option("zones"),
             "auth_kind": self.get_option("auth_kind"),
@@ -560,9 +584,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             except KeyError:
                 cache_needs_update = True
 
+        projects = []
+        if params["projects"]:
+            projects = projects + params["projects"]
+
+        if params["folders"]:
+            for folder in params["folders"]:
+                projects = projects + self.projects_for_folder(config_data, folder)
+
         if not cache or cache_needs_update:
             cached_data = {}
-            for project in params["projects"]:
+            for project in projects:
                 cached_data[project] = {}
                 params["project"] = project
                 zones = params["zones"]

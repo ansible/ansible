@@ -25,7 +25,7 @@ Although it's tempting to get straight into coding, there are a few things to be
 
 * Read though all the pages linked off :ref:`developing_modules_general`; paying particular focus to the :ref:`developing_modules_checklist`.
 * New modules must be PEP 8 compliant. See :ref:`testing_pep8` for more information.
-* Starting with Ansible version 2.7, all new modules must :ref:`support Python 2.7+ and Python 3.5+ <developing_python_3>`. If this is an issue, please contact us (see the "Speak to us" section later in this document to learn how).
+* Starting with Ansible version 2.4, all new modules must :ref:`support Python 2.6+ and Python 3.5+ <developing_python_3>`. If this is an issue, please contact us (see the "Speak to us" section later in this document to learn how).
 * Have a look at the existing modules and how they've been named in the :ref:`all_modules`, especially in the same functional area (such as cloud, networking, databases).
 * Shared code can be placed into ``lib/ansible/module_utils/``
 * Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/plugins/doc_fragments/``.
