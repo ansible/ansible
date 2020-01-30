@@ -512,7 +512,10 @@ class User(object):
             self.ssh_file = os.path.join('.ssh', 'id_%s' % self.ssh_type)
 
         if self.groups is None and self.append:
-            module.warn("Append is set, but no groups are specified. Use 'groups' for appending new groups.")
+            # Change the argument_spec in 2.14 and remove this warning
+            # required_by={'append': ['groups']}
+            module.warn("'append' is set, but no 'groups' are specified. Use 'groups' for appending new groups."
+                        "This will change to an error in Ansible 2.14.")
 
     def check_password_encrypted(self):
         # Darwin needs cleartext password, so skip validation
