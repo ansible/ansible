@@ -1,0 +1,2 @@
+deprecated_features:
+ - user - usage of append=True without setting a list of groups. This is currently a no-op, and will throw a warning in 2.14.
