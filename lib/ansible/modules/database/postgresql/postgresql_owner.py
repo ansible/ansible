@@ -386,9 +386,9 @@ def main():
     argument_spec.update(
         new_owner=dict(type='str', required=True),
         obj_name=dict(type='str'),
-        obj_type=dict(type='str', aliases=['type'], choices=[
+        obj_type=dict(type='str', required=True, aliases=['type'], choices=[
             'database', 'function', 'matview', 'sequence', 'schema', 'table', 'tablespace', 'view']),
-        reassign_owned_by=dict(type='list'),
+        reassign_owned_by=dict(type='list', elements='str'),
         fail_on_role=dict(type='bool', default=True),
         db=dict(type='str', aliases=['login_db']),
         session_role=dict(type='str'),

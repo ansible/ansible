@@ -222,7 +222,7 @@ def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
         db=dict(type="str", aliases=["login_db"]),
-        name=dict(type="str", aliases=["slot_name"]),
+        name=dict(type="str", required=True, aliases=["slot_name"]),
         slot_type=dict(type="str", default="physical", choices=["logical", "physical"]),
         immediately_reserve=dict(type="bool", default=False),
         session_role=dict(type="str"),

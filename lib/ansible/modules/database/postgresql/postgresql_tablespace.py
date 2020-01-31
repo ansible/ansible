@@ -62,6 +62,7 @@ options:
     description:
     - New name of the tablespace.
     - The new name cannot begin with pg_, as such names are reserved for system tablespaces.
+    type: str
   session_role:
     description:
     - Switch to session_role after connecting. The specified session_role must
@@ -378,7 +379,7 @@ class PgTablespace(object):
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
-        tablespace=dict(type='str', aliases=['name']),
+        tablespace=dict(type='str', required=True, aliases=['name']),
         state=dict(type='str', default="present", choices=["absent", "present"]),
         location=dict(type='path', aliases=['path']),
         owner=dict(type='str'),

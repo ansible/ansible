@@ -284,7 +284,7 @@ def main():
     argument_spec.update(
         name=dict(type='str', required=True),
         db=dict(type='str', aliases=['login_db']),
-        value=dict(type='str'),
+        value=dict(type='str', require=True),
         reset=dict(type='bool'),
         session_role=dict(type='str'),
     )

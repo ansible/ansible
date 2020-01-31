@@ -36,6 +36,7 @@ options:
       When the value is a list, it will be converted to PostgreSQL array.
     - Mutually exclusive with I(named_args).
     type: list
+    elements: raw
   named_args:
     description:
     - Dictionary of key-value arguments to pass to the query.
@@ -242,7 +243,7 @@ def main():
     argument_spec.update(
         query=dict(type='str'),
         db=dict(type='str', aliases=['login_db']),
-        positional_args=dict(type='list'),
+        positional_args=dict(type='list', elements='raw'),
         named_args=dict(type='dict'),
         session_role=dict(type='str'),
         path_to_script=dict(type='path'),
