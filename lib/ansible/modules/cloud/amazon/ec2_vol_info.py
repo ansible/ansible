@@ -120,7 +120,7 @@ def list_ec2_volumes(connection, module):
         module.fail_json_aws(e, msg="Failed to describe volumes.")
 
     # We add region to the volume info so we need it here
-    region = get_aws_connection_info(module)[0]
+    region = get_aws_connection_info(module, boto3=True)[0]
 
     for volume in all_volumes["Volumes"]:
         volume = camel_dict_to_snake_dict(volume, ignore_list=['Tags'])
