@@ -72,6 +72,12 @@ options:
      default: no
      type: bool
      version_added: '2.8'
+   timeout:
+     description:
+     - Max duration of the waiting period (seconds).
+     default: 500
+     type: int
+     version_added: '2.10'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -129,6 +135,7 @@ instance:
     sample: None
 """
 
+import datetime
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -143,26 +150,20 @@ class PyVmomiHelper(PyVmomi):
     def gather_facts(self, vm):
         return gather_vm_facts(self.content, vm)
 
-    def wait_for_tools(self, vm, poll=100, sleep=5):
+    def wait_for_tools(self, vm, timeout):
         tools_running = False
         vm_facts = {}
-        poll_num = 0
-        while not tools_running and poll_num <= poll:
+        start_at = datetime.datetime.now()
+
+        while start_at + timeout > datetime.datetime.now():
             newvm = self.get_vm()
             vm_facts = self.gather_facts(newvm)
             if vm_facts['guest_tools_status'] == 'guestToolsRunning':
-                tools_running = True
-            else:
-                time.sleep(sleep)
-                poll_num += 1
+                return {'changed': True, 'failed': False, 'instance': vm_facts}
+            time.sleep(5)
 
         if not tools_running:
-            return {'failed': True, 'msg': 'VMware tools either not present or not running after {0} seconds'.format((poll * sleep))}
-
-        changed = False
-        if poll_num > 0:
-            changed = True
-        return {'changed': changed, 'failed': False, 'instance': vm_facts}
+            return {'failed': True, 'msg': 'VMware tools either not present or not running after {0} seconds'.format(timeout.total_seconds())}
 
 
 def main():
@@ -174,6 +175,7 @@ def main():
         uuid=dict(type='str'),
         moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
+        timeout=dict(type='int', default=500),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -195,9 +197,11 @@ def main():
         vm_id = module.params.get('name') or module.params.get('uuid') or module.params.get('moid')
         module.fail_json(msg="Unable to wait for VMware tools for non-existing VM '%s'." % vm_id)
 
+    timeout = datetime.timedelta(seconds=module.params['timeout'])
+
     result = dict(changed=False)
     try:
-        result = pyv.wait_for_tools(vm)
+        result = pyv.wait_for_tools(vm, timeout)
     except Exception as e:
         module.fail_json(msg="Waiting for VMware tools failed with"
                              " exception: {0:s}".format(to_native(e)))
