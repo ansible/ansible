@@ -125,6 +125,9 @@ seealso:
 - name: MySQL access control and account management reference
   description: Complete reference of the MySQL access control and account management documentation.
   link: https://dev.mysql.com/doc/refman/8.0/en/access-control.html
+- name: MySQL provided privileges reference
+  description: Complete reference of the MySQL provided privileges documentation.
+  link: https://dev.mysql.com/doc/refman/8.0/en/privileges-provided.html
 
 author:
 - Jonathan Mainguy (@Jmainguy)
@@ -262,16 +265,18 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'PROCESS', 'PROXY', 'RELOAD', 'REPLICATION CLIENT',
                          'REPLICATION SLAVE', 'SHOW DATABASES', 'SHUTDOWN',
                          'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL',
-                         'CREATE ROLE', 'DROP ROLE', 'APPLICATION PASSWORD ADMIN',
-                         'AUDIT ADMIN', 'BACKUP ADMIN', 'BINLOG ADMIN',
-                         'BINLOG ENCRYPTION ADMIN', 'CONNECTION ADMIN',
-                         'ENCRYPTION KEY ADMIN', 'FIREWALL ADMIN', 'FIREWALL USER',
-                         'GROUP REPLICATION ADMIN', 'PERSIST RO VARIABLES ADMIN',
-                         'REPLICATION SLAVE ADMIN', 'RESOURCE GROUP ADMIN',
-                         'RESOURCE GROUP USER', 'ROLE ADMIN', 'SET USER ID',
-                         'SESSION VARIABLES ADMIN', 'SYSTEM VARIABLES ADMIN',
-                         'VERSION TOKEN ADMIN', 'XA RECOVER ADMIN',
-                         'LOAD FROM S3', 'SELECT INTO S3'))
+                         'CREATE ROLE', 'DROP ROLE', 'APPLICATION_PASSWORD_ADMIN',
+                         'AUDIT_ADMIN', 'BACKUP_ADMIN', 'BINLOG_ADMIN',
+                         'BINLOG_ENCRYPTION_ADMIN', 'CLONE_ADMIN', 'CONNECTION_ADMIN',
+                         'ENCRYPTION_KEY_ADMIN', 'FIREWALL_ADMIN', 'FIREWALL_USER',
+                         'GROUP_REPLICATION_ADMIN', 'INNODB_REDO_LOG_ARCHIVE',
+                         'NDB_STORED_USER', 'PERSIST_RO_VARIABLES_ADMIN',
+                         'REPLICATION_APPLIER', 'REPLICATION_SLAVE_ADMIN',
+                         'RESOURCE_GROUP_ADMIN', 'RESOURCE_GROUP_USER',
+                         'ROLE_ADMIN', 'SESSION_VARIABLES_ADMIN', 'SET_USER_ID',
+                         'SYSTEM_USER', 'SYSTEM_VARIABLES_ADMIN', 'SYSTEM_USER',
+                         'TABLE_ENCRYPTION_ADMIN', 'VERSION_TOKEN_ADMIN',
+                         'XA_RECOVER_ADMIN', 'LOAD FROM S3', 'SELECT INTO S3'))
 
 
 class InvalidPrivsError(Exception):
