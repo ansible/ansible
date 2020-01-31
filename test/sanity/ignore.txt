@@ -7646,7 +7646,6 @@ lib/ansible/modules/windows/win_share.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_shell.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/modules/windows/win_shortcut.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_snmp.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_unzip.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_unzip.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/modules/windows/win_updates.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_uri.ps1 pslint:PSAvoidUsingEmptyCatchBlock # Keep
