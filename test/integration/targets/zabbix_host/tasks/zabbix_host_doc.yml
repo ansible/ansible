@@ -43,6 +43,16 @@
         ip: 10.1.1.1
         dns: ""
         port: "12345"
+    macros:
+      - macro: '{$EXAMPLEMACRO}'
+        value: ExampleMacroValue
+      - macro: EXAMPLEMACRO2
+        value: ExampleMacroValue2
+        description: Example desc that work only with Zabbix 4.4 and higher
+    tags:
+      - tag: ExampleHostsTag
+      - tag: ExampleHostsTag2
+        value: ExampleTagValue
   register: zabbix_host1
 
 - name: Update an existing host's tls settings
