@@ -36,16 +36,16 @@ from ..data import (
     data_context,
 )
 
+if t.TYPE_CHECKING:
+    import coverage as coverage_module
+
 COVERAGE_GROUPS = ('command', 'target', 'environment', 'version')
 COVERAGE_CONFIG_PATH = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'coveragerc')
 COVERAGE_OUTPUT_FILE_NAME = 'coverage'
 
 
-def initialize_coverage(args):
-    """
-    :type args: CoverageConfig
-    :rtype: coverage
-    """
+def initialize_coverage(args):  # type: (CoverageConfig) -> coverage_module
+    """Delegate execution if requested, install requirements, then import and return the coverage module. Raises an exception if coverage is not available."""
     if args.delegate:
         raise Delegate()
 
