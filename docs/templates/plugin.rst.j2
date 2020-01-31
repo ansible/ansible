@@ -106,7 +106,7 @@ Parameters
             <th width="100%">Comments</th>
         </tr>
         {% for key, value in options|dictsort recursive %}
-            <tr id="parameter-@{ key }@">
+            <tr id="parameter-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}">
                 {# indentation based on nesting level #}
                 {% for i in range(1, loop.depth) %}
                     <td class="elbow-placeholder"></td>
@@ -282,7 +282,7 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
             <th width="100%">Description</th>
         </tr>
         {% for key, value in returnfacts|dictsort recursive %}
-            <tr>
+            <tr id="return-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}">
                 {% for i in range(1, loop.depth) %}
                     <td class="elbow-placeholder"></td>
                 {% endfor %}
@@ -357,7 +357,7 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
             <th width="100%">Description</th>
         </tr>
         {% for key, value in returndocs|dictsort recursive %}
-            <tr>
+            <tr id="return-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}">
                 {% for i in range(1, loop.depth) %}
                     <td class="elbow-placeholder">&nbsp;</td>
                 {% endfor %}
