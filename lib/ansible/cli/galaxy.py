@@ -228,13 +228,10 @@ class GalaxyCLI(CLI):
         if parser.metavar == 'COLLECTION_ACTION':
             galaxy_type = 'collection'
 
-        # Separate methods for listing a role or collection
-        list_func = getattr(self, 'execute_list_%s' % galaxy_type)
-
-        list_parser = parser.add_parser('list_{}'.format(galaxy_type), parents=parents,
+        list_parser = parser.add_parser('list', parents=parents,
                                         help='Show the name and version of each {0} installed in the {0}s_path.'.format(galaxy_type))
 
-        list_parser.set_defaults(func=list_func)
+        list_parser.set_defaults(func=self.execute_list)
 
         list_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
 
@@ -1065,6 +1062,16 @@ class GalaxyCLI(CLI):
                 raise AnsibleError("Failed to remove role %s: %s" % (role_name, to_native(e)))
 
         return 0
+
+    def execute_list(self):
+        """
+        List installed collections or roles
+        """
+
+        if context.CLIARGS['type'] == 'role':
+            self.execute_list_role()
+        elif context.CLIARGS['type'] == 'collection':
+            self.execute_list_collection()
 
     def execute_list_role(self):
         """
