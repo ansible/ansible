@@ -37,6 +37,7 @@ from . import (
     COVERAGE_OUTPUT_FILE_NAME,
     COVERAGE_GROUPS,
     CoverageConfig,
+    PathChecker,
 )
 
 
@@ -121,10 +122,10 @@ def _command_coverage_combine_python(args):
             arc_data[filename].update(arcs)
 
     output_files = []
-    invalid_path_count = 0
-    invalid_path_chars = 0
 
     coverage_file = os.path.join(ResultType.COVERAGE.path, COVERAGE_OUTPUT_FILE_NAME)
+
+    path_checker = PathChecker(args, collection_search_re)
 
     for group in sorted(groups):
         arc_data = groups[group]
@@ -132,17 +133,7 @@ def _command_coverage_combine_python(args):
         updated = coverage.CoverageData()
 
         for filename in arc_data:
-            if not os.path.isfile(filename):
-                if collection_search_re and collection_search_re.search(filename) and os.path.basename(filename) == '__init__.py':
-                    # the collection loader uses implicit namespace packages, so __init__.py does not need to exist on disk
-                    continue
-
-                invalid_path_count += 1
-                invalid_path_chars += len(filename)
-
-                if args.verbosity > 1:
-                    display.warning('Invalid coverage path: %s' % filename)
-
+            if not path_checker.check_path(filename):
                 continue
 
             updated.add_arcs({filename: list(arc_data[filename])})
@@ -155,8 +146,7 @@ def _command_coverage_combine_python(args):
             updated.write_file(output_file)
             output_files.append(output_file)
 
-    if invalid_path_count > 0:
-        display.warning('Ignored %d characters from %d invalid coverage path(s).' % (invalid_path_chars, invalid_path_count))
+    path_checker.report()
 
     return sorted(output_files)
 
@@ -224,21 +214,11 @@ def _command_coverage_combine_powershell(args):
                 file_coverage[hit_entry['Line']] = line_count
 
     output_files = []
-    invalid_path_count = 0
-    invalid_path_chars = 0
+
+    path_checker = PathChecker(args)
 
     for group in sorted(groups):
-        coverage_data = groups[group]
-
-        for filename in coverage_data:
-            if not os.path.isfile(filename):
-                invalid_path_count += 1
-                invalid_path_chars += len(filename)
-
-                if args.verbosity > 1:
-                    display.warning('Invalid coverage path: %s' % filename)
-
-                continue
+        coverage_data = dict((filename, data) for filename, data in groups[group].items() if path_checker.check_path(filename))
 
         if args.all:
             # Add 0 line entries for files not in coverage_data
@@ -255,9 +235,7 @@ def _command_coverage_combine_powershell(args):
 
             output_files.append(os.path.join(ResultType.COVERAGE.path, output_file))
 
-    if invalid_path_count > 0:
-        display.warning(
-            'Ignored %d characters from %d invalid coverage path(s).' % (invalid_path_chars, invalid_path_count))
+    path_checker.report()
 
     return sorted(output_files)
 

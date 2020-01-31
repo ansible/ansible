@@ -7,6 +7,10 @@ import re
 
 from .. import types as t
 
+from ..encoding import (
+    to_bytes,
+)
+
 from ..util import (
     ApplicationError,
     common_environment,
@@ -163,3 +167,35 @@ class CoverageConfig(EnvironmentConfig):
         self.all = args.all if 'all' in args else False  # type: bool
         self.stub = args.stub if 'stub' in args else False  # type: bool
         self.coverage = False  # temporary work-around to support intercept_command in cover.py
+
+
+class PathChecker:
+    """Checks code coverage paths to verify they are valid and reports on the findings."""
+    def __init__(self, args, collection_search_re=None):  # type: (CoverageConfig, t.Optional[t.Pattern]) -> None
+        self.args = args
+        self.collection_search_re = collection_search_re
+        self.invalid_paths = []
+        self.invalid_path_chars = 0
+
+    def check_path(self, path):  # type: (str) -> bool
+        """Return True if the given coverage path is valid, otherwise display a warning and return False."""
+        if os.path.isfile(to_bytes(path)):
+            return True
+
+        if self.collection_search_re and self.collection_search_re.search(path) and os.path.basename(path) == '__init__.py':
+            # the collection loader uses implicit namespace packages, so __init__.py does not need to exist on disk
+            # coverage is still reported for these non-existent files, but warnings are not needed
+            return False
+
+        self.invalid_paths.append(path)
+        self.invalid_path_chars += len(path)
+
+        if self.args.verbosity > 1:
+            display.warning('Invalid coverage path: %s' % path)
+
+        return False
+
+    def report(self):  # type: () -> None
+        """Display a warning regarding invalid paths if any were found."""
+        if self.invalid_paths:
+            display.warning('Ignored %d characters from %d invalid coverage path(s).' % (self.invalid_path_chars, len(self.invalid_paths)))
