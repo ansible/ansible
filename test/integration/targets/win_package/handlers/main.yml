@@ -1,0 +1,7 @@
+---
+- name: remove trusted root cert
+  win_certificate_store:
+    thumbprint: '{{ test_win_package_msix_packages.thumbprint }}'
+    store_location: LocalMachine
+    store_name: Root
+    state: absent

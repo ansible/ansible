@@ -2,14 +2,14 @@
 ---
 - name: fail to install broken msi
   win_package:
-    path: '{{test_win_package_path}}\bad.msi'
+    path: '{{ test_path }}\bad.msi'
     state: present
   register: fail_bad_rc
   failed_when: "'unexpected rc from' not in fail_bad_rc.msg and fail_bad_rc.rc != 1603" 
 
 - name: fail when not using an int for a return code
   win_package:
-    path: '{{test_win_package_path}}\good.msi'
+    path: '{{ test_path }}\good.msi'
     state: present
     expected_return_code: 0,abc
   register: fail_invalid_return_code
@@ -29,10 +29,10 @@
 
 - name: fail invalid local path
   win_package:
-    path: '{{test_win_package_path}}\no file.msi'
+    path: '{{ test_path }}\no file.msi'
     state: present
   register: fail_invalid_local_path
-  failed_when: fail_invalid_local_path.msg != "the file at the path '" + test_win_package_path + "\\no file.msi' cannot be reached"
+  failed_when: fail_invalid_local_path.msg != "the file at the path '" + test_path + "\\no file.msi' cannot be reached"
 
 - name: fail invalid URL
   win_package:
@@ -44,7 +44,7 @@
 
 - name: fail to check version without creates_path
   win_package:
-    path: '{{test_win_package_path}}\7z.exe'
+    path: '{{ test_path }}\good.msi'
     state: present
     creates_version: 1
   register: fail_creates_version_without_path
@@ -52,7 +52,7 @@
 
 - name: fail to check version without when path is not a file
   win_package:
-    path: '{{test_win_package_path}}\good.msi'
+    path: '{{ test_path }}\good.msi'
     state: present
     creates_path: C:\Windows
     creates_version: 1

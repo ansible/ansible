@@ -781,6 +781,7 @@ $providerInfo = [Ordered]@{
                 # Cannot find a native way to get the package info from the actual path so we need to inspect the XML
                 # manually.
                 $null = Add-Type -AssemblyName System.IO.Compression
+                $null = Add-Type -AssemblyName System.IO.Compression.FileSystem
 
                 $archive = [System.IO.Compression.ZipFile]::Open($Path, [System.IO.Compression.ZipArchiveMode]::Read,
                     [System.Text.Encoding]::UTF8)
@@ -831,7 +832,7 @@ $providerInfo = [Ordered]@{
                     }
 
                     $resourceId = ''
-                    if ($manifest.$identityParent.Identity.HasAttribute('ResourceId')) {
+                    if ($manifest.Package.Identity.HasAttribute('ResourceId')) {
                         $resourceId = $manifest.$identityParent.Identity.ResourceId
                     }
 
@@ -880,7 +881,9 @@ $providerInfo = [Ordered]@{
             try {
                 $ProgressPreference = 'SilentlyContinue'
                 if ($State -eq 'present') {
-                    Add-AppxPackage -Path $Path
+                    # Add-AppxPackage does not support a -LiteralPath parameter and it chokes on wildcard characters.
+                    # We need to escape those characters when calling the cmdlet.
+                    Add-AppxPackage -Path ([WildcardPattern]::Escape($Path))
                 } else {
                     Remove-AppxPackage -Package $Id
                 }
@@ -1126,6 +1129,8 @@ $providerInfo = [Ordered]@{
                 }
             }
 
+            # TODO: further analysis on the uninstall string to see if we need to quote it
+
             if ($Arguments) {
                 $invokeParams.Command += " $Arguments"
             }
@@ -1248,6 +1253,7 @@ try {
     $packageStatus = Get-InstalledStatus @getParams
 
     $changed = -not $packageStatus.Skip -and (($state -eq 'present') -ne $packageStatus.Installed)
+    $module.Result.rc = 0  # Make sure rc is always set
     if ($changed -and -not $module.CheckMode) {
         # Make sure we get a temp copy of the file if the provider requires it and we haven't already done so.
         if ($pathType -and -not $tempFile -and ($state -eq 'present' -or -not $packageStatus.SkipFileForRemove)) {
