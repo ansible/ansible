@@ -818,7 +818,7 @@ def main():
         expires=dict(type='str', default=None),
         conn_limit=dict(type='int', default=None),
         session_role=dict(type='str'),
-        groups=dict(type='list'),
+        groups=dict(type='list', elements='str'),
         comment=dict(type='str', default=None),
     )
     module = AnsibleModule(
