@@ -124,6 +124,9 @@ seealso:
 - name: MySQL access control and account management reference
   description: Complete reference of the MySQL access control and account management documentation.
   link: https://dev.mysql.com/doc/refman/8.0/en/access-control.html
+- name: MySQL provided privileges reference
+  description: Complete reference of the MySQL provided privileges documentation.
+  link: https://dev.mysql.com/doc/refman/8.0/en/privileges-provided.html
 
 author:
 - Jonathan Mainguy (@Jmainguy)
