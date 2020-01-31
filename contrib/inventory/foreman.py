@@ -56,7 +56,7 @@ def json_format_dict(data, pretty=False):
 class ForemanInventory(object):
 
     def __init__(self):
-        self.inventory = defaultdict(list)  # A list of groups and the hosts in that group
+        self.inventory = defaultdict(dict) # A dictionary of groups and the hosts in that group
         self.cache = dict()   # Details about hosts in the inventory
         self.params = dict()  # Params of each host
         self.facts = dict()   # Facts of each host
@@ -206,6 +206,7 @@ class ForemanInventory(object):
         self.cache_path_params = cache_path + "/%s.params" % script
         self.cache_path_facts = cache_path + "/%s.facts" % script
         self.cache_path_hostcollections = cache_path + "/%s.hostcollections" % script
+        self.cache_path_hostgroups = cache_path + "/%s.hostgroups" % script
         try:
             self.cache_max_age = config.getint('cache', 'max_age')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
@@ -326,6 +327,16 @@ class ForemanInventory(object):
         url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
         return self._get_json(url)
 
+    def _get_hostgroup_by_id(self, hid):
+        """ Fetch one hostgroup by id using foreman's API """
+
+        return self._get_json("%s/api/v2/hostgroups/%s" % (self.foreman_url, hid))
+
+    def _get_hostgroups(self):
+        """ Fetch list of hostgroups using foreman's API """
+
+        return self._get_json("%s/api/v2/hostgroups" % self.foreman_url)
+
     def _get_facts_by_id(self, hid):
         url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
         return self._get_json(url)
@@ -373,6 +384,7 @@ class ForemanInventory(object):
         self.write_to_cache(self.params, self.cache_path_params)
         self.write_to_cache(self.facts, self.cache_path_facts)
         self.write_to_cache(self.hostcollections, self.cache_path_hostcollections)
+        self.write_to_cache(self.hostgroups, self.cache_path_hostgroups)
 
     def to_safe(self, word):
         '''Converts 'bad' characters in a string to underscores
@@ -390,6 +402,7 @@ class ForemanInventory(object):
         if use_inventory_report:
             self._update_cache_inventory(scan_only_new_hosts)
         else:
+            self._update_cache_hostgroup_api()
             self._update_cache_host_api(scan_only_new_hosts)
 
     def _update_cache_inventory(self, scan_only_new_hosts):
@@ -419,7 +432,7 @@ class ForemanInventory(object):
                     group,
                     to_text(val).lower()
                 ))
-                self.inventory[safe_key].append(dns_name)
+                self._inventory_add_group_item(safe_key, dns_name)
 
             # Create ansible groups for environment, location and organization
             for group in ['environment', 'location', 'organization']:
@@ -430,7 +443,7 @@ class ForemanInventory(object):
                         group,
                         to_text(val).lower()
                     ))
-                    self.inventory[safe_key].append(dns_name)
+                    self._inventory_add_group_item(safe_key, dns_name)
 
             for group in ['lifecycle_environment', 'content_view']:
                 val = content_facet_attributes.get('%s_name' % group)
@@ -440,7 +453,7 @@ class ForemanInventory(object):
                         group,
                         to_text(val).lower()
                     ))
-                    self.inventory[safe_key].append(dns_name)
+                    self._inventory_add_group_item(safe_key, dns_name)
 
             params = host_params
 
@@ -454,7 +467,7 @@ class ForemanInventory(object):
             for pattern in self.group_patterns:
                 try:
                     key = pattern.format(**groupby)
-                    self.inventory[key].append(dns_name)
+                    self._inventory_add_group_item(key, dns_name)
                 except KeyError:
                     pass  # Host not part of this group
 
@@ -465,15 +478,63 @@ class ForemanInventory(object):
                     # Create Ansible groups for host collections
                     for hostcollection in hostcollections:
                         safe_key = self.to_safe('%shostcollection_%s' % (self.group_prefix, hostcollection.lower()))
-                        self.inventory[safe_key].append(dns_name)
+                        self._inventory_add_group_item(safe_key, dns_name)
 
                 self.hostcollections[dns_name] = hostcollections
 
             self.cache[dns_name] = host
             self.params[dns_name] = params
             self.facts[dns_name] = fact_list
-            self.inventory['all'].append(dns_name)
+            self._inventory_add_group_item('all', dns_name)
         self._write_cache()
+
+    def _inventory_add_group_item(self, group_name, group_item, item_type='hosts'):
+        """
+        Adds an item to the inventory
+
+        Supports adding:
+        - group hosts under the 'hosts' key
+        - child groups under the 'children' key
+        Makes sure non-existing keys are created as needed
+        """
+
+        if not group_name in self.inventory.keys():
+            self.inventory[group_name] = {item_type: [group_item]}
+        elif not item_type in self.inventory[group_name].keys():
+            self.inventory[group_name][item_type] = [group_item]
+        elif not group_item in self.inventory[group_name][item_type]:
+            self.inventory[group_name][item_type].append(group_item)
+
+    def _update_cache_hostgroup_api(self):
+        """
+        Adds hostgroup parent-child relations to inventory
+
+        This permits variable inheritance from parent groups in ansible
+        """
+
+        for hostgroup in self._get_hostgroups():
+            group_id = hostgroup.get('id')
+            if group_id:
+                # No need to fetch the hostgroup, the list provides all info we need
+                # self.hostgroups.update({id: self._get_hostgroup_by_id(id)})
+                self.hostgroups.update({group_id: hostgroup})
+            parent_group_name = hostgroup.get('parent_name')
+            group_name = hostgroup.get('title')
+            if parent_group_name and group_name:
+                # Foreman group belongs to a parent group
+                ansible_group_name = self.to_safe('%s%s_%s' % (
+                    to_text(self.group_prefix),
+                    self.hostgroup_label,
+                    to_text(group_name).lower(),
+                ))
+                ansible_parent_group_name = self.to_safe('%s%s_%s' % (
+                    to_text(self.group_prefix),
+                    self.hostgroup_label,
+                    to_text(parent_group_name).lower(),
+                ))
+                # Add inventory entry indicating parent-child relation
+                self._inventory_add_group_item(ansible_parent_group_name, \
+                    ansible_group_name, 'children')
 
     def _update_cache_host_api(self, scan_only_new_hosts):
         """Make calls to foreman and save the output in a cache"""
@@ -498,7 +559,7 @@ class ForemanInventory(object):
                     self.hostgroup_label,
                     to_text(val).lower()
                 ))
-                self.inventory[safe_key].append(dns_name)
+                self._inventory_add_group_item(safe_key, dns_name)
 
             # Create ansible groups for environment, location and organization
             for group in ['environment', 'location', 'organization']:
@@ -509,7 +570,7 @@ class ForemanInventory(object):
                         group,
                         to_text(val).lower()
                     ))
-                    self.inventory[safe_key].append(dns_name)
+                    self._inventory_add_group_item(safe_key, dns_name)
 
             for group in ['lifecycle_environment', 'content_view']:
                 val = host.get('content_facet_attributes', {}).get('%s_name' % group)
@@ -519,7 +580,7 @@ class ForemanInventory(object):
                         group,
                         to_text(val).lower()
                     ))
-                    self.inventory[safe_key].append(dns_name)
+                    self._inventory_add_group_item(safe_key, dns_name)
 
             params = self._resolve_params(host_params)
 
@@ -533,7 +594,7 @@ class ForemanInventory(object):
             for pattern in self.group_patterns:
                 try:
                     key = pattern.format(**groupby)
-                    self.inventory[key].append(dns_name)
+                    self._inventory_add_group_item(key, dns_name)
                 except KeyError:
                     pass  # Host not part of this group
 
@@ -544,14 +605,14 @@ class ForemanInventory(object):
                     # Create Ansible groups for host collections
                     for hostcollection in hostcollections:
                         safe_key = self.to_safe('%shostcollection_%s' % (self.group_prefix, hostcollection['name'].lower()))
-                        self.inventory[safe_key].append(dns_name)
+                        self._inventory_add_group_item(safe_key, dns_name)
 
                 self.hostcollections[dns_name] = hostcollections
 
             self.cache[dns_name] = host
             self.params[dns_name] = params
             self.facts[dns_name] = self._get_facts(host)
-            self.inventory['all'].append(dns_name)
+            self._inventory_add_group_item('all', dns_name)
         self._write_cache()
 
     def is_cache_valid(self):
