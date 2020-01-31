@@ -91,6 +91,18 @@ def get_powershell_coverage_files():  # type: () -> t.List[str]
     return coverage_files
 
 
+def get_collection_path_regexes():  # type: () -> t.Tuple[t.Optional[t.Pattern], t.Optional[t.Pattern]]
+    """Return a pair of regexes used for identifying and manipulating collection paths."""
+    if data_context().content.collection:
+        collection_search_re = re.compile(r'/%s/' % data_context().content.collection.directory)
+        collection_sub_re = re.compile(r'^.*?/%s/' % data_context().content.collection.directory)
+    else:
+        collection_search_re = None
+        collection_sub_re = None
+
+    return collection_search_re, collection_sub_re
+
+
 def sanitize_filename(filename, modules=None, collection_search_re=None, collection_sub_re=None):
     """
     :type filename: str

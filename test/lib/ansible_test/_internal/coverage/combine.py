@@ -3,7 +3,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import re
 
 from ..target import (
     walk_module_targets,
@@ -25,11 +24,8 @@ from ..util_common import (
     write_json_test_results,
 )
 
-from ..data import (
-    data_context,
-)
-
 from . import (
+    get_collection_path_regexes,
     get_python_coverage_files,
     get_powershell_coverage_files,
     initialize_coverage,
@@ -69,12 +65,7 @@ def _command_coverage_combine_python(args):
     sources = _get_coverage_targets(args, walk_compile_targets)
     groups = _build_stub_groups(args, sources, lambda line_count: set())
 
-    if data_context().content.collection:
-        collection_search_re = re.compile(r'/%s/' % data_context().content.collection.directory)
-        collection_sub_re = re.compile(r'^.*?/%s/' % data_context().content.collection.directory)
-    else:
-        collection_search_re = None
-        collection_sub_re = None
+    collection_search_re, collection_sub_re = get_collection_path_regexes()
 
     for coverage_file in coverage_files:
         counter += 1
