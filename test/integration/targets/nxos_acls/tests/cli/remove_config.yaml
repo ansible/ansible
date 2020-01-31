@@ -1,0 +1,6 @@
+--- 
+- name: Remove config
+  cli_config:
+    config: | 
+      no ip access-list Trial_ACLv4
+      no ipv6 access-list Trial_ACLv6
