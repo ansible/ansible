@@ -526,7 +526,8 @@ class PyVmomiHelper(PyVmomi):
                             self.change_detected = True
                             self.config_spec.deviceChange.append(nic_spec)
                 else:
-                    self.module.fail_json(msg='Unable to find the specified network adapter: %s' % network)
+                    if network['state'].lower() != 'absent':
+                        self.module.fail_json(msg='Unable to find the specified network adapter: %s' % network)
 
     def reconfigure_vm_network(self, vm_obj):
         network_list = self.sanitize_network_params()
