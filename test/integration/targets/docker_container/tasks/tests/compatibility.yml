@@ -1,0 +1,118 @@
+---
+- name: Registering container name
+  set_fact:
+    cname: "{{ cname_prefix ~ '-hi' }}"
+- name: Registering container name
+  set_fact:
+    cnames: "{{ cnames + [cname] }}"
+
+####################################################################
+## container_default_behavior: compatibility #######################
+####################################################################
+
+- name: Start container (check)
+  docker_container:
+    name: "{{ cname }}"
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    state: started
+    container_default_behavior: compatibility
+  check_mode: yes
+  register: start_1
+
+- name: Start container
+  docker_container:
+    name: "{{ cname }}"
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    state: started
+    container_default_behavior: compatibility
+  register: start_2
+
+- name: Start container (idempotent)
+  docker_container:
+    name: "{{ cname }}"
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    state: started
+    container_default_behavior: compatibility
+  register: start_3
+
+- name: Start container (idempotent check)
+  docker_container:
+    name: "{{ cname }}"
+    image: alpine:3.8
+    state: started
+    container_default_behavior: compatibility
+  check_mode: yes
+  register: start_4
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - start_1 is changed
+    - start_2 is changed
+    - start_3 is not changed
+    - start_4 is not changed
+
+####################################################################
+## container_default_behavior: no_defaults #########################
+####################################################################
+
+- name: Start container (check)
+  docker_container:
+    name: "{{ cname }}"
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    state: started
+    container_default_behavior: no_defaults
+  check_mode: yes
+  register: start_1
+
+- name: Start container
+  docker_container:
+    name: "{{ cname }}"
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    state: started
+    container_default_behavior: no_defaults
+  register: start_2
+
+- name: Start container (idempotent)
+  docker_container:
+    name: "{{ cname }}"
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    state: started
+    container_default_behavior: no_defaults
+  register: start_3
+
+- name: Start container (idempotent check)
+  docker_container:
+    name: "{{ cname }}"
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    state: started
+    container_default_behavior: no_defaults
+  check_mode: yes
+  register: start_4
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - start_1 is changed
+    - start_2 is changed
+    - start_3 is not changed
+    - start_4 is not changed

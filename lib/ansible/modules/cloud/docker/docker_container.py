@@ -2736,7 +2736,7 @@ class ContainerManager(DockerBaseClass):
                 self.container_stop(container.Id)
                 container = self._get_container(container.Id)
 
-            if state == 'started' and container.paused is not None and container.paused != self.parameters.paused:
+            if state == 'started' and self.parameters.paused is not None and container.paused != self.parameters.paused:
                 self.diff_tracker.add('paused', parameter=self.parameters.paused, active=was_paused)
                 if not self.check_mode:
                     try:
