@@ -1179,7 +1179,12 @@ class GalaxyCLI(CLI):
             else:
                 # list all collections
                 path = validate_collection_path(path)
-                collections = find_existing_collections(path)
+                if os.path.isdir(path):
+                    collections = find_existing_collections(path)
+                else:
+                    # There was no 'ansible_collections/' directory in the path, so there
+                    # or no collections here.
+                    continue
 
                 # Display header
                 fqcn_width, version_width = _get_collection_widths(collections)
