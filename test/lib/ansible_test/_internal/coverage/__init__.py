@@ -112,6 +112,42 @@ def get_python_modules():  # type: () -> t.Dict[str, str]
     return dict((target.module, target.path) for target in list(walk_module_targets()) if target.path.endswith('.py'))
 
 
+def enumerate_python_arcs(
+        path,  # type: str
+        coverage,  # type: coverage_module
+        modules,  # type: t.Dict[str, str]
+        collection_search_re,  # type: t.Optional[t.Pattern]
+        collection_sub_re,  # type: t.Optional[t.Pattern]
+):  # type: (...) -> t.Generator[t.Tuple[str, t.Set[t.Tuple[int, int]]]]
+    """Enumerate Python code coverage arcs in the given file."""
+    if os.path.getsize(path) == 0:
+        display.warning('Empty coverage file: %s' % path)
+        return
+
+    original = coverage.CoverageData()
+
+    try:
+        original.read_file(path)
+    except Exception as ex:  # pylint: disable=locally-disabled, broad-except
+        display.error(u'%s' % ex)
+        return
+
+    for filename in original.measured_files():
+        arcs = original.arcs(filename)
+
+        if not arcs:
+            # This is most likely due to using an unsupported version of coverage.
+            display.warning('No arcs found for "%s" in coverage file: %s' % (filename, path))
+            continue
+
+        filename = sanitize_filename(filename, modules=modules, collection_search_re=collection_search_re, collection_sub_re=collection_sub_re)
+
+        if not filename:
+            continue
+
+        yield filename, set(arcs)
+
+
 def sanitize_filename(
         filename,  # type: str
         modules=None,  # type: t.Optional[t.Dict[str, str]]

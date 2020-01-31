@@ -24,6 +24,7 @@ from ..util_common import (
 )
 
 from . import (
+    enumerate_python_arcs,
     get_collection_path_regexes,
     get_python_coverage_files,
     get_python_modules,
@@ -71,37 +72,13 @@ def _command_coverage_combine_python(args):
         counter += 1
         display.info('[%4d/%4d] %s' % (counter, len(coverage_files), coverage_file), verbosity=2)
 
-        original = coverage.CoverageData()
-
         group = get_coverage_group(args, coverage_file)
 
         if group is None:
             display.warning('Unexpected name for coverage file: %s' % coverage_file)
             continue
 
-        if os.path.getsize(coverage_file) == 0:
-            display.warning('Empty coverage file: %s' % coverage_file)
-            continue
-
-        try:
-            original.read_file(coverage_file)
-        except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-            display.error(u'%s' % ex)
-            continue
-
-        for filename in original.measured_files():
-            arcs = set(original.arcs(filename) or [])
-
-            if not arcs:
-                # This is most likely due to using an unsupported version of coverage.
-                display.warning('No arcs found for "%s" in coverage file: %s' % (filename, coverage_file))
-                continue
-
-            filename = sanitize_filename(filename, modules=modules, collection_search_re=collection_search_re,
-                                         collection_sub_re=collection_sub_re)
-            if not filename:
-                continue
-
+        for filename, arcs in enumerate_python_arcs(coverage_file, coverage, modules, collection_search_re, collection_sub_re):
             if group not in groups:
                 groups[group] = {}
 
