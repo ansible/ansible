@@ -1187,10 +1187,16 @@ class GalaxyCLI(CLI):
                 # list all collections
                 path = validate_collection_path(path)
                 if os.path.isdir(path):
+                    display.vvv("Searching {0} for collections".format(path))
                     collections = find_existing_collections(path)
                 else:
                     # There was no 'ansible_collections/' directory in the path, so there
                     # or no collections here.
+                    display.vvv("No 'ansible_collections' directory found at {0}".format(path))
+                    continue
+
+                if not collections:
+                    display.vvv("No collections found at {0}".format(path))
                     continue
 
                 # Display header
