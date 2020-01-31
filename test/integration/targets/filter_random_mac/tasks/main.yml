@@ -1,0 +1,59 @@
+# test code for filters
+# Copyright: (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2019, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
+- name: Test random_mac filter bad argument type
+  debug:
+    var: "0 | random_mac"
+  register: _bad_random_mac_filter
+  ignore_errors: yes
+
+- name: Verify random_mac filter showed a bad argument type error message
+  assert:
+    that:
+      - _bad_random_mac_filter is failed
+      - "_bad_random_mac_filter.msg is match('Invalid value type (.*int.*) for random_mac .*')"
+
+- name: Test random_mac filter bad argument value
+  debug:
+    var: "'dummy' | random_mac"
+  register: _bad_random_mac_filter
+  ignore_errors: yes
+
+- name: Verify random_mac filter showed a bad argument value error message
+  assert:
+    that:
+      - _bad_random_mac_filter is failed
+      - "_bad_random_mac_filter.msg is match('Invalid value (.*) for random_mac: .* not hexa byte')"
+
+- name: Test random_mac filter prefix too big
+  debug:
+    var: "'00:00:00:00:00:00' | random_mac"
+  register: _bad_random_mac_filter
+  ignore_errors: yes
+
+- name: Verify random_mac filter showed a prefix too big error message
+  assert:
+    that:
+      - _bad_random_mac_filter is failed
+      - "_bad_random_mac_filter.msg is match('Invalid value (.*) for random_mac: 5 colon.* separated items max')"
+
+- name:  Verify random_mac filter
+  assert:
+    that:
+            - "'00' | random_mac is match('^00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
+            - "'00:00' | random_mac is match('^00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
+            - "'00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
+            - "'00:00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
+            - "'00:00:00:00:00' | random_mac is match('^00:00:00:00:00:[a-f0-9][a-f0-9]$')"
+            - "'00:00:00' | random_mac != '00:00:00' | random_mac"
+
+- name: Verify random_mac filter with seed
+  assert:
+    that:
+      - "'00:00:00' | random_mac(seed='test') == '00:00:00' | random_mac(seed='test')"
+      - "'00:00:00' | random_mac(seed='test') != '00:00:00' | random_mac(seed='another_test')"
