@@ -31,7 +31,7 @@ options:
     - name: ansible_remote_tmp
   set_module_language:
     description:
-    - Controls if we set the locale for moduels when executing on the
+    - Controls if we set the locale for modules when executing on the
       target.
     - Windows only supports C(no) as an option.
     type: bool
