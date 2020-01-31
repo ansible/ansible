@@ -139,8 +139,6 @@ lib/ansible/modules/windows/win_say.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_say.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_tempfile.ps1 PSAvoidAssignmentToAutomaticVariable
 lib/ansible/modules/windows/win_toast.ps1 PSAvoidTrailingWhitespace
-lib/ansible/modules/windows/win_unzip.ps1 PSAvoidUsingCmdletAliases
-lib/ansible/modules/windows/win_unzip.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_unzip.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_updates.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_uri.ps1 PSAvoidUsingEmptyCatchBlock
