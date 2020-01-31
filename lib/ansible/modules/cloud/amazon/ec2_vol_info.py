@@ -64,11 +64,11 @@ import traceback
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, boto3_tag_list_to_ansible_dict
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import AWSRetry, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict
 
 
 def get_volume_info(volume, region):
@@ -99,12 +99,13 @@ def get_volume_info(volume, region):
     return volume_info
 
 
+@AWSRetry.jittered_backoff()
 def describe_volumes_with_backoff(connection, filters):
     paginator = connection.get_paginator('describe_volumes')
     return paginator.paginate(Filters=filters).build_full_result()
 
 
-def list_ec2_volumes(connection, module, region):
+def list_ec2_volumes(connection, module):
 
     # Replace filter key underscores with dashes, for compatibility, except if we're dealing with tags
     sanitized_filters = module.params.get("filters")
@@ -116,7 +117,10 @@ def list_ec2_volumes(connection, module, region):
     try:
         all_volumes = describe_volumes_with_backoff(connection, ansible_dict_to_boto3_filter_list(sanitized_filters))
     except ClientError as e:
-        module.fail_json(msg=e.response, exception=traceback.format_exc())
+        module.fail_json_aws(e, msg="Failed to describe volumes.")
+
+    # We add region to the volume info so we need it here
+    region = get_aws_connection_info(module, boto3=True)[0]
 
     for volume in all_volumes["Volumes"]:
         volume = camel_dict_to_snake_dict(volume, ignore_list=['Tags'])
@@ -125,32 +129,15 @@ def list_ec2_volumes(connection, module, region):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            filters=dict(default={}, type='dict')
-        )
-    )
+    argument_spec = dict(filters=dict(default={}, type='dict'))
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._name == 'ec2_vol_facts':
         module.deprecate("The 'ec2_vol_facts' module has been renamed to 'ec2_vol_info'", version='2.13')
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
+    connection = module.client('ec2')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(
-        module,
-        conn_type='client',
-        resource='ec2',
-        region=region,
-        endpoint=ec2_url,
-        **aws_connect_params
-    )
-
-    list_ec2_volumes(connection, module, region)
+    list_ec2_volumes(connection, module)
 
 
 if __name__ == '__main__':
