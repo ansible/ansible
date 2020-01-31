@@ -103,14 +103,13 @@ def get_collection_path_regexes():  # type: () -> t.Tuple[t.Optional[t.Pattern],
     return collection_search_re, collection_sub_re
 
 
-def sanitize_filename(filename, modules=None, collection_search_re=None, collection_sub_re=None):
-    """
-    :type filename: str
-    :type modules: dict | None
-    :type collection_search_re: Pattern | None
-    :type collection_sub_re: Pattern | None
-    :rtype: str | None
-    """
+def sanitize_filename(
+        filename,  # type: str
+        modules=None,  # type: t.Optional[t.Dict[str, str]]
+        collection_search_re=None,  # type: t.Optional[t.Pattern]
+        collection_sub_re=None,  # type: t.Optional[t.Pattern]
+):  # type: (...) -> t.Optional[str]
+    """Convert the given code coverage path to a local absolute path and return its, or None if the path is not valid."""
     ansible_path = os.path.abspath('lib/ansible/') + '/'
     root_path = data_context().content.root + '/'
     integration_temp_path = os.path.sep + os.path.join(ResultType.TMP.relative_path, 'integration') + os.path.sep
