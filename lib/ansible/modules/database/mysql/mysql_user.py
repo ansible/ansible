@@ -173,7 +173,7 @@ EXAMPLES = r'''
     state: present
     name: bob
     password: 12345dd
-    privs:
+    priv:
       'db1.*': 'ALL,GRANT'
       'db2.*': 'ALL,GRANT'
 
