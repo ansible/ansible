@@ -42,6 +42,7 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
+      timeout: 600
       validate_certs: no
       name: test_vm1
 
