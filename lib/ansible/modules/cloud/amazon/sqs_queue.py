@@ -229,20 +229,26 @@ ARGUMENT_SPEC = dict(
     state=dict(type='str', default='present', choices=['present', 'absent']),
     name=dict(required=True, type='str'),
     queue_type=dict(type='str', default='standard', choices=['standard', 'fifo']),
-    delay_seconds=dict(type='int', aliases=['delivery_delay'], return_name='delivery_delay'),
+    delay_seconds=dict(type='int', aliases=['delivery_delay']),
     maximum_message_size=dict(type='int'),
     message_retention_period=dict(type='int'),
     policy=dict(type='dict'),
-    receive_message_wait_time_seconds=dict(type='int', aliases=['receive_message_wait_time'], return_name='receive_message_wait_time'),
+    receive_message_wait_time_seconds=dict(type='int', aliases=['receive_message_wait_time']),
     redrive_policy=dict(type='dict'),
-    visibility_timeout=dict(type='int', aliases=['default_visibility_timeout'], return_name='default_visibility_timeout'),
+    visibility_timeout=dict(type='int', aliases=['default_visibility_timeout']),
     kms_master_key_id=dict(type='str'),
-    kms_data_key_reuse_period_seconds=dict(type='int', aliases=['kms_data_key_reuse_period'], return_name='kms_data_key_reuse_period'),
+    kms_data_key_reuse_period_seconds=dict(type='int', aliases=['kms_data_key_reuse_period']),
     content_based_deduplication=dict(type='bool'),
     tags=dict(type='dict'),
     purge_tags=dict(type='bool', default=False),
 )
 NON_ATTRIBUTES = ('name', 'state', 'queue_type', 'tags', 'purge_tags')
+COMPATABILITY_KEYS = dict(
+    delay_seconds='delivery_delay',
+    receive_message_wait_time_seconds='receive_message_wait_time',
+    visibility_timeout='default_visibility_timeout',
+    kms_data_key_reuse_period_seconds='kms_data_key_reuse_period',
+)
 
 
 def get_queue_name(module, is_fifo=False):
@@ -293,7 +299,7 @@ def create_or_update_sqs_queue(client, module):
 
     # provide backwards compatibility
     for key in list(result.keys()):
-        return_name = ARGUMENT_SPEC.get(key, {}).get('return_name')
+        return_name = COMPATABILITY_KEYS.get(key)
         if return_name:
             result[return_name] = result.pop(key)
 
