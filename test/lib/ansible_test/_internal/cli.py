@@ -12,6 +12,8 @@ from .init import (
     CURRENT_RLIMIT_NOFILE,
 )
 
+from . import types as t
+
 from .util import (
     ApplicationError,
     display,
@@ -112,10 +114,33 @@ from .coverage.xml import (
     command_coverage_xml,
 )
 
+from .coverage.analyze.targets.generate import (
+    command_coverage_analyze_targets_generate,
+    CoverageAnalyzeTargetsGenerateConfig,
+)
+
+from .coverage.analyze.targets.expand import (
+    command_coverage_analyze_targets_expand,
+    CoverageAnalyzeTargetsExpandConfig,
+)
+
+from .coverage.analyze.targets.combine import (
+    command_coverage_analyze_targets_combine,
+    CoverageAnalyzeTargetsCombineConfig,
+)
+
+from .coverage.analyze.targets.missing import (
+    command_coverage_analyze_targets_missing,
+    CoverageAnalyzeTargetsMissingConfig,
+)
+
 from .coverage import (
     COVERAGE_GROUPS,
     CoverageConfig,
 )
+
+if t.TYPE_CHECKING:
+    import argparse as argparse_module
 
 
 def main():
@@ -513,6 +538,8 @@ def parse_args():
     coverage_subparsers = coverage.add_subparsers(metavar='COMMAND')
     coverage_subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
 
+    add_coverage_analyze(coverage_subparsers, coverage_common)
+
     coverage_combine = coverage_subparsers.add_parser('combine',
                                                       parents=[coverage_common],
                                                       help='combine coverage data and rewrite remote paths')
@@ -606,6 +633,129 @@ def parse_args():
         args.color = sys.stdout.isatty()
 
     return args
+
+
+# noinspection PyProtectedMember
+def add_coverage_analyze(coverage_subparsers, coverage_common):  # type: (argparse_module._SubParsersAction, argparse_module.ArgumentParser) -> None
+    """Add the `coverage analyze` subcommand."""
+    analyze = coverage_subparsers.add_parser(
+        'analyze',
+        help='analyze collected coverage data',
+    )
+
+    analyze_subparsers = analyze.add_subparsers(metavar='COMMAND')
+    analyze_subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
+
+    targets = analyze_subparsers.add_parser(
+        'targets',
+        help='analyze integration test target coverage',
+    )
+
+    targets_subparsers = targets.add_subparsers(metavar='COMMAND')
+    targets_subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
+
+    targets_generate = targets_subparsers.add_parser(
+        'generate',
+        parents=[coverage_common],
+        help='aggregate coverage by integration test target',
+    )
+
+    targets_generate.set_defaults(
+        func=command_coverage_analyze_targets_generate,
+        config=CoverageAnalyzeTargetsGenerateConfig,
+    )
+
+    targets_generate.add_argument(
+        'input_dir',
+        nargs='?',
+        help='directory to read coverage from',
+    )
+
+    targets_generate.add_argument(
+        'output_file',
+        help='output file for aggregated coverage',
+    )
+
+    targets_expand = targets_subparsers.add_parser(
+        'expand',
+        parents=[coverage_common],
+        help='expand target names in aggregated coverage',
+    )
+
+    targets_expand.set_defaults(
+        func=command_coverage_analyze_targets_expand,
+        config=CoverageAnalyzeTargetsExpandConfig,
+    )
+
+    targets_expand.add_argument(
+        'input_file',
+        help='input file to read aggregated coverage from',
+    )
+
+    targets_expand.add_argument(
+        'output_file',
+        help='output file to write expanded coverage to',
+    )
+
+    targets_combine = targets_subparsers.add_parser(
+        'combine',
+        parents=[coverage_common],
+        help='combine multiple aggregated coverage files',
+    )
+
+    targets_combine.set_defaults(
+        func=command_coverage_analyze_targets_combine,
+        config=CoverageAnalyzeTargetsCombineConfig,
+    )
+
+    targets_combine.add_argument(
+        'input_file',
+        nargs='+',
+        help='input file to read aggregated coverage from',
+    )
+
+    targets_combine.add_argument(
+        'output_file',
+        help='output file to write aggregated coverage to',
+    )
+
+    targets_missing = targets_subparsers.add_parser(
+        'missing',
+        parents=[coverage_common],
+        help='identify coverage in one file missing in another',
+    )
+
+    targets_missing.set_defaults(
+        func=command_coverage_analyze_targets_missing,
+        config=CoverageAnalyzeTargetsMissingConfig,
+    )
+
+    targets_missing.add_argument(
+        'from_file',
+        help='input file containing aggregated coverage',
+    )
+
+    targets_missing.add_argument(
+        'to_file',
+        help='input file containing aggregated coverage',
+    )
+
+    targets_missing.add_argument(
+        'output_file',
+        help='output file to write aggregated coverage to',
+    )
+
+    targets_missing.add_argument(
+        '--only-gaps',
+        action='store_true',
+        help='consider any target coverage as fully covered',
+    )
+
+    targets_missing.add_argument(
+        '--only-exists',
+        action='store_true',
+        help='limit results to files that exist',
+    )
 
 
 def add_lint(parser):
@@ -923,6 +1073,6 @@ def complete_sanity_test(prefix, parsed_args, **_):
     """
     del parsed_args
 
-    tests = sorted(t.name for t in sanity_get_tests())
+    tests = sorted(test.name for test in sanity_get_tests())
 
     return [i for i in tests if i.startswith(prefix)]

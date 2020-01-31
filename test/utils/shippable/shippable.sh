@@ -103,6 +103,9 @@ function cleanup
             ansible-test coverage xml --color -v --requirements --group-by command --group-by version ${stub:+"$stub"}
             cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
 
+            # analyze and capture code coverage aggregated by integration test target
+            ansible-test coverage analyze targets generate -v shippable/testresults/coverage-analyze-targets.json
+
             # upload coverage report to codecov.io only when using complete on-demand coverage
             if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ]; then
                 for file in test/results/reports/coverage=*.xml; do
