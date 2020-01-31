@@ -180,6 +180,8 @@ def find_key_pair(module, ec2_client, name):
         if err.response['Error']['Code'] == "InvalidKeyPair.NotFound":
             return None
         module.fail_json_aws(err, msg="error finding keypair")
+    except IndexError:
+        key = None
     return key
 
 
