@@ -168,10 +168,7 @@ def sanitize_filename(
 
 class CoverageConfig(EnvironmentConfig):
     """Configuration for the coverage command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
+    def __init__(self, args):  # type: (t.Any) -> None
         super(CoverageConfig, self).__init__(args, 'coverage')
 
         self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
