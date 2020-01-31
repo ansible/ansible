@@ -117,6 +117,12 @@ options:
       - Enable wake on lan
     type: bool
     version_added: '2.10'
+  guest_network:
+    default: true
+    description:
+      - Enables guest control over whether the connectable device is connected.
+    type: bool
+    version_added: '2.10'
   directpath_io:
     default: True
     description:
@@ -335,18 +341,24 @@ class PyVmomiHelper(PyVmomi):
             sriov=vim.vm.device.VirtualSriovEthernetCard,
         )
 
-    def _get_network_object(self, vm_obj):
+    def _get_network_object(self, vm_obj, network_params=None):
         '''
         return network object matching given parameters
         :param vm_obj: vm object
+        :param network_params: dict containing parameters from deprectaed networks list method
         :return: network object
         :rtype: object
         '''
         compute_resource = self._get_compute_resource_by_name()
         pg_lookup = {}
-        vlan_id = self.params.get('vlan_id')
-        network_name = self.params.get('network_name')
-        switch_name = self.params.get('switch')
+        if network_params:
+            vlan_id = network_params['vlan_id']
+            network_name = network_params['network_name']
+            switch_name = network_params['switch']
+        else:
+            vlan_id = self.params['vlan_id']
+            network_name = self.params['network_name']
+            switch_name = self.params['switch']
 
         for pg in vm_obj.runtime.host.config.network.portgroup:
             pg_lookup[pg.spec.name] = {'switch': pg.spec.vswitchName, 'vlan_id': pg.spec.vlanId}
@@ -441,15 +453,15 @@ class PyVmomiHelper(PyVmomi):
         :rtype: object
         '''
         resource_name = None
-        if self.params.get('esxi_hostname'):
-            resource_name = self.params.get('esxi_hostname')
+        if self.params['esxi_hostname']:
+            resource_name = self.params['esxi_hostname']
 
-        if self.params.get('cluster'):
-            resource_name = self.params.get('cluster')
+        if self.params['cluster']:
+            resource_name = self.params['cluster']
 
         container = self.content.viewManager.CreateContainerView(self.content.rootFolder, [vim.ComputeResource], recurse)
         for obj in container.view:
-            if self.params.get('esxi_hostname') and isinstance(obj, vim.ClusterComputeResource) and hasattr(obj, 'host'):
+            if self.params['esxi_hostname'] and isinstance(obj, vim.ClusterComputeResource) and hasattr(obj, 'host'):
                 for host in obj.host:
                     if host.name == resource_name:
                         return obj
@@ -459,14 +471,32 @@ class PyVmomiHelper(PyVmomi):
 
         return None
 
-    def _new_nic_spec(self, vm_obj, nic_obj=None):
-        network = self._get_network_object(vm_obj)
+    def _new_nic_spec(self, vm_obj, nic_obj=None, network_params=None):
+        network = self._get_network_object(vm_obj, network_params)
+
+        if network_params:
+            connected = network_params['connected']
+            device_type = network_params['device_type'].lower()
+            directpath_io = network_params['directpath_io']
+            guest_control = network_params['guest_control']
+            label = network_params['label']
+            mac_address = network_params['mac_address']
+            start_connected = network_params['start_connected']
+            wake_onlan = network_params['wake_onlan']
+        else:
+            connected = self.params['connected']
+            device_type = self.params['device_type'].lower()
+            directpath_io = self.params['directpath_io']
+            guest_control = self.params['guest_control']
+            label = self.params['label']
+            mac_address = self.params['mac_address']
+            start_connected = self.params['start_connected']
+            wake_onlan = self.params['wake_onlan']
+
         if not nic_obj:
-            device_type = self.nic_device_type.get(
-                self.params['device_type'].lower()
-            )
+            device_obj = self.nic_device_type[device_type]
             nic_spec = vim.vm.device.VirtualDeviceSpec(
-                device=device_type()
+                device=device_obj()
             )
         else:
             nic_spec = vim.vm.device.VirtualDeviceSpec(
@@ -474,26 +504,25 @@ class PyVmomiHelper(PyVmomi):
                 device=nic_obj
             )
 
-        if self.params.get('label'):
+        if label:
             nic_spec.device.deviceInfo = vim.Description(
-                label=self.params['label']
+                label=label
             )
 
         nic_spec.device.backing = self._nic_backing_from_obj(network)
         nic_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo(
-            startConnected=self.params.get('start_connected', True),
-            allowGuestControl=self.params.get('guest_control', True),
-            connected=self.params.get('connected', True)
+            startConnected=start_connected,
+            allowGuestControl=guest_control,
+            connected=connected
         )
-        nic_spec.device.wakeOnLanEnabled = self.params.get('wake_onlan', False)
+        nic_spec.device.wakeOnLanEnabled = wake_onlan
 
-        if self.params.get('mac_address'):
+        if mac_address:
             nic_spec.device.addressType = 'manual'
-            nic_spec.device.macAddress = self.params.get('mac_address')
+            nic_spec.device.macAddress = mac_address
 
-        if self.params.get('directpath_io') and isinstance(nic_spec.device, vim.vm.VirtualVmxnet3):
+        if directpath_io and isinstance(nic_spec.device, vim.vm.device.VirtualVmxnet3):
             nic_spec.device.uptCompatibilityEnabled = True
-
         return nic_spec
 
     def _nic_backing_from_obj(self, network_obj):
@@ -515,9 +544,14 @@ class PyVmomiHelper(PyVmomi):
             )
         return rv
 
-    def _nic_absent(self):
+    def _nic_absent(self, network_params=None):
         changed = False
         diff = {'before': {}, 'after': {}}
+        if network_params:
+            mac_address = network_params['mac_address']
+        else:
+            mac_address = self.params['mac_address']
+
         device_spec = None
         vm_obj = self.get_vm()
         nic_info, nic_obj_lst = self._get_nics_from_vm(vm_obj)
@@ -528,7 +562,7 @@ class PyVmomiHelper(PyVmomi):
         network_info = copy.deepcopy(nic_info)
 
         for nic_obj in nic_obj_lst:
-            if nic_obj.macAddress == self.params['mac_address']:
+            if nic_obj.macAddress == mac_address:
                 if self.module.check_mode:
                     changed = True
                     for nic in nic_info:
@@ -584,23 +618,25 @@ class PyVmomiHelper(PyVmomi):
         diff = {'before': {}, 'after': {}}
         changed = False
         for i in self.params['networks']:
-            self.params['mac_address'] = i.get('mac') or i.get('manual_mac')
-            self.params['network_name'] = i.get('name')
-            self.params['vlan_id'] = i.get('vlan')
-            self.params['switch'] = i.get('dvswitch_name')
+            network_params = {}
+            network_params['mac_address'] = i.get('mac') or i.get('manual_mac')
+            network_params['network_name'] = i.get('name')
+            network_params['vlan_id'] = i.get('vlan')
+            network_params['switch'] = i.get('dvswitch_name')
+            network_params['guest_control'] = i.get('allow_guest_control', self.params['guest_control'])
 
-            for k in ['connected', 'start_connected', 'device_type', 'label', 'directpath_io']:
-                self.params[k] = i.get(k)
+            for k in ['connected', 'device_type', 'directpath_io', 'force', 'label', 'start_connected', 'state', 'wake_onlan']:
+                network_params[k] = i.get(k, self.params[k])
 
-            if i.get('state') in ['new', 'present']:
-                n_diff, n_changed, n_network_info = self._nic_present()
+            if network_params['state'] in ['new', 'present']:
+                n_diff, n_changed, network_info = self._nic_present(network_params)
                 diff['before'].update(n_diff['before'])
                 diff['after'] = n_diff['after']
                 if n_changed:
                     changed = True
 
-            if i.get('state') in ['absent']:
-                n_diff, n_changed, network_info = self._nic_absent()
+            if network_params['state'] == 'absent':
+                n_diff, n_changed, network_info = self._nic_absent(network_params)
                 diff['before'].update(n_diff['before'])
                 diff['after'] = n_diff['after']
                 if n_changed:
@@ -608,18 +644,33 @@ class PyVmomiHelper(PyVmomi):
 
         return diff, changed, network_info
 
-    def _nic_present(self):
+    def _nic_present(self, network_params=None):
         changed = False
-        vm_obj = self.get_vm()
         diff = {'before': {}, 'after': {}}
-        network_obj = self._get_network_object(vm_obj)
+        # backwards compatibility, clean up when params['networks']
+        # has been removed
+        if network_params:
+            force = network_params['force']
+            mac_address = network_params['mac_address']
+            network_name = network_params['network_name']
+            switch = network_params['switch']
+            vlan_id = network_params['vlan_id']
+        else:
+            force = self.params['force']
+            mac_address = self.params['mac_address']
+            network_name = self.params['network_name']
+            switch = self.params['switch']
+            vlan_id = self.params['vlan_id']
+
+        vm_obj = self.get_vm()
+        network_obj = self._get_network_object(vm_obj, network_params)
         nic_info, nic_obj_lst = self._get_nics_from_vm(vm_obj)
         mac_addr_lst = [d.get('mac_address') for d in nic_info]
         vlan_id_lst = [d.get('vlan_id') for d in nic_info]
         network_name_lst = [d.get('network_name') for d in nic_info]
 
-        if ((self.params['vlan_id'] in vlan_id_lst or self.params['network_name'] in network_name_lst) and not
-                self.params['mac_address'] and not self.params['force']):
+        if ((vlan_id in vlan_id_lst or network_name in network_name_lst) and not
+                mac_address and not force):
             for nic in nic_info:
                 diff['before'].update({nic.get('mac_address'): copy.copy(nic)})
                 diff['after'].update({nic.get('mac_address'): copy.copy(nic)})
@@ -628,40 +679,40 @@ class PyVmomiHelper(PyVmomi):
         if not network_obj:
             self.module.fail_json(
                 msg='unable to find specified network_name/vlan_id ({0}), check parameters'.format(
-                    self.params['network_name'] or self.params['vlan_id']
+                    network_name or vlan_id
                 )
             )
         for nic in nic_info:
             diff['before'].update({nic.get('mac_address'): copy.copy(nic)})
 
-        if self.params.get('mac_address') and self.params.get('mac_address') in mac_addr_lst:
+        if mac_address and mac_address in mac_addr_lst:
             for nic_obj in nic_obj_lst:
-                if nic_obj.macAddress == self.params.get('mac_address'):
-                    device_spec = self._new_nic_spec(vm_obj, nic_obj)
+                if nic_obj.macAddress == mac_address:
+                    device_spec = self._new_nic_spec(vm_obj, nic_obj, network_params)
 
             # fabricate diff for check_mode
             if self.module.check_mode:
                 for nic in nic_info:
                     nic_mac = nic.get('mac_address')
-                    if nic_mac == self.params['mac_address']:
+                    if nic_mac == mac_address:
                         diff['after'][nic_mac] = copy.deepcopy(nic)
                         diff['after'][nic_mac].update(
                             {
                                 'vlan_id': self._get_vlanid_from_network(network_obj),
                                 'network_name': network_obj.name,
-                                'switch': self.params.get('switch') or nic['switch']
+                                'switch': switch or nic['switch']
                             }
                         )
                     else:
                         diff['after'].update({nic_mac: copy.deepcopy(nic)})
 
-        if not self.params.get('mac_address') or self.params.get('mac_address') not in mac_addr_lst:
-            device_spec = self._new_nic_spec(vm_obj)
+        if not mac_address or mac_address not in mac_addr_lst:
+            device_spec = self._new_nic_spec(vm_obj, None, network_params)
             device_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
             if self.module.check_mode:
                 # fabricate diff/returns for checkmode
                 diff['after'] = copy.deepcopy(diff['before'])
-                nic_mac = self.params.get('mac_address')
+                nic_mac = mac_address
                 if not nic_mac:
                     nic_mac = 'AA:BB:CC:DD:EE:FF'
                 diff['after'].update(
@@ -670,7 +721,8 @@ class PyVmomiHelper(PyVmomi):
                             'vlan_id': self._get_vlanid_from_network(network_obj),
                             'network_name': network_obj.name,
                             'label': 'check_mode adapter',
-                            'mac_address': nic_mac
+                            'mac_address': nic_mac,
+                            'unit_number': 40000
                         }
                     }
                 )
@@ -725,6 +777,7 @@ def main():
         force=dict(type='bool', default=False),
         gather_network_info=dict(type='bool', default=False, aliases=['gather_network_facts']),
         networks=dict(type='list', default=[]),
+        guest_control=dict(type='bool', default=True),
         state=dict(type='str', default='present', choices=['absent', 'present'])
     )
 
@@ -752,6 +805,22 @@ def main():
 
         module.exit_json(network_info=nics.get('network_info'), network_data=network_data, changed=False)
 
+    if module.params['networks']:
+        network_data = {}
+        module.deprecate(
+            'The old way of configuring interfaces by supplying an arbitrary list will be removed, loops should be used to handle multiple intefaces',
+            '2.11'
+        )
+        diff, changed, network_info = pyv._deprectated_list_config()
+        nd = copy.deepcopy(network_info)
+        nics_sorted = sorted(nd, key=lambda k: k['unit_number'])
+        for n, i in enumerate(nics_sorted):
+            key_name = '{0}'.format(n)
+            network_data[key_name] = i
+            network_data[key_name].update({'mac_addr': i['mac_address'], 'name': i['network_name']})
+
+        module.exit_json(changed=changed, network_info=network_info, network_data=network_data, diff=diff)
+
     if module.params['state'] == 'present':
         diff, changed, network_info = pyv._nic_present()
 
@@ -759,21 +828,6 @@ def main():
         if not module.params['mac_address']:
             module.fail_json(msg='parameter mac_address required when removing nics')
         diff, changed, network_info = pyv._nic_absent()
-
-    if module.params['network']:
-        network_data = {}
-        module.deprecated(
-            'The old way of configuring interfaces by supplying an arbitrary list will be removed, loops should be used to handle multiple intefaces',
-            '2.11'
-        )
-        diff, changed, network_info = pyv._deprectated_list_config()
-
-        nics_sorted = sorted(network_info, key=lambda k: k['unit_number'])
-        for n, i in enumerate(nics_sorted):
-            key_name = '{0}'.format(n)
-            network_data[key_name] = i
-            network_data[key_name].update({'mac_addr': i['mac_address'], 'name': i['network_name']})
-        module.exit_json(changed=changed, network_info=network_info, network_data=network_data, diff=diff)
 
     module.exit_json(changed=changed, network_info=network_info, diff=diff)
 
