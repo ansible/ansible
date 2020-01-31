@@ -56,7 +56,7 @@ def json_format_dict(data, pretty=False):
 class ForemanInventory(object):
 
     def __init__(self):
-        self.inventory = defaultdict(dict) # A dictionary of groups and the hosts in that group
+        self.inventory = defaultdict(dict)   # A dictionary of groups and the hosts in that group
         self.cache = dict()   # Details about hosts in the inventory
         self.params = dict()  # Params of each host
         self.facts = dict()   # Facts of each host
@@ -498,11 +498,11 @@ class ForemanInventory(object):
         Makes sure non-existing keys are created as needed
         """
 
-        if not group_name in self.inventory.keys():
+        if group_name not in self.inventory.keys():
             self.inventory[group_name] = {item_type: [group_item]}
-        elif not item_type in self.inventory[group_name].keys():
+        elif item_type not in self.inventory[group_name].keys():
             self.inventory[group_name][item_type] = [group_item]
-        elif not group_item in self.inventory[group_name][item_type]:
+        elif group_item not in self.inventory[group_name][item_type]:
             self.inventory[group_name][item_type].append(group_item)
 
     def _update_cache_hostgroup_api(self):
@@ -533,8 +533,10 @@ class ForemanInventory(object):
                     to_text(parent_group_name).lower(),
                 ))
                 # Add inventory entry indicating parent-child relation
-                self._inventory_add_group_item(ansible_parent_group_name, \
-                    ansible_group_name, 'children')
+                self._inventory_add_group_item(
+                    ansible_parent_group_name,
+                    ansible_group_name, 'children'
+                )
 
     def _update_cache_host_api(self, scan_only_new_hosts):
         """Make calls to foreman and save the output in a cache"""
