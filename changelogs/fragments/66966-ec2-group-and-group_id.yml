@@ -1,0 +1,2 @@
+minor_changes:
+- 'ec2: deprecate allowing both group and group_id - currently we ignore group_id if both are passed.'
