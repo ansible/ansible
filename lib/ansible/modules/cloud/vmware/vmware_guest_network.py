@@ -117,7 +117,7 @@ options:
       - Enable wake on lan
     type: bool
     version_added: '2.10'
-  guest_network:
+  guest_control:
     default: true
     description:
       - Enables guest control over whether the connectable device is connected.
