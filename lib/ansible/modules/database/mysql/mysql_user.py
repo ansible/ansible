@@ -60,8 +60,8 @@ options:
         exactly as returned by a C(SHOW GRANT) statement. If not followed,
         the module will always report changes. It includes grouping columns
         by permission (C(SELECT(col1,col2)) instead of C(SELECT(col1),SELECT(col2))).
-      - Mutually exclusive with I(priv_dict).
-    type: str
+      - Can be passed as a dictionary (see the examples).
+    type: raw
   append_privs:
     description:
       - Append the privileges defined by priv to the existing ones for this
@@ -110,12 +110,6 @@ options:
     description:
       - User's plugin auth_string (``CREATE USER user IDENTIFIED WITH plugin BY plugin_auth_string``).
     type: str
-    version_added: '2.10'
-  priv_dict:
-    description:
-      - Similar to I(priv) parameter but allows to pass privileges in the dictionary form (see the examples).
-      - Mutually exclusive with I(priv).
-    type: dict
     version_added: '2.10'
 
 notes:
@@ -179,7 +173,7 @@ EXAMPLES = r'''
     state: present
     name: bob
     password: 12345dd
-    priv_dict:
+    privs:
       'db1.*': 'ALL,GRANT'
       'db2.*': 'ALL,GRANT'
 
@@ -698,7 +692,7 @@ def main():
             host=dict(type='str', default='localhost'),
             host_all=dict(type="bool", default=False),
             state=dict(type='str', default='present', choices=['absent', 'present']),
-            priv=dict(type='str'),
+            priv=dict(type='raw'),
             append_privs=dict(type='bool', default=False),
             check_implicit_admin=dict(type='bool', default=False),
             update_password=dict(type='str', default='always', choices=['always', 'on_create']),
@@ -711,9 +705,7 @@ def main():
             plugin=dict(default=None, type='str'),
             plugin_hash_string=dict(default=None, type='str'),
             plugin_auth_string=dict(default=None, type='str'),
-            priv_dict=dict(type='dict', default=None),
         ),
-        mutually_exclusive=(('priv', 'priv_dict'),),
         supports_check_mode=True,
     )
     login_user = module.params["login_user"]
@@ -738,8 +730,11 @@ def main():
     plugin = module.params["plugin"]
     plugin_hash_string = module.params["plugin_hash_string"]
     plugin_auth_string = module.params["plugin_auth_string"]
-    if module.params.get("priv_dict"):
-        priv = convert_priv_dict_to_str(module.params["priv_dict"])
+    if priv and not (isinstance(priv, str) or isinstance(priv, dict)):
+        module.fail_json(msg="priv parameter must be str or dict but %s was passed" % type(priv))
+
+    if priv and isinstance(priv, dict):
+        priv = convert_priv_dict_to_str(priv)
 
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)

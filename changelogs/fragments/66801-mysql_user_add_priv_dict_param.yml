@@ -1,2 +1,0 @@
-minor_changes:
-- mysql_user - add the ``priv_dict`` parameter (https://github.com/ansible/ansible/issues/57533).

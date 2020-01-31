@@ -1,4 +1,4 @@
-# Tests for priv_dict parameter
+# Tests for priv parameter value passed as a dict
 - name: Create test databases
   mysql_db:
     name: '{{ item }}'
@@ -12,7 +12,7 @@
   mysql_user:
     name: '{{ user_name_3 }}'
     password: '{{ user_password_3 }}'
-    priv_dict:
+    priv:
       "data1.*": "SELECT"
       "data2.*": "SELECT"
     state: present
