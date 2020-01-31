@@ -70,6 +70,7 @@ class ForemanInventory(object):
         env_value = os.environ.get('FOREMAN_INI_PATH')
         if env_value is not None:
             self.config_paths.append(os.path.expanduser(os.path.expandvars(env_value)))
+        self.hostgroup_label = 'hostgroup'
 
     def read_settings(self):
         """Reads the settings from the foreman.ini file"""
@@ -489,12 +490,12 @@ class ForemanInventory(object):
             host_params = host_data.get('all_parameters', {})
 
             # Create ansible groups for hostgroup
-            group = 'hostgroup'
-            val = host.get('%s_title' % group) or host.get('%s_name' % group)
+            val = host.get('%s_title' % self.hostgroup_label) or \
+                host.get('%s_name' % self.hostgroup_label)
             if val:
                 safe_key = self.to_safe('%s%s_%s' % (
                     to_text(self.group_prefix),
-                    group,
+                    self.hostgroup_label,
                     to_text(val).lower()
                 ))
                 self.inventory[safe_key].append(dns_name)
