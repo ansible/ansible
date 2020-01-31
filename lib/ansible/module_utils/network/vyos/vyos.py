@@ -41,7 +41,7 @@ vyos_provider_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
 
-    'timeout': dict(type='int'),
+    'timeout': dict(type='int')
 }
 vyos_argument_spec = {
     'provider': dict(type='dict', options=vyos_provider_spec, removed_in_version=2.14),
