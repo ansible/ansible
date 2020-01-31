@@ -364,6 +364,12 @@ files:
   $modules/monitoring/grafana:
     labels: grafana
     maintainers: $team_grafana
+  $modules/monitoring/grafana/grafana_plugin.py:
+      migrated_to: community.grafana
+  $modules/monitoring/grafana/grafana_dashboard.py:
+      migrated_to: community.grafana
+  $modules/monitoring/grafana/grafana_datasource.py:
+      migrated_to: community.grafana
   $modules/monitoring/logentries.py:
     ignored: ivanvanderbyl
   $modules/monitoring/monit.py: brian-brazil
@@ -1474,6 +1480,7 @@ files:
   $plugins/callback/grafana_annotations.py:
     maintainers: $team_grafana
     labels: monitoring grafana
+    migrated_to: community.grafana
   $plugins/callback/foreman.py:
     maintainers: $team_foreman
   $plugins/callback/junit:
@@ -1609,6 +1616,10 @@ files:
     support: community
     supershipit: $team_google
     maintainers: $team_google
+  $plugins/doc_fragments/grafana.py:
+    maintainers: $team_grafana
+    labels: monitoring grafana
+    migrated_to: community.grafana
   $plugins/doc_fragments/hwc.py:
     maintainers: $team_huawei
   $plugins/doc_fragments/intersight.py: *intersight
@@ -1741,6 +1752,7 @@ files:
   $plugins/lookup/grafana_dashboard.py:
     maintainers: $team_grafana
     labels: monitoring grafana
+    migrated_to: community.grafana
   $plugins/lookup/indexed_items.py:
     support: core
   $plugins/lookup/inventory_hostnames.py:
