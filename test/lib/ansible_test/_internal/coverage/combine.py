@@ -5,7 +5,6 @@ __metaclass__ = type
 import os
 
 from ..target import (
-    walk_module_targets,
     walk_compile_targets,
     walk_powershell_targets,
 )
@@ -27,6 +26,7 @@ from ..util_common import (
 from . import (
     get_collection_path_regexes,
     get_python_coverage_files,
+    get_python_modules,
     get_powershell_coverage_files,
     initialize_coverage,
     sanitize_filename,
@@ -57,7 +57,7 @@ def _command_coverage_combine_python(args):
     """
     coverage = initialize_coverage(args)
 
-    modules = dict((target.module, target.path) for target in list(walk_module_targets()) if target.path.endswith('.py'))
+    modules = get_python_modules()
 
     coverage_files = get_python_coverage_files()
 

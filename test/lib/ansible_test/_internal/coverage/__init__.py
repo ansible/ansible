@@ -32,6 +32,10 @@ from ..executor import (
     install_command_requirements,
 )
 
+from .. target import (
+    walk_module_targets,
+)
+
 from ..data import (
     data_context,
 )
@@ -101,6 +105,11 @@ def get_collection_path_regexes():  # type: () -> t.Tuple[t.Optional[t.Pattern],
         collection_sub_re = None
 
     return collection_search_re, collection_sub_re
+
+
+def get_python_modules():  # type: () -> t.Dict[str, str]
+    """Return a dictionary of Ansible module names and their paths."""
+    return dict((target.module, target.path) for target in list(walk_module_targets()) if target.path.endswith('.py'))
 
 
 def sanitize_filename(
