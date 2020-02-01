@@ -1,0 +1,2 @@
+bugfixes:
+- "pacman - fix module crash with ``IndexError: list index out of range`` (https://github.com/ansible/ansible/issues/63077)"
