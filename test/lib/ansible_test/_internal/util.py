@@ -625,11 +625,15 @@ class Display:
         for warning in self.warnings:
             self.__warning(warning)
 
-    def warning(self, message, unique=False):
+    def warning(self, message, unique=False, verbosity=0):
         """
         :type message: str
         :type unique: bool
+        :type verbosity: int
         """
+        if verbosity > self.verbosity:
+            return
+
         if unique:
             if message in self.warnings_unique:
                 return
