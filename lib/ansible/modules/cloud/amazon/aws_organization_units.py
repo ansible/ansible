@@ -110,14 +110,22 @@ from ansible.module_utils.ec2 import AWSRetry, boto3_tag_list_to_ansible_dict, a
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils._text import to_native
 
+
 class ParameterValidationException(Exception):
     pass
+
 
 class UnknownConditionException(Exception):
     pass
 
+
 class OrganizationalUnitDependencyException(Exception):
     pass
+
+
+class ParentOrganizationalUnitDoesNotExist(Exception):
+    pass
+
 
 class AwsOrganizationalUnit():
     def __init__(self, name=None, arn=None):
