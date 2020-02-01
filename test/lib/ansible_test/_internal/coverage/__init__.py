@@ -125,7 +125,7 @@ def enumerate_python_arcs(
 ):  # type: (...) -> t.Generator[t.Tuple[str, t.Set[t.Tuple[int, int]]]]
     """Enumerate Python code coverage arcs in the given file."""
     if os.path.getsize(path) == 0:
-        display.warning('Empty coverage file: %s' % path)
+        display.warning('Empty coverage file: %s' % path, verbosity=2)
         return
 
     original = coverage.CoverageData()
