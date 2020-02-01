@@ -75,13 +75,6 @@ name:
   returned: always
   type: str
   sample: Prod
-arn:
-  description:
-    - ARN of the organizational unit.
-      If the parent OU does not exist the module will fail with warning message.
-  returned: always
-  type: str
-  sample: Prod
 state:
   description: State of the organization unit.
   returned: always
