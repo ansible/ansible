@@ -93,7 +93,7 @@ options:
   bfd:
     description:
       - Enables BFD on all OSPF interfaces.
-      - "Dependency: 'feature bfd'"
+      - Dependency: 'feature bfd'
     version_added: "2.9"
     type: str
     choices: ['enable', 'disable']

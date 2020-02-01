@@ -56,7 +56,7 @@ options:
   bfd:
     description:
       - Enables/Disables BFD for a given neighbor.
-      - "Dependency: 'feature bfd'"
+      - Dependency: 'feature bfd'
     version_added: "2.9"
     type: str
     choices: ['enable', 'disable']

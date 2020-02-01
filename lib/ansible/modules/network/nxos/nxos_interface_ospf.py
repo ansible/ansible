@@ -57,7 +57,7 @@ options:
     description:
       - Enables bfd at interface level. This overrides the bfd variable set at the ospf router level.
       - Valid values are 'enable', 'disable' or 'default'.
-      - "Dependency: 'feature bfd'"
+      - Dependency: 'feature bfd'
     version_added: "2.9"
     type: str
     choices: ['enable', 'disable', 'default']

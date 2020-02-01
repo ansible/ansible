@@ -44,7 +44,7 @@ options:
     description:
       - Enables BFD for PIM at the interface level. This overrides the bfd variable set at the pim global level.
       - Valid values are 'enable', 'disable' or 'default'.
-      - "Dependency: 'feature bfd'"
+      - Dependency: 'feature bfd'
     version_added: "2.9"
     type: str
     choices: ['enable', 'disable', 'default']
