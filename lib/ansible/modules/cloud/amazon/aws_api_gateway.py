@@ -139,17 +139,22 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-output:
-  description: the data returned by put_restapi in boto3
-  returned: success
-  type: dict
-  sample:
-    'data':
-      {
-          "id": "abc123321cba",
-          "name": "MY REST API",
-          "createdDate": 1484233401
-      }
+api_id:
+    description: API id of the API endpoint created
+    returned: success
+    type: str
+    sample: '0ln4zq7p86'
+configure_response:
+    description: AWS response from the API configure call
+    returned: success
+    type: dict
+    sample: { api_key_source: "HEADER", created_at: "2020-01-01T11:37:59+00:00", id: "0ln4zq7p86" }
+deploy_response:
+    description: AWS responce from the API deploy call
+    returned: success
+    type: dict
+    sample: { created_date: "2020-01-01T11:36:59+00:00", id: "rptv4b", description: "Automatic deployment by Ansible." }
+
 '''
 
 import json

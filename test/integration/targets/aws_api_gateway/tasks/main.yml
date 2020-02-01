@@ -106,12 +106,14 @@
         security_token: '{{security_token}}'
       register: create_result_2
 
+    - name: DEBUG create result
+      debug:
+        var: create_result_1
+
     - name: assert both APIs deployed successfully
       assert:
         that:
            - 'create_result_1.changed == True'
-           - 'create_result_1.cache_enabled == False'
-           - 'create_result_1.stage == "minimal"'
            - 'create_result_2.changed == True'
            - '"api_id" in create_result_1'
            - '"api_id" in create_result_1'
@@ -122,6 +124,7 @@
         cache_enabled: true
         cache_size: '1.6'
         tracing_enabled: true
+        endpoint_type: 'REGIONAL'
         state: present
         region: '{{ec2_region}}'
         aws_access_key: '{{ec2_access_key}}'
@@ -129,14 +132,16 @@
         security_token: '{{security_token}}'
       register: update_result_1
 
+    - name: DEBUG update result
+      debug:
+        var: update_result_1
+
     - name: assert update result
       assert:
         that:
           - 'create_update_1.changed == True'
           - 'create_update_1.failed == False'
-          - 'create_update_1.cache_enabled == True'
-          - 'create_update_1.cache_size == "1.6"'
-          - 'create_update_1.tracing_enabled == True'
+          - 'create_update_1.configure_response.endpoint_configuration.types.0 == "REGIONAL"'
 
     - name: destroy first API
       aws_api_gateway:
