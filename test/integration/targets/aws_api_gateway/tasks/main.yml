@@ -107,7 +107,8 @@
         that:
           - 'update_result.changed == True'
           - 'update_result.failed == False'
-          - 'update_result.configure_response.endpoint_configuration.types.0 == "REGIONAL"'
+          - '"REGIONAL" in update_result.configure_response.endpoint_configuration.types'
+          - '"apigateway:PutRestApi" in update_result.resource_actions'
 
     # ==== additional create/delete tests ====
 
