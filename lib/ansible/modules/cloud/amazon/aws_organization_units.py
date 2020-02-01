@@ -27,14 +27,12 @@ options:
         This can be full OU path such as "Prod/IT/Service_Desk".
         The lookup always starts from the root node, as the names are not unique within the organization tree.
       - Mutually exclusive with c(arn)
-    required: true
     type: str
   arn:
     description:
       - ARN of the organizational unit
       - ARN can be used to delete OU but not create
       - Mutually exclusive with c(name)
-    required: true
     type: str
   state:
     description:
@@ -54,13 +52,18 @@ requirements:
 
 EXAMPLES = """
 - name: Create organizational unit
-  aws_organizations:
+  aws_organization_units:
     name: Prod
     state: present
 
 - name: Delete organizational unit
-  aws_organizations:
+  aws_organization_units:
     name: Prod
+    state: absent
+
+- name: Delete organizational unit by ARN
+  aws_organization_units:
+    arn: arn:aws:organizations::123456789012:ou/o-r7g6hgv6cm/ou-soth-06s8kbv0
     state: absent
 """
 
@@ -138,10 +141,10 @@ class AwsOrganizationalUnit():
 
     def get_aws_organizational_unit_for_parent(self, ou_name, parent_id):
         paginator = self.client.get_paginator("list_organizational_units_for_parent")
-        for page in paginator.paginate(ParentId=parent_id):
-            for child_ou in page["OrganizationalUnits"]:
-                if child_ou["Name"] == ou_name:
-                    return child_ou
+        parent_ous = paginator.paginate(ParentId=parent_id).build_full_result().get('OrganizationalUnits', [])
+        for child_ou in parent_ous:
+            if child_ou["Name"] == ou_name:
+                return child_ou
         return None
 
     def get_aws_organizational_unit_by_name(self, name):
