@@ -5,3 +5,4 @@ skip/centos
 skip/freebsd
 skip/rhel
 skip/opensuse
+skip/aix
