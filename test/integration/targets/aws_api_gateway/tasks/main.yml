@@ -1,6 +1,7 @@
 - block:
 
-    # ============================================================
+    # ====================== testing failure cases: ==================================
+
     - name: test with no parameters
       aws_api_gateway:
       register: result
@@ -12,7 +13,6 @@
            - 'result.failed'
            - 'result.msg.startswith("The aws_api_gateway module requires a region")'
 
-    # ============================================================
     - name: test with minimal parameters but no region
       aws_api_gateway:
         api_id: 'fake-api-doesnt-exist'
@@ -25,11 +25,10 @@
            - 'result.failed'
            - 'result.msg.startswith("The aws_api_gateway module requires a region")'
 
-    # ============================================================
-    - name: test disallow multiple swagger sources
+    - name: test for disallowing multiple swagger sources
       aws_api_gateway:
         api_id: 'fake-api-doesnt-exist'
-        region: 'fake_region'
+        region: '{{ec2_region}}'
         swagger_file: foo.yml
         swagger_text: "this is not really an API"
       register: result
@@ -41,35 +40,13 @@
            - 'result.failed'
            - 'result.msg.startswith("parameters are mutually exclusive")'
 
-    # This fails with
 
-    # msg": "There is an issue in the code of the module. You must
-    # specify either both, resource or client to the conn_type
-    # parameter in the boto3_conn function call"
-
-    # even though the call appears to include conn_type='client'
-
-    # # ============================================================
-    # - name: test invalid region parameter
-    #   aws_api_gateway:
-    #     api_id: 'fake-api-doesnt-exist'
-    #     region: 'asdf querty 1234'
-    #   register: result
-    #   ignore_errors: true
-
-    # - name: assert invalid region parameter
-    #   assert:
-    #     that:
-    #        - 'result.failed'
-    #        - 'result.msg.startswith("Region asdf querty 1234 does not seem to be available ")'
-
-    # ============================================================
+    # ====================== regular testing: ===================================
 
     - name: build API file
       template:
         src: minimal-swagger-api.yml.j2
         dest: "{{output_dir}}/minimal-swagger-api.yml"
-      tags: new_api,api,api_file
 
     - name: deploy new API
       aws_api_gateway:
@@ -86,8 +63,6 @@
         that:
            - 'create_result.changed == True'
            - '"api_id" in create_result'
-#           - '"created_response.created_date" in create_result'
-#           - '"deploy_response.created_date" in create_result'
 
     - name: check API works
       uri: url="https://{{create_result.api_id}}.execute-api.{{ec2_region}}.amazonaws.com/minimal"
@@ -96,7 +71,7 @@
     - name: assert API works success
       assert:
         that:
-           - 'uri_result'
+           - 'uri_result.status == 200'
 
     - name: check nonexistent endpoints cause errors
       uri: url="https://{{create_result.api_id}}.execute-api.{{ec2_region}}.amazonaws.com/nominal"
@@ -108,12 +83,12 @@
         that:
           - bad_uri_result is failed
 
-    # ============================================================
-
     - name: deploy first API
       aws_api_gateway:
         api_file: "{{output_dir}}/minimal-swagger-api.yml"
         stage: "minimal"
+        cache_enabled: false
+        state: present
         region: '{{ec2_region}}'
         aws_access_key: '{{ec2_access_key}}'
         aws_secret_key: '{{ec2_secret_key}}'
@@ -124,6 +99,7 @@
       aws_api_gateway:
         api_file: "{{output_dir}}/minimal-swagger-api.yml"
         stage: "minimal"
+        state: present
         region: '{{ec2_region}}'
         aws_access_key: '{{ec2_access_key}}'
         aws_secret_key: '{{ec2_secret_key}}'
@@ -134,11 +110,33 @@
       assert:
         that:
            - 'create_result_1.changed == True'
+           - 'create_result_1.cache_enabled == False'
+           - 'create_result_1.stage == "minimal"'
            - 'create_result_2.changed == True'
            - '"api_id" in create_result_1'
            - '"api_id" in create_result_1'
-#           - '"created_response.created_date" in create_result'
-#           - '"deploy_response.created_date" in create_result'
+
+    - name: Update first API to test params effect
+      aws_api_gateway:
+        api_id: '{{create_result_1.api_id}}'
+        cache_enabled: true
+        cache_size: '1.6'
+        tracing_enabled: true
+        state: present
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ec2_access_key}}'
+        aws_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: update_result_1
+
+    - name: assert update result
+      assert:
+        that:
+          - 'create_update_1.changed == True'
+          - 'create_update_1.failed == False'
+          - 'create_update_1.cache_enabled == True'
+          - 'create_update_1.cache_size == "1.6"'
+          - 'create_update_1.tracing_enabled == True'
 
     - name: destroy first API
       aws_api_gateway:
@@ -165,13 +163,12 @@
         that:
            - 'destroy_result_1.changed == True'
            - 'destroy_result_2.changed == True'
-#           - '"created_response.created_date" in create_result'
-#           - '"deploy_response.created_date" in create_result'
+
+    # ================= end testing ====================================
 
   always:
 
-    # ============================================================
-    - name: test state=absent (expect changed=false)
+    - name: Ensure cleanup of API deploy
       aws_api_gateway:
         state: absent
         api_id: '{{create_result.api_id}}'
@@ -179,4 +176,24 @@
         aws_access_key: '{{ec2_access_key}}'
         aws_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
-      register: destroy_result
+      ignore_errors: true
+
+    - name: Ensure cleanup of API deploy 1
+      aws_api_gateway:
+        state: absent
+        api_id: '{{create_result_1.api_id}}'
+        ec2_region: '{{ec2_region}}'
+        aws_access_key: '{{ec2_access_key}}'
+        aws_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      ignore_errors: true
+
+    - name: Ensure cleanup of API deploy 2
+      aws_api_gateway:
+        state: absent
+        api_id: '{{create_result_2.api_id}}'
+        ec2_region: '{{ec2_region}}'
+        aws_access_key: '{{ec2_access_key}}'
+        aws_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      ignore_errors: true
