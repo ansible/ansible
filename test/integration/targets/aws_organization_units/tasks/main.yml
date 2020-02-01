@@ -1,0 +1,55 @@
+- block:
+
+    # ============================================================
+    - name: test with no parameters
+      aws_organization_units:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("one of the following is required: name, arn")'
+
+    # ============================================================
+    - name: test with no name parameter when state is present
+      aws_organization_units:
+        arn: arn:aws:organizations::123456789012:ou/o-r7g6hgv6cm/ou-soth-06s8kbv0
+        state: present
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when state present is called with arn
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("state is present but all of the following are missing: name")'
+
+    # ============================================================
+    - name: test with both arn and name provided
+      aws_organization_units:
+        arn: arn:aws:organizations::123456789012:ou/o-r7g6hgv6cm/ou-soth-06s8kbv0
+        name: Prod
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with both arn and name
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("parameters are mutually exclusive")'
+
+    # ============================================================
+    - name: test invalid arn format
+      aws_organization_units:
+        arn: arn:not:aws:::123456789012:ou/o-r7g6hgv6cm/ou-soth-06s8kbv0
+        state: absent
+      register: result
+      ignore_errors: true
+  
+    - name: assert invalid arn format
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("Invalid ARN format")'
