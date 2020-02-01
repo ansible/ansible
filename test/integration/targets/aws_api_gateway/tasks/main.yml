@@ -138,10 +138,10 @@
     - name: assert both APIs deployed successfully
       assert:
         that:
-           - 'create_result_1.changed == True'
-           - 'create_result_2.changed == True'
-           - '"api_id" in create_result_1'
-           - '"api_id" in create_result_1'
+          - 'create_result_1.changed == True'
+          - 'create_result_2.changed == True'
+          - '"api_id" in create_result_1'
+          - '"api_id" in create_result_1'
           - 'create_result_1.configure_response.endpoint_configuration.types.0 == "EDGE"'
 
     - name: destroy first API
