@@ -154,7 +154,11 @@ deploy_response:
     returned: success
     type: dict
     sample: { created_date: "2020-01-01T11:36:59+00:00", id: "rptv4b", description: "Automatic deployment by Ansible." }
-
+resource_actions
+    description: Actions performed against AWS API
+    returned: always
+    type: list
+    sample: ["apigateway:CreateRestApi", "apigateway:CreateDeployment", "apigateway:PutRestApi"]
 '''
 
 import json

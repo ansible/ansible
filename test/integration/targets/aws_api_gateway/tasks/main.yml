@@ -61,19 +61,26 @@
     - name: assert deploy new API worked
       assert:
         that:
-           - 'create_result.changed == True'
-           - '"api_id" in create_result'
+          - 'create_result.changed == True'
+          - 'create_update.failed == False'
+          - 'create_result.deploy_response.description == "Automatic deployment by Ansible."'
+          - 'create_result.configure_response.id == create_result.api_id'
+          - '"apigateway:CreateRestApi" in create_result.resource_actions'
 
-    - name: check API works
+    - name: Wait for API to be persisted
+      pause:
+        seconds: 2
+
+    - name: check if API endpoint works
       uri: url="https://{{create_result.api_id}}.execute-api.{{ec2_region}}.amazonaws.com/minimal"
       register: uri_result
 
     - name: assert API works success
       assert:
         that:
-           - 'uri_result.status == 200'
+          - 'uri_result.status == 200'
 
-    - name: check nonexistent endpoints cause errors
+    - name: check if nonexistent endpoint causes error
       uri: url="https://{{create_result.api_id}}.execute-api.{{ec2_region}}.amazonaws.com/nominal"
       register: bad_uri_result
       ignore_errors: true
@@ -82,6 +89,29 @@
       assert:
         that:
           - bad_uri_result is failed
+
+    - name: Update API to test params effect
+      aws_api_gateway:
+        api_id: '{{create_result.api_id}}'
+        cache_enabled: true
+        cache_size: '1.6'
+        tracing_enabled: true
+        endpoint_type: 'REGIONAL'
+        state: present
+        region: '{{ec2_region}}'
+        aws_access_key: '{{ec2_access_key}}'
+        aws_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: update_result
+
+    - name: assert update result
+      assert:
+        that:
+          - 'create_update.changed == True'
+          - 'create_update.failed == False'
+          - 'create_update.configure_response.endpoint_configuration.types.0 == "REGIONAL"'
+
+    # ==== additional create/delete tests ====
 
     - name: deploy first API
       aws_api_gateway:
@@ -106,10 +136,6 @@
         security_token: '{{security_token}}'
       register: create_result_2
 
-    - name: DEBUG create result
-      debug:
-        var: create_result_1
-
     - name: assert both APIs deployed successfully
       assert:
         that:
@@ -117,31 +143,6 @@
            - 'create_result_2.changed == True'
            - '"api_id" in create_result_1'
            - '"api_id" in create_result_1'
-
-    - name: Update first API to test params effect
-      aws_api_gateway:
-        api_id: '{{create_result_1.api_id}}'
-        cache_enabled: true
-        cache_size: '1.6'
-        tracing_enabled: true
-        endpoint_type: 'REGIONAL'
-        state: present
-        region: '{{ec2_region}}'
-        aws_access_key: '{{ec2_access_key}}'
-        aws_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
-      register: update_result_1
-
-    - name: DEBUG update result
-      debug:
-        var: update_result_1
-
-    - name: assert update result
-      assert:
-        that:
-          - 'create_update_1.changed == True'
-          - 'create_update_1.failed == False'
-          - 'create_update_1.configure_response.endpoint_configuration.types.0 == "REGIONAL"'
 
     - name: destroy first API
       aws_api_gateway:
@@ -168,6 +169,8 @@
         that:
            - 'destroy_result_1.changed == True'
            - 'destroy_result_2.changed == True'
+           - '"apigateway:DeleteRestApi" in destroy_result_1.resource_actions'
+           - '"apigateway:DeleteRestApi" in destroy_result_2.resource_actions'
 
     # ================= end testing ====================================
 
