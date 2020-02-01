@@ -54,6 +54,7 @@ import re
 
 from subprocess import Popen, PIPE
 
+from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
@@ -91,12 +92,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def verify_file(self, path):
         ''' return true/false if this is possibly a valid file for this plugin to consume '''
-        valid = False
         if super(InventoryModule, self).verify_file(path):
             # base class verifies that file exists and is readable by current user
-            if path.endswith(('nmap.yaml', 'nmap.yml')):
-                valid = True
-        return valid
+            if path.endswith(['nmap' + e for e in C.YAML_FILENAME_EXTENSIONS]):
+                return True
+        return False
 
     def parse(self, inventory, loader, path, cache=True):
 
@@ -198,7 +198,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             except Exception as e:
                 raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)))
 
-        self._populate(results)
-
         if cache_needs_update:
             self._cache[cache_key] = results
+
+        self._populate(results)
