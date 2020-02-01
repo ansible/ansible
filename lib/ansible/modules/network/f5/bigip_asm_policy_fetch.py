@@ -57,7 +57,7 @@ options:
     type: bool
   force:
     description:
-      - If C(no), the file will only be transferred if it does not exist in the the destination.
+      - If C(no), the file will only be transferred if it does not exist in the destination.
     default: yes
     type: bool
   partition:

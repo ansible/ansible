@@ -24,7 +24,7 @@
     disk:
       - size: 1gb
         type: thin
-        autoselect_datastore: True
+        datastore: "{{ rw_datastore }}"
     state: present
   register: create_vm_for_test
 

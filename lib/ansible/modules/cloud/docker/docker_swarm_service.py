@@ -55,7 +55,6 @@ options:
         description:
           - Name of the file containing the config. Defaults to the I(config_name) if not specified.
         type: str
-        required: yes
       uid:
         description:
           - UID of the config file's owner.
@@ -194,7 +193,6 @@ options:
       - Service image path and tag.
       - Corresponds to the C(IMAGE) parameter of C(docker service create).
     type: str
-    required: yes
   labels:
     description:
       - Dictionary of key value pairs.
@@ -211,12 +209,12 @@ options:
         type: float
       memory:
         description:
-          - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
+          - "Service memory limit in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
-          - C(0) equals no reservation.
+          - C(0) equals no limit.
           - Omitting the unit defaults to bytes.
-          - Corresponds to the C(--reserve-memory) option of C(docker service create).
+          - Corresponds to the C(--limit-memory) option of C(docker service create).
         type: str
     type: dict
     version_added: "2.8"
@@ -640,7 +638,6 @@ options:
       - C(present) - Asserts the existence of a service matching the name and provided configuration parameters.
         Unspecified configuration parameters will be set to docker defaults.
     type: str
-    required: yes
     default: present
     choices:
       - present
@@ -2273,10 +2270,16 @@ class DockerServiceManager(object):
 
         healthcheck_data = task_template_data['ContainerSpec'].get('Healthcheck')
         if healthcheck_data:
-            options = ['test', 'interval', 'timeout', 'start_period', 'retries']
+            options = {
+                'Test': 'test',
+                'Interval': 'interval',
+                'Timeout': 'timeout',
+                'StartPeriod': 'start_period',
+                'Retries': 'retries'
+            }
             healthcheck = dict(
-                (key.lower(), value) for key, value in healthcheck_data.items()
-                if value is not None and key.lower() in options
+                (options[key], value) for key, value in healthcheck_data.items()
+                if value is not None and key in options
             )
             ds.healthcheck = healthcheck
 
@@ -2885,8 +2888,8 @@ def main():
             usage_msg='set publish.mode'
         ),
         healthcheck_start_period=dict(
-            docker_py_version='2.4.0',
-            docker_api_version='1.25',
+            docker_py_version='2.6.0',
+            docker_api_version='1.29',
             detect_usage=_detect_healthcheck_start_period,
             usage_msg='set healthcheck.start_period'
         ),

@@ -1,0 +1,2 @@
+minor_changes:
+  - luks_device - accept ``passphrase``, ``new_passphrase`` and ``remove_passphrase``.

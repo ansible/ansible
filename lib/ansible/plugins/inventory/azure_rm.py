@@ -89,7 +89,7 @@ EXAMPLES = '''
 # The following host variables are always available:
 # public_ipv4_addresses: all public IP addresses, with the primary IP config from the primary NIC first
 # public_dns_hostnames: all public DNS hostnames, with the primary IP config from the primary NIC first
-# private_ipv4_addresses: all private IP addressses, with the primary IP config from the primary NIC first
+# private_ipv4_addresses: all private IP addresses, with the primary IP config from the primary NIC first
 # id: the VM's Azure resource ID, eg /subscriptions/00000000-0000-0000-1111-1111aaaabb/resourceGroups/my_rg/providers/Microsoft.Compute/virtualMachines/my_vm
 # location: the VM's Azure location, eg 'westus', 'eastus'
 # name: the VM's resource name, eg 'myvm'
@@ -560,7 +560,7 @@ class AzureHost(object):
         # set nic-related values from the primary NIC first
         for nic in sorted(self.nics, key=lambda n: n.is_primary, reverse=True):
             # and from the primary IP config per NIC first
-            for ipc in sorted(nic._nic_model['properties']['ipConfigurations'], key=lambda i: i['properties']['primary'], reverse=True):
+            for ipc in sorted(nic._nic_model['properties']['ipConfigurations'], key=lambda i: i['properties'].get('primary', False), reverse=True):
                 private_ip = ipc['properties'].get('privateIPAddress')
                 if private_ip:
                     new_hostvars['private_ipv4_addresses'].append(private_ip)

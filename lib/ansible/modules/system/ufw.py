@@ -46,7 +46,8 @@ options:
     aliases: [ policy ]
   direction:
     description:
-      - Select direction for a rule or default policy command.
+      - Select direction for a rule or default policy command.  Mutually
+        exclusive with I(interface_in) and I(interface_out).
     type: str
     choices: [ in, incoming, out, outgoing, routed ]
   logging:
@@ -127,9 +128,29 @@ options:
     type: bool
   interface:
     description:
-      - Specify interface for rule.
+      - Specify interface for the rule.  The direction (in or out) used
+        for the interface depends on the value of I(direction).  See
+        I(interface_in) and I(interface_out) for routed rules that needs
+        to supply both an input and output interface.  Mutually
+        exclusive with I(interface_in) and I(interface_out).
     type: str
     aliases: [ if ]
+  interface_in:
+    description:
+      - Specify input interface for the rule.  This is mutually
+        exclusive with I(direction) and I(interface).  However, it is
+        compatible with I(interface_out) for routed rules.
+    type: str
+    aliases: [ if_in ]
+    version_added: "2.10"
+  interface_out:
+    description:
+      - Specify output interface for the rule.  This is mutually
+        exclusive with I(direction) and I(interface).  However, it is
+        compatible with I(interface_in) for routed rules.
+    type: str
+    aliases: [ if_out ]
+    version_added: "2.10"
   route:
     description:
       - Apply the rule to routed/forwarded packets.
@@ -315,6 +336,8 @@ def main():
             insert_relative_to=dict(choices=['zero', 'first-ipv4', 'last-ipv4', 'first-ipv6', 'last-ipv6'], default='zero'),
             rule=dict(type='str', choices=['allow', 'deny', 'limit', 'reject']),
             interface=dict(type='str', aliases=['if']),
+            interface_in=dict(type='str', aliases=['if_in']),
+            interface_out=dict(type='str', aliases=['if_out']),
             log=dict(type='bool', default=False),
             from_ip=dict(type='str', default='any', aliases=['from', 'src']),
             from_port=dict(type='str'),
@@ -327,6 +350,9 @@ def main():
         supports_check_mode=True,
         mutually_exclusive=[
             ['name', 'proto', 'logging'],
+            # Mutual exclusivity with `interface` implied by `required_by`.
+            ['direction', 'interface_in'],
+            ['direction', 'interface_out'],
         ],
         required_one_of=([command_keys]),
         required_by=dict(
@@ -484,6 +510,9 @@ def main():
         elif command == 'rule':
             if params['direction'] not in ['in', 'out', None]:
                 module.fail_json(msg='For rules, direction must be one of "in" and "out", or direction must not be specified.')
+            if not params['route'] and params['interface_in'] and params['interface_out']:
+                module.fail_json(msg='Only route rules can combine '
+                                 'interface_in and interface_out')
             # Rules are constructed according to the long format
             #
             # ufw [--dry-run] [route] [delete] [insert NUM] allow|deny|reject|limit [in|out on INTERFACE] [log|log-all] \
@@ -520,6 +549,8 @@ def main():
             cmd.append([value])
             cmd.append([params['direction'], "%s" % params['direction']])
             cmd.append([params['interface'], "on %s" % params['interface']])
+            cmd.append([params['interface_in'], "in on %s" % params['interface_in']])
+            cmd.append([params['interface_out'], "out on %s" % params['interface_out']])
             cmd.append([module.boolean(params['log']), 'log'])
 
             for (key, template) in [('from_ip', "from %s"), ('from_port', "port %s"),

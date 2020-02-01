@@ -166,10 +166,10 @@ def get_fingerprint_of_bytes(source):
     return fingerprint
 
 
-def get_fingerprint(path, passphrase=None):
+def get_fingerprint(path, passphrase=None, content=None):
     """Generate the fingerprint of the public key. """
 
-    privatekey = load_privatekey(path, passphrase, check_passphrase=False)
+    privatekey = load_privatekey(path, passphrase=passphrase, content=content, check_passphrase=False)
     try:
         publickey = crypto.dump_publickey(crypto.FILETYPE_ASN1, privatekey)
     except AttributeError:
@@ -252,12 +252,15 @@ def load_privatekey(path, passphrase=None, check_passphrase=True, content=None, 
         raise OpenSSLObjectError(exc)
 
 
-def load_certificate(path, backend='pyopenssl'):
+def load_certificate(path, content=None, backend='pyopenssl'):
     """Load the specified certificate."""
 
     try:
-        with open(path, 'rb') as cert_fh:
-            cert_content = cert_fh.read()
+        if content is None:
+            with open(path, 'rb') as cert_fh:
+                cert_content = cert_fh.read()
+        else:
+            cert_content = content
         if backend == 'pyopenssl':
             return crypto.load_certificate(crypto.FILETYPE_PEM, cert_content)
         elif backend == 'cryptography':
@@ -266,11 +269,14 @@ def load_certificate(path, backend='pyopenssl'):
         raise OpenSSLObjectError(exc)
 
 
-def load_certificate_request(path, backend='pyopenssl'):
+def load_certificate_request(path, content=None, backend='pyopenssl'):
     """Load the specified certificate signing request."""
     try:
-        with open(path, 'rb') as csr_fh:
-            csr_content = csr_fh.read()
+        if content is None:
+            with open(path, 'rb') as csr_fh:
+                csr_content = csr_fh.read()
+        else:
+            csr_content = content
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
     if backend == 'pyopenssl':

@@ -66,7 +66,7 @@ options:
         type: str
       table_id:
         description:
-        - The ID of the the table.
+        - The ID of the table.
         required: false
         type: str
   clustering:
@@ -544,7 +544,7 @@ tableReference:
       type: str
     tableId:
       description:
-      - The ID of the the table.
+      - The ID of the table.
       returned: success
       type: str
 clustering:

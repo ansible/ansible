@@ -3,4 +3,4 @@
 ---
 hcloud_prefix: "tests"
 hcloud_test_image_name: "always-there-snapshot"
-hcloud_test_image_id: 3439221
+hcloud_test_image_id: 10164049

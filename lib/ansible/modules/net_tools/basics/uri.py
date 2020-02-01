@@ -237,7 +237,7 @@ EXAMPLES = r'''
     method: GET
     return_content: yes
     headers:
-      Cookie: "{{ login.set_cookie }}"
+      Cookie: "{{ login.cookies_string }}"
 
 - name: Queue build of a project in Jenkins
   uri:
@@ -313,28 +313,45 @@ EXAMPLES = r'''
 
 RETURN = r'''
 # The return information includes all the HTTP headers in lower-case.
+content:
+  description: The response body content.
+  returned: status not in status_code or return_content is true
+  type: str
+  sample: "{}"
+cookies:
+  description: The cookie values placed in cookie jar.
+  returned: on success
+  type: dict
+  sample: {"SESSIONID": "[SESSIONID]"}
+  version_added: "2.4"
+cookies_string:
+  description: The value for future request Cookie headers.
+  returned: on success
+  type: str
+  sample: "SESSIONID=[SESSIONID]"
+  version_added: "2.6"
 elapsed:
-  description: The number of seconds that elapsed while performing the download
+  description: The number of seconds that elapsed while performing the download.
   returned: on success
   type: int
   sample: 23
 msg:
-  description: The HTTP message from the request
+  description: The HTTP message from the request.
   returned: always
   type: str
   sample: OK (unknown bytes)
 redirected:
-  description: Whether the request was redirected
+  description: Whether the request was redirected.
   returned: on success
   type: bool
   sample: false
 status:
-  description: The HTTP status code from the request
+  description: The HTTP status code from the request.
   returned: always
   type: int
   sample: 200
 url:
-  description: The actual URL used for the request
+  description: The actual URL used for the request.
   returned: always
   type: str
   sample: https://www.ansible.com/

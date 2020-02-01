@@ -291,15 +291,10 @@ def additional_parameter_handling(params):
         raise ParameterError(results={"msg": "recurse option requires state to be 'directory'",
                                       "path": params["path"]})
 
-    # Make sure that src makes sense with the state
+    # Fail if 'src' but no 'state' is specified
     if params['src'] and params['state'] not in ('link', 'hard'):
-        params['src'] = None
-        module.warn("The src option requires state to be 'link' or 'hard'.  This will become an"
-                    " error in Ansible 2.10")
-
-        # In 2.10, switch to this
-        # raise ParameterError(results={"msg": "src option requires state to be 'link' or 'hard'",
-        #                               "path": params["path"]})
+        raise ParameterError(results={'msg': "src option requires state to be 'link' or 'hard'",
+                                      'path': params['path']})
 
 
 def get_state(path):
@@ -886,7 +881,7 @@ def main():
             recurse=dict(type='bool', default=False),
             force=dict(type='bool', default=False),  # Note: Should not be in file_common_args in future
             follow=dict(type='bool', default=True),  # Note: Different default than file_common_args
-            _diff_peek=dict(type='str'),  # Internal use only, for internal checks in the action plugins
+            _diff_peek=dict(type='bool'),  # Internal use only, for internal checks in the action plugins
             src=dict(type='path'),  # Note: Should not be in file_common_args in future
             modification_time=dict(type='str'),
             modification_time_format=dict(type='str', default='%Y%m%d%H%M.%S'),

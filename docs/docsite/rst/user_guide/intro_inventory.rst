@@ -661,6 +661,8 @@ For a full list with available plugins and examples, see :ref:`connection_plugin
 Inventory setup examples
 ========================
 
+See also :ref:`sample_setup`, which shows inventory along with playbooks and other Ansible artifacts.
+
 .. _inventory_setup-per_environment:
 
 Example: One inventory per environment

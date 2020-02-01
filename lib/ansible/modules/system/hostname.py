@@ -610,6 +610,12 @@ class OpenSUSELeapHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class OpenSUSETumbleweedHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Opensuse-tumbleweed'
+    strategy_class = SystemdStrategy
+
+
 class AsteraHostname(Hostname):
     platform = 'Linux'
     distribution = '"astralinuxce"'
@@ -787,6 +793,18 @@ class NetBSDHostname(Hostname):
 class NeonHostname(Hostname):
     platform = 'Linux'
     distribution = 'Neon'
+    strategy_class = DebianStrategy
+
+
+class OsmcHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Osmc'
+    strategy_class = SystemdStrategy
+
+
+class VoidLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Void'
     strategy_class = DebianStrategy
 
 

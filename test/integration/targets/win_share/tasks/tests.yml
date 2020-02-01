@@ -398,6 +398,44 @@
     - set_acl_actual_again.stdout_lines[2] == 'Change|Allow|BUILTIN\\Users'
     - set_acl_actual_again.stdout_lines[3] == 'Full|Allow|BUILTIN\\Administrators'
 
+- name: Append ACLs on share
+  win_share:
+    name: "{{test_win_share_name}}"
+    state: present
+    path: "{{test_win_share_path}}"
+    change: Remote Desktop Users
+    rule_action: add
+  register: append_acl
+
+- name: get actual share ACLs
+  win_shell: foreach ($acl in Get-SmbShareAccess -Name '{{test_win_share_name}}') { Write-Host "$($acl.AccessRight)|$($acl.AccessControlType)|$($acl.AccountName)" }
+  register: append_acl_actual
+
+- name: assert Append ACLs on share
+  assert:
+    that:
+    - append_acl is changed
+    - append_acl_actual.stdout_lines|length == 5
+    - append_acl_actual.stdout_lines[0] == 'Full|Deny|BUILTIN\Remote Desktop Users'
+    - append_acl_actual.stdout_lines[1] == 'Read|Allow|BUILTIN\\Guests'
+    - append_acl_actual.stdout_lines[2] == 'Change|Allow|BUILTIN\\Users'
+    - append_acl_actual.stdout_lines[3] == 'Full|Allow|BUILTIN\\Administrators'
+    - append_acl_actual.stdout_lines[4] == 'Change|Allow|BUILTIN\\Remote Desktop Users'
+
+- name: Append ACLs on share (idempotent)
+  win_share:
+    name: "{{test_win_share_name}}"
+    state: present
+    path: "{{test_win_share_path}}"
+    change: Remote Desktop Users
+    rule_action: add
+  register: append_acl_again
+
+- name: assert Append ACLs on share (idempotent)
+  assert:
+    that:
+    - not append_acl_again is changed
+
 - name: remove share check
   win_share:
     name: "{{test_win_share_name}}"

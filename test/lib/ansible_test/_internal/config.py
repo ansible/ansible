@@ -13,6 +13,7 @@ from .util import (
     find_python,
     generate_pip_command,
     get_docker_completion,
+    get_remote_completion,
     ApplicationError,
 )
 
@@ -45,6 +46,7 @@ class EnvironmentConfig(CommonConfig):
 
         self.local = args.local is True
         self.venv = args.venv
+        self.venv_system_site_packages = args.venv_system_site_packages
 
         self.python = args.python if 'python' in args else None  # type: str
 
@@ -79,6 +81,8 @@ class EnvironmentConfig(CommonConfig):
         self.python_version = self.python or actual_major_minor
         self.python_interpreter = args.python_interpreter
 
+        self.pip_check = args.pip_check
+
         self.delegate = self.docker or self.remote or self.venv
         self.delegate_args = []  # type: t.List[str]
 
@@ -87,6 +91,12 @@ class EnvironmentConfig(CommonConfig):
 
         self.inject_httptester = args.inject_httptester if 'inject_httptester' in args else False  # type: bool
         self.httptester = docker_qualify_image(args.httptester if 'httptester' in args else '')  # type: str
+
+        if self.get_delegated_completion().get('httptester', 'enabled') == 'disabled':
+            self.httptester = False
+
+        if self.get_delegated_completion().get('pip-check', 'enabled') == 'disabled':
+            self.pip_check = False
 
         if args.check_python and args.check_python != actual_major_minor:
             raise ApplicationError('Running under Python %s instead of Python %s as expected.' % (actual_major_minor, args.check_python))
@@ -113,6 +123,18 @@ class EnvironmentConfig(CommonConfig):
         :rtype: list[str]
         """
         return generate_pip_command(self.python_executable)
+
+    def get_delegated_completion(self):
+        """Returns a dictionary of settings specific to the selected delegation system, if any. Otherwise returns an empty dictionary.
+        :rtype: dict[str, str]
+        """
+        if self.docker:
+            return get_docker_completion().get(self.docker_raw, {})
+
+        if self.remote:
+            return get_remote_completion().get(self.remote, {})
+
+        return {}
 
 
 class TestConfig(EnvironmentConfig):
@@ -233,6 +255,9 @@ class IntegrationConfig(TestConfig):
         self.no_temp_workdir = args.no_temp_workdir
         self.no_temp_unicode = args.no_temp_unicode
 
+        if self.get_delegated_completion().get('temp-unicode', 'enabled') == 'disabled':
+            self.no_temp_unicode = True
+
         if self.list_targets:
             self.explain = True
 
@@ -305,30 +330,3 @@ class UnitsConfig(TestConfig):
             self.requirements = True
         elif self.requirements_mode == 'skip':
             self.requirements = False
-
-
-class CoverageConfig(EnvironmentConfig):
-    """Configuration for the coverage command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageConfig, self).__init__(args, 'coverage')
-
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
-        self.all = args.all if 'all' in args else False  # type: bool
-        self.stub = args.stub if 'stub' in args else False  # type: bool
-        self.coverage = False  # temporary work-around to support intercept_command in cover.py
-
-
-class CoverageReportConfig(CoverageConfig):
-    """Configuration for the coverage report command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageReportConfig, self).__init__(args)
-
-        self.show_missing = args.show_missing  # type: bool
-        self.include = args.include  # type: str
-        self.omit = args.omit  # type: str

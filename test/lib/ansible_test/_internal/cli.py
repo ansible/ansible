@@ -92,15 +92,30 @@ from .util_common import (
     CommonConfig,
 )
 
-from .cover import (
+from .coverage.combine import (
     command_coverage_combine,
+)
+
+from .coverage.erase import (
     command_coverage_erase,
+)
+
+from .coverage.html import (
     command_coverage_html,
+)
+
+from .coverage.report import (
     command_coverage_report,
+    CoverageReportConfig,
+)
+
+from .coverage.xml import (
     command_coverage_xml,
+)
+
+from .coverage import (
     COVERAGE_GROUPS,
     CoverageConfig,
-    CoverageReportConfig,
 )
 
 
@@ -643,6 +658,12 @@ def add_environments(parser, isolated_delegation=True):
                         default=None,
                         help='path to the docker or remote python interpreter')
 
+    parser.add_argument('--no-pip-check',
+                        dest='pip_check',
+                        default=True,
+                        action='store_false',
+                        help='do not run "pip check" to verify requirements')
+
     environments = parser.add_mutually_exclusive_group()
 
     environments.add_argument('--local',
@@ -652,6 +673,12 @@ def add_environments(parser, isolated_delegation=True):
     environments.add_argument('--venv',
                               action='store_true',
                               help='run from ansible-test managed virtual environments')
+
+    venv = parser.add_argument_group(title='venv arguments')
+
+    venv.add_argument('--venv-system-site-packages',
+                      action='store_true',
+                      help='enable system site packages')
 
     if not isolated_delegation:
         environments.set_defaults(

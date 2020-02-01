@@ -153,6 +153,18 @@ or:
        if not HAS_BOTO3:
            module.fail_json(msg='boto3 and botocore are required for this module')
 
+Supporting Module Defaults
+--------------------------
+
+The existing AWS modules support using :ref:`module_defaults <module_defaults>` for common 
+authentication parameters.  To do the same for your new module, add an entry for it in
+``lib/ansible/config/module_defaults.yml``.  These entries take the form of:
+
+.. code-block:: yaml
+
+  aws_module_name:
+  - aws
+
 Connecting to AWS
 =================
 
@@ -649,7 +661,7 @@ for every call, it's preferable to use :ref:`module_defaults <module_defaults>`.
        group/aws:
          aws_access_key: "{{ aws_access_key }}"
          aws_secret_key: "{{ aws_secret_key }}"
-         security_token: "{{ security_token }}"
+         security_token: "{{ security_token | default(omit) }}"
          region: "{{ aws_region }}"
 
      block:

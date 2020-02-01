@@ -30,9 +30,9 @@ options:
     type: list
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See \
-      U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkAcls.html) for possible filters. Filter \
-      names and values are case sensitive.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
+        U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkAcls.html) for possible filters. Filter
+        names and values are case sensitive.
     required: false
     default: {}
     type: dict
@@ -107,12 +107,10 @@ nacls:
             sample: [[100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]]
 '''
 
-import traceback
-
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils._text import to_native

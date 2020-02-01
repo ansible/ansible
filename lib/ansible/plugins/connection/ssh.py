@@ -249,7 +249,7 @@ DOCUMENTATION = '''
       scp_if_ssh:
         default: smart
         description:
-          - "Prefered method to use when transfering files over ssh"
+          - "Preferred method to use when transfering files over ssh"
           - When set to smart, Ansible will try them until one succeeds or they all fail
           - If set to True, it will force 'scp', if False it will use 'sftp'
         env: [{name: ANSIBLE_SCP_IF_SSH}]
@@ -354,7 +354,7 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
                 msg = '{0} {1}'.format(msg, to_native(return_tuple[2]).rstrip())
             raise AnsibleConnectionFailure(msg)
 
-    # For other errors, no execption is raised so the connection is retried and we only log the messages
+    # For other errors, no exception is raised so the connection is retried and we only log the messages
     if 1 <= return_tuple[0] <= 254:
         msg = u"Failed to connect to the host via ssh:"
         if no_log:

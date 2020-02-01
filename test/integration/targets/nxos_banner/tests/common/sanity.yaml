@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_banner sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: banner_exec_image_ok
   # N5K/N6K/N9K-F support banner exec but have image defects

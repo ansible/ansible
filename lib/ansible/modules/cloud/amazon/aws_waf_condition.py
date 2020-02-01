@@ -40,6 +40,7 @@ options:
         - sql
         - xss
         type: str
+        required: true
     filters:
         description:
         - A list of the filters against which to match.
@@ -50,6 +51,7 @@ options:
         - For I(type=size), valid keys are I(field_to_match), I(transformation), I(comparison) and I(size).
         - For I(type=sql), valid keys are I(field_to_match) and I(transformation).
         - For I(type=xss), valid keys are I(field_to_match) and I(transformation).
+        - Required when I(state=present).
         type: list
         elements: dict
         suboptions:
@@ -404,7 +406,6 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, compare_policies
 from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, MATCH_LOOKUP
 from ansible.module_utils.aws.waf import get_rule_with_backoff, list_rules_with_backoff, list_regional_rules_with_backoff
@@ -704,24 +705,20 @@ def main():
         ip_address=dict(),
         regex_pattern=dict(),
     )
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            type=dict(required=True, choices=['byte', 'geo', 'ip', 'regex', 'size', 'sql', 'xss']),
-            filters=dict(type='list'),
-            purge_filters=dict(type='bool', default=False),
-            waf_regional=dict(type='bool', default=False),
-            state=dict(default='present', choices=['present', 'absent']),
-        ),
+    argument_spec = dict(
+        name=dict(required=True),
+        type=dict(required=True, choices=['byte', 'geo', 'ip', 'regex', 'size', 'sql', 'xss']),
+        filters=dict(type='list'),
+        purge_filters=dict(type='bool', default=False),
+        waf_regional=dict(type='bool', default=False),
+        state=dict(default='present', choices=['present', 'absent']),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               required_if=[['state', 'present', ['filters']]])
     state = module.params.get('state')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     resource = 'waf' if not module.params['waf_regional'] else 'waf-regional'
-    client = boto3_conn(module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client(resource)
 
     condition = Condition(client, module)
 

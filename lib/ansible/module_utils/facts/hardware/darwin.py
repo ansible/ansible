@@ -85,12 +85,17 @@ class DarwinHardware(Hardware):
 
     def get_memory_facts(self):
         memory_facts = {
-            'memtotal_mb': int(self.sysctl['hw.memsize']) // 1024 // 1024
+            'memtotal_mb': int(self.sysctl['hw.memsize']) // 1024 // 1024,
+            'memfree_mb': 0,
         }
 
         total_used = 0
         page_size = 4096
-        vm_stat_command = get_bin_path('vm_stat')
+        try:
+            vm_stat_command = get_bin_path('vm_stat')
+        except ValueError:
+            return memory_facts
+
         rc, out, err = self.module.run_command(vm_stat_command)
         if rc == 0:
             # Free = Total - (Wired + active + inactive)
@@ -104,7 +109,7 @@ class DarwinHardware(Hardware):
             for k, v in memory_stats.items():
                 try:
                     memory_stats[k] = int(v)
-                except ValueError as ve:
+                except ValueError:
                     # Most values convert cleanly to integer values but if the field does
                     # not convert to an integer, just leave it alone.
                     pass
@@ -116,7 +121,7 @@ class DarwinHardware(Hardware):
             if memory_stats.get('Pages inactive'):
                 total_used += memory_stats['Pages inactive'] * page_size
 
-        memory_facts['memfree_mb'] = memory_facts['memtotal_mb'] - (total_used // 1024 // 1024)
+            memory_facts['memfree_mb'] = memory_facts['memtotal_mb'] - (total_used // 1024 // 1024)
 
         return memory_facts
 

@@ -30,11 +30,13 @@ options:
       description:
         - An identifier name for the endpoint.
       type: str
+      required: true
     endpointtype:
       description:
         - Type of endpoint we want to manage.
       choices: ['source', 'target']
       type: str
+      required: true
     enginename:
       description:
         - Database engine that we want to use, please refer to
@@ -44,6 +46,7 @@ options:
                          'redshift', 's3', 'db2', 'azuredb', 'sybase',
                          'dynamodb', 'mongodb', 'sqlserver']
       type: str
+      required: true
     username:
       description:
         - Username our endpoint will use to connect to the database.
@@ -64,7 +67,7 @@ options:
       type: int
     databasename:
       description:
-        - Name for the database on the origin or target side
+        - Name for the database on the origin or target side.
       type: str
     extraconnectionattributes:
       description:
@@ -87,7 +90,7 @@ options:
       type: str
     sslmode:
       description:
-        - Mode used for the ssl connection
+        - Mode used for the SSL connection.
       default: none
       choices: ['none', 'require', 'verify-ca', 'verify-full']
       type: str
@@ -98,12 +101,12 @@ options:
       type: str
     externaltabledefinition:
       description:
-        - The external table definition
+        - The external table definition.
       type: str
     dynamodbsettings:
       description:
         - Settings in JSON format for the target Amazon DynamoDB endpoint
-          if source or target is dynamodb
+          if source or target is dynamodb.
       type: dict
     s3settings:
       description:
@@ -112,33 +115,35 @@ options:
     dmstransfersettings:
       description:
         - The settings in JSON format for the DMS transfer type of
-          source endpoint
+          source endpoint.
       type: dict
     mongodbsettings:
       description:
-        - Settings in JSON format for the source MongoDB endpoint
+        - Settings in JSON format for the source MongoDB endpoint.
       type: dict
     kinesissettings:
       description:
         - Settings in JSON format for the target Amazon Kinesis
-          Data Streams endpoint
+          Data Streams endpoint.
       type: dict
     elasticsearchsettings:
       description:
-        - Settings in JSON format for the target Elasticsearch endpoint
+        - Settings in JSON format for the target Elasticsearch endpoint.
       type: dict
     wait:
       description:
-        - should wait for the object to be deleted when state = absent
+        - Whether Ansible should wait for the object to be deleted when I(state=absent).
       type: bool
-      default: 'false'
+      default: false
     timeout:
       description:
-        - time in seconds we should wait for when deleting a resource
+        - Time in seconds we should wait for when deleting a resource.
+        - Required when I(wait=true).
       type: int
     retries:
       description:
         - number of times we should retry when deleting a resource
+        - Required when I(wait=true).
       type: int
 author:
    - "Rui Moreira (@ruimoreira)"
@@ -168,8 +173,7 @@ RETURN = ''' # '''
 __metaclass__ = type
 import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3, \
-    camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 try:
     import botocore
 except ImportError:
@@ -221,18 +225,6 @@ def endpoint_exists(endpoint):
     :return: bool
     """
     return bool(len(endpoint['Endpoints']))
-
-
-def get_dms_client(aws_connect_params, client_region, ec2_url):
-    client_params = dict(
-        module=module,
-        conn_type='client',
-        resource='dms',
-        region=client_region,
-        endpoint=ec2_url,
-        **aws_connect_params
-    )
-    return boto3_conn(**client_params)
 
 
 def delete_dms_endpoint(connection):
@@ -443,13 +435,10 @@ def main():
     )
     exit_message = None
     changed = False
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     state = module.params.get('state')
-    aws_config_region, ec2_url, aws_connect_params = \
-        get_aws_connection_info(module, boto3=True)
-    dmsclient = get_dms_client(aws_connect_params, aws_config_region, ec2_url)
+
+    dmsclient = module.client('dms')
     endpoint = describe_endpoints(dmsclient,
                                   module.params.get('endpointidentifier'))
     if state == 'present':

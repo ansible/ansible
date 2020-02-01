@@ -315,7 +315,7 @@ options:
                 persistence sessions (persistence type RULE). Can be either an expression or the name of a named
                 expression.
             - "Example:"
-            - "C(HTTP.RES.HEADER(\\"setcookie\\").VALUE(0).TYPECAST_NVLIST_T('=',';').VALUE(\\"server1\\"))."
+            - 'C(HTTP.RES.HEADER("setcookie").VALUE(0).TYPECAST_NVLIST_T("=",";").VALUE("server1")).'
 
     persistmask:
         description:

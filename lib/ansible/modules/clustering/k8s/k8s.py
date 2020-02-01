@@ -182,11 +182,6 @@ EXAMPLES = '''
           name: port-8000-tcp
           port: 8000
 
-- name: Create a Service object by reading the definition from a file
-  k8s:
-    state: present
-    src: /testing/service.yml
-
 - name: Remove an existing Service object
   k8s:
     state: absent

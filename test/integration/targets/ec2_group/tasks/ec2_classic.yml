@@ -1,0 +1,88 @@
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  block:
+  - name: Get available AZs
+    aws_az_facts:
+      aws_access_key: "{{ aws_connection_info['aws_access_key'] }}"
+      aws_secret_key: "{{ aws_connection_info['aws_secret_key'] }}"
+      filters:
+        region-name: "{{ aws_connection_info['region'] }}"
+    register: az_facts
+
+  - name: Create a classic ELB with classic networking
+    ec2_elb_lb: 
+      name: "{{ resource_prefix }}-elb"
+      state: present
+      zones:
+        - "{{ az_facts['availability_zones'][0]['zone_name'] }}"
+        - "{{ az_facts['availability_zones'][1]['zone_name'] }}"
+      listeners:
+        - protocol: http # options are http, https, ssl, tcp
+          load_balancer_port: 80
+          instance_port: 80
+          proxy_protocol: True
+    register: classic_elb
+
+  - name: Assert the elb was created
+    assert:
+      that:
+        - classic_elb.changed
+
+  - name: Create a security group with a classic elb-sg rule
+    ec2_group:
+      name: "{{ resource_prefix }}-sg-a"
+      description: "EC2 classic test security group"
+      rules:
+      - proto: tcp
+        ports: 80
+        group_id: amazon-elb/amazon-elb-sg
+      state: present
+    register: classic_sg
+
+  - name: Assert the SG was created
+    assert:
+      that:
+        - classic_sg.changed
+        - "{{ classic_sg.ip_permissions | length }} == 1"
+
+  - set_fact:
+      elb_sg_id: "{{ classic_sg.ip_permissions[0].user_id_group_pairs[0].user_id }}/{{ classic_sg.ip_permissions[0].user_id_group_pairs[0].group_id }}/{{ classic_sg.ip_permissions[0].user_id_group_pairs[0].group_name }}"
+
+  - name: Update the security group
+    ec2_group:
+      name: "{{ resource_prefix }}-sg-a"
+      description: "EC2 classic test security group"
+      rules:
+      - proto: tcp
+        ports: 8080
+        group_id: "{{ elb_sg_id }}"
+      - proto: tcp
+        ports:
+          - 80
+        cidr_ip: 0.0.0.0/0
+      state: present
+    register: updated_classic_sg
+
+
+  - name: Assert the SG was updated
+    assert:
+      that:
+        - updated_classic_sg.changed
+        - "{{ updated_classic_sg.ip_permissions | length }} == 2"
+        - "{{ classic_sg.ip_permissions[0]}} not in {{ updated_classic_sg.ip_permissions }}"
+
+  # ===========================================
+  always:
+    - name: Terminate classic ELB
+      ec2_elb_lb:
+        name: "{{ resource_prefix }}-classic-elb"
+        state: absent
+
+    - name: Delete security group
+      ec2_group:
+        name: "{{ resource_prefix }}-sg-a"
+        state: absent

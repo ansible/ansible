@@ -152,6 +152,11 @@ options:
     type: list
     elements: str
     version_added: '2.9'
+  comment:
+    description:
+    - Add a comment on the user (equal to the COMMENT ON ROLE statement result).
+    type: str
+    version_added: '2.10'
 notes:
 - The module creates a user (role) with login privilege by default.
   Use NOLOGIN role_attr_flags to change this behaviour.
@@ -177,6 +182,12 @@ EXAMPLES = r'''
     password: ceec4eif7ya
     priv: "CONNECT/products:ALL"
     expires: "Jan 31 2020"
+
+- name: Add a comment on django user
+  postgresql_user:
+    db: acme
+    name: django
+    comment: This is a test user
 
 # Connect to default database, create rails user, set its password (MD5-hashed),
 # and grant privilege to create other databases and demote rails from super user status if user exists
@@ -541,8 +552,8 @@ def get_table_privileges(cursor, user, table):
     else:
         schema = 'public'
     query = ("SELECT privilege_type FROM information_schema.role_table_grants "
-             "WHERE grantee='%s' AND table_name='%s' AND table_schema='%s'" % (user, table, schema))
-    cursor.execute(query)
+             "WHERE grantee=%(user)s AND table_name=%(table)s AND table_schema=%(schema)s")
+    cursor.execute(query, {'user': user, 'table': table, 'schema': schema})
     return frozenset([x[0] for x in cursor.fetchall()])
 
 
@@ -768,6 +779,26 @@ def get_valid_flags_by_version(cursor):
     ]
 
 
+def get_comment(cursor, user):
+    """Get user's comment."""
+    query = ("SELECT pg_catalog.shobj_description(r.oid, 'pg_authid') "
+             "FROM pg_catalog.pg_roles r "
+             "WHERE r.rolname = %(user)s")
+    cursor.execute(query, {'user': user})
+    return cursor.fetchone()[0]
+
+
+def add_comment(cursor, user, comment):
+    """Add comment on user."""
+    if comment != get_comment(cursor, user):
+        query = 'COMMENT ON ROLE "%s" IS ' % user
+        cursor.execute(query + '%(comment)s', {'comment': comment})
+        executed_queries.append(cursor.mogrify(query + '%(comment)s', {'comment': comment}))
+        return True
+    else:
+        return False
+
+
 # ===========================================
 # Module execution.
 #
@@ -788,6 +819,7 @@ def main():
         conn_limit=dict(type='int', default=None),
         session_role=dict(type='str'),
         groups=dict(type='list'),
+        comment=dict(type='str', default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -812,6 +844,7 @@ def main():
     groups = module.params["groups"]
     if groups:
         groups = [e.strip() for e in groups]
+    comment = module.params["comment"]
 
     conn_params = get_conn_params(module, module.params, warn_db_default=False)
     db_connection = connect_to_db(module, conn_params)
@@ -854,6 +887,13 @@ def main():
             pg_membership = PgMembership(module, cursor, groups, target_roles)
             changed = pg_membership.grant() or changed
             executed_queries.extend(pg_membership.executed_queries)
+
+        if comment is not None:
+            try:
+                changed = add_comment(cursor, user, comment) or changed
+            except Exception as e:
+                module.fail_json(msg='Unable to add comment on role: %s' % to_native(e),
+                                 exception=traceback.format_exc())
 
     else:
         if user_exists(cursor, user):

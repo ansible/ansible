@@ -1,0 +1,31 @@
+- name: "Make sure all images are removed"
+  docker_image:
+    name: "{{ item }}"
+    state: absent
+  with_items: "{{ inames }}"
+- name: "Get registry logs"
+  command: "docker logs {{ registry_name }}"
+  register: registry_logs
+  no_log: yes
+- name: "Printing registry logs"
+  debug: var=registry_logs.stdout_lines
+- name: "Get nginx logs"
+  command: "docker logs {{ nginx_name }}"
+  register: nginx_logs
+  no_log: yes
+- name: "Printing nginx logs"
+  debug: var=nginx_logs.stdout_lines
+- name: "Make sure all containers are removed"
+  docker_container:
+    name: "{{ item }}"
+    state: absent
+    force_kill: yes
+  with_items: "{{ cnames }}"
+  register: result
+  retries: 3
+  delay: 3
+  until: result is success
+- name: "Make sure all volumes are removed"
+  command: "docker rm -f {{ item }}"
+  with_items: "{{ vnames }}"
+  ignore_errors: yes

@@ -1,0 +1,2 @@
+minor_changes:
+  - azure_rm_virtualmachinescaleset - added ability to use plan information for images that require billing plan details

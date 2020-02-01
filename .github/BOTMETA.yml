@@ -27,7 +27,7 @@
 #           ignored - these people should never be notified
 #           deprecated - this file is deprecated but probably not yet renamed
 #           keywords - used to identify this file based on the issue description
-#           migrated_to - Location on Galaxy,
+#           migrated_to - If this has been migrated to Galaxy, in the form collection.namespace
 #                         see https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html
 #           support - used for files without internal ANSIBLE_METADATA, see
 #                     https://github.com/ansible/ansible/labels?q=support for full list
@@ -48,6 +48,7 @@ files:
     ignored: ryansb
   $modules/cloud/amazon/:
     ignored: erydo seiffert simplesteph nadirollo tedder joshsouza
+    maintainers: $team_aws
   $modules/cloud/amazon/aws_kms.py:
     ignored: tedder
   $modules/cloud/amazon/cloudformation.py:
@@ -97,7 +98,7 @@ files:
     support: community
   $modules/cloud/dimensiondata/dimensiondata_network.py: tintoy
   $modules/cloud/docker/: &docker
-    ignored: ThomasSteinbach
+    ignored: ThomasSteinbach cove
     labels: [ cloud, docker ]
     maintainers: $team_docker
     supershipit: felixfontein
@@ -150,6 +151,114 @@ files:
     ignored: andyhky
   $modules/cloud/opennebula/: ilicmilan xorel rsmontero meerkampdvv
   $modules/cloud/openstack/: $team_openstack
+  $modules/cloud/openstack/os_auth.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_client_config.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_coe_cluster.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_coe_cluster_template.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_flavor_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_floating_ip.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_group_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_image_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_image.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_ironic_inspect.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_ironic_node.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_ironic.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keypair.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_domain_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_domain.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_endpoint.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_role.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_service.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_listener.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_loadbalancer.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_member.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_network.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_networks_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_nova_flavor.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_nova_host_aggregate.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_object.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_pool.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_port_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_port.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_project_access.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_project_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_project.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_quota.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_recordset.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_router.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_security_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_security_group_rule.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_action.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_metadata.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_volume.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_stack.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_subnet.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_subnets_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user_role.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_volume.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_volume_snapshot.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_zone.py:
+    migrated_to: openstack.cloud
   $modules/cloud/oracle/: &oracle
     labels: [ cloud, oracle ]
     maintainers: $team_oracle
@@ -255,12 +364,20 @@ files:
   $modules/monitoring/grafana:
     labels: grafana
     maintainers: $team_grafana
+  $modules/monitoring/grafana/grafana_plugin.py:
+      migrated_to: community.grafana
+  $modules/monitoring/grafana/grafana_dashboard.py:
+      migrated_to: community.grafana
+  $modules/monitoring/grafana/grafana_datasource.py:
+      migrated_to: community.grafana
   $modules/monitoring/logentries.py:
     ignored: ivanvanderbyl
   $modules/monitoring/monit.py: brian-brazil
   $modules/monitoring/pagerduty.py:
     ignored: bpennypacker
-  $modules/monitoring/zabbix/: eikef D3DeFi rubentsirunyan
+  $modules/monitoring/zabbix/:
+    maintainers: $team_zabbix
+    ignored: cove
   $modules/net_tools/basics/get_url.py: ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py:
@@ -283,7 +400,7 @@ files:
     labels: [ aci, cisco, networking ]
     maintainers: $team_aci
   $modules/network/aireos/: &aireos
-    maintainers: $team_aireos
+    maintainers: $team_ansible
     ignored: jmighion
     labels: [ aireos, cisco, networking ]
   $modules/network/aos/: dgarros jeremyschulman
@@ -312,6 +429,328 @@ files:
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg JoeReifel $team_networking
     maintainers: caphrim007 wojtek0806
+  $modules/network/f5/bigip_apm_acl.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_apm_network_access.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_apm_policy_fetch.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_apm_policy_import.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_appsvcs_extension.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_dos_application.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_fetch.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_import.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_manage.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_server_technology.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_signature_set.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_cli_alias.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_cli_script.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_command.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_config.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_configsync_action.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_data_group.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_auth_ldap.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_auth.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_certificate.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_connectivity.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_dns.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_group_member.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_group.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_ha_group.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_httpd.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_info.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_license.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_ntp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_sshd.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_syslog.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_traffic_group.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_trust.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_dns_cache_resolver.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_dns_nameserver.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_dns_resolver.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_dns_zone.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_file_copy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_address_list.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_dos_profile.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_dos_vector.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_global_rules.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_log_profile_network.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_log_profile.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_port_list.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_rule_list.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_rule.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_schedule.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_datacenter.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_global.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_bigip.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_external.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_firepass.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_http.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_https.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_tcp_half_open.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_tcp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_pool_member.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_pool.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_server.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_topology_record.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_topology_region.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_virtual_server.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_wide_ip.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_hostname.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_iapp_service.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_iapp_template.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ike_peer.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_imish_config.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ipsec_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_irule.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_log_destination.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_log_publisher.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_lx_package.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_management_route.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_peer.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_protocol.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_route.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_router.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_transport_config.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_dns.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_external.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_gateway_icmp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_http.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_https.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_ldap.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_snmp_dca.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_tcp_echo.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_tcp_half_open.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_tcp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_udp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_node.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_partition.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_password_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_policy_rule.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_pool_member.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_pool.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_analytics.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_client_ssl.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_dns.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_fastl4.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_http2.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_http_compression.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_http.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_oneconnect.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_persistence_cookie.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_persistence_src_addr.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_server_ssl.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_tcp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_udp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_provision.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_qkview.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_remote_role.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_remote_syslog.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_remote_user.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_routedomain.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_selfip.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_service_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_smtp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snat_pool.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snat_translation.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snmp_community.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snmp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snmp_trap.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_software_image.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_software_install.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_software_update.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ssl_certificate.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ssl_key.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ssl_ocsp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_static_route.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_sys_daemon_log_tmm.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_sys_db.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_sys_global.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_timer_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_traffic_selector.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_trunk.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_tunnel.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ucs_fetch.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ucs.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_user.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_vcmp_guest.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_virtual_address.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_virtual_server.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_vlan.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_wait.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_fasthttp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_fastl4_tcp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_fastl4_udp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_http.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_https_offload.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_https_waf.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_device_discovery.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_device_info.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_regkey_license_assignment.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_regkey_license.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_regkey_pool.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_utility_license_assignment.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_utility_license.py:
+    migrated_to: f5networks.f5_modules
   $modules/network/files/: $team_networking
   $modules/network/fortios/: bjolivot
   $modules/network/fortimanager/: $team_fortimanager
@@ -367,6 +806,10 @@ files:
   $modules/notification/rocketchat.py:
     ignored: ramondelafuente
     maintainers: Deepakkothandan
+  $modules/notification/snow_record.py:
+    migrated_to: servicenow.servicenow
+  $modules/notification/snow_record_find.py:
+      migrated_to: servicenow.servicenow
   $modules/packaging/language/gem.py: $team_ansible
   $modules/packaging/language/maven_artifact.py:
     ignored: chrisisbeef
@@ -557,6 +1000,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
+    migrated_to: openstack.cloud
   contrib/inventory/ovirt4.py: *ovirt
   contrib/inventory/infoblox.py:
     keywords:
@@ -587,7 +1031,7 @@ files:
     labels:
       - cloud
       - aws
-    notified: s-hertel
+    notified: $team_aws
   contrib/inventory/vmware.py:
     keywords:
       - vmware inventory
@@ -635,6 +1079,8 @@ files:
     support: core
   $module_utils/splitter.py:
     support: core
+  $module_utils/service_now.py:
+    migrated_to: servicenow.servicenow
   $module_utils/yumdnf.py:
     support: core
   $module_utils/ansible_release.py:
@@ -827,6 +1273,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
+    migrated_to: openstack.cloud
   $module_utils/oracle/: *oracle
   $module_utils/ovirt.py: *ovirt
   $module_utils/postgres.py: *postgresql
@@ -958,9 +1405,11 @@ files:
   $plugins/action/bigip:
     maintainers: caphrim007 wojtek0806
     labels: networking
+    migrated_to: f5networks.f5_modules
   $plugins/action/bigiq:
     maintainers: caphrim007 wojtek0806
     labels: networking
+    migrated_to: f5networks.f5_modules
   $plugins/action/ce:
     <<: *cloudengine
     support: network
@@ -1031,6 +1480,7 @@ files:
   $plugins/callback/grafana_annotations.py:
     maintainers: $team_grafana
     labels: monitoring grafana
+    migrated_to: community.grafana
   $plugins/callback/foreman.py:
     maintainers: $team_foreman
   $plugins/callback/junit:
@@ -1166,11 +1616,18 @@ files:
     support: community
     supershipit: $team_google
     maintainers: $team_google
+  $plugins/doc_fragments/grafana.py:
+    maintainers: $team_grafana
+    labels: monitoring grafana
+    migrated_to: community.grafana
   $plugins/doc_fragments/hwc.py:
     maintainers: $team_huawei
   $plugins/doc_fragments/intersight.py: *intersight
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
+  $plugins/doc_fragments/openstack.py:
+    maintainers: $team_openstack
+    migrated_to: openstack.cloud
   $plugins/doc_fragments/postgres.py: *postgresql
   $plugins/doc_fragments/proxysql.py: *mysql
   $plugins/doc_fragments/ucs.py: *ucs
@@ -1181,6 +1638,11 @@ files:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
   $plugins/doc_fragments/oracle*: *oracle
+  $plugins/doc_fragments/service_now.py:
+    migrated_to: servicenow.servicenow
+  $plugins/doc_fragments/f5.py:
+    maintainers: caphrim007 wojtek0806
+    migrated_to: f5networks.f5_modules
 ###############################
 # plugins/filter
   $plugins/filter/:
@@ -1211,7 +1673,9 @@ files:
   $plugins/inventory/__init__.py:
     support: core
   $plugins/inventory/aws_ec2.py:
-    maintainers: s-hertel
+    maintainers: $team_aws
+  $plugins/inventory/azure_rm.py:
+    migrated_to: azure.azcollection
   $plugins/inventory/docker: *docker
   $plugins/inventory/docker_swarm.py:
     <<: *docker
@@ -1248,6 +1712,7 @@ files:
       - inventory
     labels:
       - cloud
+    migrated_to: openstack.cloud
   $plugins/inventory/scaleway.py: *scaleway
   $plugins/inventory/script.py:
     support: core
@@ -1263,6 +1728,8 @@ files:
   $plugins/inventory/vultr.py: *vultr
   $plugins/inventory/yaml.py:
     support: core
+  $plugins/inventory/now.py:
+    migrated_to: servicenow.servicenow
 
 ###############################
 # plugins/lookup
@@ -1285,6 +1752,7 @@ files:
   $plugins/lookup/grafana_dashboard.py:
     maintainers: $team_grafana
     labels: monitoring grafana
+    migrated_to: community.grafana
   $plugins/lookup/indexed_items.py:
     support: core
   $plugins/lookup/inventory_hostnames.py:
@@ -1425,6 +1893,9 @@ files:
   $plugins/terminal/vyos.py:
     support: network
     maintainers: $team_networking
+  $plugins/terminal/bigip.py:
+    maintainers: caphrim007 wojtek0806
+    migrated_to: f5networks.f5_modules
 ###############################
 # plugins/test
   $plugins/test:
@@ -1469,7 +1940,7 @@ files:
     labels:
       - aws
       - cloud
-    maintainers: s-hertel
+    maintainers: $team_aws
   docs/docsite/rst/scenario_guides/guide_azure.rst:
     labels:
       - azure
@@ -1538,8 +2009,8 @@ files:
   test/integration/targets/setup_docker: *docker
   test/integration/targets/setup_openssl: *crypto
   test/integration/targets/setup_mysql_db: *mysql
-  test/integration/targets/setup_zabbix:
-    maintainers: eikef D3DeFi rubentsirunyan
+  test/integration/targets/setup_zabbix: $team_zabbix
+  test/integration/targets/zabbix_: $team_zabbix
   test/integration/targets/ucs_: *ucs
   test/integration/targets/vultr: *vultr
   test/legacy/:
@@ -1549,6 +2020,8 @@ files:
   test/lib/ansible_test/_internal/cloud/acme.py: *crypto
   test/sanity/:
     notified: mattclay
+  test/sanity/ignore.txt:
+    notified: tremble
   test/units/module_utils/docker/:
     <<: *docker
     support: community
@@ -1583,6 +2056,8 @@ files:
     support: community
   test/utils/shippable/:
     notified: mattclay
+  hacking/aws_config/:
+    maintainers: $team_aws
   hacking/report.py:
     notified: mattclay
   shippable.yml:
@@ -1592,13 +2067,13 @@ macros:
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
-  team_aireos: $team_ansible
   team_aix: bcoca dagwieers d-little flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
   team_aruba: karthikeyan-dhandapani
   team_asa: NilashishC ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
-  team_azure: haroldwongms nitzmahone yuwzho yungezz zikalino
+  team_aws: jillr s-hertel tremble
+  team_azure: haroldwongms yuwzho yungezz zikalino haiyuazhang gavinfish
   team_bsd: bcoca dagwieers dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: dpassante rhtyd
@@ -1617,7 +2092,7 @@ macros:
   team_grafana: rrey seuf
   team_hcloud: cschmitt-hcloud LKaemmerling
   team_hpux: bcoca dagwieers davx8342
-  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang QijunPan xuxiaowei0512 hwDCN
+  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang QijunPan xuxiaowei0512 hwDCN yanzhangi
   team_imc: dagwieers
   team_intersight: dsoper2 movinalot
   team_ios: justjais
@@ -1656,5 +2131,6 @@ macros:
   team_vmware_httpapi: Akasurde warthog9 Tomorrow9 goneri pgbidkar n3pjk
   team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
-  team_windows: jborean93 jhawkesworth nitzmahone ShachafGoldstein
+  team_windows: jborean93 jhawkesworth ShachafGoldstein
   team_windows_core: nitzmahone jborean93
+  team_zabbix: D3DeFi rubentsirunyan sky-joker

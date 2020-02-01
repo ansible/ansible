@@ -31,6 +31,9 @@ options:
   connected:
     description:
       - List of container names or container IDs to connect to a network.
+      - Please note that the module only makes sure that these containers are connected to the network,
+        but does not care about connection options. If you rely on specific IP addresses etc., use the
+        M(docker_container) module to ensure your containers are correctly connected to this network.
     type: list
     elements: str
     aliases:
@@ -185,6 +188,15 @@ extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
 
+notes:
+  - When network options are changed, the module disconnects all containers from the network, deletes the network, and re-creates the network.
+    It does not try to reconnect containers, except the ones listed in (I(connected), and even for these, it does not consider specific
+    connection options like fixed IP addresses or MAC addresses. If you need more control over how the containers are connected to the
+    network, loop the M(docker_container) module to loop over your containers to make sure they are connected properly.
+  - The module does not support Docker Swarm, i.e. it will not try to disconnect or reconnect services. If services are connected to the
+    network, deleting the network will fail. When network options are changed, the network has to be deleted and recreated, so this will
+    fail as well.
+
 author:
   - "Ben Keith (@keitwb)"
   - "Chris Houseknecht (@chouseknecht)"
@@ -335,8 +347,8 @@ CIDR_IPV4 = re.compile(r'^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$
 CIDR_IPV6 = re.compile(r'^[0-9a-fA-F:]+/([0-9]|[1-9][0-9]|1[0-2][0-9])$')
 
 
-def get_ip_version(cidr):
-    """Gets the IP version of a CIDR string
+def validate_cidr(cidr):
+    """Validate CIDR. Return IP version of a CIDR string on success.
 
     :param cidr: Valid CIDR
     :type cidr: str
@@ -352,7 +364,7 @@ def get_ip_version(cidr):
 
 
 def normalize_ipam_config_key(key):
-    """Normalizes IPAM config keys returned by Docker API to match Ansible keys
+    """Normalizes IPAM config keys returned by Docker API to match Ansible keys.
 
     :param key: Docker API key
     :type key: str
@@ -363,6 +375,16 @@ def normalize_ipam_config_key(key):
         'AuxiliaryAddresses': 'aux_addresses'
     }
     return special_cases.get(key, key.lower())
+
+
+def dicts_are_essentially_equal(a, b):
+    """Make sure that a is a subset of b, where None entries of a are ignored."""
+    for k, v in a.items():
+        if v is None:
+            continue
+        if b.get(k) != v:
+            return False
+    return True
 
 
 class DockerNetworkManager(object):
@@ -387,6 +409,13 @@ class DockerNetworkManager(object):
         if (self.parameters.ipam_options['subnet'] or self.parameters.ipam_options['iprange'] or
                 self.parameters.ipam_options['gateway'] or self.parameters.ipam_options['aux_addresses']):
             self.parameters.ipam_config = [self.parameters.ipam_options]
+
+        if self.parameters.ipam_config:
+            try:
+                for ipam_config in self.parameters.ipam_config:
+                    validate_cidr(ipam_config['subnet'])
+            except ValueError as e:
+                self.client.fail(str(e))
 
         if self.parameters.driver_options:
             self.parameters.driver_options = clean_dict_booleans_for_docker_api(self.parameters.driver_options)
@@ -449,30 +478,29 @@ class DockerNetworkManager(object):
                                 parameter=self.parameters.ipam_config,
                                 active=net.get('IPAM', {}).get('Config'))
             else:
+                # Put network's IPAM config into the same format as module's IPAM config
+                net_ipam_configs = []
+                for net_ipam_config in net['IPAM']['Config']:
+                    config = dict()
+                    for k, v in net_ipam_config.items():
+                        config[normalize_ipam_config_key(k)] = v
+                    net_ipam_configs.append(config)
+                # Compare lists of dicts as sets of dicts
                 for idx, ipam_config in enumerate(self.parameters.ipam_config):
                     net_config = dict()
-                    try:
-                        ip_version = get_ip_version(ipam_config['subnet'])
-                        for net_ipam_config in net['IPAM']['Config']:
-                            if ip_version == get_ip_version(net_ipam_config['Subnet']):
-                                net_config = net_ipam_config
-                    except ValueError as e:
-                        self.client.fail(str(e))
-
+                    for net_ipam_config in net_ipam_configs:
+                        if dicts_are_essentially_equal(ipam_config, net_ipam_config):
+                            net_config = net_ipam_config
+                            break
                     for key, value in ipam_config.items():
                         if value is None:
                             # due to recursive argument_spec, all keys are always present
                             # (but have default value None if not specified)
                             continue
-                        camelkey = None
-                        for net_key in net_config:
-                            if key == normalize_ipam_config_key(net_key):
-                                camelkey = net_key
-                                break
-                        if not camelkey or net_config.get(camelkey) != value:
+                        if value != net_config.get(key):
                             differences.add('ipam_config[%s].%s' % (idx, key),
                                             parameter=value,
-                                            active=net_config.get(camelkey) if camelkey else None)
+                                            active=net_config.get(key))
 
         if self.parameters.enable_ipv6 is not None and self.parameters.enable_ipv6 != net.get('EnableIPv6', False):
             differences.add('enable_ipv6',

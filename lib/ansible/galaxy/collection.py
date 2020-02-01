@@ -31,6 +31,7 @@ import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.api import CollectionVersionMetadata, GalaxyError
+from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.collection_loader import AnsibleCollectionRef
@@ -91,6 +92,11 @@ class CollectionRequirement:
 
     def __unicode__(self):
         return u"%s.%s" % (self.namespace, self.name)
+
+    @property
+    def metadata(self):
+        self._get_metadata()
+        return self._metadata
 
     @property
     def latest_version(self):
@@ -422,7 +428,7 @@ def install_collections(collections, output_path, apis, validate_certs, ignore_e
     :param force: Re-install a collection if it has already been installed.
     :param force_deps: Re-install a collection as well as its dependencies if they have already been installed.
     """
-    existing_collections = _find_existing_collections(output_path)
+    existing_collections = find_existing_collections(output_path)
 
     with _tempdir() as b_temp_path:
         display.display("Process install dependency map")
@@ -458,6 +464,19 @@ def validate_collection_name(name):
                        "name must be in the format <namespace>.<collection>. "
                        "Please make sure namespace and collection name contains "
                        "characters from [a-zA-Z0-9_] only." % name)
+
+
+def validate_collection_path(collection_path):
+    """ Ensure a given path ends with 'ansible_collections'
+
+    :param collection_path: The path that should end in 'ansible_collections'
+    :return: collection_path ending in 'ansible_collections' if it does not already.
+    """
+
+    if os.path.split(collection_path)[1] != 'ansible_collections':
+        return os.path.join(collection_path, 'ansible_collections')
+
+    return collection_path
 
 
 @contextmanager
@@ -754,7 +773,7 @@ def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, fi
         display.display('Created collection for %s at %s' % (collection_name, to_text(b_tar_path)))
 
 
-def _find_existing_collections(path):
+def find_existing_collections(path):
     collections = []
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
@@ -827,9 +846,13 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
     if os.path.isfile(to_bytes(collection, errors='surrogate_or_strict')):
         display.vvvv("Collection requirement '%s' is a tar artifact" % to_text(collection))
         b_tar_path = to_bytes(collection, errors='surrogate_or_strict')
-    elif urlparse(collection).scheme:
+    elif urlparse(collection).scheme.lower() in ['http', 'https']:
         display.vvvv("Collection requirement '%s' is a URL to a tar artifact" % collection)
-        b_tar_path = _download_file(collection, b_temp_path, None, validate_certs)
+        try:
+            b_tar_path = _download_file(collection, b_temp_path, None, validate_certs)
+        except urllib_error.URLError as err:
+            raise AnsibleError("Failed to download collection tar from '%s': %s"
+                               % (to_native(collection), to_native(err)))
 
     if b_tar_path:
         req = CollectionRequirement.from_tar(b_tar_path, force, parent=parent)
@@ -872,7 +895,7 @@ def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
     display.vvv("Downloading %s to %s" % (url, to_text(b_path)))
     # Galaxy redirs downloads to S3 which reject the request if an Authorization header is attached so don't redir that
     resp = open_url(to_native(url, errors='surrogate_or_strict'), validate_certs=validate_certs, headers=headers,
-                    unredirected_headers=['Authorization'])
+                    unredirected_headers=['Authorization'], http_agent=user_agent())
 
     with open(b_file_path, 'wb') as download_file:
         data = resp.read(bufsize)

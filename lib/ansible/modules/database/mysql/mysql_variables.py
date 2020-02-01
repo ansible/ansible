@@ -204,7 +204,7 @@ def main():
 
     if mysqlvar is None:
         module.fail_json(msg="Cannot run without variable to operate with")
-    if match('^[0-9a-z_]+$', mysqlvar) is None:
+    if match('^[0-9a-z_.]+$', mysqlvar) is None:
         module.fail_json(msg="invalid variable name \"%s\"" % mysqlvar)
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)
@@ -212,8 +212,8 @@ def main():
         warnings.filterwarnings('error', category=mysql_driver.Warning)
 
     try:
-        cursor = mysql_connect(module, user, password, config_file, ssl_cert, ssl_key, ssl_ca, db,
-                               connect_timeout=connect_timeout)
+        cursor, db_conn = mysql_connect(module, user, password, config_file, ssl_cert, ssl_key, ssl_ca, db,
+                                        connect_timeout=connect_timeout)
     except Exception as e:
         if os.path.exists(config_file):
             module.fail_json(msg=("unable to connect to database, check login_user and "

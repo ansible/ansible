@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ipa_sudocmd
 author: Thomas Krahn (@Nosmoht)
@@ -21,31 +21,34 @@ description:
 options:
   sudocmd:
     description:
-    - Sudo Command.
+    - Sudo command.
     aliases: ['name']
     required: true
+    type: str
   description:
     description:
     - A description of this command.
+    type: str
   state:
-    description: State to ensure
+    description: State to ensure.
     default: present
-    choices: ['present', 'absent', 'enabled', 'disabled']
+    choices: ['absent', 'disabled', 'enabled', 'present']
+    type: str
 extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''
 
-EXAMPLES = '''
-# Ensure sudo command exists
-- ipa_sudocmd:
+EXAMPLES = r'''
+- name: Ensure sudo command exists
+  ipa_sudocmd:
     name: su
     description: Allow to run su via sudo
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
 
-# Ensure sudo command does not exist
-- ipa_sudocmd:
+- name: Ensure sudo command does not exist
+  ipa_sudocmd:
     name: su
     state: absent
     ipa_host: ipa.example.com
@@ -53,7 +56,7 @@ EXAMPLES = '''
     ipa_pass: topsecret
 '''
 
-RETURN = '''
+RETURN = r'''
 sudocmd:
   description: Sudo command as return from IPA API
   returned: always

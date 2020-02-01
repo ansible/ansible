@@ -7,9 +7,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Length, Invalid, Required, Schema, Self
+
+from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
+
 list_string_types = list(string_types)
 tuple_string_types = tuple(string_types)
 any_string_types = Any(*string_types)
@@ -21,6 +23,12 @@ any_string_types = Any(*string_types)
 #     "Michael DeHaan" - nop
 #     "Name (!UNKNOWN)" - For the few untraceable authors
 author_line = re.compile(r'^\w.*(\(@([\w-]+)\)|!UNKNOWN)(?![\w.])|^Ansible Core Team$|^Michael DeHaan$')
+
+
+def is_callable(v):
+    if not callable(v):
+        raise ValueInvalid('not a valid value')
+    return v
 
 
 def sequence_of_sequences(min=None, max=None):
@@ -58,21 +66,86 @@ seealso_schema = Schema(
     ]
 )
 
-ansible_module_kwargs_schema = Schema(
-    {
-        'argument_spec': dict,
+
+argument_spec_types = ['bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw',
+                       'sid', 'str']
+
+
+argument_spec_modifiers = {
+    'mutually_exclusive': sequence_of_sequences(min=2),
+    'required_together': sequence_of_sequences(min=2),
+    'required_one_of': sequence_of_sequences(min=2),
+    'required_if': sequence_of_sequences(min=3),
+    'required_by': Schema({str: Any(list_string_types, tuple_string_types, *string_types)}),
+}
+
+
+def no_required_with_default(v):
+    if v.get('default') and v.get('required'):
+        raise Invalid('required=True cannot be supplied with a default')
+    return v
+
+
+def elements_with_list(v):
+    if v.get('elements') and v.get('type') != 'list':
+        raise Invalid('type must be list to use elements')
+    return v
+
+
+def options_with_apply_defaults(v):
+    if v.get('apply_defaults') and not v.get('options'):
+        raise Invalid('apply_defaults=True requires options to be set')
+    return v
+
+
+def argument_spec_schema():
+    any_string_types = Any(*string_types)
+    schema = {
+        any_string_types: {
+            'type': Any(is_callable, *argument_spec_types),
+            'elements': Any(*argument_spec_types),
+            'default': object,
+            'fallback': Any(
+                (is_callable, list_string_types),
+                [is_callable, list_string_types],
+            ),
+            'choices': Any([object], (object,)),
+            'required': bool,
+            'no_log': bool,
+            'aliases': Any(list_string_types, tuple(list_string_types)),
+            'apply_defaults': bool,
+            'removed_in_version': Any(float, *string_types),
+            'options': Self,
+            'deprecated_aliases': Any([
+                {
+                    Required('name'): Any(*string_types),
+                    Required('version'): Any(float, *string_types),
+                },
+            ]),
+        }
+    }
+    schema[any_string_types].update(argument_spec_modifiers)
+    schemas = All(
+        schema,
+        Schema({any_string_types: no_required_with_default}),
+        Schema({any_string_types: elements_with_list}),
+        Schema({any_string_types: options_with_apply_defaults}),
+    )
+    return Schema(schemas)
+
+
+def ansible_module_kwargs_schema():
+    schema = {
+        'argument_spec': argument_spec_schema(),
         'bypass_checks': bool,
         'no_log': bool,
         'check_invalid_arguments': Any(None, bool),
-        'mutually_exclusive': sequence_of_sequences(min=2),
-        'required_together': sequence_of_sequences(min=2),
-        'required_one_of': sequence_of_sequences(min=2),
         'add_file_common_args': bool,
         'supports_check_mode': bool,
-        'required_if': sequence_of_sequences(min=3),
-        'required_by': Schema({str: Any(list_string_types, tuple_string_types, *string_types)}),
     }
-)
+    schema.update(argument_spec_modifiers)
+    return Schema(schema)
+
 
 suboption_schema = Schema(
     {

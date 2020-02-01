@@ -25,10 +25,10 @@ author:
 options:
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See \
-      U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSecurityGroups.html) for \
-      possible filters. Filter names and values are case sensitive. You can also use underscores (_) \
-      instead of dashes (-) in the filter keys, which will take precedence in case of conflict.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
+        U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSecurityGroups.html) for
+        possible filters. Filter names and values are case sensitive. You can also use underscores (_)
+        instead of dashes (-) in the filter keys, which will take precedence in case of conflict.
     required: false
     default: {}
     type: dict
@@ -140,7 +140,7 @@ def main():
 
     # Replace filter key underscores with dashes, for compatibility, except if we're dealing with tags
     sanitized_filters = module.params.get("filters")
-    for key in sanitized_filters:
+    for key in list(sanitized_filters):
         if not key.startswith("tag:"):
             sanitized_filters[key.replace("_", "-")] = sanitized_filters.pop(key)
 

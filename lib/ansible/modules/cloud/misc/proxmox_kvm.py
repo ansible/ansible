@@ -7,7 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -332,7 +331,7 @@ options:
     default: 30
   update:
     description:
-      - If C(yes), the VM will be update with new value.
+      - If C(yes), the VM will be updated with new value.
       - Cause of the operations of the API and security reasons, I have disabled the update of the following parameters
       - C(net, virtio, ide, sata, scsi). Per example updating C(net) update the MAC address and C(virtio) create always new disk...
     type: bool
@@ -580,6 +579,7 @@ import os
 import re
 import time
 import traceback
+from distutils.version import LooseVersion
 
 try:
     from proxmoxer import ProxmoxAPI
@@ -783,6 +783,11 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
     return False
 
 
+def proxmox_version(proxmox):
+    apireturn = proxmox.version.get()
+    return LooseVersion(apireturn['version'])
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -898,7 +903,7 @@ def main():
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
         global VZ_TYPE
         global PVE_MAJOR_VERSION
-        PVE_MAJOR_VERSION = 3 if float(proxmox.version.get()['version']) < 4.0 else 4
+        PVE_MAJOR_VERSION = 3 if proxmox_version(proxmox) < LooseVersion('4.0') else 4
     except Exception as e:
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 

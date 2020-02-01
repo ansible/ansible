@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018-2019, Andrey Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# Copyright: (c) 2018-2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -51,13 +51,9 @@ options:
     - Index state.
     - C(present) implies the index will be created if it does not exist.
     - C(absent) implies the index will be dropped if it exists.
-    - C(stat) returns index statistics information from the ``pg_stat_user_indexes`` standard view.
-      Supported from Ansible 2.10.
-    - "When C(stat) following parameters will be ignored:"
-    - I(schema), I(table), I(columns), I(cond), I(idxtype), I(tablespace), I(concurrent), I(cascade).
     type: str
     default: present
-    choices: [ absent, present, stat ]
+    choices: [ absent, present ]
   table:
     description:
     - Table to create index on it.
@@ -94,6 +90,13 @@ options:
     - Mutually exclusive with I(cascade=yes).
     type: bool
     default: yes
+  unique:
+    description:
+    - Enable unique index.
+    - Only btree currently supports unique indexes.
+    type: bool
+    default: no
+    version_added: '2.10'
   tablespace:
     description:
     - Set a tablespace for the index.
@@ -200,11 +203,14 @@ EXAMPLES = r'''
     idxname: test_idx
     cond: id > 1
 
-- name: Get index statistics of test_idx from mydb
+- name: Create unique btree index if not exists test_unique_idx on column name of table products
   postgresql_idx:
-    db: mydb
-    idxname: test_idx
-    state: stat
+    db: acme
+    table: products
+    columns: name
+    name: test_unique_idx
+    unique: yes
+    concurrent: no
 '''
 
 RETURN = r'''
@@ -243,11 +249,6 @@ valid:
   returned: always
   type: bool
   sample: true
-stat:
-  description: Index statistics.
-  returned: if state is stat
-  type: bool
-  sample: { 'idx_scan': 19239, 'idx_tup_read': 929329, 'idx_tup_fetch': 4949459 }
 '''
 
 try:
@@ -328,22 +329,6 @@ class Index(object):
         self.__exists_in_db()
         return self.info
 
-    def get_stat(self):
-        """Get and return index statistics.
-
-        Return index statistics dictionary if index exists, otherwise False.
-        """
-        query = ("SELECT * FROM pg_stat_user_indexes "
-                 "WHERE indexrelname = %(name)s "
-                 "AND schemaname = %(schema)s")
-
-        result = exec_sql(self, query, query_params={'name': self.name, 'schema': self.schema},
-                          add_to_executed=False)
-        if result:
-            return [dict(row) for row in result]
-        else:
-            return False
-
     def __exists_in_db(self):
         """Check index existence, collect info, add it to self.info dict.
 
@@ -376,7 +361,7 @@ class Index(object):
             self.exists = False
             return False
 
-    def create(self, tblname, idxtype, columns, cond, tblspace, storage_params, concurrent=True):
+    def create(self, tblname, idxtype, columns, cond, tblspace, storage_params, concurrent=True, unique=False):
         """Create PostgreSQL index.
 
         Return True if success, otherwise, return False.
@@ -397,7 +382,12 @@ class Index(object):
         if idxtype is None:
             idxtype = "BTREE"
 
-        query = 'CREATE INDEX'
+        query = 'CREATE'
+
+        if unique:
+            query += ' UNIQUE'
+
+        query += ' INDEX'
 
         if concurrent:
             query += ' CONCURRENTLY'
@@ -474,8 +464,9 @@ def main():
     argument_spec.update(
         idxname=dict(type='str', required=True, aliases=['name']),
         db=dict(type='str', aliases=['login_db']),
-        state=dict(type='str', default='present', choices=['absent', 'present', 'stat']),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
         concurrent=dict(type='bool', default=True),
+        unique=dict(type='bool', default=False),
         table=dict(type='str'),
         idxtype=dict(type='str', aliases=['type']),
         columns=dict(type='list', aliases=['column']),
@@ -494,6 +485,7 @@ def main():
     idxname = module.params["idxname"]
     state = module.params["state"]
     concurrent = module.params["concurrent"]
+    unique = module.params["unique"]
     table = module.params["table"]
     idxtype = module.params["idxtype"]
     columns = module.params["columns"]
@@ -504,7 +496,10 @@ def main():
     schema = module.params["schema"]
 
     if concurrent and cascade:
-        module.fail_json(msg="Cuncurrent mode and cascade parameters are mutually exclusive")
+        module.fail_json(msg="Concurrent mode and cascade parameters are mutually exclusive")
+
+    if unique and (idxtype and idxtype != 'btree'):
+        module.fail_json(msg="Only btree currently supports unique indexes")
 
     if state == 'present':
         if not table:
@@ -535,14 +530,7 @@ def main():
     #
     # check_mode start
     if module.check_mode:
-        if state == 'stat':
-            if index.exists:
-                kw['stat'] = index.get_stat()
-
-            kw['changed'] = False
-            module.exit_json(**kw)
-
-        elif state == 'present' and index.exists:
+        if state == 'present' and index.exists:
             kw['changed'] = False
             module.exit_json(**kw)
 
@@ -560,14 +548,7 @@ def main():
     # check_mode end
     #
 
-    if state == 'stat':
-        if index.exists:
-            kw['stat'] = index.get_stat()
-
-        kw['changed'] = False
-        module.exit_json(**kw)
-
-    elif state == "present":
+    if state == "present":
         if idxtype and idxtype.upper() not in VALID_IDX_TYPES:
             module.fail_json(msg="Index type '%s' of %s is not in valid types" % (idxtype, idxname))
 
@@ -576,7 +557,7 @@ def main():
         if storage_params:
             storage_params = ','.join(storage_params)
 
-        changed = index.create(table, idxtype, columns, cond, tablespace, storage_params, concurrent)
+        changed = index.create(table, idxtype, columns, cond, tablespace, storage_params, concurrent, unique)
 
         if changed:
             kw = index.get_info()

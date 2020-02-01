@@ -377,7 +377,7 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
             return False
 
         if not self._check_format():
-            if ignore_conversion or self.format_mismatch != 'convert':
+            if not ignore_conversion or self.format_mismatch != 'convert':
                 return False
 
         return True
@@ -606,7 +606,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
                 format=export_format,
                 encryption_algorithm=encryption_algorithm
             )
-        except ValueError as e:
+        except ValueError as dummy:
             self.module.fail_json(
                 msg='Cryptography backend cannot serialize the private key in the required format "{0}"'.format(self.format)
             )
@@ -678,6 +678,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
 
     def _check_size_and_type(self):
         privatekey = self._load_privatekey()
+        self.privatekey = privatekey
 
         if isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
             return self.type == 'RSA' and self.size == privatekey.key_size

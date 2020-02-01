@@ -11,7 +11,7 @@
     dnetworks: "{{ dnetworks + [nname_ipam_0, nname_ipam_1, nname_ipam_2, nname_ipam_3] }}"
 
 
-#################### network-ipam-0 deprecated ####################
+#################### Deprecated ipam_config ####################
 
 - name: Create network with ipam_config and deprecated ipam_options (conflicting)
   docker_network:
@@ -98,7 +98,7 @@
     state: absent
 
 
-#################### network-ipam-1 ####################
+#################### IPv4 IPAM config ####################
 - name: Create network with custom IPAM config
   docker_network:
     name: "{{ nname_ipam_1 }}"
@@ -169,7 +169,7 @@
     state: absent
 
 
-#################### network-ipam-2 ####################
+#################### IPv6 IPAM config ####################
 
 - name: Create network with IPv6 IPAM config
   docker_network:
@@ -230,7 +230,7 @@
     state: absent
 
 
-#################### network-ipam-3 ####################
+#################### IPv4 and IPv6 network ####################
 
 - name: Create network with IPv6 and custom IPv4 IPAM config
   docker_network:
@@ -279,7 +279,79 @@
     state: absent
 
 
-#################### network-ipam-4 ####################
+#################### multiple IPv4 networks ####################
+
+- block:
+  - name: Create network with two IPv4 IPAM configs
+    docker_network:
+      name: "{{ nname_ipam_3 }}"
+      driver: "macvlan"
+      driver_options:
+        parent: "{{ ansible_default_ipv4.alias }}"
+      ipam_config:
+        - subnet: 172.4.27.0/24
+        - subnet: 172.4.28.0/24
+    register: network
+
+  - assert:
+      that:
+        - network is changed
+
+  - name: Create network with two IPv4 IPAM configs (idempotence)
+    docker_network:
+      name: "{{ nname_ipam_3 }}"
+      driver: "macvlan"
+      driver_options:
+        parent: "{{ ansible_default_ipv4.alias }}"
+      ipam_config:
+        - subnet: 172.4.28.0/24
+        - subnet: 172.4.27.0/24
+    register: network
+
+  - assert:
+      that:
+        - network is not changed
+
+  - name: Create network with two IPv4 IPAM configs (change)
+    docker_network:
+      name: "{{ nname_ipam_3 }}"
+      driver: "macvlan"
+      driver_options:
+        parent: "{{ ansible_default_ipv4.alias }}"
+      ipam_config:
+        - subnet: 172.4.27.0/24
+        - subnet: 172.4.29.0/24
+    register: network
+    diff: yes
+
+  - assert:
+      that:
+        - network is changed
+        - network.diff.differences | length == 1
+
+  - name: Create network with one IPv4 IPAM config (no change)
+    docker_network:
+      name: "{{ nname_ipam_3 }}"
+      driver: "macvlan"
+      driver_options:
+        parent: "{{ ansible_default_ipv4.alias }}"
+      ipam_config:
+        - subnet: 172.4.29.0/24
+    register: network
+
+  - assert:
+      that:
+        - network is not changed
+
+  - name: Cleanup network
+    docker_network:
+      name: "{{ nname_ipam_3 }}"
+      state: absent
+
+  when: ansible_facts.virtualization_type != 'docker'
+
+
+#################### IPAM driver options ####################
 
 - name: Create network with IPAM driver options
   docker_network:

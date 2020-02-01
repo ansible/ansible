@@ -72,7 +72,14 @@ EXAMPLES = '''
     msg: Task completed ... with feeling.
 '''
 
-import cgi
+try:
+    from html import escape as html_escape
+except ImportError:
+    # Python-3.2 or later
+    import cgi
+
+    def html_escape(text, quote=True):
+        return cgi.escape(text, quote)
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -126,14 +133,14 @@ def main():
 
     # Send some audible notification if requested
     if notify:
-        response, info = fetch_url(module, target_url, data=NSTR % cgi.escape(notify), headers=headers)
+        response, info = fetch_url(module, target_url, data=NSTR % html_escape(notify), headers=headers)
         if info['status'] not in [200, 201]:
             module.fail_json(msg="unable to send msg: '%s', campfire api"
                              " returned error code: '%s'" %
                                  (notify, info['status']))
 
     # Send the message
-    response, info = fetch_url(module, target_url, data=MSTR % cgi.escape(msg), headers=headers)
+    response, info = fetch_url(module, target_url, data=MSTR % html_escape(msg), headers=headers)
     if info['status'] not in [200, 201]:
         module.fail_json(msg="unable to send msg: '%s', campfire api"
                          " returned error code: '%s'" %

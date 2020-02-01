@@ -144,7 +144,7 @@ resources:
       type: str
     storageBytes:
       description:
-      - A size of the the storage used by the snapshot. As snapshots share storage,
+      - A size of the storage used by the snapshot. As snapshots share storage,
         this number is expected to change with snapshot creation/deletion.
       returned: success
       type: int

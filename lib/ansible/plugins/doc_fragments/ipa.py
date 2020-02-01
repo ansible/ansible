@@ -45,7 +45,6 @@ options:
     - If GSSAPI is not available, the usage of 'ipa_pass' is required.
     - Environment variable fallback mechanism is added in Ansible 2.5.
     type: str
-    required: true
   ipa_prot:
     description:
     - Protocol used by IPA server.
