@@ -82,3 +82,27 @@
 
     - name: Second free task
       command: echo foo
+
+    - name: Include task
+      include_tasks: .include.yml
+
+    - name: Include task in a loop
+      include_tasks: .include.yml
+      loop:
+        - one
+        - two
+
+    - name: Include task in a loop with label
+      include_tasks: .include.yml
+      loop:
+        - one
+        - two
+      loop_control:
+        label: foo-{{ item }}
+
+    - name: Include task in a loop with no_log
+      include_tasks: .include.yml
+      loop:
+        - one
+        - two
+      no_log: yes

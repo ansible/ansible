@@ -1,0 +1,4 @@
+---
+- name: Just print an item if defined
+  command: echo {{ item }}
+  when: item is defined

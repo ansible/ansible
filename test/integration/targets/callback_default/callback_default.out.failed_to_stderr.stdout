@@ -55,7 +55,35 @@ changed: [testhost]
 
 TASK [Second free task] ********************************************************
 changed: [testhost]
+included: $PWD/.include.yml for testhost
+
+TASK [Just print an item if defined] *******************************************
+skipping: [testhost]
+included: $PWD/.include.yml for testhost => (item=one)
+included: $PWD/.include.yml for testhost => (item=two)
+
+TASK [Just print an item if defined] *******************************************
+changed: [testhost]
+
+TASK [Just print an item if defined] *******************************************
+changed: [testhost]
+included: $PWD/.include.yml for testhost => (item=foo-one)
+included: $PWD/.include.yml for testhost => (item=foo-two)
+
+TASK [Just print an item if defined] *******************************************
+changed: [testhost]
+
+TASK [Just print an item if defined] *******************************************
+changed: [testhost]
+included: $PWD/.include.yml for testhost => (item=(censored due to no_log))
+included: $PWD/.include.yml for testhost => (item=(censored due to no_log))
+
+TASK [Just print an item if defined] *******************************************
+changed: [testhost]
+
+TASK [Just print an item if defined] *******************************************
+changed: [testhost]
 
 PLAY RECAP *********************************************************************
-testhost                   : ok=12   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
+testhost                   : ok=25   changed=15   unreachable=0    failed=0    skipped=2    rescued=1    ignored=2   
 
