@@ -556,8 +556,11 @@ import time
 import traceback
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, HAS_BOTO3, camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (
+    AWSRetry,
+    camel_dict_to_snake_dict
+)
 
 try:
     import botocore
@@ -778,19 +781,19 @@ def get_properties(autoscaling_group):
     properties['metrics_collection'] = metrics
 
     if properties['target_group_arns']:
-        region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-        elbv2_connection = boto3_conn(module,
-                                      conn_type='client',
-                                      resource='elbv2',
-                                      region=region,
-                                      endpoint=ec2_url,
-                                      **aws_connect_params)
+        elbv2_connection = module.client('elbv2')
         tg_paginator = elbv2_connection.get_paginator('describe_target_groups')
-        tg_result = tg_paginator.paginate(TargetGroupArns=properties['target_group_arns']).build_full_result()
+        tg_result = tg_paginator.paginate(
+            TargetGroupArns=properties['target_group_arns']
+        ).build_full_result()
         target_groups = tg_result['TargetGroups']
     else:
         target_groups = []
-    properties['target_group_names'] = [tg['TargetGroupName'] for tg in target_groups]
+
+    properties['target_group_names'] = [
+        tg['TargetGroupName']
+        for tg in target_groups
+    ]
 
     return properties
 
@@ -836,17 +839,11 @@ def get_launch_object(connection, ec2_connection):
 
 
 def elb_dreg(asg_connection, group_name, instance_id):
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     as_group = describe_autoscaling_groups(asg_connection, group_name)[0]
     wait_timeout = module.params.get('wait_timeout')
     count = 1
     if as_group['LoadBalancerNames'] and as_group['HealthCheckType'] == 'ELB':
-        elb_connection = boto3_conn(module,
-                                    conn_type='client',
-                                    resource='elb',
-                                    region=region,
-                                    endpoint=ec2_url,
-                                    **aws_connect_params)
+        elb_connection = module.client('elb')
     else:
         return
 
@@ -939,7 +936,6 @@ def tg_healthy(asg_connection, elbv2_connection, group_name):
 
 
 def wait_for_elb(asg_connection, group_name):
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     wait_timeout = module.params.get('wait_timeout')
 
     # if the health_check_type is ELB, we want to query the ELBs directly for instance
@@ -948,12 +944,7 @@ def wait_for_elb(asg_connection, group_name):
 
     if as_group.get('LoadBalancerNames') and as_group.get('HealthCheckType') == 'ELB':
         module.debug("Waiting for ELB to consider instances healthy.")
-        elb_connection = boto3_conn(module,
-                                    conn_type='client',
-                                    resource='elb',
-                                    region=region,
-                                    endpoint=ec2_url,
-                                    **aws_connect_params)
+        elb_connection = module.client('elb')
 
         wait_timeout = time.time() + wait_timeout
         healthy_instances = elb_healthy(asg_connection, elb_connection, group_name)
@@ -969,7 +960,6 @@ def wait_for_elb(asg_connection, group_name):
 
 
 def wait_for_target_group(asg_connection, group_name):
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     wait_timeout = module.params.get('wait_timeout')
 
     # if the health_check_type is ELB, we want to query the ELBs directly for instance
@@ -978,12 +968,7 @@ def wait_for_target_group(asg_connection, group_name):
 
     if as_group.get('TargetGroupARNs') and as_group.get('HealthCheckType') == 'ELB':
         module.debug("Waiting for Target Group to consider instances healthy.")
-        elbv2_connection = boto3_conn(module,
-                                      conn_type='client',
-                                      resource='elbv2',
-                                      region=region,
-                                      endpoint=ec2_url,
-                                      **aws_connect_params)
+        elbv2_connection = module.client('elbv2')
 
         wait_timeout = time.time() + wait_timeout
         healthy_instances = tg_healthy(asg_connection, elbv2_connection, group_name)
@@ -1046,19 +1031,18 @@ def create_autoscaling_group(connection):
     metrics_granularity = module.params.get('metrics_granularity')
     metrics_list = module.params.get('metrics_list')
     max_instance_lifetime = module.params.get('max_instance_lifetime')
+    if max_instance_lifetime is not None and not module.boto3_at_least('1.10.32'):
+        module.fail_json(
+            msg='Boto3 needs to be version 1.10.32 or higher to use max_instance_lifetime.'
+        )
+
     try:
         as_groups = describe_autoscaling_groups(connection, group_name)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json(msg="Failed to describe auto scaling groups.",
                          exception=traceback.format_exc())
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    ec2_connection = boto3_conn(module,
-                                conn_type='client',
-                                resource='ec2',
-                                region=region,
-                                endpoint=ec2_url,
-                                **aws_connect_params)
+    ec2_connection = module.client('ec2')
 
     if vpc_zone_identifier:
         vpc_zone_identifier = ','.join(vpc_zone_identifier)
@@ -1723,56 +1707,66 @@ def asg_exists(connection):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True, type='str'),
-            load_balancers=dict(type='list'),
-            target_group_arns=dict(type='list'),
-            availability_zones=dict(type='list'),
-            launch_config_name=dict(type='str'),
-            launch_template=dict(type='dict',
-                                 default=None,
-                                 options=dict(
-                                     version=dict(type='str'),
-                                     launch_template_name=dict(type='str'),
-                                     launch_template_id=dict(type='str'),
-                                 ),
-                                 ),
-            mixed_instances_policy=dict(type='dict',
-                                        default=None,
-                                        options=dict(
-                                            instance_types=dict(type='list', elements='str'),
-                                        )),
-            min_size=dict(type='int'),
-            max_size=dict(type='int'),
-            placement_group=dict(type='str'),
-            desired_capacity=dict(type='int'),
-            vpc_zone_identifier=dict(type='list'),
-            replace_batch_size=dict(type='int', default=1),
-            replace_all_instances=dict(type='bool', default=False),
-            replace_instances=dict(type='list', default=[]),
-            lc_check=dict(type='bool', default=True),
-            lt_check=dict(type='bool', default=True),
-            wait_timeout=dict(type='int', default=300),
-            state=dict(default='present', choices=['present', 'absent']),
-            tags=dict(type='list', default=[]),
-            health_check_period=dict(type='int', default=300),
-            health_check_type=dict(default='EC2', choices=['EC2', 'ELB']),
-            default_cooldown=dict(type='int', default=300),
-            wait_for_instances=dict(type='bool', default=True),
-            termination_policies=dict(type='list', default='Default'),
-            notification_topic=dict(type='str', default=None),
-            notification_types=dict(type='list', default=[
+    argument_spec = dict(
+        name=dict(required=True, type='str'),
+        load_balancers=dict(type='list'),
+        target_group_arns=dict(type='list'),
+        availability_zones=dict(type='list'),
+        launch_config_name=dict(type='str'),
+        launch_template=dict(
+            type='dict',
+            default=None,
+            options=dict(
+                version=dict(type='str'),
+                launch_template_name=dict(type='str'),
+                launch_template_id=dict(type='str'),
+            )
+        ),
+        min_size=dict(type='int'),
+        max_size=dict(type='int'),
+        max_instance_lifetime=dict(type='int'),
+        mixed_instances_policy=dict(
+            type='dict',
+            default=None,
+            options=dict(
+                instance_types=dict(
+                    type='list',
+                    elements='str'
+                ),
+            )
+        ),
+        placement_group=dict(type='str'),
+        desired_capacity=dict(type='int'),
+        vpc_zone_identifier=dict(type='list'),
+        replace_batch_size=dict(type='int', default=1),
+        replace_all_instances=dict(type='bool', default=False),
+        replace_instances=dict(type='list', default=[]),
+        lc_check=dict(type='bool', default=True),
+        lt_check=dict(type='bool', default=True),
+        wait_timeout=dict(type='int', default=300),
+        state=dict(default='present', choices=['present', 'absent']),
+        tags=dict(type='list', default=[]),
+        health_check_period=dict(type='int', default=300),
+        health_check_type=dict(default='EC2', choices=['EC2', 'ELB']),
+        default_cooldown=dict(type='int', default=300),
+        wait_for_instances=dict(type='bool', default=True),
+        termination_policies=dict(type='list', default='Default'),
+        notification_topic=dict(type='str', default=None),
+        notification_types=dict(
+            type='list',
+            default=[
                 'autoscaling:EC2_INSTANCE_LAUNCH',
                 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR',
                 'autoscaling:EC2_INSTANCE_TERMINATE',
                 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
-            ]),
-            suspend_processes=dict(type='list', default=[]),
-            metrics_collection=dict(type='bool', default=False),
-            metrics_granularity=dict(type='str', default='1Minute'),
-            metrics_list=dict(type='list', default=[
+            ]
+        ),
+        suspend_processes=dict(type='list', default=[]),
+        metrics_collection=dict(type='bool', default=False),
+        metrics_granularity=dict(type='str', default='1Minute'),
+        metrics_list=dict(
+            type='list',
+            default=[
                 'GroupMinSize',
                 'GroupMaxSize',
                 'GroupDesiredCapacity',
@@ -1781,9 +1775,8 @@ def main():
                 'GroupStandbyInstances',
                 'GroupTerminatingInstances',
                 'GroupTotalInstances'
-            ]),
-            max_instance_lifetime=dict(type='int')
-        ),
+            ]
+        )
     )
 
     global module
@@ -1791,11 +1784,9 @@ def main():
         argument_spec=argument_spec,
         mutually_exclusive=[
             ['replace_all_instances', 'replace_instances'],
-            ['launch_config_name', 'launch_template']]
+            ['launch_config_name', 'launch_template']
+        ]
     )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     if module.params.get('mixed_instance_type') and not module.botocore_at_least('1.12.45'):
         module.fail_json(msg="mixed_instance_type is only supported with botocore >= 1.12.45")
@@ -1804,13 +1795,7 @@ def main():
     replace_instances = module.params.get('replace_instances')
     replace_all_instances = module.params.get('replace_all_instances')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module,
-                            conn_type='client',
-                            resource='autoscaling',
-                            region=region,
-                            endpoint=ec2_url,
-                            **aws_connect_params)
+    connection = module.client('autoscaling')
     changed = create_changed = replace_changed = False
     exists = asg_exists(connection)
 
