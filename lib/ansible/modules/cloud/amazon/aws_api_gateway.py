@@ -74,37 +74,36 @@ options:
       - Enable API GW caching of backend responses. Defaults to false
     type: bool
     default: false
-    version_added: '2.9'
+    version_added: '2.10'
   cache_size:
     description:
       - Size in GB of the API GW cache, becomes effective when cache_enabled is true.
     choices: ['0.5', '1.6', '6.1', '13.5', '28.4', '58.2', '118', '237']
     type: str
     default: '0.5'
-    version_added: '2.9'
+    version_added: '2.10'
   stage_variables:
     description:
       - ENV variables for the stage. Define a dict of key values pairs for variables.
     type: dict
-    version_added: '2.9'
+    version_added: '2.10'
   stage_canary_settings:
     description:
       - Canary settings for the deployment of the stage
     type: dict
-    version_added: '2.9'
+    version_added: '2.10'
   tracing_enabled:
     description:
       - Specifies whether active tracing with X-ray is enabled for the API GW stage.
     type: bool
-    version_added: '2.9'
+    version_added: '2.10'
   endpoint_type:
     description:
       - Type of endpoint configuration, use EDGE for edge optomized API endpoint, REGIONAL for just regional deploy or PRIVATE for private API.
     choices: ['EDGE', 'REGIONAL', 'PRIVATE']
     type: str
     default: EDGE
-    version_added: '2.9'
-
+    version_added: '2.10'
 author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:
