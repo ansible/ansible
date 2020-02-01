@@ -46,7 +46,8 @@ options:
     config_drive:
       description:
         - A configdrive file or HTTP(S) URL that will be passed along to the
-          node.
+          node or a full gzip'ed and base-64 encoded image or a JSON object
+          with the keys meta_data, network_data, user_data, vendor_data.
     instance_info:
       description:
         - Definition of the instance information which is used to deploy
@@ -98,19 +99,35 @@ options:
 
 EXAMPLES = '''
 # Activate a node by booting an image with a configdrive attached
-os_ironic_node:
-  cloud: "openstack"
-  uuid: "d44666e1-35b3-4f6b-acb0-88ab7052da69"
-  state: present
-  power: present
-  deploy: True
-  maintenance: False
-  config_drive: "http://192.168.1.1/host-configdrive.iso"
-  instance_info:
-    image_source: "http://192.168.1.1/deploy_image.img"
-    image_checksum: "356a6b55ecc511a20c33c946c4e678af"
-    image_disk_format: "qcow"
-  delegate_to: localhost
+- os_ironic_node:
+    cloud: "openstack"
+    uuid: "d44666e1-35b3-4f6b-acb0-88ab7052da69"
+    state: present
+    power: present
+    deploy: True
+    maintenance: False
+    config_drive: "http://192.168.1.1/host-configdrive.iso"
+    instance_info:
+      image_source: "http://192.168.1.1/deploy_image.img"
+      image_checksum: "356a6b55ecc511a20c33c946c4e678af"
+      image_disk_format: "qcow"
+    delegate_to: localhost
+
+# Activate a node by booting an image with a configdrive json object
+- os_ironic_node:
+    uuid: "d44666e1-35b3-4f6b-acb0-88ab7052da69"
+    auth_type: None
+    ironic_url: "http://192.168.1.1:6385/"
+    config_drive:
+      meta_data:
+        hostname: node1
+        public_keys:
+          default: ssh-rsa AAA...BBB==
+    instance_info:
+      image_source: "http://192.168.1.1/deploy_image.img"
+      image_checksum: "356a6b55ecc511a20c33c946c4e678af"
+      image_disk_format: "qcow"
+    delegate_to: localhost
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -204,7 +221,7 @@ def main():
         uuid=dict(required=False),
         name=dict(required=False),
         instance_info=dict(type='dict', required=False),
-        config_drive=dict(required=False),
+        config_drive=dict(type='raw', required=False),
         ironic_url=dict(required=False),
         state=dict(required=False, default='present'),
         maintenance=dict(required=False),
@@ -227,6 +244,13 @@ def main():
         module.params['auth'] = dict(
             endpoint=module.params['ironic_url']
         )
+
+    if (module.params['config_drive'] and
+            not isinstance(module.params['config_drive'], (str, dict))):
+        config_drive_type = type(module.params['config_drive'])
+        msg = ('argument config_drive is of type %s and we expected'
+               ' str or dict') % config_drive_type
+        module.fail_json(msg=msg)
 
     node_id = _choose_id_value(module)
 
