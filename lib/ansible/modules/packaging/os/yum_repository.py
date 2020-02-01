@@ -115,6 +115,11 @@ options:
     description:
       - A URL pointing to the ASCII-armored GPG key file for the repository.
       - It can also be a list of multiple URLs.
+  module_hotfixes:
+    description:
+      - Disable module RPM filtering and make all RPMs from the repository
+        available. The default is False.
+    version_added: '2.10'
   http_caching:
     description:
       - Determines how upstream HTTP caches are instructed to handle any HTTP
@@ -415,6 +420,7 @@ class YumRepo(object):
         'gpgcakey',
         'gpgcheck',
         'gpgkey',
+        'module_hotfixes',
         'http_caching',
         'include',
         'includepkgs',
@@ -568,6 +574,7 @@ def main():
         gpgcakey=dict(),
         gpgcheck=dict(type='bool'),
         gpgkey=dict(type='list'),
+        module_hotfixes=dict(type='bool'),
         http_caching=dict(choices=['all', 'packages', 'none']),
         include=dict(),
         includepkgs=dict(type='list'),
