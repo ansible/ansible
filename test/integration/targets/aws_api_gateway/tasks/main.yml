@@ -62,7 +62,7 @@
       assert:
         that:
           - 'create_result.changed == True'
-          - 'create_update.failed == False'
+          - 'create_result.failed == False'
           - 'create_result.deploy_response.description == "Automatic deployment by Ansible."'
           - 'create_result.configure_response.id == create_result.api_id'
           - '"apigateway:CreateRestApi" in create_result.resource_actions'
@@ -107,9 +107,9 @@
     - name: assert update result
       assert:
         that:
-          - 'create_update.changed == True'
-          - 'create_update.failed == False'
-          - 'create_update.configure_response.endpoint_configuration.types.0 == "REGIONAL"'
+          - 'update_result.changed == True'
+          - 'update_result.failed == False'
+          - 'update_result.configure_response.endpoint_configuration.types.0 == "REGIONAL"'
 
     # ==== additional create/delete tests ====
 
