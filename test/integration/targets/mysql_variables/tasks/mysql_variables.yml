@@ -394,3 +394,19 @@
   register: result
 
 - include: assert_var.yml changed=true output={{result}} var_name={{set_name}} var_value='{{def_val}}'
+
+# Bugfix of https://github.com/ansible/ansible/issues/54239
+- name: set variable containing dot
+  mysql_variables:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: root
+    login_password: '{{ root_pass }}'
+    variable: validate_password.policy
+    value: LOW
+    mode: persist_only
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["SET PERSIST_ONLY `validate_password`.`policy` = LOW"]
