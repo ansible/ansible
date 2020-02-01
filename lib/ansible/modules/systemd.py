@@ -333,7 +333,7 @@ def main():
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
             daemon_reexec=dict(type='bool', default=False, aliases=['daemon-reexec']),
             user=dict(type='bool'),
-            scope=dict(type='str', choices=['system', 'user', 'global']),
+            scope=dict(type='str', default='system', choices=['system', 'user', 'global']),
             no_block=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
@@ -368,7 +368,7 @@ def main():
 
     # if scope is 'system' or None, we can ignore as there is no extra switch.
     # The other choices match the corresponding switch
-    if module.params['scope'] not in (None, 'system'):
+    if module.params['scope'] != 'system':
         systemctl += " --%s" % module.params['scope']
 
     if module.params['no_block']:
@@ -488,7 +488,7 @@ def main():
                 enabled = True
             elif rc == 1:
                 # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
-                if module.params['scope'] in (None, 'system') and \
+                if module.params['scope'] == 'system' and \
                         not module.params['user'] and \
                         is_initd and \
                         not out.strip().endswith('disabled') and \
