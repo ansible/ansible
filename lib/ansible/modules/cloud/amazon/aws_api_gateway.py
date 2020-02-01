@@ -98,7 +98,9 @@ options:
     version_added: '2.10'
   endpoint_type:
     description:
-      - Type of endpoint configuration, use EDGE for edge optomized API endpoint, REGIONAL for just regional deploy or PRIVATE for private API.
+      - Type of endpoint configuration, use EDGE for an edge optomized API endpoint,
+      - REGIONAL for just a regional deploy or PRIVATE for a private API.
+      - This will flag will only be used when creating a new API Gateway setup, not for updates.
     choices: ['EDGE', 'REGIONAL', 'PRIVATE']
     type: str
     default: EDGE

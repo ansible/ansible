@@ -52,6 +52,7 @@
       aws_api_gateway:
         api_file: "{{output_dir}}/minimal-swagger-api.yml"
         stage: "minimal"
+        endpoint_type: 'REGIONAL'
         state: present
         region: '{{ec2_region}}'
         aws_access_key: '{{ec2_access_key}}'
@@ -67,6 +68,7 @@
           - 'create_result.deploy_response.description == "Automatic deployment by Ansible."'
           - 'create_result.configure_response.id == create_result.api_id'
           - '"apigateway:CreateRestApi" in create_result.resource_actions'
+          - 'create_result.configure_response.endpoint_configuration.types.0 == "REGIONAL"'
 
     - name: check if API endpoint works
       uri: url="https://{{create_result.api_id}}.execute-api.{{ec2_region}}.amazonaws.com/minimal"
@@ -94,7 +96,6 @@
         cache_enabled: true
         cache_size: '1.6'
         tracing_enabled: true
-        endpoint_type: 'REGIONAL'
         state: present
         region: '{{ec2_region}}'
         aws_access_key: '{{ec2_access_key}}'
@@ -107,7 +108,6 @@
         that:
           - 'update_result.changed == True'
           - 'update_result.failed == False'
-          - '"REGIONAL" in update_result.configure_response.endpoint_configuration.types'
           - '"apigateway:PutRestApi" in update_result.resource_actions'
 
     # ==== additional create/delete tests ====
@@ -142,6 +142,7 @@
            - 'create_result_2.changed == True'
            - '"api_id" in create_result_1'
            - '"api_id" in create_result_1'
+          - 'create_result_1.configure_response.endpoint_configuration.types.0 == "EDGE"'
 
     - name: destroy first API
       aws_api_gateway:
