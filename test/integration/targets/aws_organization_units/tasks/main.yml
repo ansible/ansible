@@ -53,3 +53,142 @@
         that:
            - 'result.failed'
            - 'result.msg.startswith("Invalid ARN format")'
+
+    # ============================================================
+    - name: set up AWS credentials
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_region: "{{ aws_region }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+      no_log: yes
+
+    - name: test create ou
+      aws_organization_units:
+        <<: *aws_connection_info
+        name: AnsibleModuleTestOU
+      register: result
+      ignore_errors: true
+  
+    - name: assert ou created
+      assert:
+        that:
+           - 'result.changed'
+           - 'result.name == "AnsibleModuleTestOU"'
+           - 'result.ou["Arn"].startswith("arn:aws:organizations::")'
+
+    - name: test delete ou
+      aws_organization_units:
+        <<: *aws_connection_info
+        name: AnsibleModuleTestOU
+        state: absent
+      register: result
+      ignore_errors: true
+  
+    - name: assert ou deleted
+      assert:
+        that:
+           - 'result.changed'
+
+    # ============================================================
+
+    - name: create test ou
+      aws_organization_units:
+        <<: *aws_connection_info
+        name: AnsibleModuleTestOU
+      register: test_ou_arn
+   
+    - name: test delete ou via arn
+      aws_organization_units:
+        <<: *aws_connection_info
+        arn: '{{ test_ou_arn.ou["Arn"] }}'
+        state: absent
+      register: result
+      ignore_errors: true
+  
+    - name: assert ou deleted
+      assert:
+        that:
+           - 'result.changed'
+
+    # ============================================================
+    
+    - name: test create child OU with non existing parent
+      aws_organization_units:
+        <<: *aws_connection_info
+        name: AnsibleModuleTestOU/Testing
+      register: result
+      ignore_errors: true
+
+    - name: assert create failed
+      assert:
+        that:
+           - 'result.failed'
+
+    # ============================================================
+    - name: test list of OUs
+      set_fact:
+        ansible_test_ous:
+          - AnsibleModuleTestOU
+          - AnsibleModuleTestOU/Testing
+    
+    - name: test create parent child OUs
+      aws_organization_units:
+        <<: *aws_connection_info
+        name: "{{ item }}"
+      loop: "{{ ansible_test_ous }}"
+      register: result
+      ignore_errors: true
+
+    - name: assert ous created
+      assert:
+        that:
+           - 'result.changed'
+
+    - name: clean up
+      aws_organization_units:
+        <<: *aws_connection_info
+        name: "{{ item }}"
+        state: absent
+      loop: "{{ ansible_test_ous | reverse | list }}"
+
+    # ============================================================
+    - name: create test ous
+      aws_organization_units:
+        <<: *aws_connection_info
+        name: "{{ item }}"
+      loop: "{{ ansible_test_ous }}"
+
+    - name: test if parent ou cannot be delted
+      aws_organization_units:
+        <<: *aws_connection_info
+        name: AnsibleModuleTestOU
+        state: absent
+      register: result
+      ignore_errors: true
+
+    - name: assert that call failed
+      assert:
+        that:
+          - 'result.failed'
+
+    - name: clean up
+      aws_organization_units:
+        <<: *aws_connection_info
+        name: "{{ item }}"
+        state: absent
+      loop: "{{ ansible_test_ous | reverse | list }}"
+ 
+
+
+
+
+
+
+
+
+
+
+
+
