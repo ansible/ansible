@@ -37,8 +37,7 @@ options:
       - The ID of the API you want to manage.
     type: str
   state:
-    description:
-      - NOT IMPLEMENTED Create or delete API - currently we always create.
+    description: Create or delete API Gateway.
     default: present
     choices: [ 'present', 'absent' ]
     type: str
@@ -249,7 +248,7 @@ def get_api_definitions(module, swagger_file=None, swagger_dict=None, swagger_te
         apidata = swagger_text
 
     if apidata is None:
-        module.fail_json(msg='module error - failed to get API data')
+        module.fail_json(msg='module error - no swagger info provided')
     return apidata
 
 

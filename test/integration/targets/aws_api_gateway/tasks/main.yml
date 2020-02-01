@@ -52,6 +52,7 @@
       aws_api_gateway:
         api_file: "{{output_dir}}/minimal-swagger-api.yml"
         stage: "minimal"
+        state: present
         region: '{{ec2_region}}'
         aws_access_key: '{{ec2_access_key}}'
         aws_secret_key: '{{ec2_secret_key}}'
@@ -89,10 +90,11 @@
     - name: Update API to test params effect
       aws_api_gateway:
         api_id: '{{create_result.api_id}}'
+        api_file: "{{output_dir}}/minimal-swagger-api.yml"
         cache_enabled: true
         cache_size: '1.6'
         tracing_enabled: true
-#        endpoint_type: 'REGIONAL'
+        endpoint_type: 'REGIONAL'
         state: present
         region: '{{ec2_region}}'
         aws_access_key: '{{ec2_access_key}}'
@@ -105,7 +107,7 @@
         that:
           - 'update_result.changed == True'
           - 'update_result.failed == False'
-#          - 'update_result.configure_response.endpoint_configuration.types.0 == "REGIONAL"'
+          - 'update_result.configure_response.endpoint_configuration.types.0 == "REGIONAL"'
 
     # ==== additional create/delete tests ====
 
