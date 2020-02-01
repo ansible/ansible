@@ -14,17 +14,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 module: aws_organization_units
-short_description: Manages AWS Organizations Units
+short_description: Manages AWS Organizational Units
 description:
-  - Creates and deletes AWS OrganizationalUnits.
+  - Creates and deletes AWS Organizational Units.
 version_added: "2.10"
 author:
   - Kamil Potrec (@p0tr3c)
 options:
   name:
     description:
-      - Name of the organizational unit
-        This can be full OU path such as "Prod/IT/Service_Desk".
+      - Name of the organizational unit.
+        This can be full OU path such as C(Prod/IT/Service_Desk).
         The lookup always starts from the root node, as the names are not unique within the organization tree.
       - Mutually exclusive with c(arn)
     type: str
@@ -36,7 +36,7 @@ options:
     type: str
   state:
     description:
-      - State of the organizational unit
+      - State of the organizational unit.
     default: present
     type: str
     choices:
@@ -88,7 +88,7 @@ state:
   type: str
   sample: present
 ou:
-  description: The Organization Unit details.
+  description: The Organizational Unit details.
   returned: always
   type: dict
   sample:
@@ -106,9 +106,7 @@ except ImportError:
     # handled by AnsibleAWSModule
     pass
 
-from ansible.module_utils.ec2 import AWSRetry, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, camel_dict_to_snake_dict
-from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
-from ansible.module_utils._text import to_native
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 
 class ParameterValidationException(Exception):
