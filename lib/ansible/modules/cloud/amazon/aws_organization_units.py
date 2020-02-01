@@ -165,10 +165,7 @@ class AwsOrganizationalUnit():
         return parent_ou
 
     def get_aws_organizational_unit_by_arn(self, arn):
-        if arn.startswith("arn:aws:organizations::"):
-            ou_id = arn.split("/")[-1]
-        else:
-            raise ParameterValidationException
+        ou_id = arn.split("/")[-1]
         try:
             parent_ou = self.client.describe_organizational_unit(OrganizationalUnitId=ou_id)
         except ClientError as e:
@@ -225,7 +222,10 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         mutually_exclusive=[['name', 'arn']],
-        required_one_of=[['name', 'arn']]
+        required_one_of=[['name', 'arn']],
+        required_if=[
+            ['state', 'present', ['name']]
+        ]
     )
 
     result = dict(
@@ -240,10 +240,10 @@ def main():
     ou_state = module.params.get('state')
 
     if ou_arn:
+        if not ou_arn.startswith("arn:aws:organizations::"):
+            module.fail_json(msg="Invalid ARN format")
         try:
             client = AwsOrganizationalUnit(arn=ou_arn)
-        except ParameterValidationException as e:
-            module.fail_json(msg="Invalid ARN format")
         except (BotoCoreError, ClientError) as e:
             module.fail_json(msg="Boto failure")
     else:
