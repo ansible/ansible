@@ -109,6 +109,7 @@ Noteworthy module changes
     * Junction points are no longer reported as ``islnk``, use ``isjunction`` to properly report these files. This behaviour matches the :ref:`win_stat <win_stat_module>`
     * Directories no longer return a ``size``, this matches the ``stat`` and ``find`` behaviour and has been removed due to the difficulties in correctly reporting the size of a directory
 * :ref:`docker_container <docker_container_module>` no longer passes information on non-anonymous volumes or binds as ``Volumes`` to the Docker daemon. This increases compatibility with the ``docker`` CLI program. Note that if you specify ``volumes: strict`` in ``comparisons``, this could cause existing containers created with docker_container from Ansible 2.9 or earlier to restart.
+* :ref:`purefb_fs <purefb_fs_module>` no longer supports the deprecated ``nfs`` option. This has been superceeded by ``nfsv3``.
 
 Plugins
 =======
