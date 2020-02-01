@@ -119,9 +119,9 @@ class ParentOrganizationalUnitDoesNotExist(Exception):
 
 
 class AwsOrganizationalUnit():
-    def __init__(self, name=None, arn=None):
+    def __init__(self, module, name=None, arn=None):
         self.arn = arn
-        self.client = boto3.client("organizations")
+        self.client = module.client("organizations")
         self.root = self.get_aws_organization_root()
         if arn:
             self.name = name
@@ -198,7 +198,7 @@ class AwsOrganizationalUnit():
             parent_id = parent_ou["Id"]
         else:
             parent_id = self.root["Id"]
-        self.ou = self.client.create_organizational_unit(ParentId=parent_id, Name=ou_name)
+        self.ou = self.client.create_organizational_unit(ParentId=parent_id, Name=ou_name)["OrganizationalUnit"]
         return self.ou
 
 
@@ -234,11 +234,11 @@ def main():
         if not ou_arn.startswith("arn:aws:organizations::"):
             module.fail_json(msg="Invalid ARN format")
         try:
-            client = AwsOrganizationalUnit(arn=ou_arn)
+            client = AwsOrganizationalUnit(module, arn=ou_arn)
         except (BotoCoreError, ClientError) as e:
             module.fail_json(msg="Boto failure")
     else:
-        client = AwsOrganizationalUnit(name=ou_name)
+        client = AwsOrganizationalUnit(module, name=ou_name)
 
     if client.ou is None:
         result['state'] = 'absent'
