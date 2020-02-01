@@ -72,6 +72,7 @@ options:
               The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
               Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
         choices: [ system, user, global ]
+        default: system
         version_added: "2.7"
     no_block:
         description:
