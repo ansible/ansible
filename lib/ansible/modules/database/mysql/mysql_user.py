@@ -118,6 +118,9 @@ notes:
      without providing any login_user/login_password details. The second must drop a ~/.my.cnf file containing
      the new root credentials. Subsequent runs of the playbook will then succeed by reading the new credentials from
      the file."
+   - "When using this module with mariadb, it is possible to work around this problem by using unix socket instead of
+     login/password. In this case, you can disregard the previous note and just use `login_unix_socket: /run/mysqld/mysqld.sock`.
+     Please note that on debian, mariadb is installed instead of mysql."
    - Currently, there is only support for the `mysql_native_password` encrypted password hash module.
 
 seealso:
