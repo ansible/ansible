@@ -166,10 +166,10 @@ def get_fingerprint_of_bytes(source):
     return fingerprint
 
 
-def get_fingerprint(path, passphrase=None, content=None):
+def get_fingerprint(path, passphrase=None, content=None, backend='pyopenssl'):
     """Generate the fingerprint of the public key. """
 
-    privatekey = load_privatekey(path, passphrase=passphrase, content=content, check_passphrase=False)
+    privatekey = load_privatekey(path, passphrase=passphrase, content=content, check_passphrase=False, backend=backend)
     try:
         publickey = crypto.dump_publickey(crypto.FILETYPE_ASN1, privatekey)
     except AttributeError:
