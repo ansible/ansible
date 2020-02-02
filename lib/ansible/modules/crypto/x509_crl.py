@@ -804,7 +804,7 @@ def main():
                     content=dict(type='str'),
                     serial_number=dict(type='int'),
                     revocation_date=dict(type='str', default='+0s'),
-                    issuer=dict(type='list'),
+                    issuer=dict(type='list', elements='str'),
                     issuer_critical=dict(type='bool', default=False),
                     reason=dict(
                         type='str',
