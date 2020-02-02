@@ -215,7 +215,7 @@ options:
         type: bool
         default: no
 
-    return_crl_content:
+    return_content:
         description:
             - If set to C(yes), will return the (current or generated) CRL's content as I(crl).
         type: bool
@@ -342,7 +342,7 @@ revoked_certificates:
             sample: no
 crl:
     description: The (current or generated) CRL's content.
-    returned: if I(state) is C(present) and I(return_crl_content) is C(yes)
+    returned: if I(state) is C(present) and I(return_content) is C(yes)
     type: str
 '''
 
@@ -435,7 +435,7 @@ class CRL(crypto_utils.OpenSSLObject):
 
         self.update = module.params['mode'] == 'update'
         self.ignore_timestamps = module.params['ignore_timestamps']
-        self.return_crl_content = module.params['return_crl_content']
+        self.return_content = module.params['return_content']
         self.crl_content = None
 
         self.privatekey_path = module.params['privatekey_path']
@@ -541,7 +541,7 @@ class CRL(crypto_utils.OpenSSLObject):
             with open(self.path, 'rb') as f:
                 data = f.read()
             self.crl = x509.load_pem_x509_crl(data, default_backend())
-            if self.return_crl_content:
+            if self.return_content:
                 self.crl_content = data
         except Exception as dummy:
             self.crl_content = None
@@ -693,7 +693,7 @@ class CRL(crypto_utils.OpenSSLObject):
     def generate(self):
         if not self.check(perms_required=False) or self.force:
             result = self._generate_crl()
-            if self.return_crl_content:
+            if self.return_content:
                 self.crl_content = result
             if self.backup:
                 self.backup_file = self.module.backup_local(self.path)
@@ -773,7 +773,7 @@ class CRL(crypto_utils.OpenSSLObject):
                 entry = self._decode_revoked(cert)
                 result['revoked_certificates'].append(self._dump_revoked(entry))
 
-        if self.return_crl_content:
+        if self.return_content:
             result['crl'] = self.crl_content
 
         return result
@@ -795,7 +795,7 @@ def main():
             next_update=dict(type='str'),
             digest=dict(type='str', default='sha256'),
             ignore_timestamps=dict(type='bool', default=False),
-            return_crl_content=dict(type='bool', default=False),
+            return_content=dict(type='bool', default=False),
             revoked_certificates=dict(
                 type='list',
                 elements='dict',
