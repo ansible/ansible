@@ -31,6 +31,12 @@
       - dhparam_changed_to_512 is changed
       - dhparam_changed_force is changed
 
+- name: "[{{ select_crypto_backend }}] Make sure correct values are returned"
+  assert:
+    that:
+      - dhparam.dhparams == lookup('file', output_dir ~ '/dh768.pem', rstrip=False)
+      - dhparam.dhparams == dhparam_changed.dhparams
+
 - name: "[{{ select_crypto_backend }}] Verify that broken params will be regenerated"
   assert:
     that:
@@ -49,3 +55,4 @@
       - dhparam_backup_4.backup_file is string
       - dhparam_backup_5 is not changed
       - dhparam_backup_5.backup_file is undefined
+      - dhparam_backup_4.dhparams is none
