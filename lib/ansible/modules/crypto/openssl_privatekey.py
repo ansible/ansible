@@ -164,6 +164,39 @@ options:
         type: bool
         default: no
         version_added: "2.10"
+    regenerate:
+        description:
+            - Allows to configure in which situations the module is allowed to regenerate private keys.
+              The module will always generate a new key if the destination file does not exist.
+            - By default, the key will be regenerated when it doesn't match the module's options,
+              except when the key cannot be read or the passphrase does not match. Please note that
+              this B(changed) for Ansible 2.10. For Ansible 2.9, the behavior was as if C(full_idempotence)
+              is specified.
+            - If set to C(never), the module will fail if the key cannot be read or the passphrase
+              isn't matching, and will never regenerate an existing key.
+            - If set to C(fail), the module will fail if the key does not correspond to the module's
+              options.
+            - If set to C(partial_idempotence), the key will be regenerated if it does not conform to
+              the module's options. The key is B(not) regenerated if it cannot be read (broken file),
+              the key is protected by an unknown passphrase, or when they key is not protected by a
+              passphrase, but a passphrase is specified.
+            - If set to C(full_idempotence), the key will be regenerated if it does not conform to the
+              module's options. This is also the case if the key cannot be read (broken file), the key
+              is protected by an unknown passphrase, or when they key is not protected by a passphrase,
+              but a passphrase is specified. Make sure you have a B(backup) when using this option!
+            - If set to C(always), the module will always regenerate the key. This is equivalent to
+              setting I(force) to C(yes).
+            - Note that if I(format_mismatch) is set to C(convert) and everything matches except the
+              format, the key will always be converted, except if I(regenerate) is set to C(always).
+        type: str
+        choices:
+            - never
+            - fail
+            - partial_idempotence
+            - full_idempotence
+            - always
+        default: full_idempotence
+        version_added: '2.10'
 extends_documentation_fragment:
 - files
 seealso:
@@ -321,6 +354,9 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         self.format_mismatch = module.params['format_mismatch']
         self.privatekey_bytes = None
         self.return_content = module.params['return_content']
+        self.regenerate = module.params['regenerate']
+        if self.regenerate == 'always':
+            self.force = True
 
         self.backup = module.params['backup']
         self.backup_file = None
@@ -331,6 +367,11 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
     @abc.abstractmethod
     def _generate_private_key(self):
         """(Re-)Generate private key."""
+        pass
+
+    @abc.abstractmethod
+    def _ensure_private_key_loaded(self):
+        """Make sure that the private key has been loaded."""
         pass
 
     @abc.abstractmethod
@@ -359,6 +400,7 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
             # Convert
             if self.backup:
                 self.backup_file = module.backup_local(self.path)
+            self._ensure_private_key_loaded()
             privatekey_data = self._get_private_key_data()
             if self.return_content:
                 self.privatekey_bytes = privatekey_data
@@ -390,19 +432,42 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
     def check(self, module, perms_required=True, ignore_conversion=True):
         """Ensure the resource is in its desired state."""
 
-        state_and_perms = super(PrivateKeyBase, self).check(module, perms_required)
+        state_and_perms = super(PrivateKeyBase, self).check(module, perms_required=False)
 
-        if not state_and_perms or not self._check_passphrase():
+        if not state_and_perms:
+            # key does not exist
             return False
 
-        if not self._check_size_and_type():
-            return False
+        if not self._check_passphrase():
+            if self.regenerate in ('full_idempotence', 'always'):
+                return False
+            module.fail_json(msg='Unable to read the key. The key is protected with a another passphrase / no passphrase or broken.'
+                                 ' Will not proceed. To force regeneration, call the module with `generate`'
+                                 ' set to `full_idempotence` or `always`, or with `force=yes`.')
+
+        if self.regenerate != 'never':
+            if not self._check_size_and_type():
+                if self.regenerate in ('partial_idempotence', 'full_idempotence', 'always'):
+                    return False
+                module.fail_json(msg='Key has wrong type and/or size.'
+                                     ' Will not proceed. To force regeneration, call the module with `generate`'
+                                     ' set to `partial_idempotence`, `full_idempotence` or `always`, or with `force=yes`.')
 
         if not self._check_format():
-            if not ignore_conversion or self.format_mismatch != 'convert':
+            # During conversion step, convert if format does not match and format_mismatch == 'convert'
+            if not ignore_conversion and self.format_mismatch == 'convert':
                 return False
+            # During generation step, regenerate if format does not match and format_mismatch == 'regenerate'
+            if ignore_conversion and self.format_mismatch == 'regenerate' and self.regenerate != 'never':
+                if not ignore_conversion or self.regenerate in ('partial_idempotence', 'full_idempotence', 'always'):
+                    return False
+                module.fail_json(msg='Key has wrong format.'
+                                     ' Will not proceed. To force regeneration, call the module with `generate`'
+                                     ' set to `partial_idempotence`, `full_idempotence` or `always`, or with `force=yes`.'
+                                     ' To convert the key, set `format_mismatch` to `convert`.')
 
-        return True
+        # check whether permissions are correct (in case that needs to be checked)
+        return not perms_required or super(PrivateKeyBase, self).check(module, perms_required=perms_required)
 
     def dump(self):
         """Serialize the object into a dictionary."""
@@ -453,6 +518,14 @@ class PrivateKeyPyOpenSSL(PrivateKeyBase):
         except (TypeError, ValueError) as exc:
             raise PrivateKeyError(exc)
 
+    def _ensure_private_key_loaded(self):
+        """Make sure that the private key has been loaded."""
+        if self.privatekey is None:
+            try:
+                self.privatekey = privatekey = crypto_utils.load_privatekey(self.path, self.passphrase)
+            except crypto_utils.OpenSSLBadPassphraseError as exc:
+                raise PrivateKeyError(exc)
+
     def _get_private_key_data(self):
         """Return bytes for self.privatekey"""
         if self.cipher and self.passphrase:
@@ -478,12 +551,8 @@ class PrivateKeyPyOpenSSL(PrivateKeyBase):
         def _check_type(privatekey):
             return self.type == privatekey.type()
 
-        try:
-            privatekey = crypto_utils.load_privatekey(self.path, self.passphrase)
-        except crypto_utils.OpenSSLBadPassphraseError as exc:
-            raise PrivateKeyError(exc)
-
-        return _check_size(privatekey) and _check_type(privatekey)
+        self._ensure_private_key_loaded()
+        return _check_size(self.privatekey) and _check_type(self.privatekey)
 
     def _check_format(self):
         # Not supported by this backend
@@ -606,6 +675,11 @@ class PrivateKeyCryptography(PrivateKeyBase):
         except cryptography.exceptions.UnsupportedAlgorithm as dummy:
             self.module.fail_json(msg='Cryptography backend does not support the algorithm required for {0}'.format(self.type))
 
+    def _ensure_private_key_loaded(self):
+        """Make sure that the private key has been loaded."""
+        if self.privatekey is None:
+            self.privatekey = self._load_privatekey()
+
     def _get_private_key_data(self):
         """Return bytes for self.privatekey"""
         # Select export format and encoding
@@ -697,7 +771,11 @@ class PrivateKeyCryptography(PrivateKeyBase):
                 data = f.read()
             format = crypto_utils.identify_private_key_format(data)
             if format == 'raw':
-                # Raw keys cannot be encrypted
+                # Raw keys cannot be encrypted. To avoid incompatibilities, we try to
+                # actually load the key (and return False when this fails).
+                self._load_privatekey()
+                # Loading the key succeeded. Only return True when no passphrase was
+                # provided.
                 return self.passphrase is None
             else:
                 return cryptography.hazmat.primitives.serialization.load_pem_private_key(
@@ -709,27 +787,26 @@ class PrivateKeyCryptography(PrivateKeyBase):
             return False
 
     def _check_size_and_type(self):
-        privatekey = self._load_privatekey()
-        self.privatekey = privatekey
+        self._ensure_private_key_loaded()
 
-        if isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
-            return self.type == 'RSA' and self.size == privatekey.key_size
-        if isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.dsa.DSAPrivateKey):
-            return self.type == 'DSA' and self.size == privatekey.key_size
-        if CRYPTOGRAPHY_HAS_X25519 and isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey):
+        if isinstance(self.privatekey, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
+            return self.type == 'RSA' and self.size == self.privatekey.key_size
+        if isinstance(self.privatekey, cryptography.hazmat.primitives.asymmetric.dsa.DSAPrivateKey):
+            return self.type == 'DSA' and self.size == self.privatekey.key_size
+        if CRYPTOGRAPHY_HAS_X25519 and isinstance(self.privatekey, cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey):
             return self.type == 'X25519'
-        if CRYPTOGRAPHY_HAS_X448 and isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey):
+        if CRYPTOGRAPHY_HAS_X448 and isinstance(self.privatekey, cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey):
             return self.type == 'X448'
-        if CRYPTOGRAPHY_HAS_ED25519 and isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey):
+        if CRYPTOGRAPHY_HAS_ED25519 and isinstance(self.privatekey, cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey):
             return self.type == 'Ed25519'
-        if CRYPTOGRAPHY_HAS_ED448 and isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey):
+        if CRYPTOGRAPHY_HAS_ED448 and isinstance(self.privatekey, cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey):
             return self.type == 'Ed448'
-        if isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey):
+        if isinstance(self.privatekey, cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey):
             if self.type != 'ECC':
                 return False
             if self.curve not in self.curves:
                 return False
-            return self.curves[self.curve]['verify'](privatekey)
+            return self.curves[self.curve]['verify'](self.privatekey)
 
         return False
 
@@ -777,6 +854,11 @@ def main():
             format_mismatch=dict(type='str', default='regenerate', choices=['regenerate', 'convert']),
             select_crypto_backend=dict(type='str', choices=['auto', 'pyopenssl', 'cryptography'], default='auto'),
             return_content=dict(type='bool', default=False),
+            regenerate=dict(
+                type='str',
+                default='full_idempotence',
+                choices=['never', 'fail', 'partial_idempotence', 'full_idempotence', 'always']
+            ),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
@@ -837,7 +919,9 @@ def main():
         if private_key.state == 'present':
             if module.check_mode:
                 result = private_key.dump()
-                result['changed'] = module.params['force'] or not private_key.check(module)
+                result['changed'] = private_key.force \
+                    or not private_key.check(module, ignore_conversion=True) \
+                    or not private_key.check(module, ignore_conversion=False)
                 module.exit_json(**result)
 
             private_key.generate(module)
