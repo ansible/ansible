@@ -806,8 +806,8 @@ def main():
                     invalidity_date=dict(type='str'),
                     invalidity_date_critical=dict(type='bool', default=False),
                 ),
-                required_one_of=['path', 'content', 'serial_number'],
-                mutually_exclusive=['path', 'content', 'serial_number'],
+                required_one_of=[['path', 'content', 'serial_number']],
+                mutually_exclusive=[['path', 'content', 'serial_number']],
             ),
         ),
         required_if=[
