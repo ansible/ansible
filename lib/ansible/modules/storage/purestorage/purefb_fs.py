@@ -60,13 +60,6 @@ options:
     type: bool
     default: true
     version_added: 2.9
-  nfs:
-    description:
-      - (Deprecate) Define whether to NFSv3 protocol is enabled for the filesystem.
-      - This option will be deprecated in 2.10, use I(nfsv3) instead.
-    required: false
-    type: bool
-    default: true
   nfs_rules:
     description:
       - Define the NFS rules in operation.
@@ -208,7 +201,6 @@ def create_fs(module, blade):
                 module.params['size'] = '32G'
 
             size = human_to_bytes(module.params['size'])
-            nfsv3 = module.params['nfs'] if module.params['nfsv3'] is None else module.params['nfsv3']
 
             if module.params['user_quota']:
                 user_quota = human_to_bytes(module.params['user_quota'])
@@ -227,7 +219,7 @@ def create_fs(module, blade):
                                         fast_remove_directory_enabled=module.params['fastremove'],
                                         hard_limit_enabled=module.params['hard_limit'],
                                         snapshot_directory_enabled=module.params['snapshot'],
-                                        nfs=NfsRule(v3_enabled=nfsv3,
+                                        nfs=NfsRule(v3_enabled=module.params['nfsv3'],
                                                     v4_1_enabled=module.params['nfsv4'],
                                                     rules=module.params['nfs_rules']),
                                         smb=ProtocolRule(enabled=module.params['smb']),
@@ -241,7 +233,7 @@ def create_fs(module, blade):
                                         fast_remove_directory_enabled=module.params['fastremove'],
                                         hard_limit_enabled=module.params['hard_limit'],
                                         snapshot_directory_enabled=module.params['snapshot'],
-                                        nfs=NfsRule(enabled=nfsv3, rules=module.params['nfs_rules']),
+                                        nfs=NfsRule(enabled=module.params['nfsv3'], rules=module.params['nfs_rules']),
                                         smb=ProtocolRule(enabled=module.params['smb']),
                                         http=ProtocolRule(enabled=module.params['http'])
                                         )
@@ -250,7 +242,7 @@ def create_fs(module, blade):
                                     provisioned=size,
                                     fast_remove_directory_enabled=module.params['fastremove'],
                                     snapshot_directory_enabled=module.params['snapshot'],
-                                    nfs=NfsRule(enabled=module.params['nfs'], rules=module.params['nfs_rules']),
+                                    nfs=NfsRule(enabled=module.params['nfsv3'], rules=module.params['nfs_rules']),
                                     smb=ProtocolRule(enabled=module.params['smb']),
                                     http=ProtocolRule(enabled=module.params['http'])
                                     )
@@ -265,7 +257,6 @@ def modify_fs(module, blade):
     changed = True
     if not module.check_mode:
         mod_fs = False
-        nfsv3 = module.params['nfs'] if module.params['nfsv3'] is None else module.params['nfsv3']
         attr = {}
         if module.params['user_quota']:
             user_quota = human_to_bytes(module.params['user_quota'])
@@ -281,11 +272,11 @@ def modify_fs(module, blade):
                 mod_fs = True
         api_version = blade.api_version.list_versions().versions
         if NFSV4_API_VERSION in api_version:
-            if nfsv3 and not fsys.nfs.v3_enabled:
-                attr['nfs'] = NfsRule(v3_enabled=nfsv3)
+            if module.params['nfsv3'] and not fsys.nfs.v3_enabled:
+                attr['nfs'] = NfsRule(v3_enabled=module.params['nfsv3'])
                 mod_fs = True
-            if not nfsv3 and fsys.nfs.v3_enabled:
-                attr['nfs'] = NfsRule(v3_enabled=nfsv3)
+            if not module.params['nfsv3'] and fsys.nfs.v3_enabled:
+                attr['nfs'] = NfsRule(v3_enabled=module.params['nfsv3'])
                 mod_fs = True
             if module.params['nfsv4'] and not fsys.nfs.v4_1_enabled:
                 attr['nfs'] = NfsRule(v4_1_enabled=module.params['nfsv4'])
@@ -293,7 +284,7 @@ def modify_fs(module, blade):
             if not module.params['nfsv4'] and fsys.nfs.v4_1_enabled:
                 attr['nfs'] = NfsRule(v4_1_enabled=module.params['nfsv4'])
                 mod_fs = True
-            if nfsv3 or module.params['nfsv4'] and fsys.nfs.v3_enabled or fsys.nfs.v4_1_enabled:
+            if module.params['nfsv3'] or module.params['nfsv4'] and fsys.nfs.v3_enabled or fsys.nfs.v4_1_enabled:
                 if fsys.nfs.rules != module.params['nfs_rules']:
                     attr['nfs'] = NfsRule(rules=module.params['nfs_rules'])
                     mod_fs = True
@@ -304,13 +295,13 @@ def modify_fs(module, blade):
                 attr['default_group_quota'] = group_quota
                 mod_fs = True
         else:
-            if nfsv3 and not fsys.nfs.enabled:
-                attr['nfs'] = NfsRule(enabled=nfsv3)
+            if module.params['nfsv3'] and not fsys.nfs.enabled:
+                attr['nfs'] = NfsRule(enabled=module.params['nfsv3'])
                 mod_fs = True
-            if not nfsv3 and fsys.nfs.enabled:
-                attr['nfs'] = NfsRule(enabled=nfsv3)
+            if not module.params['nfsv3'] and fsys.nfs.enabled:
+                attr['nfs'] = NfsRule(enabled=module.params['nfsv3'])
                 mod_fs = True
-            if nfsv3 and fsys.nfs.enabled:
+            if module.params['nfsv3'] and fsys.nfs.enabled:
                 if fsys.nfs.rules != module.params['nfs_rules']:
                     attr['nfs'] = NfsRule(rules=module.params['nfs_rules'])
                     mod_fs = True
@@ -406,7 +397,6 @@ def main():
         dict(
             name=dict(required=True),
             eradicate=dict(default='false', type='bool'),
-            nfs=dict(removed_in_version='2.10', default='true', type='bool'),
             nfsv3=dict(default='true', type='bool'),
             nfsv4=dict(default='true', type='bool'),
             nfs_rules=dict(default='*(rw,no_root_squash)'),
@@ -422,10 +412,7 @@ def main():
         )
     )
 
-    mutually_exclusive = [['nfs', 'nfsv3']]
-
     module = AnsibleModule(argument_spec,
-                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     if not HAS_PURITY_FB:
