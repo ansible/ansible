@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 module: mas
 short_description: Manage Mac App Store applications with mas-cli
 description:
-    - Installs, uninstalls and updates macOS applications from the Mac App Store using the `mas-cli`.
+    - Installs, uninstalls and updates macOS applications from the Mac App Store using the C(mas-cli).
 version_added: "2.10"
 author:
     - Michael Heap (@mheap)
@@ -47,7 +47,7 @@ options:
         aliases: ["upgrade"]
 requirements:
     - macOS 10.11+
-    - "`mas-cli` (U(https://github.com/mas-cli/mas)) 1.5.0+ available as C(mas) in the bin path"
+    - "mas-cli (U(https://github.com/mas-cli/mas)) 1.5.0+ available as C(mas) in the bin path"
     - The Apple ID to use already needs to be signed in to the Mac App Store (check with C(mas account)).
 notes:
     - This module supports C(check_mode).
@@ -178,16 +178,16 @@ class Mas(object):
     def get_current_state(self, command):
         ''' Returns the list of all app IDs; command can either be 'list' or 'outdated' '''
 
-        rc, raw_list, err = self.run([command])
-        rows = raw_list.split("\n")
-        list = {}
+        rc, raw_apps, err = self.run([command])
+        rows = raw_apps.split("\n")
+        apps = []
         for r in rows:
             # Format: "123456789 App Name"
             r = r.split(' ', 1)
             if len(r) == 2:
-                list[r[1]] = int(r[0])
+                apps.append(int(r[0]))
 
-        return list
+        return apps
 
     def installed(self):
         ''' Returns the list of installed apps '''
@@ -196,7 +196,7 @@ class Mas(object):
         if self._installed is None:
             self._installed = self.get_current_state('list')
 
-        return self._installed.values()
+        return self._installed
 
     def is_installed(self, id):
         ''' Checks whether the given app is installed '''
@@ -215,7 +215,7 @@ class Mas(object):
         if self._outdated is None:
             self._outdated = self.get_current_state('outdated')
 
-        return self._outdated.values()
+        return self._outdated
 
     def run(self, cmd):
         ''' Runs a command of the `mas` tool '''
@@ -235,7 +235,7 @@ class Mas(object):
             if rc != 0:
                 self.module.fail_json(msg='Could not upgrade all apps: ' + out.rstrip())
 
-        self.count_upgrade += outdated
+        self.count_upgrade += len(outdated)
 
 
 def main():
@@ -258,7 +258,7 @@ def main():
     upgrade = module.params['upgrade_all']
 
     # Run operations on the given app IDs
-    for app in apps:
+    for app in sorted(set(apps)):
         if state == 'present':
             if not mas.is_installed(app):
                 mas.app_command('install', app)
