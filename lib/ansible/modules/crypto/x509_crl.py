@@ -468,14 +468,6 @@ class CRL(crypto_utils.OpenSSLObject):
             }
             path_prefix = 'revoked_certificates[{0}].'.format(i)
             if rc['path'] is not None or rc['content'] is not None:
-                if rc['path'] is not None and rc['content'] is not None:
-                    module.fail_json(
-                        msg='{0}path and {0}content must not both be specified'.format(path_prefix)
-                    )
-                if rc['serial_number'] is not None:
-                    module.fail_json(
-                        msg='{0}serial_number must not be specified if {0}path or {0}content is specified'.format(path_prefix)
-                    )
                 # Load certificate from file or content
                 try:
                     if rc['content'] is not None:
@@ -497,10 +489,6 @@ class CRL(crypto_utils.OpenSSLObject):
                         )
             else:
                 # Specify serial_number (and potentially issuer) directly
-                if rc['serial_number'] is None:
-                    module.fail_json(
-                        msg='{0}serial_number must be specified if {0}path and {0}content are not specified'.format(path_prefix)
-                    )
                 result['serial_number'] = rc['serial_number']
             # All other options
             if rc['issuer']:
@@ -818,6 +806,8 @@ def main():
                     invalidity_date=dict(type='str'),
                     invalidity_date_critical=dict(type='bool', default=False),
                 ),
+                required_one_of=['path', 'content', 'serial_number'],
+                mutually_exclusive=['path', 'content', 'serial_number'],
             ),
         ),
         required_if=[
