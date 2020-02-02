@@ -1,4 +1,13 @@
 ---
+- name: enable sideloading of apps for test
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock
+    name: AllowAllTrustedApps
+    data: 1
+    type: dword
+    state: present
+  notify: remove sideloading mode for msix
+
 - name: download makeappx binaries
   win_get_url:
     url: '{{ makeappx_url }}'
