@@ -280,7 +280,7 @@ options:
               I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
         type: int
         version_added: "2.9"
-    return_csr_content:
+    return_content:
         description:
             - If set to C(yes), will return the (current or generated) CSR's content as I(csr).
         type: bool
@@ -427,7 +427,7 @@ backup_file:
     sample: /path/to/www.ansible.com.csr.2019-03-09@11:22~
 csr:
     description: The (current or generated) CSR's content.
-    returned: if I(state) is C(present) and I(return_csr_content) is C(yes)
+    returned: if I(state) is C(present) and I(return_content) is C(yes)
     type: str
     version_added: "2.10"
 '''
@@ -522,7 +522,7 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
         self.request = None
         self.privatekey = None
         self.csr_bytes = None
-        self.return_csr_content = module.params['return_csr_content']
+        self.return_content = module.params['return_content']
 
         if self.create_subject_key_identifier and self.subject_key_identifier is not None:
             module.fail_json(msg='subject_key_identifier cannot be specified if create_subject_key_identifier is true')
@@ -572,7 +572,7 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
             result = self._generate_csr()
             if self.backup:
                 self.backup_file = module.backup_local(self.path)
-            if self.return_csr_content:
+            if self.return_content:
                 self.csr_bytes = result
             crypto_utils.write_file(module, result)
             self.changed = True
@@ -621,7 +621,7 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
-        if self.return_csr_content:
+        if self.return_content:
             if self.csr_bytes is None:
                 self.csr_bytes = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
             result['csr'] = self.csr_bytes.decode('utf-8') if self.csr_bytes else None
@@ -1078,7 +1078,7 @@ def main():
             authority_cert_issuer=dict(type='list', elements='str'),
             authority_cert_serial_number=dict(type='int'),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
-            return_csr_content=dict(type='bool', default=False),
+            return_content=dict(type='bool', default=False),
         ),
         required_together=[('authority_cert_issuer', 'authority_cert_serial_number')],
         required_if=[('state', 'present', ['privatekey_path', 'privatekey_content'], True)],

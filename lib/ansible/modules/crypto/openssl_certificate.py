@@ -590,7 +590,7 @@ options:
         default: https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml
         version_added: "2.9"
 
-    return_certificate_content:
+    return_content:
         description:
             - If set to C(yes), will return the (current or generated) certificate's content as I(certificate).
         type: bool
@@ -861,7 +861,7 @@ backup_file:
     sample: /path/to/www.ansible.com.crt.2019-03-09@11:22~
 certificate:
     description: The (current or generated) certificate's content.
-    returned: if I(state) is C(present) and I(return_certificate_content) is C(yes)
+    returned: if I(state) is C(present) and I(return_content) is C(yes)
     type: str
     version_added: "2.10"
 '''
@@ -941,7 +941,7 @@ class Certificate(crypto_utils.OpenSSLObject):
         self.csr = None
         self.backend = backend
         self.module = module
-        self.return_certificate_content = module.params['return_certificate_content']
+        self.return_content = module.params['return_content']
 
         # The following are default values which make sure check() works as
         # before if providers do not explicitly change these properties.
@@ -1128,7 +1128,7 @@ class CertificateAbsent(Certificate):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
-        if self.return_certificate_content:
+        if self.return_content:
             result['certificate'] = None
 
         return result
@@ -1245,7 +1245,7 @@ class SelfSignedCertificateCryptography(Certificate):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
-        if self.return_certificate_content:
+        if self.return_content:
             content = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
             result['certificate'] = content.decode('utf-8') if content else None
 
@@ -1345,7 +1345,7 @@ class SelfSignedCertificate(Certificate):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
-        if self.return_certificate_content:
+        if self.return_content:
             content = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
             result['certificate'] = content.decode('utf-8') if content else None
 
@@ -1542,7 +1542,7 @@ class OwnCACertificateCryptography(Certificate):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
-        if self.return_certificate_content:
+        if self.return_content:
             content = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
             result['certificate'] = content.decode('utf-8') if content else None
 
@@ -1668,7 +1668,7 @@ class OwnCACertificate(Certificate):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
-        if self.return_certificate_content:
+        if self.return_content:
             content = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
             result['certificate'] = content.decode('utf-8') if content else None
 
@@ -1986,7 +1986,7 @@ class AssertOnlyCertificateBase(Certificate):
             'privatekey': self.privatekey_path,
             'csr': self.csr_path,
         }
-        if self.return_certificate_content:
+        if self.return_content:
             content = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
             result['certificate'] = content.decode('utf-8') if content else None
         return result
@@ -2454,7 +2454,7 @@ class EntrustCertificate(Certificate):
 
         if self.backup_file:
             result['backup_file'] = self.backup_file
-        if self.return_certificate_content:
+        if self.return_content:
             content = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
             result['certificate'] = content.decode('utf-8') if content else None
 
@@ -2544,7 +2544,7 @@ class AcmeCertificate(Certificate):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
-        if self.return_certificate_content:
+        if self.return_content:
             content = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
             result['certificate'] = content.decode('utf-8') if content else None
 
@@ -2562,7 +2562,7 @@ def main():
             csr_content=dict(type='str'),
             backup=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
-            return_certificate_content=dict(type='bool', default=False),
+            return_content=dict(type='bool', default=False),
 
             # General properties of a certificate
             privatekey_path=dict(type='path'),

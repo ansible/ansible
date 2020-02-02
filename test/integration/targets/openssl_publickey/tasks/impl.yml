@@ -8,7 +8,7 @@
     path: '{{ output_dir }}/publickey.pub'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
-    return_publickey_content: yes
+    return_content: yes
   register: publickey
 
 - name: Generate publickey - PEM format (idempotence)
@@ -16,7 +16,7 @@
     path: '{{ output_dir }}/publickey.pub'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
-    return_publickey_content: yes
+    return_content: yes
   register: publickey_idempotence
 
 - name: Generate publickey - OpenSSH format
@@ -48,7 +48,7 @@
     path: '{{ output_dir }}/publickey2.pub'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
-    return_publickey_content: yes
+    return_content: yes
   register: publickey2_absent
 
 - name: Delete publickey2 - standard (idempotence)

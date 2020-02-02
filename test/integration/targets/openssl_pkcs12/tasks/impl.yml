@@ -51,7 +51,7 @@
       privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
       certificate_path: "{{ output_dir }}/ansible.crt"
       state: present
-      return_pkcs12_content: yes
+      return_content: yes
     register: p12_standard
 
   - name: 'Generate PKCS#12 file again, idempotency'
@@ -61,7 +61,7 @@
       privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
       certificate_path: "{{ output_dir }}/ansible.crt"
       state: present
-      return_pkcs12_content: yes
+      return_content: yes
     register: p12_standard_idempotency
 
   - name: Read ansible.p12
@@ -229,7 +229,7 @@
       path: "{{ output_dir }}/ansible_backup.p12"
       state: absent
       backup: yes
-      return_pkcs12_content: yes
+      return_content: yes
     register: p12_backup_4
   - name: 'Generate PKCS#12 file (remove, idempotent)'
     openssl_pkcs12:
