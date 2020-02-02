@@ -10,6 +10,7 @@
     subject:
       commonName: www.ansible.com
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
   check_mode: yes
   register: generate_csr_check
 
@@ -20,6 +21,7 @@
     subject:
       commonName: www.ansible.com
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
   register: generate_csr
 
 - name: Generate CSR (idempotent)
@@ -29,7 +31,8 @@
     subject:
       commonName: www.ansible.com
     select_crypto_backend: '{{ select_crypto_backend }}'
-  register: generate_csr_check_idempotent
+    return_content: yes
+  register: generate_csr_idempotent
 
 - name: Generate CSR (idempotent, check mode)
   openssl_csr:
@@ -38,8 +41,9 @@
     subject:
       commonName: www.ansible.com
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
   check_mode: yes
-  register: generate_csr_check_idempotent_check
+  register: generate_csr_idempotent_check
 
 - name: Generate CSR without SAN (check mode)
   openssl_csr:
@@ -330,6 +334,7 @@
     state: absent
     backup: yes
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
   register: csr_backup_4
 - name: Generate CSR (remove, idempotent)
   openssl_csr:

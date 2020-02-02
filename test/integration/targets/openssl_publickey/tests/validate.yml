@@ -1,4 +1,12 @@
 ---
+- name: Validate publickey 1 idempotence and result behavior
+  assert:
+    that:
+      - publickey is changed
+      - publickey_idempotence is not changed
+      - publickey.publickey == lookup('file', output_dir ~ '/publickey.pub', rstrip=False)
+      - publickey.publickey == publickey_idempotence.publickey
+
 - name: Validate public key (test - privatekey modulus)
   shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem'
   register: privatekey_modulus
@@ -44,6 +52,13 @@
   assert:
     that:
       - publickey2.stat.exists == False
+
+- name: Validate publickey2 removal behavior
+  assert:
+    that:
+      - publickey2_absent is changed
+      - publickey2_absent_idempotence is not changed
+      - publickey2_absent.publickey is none
 
 
 - name: Validate publickey3 (test - privatekey modulus)

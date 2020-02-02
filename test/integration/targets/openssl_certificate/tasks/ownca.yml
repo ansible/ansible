@@ -62,6 +62,7 @@
     provider: ownca
     ownca_digest: sha256
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
   register: ownca_certificate
 
 - name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (idempotent)
@@ -74,6 +75,7 @@
     provider: ownca
     ownca_digest: sha256
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
   register: ownca_certificate_idempotence
 
 - name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (check mode)

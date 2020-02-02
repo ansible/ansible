@@ -30,6 +30,12 @@
       - selfsigned_certificate.notBefore == selfsigned_certificate_idempotence.notBefore
       - selfsigned_certificate.notAfter == selfsigned_certificate_idempotence.notAfter
 
+- name: (Selfsigned validation, {{select_crypto_backend}}) Validate data retrieval
+  assert:
+    that:
+      - selfsigned_certificate.certificate == lookup('file', output_dir ~ '/cert.pem', rstrip=False)
+      - selfsigned_certificate.certificate == selfsigned_certificate_idempotence.certificate
+
 - name: Make sure that changes in CSR are detected even if private key is specified
   assert:
     that:

@@ -90,6 +90,12 @@ options:
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
         version_added: "2.9"
+    return_content:
+        description:
+            - If set to C(yes), will return the (current or generated) public key's content as I(publickey).
+        type: bool
+        default: no
+        version_added: "2.10"
 extends_documentation_fragment:
 - files
 seealso:
@@ -171,6 +177,11 @@ backup_file:
     returned: changed and if I(backup) is C(yes)
     type: str
     sample: /path/to/publickey.pem.2019-03-09@11:22~
+publickey:
+    description: The (current or generated) public key's content.
+    returned: if I(state) is C(present) and I(return_content) is C(yes)
+    type: str
+    version_added: "2.10"
 '''
 
 import os
@@ -229,6 +240,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
             self.privatekey_content = self.privatekey_content.encode('utf-8')
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.privatekey = None
+        self.publickey_bytes = None
+        self.return_content = module.params['return_content']
         self.fingerprint = {}
         self.backend = backend
 
@@ -270,6 +283,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
         if not self.check(module, perms_required=False) or self.force:
             try:
                 publickey_content = self._create_publickey(module)
+                if self.return_content:
+                    self.publickey_bytes = publickey_content
 
                 if self.backup:
                     self.backup_file = module.backup_local(self.path)
@@ -302,6 +317,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
             try:
                 with open(self.path, 'rb') as public_key_fh:
                     publickey_content = public_key_fh.read()
+                if self.return_content:
+                    self.publickey_bytes = publickey_content
                 if self.backend == 'cryptography':
                     if self.format == 'OpenSSH':
                         # Read and dump public key. Makes sure that the comment is stripped off.
@@ -353,6 +370,10 @@ class PublicKey(crypto_utils.OpenSSLObject):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
+        if self.return_content:
+            if self.publickey_bytes is None:
+                self.publickey_bytes = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
+            result['publickey'] = self.publickey_bytes.decode('utf-8') if self.publickey_bytes else None
 
         return result
 
@@ -370,6 +391,7 @@ def main():
             privatekey_passphrase=dict(type='str', no_log=True),
             backup=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', choices=['auto', 'pyopenssl', 'cryptography'], default='auto'),
+            return_content=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         add_file_common_args=True,

@@ -70,6 +70,12 @@ options:
         default: auto
         choices: [ auto, cryptography, openssl ]
         version_added: '2.10'
+    return_content:
+        description:
+            - If set to C(yes), will return the (current or generated) DH params' content as I(dhparams).
+        type: bool
+        default: no
+        version_added: "2.10"
 extends_documentation_fragment:
 - files
 seealso:
@@ -112,6 +118,11 @@ backup_file:
     returned: changed and if I(backup) is C(yes)
     type: str
     sample: /path/to/dhparams.pem.2019-03-09@11:22~
+dhparams:
+    description: The (current or generated) DH params' content.
+    returned: if I(state) is C(present) and I(return_content) is C(yes)
+    type: str
+    version_added: "2.10"
 '''
 
 import abc
@@ -155,6 +166,7 @@ class DHParameterBase(object):
         self.size = module.params['size']
         self.force = module.params['force']
         self.changed = False
+        self.return_content = module.params['return_content']
 
         self.backup = module.params['backup']
         self.backup_file = None
@@ -218,6 +230,9 @@ class DHParameterBase(object):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
+        if self.return_content:
+            content = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
+            result['dhparams'] = content.decode('utf-8') if content else None
 
         return result
 
@@ -332,6 +347,7 @@ def main():
             path=dict(type='path', required=True),
             backup=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'openssl']),
+            return_content=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         add_file_common_args=True,

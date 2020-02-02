@@ -8,6 +8,16 @@
     path: '{{ output_dir }}/publickey.pub'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
+  register: publickey
+
+- name: Generate publickey - PEM format (idempotence)
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
+  register: publickey_idempotence
 
 - name: Generate publickey - OpenSSH format
   openssl_publickey:
@@ -38,6 +48,16 @@
     path: '{{ output_dir }}/publickey2.pub'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
+  register: publickey2_absent
+
+- name: Delete publickey2 - standard (idempotence)
+  openssl_publickey:
+    state: absent
+    path: '{{ output_dir }}/publickey2.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: publickey2_absent_idempotence
 
 - name: Generate privatekey3 - with passphrase
   openssl_privatekey:

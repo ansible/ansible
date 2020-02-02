@@ -1,3 +1,4 @@
+---
 - name: 'Validate PKCS#12'
   command: "openssl pkcs12 -info -in {{ output_dir }}/ansible.p12 -nodes -passin pass:''"
   register: p12
@@ -53,3 +54,4 @@
       - p12_backup_4.backup_file is string
       - p12_backup_5 is not changed
       - p12_backup_5.backup_file is undefined
+      - p12_backup_4.pkcs12 is none

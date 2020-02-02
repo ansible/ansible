@@ -22,8 +22,16 @@
     that:
       - generate_csr_check is changed
       - generate_csr is changed
-      - generate_csr_check_idempotent is not changed
-      - generate_csr_check_idempotent_check is not changed
+      - generate_csr_idempotent is not changed
+      - generate_csr_idempotent_check is not changed
+
+- name: Validate CSR (data retrieval)
+  assert:
+    that:
+      - generate_csr_check.csr is none
+      - generate_csr.csr == lookup('file', output_dir ~ '/csr.csr', rstrip=False)
+      - generate_csr.csr == generate_csr_idempotent.csr
+      - generate_csr.csr == generate_csr_idempotent_check.csr
 
 - name: Validate CSR without SAN (check mode, idempotency)
   assert:
@@ -168,6 +176,7 @@
       - csr_backup_4.backup_file is string
       - csr_backup_5 is not changed
       - csr_backup_5.backup_file is undefined
+      - csr_backup_4.csr is none
 
 - name: Check CSR with everything
   assert:
