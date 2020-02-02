@@ -59,6 +59,11 @@
     path: '{{ test_path }}'
     makeappx_path: '{{ test_path }}\makeappx\makeappx.exe'
     signtool_path: '{{ test_path }}\makeappx\signtool.exe'
+  become: yes  # New-SelfSignedCertificate requires this to store the cert with key into the store.
+  become_method: runas
+  vars:
+    ansible_become_user: '{{ ansible_user }}'
+    ansible_become_pass: '{{ ansible_password }}'
   register: test_win_package_msix_packages
   notify: remove trusted root cert
 
@@ -265,4 +270,172 @@
   register: fail_msix
   failed_when: "'unexpected status from Add-AppxPackage' not in fail_msix.msg"
 
-# TODO: test appxbundle and msixbundle
+- name: install msixbundle (check mode)
+  win_package:
+    path: '{{ test_path }}\WinPackageBundle.msixbundle'
+    state: present
+  register: msixbundle_install_check
+  check_mode: yes
+
+- name: get result of install msixbundle (check mode)
+  win_shell: if (Get-AppxPackage -Name '{{ msixbundle_id }}') { $true } else { $false }
+  changed_when: False
+  register: msixbundle_install_actual_check
+
+- name: assert install msixbundle (check mode)
+  assert:
+    that:
+    - msixbundle_install_check is changed
+    - msixbundle_install_check.rc == 0
+    - not msixbundle_install_check.reboot_required
+    - not msixbundle_install_actual_check.stdout | trim | bool
+
+- name: install msixbundle
+  win_package:
+    path: '{{ test_path }}\WinPackageBundle.msixbundle'
+    state: present
+  register: msixbundle_install
+
+- name: get result of install msixbundle
+  win_shell: if (Get-AppxPackage -Name '{{ msixbundle_id }}') { $true } else { $false }
+  changed_when: False
+  register: msixbundle_install_actual
+
+- name: assert install msixbundle
+  assert:
+    that:
+    - msixbundle_install is changed
+    - msixbundle_install.rc == 0
+    - not msixbundle_install.reboot_required
+    - msixbundle_install_actual.stdout | trim | bool
+
+- name: install msixbundle (idempotence)
+  win_package:
+    path: '{{ test_path }}\WinPackageBundle.msixbundle'
+    state: present
+  register: msixbundle_install_again
+
+- name: assert install msixbundle (idempotence)
+  assert:
+    that:
+    - not msixbundle_install_again is changed
+
+- name: uninstall msixbundle by id (check mode)
+  win_package:
+    product_id: '{{ msixbundle_id }}'
+    state: absent
+  register: msixbundle_uninstall_check
+  check_mode: yes
+
+- name: get result of uninstall msixbundle by id (check mode)
+  win_shell: if (Get-AppxPackage -Name '{{ msixbundle_id }}') { $true } else { $false }
+  changed_when: False
+  register: msixbundle_uninstall_actual_check
+
+- name: assert uninstall msixbundle by id (check mode)
+  assert:
+    that:
+    - msixbundle_uninstall_check is changed
+    - msixbundle_uninstall_check.rc == 0
+    - not msixbundle_uninstall_check.reboot_required
+    - msixbundle_uninstall_actual_check.stdout | trim | bool
+
+- name: uninstall msixbundle by id
+  win_package:
+    product_id: '{{ msixbundle_id }}'
+    state: absent
+  register: msixbundle_uninstall
+
+- name: get result of uninstall msixbundle by id
+  win_shell: if (Get-AppxPackage -Name '{{ msixbundle_id }}') { $true } else { $false }
+  changed_when: False
+  register: msixbundle_uninstall_actual
+
+- name: assert uninstall msixbundle by id
+  assert:
+    that:
+    - msixbundle_uninstall is changed
+    - msixbundle_uninstall.rc == 0
+    - not msixbundle_uninstall.reboot_required
+    - not msixbundle_uninstall_actual.stdout | trim | bool
+
+- name: uninstall msixbundle by id (idempotence)
+  win_package:
+    product_id: '{{ msixbundle_id }}'
+    state: absent
+  register: msixbundle_uninstall_again
+
+- name: assert uninstall msixbundle by id (idempotence)
+  assert:
+    that:
+    - not msixbundle_uninstall_again is changed
+
+# The logic for appxbundle is the same for msixbundle no need for check and idempotence tests
+- name: install appxbundle
+  win_package:
+    path: '{{ test_path }}\WinPackageBundle.appxbundle'
+    state: present
+  register: appxbundle_install
+
+- name: get result of install appxbundle
+  win_shell: if (Get-AppxPackage -Name '{{ appxbundle_id }}') { $true } else { $false }
+  changed_when: False
+  register: appxbundle_install_actual
+
+- name: assert install appxbundle
+  assert:
+    that:
+    - appxbundle_install is changed
+    - appxbundle_install.rc == 0
+    - not appxbundle_install.reboot_required
+    - appxbundle_install_actual.stdout | trim | bool
+
+- name: uninstall appxbundle by path (check mode)
+  win_package:
+    path: '{{ test_path }}\WinPackageBundle.appxbundle'
+    state: absent
+  register: msixbundle_uninstall_check
+  check_mode: yes
+
+- name: get result of uninstall appxbundle by path (check mode)
+  win_shell: if (Get-AppxPackage -Name '{{ appxbundle_id }}') { $true } else { $false }
+  changed_when: False
+  register: msixbundle_uninstall_actual_check
+
+- name: assert uninstall appxbundle by path (check mode)
+  assert:
+    that:
+    - msixbundle_uninstall_check is changed
+    - msixbundle_uninstall_check.rc == 0
+    - not msixbundle_uninstall_check.reboot_required
+    - msixbundle_uninstall_actual_check.stdout | trim | bool
+
+- name: uninstall appxbundle by path
+  win_package:
+    path: '{{ test_path }}\WinPackageBundle.appxbundle'
+    state: absent
+  register: msixbundle_uninstall
+
+- name: get result of uninstall appxbundle by path
+  win_shell: if (Get-AppxPackage -Name '{{ appxbundle_id }}') { $true } else { $false }
+  changed_when: False
+  register: msixbundle_uninstall_actual
+
+- name: assert uninstall appxbundle by path
+  assert:
+    that:
+    - msixbundle_uninstall is changed
+    - msixbundle_uninstall.rc == 0
+    - not msixbundle_uninstall.reboot_required
+    - not msixbundle_uninstall_actual.stdout | trim | bool
+
+- name: uninstall appxbundle by path (idempotence)
+  win_package:
+    path: '{{ test_path }}\WinPackageBundle.appxbundle'
+    state: absent
+  register: msixbundle_uninstall_again
+
+- name: assert uninstall appxbundle by path (idempotence)
+  assert:
+    that:
+    - not msixbundle_uninstall_again is changed
