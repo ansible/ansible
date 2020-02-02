@@ -725,7 +725,7 @@
 - name: Ed25519 and Ed448 tests (for cryptography >= 2.6)
   block:
     - name: Generate privatekeys
-      openssl_privatekey:
+      x509_privatekey:
         path: '{{ output_dir }}/privatekey_{{ item }}.pem'
         type: '{{ item }}'
       loop:
@@ -733,7 +733,7 @@
         - Ed448
 
     - name: Generate CSR
-      openssl_csr:
+      x509_csr:
         path: '{{ output_dir }}/csr_{{ item }}.csr'
         privatekey_path: '{{ output_dir }}/privatekey_{{ item }}.pem'
         subject:
@@ -746,7 +746,7 @@
       ignore_errors: yes
 
     - name: Generate CSR (idempotent)
-      openssl_csr:
+      x509_csr:
         path: '{{ output_dir }}/csr_{{ item }}.csr'
         privatekey_path: '{{ output_dir }}/privatekey_{{ item }}.pem'
         subject:

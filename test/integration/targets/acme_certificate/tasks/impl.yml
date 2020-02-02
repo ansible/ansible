@@ -372,35 +372,35 @@
   register: cert_8_text
 # Dump certificate info
 - name: Dumping cert 1
-  openssl_certificate_info:
+  x509_certificate_info:
     path: "{{ output_dir }}/cert-1.pem"
   register: cert_1_info
 - name: Dumping cert 2
-  openssl_certificate_info:
+  x509_certificate_info:
     path: "{{ output_dir }}/cert-2.pem"
   register: cert_2_info
 - name: Dumping cert 3
-  openssl_certificate_info:
+  x509_certificate_info:
     path: "{{ output_dir }}/cert-3.pem"
   register: cert_3_info
 - name: Dumping cert 4
-  openssl_certificate_info:
+  x509_certificate_info:
     path: "{{ output_dir }}/cert-4.pem"
   register: cert_4_info
 - name: Dumping cert 5
-  openssl_certificate_info:
+  x509_certificate_info:
     path: "{{ output_dir }}/cert-5.pem"
   register: cert_5_info
 - name: Dumping cert 6
-  openssl_certificate_info:
+  x509_certificate_info:
     path: "{{ output_dir }}/cert-6.pem"
   register: cert_6_info
 - name: Dumping cert 7
-  openssl_certificate_info:
+  x509_certificate_info:
     path: "{{ output_dir }}/cert-7.pem"
   register: cert_7_info
 - name: Dumping cert 8
-  openssl_certificate_info:
+  x509_certificate_info:
     path: "{{ output_dir }}/cert-8.pem"
   register: cert_8_info
 ## GET ACCOUNT ORDERS #########################################################################

@@ -7,7 +7,7 @@
   register: privatekey1
 
 - name: Generate privatekey1 - standard (idempotence)
-  openssl_privatekey:
+  x509_privatekey:
     path: '{{ output_dir }}/privatekey1.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
     return_content: yes
@@ -40,7 +40,7 @@
   register: privatekey4_delete
 
 - name: Delete privatekey4 - standard (idempotence)
-  openssl_privatekey:
+  x509_privatekey:
     state: absent
     path: '{{ output_dir }}/privatekey4.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'

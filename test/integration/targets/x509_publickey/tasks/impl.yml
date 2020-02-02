@@ -12,7 +12,7 @@
   register: publickey
 
 - name: Generate publickey - PEM format (idempotence)
-  openssl_publickey:
+  x509_publickey:
     path: '{{ output_dir }}/publickey.pub'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
@@ -52,7 +52,7 @@
   register: publickey2_absent
 
 - name: Delete publickey2 - standard (idempotence)
-  openssl_publickey:
+  x509_publickey:
     state: absent
     path: '{{ output_dir }}/publickey2.pub'
     privatekey_path: '{{ output_dir }}/privatekey.pem'

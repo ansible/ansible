@@ -33,7 +33,7 @@
     info_results: "{{ info_results + [result] }}"
 
 - name: ({{select_crypto_backend}}) Get CSR info directly
-  openssl_csr_info:
+  x509_csr_info:
     content: '{{ lookup("file", output_dir ~ "/csr_1.csr") }}'
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: result_direct

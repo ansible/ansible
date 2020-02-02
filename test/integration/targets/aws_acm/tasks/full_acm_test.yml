@@ -51,21 +51,21 @@
       
   # https://github.com/vbotka/ansible-certificate/blob/master/tasks/cert-self-signed.yml
   - name: Generate private key for local certs
-    openssl_privatekey:
+    x509_privatekey:
       path: "{{ item.priv_key }}"
       type: RSA
       size: 2048 # ACM doesn't work properly with 4096
     with_items: "{{ local_certs }}"
 
   - name: Generate an OpenSSL Certificate Signing Request for own certs
-    openssl_csr:
+    x509_csr:
       path: "{{ item.csr }}"
       privatekey_path: "{{ item.priv_key }}"
       common_name: "{{ item.domain }}"
     with_items: "{{ local_certs }}"
 
   - name: Generate a Self Signed OpenSSL certificate for own certs
-    openssl_certificate:
+    x509_certificate:
       provider: selfsigned
       path: "{{ item.cert }}"
       csr_path: "{{ item.csr }}"
@@ -345,13 +345,13 @@
        - remote_tmp_dir is defined
 
   - name: Generate private key for cert to be chained
-    openssl_privatekey:
+    x509_privatekey:
       path: "{{ chained_cert.priv_key }}"
       type: RSA
       size: 2048 # ACM doesn't work properly with 4096
 
   - name: Generate two OpenSSL Certificate Signing Requests for cert to be chained
-    openssl_csr:
+    x509_csr:
       path: "{{ item.csr }}"
       privatekey_path: "{{ chained_cert.priv_key }}"
       common_name: "{{ chained_cert.domain }}"
@@ -359,7 +359,7 @@
     
 
   - name: Sign new certs with cert 0 and 1
-    openssl_certificate:
+    x509_certificate:
       provider: ownca
       path: "{{ item.cert }}"
       csr_path: "{{ item.csr }}"

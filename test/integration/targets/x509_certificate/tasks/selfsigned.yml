@@ -373,7 +373,7 @@
 - name: (Selfsigned, {{select_crypto_backend}}) Ed25519 and Ed448 tests (for cryptography >= 2.6)
   block:
     - name: (Selfsigned, {{select_crypto_backend}}) Generate privatekeys
-      openssl_privatekey:
+      x509_privatekey:
         path: '{{ output_dir }}/privatekey_{{ item }}.pem'
         type: '{{ item }}'
       loop:
@@ -381,7 +381,7 @@
         - Ed448
 
     - name: (Selfsigned, {{select_crypto_backend}}) Generate CSR
-      openssl_csr:
+      x509_csr:
         path: '{{ output_dir }}/csr_{{ item }}.csr'
         privatekey_path: '{{ output_dir }}/privatekey_{{ item }}.pem'
         subject:
@@ -393,7 +393,7 @@
       ignore_errors: yes
 
     - name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate
-      openssl_certificate:
+      x509_certificate:
         path: '{{ output_dir }}/cert_{{ item }}.pem'
         csr_path: '{{ output_dir }}/csr_{{ item }}.csr'
         privatekey_path: '{{ output_dir }}/privatekey_{{ item }}.pem'
@@ -407,7 +407,7 @@
       ignore_errors: yes
 
     - name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate - idempotency
-      openssl_certificate:
+      x509_certificate:
         path: '{{ output_dir }}/cert_{{ item }}.pem'
         csr_path: '{{ output_dir }}/csr_{{ item }}.csr'
         privatekey_path: '{{ output_dir }}/privatekey_{{ item }}.pem'

@@ -7,13 +7,13 @@
     loop: "{{ query('nested', types, root_numbers) }}"
 
   - name: Analyze root certificates
-    openssl_certificate_info:
+    x509_certificate_info:
       path: "{{ output_dir }}/acme-root-{{ item }}.pem"
     loop: "{{ root_numbers }}"
     register: acme_roots
 
   - name: Analyze intermediate certificates
-    openssl_certificate_info:
+    x509_certificate_info:
       path: "{{ output_dir }}/acme-intermediate-{{ item }}.pem"
     loop: "{{ root_numbers }}"
     register: acme_intermediates
