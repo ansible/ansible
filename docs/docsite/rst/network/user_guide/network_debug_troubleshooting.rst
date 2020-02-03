@@ -204,7 +204,6 @@ Category "socket_path issue"
 
 The ``socket_path does not exist or cannot be found``  and ``unable to connect to socket`` messages are new in Ansible 2.5. These messages indicate that the socket used to communicate with the remote network device is unavailable or does not exist.
 
-
 For example:
 
 .. code-block:: none
@@ -233,7 +232,9 @@ or
 
 Suggestions to resolve:
 
-Follow the steps detailed in :ref:`enable network logging <enable_network_logging>`.
+#. Verify that you have write access to the ``socket_path``.
+
+#. Follow the steps detailed in :ref:`enable network logging <enable_network_logging>`.
 
 If the identified error message from the log file is:
 
