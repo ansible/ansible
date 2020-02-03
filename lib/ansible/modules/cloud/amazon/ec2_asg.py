@@ -1685,7 +1685,7 @@ def main():
             mixed_instances_policy=dict(type='dict',
                                         default=None,
                                         options=dict(
-                                            instance_types=dict(type='list'),
+                                            instance_types=dict(type='list', elements='str'),
                                         )),
             min_size=dict(type='int'),
             max_size=dict(type='int'),
