@@ -36,13 +36,6 @@ options:
       - name: ANSIBLE_REMOTE_PORT
     vars:
       - name: ansible_port
-  network_os:
-    description:
-      - Configures the device platform network operating system.  This value is
-        used to load the correct terminal and cliconf plugins to communicate
-        with the remote device.
-    vars:
-      - name: ansible_network_os
   remote_user:
     description:
       - The username used to authenticate to the remote device when the SSH
@@ -75,6 +68,75 @@ options:
       - name: ANSIBLE_PRIVATE_KEY_FILE
     vars:
       - name: ansible_private_key_file
+  host_key_auto_add:
+    type: boolean
+    description:
+      - By default, Ansible will prompt the user before adding SSH keys to the
+        known hosts file.  Since persistent connections such as network_cli run
+        in background processes, the user will never be prompted.  By enabling
+        this option, unknown host keys will automatically be added to the
+        known hosts file.
+      - Be sure to fully understand the security implications of enabling this
+        option on production systems as it could create a security vulnerability.
+    default: False
+    ini:
+      - section: paramiko_connection
+        key: host_key_auto_add
+    env:
+      - name: ANSIBLE_HOST_KEY_AUTO_ADD
+  look_for_keys:
+    default: True
+    description: 'TODO: write it'
+    env: [{name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS}]
+    ini:
+    - {key: look_for_keys, section: paramiko_connection}
+    type: boolean
+  proxy_command:
+    default: ''
+    description:
+        - Proxy information for running the connection via a jumphost
+        - Also this plugin will scan 'ssh_args', 'ssh_extra_args' and 'ssh_common_args' from the 'ssh' plugin settings for proxy information if set.
+    env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
+    ini:
+      - {key: proxy_command, section: paramiko_connection}
+  record_host_keys:
+    default: True
+    description: 'TODO: write it'
+    env: [{name: ANSIBLE_PARAMIKO_RECORD_HOST_KEYS}]
+    ini:
+      - section: paramiko_connection
+        key: record_host_keys
+    type: boolean
+  host_key_checking:
+    description: 'Set this to "False" if you want to avoid host key checking by the underlying tools Ansible uses to connect to the host'
+    type: boolean
+    default: True
+    env:
+      - name: ANSIBLE_HOST_KEY_CHECKING
+      - name: ANSIBLE_SSH_HOST_KEY_CHECKING
+        version_added: '2.5'
+      - name: ANSIBLE_PARAMIKO_HOST_KEY_CHECKING
+        version_added: '2.5'
+    ini:
+      - section: defaults
+        key: host_key_checking
+      - section: paramiko_connection
+        key: host_key_checking
+        version_added: '2.5'
+    vars:
+      - name: ansible_host_key_checking
+        version_added: '2.5'
+      - name: ansible_ssh_host_key_checking
+        version_added: '2.5'
+      - name: ansible_paramiko_host_key_checking
+        version_added: '2.5'
+  network_os:
+    description:
+      - Configures the device platform network operating system.  This value is
+        used to load the correct terminal and cliconf plugins to communicate
+        with the remote device.
+    vars:
+      - name: ansible_network_os
   become:
     type: boolean
     description:
@@ -106,22 +168,6 @@ options:
       - name: ANSIBLE_BECOME_METHOD
     vars:
       - name: ansible_become_method
-  host_key_auto_add:
-    type: boolean
-    description:
-      - By default, Ansible will prompt the user before adding SSH keys to the
-        known hosts file.  Since persistent connections such as network_cli run
-        in background processes, the user will never be prompted.  By enabling
-        this option, unknown host keys will automatically be added to the
-        known hosts file.
-      - Be sure to fully understand the security implications of enabling this
-        option on production systems as it could create a security vulnerability.
-    default: False
-    ini:
-      - section: paramiko_connection
-        key: host_key_auto_add
-    env:
-      - name: ANSIBLE_HOST_KEY_AUTO_ADD
   persistent_connect_timeout:
     type: int
     description:
@@ -265,6 +311,7 @@ options:
         - name: ansible_network_cli_retries
 """
 
+import fcntl
 from functools import wraps
 import getpass
 import json
@@ -273,18 +320,40 @@ import re
 import os
 import signal
 import socket
+import tempfile
 import time
 import traceback
 from io import BytesIO
 
-from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils.six import PY3
+from binascii import hexlify
+from distutils.version import LooseVersion
+
+from ansible.errors import (
+    AnsibleAuthenticationFailure, AnsibleConnectionFailure, AnsibleError
+)
+from ansible.module_utils.compat.paramiko import PARAMIKO_IMPORT_ERR, paramiko
+from ansible.module_utils.six import PY3, iteritems, itervalues
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.network.common.utils import to_list
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import NetworkConnectionBase
-from ansible.plugins.loader import cliconf_loader, terminal_loader, connection_loader
+from ansible.plugins.loader import cliconf_loader, terminal_loader
+from ansible.utils.path import makedirs_safe
+
+
+AUTHENTICITY_MSG = """
+paramiko: The authenticity of host '%s' can't be established.
+The %s key fingerprint is %s.
+Are you sure you want to continue connecting (yes/no)?
+"""
+
+# SSH Options Regex
+SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
+
+
+# keep connection objects on a per host basis to avoid repeated attempts to reconnect
+SSH_CONNECTION_CACHE = {}
 
 
 def ensure_connect(func):
@@ -295,6 +364,287 @@ def ensure_connect(func):
         self.update_cli_prompt_context()
         return func(self, *args, **kwargs)
     return wrapped
+
+
+class MyAddPolicy(object):
+    """
+    Based on AutoAddPolicy in paramiko so we can determine when keys are added
+
+    and also prompt for input.
+
+    Policy for automatically adding the hostname and new host key to the
+    local L{HostKeys} object, and saving it.  This is used by L{SSHClient}.
+    """
+
+    def __init__(self, connection):
+        self._options = connection._options
+
+    def missing_host_key(self, client, hostname, key):
+
+        if all((self._options['host_key_checking'], not self._options['host_key_auto_add'])):
+
+            fingerprint = hexlify(key.get_fingerprint())
+            ktype = key.get_name()
+
+            raise AnsibleError(AUTHENTICITY_MSG[1:92] % (hostname, ktype, fingerprint))
+
+        key._added_by_ansible_this_time = True
+
+        # existing implementation below:
+        client._host_keys.add(hostname, key.get_name(), key)
+
+        # host keys are actually saved in close() function below
+        # in order to control ordering.
+
+
+class ParamikoConnection(object):
+    ''' SSH based connection with Paramiko '''
+
+    _log_channel = None
+
+    def __init__(self, connection):
+        self._connection = connection
+        self._play_context = connection._play_context
+
+    def _cache_key(self):
+        return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
+
+    def _connect(self):
+        cache_key = self._cache_key()
+        if cache_key in SSH_CONNECTION_CACHE:
+            self.ssh = SSH_CONNECTION_CACHE[cache_key]
+        else:
+            self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
+        return self
+
+    def _set_log_channel(self, name):
+        '''Mimic paramiko.SSHClient.set_log_channel'''
+        self._log_channel = name
+
+    def _parse_proxy_command(self, port=22):
+        proxy_command = None
+        # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
+        ssh_args = [
+            getattr(self._play_context, 'ssh_extra_args', '') or '',
+            getattr(self._play_context, 'ssh_common_args', '') or '',
+            getattr(self._play_context, 'ssh_args', '') or '',
+        ]
+        if ssh_args is not None:
+            args = self._connection._split_ssh_args(' '.join(ssh_args))
+            for i, arg in enumerate(args):
+                if arg.lower() == 'proxycommand':
+                    # _split_ssh_args split ProxyCommand from the command itself
+                    proxy_command = args[i + 1]
+                else:
+                    # ProxyCommand and the command itself are a single string
+                    match = SETTINGS_REGEX.match(arg)
+                    if match:
+                        if match.group(1).lower() == 'proxycommand':
+                            proxy_command = match.group(2)
+
+                if proxy_command:
+                    break
+
+        proxy_command = proxy_command or self._connection.get_option('proxy_command')
+
+        sock_kwarg = {}
+        if proxy_command:
+            replacers = {
+                '%h': self._play_context.remote_addr,
+                '%p': port,
+                '%r': self._play_context.remote_user
+            }
+            for find, replace in replacers.items():
+                proxy_command = proxy_command.replace(find, str(replace))
+            try:
+                sock_kwarg = {'sock': paramiko.ProxyCommand(proxy_command)}
+                self._connection.queue_message("vvv", "CONFIGURE PROXY COMMAND FOR CONNECTION: %s" % proxy_command)
+            except AttributeError:
+                self._connection.queue_message(
+                    "warning",
+                    'Paramiko ProxyCommand support unavailable. Please upgrade to Paramiko 1.9.0 or newer. '
+                    'Not using configured ProxyCommand'
+                )
+
+        return sock_kwarg
+
+    def _connect_uncached(self):
+        ''' activates the connection object '''
+
+        if paramiko is None:
+            raise AnsibleError("paramiko is not installed: %s" % to_native(PARAMIKO_IMPORT_ERR))
+
+        port = self._play_context.port or 22
+        self._connection.queue_message(
+            "vvv",
+            "ESTABLISH PARAMIKO SSH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
+        )
+
+        ssh = paramiko.SSHClient()
+
+        # override paramiko's default logger name
+        if self._log_channel is not None:
+            ssh.set_log_channel(self._log_channel)
+
+        self._connection.keyfile = os.path.expanduser("~/.ssh/known_hosts")
+
+        if self._connection.get_option('host_key_checking'):
+            for ssh_known_hosts in ("/etc/ssh/ssh_known_hosts", "/etc/openssh/ssh_known_hosts"):
+                try:
+                    # TODO: check if we need to look at several possible locations, possible for loop
+                    ssh.load_system_host_keys(ssh_known_hosts)
+                    break
+                except IOError:
+                    pass  # file was not found, but not required to function
+            ssh.load_system_host_keys()
+
+        ssh_connect_kwargs = self._parse_proxy_command(port)
+
+        ssh.set_missing_host_key_policy(MyAddPolicy(self._connection))
+
+        allow_agent = True
+
+        if self._play_context.password is not None:
+            allow_agent = False
+
+        try:
+            key_filename = None
+            if self._play_context.private_key_file:
+                key_filename = os.path.expanduser(self._play_context.private_key_file)
+
+            # paramiko 2.2 introduced auth_timeout parameter
+            if LooseVersion(paramiko.__version__) >= LooseVersion('2.2.0'):
+                ssh_connect_kwargs['auth_timeout'] = self._play_context.timeout
+
+            ssh.connect(
+                self._play_context.remote_addr.lower(),
+                username=self._play_context.remote_user,
+                allow_agent=allow_agent,
+                look_for_keys=self._connection.get_option('look_for_keys'),
+                key_filename=key_filename,
+                password=self._play_context.password,
+                timeout=self._play_context.timeout,
+                port=port,
+                **ssh_connect_kwargs
+            )
+        except paramiko.ssh_exception.BadHostKeyException as e:
+            raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
+        except paramiko.ssh_exception.AuthenticationException as e:
+            msg = 'Failed to authenticate: {0}'.format(to_text(e))
+            raise AnsibleAuthenticationFailure(msg)
+        except Exception as e:
+            msg = to_text(e)
+            if u"PID check failed" in msg:
+                raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
+            elif u"Private key file is encrypted" in msg:
+                msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
+                    self._play_context.remote_user, self._play_context.remote_addr, port, msg)
+                raise AnsibleConnectionFailure(msg)
+            else:
+                raise AnsibleConnectionFailure(msg)
+
+        return ssh
+
+    def _any_keys_added(self):
+        for keys in itervalues(self.ssh._host_keys):
+            for key in itervalues(keys):
+                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                if added_this_time:
+                    return True
+        return False
+
+    def _save_ssh_host_keys(self, filename):
+        '''
+        not using the paramiko save_ssh_host_keys function as we want to add new SSH keys at the bottom so folks
+        don't complain about it :)
+        '''
+
+        if not self._any_keys_added():
+            return False
+
+        path = os.path.expanduser("~/.ssh")
+        makedirs_safe(path)
+
+        # Can't we do this with 'a' instead?
+        with open(filename, 'w') as f:
+            for hostname, keys in iteritems(self.ssh._host_keys):
+                for keytype, key in iteritems(keys):
+                    # was f.write
+                    added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                    if not added_this_time:
+                        f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+
+            for hostname, keys in iteritems(self.ssh._host_keys):
+                for keytype, key in iteritems(keys):
+                    added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                    if added_this_time:
+                        f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+
+    def reset(self):
+        self.close()
+        self._connect()
+
+    def close(self):
+        ''' terminate the connection '''
+
+        cache_key = self._cache_key()
+        SSH_CONNECTION_CACHE.pop(cache_key, None)
+
+        if self._connection.get_option('host_key_checking') and self._connection.get_option('record_host_keys') and self._any_keys_added():
+
+            # add any new SSH host keys -- warning -- this could be slow
+            # (This doesn't acquire the connection lock because it needs
+            # to exclude only other known_hosts writers, not connections
+            # that are starting up.)
+            lockfile = self._connection.keyfile.replace("known_hosts", ".known_hosts.lock")
+            dirname = os.path.dirname(self._connection.keyfile)
+            makedirs_safe(dirname)
+
+            KEY_LOCK = open(lockfile, 'w')
+            fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
+
+            try:
+                # just in case any were added recently
+
+                self.ssh.load_system_host_keys()
+                self.ssh._host_keys.update(self.ssh._system_host_keys)
+
+                # gather information about the current key file, so
+                # we can ensure the new file has the correct mode/owner
+
+                key_dir = os.path.dirname(self._connection.keyfile)
+                if os.path.exists(self._connection.keyfile):
+                    key_stat = os.stat(self._connection.keyfile)
+                    mode = key_stat.st_mode
+                    uid = key_stat.st_uid
+                    gid = key_stat.st_gid
+                else:
+                    mode = 33188
+                    uid = os.getuid()
+                    gid = os.getgid()
+
+                # Save the new keys to a temporary file and move it into place
+                # rather than rewriting the file. We set delete=False because
+                # the file will be moved into place rather than cleaned up.
+
+                tmp_keyfile = tempfile.NamedTemporaryFile(dir=key_dir, delete=False)
+                os.chmod(tmp_keyfile.name, mode & 0o7777)
+                os.chown(tmp_keyfile.name, uid, gid)
+
+                self._save_ssh_host_keys(tmp_keyfile.name)
+                tmp_keyfile.close()
+
+                os.rename(tmp_keyfile.name, self._connection.keyfile)
+
+            except Exception:
+
+                # unable to save keys, including scenario when key was invalid
+                # and caught earlier
+                traceback.print_exc()
+            fcntl.lockf(KEY_LOCK, fcntl.LOCK_UN)
+
+        self.ssh.close()
+        self._connected = False
 
 
 class AnsibleCmdRespRecv(Exception):
@@ -321,7 +671,7 @@ class Connection(NetworkConnectionBase):
 
         self._terminal = None
         self.cliconf = None
-        self._paramiko_conn = None
+        self.paramiko_conn = ParamikoConnection(self)
 
         # Managing prompt context
         self._check_prompt = False
@@ -348,13 +698,6 @@ class Connection(NetworkConnectionBase):
                 'manually configure ansible_network_os value for this host'
             )
         self.queue_message('log', 'network_os is set to %s' % self._network_os)
-
-    @property
-    def paramiko_conn(self):
-        if self._paramiko_conn is None:
-            self._paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
-            self._paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
-        return self._paramiko_conn
 
     def _get_log_channel(self):
         name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
@@ -496,7 +839,6 @@ class Connection(NetworkConnectionBase):
                 self.queue_message('debug', "cli session is now closed")
 
                 self.paramiko_conn.close()
-                self._paramiko_conn = None
                 self.queue_message('debug', "ssh connection has been closed successfully")
         super(Connection, self).close()
 
