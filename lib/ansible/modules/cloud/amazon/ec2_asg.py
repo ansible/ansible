@@ -85,7 +85,7 @@ options:
     description:
       - Using mixed intances policy while ASG present
     required: false
-    version_added: "2.8"
+    version_added: "2.10"
     suboptions:
       instance_types:
         description:
