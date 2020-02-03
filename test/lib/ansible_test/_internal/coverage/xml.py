@@ -2,7 +2,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import os
 import time
 
@@ -19,10 +18,7 @@ from xml.dom import (
 
 from ..io import (
     make_dirs,
-)
-
-from ..util import (
-    to_text,
+    read_json_file,
 )
 
 from ..util_common import (
@@ -75,8 +71,7 @@ def _generate_powershell_xml(coverage_file):
     :type coverage_file: str
     :rtype: Element
     """
-    with open(coverage_file, 'rb') as coverage_fd:
-        coverage_info = json.loads(to_text(coverage_fd.read()))
+    coverage_info = read_json_file(coverage_file)
 
     content_root = data_context().content.root
     is_ansible = data_context().content.is_ansible

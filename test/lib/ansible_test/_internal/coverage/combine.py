@@ -13,6 +13,7 @@ from ..target import (
 
 from ..io import (
     read_json_file,
+    read_text_file,
 )
 
 from ..util import (
@@ -276,8 +277,7 @@ def _get_coverage_targets(args, walk_func):
         for target in walk_func(include_symlinks=False):
             target_path = os.path.abspath(target.path)
 
-            with open(target_path, 'r') as target_fd:
-                target_lines = len(target_fd.read().splitlines())
+            target_lines = len(read_text_file(target_path).splitlines())
 
             sources.append((target_path, target_lines))
 
