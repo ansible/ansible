@@ -139,9 +139,9 @@ options:
     - The C(msix) provider is used to install C(.appx), C(.msix),
       C(.appxbundle), or C(.msixbundle) packages. These packages are only
       installed or removed on the current use. The host must be set to allow
-      sideloaded apps or in developer mode. If a package is already installed
-      but C(path) points to an updated package, this will be installed over the
-      top of the existing one.
+      sideloaded apps or in developer mode. See the examples for how to enable
+      this. If a package is already installed but C(path) points to an updated
+      package, this will be installed over the top of the existing one.
     - The C(msp) provider scans for all MSP patches installed on a machine wide
       and current user context based on the C(PatchCode) of the MSP. A C(msp)
       will be applied or removed on all C(msi) products that it applies to and
@@ -341,6 +341,14 @@ EXAMPLES = r'''
   win_package:
     product_id: '{AC76BA86-A440-FFFF-A440-0C13154E5D00}'
     state: absent
+
+- name: Enable installation of 3rd party MSIX packages
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock
+    name: AllowAllTrustedApps
+    data: 1
+    type: dword
+    state: present
 
 - name: Install an MSIX package for the current user
   win_package:

@@ -556,7 +556,7 @@ Function Get-InstalledStatus {
 
         if ($CreatesVersion) {
             if (Test-Path -LiteralPath $CreatesPath -PathType Leaf) {
-                $existingVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($CreatesPath).FileVersion
+                $existingVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($CreatesPath).FileVersionRaw
                 $status.Installed = $CreatesVersion -eq $existingVersion
             } else {
                 throw "creates_path must be a file not a directory when creates_version is set"
@@ -667,7 +667,7 @@ Function Invoke-Msiexec {
             Module = $Module
             Command = (Argv-ToString -arguments $cmd)
             ReturnCodes = $ReturnCodes
-            LogPath = $PathPath
+            LogPath = $LogPath
             WorkingDirectory = $WorkingDirectory
 
             # Msiexec is not a console application but in the case of a fatal error it does still send messages back
@@ -1121,15 +1121,47 @@ $providerInfo = [Ordered]@{
                 $registryProperties = Get-ItemProperty -LiteralPath $RegistryPath
 
                 if ('QuietUninstallString' -in $registryProperties.PSObject.Properties.Name) {
-                    $invokeParams.Command = $registryProperties.QuietUninstallString
+                    $command = $registryProperties.QuietUninstallString
                 } elseif ('UninstallString' -in $registryProperties.PSObject.Properties.Name) {
-                    $invokeParams.Command = $registryProperties.UninstallString
+                    $command = $registryProperties.UninstallString
                 } else {
-                    $module.FailJson("Failed to find registry uninstall string for package '$Id' at '$RegistryPath'")
+                    $module.FailJson("Failed to find registry uninstall string at registry path '$RegistryPath'")
                 }
-            }
 
-            # TODO: further analysis on the uninstall string to see if we need to quote it
+                # If the uninstall string starts with '%', we need to expand the env vars.
+                if ($command.StartsWith('%') -or $command.StartsWith('"%')) {
+                    $command = [System.Environment]::ExpandEnvironmentVariables($command)
+                }
+
+                # If the command is not quoted and contains spaces we need to see if it needs to be manually quoted for the executable.
+                if (-not $command.StartsWith('"') -and $command.Contains(' ')) {
+                    $rawArguments = [System.Collections.Generic.List[String]]@()
+
+                    $executable = New-Object -TypeName System.Text.StringBuilder
+                    foreach ($cmd in ([Ansible.Process.ProcessUtil]::ParseCommandLine($command))) {
+                        if ($rawArguments.Count -eq 0) {
+                            # Still haven't found the path, append the arg to the executable path and see if it exists.
+                            $null = $executable.Append($cmd)
+                            $exe = $executable.ToString()
+                            if (Test-Path -LiteralPath $exe -PathType Leaf) {
+                                $rawArguments.Add($exe)
+                            } else {
+                                $null = $executable.Append(" ")  # The arg had a space and we need to preserve that.
+                            }
+                        } else {
+                            $rawArguments.Add($cmd)
+                        }
+                    }
+
+                    # If we still couldn't find a file just use the command literally and hope WIndows can handle it,
+                    # otherwise recombind the args which will also quote whatever is needed.
+                    if ($rawArguments.Count -gt 0) {
+                        $command = Argv-ToString -arguments $rawArguments
+                    }
+                }
+
+                $invokeParams.Command = $command
+            }
 
             if ($Arguments) {
                 $invokeParams.Command += " $Arguments"

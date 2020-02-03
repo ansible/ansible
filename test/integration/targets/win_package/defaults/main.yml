@@ -12,6 +12,7 @@ msix_id: WinPackageMsix
 msixbundle_id: WinPackageBundleMsix
 appx_id: WinPackageAppx
 appxbundle_id: WinPackageBundleAppx
+registry_id: WinPackageRegistry
 
 all_ids:
 - '{{ good_id }}'
@@ -20,3 +21,4 @@ all_ids:
 - '{{ msixbundle_id }}'
 - '{{ appx_id }}'
 - '{{ appxbundle_id }}'
+- '{{ registry_id }}'
