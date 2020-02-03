@@ -437,6 +437,11 @@ min_size:
     returned: success
     type: int
     sample: 1
+mixed_instance_policy:
+    description: Returns the list of used mixed instance policy if set.
+    returned: success
+    type: list
+    sample: ["t3.micro", "t3a.micro"]
 pending_instances:
     description: Number of instances in pending state
     returned: success
