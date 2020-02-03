@@ -581,10 +581,6 @@ class ParamikoConnection(object):
                     if added_this_time:
                         f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
-    def reset(self):
-        self.close()
-        self._connect()
-
     def close(self):
         ''' terminate the connection '''
 
@@ -774,7 +770,6 @@ class Connection(NetworkConnectionBase):
         '''
         if not self.connected:
             self.paramiko_conn._set_log_channel(self._get_log_channel())
-            self.paramiko_conn.force_persistence = self.force_persistence
 
             command_timeout = self.get_option('persistent_command_timeout')
             max_pause = min([self.get_option('persistent_connect_timeout'), command_timeout])
