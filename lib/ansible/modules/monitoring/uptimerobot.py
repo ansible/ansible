@@ -93,11 +93,7 @@ class UptimeRobot:
         }
         self.uri = ''
         self.api_methods = api_methods
-        self.params = params
-        self.params = self.check_dict(self.params)
-        for k, v in self.params.items():
-            if k == 'type':
-                self.params[k] = 2 if v == 'dns' else 1
+        self.params = self.check_dict(params)
         self.body = json.dumps(self.params)
         for state, method in self.api_methods.items():
             if state == self.params['status']:
@@ -134,6 +130,9 @@ class UptimeRobot:
         for k, v in dictionary.items():
             if v != '':
                 tmp[k] = v
+            if k == 'type':
+                tmp[k] = 2 if v == 'dns' else 1
+
         if dictionary['status'] != 'created':
             tmp['id'] = self.get_monitor_id(dictionary['friendly_name'])
         dictionary.clear()
