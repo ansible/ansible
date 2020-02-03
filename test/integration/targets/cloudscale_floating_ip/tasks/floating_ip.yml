@@ -1,15 +1,17 @@
-- name: Request floating IP
+- name: Request regional floating IP
   cloudscale_floating_ip:
     server: '{{ test01.uuid }}'
     ip_version: '{{ item.ip_version }}'
     reverse_ptr: '{{ item.reverse_ptr | default(omit) }}'
     prefix_length: '{{ item.prefix_length | default(omit) }}'
+    region: '{{ cloudscale_test_region }}'
   register: floating_ip
 - name: Verify request floating IP
   assert:
     that:
       - floating_ip is successful
       - floating_ip is changed
+      - floating_ip.region.slug == '{{ cloudscale_test_region }}'
       - (item.ip_version == 4 and floating_ip.ip | ipv4) or (item.ip_version == 6 and floating_ip.ip | ipv6)
       - floating_ip.server == test01.uuid
 
@@ -17,6 +19,7 @@
   cloudscale_floating_ip:
     server: '{{ test01.uuid }}'
     ip: '{{ floating_ip.ip }}'
+    region: '{{ cloudscale_test_region }}'
   register: floating_ip_indempotence
 - name: Verify floating IP indempotence
   assert:
@@ -24,6 +27,41 @@
       - floating_ip_indempotence is successful
       - floating_ip_indempotence is not changed
       - floating_ip_indempotence.server == test01.uuid
+      - floating_ip.region.slug == '{{ cloudscale_test_region }}'
+
+# - name: Request global floating IP (the recommended variant)
+#   cloudscale_floating_ip:
+#     server: '{{ test01.uuid }}'
+#     ip_version: '{{ item.ip_version }}'
+#     reverse_ptr: '{{ item.reverse_ptr | default(omit) }}'
+#     prefix_length: '{{ item.prefix_length | default(omit) }}'
+#     region: 'global'
+#   register: global_floating_ip
+# - name: Verify request floating IP
+#   assert:
+#     that:
+#       - global_floating_ip is successful
+#       - global_floating_ip is changed
+#       - global_floating_ip.region is None
+#       - (item.ip_version == 4 and global_floating_ip.ip | ipv4) or (item.ip_version == 6 and global_floating_ip.ip | ipv6)
+#       - global_floating_ip.server == test01.uuid
+
+# - name: Request global floating IP (the alternate approach)
+#   cloudscale_floating_ip:
+#     server: '{{ test01.uuid }}'
+#     ip_version: '{{ item.ip_version }}'
+#     reverse_ptr: '{{ item.reverse_ptr | default(omit) }}'
+#     prefix_length: '{{ item.prefix_length | default(omit) }}'
+#     region: null
+#   register: global_floating_ip
+# - name: Verify request floating IP
+#   assert:
+#     that:
+#       - global_floating_ip is successful
+#       - global_floating_ip is changed
+#       - global_floating_ip.region is None
+#       - (item.ip_version == 4 and global_floating_ip.ip | ipv4) or (item.ip_version == 6 and global_floating_ip.ip | ipv6)
+#       - global_floating_ip.server == test01.uuid
 
 - name: Check network parameter alias
   cloudscale_floating_ip:

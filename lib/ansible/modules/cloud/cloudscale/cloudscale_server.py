@@ -55,6 +55,11 @@ options:
     description:
       - Image used to create the server.
     type: str
+  zone:
+    description:
+      - Zone to launch the server in (e.g. 'lgp1' or 'rma1')
+    type: str
+    version_added: '2.10'
   volume_size_gb:
     description:
       - Size of the root volume in GB.
@@ -131,6 +136,7 @@ EXAMPLES = '''
     flavor: flex-4
     ssh_keys: ssh-rsa XXXXXXXXXX...XXXX ansible@cloudscale
     server_groups: shiny-group
+    zone: lpg1
     use_private_network: True
     bulk_volume_size_gb: 100
     api_token: xxxxxx
@@ -143,6 +149,7 @@ EXAMPLES = '''
     flavor: flex-8
     ssh_keys: ssh-rsa XXXXXXXXXXX ansible@cloudscale
     server_groups: shiny-group
+    zone: lpg1
     api_token: xxxxxx
 
 
@@ -218,6 +225,12 @@ image:
   returned: success when not state == absent
   type: dict
   sample: { "default_username": "ubuntu", "name": "Ubuntu 18.04 LTS", "operating_system": "Ubuntu", "slug": "ubuntu-18.04" }
+zone:
+  description: The zone this server is running in
+  returned: success when not state == absent
+  type: dict
+  sample: { 'slug': 'lpg1' }
+  version_added: '2.10'
 volumes:
   description: List of volumes attached to the server
   returned: success when not state == absent
@@ -511,6 +524,7 @@ def main():
         uuid=dict(),
         flavor=dict(),
         image=dict(),
+        zone=dict(),
         volume_size_gb=dict(type='int', default=10),
         bulk_volume_size_gb=dict(type='int'),
         ssh_keys=dict(type='list'),

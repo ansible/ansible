@@ -50,6 +50,12 @@ options:
       - UUID of the server assigned to this floating IP.
       - Required unless I(state) is absent.
     type: str
+  region:
+    description:
+      - The region in which the floating IP resides. Use 'global' to create
+        a global floating IP. If omitted, the region of the project default
+        zone is used.
+    type: str
   prefix_length:
     description:
       - Only valid if I(ip_version) is 6.
@@ -137,6 +143,11 @@ ip:
   returned: success
   type: str
   sample: 185.98.122.176
+region:
+  description: The region of the floating IP address or network.
+  returned: success when state == present
+  type: dict
+  sample: {'slug': 'lpg'}
 state:
   description: The current status of the floating IP.
   returned: success
@@ -215,6 +226,17 @@ class AnsibleCloudscaleFloatingIP(AnsibleCloudscaleBase):
         if params['reverse_ptr']:
             data['reverse_ptr'] = params['reverse_ptr']
 
+        # Though we can enter 'None' values in YAML by using the literal
+        # 'null' (without apostrophes) we advertise the string 'global', since
+        # that is less error-prone in a yaml configuration context.
+        #
+        # It is however still possible to use None if a perfect match with
+        # api.cloudscale.ch is desired.
+        if params['region'] in ('global', None):
+            data['region'] = None
+        elif params['region']:
+            data['region'] = params['region']
+
         self.info = self._resp2info(self._post('floating-ips', data))
 
     def release_floating_ip(self):
@@ -235,6 +257,7 @@ def main():
         ip=dict(aliases=('network', ), type='str'),
         ip_version=dict(choices=(4, 6), type='int'),
         server=dict(type='str'),
+        region=dict(type='str'),
         prefix_length=dict(choices=(56,), type='int'),
         reverse_ptr=dict(type='str'),
     ))

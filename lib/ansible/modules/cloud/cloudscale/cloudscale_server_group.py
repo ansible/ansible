@@ -38,6 +38,11 @@ options:
       - Type of the server group.
     default: anti-affinity
     type: str
+  zone:
+    description:
+      - Zone of the server group.
+    type: str
+    version_added: '2.10'
   state:
     description:
       - State of the server group.
@@ -58,6 +63,13 @@ EXAMPLES = '''
   cloudscale_server_group:
     name: my-name
     type: anti-affinity
+    api_token: xxxxxx
+
+- name: Ensure server group in a specific zone
+  cloudscale_server_group:
+    name: my-rma-group
+    type: anti-affinity
+    zone: lpg1
     api_token: xxxxxx
 
 - name: Ensure a server group is absent
@@ -89,6 +101,11 @@ type:
   returned: if available
   type: str
   sample: anti-affinity
+zone:
+  description: The zone of the server group
+  returned: success
+  type: dict
+  sample: { 'slug': 'rma1' }
 servers:
   description: A list of servers that are part of the server group.
   returned: if available
@@ -130,6 +147,7 @@ class AnsibleCloudscaleServerGroup(AnsibleCloudscaleBase):
         data = {
             'name': self._module.params.get('name'),
             'type': self._module.params.get('type'),
+            'zone': self._module.params.get('zone'),
             'tags': self._module.params.get('tags'),
         }
         if not self._module.check_mode:
@@ -193,6 +211,7 @@ def main():
         name=dict(),
         uuid=dict(),
         type=dict(default='anti-affinity'),
+        zone=dict(),
         tags=dict(type='dict'),
         state=dict(default='present', choices=['absent', 'present']),
     ))

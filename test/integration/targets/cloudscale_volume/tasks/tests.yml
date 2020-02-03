@@ -2,6 +2,7 @@
 - name: Create volume in check mode
   cloudscale_volume:
     name: '{{ cloudscale_resource_prefix }}-vol'
+    zone: '{{ cloudscale_test_zone }}'
     size_gb: 50
     tags:
       project: ansible-test
@@ -19,6 +20,7 @@
 - name: Create volume
   cloudscale_volume:
     name: '{{ cloudscale_resource_prefix }}-vol'
+    zone: '{{ cloudscale_test_zone }}'
     size_gb: 50
     tags:
       project: ansible-test
@@ -32,6 +34,7 @@
       - vol is changed
       - vol.size_gb == 50
       - vol.name == '{{ cloudscale_resource_prefix }}-vol'
+      - vol.zone.slug == '{{ cloudscale_test_zone }}'
       - vol.tags.project == 'ansible-test'
       - vol.tags.stage == 'production'
       - vol.tags.sla == '24-7'
@@ -39,6 +42,7 @@
 - name: Create volume indempotence
   cloudscale_volume:
     name: '{{ cloudscale_resource_prefix }}-vol'
+    zone: '{{ cloudscale_test_zone }}'
     size_gb: 50
     tags:
       project: ansible-test
@@ -52,6 +56,7 @@
       - vol is not changed
       - vol.size_gb == 50
       - vol.name == '{{ cloudscale_resource_prefix }}-vol'
+      - vol.zone.slug == '{{ cloudscale_test_zone }}'
       - vol.tags.project == 'ansible-test'
       - vol.tags.stage == 'production'
       - vol.tags.sla == '24-7'
@@ -180,6 +185,7 @@
   cloudscale_volume:
     name: '{{ cloudscale_resource_prefix }}-bulk'
     type: bulk
+    zone: '{{ cloudscale_test_zone }}'
     size_gb: 100
     server_uuids:
       - '{{ server.uuid }}'
