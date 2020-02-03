@@ -91,6 +91,7 @@ options:
         description:
           - A list of instance_types.
         type: list
+        elements: str
     type: dict
   placement_group:
     description:
