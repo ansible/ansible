@@ -1480,6 +1480,10 @@ class TaskParameters(DockerBaseClass):
                 if self.client.option_minimal_versions[value]['supported']:
                     result[key] = getattr(self, value)
 
+        if self.disable_healthcheck:
+            # Make sure image's health check is overridden
+            result['healthcheck'] = {'test': ['NONE']}
+
         if self.networks_cli_compatible and self.networks:
             network = self.networks[0]
             params = dict()
