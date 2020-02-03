@@ -74,6 +74,7 @@
     loop:
     - '{{ test_func1 }}'
     - '{{ test_func2 }}'
+    - '{{ test_schema1 }}.{{ test_func3 }}'
 
   - name: Touch test functions
     <<: *task_parameters
@@ -83,6 +84,7 @@
     loop:
     - '{{ test_func1 }}'
     - '{{ test_func2 }}'
+    - '{{ test_schema1 }}.{{ test_func3 }}'
 
   #######
   # Tests
@@ -101,6 +103,7 @@
       - result.tables.{{ test_schema1 }}.{{ test_table3 }}.size == 0
       - result.functions.public.{{ test_func1 }}.calls == 1
       - result.functions.public.{{ test_func2 }}.calls == 1
+      - result.functions.{{ test_schema1 }}.{{ test_func3 }}.calls == 1
       - result.indexes.public.{{ test_idx1 }}.idx_scan == 0
       - result.indexes.public.{{ test_idx2 }}.idx_scan == 0
 
@@ -178,7 +181,9 @@
     <<: *task_parameters
     postgresql_query:
       <<: *pg_parameters
-      query: 'DROP FUNCTION {{ item }}'
+      query: 'DROP FUNCTION {{ item }}()'
     loop:
     - '{{ test_func1 }}'
     - '{{ test_func2 }}'
+    - '{{ test_schema1 }}.{{ test_func3 }}'
+    ignore_errors: yes
