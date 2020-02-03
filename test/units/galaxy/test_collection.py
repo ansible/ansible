@@ -1100,7 +1100,59 @@ def test_verify_identical(monkeypatch, mock_collection, manifest_info, files_man
 
 
 @patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_not_installed(mock_verify, mock_collection):
+def test_verify_collections_not_installed(mock_verify, mock_collection, monkeypatch):
+    namespace = 'ansible_namespace'
+    name = 'collection'
+    version = '1.0.0'
+
+    local_collection = mock_collection(local_installed=False)
+
+    found_remote = MagicMock(return_value=mock_collection(local=False))
+    monkeypatch.setattr(collection.CollectionRequirement, 'from_name', found_remote)
+
+    collections = [('%s.%s' % (namespace, name), version, None)]
+    search_path = './'
+    validate_certs = False
+    ignore_errors = False
+    apis = [local_collection.api]
+
+    with patch.object(collection, '_download_file') as mock_download_file:
+        with pytest.raises(AnsibleError) as err:
+            collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
+
+    assert err.value.message == "Collection %s.%s is not installed in any of the collection paths." % (namespace, name)
+
+
+@patch.object(collection.CollectionRequirement, 'verify')
+def test_verify_collections_not_installed_ignore_errors(mock_verify, mock_collection, monkeypatch):
+    namespace = 'ansible_namespace'
+    name = 'collection'
+    version = '1.0.0'
+
+    local_collection = mock_collection(local_installed=False)
+
+    found_remote = MagicMock(return_value=mock_collection(local=False))
+    monkeypatch.setattr(collection.CollectionRequirement, 'from_name', found_remote)
+
+    collections = [('%s.%s' % (namespace, name), version, None)]
+    search_path = './'
+    validate_certs = False
+    ignore_errors = True
+    apis = [local_collection.api]
+
+    with patch.object(collection, '_download_file') as mock_download_file:
+        with patch.object(Display, 'warning') as mock_warning:
+            collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
+
+            skip_message = "Failed to verify collection %s.%s but skipping due to --ignore-errors being set." % (namespace, name)
+            original_err = "Error: Collection %s.%s is not installed in any of the collection paths." % (namespace, name)
+
+            assert mock_warning.called
+            assert mock_warning.call_args[0][0] == skip_message + " " + original_err
+
+
+@patch.object(collection.CollectionRequirement, 'verify')
+def test_verify_collections_no_remote(mock_verify, mock_collection):
     namespace = 'ansible_namespace'
     name = 'collection'
     version = '1.0.0'
@@ -1114,11 +1166,11 @@ def test_verify_collections_not_installed(mock_verify, mock_collection):
     with pytest.raises(AnsibleError) as err:
         collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
 
-    assert err.value.message == "Failed to find collection %s.%s:%s" % (namespace, name, version)
+    assert err.value.message == "Failed to find remote collection %s.%s:%s on any of the galaxy servers" % (namespace, name, version)
 
 
 @patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_not_installed_ignore_errors(mock_verify, mock_collection):
+def test_verify_collections_no_remote_ignore_errors(mock_verify, mock_collection):
     namespace = 'ansible_namespace'
     name = 'collection'
     version = '1.0.0'
@@ -1129,9 +1181,16 @@ def test_verify_collections_not_installed_ignore_errors(mock_verify, mock_collec
     search_path = './'
     validate_certs = False
     ignore_errors = True
-    apis = [local_collection.api]
+    apis = []
 
-    collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
+    with patch.object(Display, 'warning') as mock_warning:
+        collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
+
+        skip_message = "Failed to verify collection %s.%s but skipping due to --ignore-errors being set." % (namespace, name)
+        original_err = "Error: Failed to find remote collection %s.%s:%s on any of the galaxy servers" % (namespace, name, version)
+
+        assert mock_warning.called
+        assert mock_warning.call_args[0][0] == skip_message + " " + original_err
 
 
 @patch.object(os.path, 'isfile', return_value=True)
