@@ -1,0 +1,2 @@
+minor_changes:
+  - grafana_plugin - fix error on missing plugin_version ( see https://github.com/ansible/ansible/pull/67043 )
