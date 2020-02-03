@@ -63,16 +63,16 @@ extends_documentation_fragment: postgres
 
 EXAMPLES = r'''
 - name: Collect information about all supported user objects of the acme database
-  postgresql_user_objects_info:
+  postgresql_user_obj_stat_info:
     db: acme
 
 - name: Collect information about all supported user objects in the custom schema of the acme database
-  postgresql_user_objects_info:
+  postgresql_user_obj_stat_info:
     db: acme
     schema: custom
 
 - name: Collect information about user tables and indexes in the acme database
-  postgresql_user_objects_info:
+  postgresql_user_obj_stat_info:
     db: acme
     filter: tables, indexes
 '''
