@@ -565,7 +565,12 @@ def verify_collections(collections, search_paths, apis, validate_certs, ignore_e
                         if len(collection[0].split('.')) != 2:
                             raise AnsibleError(message="'%s' is not a valid collection name. The format namespace.name is expected." % collection[0])
                         located_by_name = True
-                        remote_collection = CollectionRequirement.from_name(collection[0], apis, collection[1], False, parent=None)
+                        try:
+                            remote_collection = CollectionRequirement.from_name(collection[0], apis, collection[1], False, parent=None)
+                        except AnsibleError as e:
+                            if e.message == 'Failed to find collection %s:%s' % (collection[0], collection[1]):
+                                raise AnsibleError('Failed to find remote collection %s:%s on any of the galaxy servers' % (collection[0], collection[1]))
+                            raise
 
                     collection_name = '%s.%s' % (remote_collection.namespace, remote_collection.name)
                     collection_version = remote_collection.latest_version
@@ -584,7 +589,13 @@ def verify_collections(collections, search_paths, apis, validate_certs, ignore_e
                     # Download the tar file to compare with the installed collection
                     if b_temp_tar_path is None:
                         if not located_by_name:
-                            remote_collection = CollectionRequirement.from_name(collection_name, apis, collection_version, False, parent=None)
+                            try:
+                                remote_collection = CollectionRequirement.from_name(collection_name, apis, collection_version, False, parent=None)
+                            except AnsibleError as e:
+                                if e.message == 'Failed to find collection %s:%s' % (collection_name, collection_version):
+                                    msg = 'Failed to find remote collection %s:%s on any of the galaxy servers' % (collection_name, collection_version)
+                                    raise AnsibleError(msg)
+                                raise
                         download_url = remote_collection.metadata.download_url
                         headers = {}
                         remote_collection.api._add_auth_token(headers, download_url, required=False)

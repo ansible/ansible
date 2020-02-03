@@ -53,7 +53,7 @@ Verifying collections
 Verifying collections with ``ansible-galaxy``
 ---------------------------------------------
 
-Once installed, you can verify that the content of the installed collection matches the content of the collection on the server.
+Once installed, you can verify that the content of the installed collection matches the content of the collection on the server. This feature expects that the collection is installed in one of the configured collection paths and that the collection exists on one of the configured galaxy servers.
 
 .. code-block:: bash
 
