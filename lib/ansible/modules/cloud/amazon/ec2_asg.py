@@ -766,12 +766,12 @@ def get_launch_object(connection, ec2_connection):
             launch_object = {"LaunchTemplate": {"LaunchTemplateId": lt['LaunchTemplateId'], "Version": launch_template['version']}}
         else:
             launch_object = {"LaunchTemplate": {"LaunchTemplateId": lt['LaunchTemplateId'], "Version": str(lt['LatestVersionNumber'])}}
-        launch_object = {'LaunchTemplate': launch_object}
+
         if mixed_instances_policy:
             instance_types = mixed_instances_policy.get('instance_types', [])
             policy = {
                 'LaunchTemplate': {
-                    'LaunchTemplateSpecification': launch_object
+                    'LaunchTemplateSpecification': launch_object["LaunchTemplate"]
                 }
             }
             if instance_types:
@@ -1229,7 +1229,10 @@ def create_autoscaling_group(connection):
         if 'LaunchConfigurationName' in launch_object:
             ag['LaunchConfigurationName'] = launch_object['LaunchConfigurationName']
         elif 'LaunchTemplate' in launch_object:
-            ag['LaunchTemplate'] = launch_object['LaunchTemplate']
+            if 'MixedInstancesPolicy' in launch_object:
+                ag['MixedInstancesPolicy'] = launch_object['MixedInstancesPolicy']
+            else:
+                ag['LaunchTemplate'] = launch_object['LaunchTemplate']
         else:
             try:
                 ag['LaunchConfigurationName'] = as_group['LaunchConfigurationName']
