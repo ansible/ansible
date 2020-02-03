@@ -889,8 +889,16 @@ EXAMPLES = '''
     devices:
      - "/dev/sda:/dev/xvda:rwm"
     ports:
+     # Publish container port 9000 as host port 8080
      - "8080:9000"
+     # Publish container UDP port 9001 as host port 8081 on interface 127.0.0.1
      - "127.0.0.1:8081:9001/udp"
+     # Publish container port 9002 as a random host port
+     - "9002"
+     # Publish container port 9003 as a random host port in range 8000-8100
+     - "9003:8000-8100"
+     # Publish container ports 9010-9020 to host ports 7000-7010
+     - "9010-9020:7000-7010"
     env:
         SECRET_KEY: "ssssh"
         # Values which might be parsed as numbers, booleans or other types by the YAML parser need to be quoted
