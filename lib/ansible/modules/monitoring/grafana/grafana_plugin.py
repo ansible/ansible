@@ -206,7 +206,7 @@ def grafana_plugin(module, params):
             if line.find(params['name']):
                 if line.find(' @ ') != -1:
                     line = line.rstrip()
-                    plugin_name, plugin_version = line.split(' @ ')
+                    plugin_name, plugin_version = line.split('@')
                 else:
                     plugin_version = None
                 return {'msg': 'Grafana plugin {0} installed : {1}'.format(params['name'], cmd),
