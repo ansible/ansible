@@ -106,7 +106,7 @@ Parameters
             <th width="100%">Comments</th>
         </tr>
         {% for key, value in options|dictsort recursive %}
-            <tr>
+            <tr id="parameter-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}">
                 {# indentation based on nesting level #}
                 {% for i in range(1, loop.depth) %}
                     <td class="elbow-placeholder"></td>
@@ -114,6 +114,7 @@ Parameters
                 {# parameter name with required and/or introduced label #}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
+                    <a class="ansibleOptionLink" href="#parameter-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}" title="Permalink to this option">¶</a>
                     <div style="font-size: small">
                         <span style="color: purple">@{ value.type | documented_type }@</span>
                         {% if value.get('elements') %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
@@ -282,12 +283,13 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
             <th width="100%">Description</th>
         </tr>
         {% for key, value in returnfacts|dictsort recursive %}
-            <tr>
+            <tr id="return-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}">
                 {% for i in range(1, loop.depth) %}
                     <td class="elbow-placeholder"></td>
                 {% endfor %}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
+                    <a class="ansibleOptionLink" href="#return-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}" title="Permalink to this fact">¶</a>
                     <div style="font-size: small">
                       <span style="color: purple">@{ value.type | documented_type }@</span>
                       {% if value.elements %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
@@ -357,12 +359,13 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
             <th width="100%">Description</th>
         </tr>
         {% for key, value in returndocs|dictsort recursive %}
-            <tr>
+            <tr id="return-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}">
                 {% for i in range(1, loop.depth) %}
                     <td class="elbow-placeholder">&nbsp;</td>
                 {% endfor %}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
+                    <a class="ansibleOptionLink" href="#return-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}" title="Permalink to this return value">¶</a>
                     <div style="font-size: small">
                       <span style="color: purple">@{ value.type | documented_type }@</span>
                       {% if value.elements %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
