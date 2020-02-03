@@ -41,7 +41,7 @@ options:
     check_type:
         description:
             - The kind of check, that will be performed on the url.
-        choices: [ "http", "dns" ]
+        choices: [ "http", "ping" ]
         version_added: '2.10'
     monitorid:
         description:
@@ -131,7 +131,7 @@ class UptimeRobot:
             if v != '':
                 tmp[k] = v
             if k == 'type':
-                tmp[k] = 2 if v == 'dns' else 1
+                tmp[k] = 3 if v == 'ping' else 1
 
         if dictionary['status'] != 'created':
             tmp['id'] = self.get_monitor_id(dictionary['friendly_name'])
@@ -158,7 +158,7 @@ def main():
         argument_spec=dict(
             name=dict(required=True),
             url=dict(required=True),
-            check_type=dict(required=False, choices=['http', 'dns']),
+            check_type=dict(required=False, choices=['http', 'ping']),
             state=dict(required=True, choices=['started', 'paused', 'absent', 'created', 'present']),
             apikey=dict(required=True, no_log=True),
             monitorid=dict(required=False)
