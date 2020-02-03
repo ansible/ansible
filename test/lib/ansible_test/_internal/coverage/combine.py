@@ -10,7 +10,6 @@ from ..target import (
 )
 
 from ..io import (
-    read_json_file,
     read_text_file,
 )
 
@@ -25,12 +24,12 @@ from ..util_common import (
 
 from . import (
     enumerate_python_arcs,
+    enumerate_powershell_lines,
     get_collection_path_regexes,
     get_python_coverage_files,
     get_python_modules,
     get_powershell_coverage_files,
     initialize_coverage,
-    sanitize_filename,
     COVERAGE_OUTPUT_FILE_NAME,
     COVERAGE_GROUPS,
     CoverageConfig,
@@ -146,40 +145,19 @@ def _command_coverage_combine_powershell(args):
             display.warning('Unexpected name for coverage file: %s' % coverage_file)
             continue
 
-        if os.path.getsize(coverage_file) == 0:
-            display.warning('Empty coverage file: %s' % coverage_file)
-            continue
-
-        try:
-            coverage_run = read_json_file(coverage_file)
-        except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-            display.error(u'%s' % ex)
-            continue
-
-        for filename, hit_info in coverage_run.items():
+        for filename, hits in enumerate_powershell_lines(coverage_file):
             if group not in groups:
                 groups[group] = {}
 
             coverage_data = groups[group]
-
-            filename = sanitize_filename(filename)
-            if not filename:
-                continue
 
             if filename not in coverage_data:
                 coverage_data[filename] = {}
 
             file_coverage = coverage_data[filename]
 
-            if not isinstance(hit_info, list):
-                hit_info = [hit_info]
-
-            for hit_entry in hit_info:
-                if not hit_entry:
-                    continue
-
-                line_count = file_coverage.get(hit_entry['Line'], 0) + hit_entry['HitCount']
-                file_coverage[hit_entry['Line']] = line_count
+            for line_no, hit_count in hits.items():
+                file_coverage[line_no] = file_coverage.get(line_no, 0) + hit_count
 
     output_files = []
 

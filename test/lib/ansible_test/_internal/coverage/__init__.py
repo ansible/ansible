@@ -11,6 +11,10 @@ from ..encoding import (
     to_bytes,
 )
 
+from ..io import (
+    read_json_file,
+)
+
 from ..util import (
     ApplicationError,
     common_environment,
@@ -146,6 +150,32 @@ def enumerate_python_arcs(
             continue
 
         yield filename, set(arcs)
+
+
+def enumerate_powershell_lines(path):  # type: (str) -> t.Generator[t.Tuple[str, t.Dict[int, int]]]
+    """Enumerate PowerShell code coverage lines in the given file."""
+    if os.path.getsize(path) == 0:
+        display.warning('Empty coverage file: %s' % path, verbosity=2)
+        return
+
+    try:
+        coverage_run = read_json_file(path)
+    except Exception as ex:  # pylint: disable=locally-disabled, broad-except
+        display.error(u'%s' % ex)
+        return
+
+    for filename, hits in coverage_run.items():
+        filename = sanitize_filename(filename)
+
+        if not filename:
+            continue
+
+        if not isinstance(hits, list):
+            hits = [hits]
+
+        hits = dict((hit['Line'], hit['HitCount']) for hit in hits if hit)
+
+        yield filename, hits
 
 
 def sanitize_filename(
