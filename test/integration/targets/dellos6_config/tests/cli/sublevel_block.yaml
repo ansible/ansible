@@ -13,7 +13,7 @@
     provider: "{{ cli }}"
     match: none
 
-- name: configure sub level command using block resplace
+- name: configure sub level command using block replace
   dellos6_config:
     lines:
       - 1000 permit ip 192.0.2.1 0.0.0.0 any log

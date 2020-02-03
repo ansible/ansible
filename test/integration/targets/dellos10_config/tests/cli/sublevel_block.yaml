@@ -13,7 +13,7 @@
     provider: "{{ cli }}"
     match: none
 
-- name: configure sub level command using block resplace
+- name: configure sub level command using block replace
   dellos10_config:
     lines:
       - seq 5 permit ip host 192.0.2.1 any count byte

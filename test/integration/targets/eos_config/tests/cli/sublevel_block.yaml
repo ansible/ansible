@@ -13,7 +13,7 @@
     match: none
   become: yes
 
-- name: configure sub level command using block resplace
+- name: configure sub level command using block replace
   eos_config:
     lines:
       - 10 permit ip host 192.0.2.1 any log

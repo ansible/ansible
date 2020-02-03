@@ -12,7 +12,7 @@
     after: ['exit']
     match: none
 
-- name: configure sub level command using block resplace
+- name: configure sub level command using block replace
   ios_config:
     lines:
       - permit ip host 192.0.2.1 any log
