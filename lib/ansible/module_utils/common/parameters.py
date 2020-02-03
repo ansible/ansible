@@ -142,7 +142,7 @@ def list_deprecations(argument_spec, params, prefix=''):
                 if isinstance(sub_arguments, Mapping):
                     sub_arguments = [sub_arguments]
                 if isinstance(sub_arguments, list):
-                    sub_prefix = prefix + arg_name + "' -> '"
+                    sub_prefix = "%s%s' -> '" % (prefix, arg_name)
                     for sub_params in sub_arguments:
                         if isinstance(sub_params, Mapping):
                             deprecations.extend(list_deprecations(sub_argument_spec, sub_params, prefix=sub_prefix))
