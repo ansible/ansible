@@ -265,7 +265,8 @@
         - update_with_new_tag.changed
         - "'Third' in update_with_new_tag.tags"
         - "'Another' in update_with_new_tag.tags"
-        - rerun_with_purge_tags.tags|length == 2
+        - "'Atag' in update_with_new_tag.tags"
+        - update_with_new_tag.tags|length == 3
 
   - name: create some cache behaviors
     cloudfront_distribution:
