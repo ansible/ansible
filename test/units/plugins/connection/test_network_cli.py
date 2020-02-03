@@ -47,16 +47,17 @@ class TestConnectionClass(unittest.TestCase):
         self.assertRaises(AnsibleConnectionFailure, connection_loader.get, 'network_cli', pc, '/dev/null')
 
     @patch("ansible.plugins.connection.network_cli.terminal_loader")
-    @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
-    def test_network_cli__connect(self, mocked_super, mocked_terminal_loader):
+    def test_network_cli__connect(self, mocked_terminal_loader):
         pc = PlayContext()
         pc.network_os = 'ios'
         conn = connection_loader.get('network_cli', pc, '/dev/null')
 
+        conn.paramiko_conn = MagicMock()
         conn.ssh = MagicMock()
         conn.receive = MagicMock()
 
         conn._connect()
+        self.assertTrue(conn.paramiko_conn._connect.called)
         self.assertTrue(conn._terminal.on_open_shell.called)
         self.assertFalse(conn._terminal.on_become.called)
 
@@ -68,8 +69,7 @@ class TestConnectionClass(unittest.TestCase):
         conn._connect()
         conn._terminal.on_become.assert_called_with(passwd='password')
 
-    @patch("ansible.plugins.connection.paramiko_ssh.Connection.close")
-    def test_network_cli_close(self, mocked_super):
+    def test_network_cli_close(self):
         pc = PlayContext()
         pc.network_os = 'ios'
         conn = connection_loader.get('network_cli', pc, '/dev/null')
@@ -77,13 +77,13 @@ class TestConnectionClass(unittest.TestCase):
         terminal = MagicMock(supports_multiplexing=False)
         conn._terminal = terminal
         conn._ssh_shell = MagicMock()
-        conn._paramiko_conn = MagicMock()
+        conn.paramiko_conn = MagicMock()
         conn._connected = True
 
         conn.close()
         self.assertTrue(terminal.on_close_shell.called)
         self.assertIsNone(conn._ssh_shell)
-        self.assertIsNone(conn._paramiko_conn)
+        self.assertTrue(conn.paramiko_conn.close.called)
 
     @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli_exec_command(self, mocked_super):
