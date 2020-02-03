@@ -87,7 +87,6 @@ options:
       - Maximum instance lifetime must be equal to 0, between 604800 and 31536000 seconds (inclusive), or not specified.
       - Value of 0 removes lifetime restriction.
     version_added: "2.10"
-    default: 0
     type: int
   mixed_instances_policy:
     description:
@@ -1015,6 +1014,7 @@ def create_autoscaling_group(connection):
     mixed_instances_policy = module.params.get('mixed_instances_policy')
     min_size = module.params['min_size']
     max_size = module.params['max_size']
+    max_instance_lifetime = module.params.get('max_instance_lifetime')
     placement_group = module.params.get('placement_group')
     desired_capacity = module.params.get('desired_capacity')
     vpc_zone_identifier = module.params.get('vpc_zone_identifier')
@@ -1030,11 +1030,6 @@ def create_autoscaling_group(connection):
     metrics_collection = module.params.get('metrics_collection')
     metrics_granularity = module.params.get('metrics_granularity')
     metrics_list = module.params.get('metrics_list')
-    max_instance_lifetime = module.params.get('max_instance_lifetime')
-    if max_instance_lifetime is not None and not module.boto3_at_least('1.10.32'):
-        module.fail_json(
-            msg='Boto3 needs to be version 1.10.32 or higher to use max_instance_lifetime.'
-        )
 
     try:
         as_groups = describe_autoscaling_groups(connection, group_name)
@@ -1788,8 +1783,21 @@ def main():
         ]
     )
 
-    if module.params.get('mixed_instance_type') and not module.botocore_at_least('1.12.45'):
-        module.fail_json(msg="mixed_instance_type is only supported with botocore >= 1.12.45")
+    if (
+        module.params.get('max_instance_lifetime') is not None
+        and not module.botocore_at_least('1.13.21')
+    ):
+        module.fail_json(
+            msg='Botocore needs to be version 1.13.21 or higher to use max_instance_lifetime.'
+        )
+
+    if (
+        module.params.get('mixed_instances_policy') is not None
+        and not module.botocore_at_least('1.12.45')
+    ):
+        module.fail_json(
+            msg='Botocore needs to be version 1.12.45 or higher to use mixed_instances_policy.'
+        )
 
     state = module.params.get('state')
     replace_instances = module.params.get('replace_instances')
