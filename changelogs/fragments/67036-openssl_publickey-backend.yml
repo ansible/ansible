@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_publickey - fix a module crash caused when pyOpenSSL is not installed (https://github.com/ansible/ansible/issues/67035)."
