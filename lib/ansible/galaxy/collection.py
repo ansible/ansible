@@ -561,6 +561,9 @@ def verify_collections(collections, search_paths, apis, validate_certs, ignore_e
                         b_temp_tar_path = _download_file(collection[0], b_temp_path, None, validate_certs)
                         remote_collection = CollectionRequirement.from_tar(b_temp_tar_path, False, parent=None)
                     else:
+                        # Check that it looks like a collection name
+                        if len(collection[0].split('.')) != 2:
+                            raise AnsibleError(message="'%s' is not a valid collection name. The format namespace.name is expected." % collection[0])
                         located_by_name = True
                         remote_collection = CollectionRequirement.from_name(collection[0], apis, collection[1], False, parent=None)
 
