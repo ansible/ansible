@@ -166,24 +166,32 @@ def get_fingerprint_of_bytes(source):
     return fingerprint
 
 
-def get_fingerprint(path, passphrase=None, content=None):
+def get_fingerprint(path, passphrase=None, content=None, backend='pyopenssl'):
     """Generate the fingerprint of the public key. """
 
-    privatekey = load_privatekey(path, passphrase=passphrase, content=content, check_passphrase=False)
-    try:
-        publickey = crypto.dump_publickey(crypto.FILETYPE_ASN1, privatekey)
-    except AttributeError:
-        # If PyOpenSSL < 16.0 crypto.dump_publickey() will fail.
+    privatekey = load_privatekey(path, passphrase=passphrase, content=content, check_passphrase=False, backend=backend)
+
+    if backend == 'pyopenssl':
         try:
-            bio = crypto._new_mem_buf()
-            rc = crypto._lib.i2d_PUBKEY_bio(bio, privatekey._pkey)
-            if rc != 1:
-                crypto._raise_current_error()
-            publickey = crypto._bio_to_string(bio)
+            publickey = crypto.dump_publickey(crypto.FILETYPE_ASN1, privatekey)
         except AttributeError:
-            # By doing this we prevent the code from raising an error
-            # yet we return no value in the fingerprint hash.
-            return None
+            # If PyOpenSSL < 16.0 crypto.dump_publickey() will fail.
+            try:
+                bio = crypto._new_mem_buf()
+                rc = crypto._lib.i2d_PUBKEY_bio(bio, privatekey._pkey)
+                if rc != 1:
+                    crypto._raise_current_error()
+                publickey = crypto._bio_to_string(bio)
+            except AttributeError:
+                # By doing this we prevent the code from raising an error
+                # yet we return no value in the fingerprint hash.
+                return None
+    elif backend == 'cryptography':
+        publickey = privatekey.public_key().public_bytes(
+            serialization.Encoding.DER,
+            serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
     return get_fingerprint_of_bytes(publickey)
 
 

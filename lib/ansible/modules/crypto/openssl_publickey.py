@@ -299,7 +299,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
         self.fingerprint = crypto_utils.get_fingerprint(
             path=self.privatekey_path,
             content=self.privatekey_content,
-            passphrase=self.privatekey_passphrase
+            passphrase=self.privatekey_passphrase,
+            backend=self.backend,
         )
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
