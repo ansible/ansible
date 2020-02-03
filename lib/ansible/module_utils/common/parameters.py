@@ -130,9 +130,13 @@ def list_deprecations(argument_spec, params, prefix=''):
     deprecations = []
     for arg_name, arg_opts in argument_spec.items():
         if arg_name in params:
+            if prefix:
+                sub_prefix = '%s["%s"]' % (prefix, arg_name)
+            else:
+                sub_prefix = arg_name
             if arg_opts.get('removed_in_version') is not None:
                 deprecations.append({
-                    'msg': "Param '%s' is deprecated. See the module docs for more information" % (prefix + arg_name),
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
                     'version': arg_opts.get('removed_in_version')
                 })
             # Check sub-argument spec
@@ -142,7 +146,6 @@ def list_deprecations(argument_spec, params, prefix=''):
                 if isinstance(sub_arguments, Mapping):
                     sub_arguments = [sub_arguments]
                 if isinstance(sub_arguments, list):
-                    sub_prefix = "%s%s' -> '" % (prefix, arg_name)
                     for sub_params in sub_arguments:
                         if isinstance(sub_params, Mapping):
                             deprecations.extend(list_deprecations(sub_argument_spec, sub_params, prefix=sub_prefix))
