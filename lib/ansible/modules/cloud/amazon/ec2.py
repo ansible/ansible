@@ -16,6 +16,12 @@ module: ec2
 short_description: create, terminate, start or stop an instance in ec2
 description:
     - Creates or terminates ec2 instances.
+    - >
+      Note: This module uses the older boto Python module to interact with the EC2 API.
+      M(ec2) will still receive bug fixes, but no new features.
+      Consider using the M(ec2_instance) module instead.
+      If M(ec2_instance) does not support a feature you need that is available in M(ec2), please
+      file a feature request.
 version_added: "0.9"
 options:
   key_name:
