@@ -163,11 +163,17 @@ class PgUserObjStatInfo():
 
         if filter_:
             for obj_type in filter_:
-                self.obj_func_mapping.get(obj_type.strip())()
+                obj_type = obj_type.strip()
+                obj_func = self.obj_func_mapping.get(obj_type)
+
+                if obj_func is not None:
+                    obj_func()
+                else:
+                    self.module.warn("Unknown filter option '%s'" % obj_type)
 
         else:
-            for obj_type in self.obj_func_mapping:
-                self.obj_func_mapping.get(obj_type)()
+            for obj_func in self.obj_func_mapping.values():
+                obj_func()
 
         return self.info
 
