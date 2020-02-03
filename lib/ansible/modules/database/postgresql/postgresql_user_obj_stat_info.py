@@ -48,7 +48,7 @@ options:
     type: str
 notes:
 - C(size) and C(total_size) returned values are presented in bytes.
-- For tracking function statistics the PostgreSQL ``track_functions`` parameter must be enabled.
+- For tracking function statistics the PostgreSQL C(track_functions) parameter must be enabled.
   See U(https://www.postgresql.org/docs/current/runtime-config-statistics.html) for more information.
 seealso:
 - module: postgresql_info
