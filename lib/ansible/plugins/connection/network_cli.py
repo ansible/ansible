@@ -401,6 +401,7 @@ class ParamikoConnection(object):
     ''' SSH based connection with Paramiko '''
 
     _log_channel = None
+    keyfile = None
 
     def __init__(self, connection):
         self._connection = connection
@@ -486,7 +487,7 @@ class ParamikoConnection(object):
         if self._log_channel is not None:
             ssh.set_log_channel(self._log_channel)
 
-        self._connection.keyfile = os.path.expanduser("~/.ssh/known_hosts")
+        self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
         if self._connection.get_option('host_key_checking'):
             for ssh_known_hosts in ("/etc/ssh/ssh_known_hosts", "/etc/openssh/ssh_known_hosts"):
@@ -596,8 +597,8 @@ class ParamikoConnection(object):
             # (This doesn't acquire the connection lock because it needs
             # to exclude only other known_hosts writers, not connections
             # that are starting up.)
-            lockfile = self._connection.keyfile.replace("known_hosts", ".known_hosts.lock")
-            dirname = os.path.dirname(self._connection.keyfile)
+            lockfile = self.keyfile.replace("known_hosts", ".known_hosts.lock")
+            dirname = os.path.dirname(self.keyfile)
             makedirs_safe(dirname)
 
             KEY_LOCK = open(lockfile, 'w')
@@ -612,9 +613,9 @@ class ParamikoConnection(object):
                 # gather information about the current key file, so
                 # we can ensure the new file has the correct mode/owner
 
-                key_dir = os.path.dirname(self._connection.keyfile)
-                if os.path.exists(self._connection.keyfile):
-                    key_stat = os.stat(self._connection.keyfile)
+                key_dir = os.path.dirname(self.keyfile)
+                if os.path.exists(self.keyfile):
+                    key_stat = os.stat(self.keyfile)
                     mode = key_stat.st_mode
                     uid = key_stat.st_uid
                     gid = key_stat.st_gid
@@ -634,7 +635,7 @@ class ParamikoConnection(object):
                 self._save_ssh_host_keys(tmp_keyfile.name)
                 tmp_keyfile.close()
 
-                os.rename(tmp_keyfile.name, self._connection.keyfile)
+                os.rename(tmp_keyfile.name, self.keyfile)
 
             except Exception:
 
