@@ -8,5 +8,5 @@ test_idx1: idx1
 test_idx2: idx2
 test_func1: func1
 test_func2: func2
-test_func2: func3
+test_func3: func3
 test_schema1: schema1
