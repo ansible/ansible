@@ -55,7 +55,6 @@ from .encoding import (
 
 from .io import (
     open_binary_file,
-    open_text_file,
     read_text_file,
 )
 
@@ -883,7 +882,8 @@ def load_module(path, name):  # type: (str, str) -> None
         # noinspection PyDeprecation
         import imp
 
-        with open_text_file(path) as module_file:
+        # load_source (and thus load_module) require a file opened with `open` in text mode
+        with open(to_bytes(path)) as module_file:
             # noinspection PyDeprecation
             imp.load_module(name, module_file, path, ('.py', 'r', imp.PY_SOURCE))
 
