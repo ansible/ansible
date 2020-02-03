@@ -36,9 +36,9 @@ def test_list_deprecations():
     result = list_deprecations(argument_spec, params)
     assert len(result) == 3
     result.sort(key=lambda entry: entry['msg'])
-    assert result[0]['msg'] == "Param 'bar' -> 'old' is deprecated. See the module docs for more information"
+    assert result[0]['msg'] == """Param 'bar["old"]' is deprecated. See the module docs for more information"""
     assert result[0]['version'] == '2.10'
-    assert result[1]['msg'] == "Param 'foo' -> 'old' is deprecated. See the module docs for more information"
+    assert result[1]['msg'] == """Param 'foo["old"]' is deprecated. See the module docs for more information"""
     assert result[1]['version'] == 1.0
     assert result[2]['msg'] == "Param 'old' is deprecated. See the module docs for more information"
     assert result[2]['version'] == '2.5'
