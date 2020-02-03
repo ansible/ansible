@@ -411,8 +411,8 @@ Here are some examples using the inventory script:
     # Execute win_ping on all Windows instances
     $ ansible -i azure_rm.py windows -m win_ping
 
-    # Execute win_ping on all Windows instances
-    $ ansible -i azure_rm.py winux -m ping
+    # Execute ping on all Linux instances
+    $ ansible -i azure_rm.py linux -m ping
 
     # Use the inventory script to print instance specific information
     $ ./ansible/contrib/inventory/azure_rm.py --host my_instance_host_name --resource-groups=Testing --pretty
