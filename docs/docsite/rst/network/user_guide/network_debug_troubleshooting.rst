@@ -202,7 +202,7 @@ Category "socket path issue"
 
 **Platforms:** Any
 
-The ``socket path does not exist or cannot be found``  and ``unable to connect to socket`` messages are new in Ansible 2.5. These messages indicate that the socket used to communicate with the remote network device is unavailable or does not exist.
+The ``Socket path does not exist or cannot be found``  and ``Unable to connect to socket`` messages are new in Ansible 2.5. These messages indicate that the socket used to communicate with the remote network device is unavailable or does not exist.
 
 For example:
 
@@ -211,7 +211,7 @@ For example:
    fatal: [spine02]: FAILED! => {
        "changed": false,
        "failed": true,
-       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 115, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: socket path XX does not exist or cannot be found\n",
+       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 115, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: Socket path XX does not exist or cannot be found. See the socket path issue category in Network Debug and Troubleshooting Guide\n",
        "module_stdout": "",
        "msg": "MODULE FAILURE",
        "rc": 1
@@ -224,7 +224,7 @@ or
    fatal: [spine02]: FAILED! => {
        "changed": false,
        "failed": true,
-       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 123, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: unable to connect to socket XX\n",
+       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 123, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: Unable to connect to socket XX. See the socket path issue category in Network Debug and Troubleshooting Guide\n",
        "module_stdout": "",
        "msg": "MODULE FAILURE",
        "rc": 1
