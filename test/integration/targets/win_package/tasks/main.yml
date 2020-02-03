@@ -22,6 +22,10 @@
     name: reboot.msi
   - url: '{{ bad_url }}'
     name: bad.msi
+  - url: '{{ patch_msi_url }}'
+    name: patch.msi
+  - url: '{{ patch_msp_url }}'
+    name: patch.msp
 
 - name: make sure all test packages are uninstalled before test
   win_package:
@@ -48,7 +52,8 @@
     include_tasks: msix_tests.yml
     when: can_run_msix.stdout | trim | bool
 
-  # TODO: Test msp
+  - name: run tests for msp packages
+    include_tasks: msp_tests.yml
 
   - name: run tests for registry packages
     include_tasks: registry_tests.yml

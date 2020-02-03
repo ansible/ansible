@@ -449,6 +449,7 @@ def common_environment():
         # Example configuration for macOS:
         # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
         'OBJC_DISABLE_INITIALIZE_FORK_SAFETY',
+        'no_proxy',
         'ANSIBLE_KEEP_REMOTE_FILES',
         # MacOS Homebrew Compatibility
         # https://cryptography.io/en/latest/installation/#building-cryptography-on-macos

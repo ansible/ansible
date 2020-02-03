@@ -933,6 +933,10 @@ $providerInfo = [Ordered]@{
                         }
                     }
 
+                    if ($productCodes.Count -eq 0) {
+                        throw "The specified patch does not apply to any installed MSI packages."
+                    }
+
                     # The first guid in the REVNUMBER is the patch code, the subsequent values are obsoleted patches
                     # which we don't care about.
                     $Id = [Ansible.WinPackage.MsiHelper]::GetSummaryPropertyString($summaryInfo,
@@ -952,12 +956,12 @@ $providerInfo = [Ordered]@{
 
             # Filter the product list even further to only ones that are applied and not obsolete.
             $skipCodes = [System.Collections.Generic.List[System.String]]@()
-            $productCodes = foreach ($product in $productCodes) {
-                if ($product.Length -eq 39) {  # Guid length with braces is 39
+            $productCodes = @(@(foreach ($product in $productCodes) {
+                if ($product.Length -eq 38) {  # Guid length with braces is 38
                     $contextList = @('UserManaged', 'UserUnmanaged', 'Machine')
                 } else {
                     # We already know the context and was appended to the product guid with ';context'
-                    $productInfo = $product -split ':'
+                    $productInfo = $product.Split(':', 2)
                     $product = $productInfo[0]
                     $contextList = @($productInfo[1])
                 }
@@ -969,9 +973,10 @@ $providerInfo = [Ordered]@{
                             $Id, $product, $null, $context, 'State'
                         ))
                     } catch [System.ComponentModel.Win32Exception] {
-                        if ($_.Exception.NativeErrorCode -eq 0x00000645) {
+                        if ($_.Exception.NativeErrorCode -in @(0x00000645, 0x0000066F)) {
                             # ERROR_UNKNOWN_PRODUCT can be raised if the product is not installed in the context
                             # specified, just try the next one.
+                            # ERROR_UNKNOWN_PATCH can be raised if the patch is not installed but the product is.
                             continue
                         }
                         throw
@@ -986,7 +991,7 @@ $providerInfo = [Ordered]@{
                         $skipCodes.Add($product)
                     }
                 }
-            }
+            }) | Select-Object -Unique)
 
             @{
                 Provider = 'msp'
@@ -1030,25 +1035,48 @@ $providerInfo = [Ordered]@{
                 $ProductCodes
             )
 
-            $actions = @(if ($state -eq 'present') {
-                # $Module.Tmpdir only gives rights to the current user but msiexec (as SYSTEM) needs access.
-                Add-SystemReadAce -Path $Path
-                ,@('/update', $Path)
-            } else {
-                foreach ($code in $ProductCodes) {
-                    @('/uninstall', $Id, '/package', $code)
-                }
-            })
+            $tempLink = $null
+            try {
+                $actions = @(if ($state -eq 'present') {
+                    # $Module.Tmpdir only gives rights to the current user but msiexec (as SYSTEM) needs access.
+                    Add-SystemReadAce -Path $Path
 
-            $invokeParams = @{
-                Arguments = $Arguments
-                Module = $Module
-                ReturnCodes = $ReturnCodes
-                LogPath = $LogPath
-                WorkingDirectory = $WorkingDirectory
-            }
-            foreach ($action in $actions) {
-                Invoke-Msiexec -Actions $action @invokeParams
+                    # MsiApplyPatchW fails if the path contains a ';', we need to use a temporary symlink instead.
+                    # https://docs.microsoft.com/en-us/windows/win32/api/msi/nf-msi-msiapplypatchw
+                    if ($Path.Contains(';')) {
+                        $tempLink = Join-Path -Path $env:TEMP -ChildPath "win_package-$([System.IO.Path]::GetRandomFileName()).msp"
+                        $res = Run-Command -command (Argv-ToString -arguments @("cmd.exe", "/c", "mklink", $tempLink, $Path))
+                        if ($res.rc -ne 0) {
+                            $Module.Result.rc = $res.rc
+                            $Module.Result.stdout = $res.stdout
+                            $Module.Result.stderr = $res.stderr
+
+                            $Module.FailJson("Failed to create temporary symlink '$tempLink' -> '$Path' for msiexec patch install as path contains semicolon")
+                        }
+                        $Path = $tempLink
+                    }
+
+                    ,@('/update', $Path)
+                } else {
+                    foreach ($code in $ProductCodes) {
+                        ,@('/uninstall', $Id, '/package', $code)
+                    }
+                })
+
+                $invokeParams = @{
+                    Arguments = $Arguments
+                    Module = $Module
+                    ReturnCodes = $ReturnCodes
+                    LogPath = $LogPath
+                    WorkingDirectory = $WorkingDirectory
+                }
+                foreach ($action in $actions) {
+                    Invoke-Msiexec -Actions $action @invokeParams
+                }
+            } finally {
+                if ($tempLink -and (Test-Path -LiteralPath $tempLink)) {
+                    Remove-Item -LiteralPath $tempLink -Force
+                }
             }
         }
     }
