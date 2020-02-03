@@ -90,6 +90,8 @@ options:
       instance_types:
         description:
           - A list of instance_types.
+        type: list
+    type: dict
   placement_group:
     description:
       - Physical location of your cluster placement group created in Amazon EC2.
@@ -720,6 +722,11 @@ def get_properties(autoscaling_group):
     properties['termination_policies'] = autoscaling_group.get('TerminationPolicies')
     properties['target_group_arns'] = autoscaling_group.get('TargetGroupARNs')
     properties['vpc_zone_identifier'] = autoscaling_group.get('VPCZoneIdentifier')
+    raw_mixed_instance_object = autoscaling_group.get('MixedInstancesPolicy')
+    if raw_mixed_instance_object:
+        raw_mixed_instance_object.get('LaunchTemplate').get('Overrides')
+        properties['mixed_instances_policy'] = [x['InstanceType'] for x in raw_mixed_instance_object.get('LaunchTemplate').get('Overrides')]
+
     metrics = autoscaling_group.get('EnabledMetrics')
     if metrics:
         metrics.sort(key=lambda x: x["Metric"])
