@@ -154,7 +154,7 @@ options:
       - The content to PUT into an object.
       - Either I(content) or I(src) must be specified for a PUT operation. Ignored otherwise.
     version_added: "2.10"
-    type: bytes
+    type: str
   ignore_nonexistent_bucket:
     description:
       - "Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the
@@ -707,14 +707,14 @@ def main():
         dualstack=dict(default='no', type='bool'),
         rgw=dict(default='no', type='bool'),
         src=dict(),
-        content=dict(type='bytes'),
+        content=dict(),
         ignore_nonexistent_bucket=dict(default=False, type='bool'),
         encryption_kms_key_id=dict()
     )
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=[['mode', 'put', ['src', 'object']],
+        required_if=[['mode', 'put', ['object']],
                      ['mode', 'get', ['dest', 'object']],
                      ['mode', 'getstr', ['object']],
                      ['mode', 'geturl', ['object']]],
