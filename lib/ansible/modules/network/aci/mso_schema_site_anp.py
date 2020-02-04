@@ -88,6 +88,7 @@ EXAMPLES = r'''
     schema: Schema1
     site: Site1
     template: Template1
+    anp: ANP1
     state: query
   delegate_to: localhost
   register: query_result
