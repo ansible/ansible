@@ -311,11 +311,12 @@ s3_keys:
 
 import mimetypes
 import os
+import io
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ssl import SSLError
 from ansible.module_utils.basic import to_text, to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.aws.s3 import calculate_etag, HAS_MD5
+from ansible.module_utils.aws.s3 import calculate_etag, calculate_etag_content, HAS_MD5
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 
 try:
