@@ -849,7 +849,7 @@ def main():
             create_bucket(module, s3, bucket, location)
 
         if keyrtn and overwrite != 'always':
-            if overwrite == 'never' or etag_compare(module, s3, bucket, obj, local_file=src, content=content):
+            if overwrite == 'never' or etag_compare(module, s3, bucket, obj, version=version, local_file=src, content=content):
                 # Return the download URL for the existing object
                 get_download_url(module, s3, bucket, obj, expiry, changed=False)
 
