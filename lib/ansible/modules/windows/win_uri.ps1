@@ -12,6 +12,7 @@
 
 $spec = @{
     options = @{
+       url = @{ type = "str"; required = $true }
        content_type = @{ type = "str" }
        body = @{ type = "raw" }
        dest = @{ type = "path" }
@@ -73,7 +74,7 @@ if ($removes -and -not (Test-AnsiblePath -Path $removes)) {
     $module.ExitJson()
 }
 
-$client = Get-AnsibleWebRequest -Module $module
+$client = Get-AnsibleWebRequest -Uri $url -Module $module
 
 if ($null -ne $content_type) {
     $client.ContentType = $content_type
