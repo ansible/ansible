@@ -562,6 +562,60 @@
               - result is not changed
       when: ansible_system == 'Linux' or ansible_distribution == 'MacOSX'
 
+    - name: create an object from static content
+      aws_s3:
+        bucket: "{{ bucket_name + '.bucket' }}"
+        object: put-content.txt
+        mode: put
+        content: >
+          test content
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: fetch test content
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: getstr
+        object: put-content.txt
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.contents == "test content"
+
+    - set_fact:
+        put_template_text: test template
+
+    - name: create an object from a template
+      aws_s3:
+        bucket: "{{ bucket_name + '.bucket' }}"
+        object: /put-template.txt
+        mode: put
+        content: "{{ lookup('template', 'templates/put-template.txt.j2') }}"
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
+    - name: fetch template content
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: getstr
+        object: put-template.txt
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result.contents == "{{ lookup('template', 'templates/put-template.txt.j2') }}"
+
   always:
     - name: remove uploaded files
       aws_s3:
