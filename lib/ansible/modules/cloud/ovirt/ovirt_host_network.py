@@ -252,6 +252,15 @@ class HostNetworksModule(BaseModule):
     def build_entity(self):
         return otypes.Host()
 
+    def check_custom_properties():
+        if self.param('custom_properties'):
+            current = []
+            if entity.custom_properties:
+                current = [(cp.name, cp.regexp, str(cp.value)) for cp in entity.custom_properties]
+            passed = [(cp.get('name'), cp.get('regexp'), str(cp.get('value'))) for cp in self.param('custom_properties') if cp]
+            return sorted(current) == sorted(passed)
+        return True
+
     def update_address(self, attachments_service, attachment, network):
         # Check if there is any change in address assignments and
         # update it if needed:
@@ -464,6 +473,12 @@ def main():
                                 ),
                             ),
                         ],
+                        properties=[
+                            otypes.Property(
+                                name=prop.get('name'),
+                                value=prop.get('value')
+                            ) for prop in network.get('custom_proprieties')
+                        ]
                     ) for network in networks
                 ] if networks else None,
             )
