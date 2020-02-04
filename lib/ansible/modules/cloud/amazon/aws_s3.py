@@ -352,7 +352,7 @@ def key_check(module, s3, bucket, obj, version=None, validate=True):
     return exists
 
 
-def etag_compare(module, local_file=None, s3, bucket, obj, version=None, content=None):
+def etag_compare(module, s3, bucket, obj, local_file=None, version=None, content=None):
     s3_etag = get_etag(s3, bucket, obj, version=version)
     if local_file is not None:
         local_etag = calculate_etag(module, local_file, s3_etag, s3, bucket, obj, version)
@@ -523,7 +523,7 @@ def option_in_extra_args(option):
         return allowed_extra_args[temp_option]
 
 
-def upload_s3file(module, s3, bucket, obj, src=None, expiry, metadata, encrypt, headers, content=None):
+def upload_s3file(module, s3, bucket, obj, expiry, metadata, encrypt, headers, src=None, content=None):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
