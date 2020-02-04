@@ -822,6 +822,7 @@ def complete_target(prefix, parsed_args, **_):
     return find_target_completion(parsed_args.targets, prefix)
 
 
+# noinspection PyUnusedLocal
 def complete_remote(prefix, parsed_args, **_):
     """
     :type prefix: unicode
@@ -835,6 +836,7 @@ def complete_remote(prefix, parsed_args, **_):
     return [i for i in images if i.startswith(prefix)]
 
 
+# noinspection PyUnusedLocal
 def complete_remote_shell(prefix, parsed_args, **_):
     """
     :type prefix: unicode
@@ -852,6 +854,7 @@ def complete_remote_shell(prefix, parsed_args, **_):
     return [i for i in images if i.startswith(prefix)]
 
 
+# noinspection PyUnusedLocal
 def complete_docker(prefix, parsed_args, **_):
     """
     :type prefix: unicode
@@ -911,6 +914,7 @@ def complete_network_testcase(prefix, parsed_args, **_):
     return testcases
 
 
+# noinspection PyUnusedLocal
 def complete_sanity_test(prefix, parsed_args, **_):
     """
     :type prefix: unicode

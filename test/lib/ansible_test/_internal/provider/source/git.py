@@ -10,7 +10,7 @@ from ...git import (
     Git,
 )
 
-from ...util import (
+from ...encoding import (
     to_bytes,
 )
 

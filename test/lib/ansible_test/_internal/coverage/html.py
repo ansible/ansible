@@ -4,9 +4,12 @@ __metaclass__ = type
 
 import os
 
+from ..io import (
+    make_dirs,
+)
+
 from ..util import (
     display,
-    make_dirs,
 )
 
 from ..util_common import (

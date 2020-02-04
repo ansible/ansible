@@ -1,0 +1,5 @@
+minor_changes:
+    - "ansible-test - Support writing compact JSON files instead of formatting and indenting the output."
+    - "ansible-test - Add a verbosity option for displaying warnings."
+    - "ansible-test - Refactor code to consolidate filesystem access and improve handling of encoding."
+    - "ansible-test - General code cleanup."

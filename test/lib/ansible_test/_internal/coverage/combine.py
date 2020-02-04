@@ -2,7 +2,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import os
 import re
 
@@ -12,9 +11,13 @@ from ..target import (
     walk_powershell_targets,
 )
 
+from ..io import (
+    read_json_file,
+    read_text_file,
+)
+
 from ..util import (
     display,
-    to_text,
 )
 
 from ..util_common import (
@@ -191,8 +194,7 @@ def _command_coverage_combine_powershell(args):
             continue
 
         try:
-            with open(coverage_file, 'rb') as original_fd:
-                coverage_run = json.loads(to_text(original_fd.read(), errors='replace'))
+            coverage_run = read_json_file(coverage_file)
         except Exception as ex:  # pylint: disable=locally-disabled, broad-except
             display.error(u'%s' % ex)
             continue
@@ -275,8 +277,7 @@ def _get_coverage_targets(args, walk_func):
         for target in walk_func(include_symlinks=False):
             target_path = os.path.abspath(target.path)
 
-            with open(target_path, 'r') as target_fd:
-                target_lines = len(target_fd.read().splitlines())
+            target_lines = len(read_text_file(target_path).splitlines())
 
             sources.append((target_path, target_lines))
 
@@ -327,6 +328,7 @@ def get_coverage_group(args, coverage_file):
     """
     parts = os.path.basename(coverage_file).split('=', 4)
 
+    # noinspection PyTypeChecker
     if len(parts) != 5 or not parts[4].startswith('coverage.'):
         return None
 
