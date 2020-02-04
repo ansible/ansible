@@ -1,0 +1,2 @@
+minor_changes:
+  - "powershell (shell plugin) - Fix `join_path` to support UNC paths (https://github.com/ansible/ansible/issues/66341)"
