@@ -19,6 +19,12 @@
       register: git_install
 
     - include_tasks: pip.yml
+
+    - name: Create virtualenv using Python3 venv module
+      pip:
+        name: ['{{ pip_test_packages }}']
+        virtualenv_command: python3 -m venv
+        virtualenv: '{{ output_dir }}/python3venv'
   always:
     - name: remove unwanted packages
       package:
