@@ -13,6 +13,7 @@
 
 $spec = @{
     options = @{
+        url = @{ type="str"; required=$true }
         dest = @{ type='path'; required=$true }
         force = @{ type='bool'; default=$true }
         checksum = @{ type='str' }
