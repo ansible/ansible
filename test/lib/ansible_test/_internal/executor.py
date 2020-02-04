@@ -1209,12 +1209,12 @@ def inject_httptester(args):
     """
     comment = ' # ansible-test httptester\n'
     append_lines = ['127.0.0.1 %s%s' % (host, comment) for host in HTTPTESTER_HOSTS]
+    hosts_path = '/etc/hosts'
 
-    with open_text_file('/etc/hosts', 'r+') as hosts_fd:
-        original_lines = hosts_fd.readlines()
+    original_lines = read_text_file(hosts_path).splitlines(keepends=True)
 
-        if not any(line.endswith(comment) for line in original_lines):
-            hosts_fd.writelines(append_lines)
+    if not any(line.endswith(comment) for line in original_lines):
+        write_text_file(hosts_path, '\n'.join(original_lines + append_lines))
 
     # determine which forwarding mechanism to use
     pfctl = find_executable('pfctl', required=False)

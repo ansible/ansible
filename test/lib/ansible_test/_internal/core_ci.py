@@ -20,7 +20,6 @@ from .http import (
 
 from .io import (
     make_dirs,
-    open_text_file,
     read_text_file,
     write_json_file,
 )
@@ -643,11 +642,10 @@ class SshKey:
             run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', 'rsa', '-N', '', '-f', key])
 
             # newer ssh-keygen PEM output (such as on RHEL 8.1) is not recognized by paramiko
-            with open_text_file(key, 'r+') as key_fd:
-                key_contents = key_fd.read()
-                key_contents = re.sub(r'(BEGIN|END) PRIVATE KEY', r'\1 RSA PRIVATE KEY', key_contents)
-                key_fd.seek(0)
-                key_fd.write(key_contents)
+            key_contents = read_text_file(key)
+            key_contents = re.sub(r'(BEGIN|END) PRIVATE KEY', r'\1 RSA PRIVATE KEY', key_contents)
+
+            write_text_file(key, key_contents)
 
         return key, pub
 
