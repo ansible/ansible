@@ -35,6 +35,8 @@
         - name: "{{ test_int2 }}"
           access:
             vlan: 6
+          trunk:
+            allowed_vlans: "10-12"
       state: overridden
     register: result
 
@@ -46,6 +48,7 @@
         - "'no switchport trunk allowed vlan' in result.commands"
         - "'interface {{ test_int2 }}' in result.commands"
         - "'switchport access vlan 6' in result.commands"
+        - "'switchport trunk allowed vlan 10,11,12' in result.commands"
 
   - name: Gather l2_interfaces post facts
     nxos_facts: *facts

@@ -22,6 +22,7 @@
         interface {{ test_int2 }}
           switchport
           switchport trunk native vlan 15
+          switchport trunk allowed vlan 25-27
 
   - name: Gather l2_interfaces facts
     nxos_facts: &facts
@@ -36,16 +37,18 @@
         - name: "{{ test_int1 }}"
           access:
             vlan: 8
+          trunk:
+            allowed_vlans: "10-12"
       state: replaced
     register: result
 
   - assert:
       that:
-        - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.before)|length == 0"
         - "result.changed == true"
         - "'interface {{ test_int1 }}' in result.commands"
         - "'switchport access vlan 8' in result.commands"
-        - "result.commands|length == 2"
+        - "'switchport trunk allowed vlan 10,11,12' in result.commands"
+        - "result.commands|length == 3"
 
   - name: Gather l2_interfaces post facts
     nxos_facts: *facts
