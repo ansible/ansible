@@ -567,7 +567,7 @@
         bucket: "{{ bucket_name + '.bucket' }}"
         object: put-content.txt
         mode: put
-        content: >
+        content: >-
           test content
         <<: *aws_connection_info
       register: result
