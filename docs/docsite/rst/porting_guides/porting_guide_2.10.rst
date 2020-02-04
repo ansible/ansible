@@ -32,6 +32,8 @@ Deprecated
 ==========
 
 * Windows Server 2008 and 2008 R2 will no longer be supported or tested in the next Ansible release, see :ref:`windows_faq_server2008`.
+* The :ref:`win_stat <win_stat_module>` module has removed the deprecated ``get_md55`` option and ``md5`` return value.
+* The :ref:`win_psexec <win_psexec_module>` module has removed the deprecated ``extra_opts`` option.
 
 
 Modules
