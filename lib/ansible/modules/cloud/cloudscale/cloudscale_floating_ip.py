@@ -50,11 +50,17 @@ options:
       - UUID of the server assigned to this floating IP.
       - Required unless I(state) is absent.
     type: str
+  type:
+    description:
+      - The type of the floating IP.
+    chioces: [ regional, global ]
+    type: str
+    default: regional
   region:
     description:
-      - The region in which the floating IP resides. Use 'global' to create
-        a global floating IP. If omitted, the region of the project default
-        zone is used.
+      - The region in which the floating IP resides. If omitted, the region of
+        the project default zone is used. This parameter must be omitted if the
+        type of the floating ip is 'global'.
     type: str
   prefix_length:
     description:
@@ -221,21 +227,9 @@ class AnsibleCloudscaleFloatingIP(AnsibleCloudscaleBase):
         data = {'ip_version': params['ip_version'],
                 'server': params['server']}
 
-        if params['prefix_length']:
-            data['prefix_length'] = params['prefix_length']
-        if params['reverse_ptr']:
-            data['reverse_ptr'] = params['reverse_ptr']
-
-        # Though we can enter 'None' values in YAML by using the literal
-        # 'null' (without apostrophes) we advertise the string 'global', since
-        # that is less error-prone in a yaml configuration context.
-        #
-        # It is however still possible to use None if a perfect match with
-        # api.cloudscale.ch is desired.
-        if params['region'] in ('global', None):
-            data['region'] = None
-        elif params['region']:
-            data['region'] = params['region']
+        for p in ('prefix_length', 'reverse_ptr', 'type', 'region'):
+            if params[p]:
+                data[p] = params[p]
 
         self.info = self._resp2info(self._post('floating-ips', data))
 
@@ -257,6 +251,7 @@ def main():
         ip=dict(aliases=('network', ), type='str'),
         ip_version=dict(choices=(4, 6), type='int'),
         server=dict(type='str'),
+        type=dict(type='str', choices=('regional', 'global')),
         region=dict(type='str'),
         prefix_length=dict(choices=(56,), type='int'),
         reverse_ptr=dict(type='str'),
