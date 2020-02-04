@@ -80,4 +80,4 @@ def calculate_etag_content(module, content, etag, s3, bucket, obj, version=None)
         digest_squared = md5(b''.join(m.digest() for m in digests))
         return '"{0}-{1}"'.format(digest_squared.hexdigest(), len(digests))
     else:  # Compute the MD5 sum normally
-        return '"{0}"'.format(module.md5(filename))
+        return '"{0}"'.format(md5(content).hexdigest())
