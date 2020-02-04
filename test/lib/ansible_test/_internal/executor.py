@@ -1211,7 +1211,7 @@ def inject_httptester(args):
     append_lines = ['127.0.0.1 %s%s' % (host, comment) for host in HTTPTESTER_HOSTS]
     hosts_path = '/etc/hosts'
 
-    original_lines = read_text_file(hosts_path).splitlines(keepends=True)
+    original_lines = read_text_file(hosts_path).splitlines(True)
 
     if not any(line.endswith(comment) for line in original_lines):
         write_text_file(hosts_path, '\n'.join(original_lines + append_lines))
