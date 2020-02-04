@@ -1022,15 +1022,25 @@
   tags:
     - user_test_local_mode
 
+- name: Test append without groups for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    append: yes
+  register: local_user_test_5
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
 - name: Ensure local user accounts were created and removed properly
   assert:
     that:
       - local_user_test_1 is changed
       - local_user_test_2 is not changed
       - local_user_test_3 is failed
-      - "local_user_test_3['msg'] is search('parameters are mutually exclusive: groups|local')"
+      - 'local_user_test_3["msg"] is search("parameters are mutually exclusive: groups|local")'
       - local_user_test_4 is failed
-      - "local_user_test_4['msg'] is search('parameters are mutually exclusive: groups|append')"
+      - 'local_user_test_4["msg"] is search("parameters are mutually exclusive: groups|append")'
       - local_user_test_remove_1 is changed
       - local_user_test_remove_2 is not changed
   tags:
@@ -1041,6 +1051,7 @@
     that:
       - local_user_test_1['warnings'] | length > 0
       - local_user_test_1['warnings'] | first is search('The local user account may already exist')
+      - local_user_test_5['warnings'] is search("'append' is set, but no 'groups' are specified. Use 'groups'")
       - local_existing['warnings'] is not defined
   when: ansible_facts.system in ['Linux']
   tags:
