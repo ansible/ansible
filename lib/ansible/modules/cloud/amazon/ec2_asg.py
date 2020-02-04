@@ -463,7 +463,7 @@ min_size:
     type: int
     sample: 1
 mixed_instance_policy:
-    description: Returns the list of used mixed instance policy if set.
+    description: Returns the list of instance types if a mixed instance policy is set.
     returned: success
     type: list
     sample: ["t3.micro", "t3a.micro"]
