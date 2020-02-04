@@ -41,9 +41,11 @@ from .cloud import (
 )
 
 from .io import (
+    make_dirs,
     open_text_file,
     read_binary_file,
     read_text_file,
+    write_text_file,
 )
 
 from .util import (
@@ -79,11 +81,6 @@ from .util_common import (
     write_json_test_results,
     ResultType,
     handle_layout_messages,
-)
-
-from .io import (
-    make_dirs,
-    write_text_file,
 )
 
 from .docker_util import (
@@ -1214,7 +1211,7 @@ def inject_httptester(args):
     original_lines = read_text_file(hosts_path).splitlines(True)
 
     if not any(line.endswith(comment) for line in original_lines):
-        write_text_file(hosts_path, '\n'.join(original_lines + append_lines))
+        write_text_file(hosts_path, ''.join(original_lines + append_lines))
 
     # determine which forwarding mechanism to use
     pfctl = find_executable('pfctl', required=False)
