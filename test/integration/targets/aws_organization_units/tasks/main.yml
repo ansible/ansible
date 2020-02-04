@@ -179,16 +179,3 @@
         name: "{{ item }}"
         state: absent
       loop: "{{ ansible_test_ous | reverse | list }}"
- 
-
-
-
-
-
-
-
-
-
-
-
-
