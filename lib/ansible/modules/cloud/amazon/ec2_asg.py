@@ -754,7 +754,6 @@ def get_properties(autoscaling_group):
     properties['vpc_zone_identifier'] = autoscaling_group.get('VPCZoneIdentifier')
     raw_mixed_instance_object = autoscaling_group.get('MixedInstancesPolicy')
     if raw_mixed_instance_object:
-        raw_mixed_instance_object.get('LaunchTemplate').get('Overrides')
         properties['mixed_instances_policy'] = [x['InstanceType'] for x in raw_mixed_instance_object.get('LaunchTemplate').get('Overrides')]
 
     metrics = autoscaling_group.get('EnabledMetrics')
