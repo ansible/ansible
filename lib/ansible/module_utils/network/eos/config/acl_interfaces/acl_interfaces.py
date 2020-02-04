@@ -145,12 +145,10 @@ class Acl_interfaces(ConfigBase):
         commandset = []
         want_interface = []
         for w in want:
-            q(w)
             commands = []
             diff_access_group = []
             want_interface.append(w['name'])
             obj_in_have = search_obj_in_list(w['name'], have, 'name')
-            q(obj_in_have)
             if not obj_in_have or 'access_groups' not in obj_in_have.keys():
                 commands.append(add_commands(w['access_groups'], w['name']))
             else:
@@ -164,7 +162,6 @@ class Acl_interfaces(ConfigBase):
                         to_delete = {'access_groups': [{'acls': obj[1], 'afi': 'ipv6'}]}
                         commands.append(remove_commands(to_delete, w['name']))
                     diff = self.get_acl_diff(w, obj_in_have)
-                    q(diff)
                     if diff[0]:
                         diff_access_group.append({'afi': 'ipv4' , 'acls': diff[0]})
                     if diff[1]:
@@ -287,13 +284,12 @@ class Acl_interfaces(ConfigBase):
         """
         commandset = []
         for w in want:
+            q(w)
             commands = []
             intf_command = ["interface " + w['name']]
             obj_in_have = search_obj_in_list(w['name'], have, 'name')
             if 'access_groups' not in w.keys() or not w['access_groups']:
                 commands = remove_commands(obj_in_have , w['name'])
-                commands.insert(0, intf_command)
-                commandset.append(commands)
             if w['access_groups']:
                 for w_grp in w['access_groups']:
                     if 'acls' not in w_grp.keys() or not w_grp['acls']:
@@ -304,6 +300,7 @@ class Acl_interfaces(ConfigBase):
                         if 'access_groups' not in obj_in_have.keys() or not obj_in_have['access_groups']:
                             continue
                         group = {'access_groups': [w_grp]}
+                        q(w_grp)
                         obj = self.get_acl_diff(group, obj_in_have, True)
                         if obj[0]:
                             to_delete = {'access_groups': [{'acls': obj[0], 'afi': 'ipv4'}]}
@@ -311,8 +308,10 @@ class Acl_interfaces(ConfigBase):
                         if obj[1]:
                             to_delete = {'access_groups': [{'acls': obj[1], 'afi': 'ipv6'}]}
                             commands.append(remove_commands(to_delete, w['name']))
+                        if commands:
+                            commands = list(itertools.chain(*commands))
             if commands:
-                commands = list(itertools.chain(*commands))
+                #commands = list(itertools.chain(*commands))
                 commandset.append(intf_command)
                 commandset.append(commands)
         q(commandset)
@@ -329,6 +328,7 @@ class Acl_interfaces(ConfigBase):
         w_acls_v6 = []
         h_acls_v4 = []
         h_acls_v6 = []
+        q(w)
         for w_group in w['access_groups']:
             if w_group['afi'] == 'ipv4':
                 w_acls_v4 =  w_group['acls']
@@ -390,6 +390,8 @@ def add_commands(want, interface):
 
 def remove_commands(want, interface):
     commands = []
+    if 'access_groups' not in want.keys() or not want['access_groups']:
+        return commands
     for w in want['access_groups']:
         a_cmd = "traffic-filter" if w['afi'] == 'ipv6' else "access-group"
         afi = 'ip' if w['afi'] == 'ipv4' else w['afi']

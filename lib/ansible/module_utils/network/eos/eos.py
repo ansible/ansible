@@ -129,6 +129,8 @@ class Cli:
         """Run list of commands on remote device and return results
         """
         connection = self._get_connection()
+        import q
+        q(commands)
         try:
             response = connection.run_commands(commands=commands, check_rc=check_rc)
         except ConnectionError as exc:
