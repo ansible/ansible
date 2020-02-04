@@ -784,7 +784,7 @@ def get_launch_object(connection, ec2_connection):
             instance_types = mixed_instances_policy.get('instance_types', [])
             policy = {
                 'LaunchTemplate': {
-                    'LaunchTemplateSpecification': launch_object["LaunchTemplate"]
+                    'LaunchTemplateSpecification': launch_object['LaunchTemplate']
                 }
             }
             if instance_types:
