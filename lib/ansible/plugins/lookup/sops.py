@@ -104,6 +104,15 @@ sops_error_codes = {
 }
 
 
+class SopsError(AnsibleError):
+    ''' extend AnsibleError class with sops specific informations '''
+
+    def __init__(self, filename, exit_code, message,):
+        exception_name = sops_error_codes[exit_code]
+        message = "error with file %s: %s exited with code %d: %s" % (filename, exception_name, exit_code, message)
+        super(SopsError, self).__init__(message=message)
+
+
 class Sops():
     @staticmethod
     def decrypt(encrypted_file):
@@ -149,7 +158,7 @@ class LookupModule(LookupBase):
 
                     if exit_code > 0:
                         if exit_code in sops_error_codes.keys():
-                            raise AnsibleLookupError("could not decrypt file %s; Sops error: %s" % (to_native(term), to_native(sops_error_codes[exit_code])))
+                            raise SopsError(lookupfile, exit_code, err)
                         else:
                             raise AnsibleLookupError("could not decrypt file %s; Unknown sops error code: %s" % (to_native(term), to_native(exit_code)))
 
