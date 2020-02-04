@@ -49,6 +49,7 @@ def calculate_etag(module, filename, etag, s3, bucket, obj, version=None):
     else:  # Compute the MD5 sum normally
         return '"{0}"'.format(module.md5(filename))
 
+
 def calculate_etag_content(module, content, etag, s3, bucket, obj, version=None):
     if not HAS_MD5:
         return None
@@ -74,7 +75,7 @@ def calculate_etag_content(module, content, etag, s3, bucket, obj, version=None)
                 except (BotoCoreError, ClientError) as e:
                     module.fail_json_aws(e, msg="Failed to get head object")
                 length = int(head['ContentLength'])
-                digests.append(md5(content[offset:offset+length]))
+                digests.append(md5(content[offset:offset + length]))
                 offset += length
 
         digest_squared = md5(b''.join(m.digest() for m in digests))
