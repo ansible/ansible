@@ -556,7 +556,11 @@ Function Get-InstalledStatus {
 
         if ($CreatesVersion) {
             if (Test-Path -LiteralPath $CreatesPath -PathType Leaf) {
-                $existingVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($CreatesPath).FileVersionRaw
+                $versionRaw = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($CreatesPath)
+                $existingVersion = New-Object -TypeName System.Version -ArgumentList @(
+                    $versionRaw.FileMajorPart, $versionRaw.FileMinorPart, $versionRaw.FileBuildPart,
+                    $versionRaw.FilePrivatePart
+                )
                 $status.Installed = $CreatesVersion -eq $existingVersion
             } else {
                 throw "creates_path must be a file not a directory when creates_version is set"

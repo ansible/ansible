@@ -305,7 +305,12 @@
     state: present
 
 - name: get actual PowerShell file version for tests
-  win_shell: (Get-Item -LiteralPath '{{ test_path }}\powershell symlink.exe').VersionInfo.FileVersionRaw.ToString()
+  win_shell: |
+    $path = '{{ test_path }}\powershell symlink.exe'
+    $version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($path)
+    (New-Object -TypeName System.Version -ArgumentList @(
+        $version.FileMajorPart, $version.FileMinorPart, $version.FileBuildPart, $version.FilePrivatePart
+    )).ToString()
   changed_when: False
   register: powershell_version
 
