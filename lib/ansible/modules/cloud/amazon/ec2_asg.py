@@ -341,6 +341,28 @@ EXAMPLES = '''
       - environment: production
         propagate_at_launch: no
 
+# Basic Configuration with Launch Template using mixed instance policy
+
+- ec2_asg:
+    name: special
+    load_balancers: [ 'lb1', 'lb2' ]
+    availability_zones: [ 'eu-west-1a', 'eu-west-1b' ]
+    launch_template:
+        version: '1'
+        launch_template_name: 'lt-example'
+        launch_template_id: 'lt-123456'
+    mixed_instances_policy:
+        instance_types:
+            - t3a.large
+            - t3.large
+            - t2.large
+    min_size: 1
+    max_size: 10
+    desired_capacity: 5
+    vpc_zone_identifier: [ 'subnet-abcd1234', 'subnet-1a2b3c4d' ]
+    tags:
+      - environment: production
+        propagate_at_launch: no
 
 '''
 
@@ -527,6 +549,8 @@ try:
     import botocore
 except ImportError:
     pass  # will be detected by imported HAS_BOTO3
+
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 ASG_ATTRIBUTES = ('AvailabilityZones', 'DefaultCooldown', 'DesiredCapacity',
                   'HealthCheckGracePeriod', 'HealthCheckType', 'LaunchConfigurationName',
@@ -1730,7 +1754,7 @@ def main():
     )
 
     global module
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         mutually_exclusive=[
             ['replace_all_instances', 'replace_instances'],
@@ -1739,6 +1763,9 @@ def main():
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
+
+    if module.params.get('mixed_instance_type') and not module.botocore_at_least('1.12.45'):
+        module.fail_json(msg="mixed_instance_type is only supported with botocore >= 1.12.45")
 
     state = module.params.get('state')
     replace_instances = module.params.get('replace_instances')
