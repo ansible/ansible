@@ -556,7 +556,9 @@ def upload_s3file(module, s3, bucket, obj, expiry, metadata, encrypt, headers, s
         if src is not None:
             s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
         else:
-            f = io.BytesIO(content)
+            # that's the drawback of using a string parameter...
+            # we have to encode it first
+            f = io.BytesIO(content.encode('utf-8'))
             s3.upload_fileobj(Fileobj=f, Bucket=bucket, Key=obj, ExtraArgs=extra)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Unable to complete PUT operation.")
