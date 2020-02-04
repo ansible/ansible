@@ -1,2 +1,0 @@
-bugfixes:
-  - Make cloudfront_info module work with Python 3
