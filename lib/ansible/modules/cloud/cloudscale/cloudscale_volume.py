@@ -59,7 +59,7 @@ options:
   zone:
     description:
       - Zone in which the volume resides. Cannot be changed after creating
-      the volume. Defaults to the project default zone.
+        the volume. Defaults to the project default zone.
     type: str
   server_uuids:
     description:

@@ -59,8 +59,8 @@ options:
   region:
     description:
       - The region in which the floating IP resides. If omitted, the region of
-        the project default zone is used. This parameter must be omitted if the
-        type of the floating ip is 'global'.
+        the project default zone is used. This parameter B(must) be omitted if
+        I(type) is set to C(global).
     type: str
   prefix_length:
     description:
@@ -101,6 +101,7 @@ EXAMPLES = '''
     prefix_length: 56
     server: 47cec963-fcd2-482f-bdb6-24461b2d47b1
     api_token: xxxxxx
+    region: lpg1
   register: floating_ip
 
 # Assign an existing floating network to a different server
