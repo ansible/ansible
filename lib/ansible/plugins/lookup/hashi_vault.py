@@ -18,8 +18,9 @@ DOCUMENTATION = """
   requirements:
     - hvac (python library)
     - hvac 0.7.0+ (for namespace support)
-    - hvac 0.9.3+ (for non-deprecated methods)
+    - hvac 0.9.6+ (to avoid all deprecation warnings)
     - botocore (only if inferring aws params from boto)
+    - boto3 (only if using a boto profile)
   description:
     - Retrieve secrets from HashiCorp's vault.
   notes:
@@ -30,7 +31,9 @@ DOCUMENTATION = """
       description: query you are making.
       required: True
     token:
-      description: Vault token. If using token auth and no token is supplied, will check in ~/.vault-token <- TODO UPDATE
+      description:
+        - Vault token. If using token auth and no token is supplied, explicitly or through env, then the plugin will check
+        - for a token file, as determined by C(token_path) and C(token_file).
       env:
         - name: VAULT_TOKEN
     token_path:
@@ -59,7 +62,7 @@ DOCUMENTATION = """
     password:
       description: Authentication password.
     role_id:
-      description: Role id for a vault AppRole auth.
+      description: Vault Role ID. Used in approle and aws_iam_login auth methods.
       env:
         - name: VAULT_ROLE_ID
       ini:
@@ -86,6 +89,21 @@ DOCUMENTATION = """
         - approle
         - aws_iam_login
       default: token
+    return_format:
+      version_added: "2.10"
+      description:
+        - Controls how multiple key/value pairs in a path are treated on return.
+        - C(dict) returns a single dict containing the key/value pairs (same behavior as before 2.10).
+        - C(pairs) returns a list of dicts that each contain a single key/value pair, which may be more convenient in loops.
+        - C(values) returns a list of all the values only. Use when you don't care about the keys.
+        - C(raw) returns the actual API result, which includes metadata and may have the data nested in other keys.
+      choices:
+        - dict
+        - pairs
+        - values
+        - raw
+      default: dict
+      aliases: [ as ]
     mount_point:
       description: Vault mount point, only required if you have a custom mount point.
     ca_cert:
@@ -205,37 +223,52 @@ class HashiVault:
         if self.options.get('namespace'):
             client_args['namespace'] = self.options['namespace']
 
+        # this is the only auth_method-specific thing here, because if we're using a token, we need it now
         if self.options['auth_method'] == 'token':
             client_args['token'] = self.options.get('token')
 
         self.client = hvac.Client(**client_args)
 
-        # Check for deprecated version:
+        # Check for old version, before auth_methods class (added in 0.7.0):
+        # https://github.com/hvac/hvac/releases/tag/v0.7.0
+        #
         # hvac is moving auth methods into the auth_methods class
         # which lives in the client.auth member.
-        self.hvac_is_old = not hasattr(self.client, 'auth')
+        #
+        # Attempting to find which backends were moved into the class when (this is primarily for warnings):
+        # 0.7.0 -- github, ldap, mfa, azure?, gcp
+        # 0.7.1 -- okta
+        # 0.8.0 -- kubernetes
+        # 0.9.0 -- azure?, radius
+        # 0.9.3 -- aws
+        # 0.9.6 -- userpass
+        self.hvac_has_auth_methods = hasattr(self.client, 'auth')
 
-        self.authenticate(**kwargs)
-
-    # If a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
-    # token auth. This means if a particular auth backend is requested and a token is also given, then we
-    # ignore the token and attempt authentication against the specified backend.
+    # We've already checked to ensure a method exists for a particular auth_method, of the form:
     #
-    # to enable a new auth backend, simply add a new 'def auth_<type>' method below.
+    # auth_<method_name>
     #
-    # TODO: Update this
-
-    def authenticate(self, **kwargs):
-        getattr(self, self.auth_function)(**kwargs)
+    def authenticate(self):
+        getattr(self, self.auth_function)()
 
     def get(self):
+        '''gets a secret. should always return a list'''
         secret = self.options['secret']
         field = self.options['secret_field']
+        return_as = self.options['return_format']
 
-        data = self.client.read(secret)
+        try:
+            data = self.client.read(secret)
+        except hvac.exceptions.Forbidden:
+            raise AnsibleError("Forbidden: Permission Denied to secret '%s'." % secret)
+
+        if data is None:
+            raise AnsibleError("The secret '%s' doesn't seem to exist." % secret)
+
+        if return_as == 'raw':
+            return [data]
 
         # Check response for KV v2 fields and flatten nested secret data.
-        #
         # https://vaultproject.io/api/secret/kv/kv-v2.html#sample-response-1
         try:
             # sentinel field checks
@@ -246,50 +279,66 @@ class HashiVault:
         except KeyError:
             pass
 
-        if data is None:
-            raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % secret)
+        if return_as == 'pairs':
+            return [dict([pair]) for pair in data['data'].items()]
 
+        if return_as == 'values':
+            return list(data['data'].values())
+
+        # everything after here implements return_as == 'dict'
         if not field:
-            return data['data']
+            return [data['data']]
 
         if field not in data['data']:
             raise AnsibleError("The secret %s does not contain the field '%s'. for hashi_vault lookup" % (secret, field))
 
-        return data['data'][field]
+        return [data['data'][field]]
 
     # begin auth implementation methods
-
-    def auth_token(self, **kwargs):
+    #
+    # To add new backends, 3 things should be added:
+    #
+    # 1. Add a new validate_auth_<method_name> method to the LookupModule, which is responsible for validating
+    #    that it has the necessary options and whatever else it needs.
+    #
+    # 2. Add a new auth_<method_name> method to this class. These implementations are faily minimal as they should
+    #    already have everything they need. This is also the place to check for deprecated auth methods as hvac
+    #    continues to move backends into the auth_methods class.
+    #
+    # 3. Update the avail_auth_methods list in the LookupModules auth_methods() method (for now this is static).
+    #
+    def auth_token(self):
         if not self.client.is_authenticated():
             raise AnsibleError("Invalid Hashicorp Vault Token Specified for hashi_vault lookup.")
 
-    def auth_userpass(self, **kwargs):
+    def auth_userpass(self):
         params = self.get_options('username', 'password', 'mount_point')
-        if self.hvac_is_old:
-            Display().warning('HVAC should be updated to version 0.9.3 or higher. Deprecated methods will be used.')
-            self.client.auth_userpass(**params)
-        else:
+        if self.hvac_has_auth_methods and hasattr(self.client.auth.userpass, 'login'):
             self.client.auth.userpass.login(**params)
-
-    def auth_ldap(self, **kwargs):
-        params = self.get_options('username', 'password', 'mount_point')
-        if self.hvac_is_old:
-            Display().warning('HVAC should be updated to version 0.9.3 or higher. Deprecated methods will be used.')
-            self.client.auth_ldap(**params)
         else:
-            self.client.auth.ldap.login(**params)
+            Display().warning("HVAC should be updated to version 0.9.6 or higher. Deprecated method 'auth_userpass' will be used.")
+            self.client.auth_userpass(**params)
 
-    def auth_approle(self, **kwargs):
+    def auth_ldap(self):
+        params = self.get_options('username', 'password', 'mount_point')
+# not hasattr(self.client, 'auth')
+        if self.hvac_has_auth_methods and hasattr(self.client.auth.ldap, 'login'):
+            self.client.auth.ldap.login(**params)
+        else:
+            Display().warning("HVAC should be updated to version 0.7.0 or higher. Deprecated method 'auth_ldap' will be used.")
+            self.client.auth_ldap(**params)
+
+    def auth_approle(self):
         params = self.get_options('role_id', 'secret_id')
         self.client.auth_approle(**params)
 
-    def auth_iam_login(self, **kwargs):
+    def auth_aws_iam_login(self):
         params = self.options['iam_login_credentials']
-        if self.hvac_is_old:
-            Display().warning('HVAC should be updated to version 0.9.3 or higher. Deprecated methods will be used.')
-            self.client.auth_aws_iam(**params)
-        else:
+        if self.hvac_has_auth_methods and hasattr(self.client.auth.aws, 'iam_login'):
             self.client.auth.aws.iam_login(**params)
+        else:
+            Display().warning("HVAC should be updated to version 0.9.3 or higher. Deprecated method 'auth_aws_iam' will be used.")
+            self.client.auth_aws_iam(**params)
 
     # end auth implementation methods
 
@@ -306,9 +355,11 @@ class LookupModule(LookupBase):
             opts.update(self.parse_term(term))
             self.set_options(direct=opts)
             self.process_options()
-            # return [self.get_option('aws_access_key')]
-            # return [self._options]
-            ret.append(HashiVault(**self._options).get())
+            # FUTURE: Create one object, authenticate once, and re-use it,
+            # for gets, for better use during with_ loops.
+            client = HashiVault(**self._options)
+            client.authenticate()
+            ret.extend(client.get())
 
         return ret
 
@@ -371,7 +422,7 @@ class LookupModule(LookupBase):
     def auth_methods(self):
         # enforce and set the list of available auth methods
         # TODO: can this be read from the choices: field in documentation?
-        avail_auth_methods = ['token', 'approle', 'userpass', 'ldap', 'aws_iam_role']
+        avail_auth_methods = ['token', 'approle', 'userpass', 'ldap', 'aws_iam_login']
         self.set_option('avail_auth_methods', avail_auth_methods)
         auth_method = self.get_option('auth_method')
 
@@ -418,7 +469,7 @@ class LookupModule(LookupBase):
             if not self.get_option('token'):
                 raise AnsibleError("No Vault Token specified or discovered.")
 
-    def validate_auth_iam(self, auth_method):
+    def validate_auth_aws_iam_login(self, auth_method):
         params = {
             'access_key': self.get_option('aws_access_key'),
             'secret_key': self.get_option('aws_secret_key')
