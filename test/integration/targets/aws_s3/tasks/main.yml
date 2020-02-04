@@ -564,7 +564,7 @@
 
     - name: create an object from static content
       aws_s3:
-        bucket: "{{ bucket_name + '.bucket' }}"
+        bucket: "{{ bucket_name }}"
         object: put-content.txt
         mode: put
         content: >-
@@ -593,8 +593,8 @@
 
     - name: create an object from a template
       aws_s3:
-        bucket: "{{ bucket_name + '.bucket' }}"
-        object: /put-template.txt
+        bucket: "{{ bucket_name }}"
+        object: put-template.txt
         mode: put
         content: "{{ lookup('template', 'templates/put-template.txt.j2') }}"
         <<: *aws_connection_info
@@ -628,6 +628,8 @@
         - delete.txt
         - delete_encrypt.txt
         - delete_encrypt_kms.txt
+        - put-content.txt
+        - put-template.txt
       ignore_errors: yes
 
     - name: delete temporary files
@@ -639,6 +641,13 @@
     - name: delete the bucket
       aws_s3:
         bucket: "{{ bucket_name }}"
+        mode: delete
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: delete the dot bucket
+      aws_s3:
+        bucket: "{{ bucket_name + '.bucket' }}"
         mode: delete
         <<: *aws_connection_info
       ignore_errors: yes
