@@ -1240,9 +1240,7 @@ $spec = @{
     required_together = @(,@("username", "password"))
     supports_check_mode = $true
 }
-
 $spec = Merge-WebRequestSpec -ModuleSpec $spec
-$spec.options.url.required = $false
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 

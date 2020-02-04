@@ -219,11 +219,6 @@ options:
       times out in seconds.
     - Set to C(0) to specify an infinite timeout.
     version_added: '2.10'
-  url:
-    description:
-    - Not used in win_package, will be ignored if set.
-    required: false
-    version_added: '2.10'
   url_password:
     version_added: '2.10'
   url_username:
