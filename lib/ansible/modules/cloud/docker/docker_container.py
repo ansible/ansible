@@ -895,7 +895,8 @@ EXAMPLES = '''
      - "127.0.0.1:8081:9001/udp"
      # Publish container port 9002 as a random host port
      - "9002"
-     # Publish container port 9003 as a random host port in range 8000-8100
+     # Publish container port 9003 as a free host port in range 8000-8100
+     # (the host port will be selected by the Docker daemon)
      - "8000-8100:9003"
      # Publish container ports 9010-9020 to host ports 7000-7010
      - "7000-7010:9010-9020"
