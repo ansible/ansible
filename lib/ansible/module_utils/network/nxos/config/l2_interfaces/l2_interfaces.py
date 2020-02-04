@@ -151,12 +151,12 @@ class L2_interfaces(ConfigBase):
             diff = dict_diff(w, obj_in_have)
         else:
             diff = w
-        merged_commands = self.set_commands(w, have)
+        merged_commands = self.set_commands(w, have, True)
         if 'name' not in diff:
             diff['name'] = w['name']
         wkeys = w.keys()
         dkeys = diff.keys()
-        for k in wkeys:
+        for k in w.copy():
             if k in self.exclude_params and k in dkeys:
                 del diff[k]
         replaced_commands = self.del_attribs(diff)
@@ -192,7 +192,7 @@ class L2_interfaces(ConfigBase):
                             del h[k]
             commands.extend(self.del_attribs(h))
         for w in want:
-            commands.extend(self.set_commands(flatten_dict(w), have))
+            commands.extend(self.set_commands(flatten_dict(w), have, True))
         return commands
 
     def _state_merged(self, w, have):
@@ -246,7 +246,7 @@ class L2_interfaces(ConfigBase):
             diff.update({'name': w['name']})
         return diff
 
-    def add_commands(self, d):
+    def add_commands(self, d, vlan_exists=False):
         commands = []
         if not d:
             return commands
@@ -255,19 +255,35 @@ class L2_interfaces(ConfigBase):
         if 'vlan' in d:
             commands.append(cmd + 'access vlan ' + str(d['vlan']))
         if 'allowed_vlans' in d:
-            commands.append(cmd + 'trunk allowed vlan ' + str(d['allowed_vlans']))
+            if vlan_exists:
+                commands.append(cmd + 'trunk allowed vlan add ' + str(d['allowed_vlans']))
+            else:
+                commands.append(cmd + 'trunk allowed vlan ' + str(d['allowed_vlans']))
         if 'native_vlan' in d:
             commands.append(cmd + 'trunk native vlan ' + str(d['native_vlan']))
         if commands:
             commands.insert(0, 'interface ' + d['name'])
         return commands
 
-    def set_commands(self, w, have):
+    def set_commands(self, w, have, replace=False):
         commands = []
+        vlan_tobe_added = []
         obj_in_have = flatten_dict(search_obj_in_list(w['name'], have, 'name'))
         if not obj_in_have:
             commands = self.add_commands(w)
         else:
             diff = self.diff_of_dicts(w, obj_in_have)
+            if diff and not replace:
+                if "allowed_vlans" in diff.keys() and diff["allowed_vlans"]:
+                    vlan_tobe_added = diff["allowed_vlans"].split(',')
+                    vlan_list = vlan_tobe_added[:]
+                    have_vlans = obj_in_have["allowed_vlans"].split(',')
+                    for w_vlans in vlan_list:
+                        if w_vlans in have_vlans:
+                            vlan_tobe_added.pop(vlan_tobe_added.index(w_vlans))
+                    if vlan_tobe_added:
+                        diff.update({"allowed_vlans": ','.join(vlan_tobe_added)})
+                        commands = self.add_commands(diff, True)
+                    return commands
             commands = self.add_commands(diff)
         return commands
