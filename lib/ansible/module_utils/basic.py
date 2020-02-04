@@ -1428,8 +1428,8 @@ class AnsibleModule(object):
             self.fail_json(msg="Failure when processing no_log parameters. Module invocation will be hidden. "
                                "%s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
 
-        for msg, version in list_deprecations(spec, param):
-            deprecate(msg, version)
+        for message in list_deprecations(spec, param):
+            deprecate(message['msg'], message['version'])
 
     def _check_arguments(self, spec=None, param=None, legal_inputs=None):
         self._syslog_facility = 'LOG_USER'
