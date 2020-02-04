@@ -900,6 +900,48 @@ files:
   $modules/storage/netapp/:
     maintainers: $team_netapp
     support: community
+  $modules/storage/netapp/na_elementsw_access_group.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_account.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_admin_users.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_backup.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_check_connections.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_cluster_config.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_cluster_pair.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_cluster.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_cluster_snmp.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_drive.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_initiators.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_ldap.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_network_interfaces.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_node.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_snapshot.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_snapshot_restore.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_snapshot_schedule.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_vlan.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_volume_clone.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_volume_pair.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_volume.py:
+    migrated_to: netapp.elementsw
   $modules/storage/purestorage/:
     maintainers: $team_purestorage
     labels: pure_storage
@@ -1174,6 +1216,8 @@ files:
   $module_utils/netapp:
     maintainers: $team_netapp
     support: community
+  $module_utils/netapp/netapp_elementsw_module.py:
+    migrated_to: netapp.elementsw
   $module_utils/network:
     labels: networking
   $module_utils/network/a10:
@@ -2054,6 +2098,14 @@ files:
   test/units/modules/storage/netapp:
     maintainers: $team_netapp
     support: community
+  test/units/modules/storage/netapp/test_na_elementsw_access_group.py:
+    migrated_to: netapp.elementsw 
+  test/units/modules/storage/netapp/test_na_elementsw_cluster_config.py:
+    migrated_to: netapp.elementsw 
+  test/units/modules/storage/netapp/test_na_elementsw_cluster_snmp.py:
+    migrated_to: netapp.elementsw 
+  test/units/modules/storage/netapp/test_na_elementsw_initiators.py:
+    migrated_to: netapp.elementsw 
   test/utils/shippable/:
     notified: mattclay
   hacking/aws_config/:
