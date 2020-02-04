@@ -10,6 +10,10 @@ import abc
 
 from . import types as t
 
+from .encoding import (
+    to_bytes,
+)
+
 from .io import (
     read_text_file,
 )
@@ -19,7 +23,6 @@ from .util import (
     display,
     read_lines_without_comments,
     is_subdir,
-    to_bytes,
 )
 
 from .data import (

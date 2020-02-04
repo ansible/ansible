@@ -12,6 +12,10 @@ import textwrap
 
 from . import types as t
 
+from .encoding import (
+    to_bytes,
+)
+
 from .util import (
     common_environment,
     COVERAGE_CONFIG_NAME,
@@ -22,7 +26,6 @@ from .util import (
     MODE_FILE_EXECUTE,
     PYTHON_PATHS,
     raw_command,
-    to_bytes,
     ANSIBLE_TEST_DATA_ROOT,
     ApplicationError,
 )

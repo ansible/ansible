@@ -10,6 +10,10 @@ import tempfile
 
 from .. import types as t
 
+from ..encoding import (
+    to_bytes,
+)
+
 from ..target import (
     analyze_integration_target_dependencies,
     walk_integration_targets,
@@ -28,7 +32,6 @@ from ..io import (
     read_text_file,
 )
 
-
 from ..util import (
     ApplicationError,
     display,
@@ -36,7 +39,6 @@ from ..util import (
     MODE_DIRECTORY,
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
-    to_bytes,
 )
 
 from ..util_common import (

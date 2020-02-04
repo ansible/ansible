@@ -11,9 +11,6 @@ from . import types as t
 
 from .encoding import (
     ENCODING,
-)
-
-from .util import (
     to_bytes,
     to_text,
 )

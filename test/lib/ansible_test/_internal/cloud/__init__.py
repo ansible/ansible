@@ -14,6 +14,10 @@ import tempfile
 
 from .. import types as t
 
+from ..encoding import (
+    to_bytes,
+)
+
 from ..io import (
     read_text_file,
 )
@@ -25,7 +29,6 @@ from ..util import (
     import_plugins,
     load_plugins,
     ABC,
-    to_bytes,
     ANSIBLE_TEST_CONFIG_ROOT,
 )
 

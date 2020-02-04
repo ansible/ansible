@@ -45,12 +45,10 @@ except ImportError:
 
 from . import types as t
 
-# noinspection PyUnresolvedReferences
 from .encoding import (
     to_bytes,
     to_optional_bytes,
     to_optional_text,
-    to_text,
 )
 
 from .io import (

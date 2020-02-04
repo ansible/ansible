@@ -10,7 +10,7 @@ from ...constants import (
     TIMEOUT_PATH,
 )
 
-from ...util import (
+from ...encoding import (
     to_bytes,
 )
 
