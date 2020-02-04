@@ -5,6 +5,10 @@ __metaclass__ = type
 import os
 import re
 
+from .io import (
+    open_text_file,
+)
+
 from .util import (
     display,
 )
@@ -53,7 +57,7 @@ def get_csharp_module_utils_name(path):  # type: (str) -> str
     else:
         prefix = ''
 
-    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.sep, '.')
+    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.path.sep, '.')
 
     return name
 
@@ -80,7 +84,7 @@ def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):
     else:
         pattern = re.compile(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((?:Ansible|ansible.collections)\..+)')
 
-    with open(path, 'r') as module_file:
+    with open_text_file(path) as module_file:
         for line_number, line in enumerate(module_file, 1):
             match = re.search(pattern, line)
 

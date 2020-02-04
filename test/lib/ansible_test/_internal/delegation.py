@@ -44,14 +44,12 @@ from .manage_ci import (
 from .util import (
     ApplicationError,
     common_environment,
-    pass_vars,
     display,
     ANSIBLE_BIN_PATH,
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
     tempdir,
-    make_dirs,
 )
 
 from .util_common import (
@@ -203,7 +201,7 @@ def delegate_venv(args,  # type: EnvironmentConfig
             os.symlink(ANSIBLE_TEST_ROOT, os.path.join(library_path, 'ansible_test'))
 
             env.update(
-                PATH=inject_path + os.pathsep + env['PATH'],
+                PATH=inject_path + os.path.pathsep + env['PATH'],
                 PYTHONPATH=library_path,
             )
 

@@ -2,12 +2,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import os
+
+from ..io import (
+    read_json_file,
+)
 
 from ..util import (
     display,
-    to_text,
 )
 
 from ..data import (
@@ -57,8 +59,7 @@ def _generate_powershell_output_report(args, coverage_file):
     :type coverage_file: str
     :rtype: str
     """
-    with open(coverage_file, 'rb') as coverage_fd:
-        coverage_info = json.loads(to_text(coverage_fd.read()))
+    coverage_info = read_json_file(coverage_file)
 
     root_path = data_context().content.root + '/'
 
