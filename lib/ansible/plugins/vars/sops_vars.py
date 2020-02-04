@@ -77,109 +77,10 @@ sops_error_codes = {
 class SopsError(AnsibleError):
     ''' extend AnsibleError class with sops specific informations '''
 
-    def __init__(self, filename, exit_code, message="Unknown error",):
-        message = "error with file %s: sops exited with code %d: %s" % (filename, exit_code, message)
+    def __init__(self, filename, exit_code, message,):
+        exception_name = sops_error_codes[exit_code]
+        message = "error with file %s: %s exited with code %d: %s" % (filename, exception_name, exit_code, message)
         super(SopsError, self).__init__(message=message)
-
-
-class SopsErrorGeneric(SopsError):
-    pass
-
-
-class SopsCouldNotReadInputFile(SopsError):
-    pass
-
-
-class SopsCouldNotWriteOutputFile(SopsError):
-    pass
-
-
-class SopsErrorDumpingTree(SopsError):
-    pass
-
-
-class SopsErrorReadingConfig(SopsError):
-    pass
-
-
-class SopsErrorInvalidKMSEncryptionContextFormat(SopsError):
-    pass
-
-
-class SopsErrorInvalidSetFormat(SopsError):
-    pass
-
-
-class SopsErrorConflictingParameters(SopsError):
-    pass
-
-
-class SopsErrorEncryptingMac(SopsError):
-    pass
-
-
-class SopsErrorEncryptingTree(SopsError):
-    pass
-
-
-class SopsErrorDecryptingMac(SopsError):
-    pass
-
-
-class SopsErrorDecryptingTree(SopsError):
-    pass
-
-
-class SopsCannotChangeKeysFromNonExistentFile(SopsError):
-    pass
-
-
-class SopsMacMismatch(SopsError):
-    pass
-
-
-class SopsMacNotFound(SopsError):
-    pass
-
-
-class SopsConfigFileNotFound(SopsError):
-    pass
-
-
-class SopsKeyboardInterrupt(SopsError):
-    pass
-
-
-class SopsInvalidTreePathFormat(SopsError):
-    pass
-
-
-class SopsNoFileSpecified(SopsError):
-    pass
-
-
-class SopsCouldNotRetrieveKey(SopsError):
-    pass
-
-
-class SopsNoEncryptionKeyFound(SopsError):
-    pass
-
-
-class SopsFileHasNotBeenModified(SopsError):
-    pass
-
-
-class SopsNoEditorFound(SopsError):
-    pass
-
-
-class SopsFailedToCompareVersions(SopsError):
-    pass
-
-
-class SopsFileAlreadyEncrypted(SopsError):
-    pass
 
 
 def decrypt_with_sops(filename):
@@ -200,9 +101,8 @@ def decrypt_with_sops(filename):
         display.vvvv(err)
 
     if exit_code > 0:
-        if exit_code in sops_error_codes:
-            exception_name = sops_error_codes[exit_code]
-            raise globals()[exception_name](filename, exit_code, err)
+        if exit_code in sops_error_codes.keys():
+            raise SopsError(filename, exit_code, err)
         else:
             raise AnsibleError(message=err)
 
