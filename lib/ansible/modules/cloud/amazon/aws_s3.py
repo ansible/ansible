@@ -353,7 +353,7 @@ def key_check(module, s3, bucket, obj, version=None, validate=True):
     return exists
 
 
-def etag_compare(module, s3, bucket, obj, local_file=None, version=None, content=None):
+def etag_compare(module, s3, bucket, obj, version=None, local_file=None, content=None):
     s3_etag = get_etag(s3, bucket, obj, version=version)
     if local_file is not None:
         local_etag = calculate_etag(module, local_file, s3_etag, s3, bucket, obj, version)
@@ -821,7 +821,7 @@ def main():
         if path_check(dest) and overwrite != 'always':
             if overwrite == 'never':
                 module.exit_json(msg="Local object already exists and overwrite is disabled.", changed=False)
-            if etag_compare(module, dest, s3, bucket, obj, version=version):
+            if etag_compare(module, s3, bucket, obj, version=version, local_file=dest):
                 module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite=always parameter to force.", changed=False)
 
         try:
