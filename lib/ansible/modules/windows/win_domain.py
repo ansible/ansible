@@ -41,6 +41,12 @@ options:
     - If not set then the default path is C(%SYSTEMROOT%\NTDS).
     type: path
     version_added: '2.5'
+  log_path:
+    description:
+    - Specifies the fully qualified, non-UNC path to a directory on a fixed disk of the local computer where the log file for this operation is written.
+    - If not set then the default path is C(%SYSTEMROOT%\NTDS).
+    type: path
+    version_added: '2.10'
   sysvol_path:
     description:
     - The path to a directory on a fixed disk of the Windows host where the
