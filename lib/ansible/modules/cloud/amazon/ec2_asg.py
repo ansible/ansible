@@ -83,7 +83,9 @@ options:
     type: int
   mixed_instances_policy:
     description:
-      - Using mixed intances policy while ASG present
+      - A mixed instance policy to use for the ASG.
+      - Only used when the ASG is configured to use a Launch Template (I(launch_template)).
+      - 'See also U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-autoscaling-autoscalinggroup-mixedinstancespolicy.html)'
     required: false
     version_added: "2.10"
     suboptions:
