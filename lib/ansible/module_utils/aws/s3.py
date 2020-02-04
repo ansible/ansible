@@ -67,16 +67,15 @@ def calculate_etag_content(module, content, etag, s3, bucket, obj, version=None)
         if version:
             s3_kwargs['VersionId'] = version
 
-        with open(filename, 'rb') as f:
-            for part_num in range(1, parts + 1):
-                s3_kwargs['PartNumber'] = part_num
-                try:
-                    head = s3.head_object(**s3_kwargs)
-                except (BotoCoreError, ClientError) as e:
-                    module.fail_json_aws(e, msg="Failed to get head object")
-                length = int(head['ContentLength'])
-                digests.append(md5(content[offset:offset + length]))
-                offset += length
+        for part_num in range(1, parts + 1):
+            s3_kwargs['PartNumber'] = part_num
+            try:
+                head = s3.head_object(**s3_kwargs)
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, msg="Failed to get head object")
+            length = int(head['ContentLength'])
+            digests.append(md5(content[offset:offset + length]))
+            offset += length
 
         digest_squared = md5(b''.join(m.digest() for m in digests))
         return '"{0}-{1}"'.format(digest_squared.hexdigest(), len(digests))
