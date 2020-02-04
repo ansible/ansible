@@ -69,6 +69,21 @@ DOCUMENTATION = '''
         type: boolean
         default: False
         version_added: '2.10'
+      legacy_groups:
+        description:
+            - Toggle, if true the plugin will build legacy groups present in the foreman script
+            - This includes groups based on environment, location, and organization
+            - Also includes groups based on content_facet_attributes (i.e. lifecycle_environment, content_view)
+        type: boolean
+        default: False
+        version_added: '2.10'
+      legacy_hostvars:
+        description:
+            - Toggle, if true the plugin will build legacy hostvars present in the foreman script
+            - Places hostvars in a dictionary with keys `foreman`, `foreman_facts`, and `foreman_params`
+        type: boolean
+        default: False
+        version_added: '2.10'
 
 '''
 
@@ -208,6 +223,13 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
             raise ValueError("More than one set of facts returned for '%s'" % host)
         return facts
 
+    def _get_hostvars(self, host, vars_prefix='', omitted_vars=()):
+        hostvars = {}
+        for k, v in host.items():
+            if k not in omitted_vars:
+                hostvars[vars_prefix + k] = v
+        return hostvars
+
     def _populate(self):
 
         for host in self._get_hosts():
@@ -222,25 +244,60 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
                     group_name = self.inventory.add_group(group_name)
                     self.inventory.add_child(group_name, host_name)
 
-                # set host vars from host info
-                try:
-                    for k, v in host.items():
-                        if k not in ('name', 'hostgroup_title', 'hostgroup_name'):
-                            try:
-                                self.inventory.set_variable(host_name, self.get_option('vars_prefix') + k, v)
-                            except ValueError as e:
-                                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_text(e)))
-                except ValueError as e:
-                    self.display.warning("Could not get host info for %s, skipping: %s" % (host_name, to_text(e)))
+                if self.get_option('legacy_groups'):
+                    # create ansible groups for environment, location and organization
+                    for group in ['environment', 'location', 'organization']:
+                        group_name = host.get('%s_name' % group)
+                        if group_name:
+                            group_name = to_safe_group_name('%s%s_%s' % (
+                                self.get_option('group_prefix'),
+                                group,
+                                group_name.lower().replace(" ", "")
+                            ))
+                            group_name = self.inventory.add_group(group_name)
+                            self.inventory.add_child(group_name, host_name)
+
+                    for group in ['lifecycle_environment', 'content_view']:
+                        group_name = host.get('content_facet_attributes', {}).get('%s_name' % group)
+                        if group_name:
+                            group_name = to_safe_group_name('%s%s_%s' % (
+                                self.get_option('group_prefix'),
+                                group,
+                                to_text(group_name).lower().replace(" ", "")
+                            ))
+                            group_name = self.inventory.add_group(group_name)
+                            self.inventory.add_child(group_name, host_name)
+
+                if self.get_option('legacy_hostvars'):
+                    hostvars = self._get_hostvars(host)
+                    self.inventory.set_variable(host_name, 'foreman', hostvars)
+                else:
+                    omitted_vars = ('name', 'hostgroup_title', 'hostgroup_name')
+                    hostvars = self._get_hostvars(host, self.get_option('vars_prefix'), omitted_vars)
+
+                    for k, v in hostvars.items():
+                        try:
+                            self.inventory.set_variable(host_name, k, v)
+                        except ValueError as e:
+                            self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_text(e)))
 
                 # set host vars from params
                 if self.get_option('want_params'):
-                    for p in self._get_all_params_by_id(host['id']):
-                        try:
-                            self.inventory.set_variable(host_name, p['name'], p['value'])
-                        except ValueError as e:
-                            self.display.warning("Could not set hostvar %s to '%s' for the '%s' host, skipping:  %s" %
-                                                 (p['name'], to_native(p['value']), host, to_native(e)))
+                    params = self._get_all_params_by_id(host['id'])
+                    filtered_params = {}
+                    for p in params:
+                        if 'name' in p and 'value' in p:
+                            filtered_params[p['name']] = p['value']
+
+                    if self.get_option('legacy_hostvars'):
+                        self.inventory.set_variable(host_name, 'foreman_params', filtered_params)
+                    else:
+                        for k, v in filtered_params:
+                            try:
+                                self.inventory.set_variable(host_name, p['name'], p['value'])
+                            except ValueError as e:
+                                self.display.warning("Could not set hostvar %s to '%s' for the '%s' host, skipping:  %s" %
+                                                     (p['name'], to_native(p['value']), host, to_native(e)))
 
                 # set host vars from facts
                 if self.get_option('want_facts'):
