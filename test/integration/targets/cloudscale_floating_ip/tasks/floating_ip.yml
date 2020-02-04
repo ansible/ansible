@@ -16,18 +16,18 @@
       - (item.ip_version == 4 and floating_ip.ip | ipv4) or (item.ip_version == 6 and floating_ip.ip | ipv6)
       - floating_ip.server == test01.uuid
 
-- name: Check floating IP indempotence
+- name: Check floating IP idempotence
   cloudscale_floating_ip:
     server: '{{ test01.uuid }}'
     ip: '{{ floating_ip.ip }}'
     region: '{{ cloudscale_test_region }}'
-  register: floating_ip_indempotence
-- name: Verify floating IP indempotence
+  register: floating_ip_idempotence
+- name: Verify floating IP idempotence
   assert:
     that:
-      - floating_ip_indempotence is successful
-      - floating_ip_indempotence is not changed
-      - floating_ip_indempotence.server == test01.uuid
+      - floating_ip_idempotence is successful
+      - floating_ip_idempotence is not changed
+      - floating_ip_idempotence.server == test01.uuid
       - floating_ip.region.slug == '{{ cloudscale_test_region }}'
 
 - name: Request global floating IP
@@ -105,12 +105,12 @@
       - release_ip is changed
       - release_ip.state == 'absent'
 
-- name: Release floating IP indempotence
+- name: Release floating IP idempotence
   cloudscale_floating_ip:
     ip: '{{ floating_ip.ip }}'
     state: 'absent'
   register: release_ip
-- name: Verify release floating IPs indempotence
+- name: Verify release floating IPs idempotence
   assert:
     that:
       - release_ip is successful

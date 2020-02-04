@@ -39,7 +39,7 @@
       - vol.tags.stage == 'production'
       - vol.tags.sla == '24-7'
 
-- name: Create volume indempotence
+- name: Create volume idempotence
   cloudscale_volume:
     name: '{{ cloudscale_resource_prefix }}-vol'
     zone: '{{ cloudscale_test_zone }}'
@@ -49,7 +49,7 @@
       stage: production
       sla: 24-7
   register: vol
-- name: 'VERIFY: Create volume indempotence'
+- name: 'VERIFY: Create volume idempotence'
   assert:
     that:
       - vol is successful
@@ -88,13 +88,13 @@
       - vol is changed
       - server.uuid in vol.server_uuids
 
-- name: Attach existing volume by name to server indempotence
+- name: Attach existing volume by name to server idempotence
   cloudscale_volume:
     name: '{{ cloudscale_resource_prefix }}-vol'
     server_uuids:
       - '{{ server.uuid }}'
   register: vol
-- name: 'VERIFY: Attach existing volume by name to server indempotence'
+- name: 'VERIFY: Attach existing volume by name to server idempotence'
   assert:
     that:
       - vol is successful
@@ -126,12 +126,12 @@
       - vol is changed
       - vol.size_gb == 100
 
-- name: Resize attached volume by UUID indempotence
+- name: Resize attached volume by UUID idempotence
   cloudscale_volume:
     uuid: '{{ vol.uuid }}'
     size_gb: 100
   register: vol
-- name: 'VERIFY: Resize attached volume by UUID indempotence'
+- name: 'VERIFY: Resize attached volume by UUID idempotence'
   assert:
     that:
       - vol is successful
@@ -167,12 +167,12 @@
       - deleted.uuid == vol.uuid
       - deleted.name == '{{ cloudscale_resource_prefix }}-vol'
 
-- name: Delete attached volume by UUID indempotence
+- name: Delete attached volume by UUID idempotence
   cloudscale_volume:
     uuid: '{{ vol.uuid }}'
     state: 'absent'
   register: deleted
-- name: 'VERIFY: Delete attached volume by UUID indempotence'
+- name: 'VERIFY: Delete attached volume by UUID idempotence'
   assert:
     that:
       - deleted is successful
