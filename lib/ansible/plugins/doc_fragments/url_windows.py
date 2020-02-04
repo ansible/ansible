@@ -12,11 +12,6 @@ class ModuleDocFragment(object):
     # Standard files documentation fragment
     DOCUMENTATION = r'''
 options:
-  url:
-    description:
-    - The URL to make the request with.
-    required: yes
-    type: str
   method:
     description:
     - The HTTP Method of the request.

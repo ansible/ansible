@@ -519,7 +519,6 @@ Function Merge-WebRequestSpec {
 }
 
 $ansible_web_request_options = @{
-    url = @{ type="str"; required=$true }
     method = @{ type="str" }
     follow_redirects = @{ type="str"; choices=@("all","none","safe"); default="safe" }
     headers = @{ type="dict" }
