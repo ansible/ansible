@@ -352,9 +352,12 @@ def key_check(module, s3, bucket, obj, version=None, validate=True):
     return exists
 
 
-def etag_compare(module, local_file, s3, bucket, obj, version=None):
+def etag_compare(module, local_file=None, s3, bucket, obj, version=None, content=None):
     s3_etag = get_etag(s3, bucket, obj, version=version)
-    local_etag = calculate_etag(module, local_file, s3_etag, s3, bucket, obj, version)
+    if local_file is not None:
+        local_etag = calculate_etag(module, local_file, s3_etag, s3, bucket, obj, version)
+    else:
+        local_etag = calculate_etag_content(module, content, s3_etag, s3, bucket, obj, version)
 
     return s3_etag == local_etag
 
@@ -520,7 +523,7 @@ def option_in_extra_args(option):
         return allowed_extra_args[temp_option]
 
 
-def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers):
+def upload_s3file(module, s3, bucket, obj, src=None, expiry, metadata, encrypt, headers, content=None):
     if module.check_mode:
         module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
@@ -541,13 +544,19 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
                     extra['Metadata'][option] = metadata[option]
 
         if 'ContentType' not in extra:
-            content_type = mimetypes.guess_type(src)[0]
+            content_type = None
+            if src is not None:
+                content_type = mimetypes.guess_type(src)[0]
             if content_type is None:
                 # s3 default content type
                 content_type = 'binary/octet-stream'
             extra['ContentType'] = content_type
 
-        s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
+        if src is not None:
+            s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
+        else:
+            f = io.BytesIO(content)
+            s3.upload_fileobj(Fileobj=f, Bucket=bucket, Key=obj, ExtraArgs=extra)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Unable to complete PUT operation.")
     try:
@@ -697,6 +706,7 @@ def main():
         dualstack=dict(default='no', type='bool'),
         rgw=dict(default='no', type='bool'),
         src=dict(),
+        content=dict(type='bytes'),
         ignore_nonexistent_bucket=dict(default=False, type='bool'),
         encryption_kms_key_id=dict()
     )
@@ -727,6 +737,7 @@ def main():
     dualstack = module.params.get('dualstack')
     rgw = module.params.get('rgw')
     src = module.params.get('src')
+    content = module.params.get('content')
     ignore_nonexistent_bucket = module.params.get('ignore_nonexistent_bucket')
 
     object_canned_acl = ["private", "public-read", "public-read-write", "aws-exec-read", "authenticated-read", "bucket-owner-read", "bucket-owner-full-control"]
@@ -823,8 +834,10 @@ def main():
         # if putting an object in a bucket yet to be created, acls for the bucket and/or the object may be specified
         # these were separated into the variables bucket_acl and object_acl above
 
-        if not path_check(src):
-            module.fail_json(msg="Local object for PUT does not exist")
+        if content is not None and src is not None:
+            module.fail_json(msg="Either src or content must be specified, but not both")
+        if content is None and not path_check(src):
+            module.fail_json(msg="Local object for PUT does not exist and no content was specified")
 
         if bucketrtn:
             keyrtn = key_check(module, s3, bucket, obj, version=version, validate=validate)
@@ -835,13 +848,13 @@ def main():
             create_bucket(module, s3, bucket, location)
 
         if keyrtn and overwrite != 'always':
-            if overwrite == 'never' or etag_compare(module, src, s3, bucket, obj):
+            if overwrite == 'never' or etag_compare(module, s3, bucket, obj, local_file=src, content=content):
                 # Return the download URL for the existing object
                 get_download_url(module, s3, bucket, obj, expiry, changed=False)
 
         # only use valid object acls for the upload_s3file function
         module.params['permission'] = object_acl
-        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
+        upload_s3file(module, s3, bucket, obj, expiry, metadata, encrypt, headers, src=src, content=content)
 
     # Delete an object from a bucket, not the entire bucket
     if mode == 'delobj':
