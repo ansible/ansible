@@ -942,6 +942,108 @@ files:
     migrated_to: netapp.elementsw
   $modules/storage/netapp/na_elementsw_volume.py:
     migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_ontap_autosupport.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_broadcast_domain.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_cg_snapshot.py:
+    migrated_to: netapp.ontap
+  $modules/st$modules/storage/netapp/na_ontap_ldap.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_lun_copy.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_lun_map.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_motd.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_ndmp.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_net_subnet.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_net_vlan.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_nfs.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_node.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_object_store.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_ports.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_qos_adaptive_policy_group.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_qos_policy_group.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_qtree.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_quotas.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_snapmirror.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_snapshot_policy.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_snapshot.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_snmp.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_ucadapter.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_unix_group.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_user.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_volume_autosize.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_volume_clone.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_volume.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_vscan_on_access_policy.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_vscan_on_demand_task.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_vscan.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_vscan_scanner_pool.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_vserver_cifs_security.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_cifs_acl.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_cifs.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_cifs_server.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_cluster_ha.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_cluster.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_command.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_disks.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_dns.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_fcp.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_firewall_policy.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_firmware_upgrade.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_igroup_initiator.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_igroup.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_info.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_interface.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_job_schedule.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_kerberos_realm.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_ldap_client.py:
+    migrated_to: netapp.ontap
   $modules/storage/purestorage/:
     maintainers: $team_purestorage
     labels: pure_storage
@@ -1218,6 +1320,10 @@ files:
     support: community
   $module_utils/netapp/netapp_elementsw_module.py:
     migrated_to: netapp.elementsw
+  $module_utils/netapp/netapp.py:
+    migrated_to: netapp.ontap
+  $module_utils/netapp/netapp_module.py:
+    migrated_to: netapp.ontap
   $module_utils/network:
     labels: networking
   $module_utils/network/a10:
@@ -1669,6 +1775,8 @@ files:
   $plugins/doc_fragments/intersight.py: *intersight
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
+  $plugins/doc_fragments/netapp.py:
+    migrated_to: netapp.ontap
   $plugins/doc_fragments/openstack.py:
     maintainers: $team_openstack
     migrated_to: openstack.cloud
@@ -2073,6 +2181,7 @@ files:
   test/units/module_utils/test_netapp.py:
     maintainers: $team_netapp
     support: community
+    migrated_to: netapp.ontap
   test/units/module_utils/hwc:
     maintainers: $team_huawei
   test/units/module_utils/acme: *crypto
@@ -2105,7 +2214,61 @@ files:
   test/units/modules/storage/netapp/test_na_elementsw_cluster_snmp.py:
     migrated_to: netapp.elementsw 
   test/units/modules/storage/netapp/test_na_elementsw_initiators.py:
-    migrated_to: netapp.elementsw 
+    migrated_to: netapp.elementsw
+  test/units/modules/storage/netapp/test_na_ontap_cifs.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_command.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_dns.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_firewall_policy.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_firmware_upgrade.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_flexcache.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_igroup_initiator.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_info.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_interface.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_kerberos_realm.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_motd.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_ndmp.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_net_subnet.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_object_store.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_ports.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_qos_adaptive_policy_group.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_service_processor_network.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_snapmirror.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_snapshot_policy.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_unix_group.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_user.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_volume_autosize.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_volume_clone.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_volume.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_vscan_on_access_policy.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_vscan.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_vserver_cifs_security.py:
+    migrated_to: netapp.ontap
   test/utils/shippable/:
     notified: mattclay
   hacking/aws_config/:
