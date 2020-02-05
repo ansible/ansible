@@ -346,11 +346,17 @@ def too_old(added):
     return added_float < TOO_OLD_TO_BE_NOTABLE
 
 
-def process_options(module, options):
+def process_options(module, options, full_key=None):
     option_names = []
+    if full_key is None:
+        full_key = []
 
     if options:
         for (k, v) in iteritems(options):
+            # Make sure that "full key" is contained
+            full_key_k = full_key + [k]
+            v['full_key'] = full_key_k
+
             # Error out if there's no description
             if 'description' not in v:
                 raise AnsibleError("Missing required description for parameter '%s' in '%s' " % (k, module))
@@ -376,15 +382,34 @@ def process_options(module, options):
 
             if 'suboptions' in v and v['suboptions']:
                 if isinstance(v['suboptions'], dict):
-                    process_options(module, v['suboptions'])
+                    process_options(module, v['suboptions'], full_key=full_key_k)
                 elif isinstance(v['suboptions'][0], dict):
-                    process_options(module, v['suboptions'][0])
+                    process_options(module, v['suboptions'][0], full_key=full_key_k)
 
             option_names.append(k)
 
     option_names.sort()
 
     return option_names
+
+
+def process_returndocs(returndocs, full_key=None):
+    if full_key is None:
+        full_key = []
+
+    if returndocs:
+        for (k, v) in iteritems(returndocs):
+            # Make sure that "full key" is contained
+            full_key_k = full_key + [k]
+            v['full_key'] = full_key_k
+
+            # Process suboptions
+            suboptions = v.get('contains')
+            if suboptions:
+                if isinstance(suboptions, dict):
+                    process_returndocs(suboptions, full_key=full_key_k)
+                elif is_sequence(suboptions):
+                    process_returndocs(suboptions[0], full_key=full_key_k)
 
 
 def process_plugins(module_map, templates, outputname, output_dir, ansible_version, plugin_type):
@@ -483,6 +508,7 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
         if module_map[module]['returndocs']:
             try:
                 doc['returndocs'] = yaml.safe_load(module_map[module]['returndocs'])
+                process_returndocs(doc['returndocs'])
             except Exception as e:
                 print("%s:%s:yaml error:%s:returndocs=%s" % (fname, module, e, module_map[module]['returndocs']))
                 doc['returndocs'] = None
