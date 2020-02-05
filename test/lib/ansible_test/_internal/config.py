@@ -225,6 +225,8 @@ class SanityConfig(TestConfig):
         else:
             self.base_branch = ''
 
+        self.info_stderr = self.lint
+
 
 class IntegrationConfig(TestConfig):
     """Configuration for the integration command."""
@@ -260,6 +262,7 @@ class IntegrationConfig(TestConfig):
 
         if self.list_targets:
             self.explain = True
+            self.info_stderr = True
 
     def get_ansible_config(self):  # type: () -> str
         """Return the path to the Ansible config for the given config."""

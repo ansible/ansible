@@ -42,7 +42,6 @@ from .executor import (
 )
 
 from .config import (
-    IntegrationConfig,
     PosixIntegrationConfig,
     WindowsIntegrationConfig,
     NetworkIntegrationConfig,
@@ -131,7 +130,7 @@ def main():
         display.truncate = config.truncate
         display.redact = config.redact
         display.color = config.color
-        display.info_stderr = (isinstance(config, SanityConfig) and config.lint) or (isinstance(config, IntegrationConfig) and config.list_targets)
+        display.info_stderr = config.info_stderr
         check_startup()
         check_delegation_args(config)
         configure_timeout(config)
@@ -147,6 +146,7 @@ def main():
             delegate_args = (ex.exclude, ex.require, ex.integration_targets)
 
         if delegate_args:
+            # noinspection PyTypeChecker
             delegate(config, *delegate_args)
 
         display.review_warnings()

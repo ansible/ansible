@@ -101,6 +101,8 @@ class CommonConfig:
         self.truncate = args.truncate  # type: int
         self.redact = args.redact  # type: bool
 
+        self.info_stderr = False  # type: bool
+
         self.cache = {}
 
     def get_ansible_config(self):  # type: () -> str
