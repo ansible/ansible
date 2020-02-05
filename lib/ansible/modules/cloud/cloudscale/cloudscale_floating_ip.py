@@ -59,7 +59,7 @@ options:
   region:
     description:
       - The region in which the floating IP resides. If omitted, the region of
-        the project default zone is used. This parameter B(must) be omitted if
+        the project default zone is used. This parameter must be omitted if
         I(type) is set to C(global).
     type: str
   prefix_length:
