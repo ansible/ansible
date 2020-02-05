@@ -235,7 +235,7 @@ def check_compatibility(module, client):
         pass
 
     if LooseVersion(PyMongoVersion) < loose_srv_requirement:
-        msg = ' (Note: you must use pymongo {0} with MongoDB >= {1})'.format(loose_srv_requirement, loose_srv_version)
+        msg = ' (Note: you must use pymongo >= {0} with MongoDB {1})'.format(loose_srv_requirement, loose_srv_version)
         module.fail_json(msg=msg)
 
 
