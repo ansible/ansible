@@ -365,7 +365,7 @@ def get_submodule_update_params(module, git_path, cwd):
 
 def write_ssh_wrapper(module_tmpdir):
     try:
-        # make sure we have full permission to the module_tmpdir, which
+        # make sure we have full permission to the module_dir, which
         # may not be the case if we're sudo'ing to a non-root user
         if os.access(module_tmpdir, os.W_OK | os.R_OK | os.X_OK):
             fd, wrapper_path = tempfile.mkstemp(prefix=module_tmpdir + '/')
