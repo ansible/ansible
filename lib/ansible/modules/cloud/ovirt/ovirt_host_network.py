@@ -97,6 +97,7 @@ options:
                     value:
                         description:
                             - Value of custom property.
+                version_added: 2.10
     labels:
         description:
             - "List of names of the network label to be assigned to bond or interface."
