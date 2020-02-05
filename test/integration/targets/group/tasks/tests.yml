@@ -312,3 +312,5 @@
         name: group1_test
         local: yes
         state: absent
+  # only applicable to Linux, limit further to CentOS where 'lgroupadd' is installed
+  when: ansible_distribution == 'CentOS'
