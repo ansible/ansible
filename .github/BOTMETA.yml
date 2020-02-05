@@ -1668,6 +1668,10 @@ files:
   $plugins/httpapi/ftd.py: *ftd
   $plugins/httpapi/exos.py:
     maintainers: $team_extreme
+  $plugins/httpapi/splunk.py:
+    migrated_to: splunk.enterprise_security
+  $plugins/httpapi/qradar.py:
+    migrated_to: ibm.qradar
 ###############################
 # plugins/inventory
   $plugins/inventory/__init__.py:
