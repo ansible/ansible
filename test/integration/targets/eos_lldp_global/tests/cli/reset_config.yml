@@ -1,7 +1,7 @@
 ---
 - name: Reset initial config
-  eos_config:
-    lines: |
+  cli_config:
+    config: |
       lldp timer 3000
       lldp holdtime 100
       lldp reinit 5
