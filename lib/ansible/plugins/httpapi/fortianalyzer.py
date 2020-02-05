@@ -145,7 +145,7 @@ class HttpApi(HttpApiBase):
         :param method: The preferred API Request method (GET, ADD, POST, etc....)
         :type method: basestring
 
-        :return: Dictionary of status, if it logged in or not.
+        :return: Dictionary of status if it logged in or not.
         """
 
         try:
