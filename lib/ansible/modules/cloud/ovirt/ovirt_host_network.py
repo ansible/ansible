@@ -88,8 +88,8 @@ options:
                     - IP version. Either v4 or v6. Default is v4.
             custom_properties:
                 description:
-                    - Custom properties applied to the host network.
-                    - Custom properties is a list of dictionary which can have following values:
+                    - "Custom properties applied to the host network."
+                    - "Custom properties is a list of dictionary which can have following values."
                 suboptions:
                     name:
                         description:
@@ -305,11 +305,11 @@ class HostNetworksModule(BaseModule):
             passed = [(cp.get('name'), str(cp.get('value'))) for cp in network.get('custom_properties') if cp]
             if sorted(current) != sorted(passed):
                 attachment.properties = [
-                        otypes.Property(
-                            name=prop.get('name'),
-                            value=prop.get('value')
-                        ) for prop in network.get('custom_properties')
-                    ]
+                    otypes.Property(
+                        name=prop.get('name'),
+                        value=prop.get('value')
+                    ) for prop in network.get('custom_properties')
+                ]
                 if not self._module.check_mode:
                     attachments_service.service(attachment.id).update(attachment)
                 self.changed = True
