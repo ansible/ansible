@@ -150,7 +150,7 @@ def main():
     module = AnsibleModule(
         argument_spec={
             'group': {'type': 'str', 'required': True},
-            'users': {'type': 'list', 'elements':'str', 'required': True},
+            'users': {'type': 'list', 'elements': 'str', 'required': True},
             'state': {'type': 'str', 'default': 'exactly', 'choices': ['exactly', 'absent', 'present']},
         },
         supports_check_mode=True
