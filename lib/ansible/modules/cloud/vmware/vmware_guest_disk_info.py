@@ -230,6 +230,7 @@ class PyVmomiHelper(PyVmomi):
                     disks_info[disk_index]['backing_writethrough'] = bool(disk.backing.writeThrough)
                     disks_info[disk_index]['backing_thinprovisioned'] = bool(disk.backing.thinProvisioned)
                     disks_info[disk_index]['backing_eagerlyscrub'] = bool(disk.backing.eagerlyScrub)
+                    disks_info[disk_index]['backing_diskmode'] = disk.backing.diskMode
                     disks_info[disk_index]['backing_uuid'] = disk.backing.uuid
 
                 elif isinstance(disk.backing, vim.vm.device.VirtualDisk.LocalPMemBackingInfo):
