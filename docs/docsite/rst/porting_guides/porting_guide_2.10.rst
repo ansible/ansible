@@ -74,6 +74,7 @@ The following functionality will be removed in Ansible 2.14. Please update updat
 * :ref:`redfish_config <redfish_config_module>`: the ``bios_attribute_name`` and ``bios_attribute_value`` options will be removed. To maintain the existing behavior use the ``bios_attributes`` option instead.
 * :ref:`clc_aa_policy <clc_aa_policy_module>`: the ``wait`` parameter will be removed. It has always been ignored by the module.
 * :ref:`redfish_config <redfish_config_module>`, :ref:`redfish_command <redfish_command_module>`: the behavior to select the first System, Manager, or Chassis resource to modify when multiple are present will be removed. Use the new ``resource_id`` option to specify target resource to modify.
+* :ref:`win_domain_controller <win_domain_controller_module>`: the ``log_path`` option will be removed. This was undocumented and only related to debugging information for module development.
 
 
 
