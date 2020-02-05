@@ -66,7 +66,7 @@ options:
          - Image id the cluster will be based on
    labels:
       description:
-         - One or more key/value pairs
+         - One or more key/value pairs wrapped in string
    http_proxy:
       description:
          - Address of a proxy that will receive all HTTP requests and relay them
@@ -189,9 +189,9 @@ cluster_template:
           type: str
           sample: 05567ec6-85f5-44cb-bd63-242a8e7f0e9d
       labels:
-          description: One or more key/value pairs
-          type: dict
-          sample: {'key1': 'value1', 'key2': 'value2'}
+          description: One or more key/value pairs wrapped in string
+          type: str
+          sample: 'key1=value1, key2=value2'
       http_proxy:
           description:
             - Address of a proxy that will receive all HTTP requests and relay them
@@ -277,7 +277,7 @@ def _parse_labels(labels):
         labels_dict = {}
         for kv_str in labels.split(","):
             k, v = kv_str.split("=")
-            labels_dict[k] = v
+            labels_dict[k.strip()] = v.strip()
         return labels_dict
     if not labels:
         return {}
