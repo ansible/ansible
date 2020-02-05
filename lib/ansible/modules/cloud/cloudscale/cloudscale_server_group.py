@@ -21,6 +21,7 @@ description:
   - Create, update and remove server groups.
 author:
   - René Moser (@resmo)
+  - Denis Krienbühl (@href)
 version_added: '2.8'
 options:
   name:

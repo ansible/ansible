@@ -29,6 +29,7 @@ version_added: '2.8'
 author:
   - Gaudenz Steinlin (@gaudenz)
   - René Moser (@resmo)
+  - Denis Krienbühl (@href)
 options:
   state:
     description:
