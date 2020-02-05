@@ -165,8 +165,10 @@ virtual_machines:
   sample: [
     {
         "guest_name": "ubuntu_t",
+        "datacenter": "Datacenter-1",
         "cluster": null,
         "esxi_hostname": "10.76.33.226",
+        "folder: "/Datacenter-1/vm",
         "guest_fullname": "Ubuntu Linux (64-bit)",
         "ip_address": "",
         "mac_address": [
@@ -276,6 +278,16 @@ class VmwareVmInfo(PyVmomi):
             if self.module.params.get('show_attribute'):
                 vm_attributes = self.get_vm_attributes(vm)
 
+            vm_folder = ""
+            vm_parent = vm.parent
+            datacenter = None
+            while isinstance(vm_parent, vim.Folder):
+              vm_folder += f"/{vm_parent.name}"
+              vm_parent = vm_parent.parent
+              if isinstance(vm_parent, vim.Datacenter):
+                datacenter = vm_parent.name
+                vm_folder = f"/{vm_parent.name}{vm_folder}"
+
             vm_tags = list()
             if self.module.params.get('show_tag'):
                 vm_tags = self.get_tag_info(vm)
@@ -289,9 +301,11 @@ class VmwareVmInfo(PyVmomi):
                 "uuid": summary.config.uuid,
                 "vm_network": net_dict,
                 "esxi_hostname": esxi_hostname,
+                "datacenter": datacenter,
                 "cluster": cluster_name,
                 "attributes": vm_attributes,
-                "tags": vm_tags
+                "tags": vm_tags,
+                "folder": vm_folder,
             }
 
             vm_type = self.module.params.get('vm_type')
