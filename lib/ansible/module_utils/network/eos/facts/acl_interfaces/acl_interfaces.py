@@ -10,12 +10,11 @@ for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
 import re
-import q
 from copy import deepcopy
 
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.eos.argspec.acl_interfaces.acl_interfaces import Acl_interfacesArgs
-# from ansible.module_utils.network.eos.utils.utils import parse_conf_arg
+
 
 class Acl_interfacesFacts(object):
     """ The eos acl_interfaces fact class
@@ -94,7 +93,12 @@ class Acl_interfacesFacts(object):
             if config['name'] in line:
                 continue
             access_group = utils.parse_conf_arg(line, 'ip access-group')
-            access_group_v6 = utils.parse_conf_arg(line, 'ipv6 traffic-filter')
+            # This module was verified on an ios device since vEOS doesnot support
+            # acl_interfaces cnfiguration. In ios, ipv6 acl is configured as 
+            # traffic-filter and in eos it is access-group
+
+            # access_group_v6 = utils.parse_conf_arg(line, 'ipv6 traffic-filter')
+            access_group_v6 = utils.parse_conf_arg(line, 'ipv6 access-group')
             if access_group:
                 access_group_list.append(access_group)
             if access_group_v6:
