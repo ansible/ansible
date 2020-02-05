@@ -47,22 +47,57 @@ options:
     bond:
         description:
             - "Dictionary describing network bond:"
-            - "C(name) - Bond name."
-            - "C(mode) - Bonding mode."
-            - "C(options) - Bonding options."
-            - "C(interfaces) - List of interfaces to create a bond."
+        suboptions:
+            name:
+                description:
+                    - Bond name.
+            mode:
+                description:
+                    - Bonding mode.
+            options:
+                description:
+                    - Bonding options.
+            interfaces:
+                description:
+                    - List of interfaces to create a bond.
     interface:
         description:
             - "Name of the network interface where logical network should be attached."
     networks:
         description:
             - "List of dictionary describing networks to be attached to interface or bond:"
-            - "C(name) - Name of the logical network to be assigned to bond or interface."
-            - "C(boot_protocol) - Boot protocol one of the I(none), I(static) or I(dhcp)."
-            - "C(address) - IP address in case of I(static) boot protocol is used."
-            - "C(netmask) - Subnet mask in case of I(static) boot protocol is used."
-            - "C(gateway) - Gateway in case of I(static) boot protocol is used."
-            - "C(version) - IP version. Either v4 or v6. Default is v4."
+        suboptions:
+            name:
+                description:
+                    - Name of the logical network to be assigned to bond or interface.
+            boot_protocol:
+                description:
+                    - Boot protocol.
+                choices: ['none', 'static', 'dhcp']
+            address:
+                description:
+                    - IP address in case of I(static) boot protocol is used.
+            netmask:
+                description:
+                    - Subnet mask in case of I(static) boot protocol is used.
+            gateway:
+                description:
+                    - Gateway in case of I(static) boot protocol is used.
+            version:
+                description:
+                    - IP version. Either v4 or v6. Default is v4.
+            custom_properties:
+                description:
+                    - "Custom properties applied to the host network."
+                    - "Custom properties is a list of dictionary which can have following values."
+                suboptions:
+                    name:
+                        description:
+                            - Name of custom property.
+                    value:
+                        description:
+                            - Value of custom property.
+                version_added: 2.10
     labels:
         description:
             - "List of names of the network label to be assigned to bond or interface."
@@ -152,6 +187,16 @@ EXAMPLES = '''
     state: absent
     name: myhost
     interface: eth0
+
+# Add custom_properties to network:
+- ovirt_host_network:
+    name: myhost
+    interface: eth0
+    networks:
+      - name: myvlan1
+        custom_properties:
+          - name: bridge_opts
+            value: gc_timer=10
 '''
 
 RETURN = '''
@@ -252,6 +297,23 @@ class HostNetworksModule(BaseModule):
     def build_entity(self):
         return otypes.Host()
 
+    def update_custom_properties(self, attachments_service, attachment, network):
+        if network.get('custom_properties'):
+            current = []
+            if attachment.properties:
+                current = [(cp.name, str(cp.value)) for cp in attachment.properties]
+            passed = [(cp.get('name'), str(cp.get('value'))) for cp in network.get('custom_properties') if cp]
+            if sorted(current) != sorted(passed):
+                attachment.properties = [
+                    otypes.Property(
+                        name=prop.get('name'),
+                        value=prop.get('value')
+                    ) for prop in network.get('custom_properties')
+                ]
+                if not self._module.check_mode:
+                    attachments_service.service(attachment.id).update(attachment)
+                self.changed = True
+
     def update_address(self, attachments_service, attachment, network):
         # Check if there is any change in address assignments and
         # update it if needed:
@@ -320,7 +382,7 @@ class HostNetworksModule(BaseModule):
             # If attachment don't exists, we need to create it:
             if attachment is None:
                 return True
-
+            self.update_custom_properties(attachments_service, attachment, network)
             self.update_address(attachments_service, attachment, network)
 
         return update
@@ -464,6 +526,12 @@ def main():
                                 ),
                             ),
                         ],
+                        properties=[
+                            otypes.Property(
+                                name=prop.get('name'),
+                                value=prop.get('value')
+                            ) for prop in network.get('custom_properties')
+                        ]
                     ) for network in networks
                 ] if networks else None,
             )
