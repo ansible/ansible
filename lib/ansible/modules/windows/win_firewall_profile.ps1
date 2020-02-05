@@ -9,7 +9,7 @@
 # Specs and init
 $spec = @{
     options = @{
-        profiles = @{ type = "list"; choices = "Domain", "Private", "Public"; default = @( "Domain", "Private", "Public" ); aliases = @( "profile" ) }
+        profiles = @{ type = "list"; elements = "str"; choices = "Domain", "Private", "Public"; default = @( "Domain", "Private", "Public" ); aliases = @( "profile" ) }
         enabled = @{ type = "str"; choices = "True", "False", "NotConfigured" }
         default_inbound_action = @{ type = "str"; choices = "NotConfigured", "Allow", "Block"; aliases = @( "inbound" ) }
         default_outbound_action = @{ type = "str"; choices = "NotConfigured", "Allow", "Block"; aliases = @( "outbound" ) }
