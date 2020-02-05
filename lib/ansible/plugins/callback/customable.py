@@ -105,7 +105,7 @@ class CallbackModule(CallbackBase):
         self._display.display("%s | SKIPPED" % (result._host.get_name()), color=C.COLOR_SKIP)
 
     def v2_runner_on_unreachable(self, result):
-#        self._display.display("%s | UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_UNREACHABLE)
+        self._display.display("%s | UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_UNREACHABLE)
         pass
 
     def v2_on_file_diff(self, result):
