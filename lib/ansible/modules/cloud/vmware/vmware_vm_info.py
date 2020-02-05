@@ -168,7 +168,7 @@ virtual_machines:
         "datacenter": "Datacenter-1",
         "cluster": null,
         "esxi_hostname": "10.76.33.226",
-        "folder: "/Datacenter-1/vm",
+        "folder": "/Datacenter-1/vm",
         "guest_fullname": "Ubuntu Linux (64-bit)",
         "ip_address": "",
         "mac_address": [
@@ -282,11 +282,11 @@ class VmwareVmInfo(PyVmomi):
             vm_parent = vm.parent
             datacenter = None
             while isinstance(vm_parent, vim.Folder):
-              vm_folder += f"/{vm_parent.name}"
-              vm_parent = vm_parent.parent
-              if isinstance(vm_parent, vim.Datacenter):
-                datacenter = vm_parent.name
-                vm_folder = f"/{vm_parent.name}{vm_folder}"
+                vm_folder += "/{0}".format(vm_parent.name)
+                vm_parent = vm_parent.parent
+                if isinstance(vm_parent, vim.Datacenter):
+                    datacenter = vm_parent.name
+                    vm_folder = "/{0}{1}".format(vm_parent.name, vm_folder)
 
             vm_tags = list()
             if self.module.params.get('show_tag'):
