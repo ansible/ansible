@@ -22,8 +22,7 @@ options:
     description:
       - The profiles which need to be configured.
     type: list
-    elements: str
-    choices: [ Domain, Private, Public ]
+    elements: [ Domain, Private, Public ]
     default: [ Domain, Private, Public ]
     aliases:
       - profile
