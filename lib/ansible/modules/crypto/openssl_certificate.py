@@ -41,7 +41,7 @@ description:
       Please note that the PyOpenSSL backend was deprecated in Ansible 2.9 and will be removed in Ansible 2.13.
 requirements:
     - PyOpenSSL >= 0.15 or cryptography >= 1.6 (if using C(selfsigned) or C(assertonly) provider)
-    - acme-tiny (if using the C(acme) provider)
+    - acme-tiny >= 4.0.0 (if using the C(acme) provider)
 author:
   - Yanis Guenane (@Spredzy)
   - Markus Teufelberger (@MarkusTeufelberger)
@@ -299,6 +299,14 @@ options:
         type: bool
         default: no
         version_added: "2.5"
+
+    acme_directory:
+        description:
+            - "The ACME directory to use. You can use any directory that supports the ACME protocol, such as Buypass or Let's Encrypt."
+            - "Let's Encrypt recommends using their staging server while developing jobs. U(https://letsencrypt.org/docs/staging-environment/)."
+        type: str
+        default: https://acme-v02.api.letsencrypt.org/directory
+        version_added: "2.10"
 
     signature_algorithms:
         description:
@@ -2474,6 +2482,7 @@ class AcmeCertificate(Certificate):
         self.accountkey_path = module.params['acme_accountkey_path']
         self.challenge_path = module.params['acme_challenge_path']
         self.use_chain = module.params['acme_chain']
+        self.acme_directory = module.params['acme_directory']
 
     def generate(self, module):
 
@@ -2519,6 +2528,7 @@ class AcmeCertificate(Certificate):
             else:
                 command.extend(['--csr', self.csr_path])
             command.extend(['--acme-dir', self.challenge_path])
+            command.extend(['--directory-url', self.acme_directory])
 
             try:
                 crt = module.run_command(command, check_rc=True)[1]
@@ -2621,6 +2631,7 @@ def main():
             acme_accountkey_path=dict(type='path'),
             acme_challenge_path=dict(type='path'),
             acme_chain=dict(type='bool', default=False),
+            acme_directory=dict(type='str', default="https://acme-v02.api.letsencrypt.org/directory"),
 
             # provider: entrust
             entrust_cert_type=dict(type='str', default='STANDARD_SSL',
