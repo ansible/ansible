@@ -149,6 +149,7 @@ class HttpApi(HttpApiBase):
         """
         try:
             if self.sid is None and params[0]["url"] != "sys/login/user":
+                try:
                 # If not connected, send connection request.
                 if not self.connection._connected:
                     self.connection._connect()
