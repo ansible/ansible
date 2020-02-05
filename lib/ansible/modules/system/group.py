@@ -75,6 +75,7 @@ EXAMPLES = '''
 '''
 
 import grp
+import os
 
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
@@ -167,11 +168,36 @@ class Group(object):
         return self.execute_command(cmd)
 
     def group_exists(self):
-        try:
-            if grp.getgrnam(self.name):
-                return True
-        except KeyError:
-            return False
+        # The grp module does not distinguish between local and directory accounts.
+        # It's output cannot be used to determine whether or not a group exists locally.
+        # It returns True if the group exists locally or in the directory, so instead
+        # look in the local GROUP file for an existing account.
+        if self.local:
+            if not os.path.exists(self.GROUPFILE):
+                self.module.fail_json(msg="'local: true' specified but unable to find local group file {0} to parse.".format(self.GROUPFILE))
+
+            exists = False
+            name_test = '{0}:'.format(self.name)
+            with open(self.GROUPFILE, 'rb') as f:
+                reversed_lines = f.readlines()[::-1]
+                for line in reversed_lines:
+                    if line.startswith(to_bytes(name_test)):
+                        exists = True
+                        break
+
+            if not exists:
+                self.module.warn(
+                    "'local: true' specified and group was not found in {file}. "
+                    "The local group may already exist if the local group database exists somewhere other than {file}.".format(file=self.GROUPFILE))
+
+            return exists
+
+        else:
+            try:
+                if grp.getgrnam(self.name):
+                    return True
+            except KeyError:
+                return False
 
     def group_info(self):
         if not self.group_exists():
