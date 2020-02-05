@@ -45,6 +45,13 @@ options:
         here, you can also use any other hash supported by passlib, such as
         md5_crypt and sha256_crypt, which are linux passwd hashes.  If you
         do so the password file will not be compatible with Apache or Nginx
+  scheme_opts:
+    required: false
+    description:
+      - Optional parameters for the chosen encryption scheme, for instance
+        the number of rounds, or a specific salt. See the corresponding passlib
+        documentation for which parameters are supported by the encryption
+        scheme.
   state:
     required: false
     choices: [ present, absent ]
@@ -90,6 +97,15 @@ EXAMPLES = """
     name: alex
     password: oedu2eGh
     crypt_scheme: md5_crypt
+
+# Add a user to a password file suitable for use by Dovecot
+- htpasswd:
+    path: /etc/dovecot/passwords
+    name: admin
+    password: hackme
+    crypt_scheme: bcrypt
+    scheme_opts:
+      rounds: 14
 """
 
 
@@ -120,14 +136,17 @@ def create_missing_directories(dest):
         os.makedirs(destpath)
 
 
-def present(dest, username, password, crypt_scheme, create, check_mode):
+def present(dest, username, password, crypt_scheme, scheme_opts, create, check_mode):
     """ Ensures user is present
 
     Returns (msg, changed) """
     if crypt_scheme in apache_hashes:
         context = htpasswd_context
     else:
-        context = CryptContext(schemes=[crypt_scheme] + apache_hashes)
+        # Add scheme opts as defaults by prepending 'all__' to the key names
+        if scheme_opts:
+            opts = {"all__"+key: value for key, value in scheme_opts.items()}
+        context = CryptContext(schemes=[crypt_scheme] + apache_hashes, **opts)
     if not os.path.exists(dest):
         if not create:
             raise ValueError('Destination %s does not exist' % dest)
@@ -205,6 +224,7 @@ def main():
         name=dict(required=True, aliases=["username"]),
         password=dict(required=False, default=None, no_log=True),
         crypt_scheme=dict(required=False, default="apr_md5_crypt"),
+        scheme_opts=dict(required=False, type='dict', default={}),
         state=dict(required=False, default="present"),
         create=dict(type='bool', default='yes'),
 
@@ -217,6 +237,7 @@ def main():
     username = module.params['name']
     password = module.params['password']
     crypt_scheme = module.params['crypt_scheme']
+    scheme_opts = module.params['scheme_opts']
     state = module.params['state']
     create = module.params['create']
     check_mode = module.check_mode
@@ -256,7 +277,7 @@ def main():
 
     try:
         if state == 'present':
-            (msg, changed) = present(path, username, password, crypt_scheme, create, check_mode)
+            (msg, changed) = present(path, username, password, crypt_scheme, scheme_opts, create, check_mode)
         elif state == 'absent':
             if not os.path.exists(path):
                 module.exit_json(msg="%s not present" % username,
