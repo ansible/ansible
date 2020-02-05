@@ -15,22 +15,25 @@ DOCUMENTATION = '''
 ---
 module: member
 short_description: Manage local group memberships
-version_added: "2.6"
+version_added: "2.10"
 description:
     - Define which users are or are not members of a specific group.
 options:
     group:
         description:
             - Name of the group to define the members of.
+        type: str
         required: true
     users:
         description:
             - List of the group members.
         type: list
+        elements: str
         required: true
     state:
         description:
             - Whether the users should be member of the group or not.
+        type: str
         choices: [ exactly, absent, present ]
         default: exactly
 requirements:
@@ -83,12 +86,14 @@ import grp
 # Group manipulation classes
 #
 
+
 class GroupError(Exception):
     def __init__(self, rc, out, err):
         super(GroupError, self).__init__(err)
         self.rc = rc
         self.out = out
         self.err = err
+
 
 class Group(object):
     '''
@@ -100,7 +105,7 @@ class Group(object):
 
     platform = 'Generic'
     distribution = None
-    
+
     def __new__(cls, *args, **kwargs):
         return load_platform_subclass(Group, args, kwargs)
 
@@ -115,7 +120,7 @@ class Group(object):
         except KeyError:
             return False
 
-    def _run(self, cmd, expected_rc = 0):
+    def _run(self, cmd, expected_rc=0):
         (rc, out, err) = self._module.run_command(cmd)
         if rc != expected_rc:
             raise GroupError(rc, out, err)
@@ -140,16 +145,17 @@ class Group(object):
 # Module logic
 #
 
+
 def main():
     module = AnsibleModule(
         argument_spec={
             'group': {'type': 'str', 'required': True},
-            'users': {'type': 'list', 'required': True},
+            'users': {'type': 'list', 'elements':'str', 'required': True},
             'state': {'type': 'str', 'default': 'exactly', 'choices': ['exactly', 'absent', 'present']},
         },
         supports_check_mode=True
     )
-    
+
     result = {
         'changed': False,
         'state': module.params['state'],
@@ -166,17 +172,17 @@ def main():
 
     users = set(module.params['users'])
     members = set(group.get_members())
-        
+
     if result['state'] == 'absent':
         result['users_removed'] = list(users.intersection(members))
     elif result['state'] == 'present':
-        result['users_added']   = list(users.difference(members))
+        result['users_added'] = list(users.difference(members))
     else:
-        result['users_added']   = list(users.difference(members))
+        result['users_added'] = list(users.difference(members))
         result['users_removed'] = list(members.difference(users))
 
     if len(result['users_removed']) > 0 or \
-       len(result['users_added'])   > 0:
+       len(result['users_added']) > 0:
         result['changed'] = True
 
     if not result['changed']:
@@ -184,7 +190,7 @@ def main():
         return
     elif module.check_mode:
         return result
-    
+
     try:
         group.remove_members(result['users_removed'])
         group.add_members(result['users_added'])
@@ -194,6 +200,7 @@ def main():
 
     module.exit_json(**result)
     return
+
 
 #
 # Run
