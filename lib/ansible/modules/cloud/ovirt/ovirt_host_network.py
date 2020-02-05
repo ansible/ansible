@@ -181,6 +181,12 @@ EXAMPLES = '''
     networks:
       - name: myvlan2
 
+# Remove all networks/vlans from host eth0 interface:
+- ovirt_host_network:
+    state: absent
+    name: myhost
+    interface: eth0
+
 # Add custom_properties to network:
 - ovirt_host_network:
     name: myhost
