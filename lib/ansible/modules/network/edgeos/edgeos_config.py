@@ -137,11 +137,6 @@ commands:
   returned: always
   type: list
   sample: ['...', '...']
-filtered:
-  description: The list of configuration commands removed to avoid a load failure
-  returned: always
-  type: list
-  sample: ['...', '...']
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
@@ -158,10 +153,6 @@ from ansible.module_utils.network.edgeos.edgeos import load_config, get_config, 
 
 
 DEFAULT_COMMENT = 'configured by edgeos_config'
-
-CONFIG_FILTERS = [
-    re.compile(r'set system login user \S+ authentication encrypted-password')
-]
 
 
 def config_to_commands(config):
@@ -234,15 +225,6 @@ def diff_config(commands, config):
     return list(updates)
 
 
-def sanitize_config(config, result):
-    result['filtered'] = list()
-    for regex in CONFIG_FILTERS:
-        for index, line in reversed(list(enumerate(config))):
-            if regex.search(line):
-                result['filtered'].append(line)
-                del config[index]
-
-
 def run(module, result):
     # get the current active config from the node or passed in via
     # the config param
@@ -253,7 +235,6 @@ def run(module, result):
 
     # create loadable config that includes only the configuration updates
     commands = diff_config(candidate, config)
-    sanitize_config(commands, result)
 
     result['commands'] = commands
 
@@ -262,10 +243,6 @@ def run(module, result):
 
     if commands:
         load_config(module, commands, commit=commit, comment=comment)
-
-        if result.get('filtered'):
-            result['warnings'].append('Some configuration commands were '
-                                      'removed, please see the filtered key')
 
         result['changed'] = True
 
