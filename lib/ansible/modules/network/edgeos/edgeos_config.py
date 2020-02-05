@@ -336,8 +336,8 @@ def run(module, result):
         delete_unmanaged(updates, unmanaged_config)
 
     result['commands'] = updates
-    result['unmanaged'] = unmanaged_config
-    result['invalid'] = invalid_commands
+    result['unmanaged'] = sorted(unmanaged_config)
+    result['invalid'] = sorted(invalid_commands)
 
     commit = not module.check_mode
     comment = module.params['comment']
