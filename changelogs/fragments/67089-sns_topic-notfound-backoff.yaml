@@ -1,0 +1,2 @@
+minor_changes:
+- sns_topic - Add backoff when we get Topic ``NotFound`` exceptions while listing the subscriptions.
