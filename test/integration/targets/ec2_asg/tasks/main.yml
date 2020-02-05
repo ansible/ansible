@@ -585,6 +585,44 @@
       until: status is finished
       retries: 200
       delay: 15
+    
+    # we need a launch template, otherwise we cannot test the mixed instance policy
+    - name: create launch template for autoscaling group to test its mixed instance policy
+      ec2_launch_template:
+        template_name: "{{ resource_prefix }}-lt"
+        image_id: "{{ ec2_ami_image }}"
+        instance_type: t3.micro
+        credit_specification:
+          cpu_credits: standard
+        network_interfaces:
+          - associate_public_ip_address: yes
+            delete_on_termination: yes
+            device_index: 0
+            groups:
+              - "{{ sg.group_id }}"
+
+    - name: update autoscaling group with mixed-instance policy
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_template: 
+          launch_template_name: "{{ resource_prefix }}-lt"
+        desired_capacity: 1
+        min_size: 1
+        max_size: 1
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        state: present
+        mixed_instances_policy:
+          instance_types:
+            - t3.micro
+            - t3a.micro
+        wait_for_instances: yes
+      register: output
+
+    - assert:
+        that:
+          - "output.mixed_instances_policy | length == 2"
+          - "output.mixed_instances_policy[0] == 't3.micro'"
+          - "output.mixed_instances_policy[1] == 't3a.micro'"
 
 # ============================================================
 
@@ -638,6 +676,15 @@
       with_items:
         - "{{ resource_prefix }}-lc"
         - "{{ resource_prefix }}-lc-2"
+
+    - name: delete launch template
+      ec2_launch_template:
+        name: "{{ resource_prefix }}-lt"
+        state: absent
+      register: del_lt
+      retries: 10
+      until: del_lt is not failed
+      ignore_errors: true
 
     - name: remove the security group
       ec2_group:

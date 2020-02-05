@@ -81,6 +81,20 @@ options:
     description:
       - Maximum number of instances in group, if unspecified then the current group value will be used.
     type: int
+  mixed_instances_policy:
+    description:
+      - A mixed instance policy to use for the ASG.
+      - Only used when the ASG is configured to use a Launch Template (I(launch_template)).
+      - 'See also U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-autoscaling-autoscalinggroup-mixedinstancespolicy.html)'
+    required: false
+    version_added: "2.10"
+    suboptions:
+      instance_types:
+        description:
+          - A list of instance_types.
+        type: list
+        elements: str
+    type: dict
   placement_group:
     description:
       - Physical location of your cluster placement group created in Amazon EC2.
@@ -329,6 +343,28 @@ EXAMPLES = '''
       - environment: production
         propagate_at_launch: no
 
+# Basic Configuration with Launch Template using mixed instance policy
+
+- ec2_asg:
+    name: special
+    load_balancers: [ 'lb1', 'lb2' ]
+    availability_zones: [ 'eu-west-1a', 'eu-west-1b' ]
+    launch_template:
+        version: '1'
+        launch_template_name: 'lt-example'
+        launch_template_id: 'lt-123456'
+    mixed_instances_policy:
+        instance_types:
+            - t3a.large
+            - t3.large
+            - t2.large
+    min_size: 1
+    max_size: 10
+    desired_capacity: 5
+    vpc_zone_identifier: [ 'subnet-abcd1234', 'subnet-1a2b3c4d' ]
+    tags:
+      - environment: production
+        propagate_at_launch: no
 
 '''
 
@@ -426,6 +462,11 @@ min_size:
     returned: success
     type: int
     sample: 1
+mixed_instance_policy:
+    description: Returns the list of instance types if a mixed instance policy is set.
+    returned: success
+    type: list
+    sample: ["t3.micro", "t3a.micro"]
 pending_instances:
     description: Number of instances in pending state
     returned: success
@@ -510,6 +551,8 @@ try:
     import botocore
 except ImportError:
     pass  # will be detected by imported HAS_BOTO3
+
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 ASG_ATTRIBUTES = ('AvailabilityZones', 'DefaultCooldown', 'DesiredCapacity',
                   'HealthCheckGracePeriod', 'HealthCheckType', 'LaunchConfigurationName',
@@ -711,6 +754,10 @@ def get_properties(autoscaling_group):
     properties['termination_policies'] = autoscaling_group.get('TerminationPolicies')
     properties['target_group_arns'] = autoscaling_group.get('TargetGroupARNs')
     properties['vpc_zone_identifier'] = autoscaling_group.get('VPCZoneIdentifier')
+    raw_mixed_instance_object = autoscaling_group.get('MixedInstancesPolicy')
+    if raw_mixed_instance_object:
+        properties['mixed_instances_policy'] = [x['InstanceType'] for x in raw_mixed_instance_object.get('LaunchTemplate').get('Overrides')]
+
     metrics = autoscaling_group.get('EnabledMetrics')
     if metrics:
         metrics.sort(key=lambda x: x["Metric"])
@@ -738,6 +785,7 @@ def get_launch_object(connection, ec2_connection):
     launch_object = dict()
     launch_config_name = module.params.get('launch_config_name')
     launch_template = module.params.get('launch_template')
+    mixed_instances_policy = module.params.get('mixed_instances_policy')
     if launch_config_name is None and launch_template is None:
         return launch_object
     elif launch_config_name:
@@ -756,6 +804,20 @@ def get_launch_object(connection, ec2_connection):
             launch_object = {"LaunchTemplate": {"LaunchTemplateId": lt['LaunchTemplateId'], "Version": launch_template['version']}}
         else:
             launch_object = {"LaunchTemplate": {"LaunchTemplateId": lt['LaunchTemplateId'], "Version": str(lt['LatestVersionNumber'])}}
+
+        if mixed_instances_policy:
+            instance_types = mixed_instances_policy.get('instance_types', [])
+            policy = {
+                'LaunchTemplate': {
+                    'LaunchTemplateSpecification': launch_object['LaunchTemplate']
+                }
+            }
+            if instance_types:
+                policy['LaunchTemplate']['Overrides'] = []
+                for instance_type in instance_types:
+                    instance_type_dict = {'InstanceType': instance_type}
+                    policy['LaunchTemplate']['Overrides'].append(instance_type_dict)
+            launch_object['MixedInstancesPolicy'] = policy
         return launch_object
 
 
@@ -951,6 +1013,7 @@ def create_autoscaling_group(connection):
     availability_zones = module.params['availability_zones']
     launch_config_name = module.params.get('launch_config_name')
     launch_template = module.params.get('launch_template')
+    mixed_instances_policy = module.params.get('mixed_instances_policy')
     min_size = module.params['min_size']
     max_size = module.params['max_size']
     placement_group = module.params.get('placement_group')
@@ -1028,7 +1091,10 @@ def create_autoscaling_group(connection):
         if 'LaunchConfigurationName' in launch_object:
             ag['LaunchConfigurationName'] = launch_object['LaunchConfigurationName']
         elif 'LaunchTemplate' in launch_object:
-            ag['LaunchTemplate'] = launch_object['LaunchTemplate']
+            if 'MixedInstancesPolicy' in launch_object:
+                ag['MixedInstancesPolicy'] = launch_object['MixedInstancesPolicy']
+            else:
+                ag['LaunchTemplate'] = launch_object['LaunchTemplate']
         else:
             module.fail_json(msg="Missing LaunchConfigurationName or LaunchTemplate",
                              exception=traceback.format_exc())
@@ -1201,7 +1267,10 @@ def create_autoscaling_group(connection):
         if 'LaunchConfigurationName' in launch_object:
             ag['LaunchConfigurationName'] = launch_object['LaunchConfigurationName']
         elif 'LaunchTemplate' in launch_object:
-            ag['LaunchTemplate'] = launch_object['LaunchTemplate']
+            if 'MixedInstancesPolicy' in launch_object:
+                ag['MixedInstancesPolicy'] = launch_object['MixedInstancesPolicy']
+            else:
+                ag['LaunchTemplate'] = launch_object['LaunchTemplate']
         else:
             try:
                 ag['LaunchConfigurationName'] = as_group['LaunchConfigurationName']
@@ -1639,6 +1708,11 @@ def main():
                                      launch_template_id=dict(type='str'),
                                  ),
                                  ),
+            mixed_instances_policy=dict(type='dict',
+                                        default=None,
+                                        options=dict(
+                                            instance_types=dict(type='list', elements='str'),
+                                        )),
             min_size=dict(type='int'),
             max_size=dict(type='int'),
             placement_group=dict(type='str'),
@@ -1681,7 +1755,7 @@ def main():
     )
 
     global module
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         mutually_exclusive=[
             ['replace_all_instances', 'replace_instances'],
@@ -1690,6 +1764,9 @@ def main():
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
+
+    if module.params.get('mixed_instance_type') and not module.botocore_at_least('1.12.45'):
+        module.fail_json(msg="mixed_instance_type is only supported with botocore >= 1.12.45")
 
     state = module.params.get('state')
     replace_instances = module.params.get('replace_instances')
