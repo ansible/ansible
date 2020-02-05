@@ -111,8 +111,6 @@ def symmetric_difference(environment, a, b):
     else:
         isect = intersect(environment, a, b)
         c = [x for x in union(environment, a, b) if x not in isect]
-    import q
-    q(a, b, c)
     return c
 
 
