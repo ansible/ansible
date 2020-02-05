@@ -299,7 +299,6 @@ files:
   $modules/clustering/k8s/:
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: k8s
-  $modules/clustering/k8s/_kubernetes.py: supertom
   $modules/clustering/openshift/: chouseknecht maxamillion fabianvf flaper87
   $modules/commands/command.py: $team_ansible
   $modules/commands/raw.py: $team_ansible

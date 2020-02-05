@@ -96,10 +96,3 @@
         that:
           - 'result is failed'
           - '"ERROR! module test_no_docs_non_iterable_status missing documentation (or could not parse documentation): test_no_docs_non_iterable_status did not contain a DOCUMENTATION attribute" in result.stderr'
-
-    - name: module with no documentation and removed status
-      command: ansible-doc test_no_docs_removed_status
-      register: result
-    - assert:
-        that:
-          - '"[WARNING]: module test_no_docs_removed_status has been removed" in result.stderr'
