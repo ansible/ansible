@@ -57,7 +57,7 @@ options:
     type: str
   zone:
     description:
-      - Zone to launch the server in (e.g. C(lgp1) or C(rma1))
+      - Zone in which the server resides (e.g. C(lgp1) or C(rma1)).
     type: str
     version_added: '2.10'
   volume_size_gb:

@@ -40,7 +40,7 @@ options:
     type: str
   zone:
     description:
-      - Zone of the server group.
+      - Zone in which the server resides (e.g. C(lgp1) or C(rma1)).
     type: str
     version_added: '2.10'
   state:

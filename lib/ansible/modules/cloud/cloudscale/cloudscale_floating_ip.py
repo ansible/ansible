@@ -53,14 +53,14 @@ options:
   type:
     description:
       - The type of the floating IP.
-    chioces: [ regional, global ]
+    choices: [ regional, global ]
     type: str
     default: regional
   region:
     description:
-      - The region in which the floating IP resides. If omitted, the region of
-        the project default zone is used. This parameter must be omitted if
-        I(type) is set to C(global).
+      - Region in which the floating IP resides (e.g. C(lgp) or C(rma)).
+        If omitted, the region of the project default zone is used.
+        This parameter must be omitted if I(type) is set to C(global).
     type: str
   prefix_length:
     description:
