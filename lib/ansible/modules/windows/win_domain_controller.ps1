@@ -110,6 +110,10 @@ $install_dns = Get-AnsibleParam -obj $params -name "install_dns" -type "bool"
 $state = Get-AnsibleParam -obj $params -name "state" -validateset ("domain_controller", "member_server") -failifempty $result
 
 $log_path = Get-AnsibleParam -obj $params -name "log_path"
+if ($log_path) {
+    $msg = "Param 'log_path' is deprecated. See the module docs for more information"
+    Add-DeprecationWarning -obj $result -message $msg -version "2.14"
+}
 $_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 $global:log_path = $log_path
