@@ -150,9 +150,11 @@ class HttpApi(HttpApiBase):
         try:
             if self.sid is None and params[0]["url"] != "sys/login/user":
                 try:
-                # If not connected, send connection request.
-                if not self.connection._connected:
                     self.connection._connect()
+                except BaseException as err:
+                    raise FMGBaseException(
+                        msg="An problem happened with the httpapi plugin self-init connection process. "
+                            "Error: " + str(err))
         except IndexError:
             raise FMGBaseException("An attempt was made at communicating with a FMG with "
                                    "no valid session and an incorrectly formatted request.")
