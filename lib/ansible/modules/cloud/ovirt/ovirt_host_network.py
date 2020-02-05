@@ -181,7 +181,7 @@ EXAMPLES = '''
     networks:
       - name: myvlan2
 
-# Remove myvlan2 vlan from host eth0 interface:
+# Add custom_properties to network:
 - ovirt_host_network:
     name: myhost
     interface: eth0
@@ -189,7 +189,7 @@ EXAMPLES = '''
       - name: myvlan1
         custom_properties:
           - name: bridge_opts
-            value: "gc_timer=10"
+            value: gc_timer=10
 '''
 
 RETURN = '''
@@ -296,14 +296,15 @@ class HostNetworksModule(BaseModule):
             if attachment.properties:
                 current = [(cp.name, str(cp.value)) for cp in attachment.properties]
             passed = [(cp.get('name'), str(cp.get('value'))) for cp in network.get('custom_properties') if cp]
-            if sorted(current) != sorted(passed) and not self._module.check_mode:
+            if sorted(current) != sorted(passed):
                 attachment.properties = [
                         otypes.Property(
                             name=prop.get('name'),
                             value=prop.get('value')
                         ) for prop in network.get('custom_properties')
                     ]
-                attachments_service.service(attachment.id).update(attachment)
+                if not self._module.check_mode:
+                    attachments_service.service(attachment.id).update(attachment)
                 self.changed = True
 
     def update_address(self, attachments_service, attachment, network):
