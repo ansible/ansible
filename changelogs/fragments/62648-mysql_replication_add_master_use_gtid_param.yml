@@ -1,0 +1,2 @@
+minor_changes:
+- mysql_replication - add ``master_use_gtid`` parameter (https://github.com/ansible/ansible/pull/62648).

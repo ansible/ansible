@@ -1,0 +1,14 @@
+read EC key
+Private-Key: (256 bit)
+priv:
+    35:9a:8d:4d:0f:ca:16:0a:7a:e9:5f:cb:f9:6e:36:
+    d9:00:bd:ee:c3:93:04:34:d5:b5:c9:f7:bc:db:c4:
+    1e:ba
+pub:
+    04:00:9c:f4:c8:00:17:03:01:26:3a:14:d1:92:35:
+    f1:c2:07:9d:6d:63:ba:82:86:d8:33:79:56:b3:3a:
+    d2:eb:c1:bc:41:2c:e1:5d:1e:80:99:0d:c8:cd:90:
+    e2:9a:74:d3:5c:ee:d7:85:5c:a5:0d:3f:12:2f:31:
+    38:e3:f1:29:9b
+ASN1 OID: prime256v1
+NIST CURVE: P-256

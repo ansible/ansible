@@ -1,0 +1,6 @@
+---
+# Password to use for test server
+# This has to be set as a fact, otherwise a new password will be generated
+# on every variable access.
+- set_fact:
+    cloudscale_test_password: "{{ lookup('password', '/dev/null length=15 chars=ascii_letters') }}"

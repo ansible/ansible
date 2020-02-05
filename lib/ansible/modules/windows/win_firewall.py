@@ -35,7 +35,7 @@ options:
 seealso:
 - module: win_firewall_rule
 author:
-- Michael Eaton (@if-meaton)
+- Michael Eaton (@michaeldeaton)
 '''
 
 EXAMPLES = r'''

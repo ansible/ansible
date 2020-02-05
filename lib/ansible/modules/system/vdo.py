@@ -1,14 +1,10 @@
 #!/usr/bin/python
 
-#
-# Copyright (c) 2018 Red Hat, Inc.
-#
+# Copyright: (c) 2018, Red Hat, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-#
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -131,6 +127,7 @@ options:
               volumes will maintain their previously configured
               setting unless a different value is specified in the
               playbook.
+            - The read cache feature is available in VDO 6.1 and older.
         type: str
         choices: [ disabled, enabled ]
     readcachesize:
@@ -146,6 +143,7 @@ options:
               Existing volumes will maintain their previously
               configured setting unless a different value is specified
               in the playbook.
+            - The read cache feature is available in VDO 6.1 and older.
         type: str
     emulate512:
         description:
@@ -214,6 +212,7 @@ options:
               is only available when creating a new volume, and cannot
               be changed for an existing volume.
         type: str
+        choices: [ dense, sparse ]
     ackthreads:
         description:
             - Specifies the number of threads to use for
@@ -290,13 +289,16 @@ EXAMPLES = r'''
 
 RETURN = r'''#  '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 import re
+import traceback
 
+YAML_IMP_ERR = None
 try:
     import yaml
     HAS_YAML = True
 except ImportError:
+    YAML_IMP_ERR = traceback.format_exc()
     HAS_YAML = False
 
 
@@ -490,7 +492,7 @@ def run_module():
     )
 
     if not HAS_YAML:
-        module.fail_json(msg='PyYAML is required for this module.')
+        module.fail_json(msg=missing_required_lib('PyYAML'), exception=YAML_IMP_ERR)
 
     vdocmd = module.get_bin_path("vdo", required=True)
     if not vdocmd:
@@ -604,14 +606,16 @@ def run_module():
         modtrans = {}
 
         for statfield in statusparamkeys:
-            currentvdoparams[statfield] = processedvdos[desiredvdo][statfield]
+            if statfield in processedvdos[desiredvdo]:
+                currentvdoparams[statfield] = processedvdos[desiredvdo][statfield]
+
             modtrans[statfield] = vdokeytrans[statfield]
 
         # Build a dictionary of current parameters formatted with the
         # same keys as the AnsibleModule parameters.
         currentparams = {}
-        for paramkey in currentvdoparams.keys():
-            currentparams[modtrans[paramkey]] = currentvdoparams[paramkey]
+        for paramkey in modtrans.keys():
+            currentparams[modtrans[paramkey]] = modtrans[paramkey]
 
         diffparams = {}
 

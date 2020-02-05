@@ -26,14 +26,17 @@ options:
   config_sync_ip:
     description:
       - Local IP address that the system uses for ConfigSync operations.
+    type: str
   mirror_primary_address:
     description:
       - Specifies the primary IP address for the system to use to mirror
         connections.
+    type: str
   mirror_secondary_address:
     description:
       - Specifies the secondary IP address for the system to use to mirror
         connections.
+    type: str
   unicast_failover:
     description:
       - Desired addresses to use for failover operations. Options C(address)
@@ -43,6 +46,7 @@ options:
         is not specified, the default value C(1026) will be used.  If you are
         specifying the (recommended) management IP address, use 'management-ip' in
         the address field.
+    type: list
   failover_multicast:
     description:
       - When C(yes), ensures that the Failover Multicast configuration is enabled
@@ -56,23 +60,27 @@ options:
       - Interface over which the system sends multicast messages associated
         with failover. When C(failover_multicast) is C(yes) and this option is
         not provided, a default of C(eth0) will be used.
+    type: str
   multicast_address:
     description:
       - IP address for the system to send multicast messages associated with
         failover. When C(failover_multicast) is C(yes) and this option is not
         provided, a default of C(224.0.0.245) will be used.
+    type: str
   multicast_port:
     description:
       - Port for the system to send multicast messages associated with
         failover. When C(failover_multicast) is C(yes) and this option is not
         provided, a default of C(62960) will be used. This value must be between
         0 and 65535.
+    type: int
   cluster_mirroring:
     description:
       - Specifies whether mirroring occurs within the same cluster or between
         different clusters on a multi-bladed system.
       - This parameter is only supported on platforms that have multiple blades,
         such as Viprion hardware. It is not supported on VE.
+    type: str
     choices:
       - between-clusters
       - within-cluster
@@ -144,7 +152,7 @@ multicast_address:
 multicast_port:
   description: The new value of the C(multicast_port) setting.
   returned: changed
-  type: str
+  type: int
   sample: 1026
 cluster_mirroring:
   description: The current cluster-mirroring setting.
@@ -160,21 +168,15 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
@@ -489,7 +491,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -704,16 +706,12 @@ def main():
         required_together=spec.required_together
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

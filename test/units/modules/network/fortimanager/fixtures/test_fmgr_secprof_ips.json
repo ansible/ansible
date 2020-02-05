@@ -1,0 +1,79 @@
+{
+    "fmgr_ips_sensor_modify": [
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/root/obj/ips/sensor"
+            },
+            "datagram_sent": {
+                "comment": "Created by Ansible Module TEST",
+                "block-malicious-url": "enable",
+                "name": "Ansible_IPS_Profile",
+                "entries": [
+                    {
+                        "action": "block",
+                        "log-packet": "enable",
+                        "severity": "high"
+                    },
+                    {
+                        "action": "pass",
+                        "severity": "medium"
+                    }
+                ]
+            },
+            "paramgram_used": {
+                "comment": "Created by Ansible Module TEST",
+                "block-malicious-url": "enable",
+                "mode": "set",
+                "name": "Ansible_IPS_Profile",
+                "adom": "root",
+                "override": {
+                    "status": null,
+                    "exempt-ip": {
+                        "src-ip": null,
+                        "dst-ip": null
+                    },
+                    "quarantine-log": null,
+                    "log": null,
+                    "action": null,
+                    "log-packet": null,
+                    "quarantine": null,
+                    "quarantine-expiry": null,
+                    "rule-id": null
+                },
+                "entries": [
+                    {
+                        "action": "block",
+                        "log-packet": "enable",
+                        "severity": "high"
+                    },
+                    {
+                        "action": "pass",
+                        "severity": "medium"
+                    }
+                ],
+                "filter": {
+                    "status": null,
+                    "quarantine-log": null,
+                    "protocol": null,
+                    "severity": null,
+                    "log": null,
+                    "name": null,
+                    "quarantine": null,
+                    "quarantine-expiry": null,
+                    "application": null,
+                    "location": null,
+                    "action": null,
+                    "log-packet": null,
+                    "os": null
+                },
+                "extended-log": null,
+                "replacemsg-group": null
+            },
+            "post_method": "set"
+        }
+    ]
+}

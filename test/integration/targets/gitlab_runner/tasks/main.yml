@@ -1,0 +1,68 @@
+- name: Install required libs
+  pip:
+    name: python-gitlab
+    state: present
+
+- name: Create {{ gitlab_project_name }}
+  gitlab_project:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: False
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    state: present
+
+- name: Cleanup GitLab runner
+  gitlab_runner:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    description: "{{ gitlab_runner_name }}"
+    registration_token: "{{ gitlab_runner_registration_token }}"
+    state: absent
+
+- name: Create GitLab Runner
+  gitlab_runner:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    description: "{{ gitlab_runner_name }}"
+    registration_token: "{{ gitlab_runner_registration_token }}"
+    state: present
+  register: gitlab_runner_state
+
+- name: Test group created
+  assert:
+    that:
+      - gitlab_runner_state is changed
+
+
+#### COMMENTED AS MODULE WILL UPDATE THE RUNNER IF EXISTS. TO BE DISCUSSED ####
+# - name: Create GitLab Runner ( Idempotency test )
+#   gitlab_runner:
+#     server_url: "{{ gitlab_host }}"
+#     validate_certs: false
+#     login_token: "{{ gitlab_login_token }}"
+#     description: "{{ gitlab_runner_name }}"
+#     registration_token: "{{ gitlab_runner_registration_token }}"
+#     state: present
+#   register: gitlab_runner_state_again
+
+# - name: Test module is idempotent
+#   assert:
+#     that:
+#       - gitlab_runner_state_again is not changed
+
+- name: Remove GitLab Runner
+  gitlab_runner:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    description: "{{ gitlab_runner_name }}"
+    registration_token: "{{ gitlab_runner_registration_token }}"
+    state: absent
+  register: gitlab_runner_state_absent
+
+- name: Assert runner has been removed
+  assert:
+    that:
+      - gitlab_runner_state_absent is changed

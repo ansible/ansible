@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -25,10 +28,12 @@ options:
             - This is the email address or domain to verify / delete.
             - If this contains an '@' then it will be considered an email. Otherwise it will be considered a domain.
         required: true
+        type: str
     state:
         description: Whether to create(or update) or delete the identity.
         default: present
         choices: [ 'present', 'absent' ]
+        type: str
     bounce_notifications:
         description:
             - Setup the SNS topic used to report bounce notifications.
@@ -45,6 +50,7 @@ options:
                     - If I(topic) is not specified this will have no impact, but the SES setting is updated even if there is no topic.
                 type: bool
                 default: No
+        type: dict
     complaint_notifications:
         description:
             - Setup the SNS topic used to report complaint notifications.
@@ -61,6 +67,7 @@ options:
                     - If I(topic) is not specified this will have no impact, but the SES setting is updated even if there is no topic.
                 type: bool
                 default: No
+        type: dict
     delivery_notifications:
         description:
             - Setup the SNS topic used to report delivery notifications.
@@ -76,6 +83,7 @@ options:
                     - If I(topic) is not specified this will have no impact, but the SES setting is updated even if there is no topic.
                 type: bool
                 default: No
+        type: dict
     feedback_forwarding:
         description:
             - Whether or not to enable feedback forwarding.
@@ -215,14 +223,14 @@ notification_attributes:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, get_aws_connection_info
 
 import time
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def get_verification_attributes(connection, module, identity, retries=0, retryDelay=10):
@@ -526,7 +534,7 @@ def main():
     state = module.params.get("state")
 
     if state == 'present':
-        region = module.params.get('region')
+        region = get_aws_connection_info(module, boto3=True)[0]
         account_id = get_account_id(module)
         validate_params_for_identity_present(module)
         create_or_update_identity(connection, module, region, account_id)

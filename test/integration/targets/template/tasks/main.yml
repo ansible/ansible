@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
 - name: show python interpreter
   debug:
      msg: "{{ ansible_python['executable'] }}"
@@ -395,7 +398,7 @@
   assert:
     that:
       - "template_result is not changed"
-      - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser}}/short.templated')"
+      - "'templated_var_loaded' in lookup('file', output_dir + '/short.templated')"
 
 - name: change var for the template
   set_fact:
@@ -409,7 +412,7 @@
 - name: verify that the file was marked as changed in check mode but the content was not changed
   assert:
     that:
-      - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser }}/short.templated')"
+      - "'templated_var_loaded' in lookup('file', output_dir + '/short.templated')"
       - "template_result is changed"
 
 # Create a template using a child template, to ensure that variables
@@ -641,6 +644,67 @@
   command: diff -u {{ output_dir }}/encoding_1252_{{ item }}.expected {{ output_dir }}/encoding_1252_{{ item }}.txt
   register: encoding_1252_diff_result
   loop: '{{ template_encoding_1252_encodings }}'
+
+- name: Check that nested undefined values return Undefined
+  vars:
+    dict_var:
+      bar: {}
+    list_var:
+      - foo: {}
+  assert:
+    that:
+      - dict_var is defined
+      - dict_var.bar is defined
+      - dict_var.bar.baz is not defined
+      - dict_var.bar.baz | default('DEFAULT') == 'DEFAULT'
+      - dict_var.bar.baz.abc is not defined
+      - dict_var.bar.baz.abc | default('DEFAULT') == 'DEFAULT'
+      - dict_var.baz is not defined
+      - dict_var.baz.abc is not defined
+      - dict_var.baz.abc | default('DEFAULT') == 'DEFAULT'
+      - list_var.0 is defined
+      - list_var.1 is not defined
+      - list_var.0.foo is defined
+      - list_var.0.foo.bar is not defined
+      - list_var.0.foo.bar | default('DEFAULT') == 'DEFAULT'
+      - list_var.1.foo is not defined
+      - list_var.1.foo | default('DEFAULT') == 'DEFAULT'
+      - dict_var is defined
+      - dict_var['bar'] is defined
+      - dict_var['bar']['baz'] is not defined
+      - dict_var['bar']['baz'] | default('DEFAULT') == 'DEFAULT'
+      - dict_var['bar']['baz']['abc'] is not defined
+      - dict_var['bar']['baz']['abc'] | default('DEFAULT') == 'DEFAULT'
+      - dict_var['baz'] is not defined
+      - dict_var['baz']['abc'] is not defined
+      - dict_var['baz']['abc'] | default('DEFAULT') == 'DEFAULT'
+      - list_var[0] is defined
+      - list_var[1] is not defined
+      - list_var[0]['foo'] is defined
+      - list_var[0]['foo']['bar'] is not defined
+      - list_var[0]['foo']['bar'] | default('DEFAULT') == 'DEFAULT'
+      - list_var[1]['foo'] is not defined
+      - list_var[1]['foo'] | default('DEFAULT') == 'DEFAULT'
+      - dict_var['bar'].baz is not defined
+      - dict_var['bar'].baz | default('DEFAULT') == 'DEFAULT'
+
+- template:
+    src: template_destpath_test.j2
+    dest: "{{ output_dir }}/template_destpath.templated"
+
+- copy:
+    content: "{{ output_dir}}/template_destpath.templated\n"
+    dest: "{{ output_dir }}/template_destpath.expected"
+
+- name: compare templated file to known good template_destpath
+  shell: diff -uw {{output_dir}}/template_destpath.templated {{output_dir}}/template_destpath.expected
+  register: diff_result
+
+- name: verify templated template_destpath matches known good
+  assert:
+    that:
+        - 'diff_result.stdout == ""'
+        - "diff_result.rc == 0"
 
 # aliases file requires root for template tests so this should be safe
 - include: backup_test.yml

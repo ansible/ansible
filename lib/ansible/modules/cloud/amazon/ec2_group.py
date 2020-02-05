@@ -1,19 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -27,7 +18,7 @@ version_added: "1.3"
 requirements: [ boto3 ]
 short_description: maintain an ec2 VPC security group.
 description:
-    - maintains ec2 security groups. This module has a dependency on python-boto >= 2.5
+    - Maintains ec2 security groups. This module has a dependency on python-boto >= 2.5.
 options:
   name:
     description:
@@ -35,20 +26,24 @@ options:
       - One of and only one of I(name) or I(group_id) is required.
       - Required if I(state=present).
     required: false
+    type: str
   group_id:
     description:
       - Id of group to delete (works only with absent).
       - One of and only one of I(name) or I(group_id) is required.
     required: false
     version_added: "2.4"
+    type: str
   description:
     description:
       - Description of the security group. Required when C(state) is C(present).
     required: false
+    type: str
   vpc_id:
     description:
       - ID of the VPC to create the group in.
     required: false
+    type: str
   rules:
     description:
       - List of firewall inbound rules to enforce in this group (see example). If none are supplied,
@@ -58,6 +53,60 @@ options:
         source type as well as multiple source types per rule. Prior to 2.4 an individual source is allowed.
         In version 2.5 support for rule descriptions was added.
     required: false
+    type: list
+    elements: dict
+    suboptions:
+        cidr_ip:
+            type: str
+            description:
+            - The IPv4 CIDR range traffic is coming from.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        cidr_ipv6:
+            type: str
+            description:
+            - The IPv6 CIDR range traffic is coming from.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        ip_prefix:
+            type: str
+            description:
+            - The IP Prefix U(https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-prefix-lists.html)
+              that traffic is coming from.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        group_id:
+            type: str
+            description:
+            - The ID of the Security Group that traffic is coming from.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        group_name:
+            type: str
+            description:
+            - Name of the Security Group that traffic is coming from.
+            - If the Security Group doesn't exist a new Security Group will be
+              created with I(group_desc) as the description.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        group_desc:
+            type: str
+            description:
+            - If the I(group_name) is set and the Security Group doesn't exist a new Security Group will be
+              created with I(group_desc) as the description.
+        proto:
+            type: str
+            description:
+            - The IP protocol name (C(tcp), C(udp), C(icmp), C(icmpv6)) or number (U(https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers))
+        from_port:
+            type: int
+            description: The start of the range of ports that traffic is coming from.  A value of C(-1) indicates all ports.
+        to_port:
+            type: int
+            description: The end of the range of ports that traffic is coming from.  A value of C(-1) indicates all ports.
+        rule_desc:
+            type: str
+            description: A description for the rule.
   rules_egress:
     description:
       - List of firewall outbound rules to enforce in this group (see example). If none are supplied,
@@ -66,18 +115,73 @@ options:
         was added.
     required: false
     version_added: "1.6"
+    type: list
+    elements: dict
+    suboptions:
+        cidr_ip:
+            type: str
+            description:
+            - The IPv4 CIDR range traffic is going to.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        cidr_ipv6:
+            type: str
+            description:
+            - The IPv6 CIDR range traffic is going to.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        ip_prefix:
+            type: str
+            description:
+            - The IP Prefix U(https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-prefix-lists.html)
+              that traffic is going to.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        group_id:
+            type: str
+            description:
+            - The ID of the Security Group that traffic is going to.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        group_name:
+            type: str
+            description:
+            - Name of the Security Group that traffic is going to.
+            - If the Security Group doesn't exist a new Security Group will be
+              created with I(group_desc) as the description.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        group_desc:
+            type: str
+            description:
+            - If the I(group_name) is set and the Security Group doesn't exist a new Security Group will be
+              created with I(group_desc) as the description.
+        proto:
+            type: str
+            description:
+            - The IP protocol name (C(tcp), C(udp), C(icmp), C(icmpv6)) or number (U(https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers))
+        from_port:
+            type: int
+            description: The start of the range of ports that traffic is going to.  A value of C(-1) indicates all ports.
+        to_port:
+            type: int
+            description: The end of the range of ports that traffic is going to.  A value of C(-1) indicates all ports.
+        rule_desc:
+            type: str
+            description: A description for the rule.
   state:
     version_added: "1.4"
     description:
-      - Create or delete a security group
+      - Create or delete a security group.
     required: false
     default: 'present'
     choices: [ "present", "absent" ]
     aliases: []
+    type: str
   purge_rules:
     version_added: "1.8"
     description:
-      - Purge existing rules on security group that are not found in rules
+      - Purge existing rules on security group that are not found in rules.
     required: false
     default: 'true'
     aliases: []
@@ -85,7 +189,7 @@ options:
   purge_rules_egress:
     version_added: "1.8"
     description:
-      - Purge existing rules_egress on security group that are not found in rules_egress
+      - Purge existing rules_egress on security group that are not found in rules_egress.
     required: false
     default: 'true'
     aliases: []
@@ -95,6 +199,8 @@ options:
     description:
       - A dictionary of one or more tags to assign to the security group.
     required: false
+    type: dict
+    aliases: ['resource_tags']
   purge_tags:
     version_added: "2.4"
     description:
@@ -229,6 +335,7 @@ EXAMPLES = '''
 
 - name: "Delete group by its id"
   ec2_group:
+    region: eu-west-1
     group_id: sg-33b4ee5b
     state: absent
 '''
@@ -303,7 +410,8 @@ from ansible.module_utils.aws.iam import get_aws_account_id
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict, compare_aws_tags
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
-from ansible.module_utils.network.common.utils import to_ipv6_network, to_subnet
+from ansible.module_utils.common.network import to_ipv6_subnet, to_subnet
+from ansible.module_utils.compat.ipaddress import ip_network, IPv6Network
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
 
@@ -407,7 +515,11 @@ def rule_from_group_permission(perm):
             )
     if 'UserIdGroupPairs' in perm and perm['UserIdGroupPairs']:
         for pair in perm['UserIdGroupPairs']:
-            target = pair['GroupId']
+            target = (
+                pair.get('UserId', None),
+                pair.get('GroupId', None),
+                pair.get('GroupName', None),
+            )
             if pair.get('UserId', '').startswith('amazon-'):
                 # amazon-elb and amazon-prefix rules don't need
                 # group-id specified, so remove it when querying
@@ -722,14 +834,26 @@ def validate_ip(module, cidr_ip):
     split_addr = cidr_ip.split('/')
     if len(split_addr) == 2:
         # this_ip is a IPv4 or IPv6 CIDR that may or may not have host bits set
-        # Get the network bits.
+        # Get the network bits if IPv4, and validate if IPv6.
         try:
             ip = to_subnet(split_addr[0], split_addr[1])
+            if ip != cidr_ip:
+                module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                            "check the network mask and make sure that only network bits are set: {1}.".format(
+                                cidr_ip, ip))
         except ValueError:
-            ip = to_ipv6_network(split_addr[0]) + "/" + split_addr[1]
-        if ip != cidr_ip:
-            module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
-                        "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip))
+            # to_subnet throws a ValueError on IPv6 networks, so we should be working with v6 if we get here
+            try:
+                isinstance(ip_network(to_text(cidr_ip)), IPv6Network)
+                ip = cidr_ip
+            except ValueError:
+                # If a host bit is set on something other than a /128, IPv6Network will throw a ValueError
+                # The ipv6_cidr in this case probably looks like "2001:DB8:A0B:12F0::1/64" and we just want the network bits
+                ip6 = to_ipv6_subnet(split_addr[0]) + "/" + split_addr[1]
+                if ip6 != cidr_ip:
+                    module.warn("One of your IPv6 CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                                "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip6))
+                return ip6
         return ip
     return cidr_ip
 
@@ -937,12 +1061,12 @@ def get_diff_final_resource(client, module, security_group):
                     'vpc_id': rule_sg.get('vpc_id', module.params['vpc_id']),
                     'vpc_peering_connection_id': rule_sg.get('vpc_peering_connection_id')
                 }]
-                for k, v in format_rule['user_id_group_pairs'][0].items():
+                for k, v in list(format_rule['user_id_group_pairs'][0].items()):
                     if v is None:
                         format_rule['user_id_group_pairs'][0].pop(k)
             final_rules.append(format_rule)
             # Order final rules consistently
-            final_rules.sort(key=lambda x: x.get('cidr_ip', x.get('ip_ranges', x.get('ipv6_ranges', x.get('prefix_list_ids', x.get('user_id_group_pairs'))))))
+            final_rules.sort(key=get_ip_permissions_sort_key)
         return final_rules
     security_group_ingress = security_group.get('ip_permissions', [])
     specified_ingress = module.params['rules']
@@ -980,6 +1104,34 @@ def flatten_nested_targets(module, rules):
             if target_list_type is not None:
                 rule[target_list_type] = list(_flatten(rule[target_list_type]))
     return rules
+
+
+def get_rule_sort_key(dicts):
+    if dicts.get('cidr_ip'):
+        return dicts.get('cidr_ip')
+    elif dicts.get('cidr_ipv6'):
+        return dicts.get('cidr_ipv6')
+    elif dicts.get('prefix_list_id'):
+        return dicts.get('prefix_list_id')
+    elif dicts.get('group_id'):
+        return dicts.get('group_id')
+    return None
+
+
+def get_ip_permissions_sort_key(rule):
+    if rule.get('ip_ranges'):
+        rule.get('ip_ranges').sort(key=get_rule_sort_key)
+        return rule.get('ip_ranges')[0]['cidr_ip']
+    elif rule.get('ipv6_ranges'):
+        rule.get('ipv6_ranges').sort(key=get_rule_sort_key)
+        return rule.get('ipv6_ranges')[0]['cidr_ipv6']
+    elif rule.get('prefix_list_ids'):
+        rule.get('prefix_list_ids').sort(key=get_rule_sort_key)
+        return rule.get('prefix_list_ids')[0]['prefix_list_id']
+    elif rule.get('user_id_group_pairs'):
+        rule.get('user_id_group_pairs').sort(key=get_rule_sort_key)
+        return rule.get('user_id_group_pairs')[0]['group_id']
+    return None
 
 
 def main():
@@ -1145,6 +1297,12 @@ def main():
         else:
             revoke_egress = []
 
+        # named_tuple_ingress_list and named_tuple_egress_list got updated by
+        # method update_rule_descriptions, deep copy these two lists to new
+        # variables for the record of the 'desired' ingress and egress sg permissions
+        desired_ingress = deepcopy(named_tuple_ingress_list)
+        desired_egress = deepcopy(named_tuple_egress_list)
+
         changed |= update_rule_descriptions(module, group['GroupId'], present_ingress, named_tuple_ingress_list, present_egress, named_tuple_egress_list)
 
         # Revoke old rules
@@ -1162,7 +1320,8 @@ def main():
             # When it is created we wait for the default egress rule to be added by AWS
             security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
         elif changed and not module.check_mode:
-            security_group = wait_for_rule_propagation(module, group, named_tuple_ingress_list, named_tuple_egress_list, purge_rules, purge_rules_egress)
+            # keep pulling until current security group rules match the desired ingress and egress rules
+            security_group = wait_for_rule_propagation(module, group, desired_ingress, desired_egress, purge_rules, purge_rules_egress)
         else:
             security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
         security_group = camel_dict_to_snake_dict(security_group, ignore_list=['Tags'])
@@ -1174,6 +1333,8 @@ def main():
     if module._diff:
         if module.params['state'] == 'present':
             after = get_diff_final_resource(client, module, security_group)
+            if before.get('ip_permissions'):
+                before['ip_permissions'].sort(key=get_ip_permissions_sort_key)
 
         security_group['diff'] = [{'before': before, 'after': after}]
 

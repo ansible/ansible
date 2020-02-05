@@ -1,0 +1,3 @@
+minor_changes:
+ - "docker_container - support for port ranges was adjusted to be more compatible to the ``docker`` command line utility:
+    a one-port container range combined with a multiple-port host range will no longer result in only the first host port be used, but the whole range being passed to Docker so that a free port in that range will be used."

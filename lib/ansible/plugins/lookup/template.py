@@ -11,7 +11,7 @@ DOCUMENTATION = """
     version_added: "0.9"
     short_description: retrieve contents of file after templating with Jinja2
     description:
-      - this is mostly a noop, to be used as a with_list loop when you do not want the content transformed in any way.
+      - Returns a list of strings; for each template in the list of templates you pass in, returns a string containing the results of processing that template.
     options:
       _terms:
         description: list of files to template
@@ -45,6 +45,7 @@ _raw:
    description: file(s) content after templating
 """
 
+from copy import deepcopy
 import os
 
 from ansible.errors import AnsibleError
@@ -89,24 +90,21 @@ class LookupModule(LookupBase):
                     searchpath = newsearchpath
                 searchpath.insert(0, os.path.dirname(lookupfile))
 
-                self._templar.environment.loader.searchpath = searchpath
-                if variable_start_string is not None:
-                    self._templar.environment.variable_start_string = variable_start_string
-                if variable_end_string is not None:
-                    self._templar.environment.variable_end_string = variable_end_string
-
                 # The template will have access to all existing variables,
                 # plus some added by ansible (e.g., template_{path,mtime}),
                 # plus anything passed to the lookup with the template_vars=
                 # argument.
-                vars = variables.copy()
+                vars = deepcopy(variables)
                 vars.update(generate_ansible_template_vars(lookupfile))
                 vars.update(lookup_template_vars)
-                self._templar.set_available_variables(vars)
 
                 # do the templating
-                res = self._templar.template(template_data, preserve_trailing_newlines=True,
-                                             convert_data=convert_data_p, escape_backslashes=False)
+                with self._templar.set_temporary_context(variable_start_string=variable_start_string,
+                                                         variable_end_string=variable_end_string,
+                                                         available_variables=vars, searchpath=searchpath):
+                    res = self._templar.template(template_data, preserve_trailing_newlines=True,
+                                                 convert_data=convert_data_p, escape_backslashes=False)
+
                 ret.append(res)
             else:
                 raise AnsibleError("the template file %s could not be found for the lookup" % term)

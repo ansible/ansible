@@ -39,9 +39,6 @@ class TestDataLoader(unittest.TestCase):
     def setUp(self):
         self._loader = DataLoader()
 
-    def tearDown(self):
-        pass
-
     @patch('os.path.exists')
     def test__is_role(self, p_exists):
         p_exists.side_effect = lambda p: p == b'test_path/tasks/main.yml'
@@ -154,16 +151,16 @@ class TestPathDwimRelativeDataLoader(unittest.TestCase):
         self._loader = DataLoader()
 
     def test_all_slash(self):
-        self.assertEquals(self._loader.path_dwim_relative('/', '/', '/'), '/')
+        self.assertEqual(self._loader.path_dwim_relative('/', '/', '/'), '/')
 
     def test_path_endswith_role(self):
-        self.assertEquals(self._loader.path_dwim_relative(path='foo/bar/tasks/', dirname='/', source='/'), '/')
+        self.assertEqual(self._loader.path_dwim_relative(path='foo/bar/tasks/', dirname='/', source='/'), '/')
 
     def test_path_endswith_role_main_yml(self):
         self.assertIn('main.yml', self._loader.path_dwim_relative(path='foo/bar/tasks/', dirname='/', source='main.yml'))
 
     def test_path_endswith_role_source_tilde(self):
-        self.assertEquals(self._loader.path_dwim_relative(path='foo/bar/tasks/', dirname='/', source='~/'), os.path.expanduser('~'))
+        self.assertEqual(self._loader.path_dwim_relative(path='foo/bar/tasks/', dirname='/', source='~/'), os.path.expanduser('~'))
 
 
 class TestPathDwimRelativeStackDataLoader(unittest.TestCase):
@@ -181,13 +178,13 @@ class TestPathDwimRelativeStackDataLoader(unittest.TestCase):
         self.assertEqual(self._loader.path_dwim_relative_stack([], '', '~/'), os.path.expanduser('~'))
 
     def test_all_slash(self):
-        self.assertEquals(self._loader.path_dwim_relative_stack('/', '/', '/'), '/')
+        self.assertEqual(self._loader.path_dwim_relative_stack('/', '/', '/'), '/')
 
     def test_path_endswith_role(self):
-        self.assertEquals(self._loader.path_dwim_relative_stack(paths=['foo/bar/tasks/'], dirname='/', source='/'), '/')
+        self.assertEqual(self._loader.path_dwim_relative_stack(paths=['foo/bar/tasks/'], dirname='/', source='/'), '/')
 
     def test_path_endswith_role_source_tilde(self):
-        self.assertEquals(self._loader.path_dwim_relative_stack(paths=['foo/bar/tasks/'], dirname='/', source='~/'), os.path.expanduser('~'))
+        self.assertEqual(self._loader.path_dwim_relative_stack(paths=['foo/bar/tasks/'], dirname='/', source='~/'), os.path.expanduser('~'))
 
     def test_path_endswith_role_source_main_yml(self):
         self.assertRaises(AnsibleFileNotFound, self._loader.path_dwim_relative_stack, ['foo/bar/tasks/'], '/', 'main.yml')

@@ -53,59 +53,87 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.six import string_types, text_type
-from ansible.module_utils._text import to_text
-from ansible.module_utils.common._collections_compat import Mapping, MutableSequence, Set
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common._collections_compat import Mapping, Set
+from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.six import string_types, binary_type, text_type
 
 
-__all__ = ['UnsafeProxy', 'AnsibleUnsafe', 'wrap_var']
+__all__ = ['AnsibleUnsafe', 'wrap_var']
 
 
 class AnsibleUnsafe(object):
     __UNSAFE__ = True
 
 
+class AnsibleUnsafeBytes(binary_type, AnsibleUnsafe):
+    def decode(self, *args, **kwargs):
+        """Wrapper method to ensure type conversions maintain unsafe context"""
+        return AnsibleUnsafeText(super(AnsibleUnsafeBytes, self).decode(*args, **kwargs))
+
+
 class AnsibleUnsafeText(text_type, AnsibleUnsafe):
-    pass
+    def encode(self, *args, **kwargs):
+        """Wrapper method to ensure type conversions maintain unsafe context"""
+        return AnsibleUnsafeBytes(super(AnsibleUnsafeText, self).encode(*args, **kwargs))
 
 
 class UnsafeProxy(object):
     def __new__(cls, obj, *args, **kwargs):
+        from ansible.utils.display import Display
+        Display().deprecated(
+            'UnsafeProxy is being deprecated. Use wrap_var or AnsibleUnsafeBytes/AnsibleUnsafeText directly instead',
+            version='2.13'
+        )
         # In our usage we should only receive unicode strings.
         # This conditional and conversion exists to sanity check the values
         # we're given but we may want to take it out for testing and sanitize
         # our input instead.
+        if isinstance(obj, AnsibleUnsafe):
+            return obj
+
         if isinstance(obj, string_types):
-            obj = to_text(obj, errors='surrogate_or_strict')
-            return AnsibleUnsafeText(obj)
+            obj = AnsibleUnsafeText(to_text(obj, errors='surrogate_or_strict'))
         return obj
 
 
 def _wrap_dict(v):
-    for k in v.keys():
-        if v[k] is not None:
-            v[wrap_var(k)] = wrap_var(v[k])
-    return v
+    return dict((wrap_var(k), wrap_var(item)) for k, item in v.items())
 
 
-def _wrap_list(v):
-    for idx, item in enumerate(v):
-        if item is not None:
-            v[idx] = wrap_var(item)
-    return v
+def _wrap_sequence(v):
+    """Wraps a sequence with unsafe, not meant for strings, primarily
+    ``tuple`` and ``list``
+    """
+    v_type = type(v)
+    return v_type(wrap_var(item) for item in v)
 
 
 def _wrap_set(v):
-    return set(item if item is None else wrap_var(item) for item in v)
+    return set(wrap_var(item) for item in v)
 
 
 def wrap_var(v):
+    if v is None or isinstance(v, AnsibleUnsafe):
+        return v
+
     if isinstance(v, Mapping):
         v = _wrap_dict(v)
-    elif isinstance(v, MutableSequence):
-        v = _wrap_list(v)
     elif isinstance(v, Set):
         v = _wrap_set(v)
-    elif v is not None and not isinstance(v, AnsibleUnsafe):
-        v = UnsafeProxy(v)
+    elif is_sequence(v):
+        v = _wrap_sequence(v)
+    elif isinstance(v, binary_type):
+        v = AnsibleUnsafeBytes(v)
+    elif isinstance(v, text_type):
+        v = AnsibleUnsafeText(v)
+
     return v
+
+
+def to_unsafe_bytes(*args, **kwargs):
+    return wrap_var(to_bytes(*args, **kwargs))
+
+
+def to_unsafe_text(*args, **kwargs):
+    return wrap_var(to_text(*args, **kwargs))

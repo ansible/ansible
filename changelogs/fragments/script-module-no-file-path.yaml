@@ -1,2 +1,0 @@
-bugfixes:
-- script inventory plugin - Don't pass file_name to DataLoader.load, which will prevent misleading error messages (https://github.com/ansible/ansible/issues/34164)

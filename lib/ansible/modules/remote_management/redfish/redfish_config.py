@@ -26,47 +26,87 @@ options:
     required: true
     description:
       - Category to execute on OOB controller
+    type: str
   command:
     required: true
     description:
       - List of commands to execute on OOB controller
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of OOB controller
+    type: str
   username:
     required: true
     description:
       - User for authentication with OOB controller
+    type: str
     version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
+    type: str
   bios_attribute_name:
     required: false
     description:
-      - name of BIOS attribute to update
+      - name of BIOS attr to update (deprecated - use bios_attributes instead)
     default: 'null'
+    type: str
     version_added: "2.8"
   bios_attribute_value:
     required: false
     description:
-      - value of BIOS attribute to update
+      - value of BIOS attr to update (deprecated - use bios_attributes instead)
     default: 'null'
+    type: str
     version_added: "2.8"
-  manager_attribute_name:
+  bios_attributes:
     required: false
     description:
-      - name of Manager attribute to update
-    default: 'null'
+      - dictionary of BIOS attributes to update
+    default: {}
+    type: dict
+    version_added: "2.10"
+  timeout:
+    description:
+      - Timeout in seconds for URL requests to OOB controller
+    default: 10
+    type: int
     version_added: "2.8"
-  manager_attribute_value:
+  boot_order:
     required: false
     description:
-      - value of Manager attribute to update
+      - list of BootOptionReference strings specifying the BootOrder
+    default: []
+    type: list
+    version_added: "2.10"
+  network_protocols:
+    required: false
+    description:
+      -  setting dict of manager services to update
+    type: dict
+    version_added: "2.10"
+  resource_id:
+    required: false
+    description:
+      - The ID of the System, Manager or Chassis to modify
+    type: str
+    version_added: "2.10"
+  nic_addr:
+    required: false
+    description:
+      - EthernetInterface Address string on OOB controller
     default: 'null'
-    version_added: "2.8"
+    type: str
+    version_added: '2.10'
+  nic_config:
+    required: false
+    description:
+      - setting dict of EthernetInterface on OOB controller
+    type: dict
+    version_added: '2.10'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -76,68 +116,97 @@ EXAMPLES = '''
     redfish_config:
       category: Systems
       command: SetBiosAttributes
-      bios_attribute_name: BootMode
-      bios_attribute_value: Uefi
+      resource_id: 437XR1138R2
+      bios_attributes:
+        BootMode: "Uefi"
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
 
-  - name: Set BootMode to Legacy BIOS
+  - name: Set multiple BootMode attributes
     redfish_config:
       category: Systems
       command: SetBiosAttributes
-      bios_attribute_name: BootMode
-      bios_attribute_value: Bios
+      resource_id: 437XR1138R2
+      bios_attributes:
+        BootMode: "Bios"
+        OneTimeBootMode: "Enabled"
+        BootSeqRetry: "Enabled"
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
 
-  - name: Enable PXE Boot for NIC1
+  - name: Enable PXE Boot for NIC1 using deprecated options
     redfish_config:
       category: Systems
       command: SetBiosAttributes
+      resource_id: 437XR1138R2
       bios_attribute_name: PxeDev1EnDis
       bios_attribute_value: Enabled
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
 
-  - name: Set BIOS default settings
+  - name: Set BIOS default settings with a timeout of 20 seconds
     redfish_config:
       category: Systems
       command: SetBiosDefaultSettings
+      resource_id: 437XR1138R2
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      timeout: 20
+
+  - name: Set boot order
+    redfish_config:
+      category: Systems
+      command: SetBootOrder
+      boot_order:
+        - Boot0002
+        - Boot0001
+        - Boot0000
+        - Boot0003
+        - Boot0004
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
 
-  - name: Enable NTP in the OOB Controller
+  - name: Set boot order to the default
     redfish_config:
-      category: Manager
-      command: SetManagerAttributes
-      manager_attribute_name: NTPConfigGroup.1.NTPEnable
-      manager_attribute_value: Enabled
+      category: Systems
+      command: SetDefaultBootOrder
       baseuri: "{{ baseuri }}"
-      username: "{{ username}}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
-  - name: Set NTP server 1 to {{ ntpserver1 }} in the OOB Controller
+  - name: Set Manager Network Protocols
     redfish_config:
       category: Manager
-      command: SetManagerAttributes
-      manager_attribute_name: NTPConfigGroup.1.NTP1
-      manager_attribute_value: "{{ ntpserver1 }}"
+      command: SetNetworkProtocols
+      network_protocols:
+        SNMP:
+          ProtocolEnabled: True
+          Port: 161
+        HTTP:
+          ProtocolEnabled: False
+          Port: 8080
       baseuri: "{{ baseuri }}"
-      username: "{{ username}}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
-  - name: Set Timezone to {{ timezone }} in the OOB Controller
+  - name: Set Manager NIC
     redfish_config:
       category: Manager
-      command: SetManagerAttributes
-      manager_attribute_name: Time.1.Timezone
-      manager_attribute_value: "{{ timezone }}"
+      command: SetManagerNic
+      nic_config:
+        DHCPv4:
+          DHCPEnabled: False
+        IPv4StaticAddresses:
+          Address: 192.168.1.3
+          Gateway: 192.168.1.1
+          SubnetMask: 255.255.255.0
       baseuri: "{{ baseuri }}"
-      username: "{{ username}}"
+      username: "{{ username }}"
       password: "{{ password }}"
 '''
 
@@ -156,8 +225,9 @@ from ansible.module_utils._text import to_native
 
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
-    "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes"],
-    "Manager": ["SetManagerAttributes"],
+    "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes", "SetBootOrder",
+                "SetDefaultBootOrder"],
+    "Manager": ["SetNetworkProtocols", "SetManagerNic"]
 }
 
 
@@ -170,10 +240,21 @@ def main():
             baseuri=dict(required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
-            manager_attribute_name=dict(default='null'),
-            manager_attribute_value=dict(default='null'),
             bios_attribute_name=dict(default='null'),
             bios_attribute_value=dict(default='null'),
+            bios_attributes=dict(type='dict', default={}),
+            timeout=dict(type='int', default=10),
+            boot_order=dict(type='list', elements='str', default=[]),
+            network_protocols=dict(
+                type='dict',
+                default={}
+            ),
+            resource_id=dict(),
+            nic_addr=dict(default='null'),
+            nic_config=dict(
+                type='dict',
+                default={}
+            )
         ),
         supports_check_mode=False
     )
@@ -185,17 +266,32 @@ def main():
     creds = {'user': module.params['username'],
              'pswd': module.params['password']}
 
-    # Manager attributes to update
-    mgr_attributes = {'mgr_attr_name': module.params['manager_attribute_name'],
-                      'mgr_attr_value': module.params['manager_attribute_value']}
+    # timeout
+    timeout = module.params['timeout']
+
     # BIOS attributes to update
-    bios_attributes = {'bios_attr_name': module.params['bios_attribute_name'],
-                       'bios_attr_value': module.params['bios_attribute_value']}
+    bios_attributes = module.params['bios_attributes']
+    if module.params['bios_attribute_name'] != 'null':
+        bios_attributes[module.params['bios_attribute_name']] = module.params[
+            'bios_attribute_value']
+        module.deprecate(msg='The bios_attribute_name/bios_attribute_value '
+                         'options are deprecated. Use bios_attributes instead',
+                         version='2.14')
+
+    # boot order
+    boot_order = module.params['boot_order']
+
+    # System, Manager or Chassis ID to modify
+    resource_id = module.params['resource_id']
+
+    # manager nic
+    nic_addr = module.params['nic_addr']
+    nic_config = module.params['nic_config']
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri)
+    rf_utils = RedfishUtils(creds, root_uri, timeout, module,
+                            resource_id=resource_id, data_modification=True)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
@@ -210,7 +306,7 @@ def main():
     # Organize by Categories / Commands
     if category == "Systems":
         # execute only if we find a System resource
-        result = rf_utils._find_systems_resource(rf_uri)
+        result = rf_utils._find_systems_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -219,16 +315,22 @@ def main():
                 result = rf_utils.set_bios_default_settings()
             elif command == "SetBiosAttributes":
                 result = rf_utils.set_bios_attributes(bios_attributes)
+            elif command == "SetBootOrder":
+                result = rf_utils.set_boot_order(boot_order)
+            elif command == "SetDefaultBootOrder":
+                result = rf_utils.set_default_boot_order()
 
     elif category == "Manager":
         # execute only if we find a Manager service resource
-        result = rf_utils._find_managers_resource(rf_uri)
+        result = rf_utils._find_managers_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
         for command in command_list:
-            if command == "SetManagerAttributes":
-                result = rf_utils.set_manager_attributes(mgr_attributes)
+            if command == "SetNetworkProtocols":
+                result = rf_utils.set_network_protocols(module.params['network_protocols'])
+            elif command == "SetManagerNic":
+                result = rf_utils.set_manager_nic(nic_addr, nic_config)
 
     # Return data back or fail with proper message
     if result['ret'] is True:

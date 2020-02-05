@@ -1,3 +1,0 @@
----
-minor_changes:
-  - Add support for per_host:no stats for the callback plugin **json** (https://github.com/ansible/ansible/pull/43123)

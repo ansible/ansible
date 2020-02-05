@@ -17,22 +17,21 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_routetable
 version_added: "2.7"
-short_description: Manage Azure route table resource.
+short_description: Manage Azure route table resource
 description:
     - Create, update or delete a route table.
 options:
     resource_group:
         description:
-            - name of resource group.
+            - Name of resource group.
         required: true
     name:
         description:
-            - name of the route table.
+            - Name of the route table.
         required: true
     state:
         description:
-            - Assert the state of the route table. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the route table. Use C(present) to create or update and C(absent) to delete.
         default: present
         choices:
             - absent
@@ -45,49 +44,45 @@ options:
     location:
         description:
             - Region of the resource.
-            - Derived from C(resource_group) if not specified
+            - Derived from I(resource_group) if not specified.
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
 EXAMPLES = '''
     - name: Create a route table
       azure_rm_routetable:
-        name: foobar
-        resource_group: Testing
+        resource_group: myResourceGroup
+        name: myRouteTable
         disable_bgp_route_propagation: False
         tags:
           purpose: testing
 
-    - name: Update the subnet (idempotent)
-      azure_rm_subnet:
-        name: subnet
-        virtual_network_name: virtualnetwork
-        resource_group: Testing
-        address_prefix_cidr: "10.1.0.0/16"
-        route_table: foobar
-
     - name: Delete a route table
       azure_rm_routetable:
-        name: foobar
-        resource_group: Testing
+        resource_group: myResourceGroup
+        name: myRouteTable
         state: absent
 '''
 RETURN = '''
 changed:
-    description: Whether the resource is changed.
+    description:
+        - Whether the resource is changed.
     returned: always
     type: bool
+    sample: true
 id:
-    description: resource id.
+    description:
+        - Resource ID.
     returned: success
     type: str
+    sample: "/subscriptions/xxx...xxx/resourceGroups/v-xisuRG/providers/Microsoft.Network/routeTables/tableb57dc95642/routes/routeb57dc95986"
 '''
 
 try:

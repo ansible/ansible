@@ -143,7 +143,7 @@ Ansible fact namespacing
 Ansible facts, which have historically been written to names like ``ansible_*``
 in the main facts namespace, have been placed in their own new namespace,
 ``ansible_facts.*`` For example, the fact ``ansible_distribution`` is now best
-queried through the variable structure ``ansible_facts.distribution``. 
+queried through the variable structure ``ansible_facts.distribution``.
 
 A new configuration variable, ``inject_facts_as_vars``, has been added to
 ansible.cfg. Its default setting, 'True', keeps the 2.4 behavior of facts
@@ -196,12 +196,12 @@ Deprecation notices
 The following modules will be removed in Ansible 2.9. Please update your playbooks accordingly.
 
 * Apstra's ``aos_*`` modules are deprecated as they do not work with AOS 2.1 or higher. See new modules at `https://github.com/apstra <https://github.com/apstra>`_.
-* :ref:`nxos_ip_interface <nxos_ip_interface_module>` use :ref:`nxos_l3_interface <nxos_l3_interface_module>` instead.
-* :ref:`nxos_portchannel <nxos_portchannel_module>` use :ref:`nxos_linkagg <nxos_linkagg_module>` instead.
-* :ref:`nxos_switchport <nxos_switchport_module>` use :ref:`nxos_l2_interface <nxos_l2_interface_module>` instead.
-* :ref:`panos_security_policy <panos_security_policy_module>` use :ref:`panos_security_rule <panos_security_rule_module>` instead.
-* :ref:`panos_nat_policy <panos_nat_policy_module>` use :ref:`panos_nat_rule <panos_nat_rule_module>` instead.
-* :ref:`vsphere_guest <vsphere_guest_module>` use :ref:`vmware_guest <vmware_guest_module>` instead.
+* nxos_ip_interface use :ref:`nxos_l3_interface <nxos_l3_interface_module>` instead.
+* nxos_portchannel use :ref:`nxos_linkagg <nxos_linkagg_module>` instead.
+* nxos_switchport use :ref:`nxos_l2_interface <nxos_l2_interface_module>` instead.
+* panos_security_policy use :ref:`panos_security_rule <panos_security_rule_module>` instead.
+* panos_nat_policy use :ref:`panos_nat_rule <panos_nat_rule_module>` instead.
+* vsphere_guest use :ref:`vmware_guest <vmware_guest_module>` instead.
 
 Noteworthy module changes
 -------------------------
@@ -254,7 +254,7 @@ Inventory plugins have been fine tuned, and we have started to add some common f
 Shell
 -----
 
-Shell plugins have been migrated to the new plugin configuration framework. It is now possible to customize more settings, and settings which were previously 'global' can now also be overriden using host specific variables.
+Shell plugins have been migrated to the new plugin configuration framework. It is now possible to customize more settings, and settings which were previously 'global' can now also be overridden using host specific variables.
 
 For example, ``system_temps`` is a new setting that allows you to control what Ansible will consider a 'system temporary dir'. This is used when escalating privileges for a non-administrative user. Previously this was hardcoded to '/tmp', which some systems cannot use for privilege escalation. This setting now defaults to ``[ '/var/tmp', '/tmp']``.
 
@@ -274,7 +274,7 @@ other non-iterable types returned by a plugin were accepted without error or war
 Lookup
 -------
 
-A new option was added to lookup plugins globally named ``error`` which allows you to control how errors produced by the lookup are handled, before this option they were always fatal. Valid values for this option are ``warn``, ``ignore`` and ``strict``. See the :doc:`lookup <../plugins/lookup>` page for more details.
+A new option was added to lookup plugins globally named ``error`` which allows you to control how errors produced by the lookup are handled, before this option they were always fatal. Valid values for this option are ``warn``, ``ignore`` and ``strict``. See the :ref:`lookup <lookup_plugins>` page for more details.
 
 
 Porting custom scripts
@@ -389,4 +389,4 @@ If your module uses shared module utilities, you must update all references. For
    from ansible.module_utils.network.vyos.vyos import get_config, load_config
 
 
-See the module utilities developer guide see :ref:`appendix_module_utilities` for more information.
+See the module utilities developer guide see :ref:`developing_module_utilities` for more information.

@@ -37,7 +37,7 @@ options:
    docker_storage_driver:
       description:
          - Docker storage driver
-      choices: [devicemapper, overlay]
+      choices: [devicemapper, overlay, overlay2]
    docker_volume_size:
       description:
          - The size in GB of the docker volume
@@ -66,7 +66,7 @@ options:
          - Image id the cluster will be based on
    labels:
       description:
-         - One or more key/value pairs
+         - One or more key/value pairs wrapped in string
    http_proxy:
       description:
          - Address of a proxy that will receive all HTTP requests and relay them
@@ -177,7 +177,7 @@ cluster_template:
           description:
             - Indicates whether created clusters should have a floating ip or not
           type: bool
-          default: true
+          sample: true
       keypair_id:
           description:
             - Name or ID of the keypair to use.
@@ -189,9 +189,9 @@ cluster_template:
           type: str
           sample: 05567ec6-85f5-44cb-bd63-242a8e7f0e9d
       labels:
-          description: One or more key/value pairs
-          type: dict
-          sample: {'key1': 'value1', 'key2': 'value2'}
+          description: One or more key/value pairs wrapped in string
+          type: str
+          sample: 'key1=value1, key2=value2'
       http_proxy:
           description:
             - Address of a proxy that will receive all HTTP requests and relay them
@@ -277,7 +277,7 @@ def _parse_labels(labels):
         labels_dict = {}
         for kv_str in labels.split(","):
             k, v = kv_str.split("=")
-            labels_dict[k] = v
+            labels_dict[k.strip()] = v.strip()
         return labels_dict
     if not labels:
         return {}
@@ -288,7 +288,7 @@ def main():
     argument_spec = openstack_full_argument_spec(
         coe=dict(required=True, choices=['kubernetes', 'swarm', 'mesos']),
         dns_nameserver=dict(default='8.8.8.8'),
-        docker_storage_driver=dict(choices=['devicemapper', 'overlay']),
+        docker_storage_driver=dict(choices=['devicemapper', 'overlay', 'overlay2']),
         docker_volume_size=dict(type='int'),
         external_network_id=dict(default=None),
         fixed_network=dict(default=None),

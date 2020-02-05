@@ -1,0 +1,31 @@
+---
+# Run the tests
+- block:
+  - include_tasks: test_node.yml
+
+  always:
+  - name: Cleanup (trying)
+    docker_swarm:
+      state: absent
+      force: true
+    diff: no
+    ignore_errors: yes
+
+  - name: Restart docker daemon
+    service:
+      name: docker
+      state: restarted
+    become: yes
+  - name: Wait for docker daemon to be fully restarted
+    command: docker ps
+
+  - name: Cleanup
+    docker_swarm:
+      state: absent
+      force: true
+    diff: no
+
+  when: docker_py_version is version('2.4.0', '>=') and docker_api_version is version('1.25', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_node tests!"
+  when: not(docker_py_version is version('2.4.0', '>=') and docker_api_version is version('1.25', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

@@ -46,7 +46,7 @@ options:
     description:
     - "IP or FQDN of NTP server(s)."
     - This accepts a list of NTP servers. For multiple servers, please look at the examples.
-    type: dict
+    type: list
     required: True
   state:
     description:
@@ -115,7 +115,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-results:
+host_ntp_status:
     description: metadata about host system's NTP configuration
     returned: always
     type: dict
@@ -256,7 +256,7 @@ class VmwareNtpConfigManager(PyVmomi):
 
         if any(change_list):
             changed = True
-        self.module.exit_json(changed=changed, results=self.results)
+        self.module.exit_json(changed=changed, host_ntp_status=self.results)
 
     def check_ntp_servers(self, host):
         """Check configured NTP servers"""

@@ -1,6 +1,7 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# (c) 2015, Paul Markham <pmarkham@netrefinery.com>
+# Copyright: (c) 2015, Paul Markham <pmarkham@netrefinery.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,13 +11,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: solaris_zone
 short_description: Manage Solaris zones
 description:
-   - Create, start, stop and delete Solaris zones. This module doesn't currently allow
-     changing of options for a zone that's already been created.
+  - Create, start, stop and delete Solaris zones.
+  - This module does not currently allow changing of options for a zone that is already been created.
 version_added: "2.0"
 author:
 - Paul Markham (@pmarkham)
@@ -35,50 +36,63 @@ options:
       - C(configured), configure the ready so that it's to be attached.
       - C(attached), attach a zone, but do not boot it.
       - C(detached), shutdown and detach a zone
+    type: str
     choices: [ absent, attached, configured, detached, installed, present, running, started, stopped ]
     default: present
     required: true
   name:
     description:
       - Zone name.
+      - A zone name must be unique name.
+      - A zone name must begin with an alpha-numeric character.
+      - The name can contain alpha-numeric characters, underbars I(_), hyphens I(-), and periods I(.).
+      - The name cannot be longer than 64 characters.
+    type: str
     required: true
   path:
     description:
       - The path where the zone will be created. This is required when the zone is created, but not
         used otherwise.
+    type: str
   sparse:
     description:
       - Whether to create a sparse (C(true)) or whole root (C(false)) zone.
     type: bool
-    default: 'no'
+    default: no
   root_password:
     description:
       - The password hash for the root account. If not specified, the zone's root account
         will not have a password.
+    type: str
   config:
     description:
       - 'The zonecfg configuration commands for this zone. See zonecfg(1M) for the valid options
         and syntax. Typically this is a list of options separated by semi-colons or new lines, e.g.
         "set auto-boot=true;add net;set physical=bge0;set address=10.1.1.1;end"'
-    default: empty string
+    type: str
+    default: ''
   create_options:
     description:
       - 'Extra options to the zonecfg(1M) create command.'
-    default: empty string
+    type: str
+    default: ''
   install_options:
     description:
       - 'Extra options to the zoneadm(1M) install command. To automate Solaris 11 zone creation,
          use this to specify the profile XML file, e.g. install_options="-c sc_profile.xml"'
-    default: empty string
+    type: str
+    default: ''
   attach_options:
     description:
       - 'Extra options to the zoneadm attach command. For example, this can be used to specify
         whether a minimum or full update of packages is required and if any packages need to
         be deleted. For valid values, see zoneadm(1M)'
-    default: empty string
+    type: str
+    default: ''
   timeout:
     description:
       - Timeout, in seconds, for zone to boot.
+    type: int
     default: 600
 '''
 
@@ -137,6 +151,7 @@ EXAMPLES = '''
 
 import os
 import platform
+import re
 import tempfile
 import time
 
@@ -172,6 +187,11 @@ class Zone(object):
         (self.os_major, self.os_minor) = platform.release().split('.')
         if int(self.os_minor) < 10:
             self.module.fail_json(msg='This module requires Solaris 10 or later')
+
+        match = re.match('^[a-zA-Z0-9][-_.a-zA-Z0-9]{0,62}$', self.name)
+        if not match:
+            self.module.fail_json(msg="Provided zone name is not a valid zone name. "
+                                      "Please refer documentation for correct zone name specifications.")
 
     def configure(self):
         if not self.path:

@@ -139,9 +139,11 @@ class TestManager(unittest.TestCase):
             port=80,
             interval=20,
             timeout=30,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -166,9 +168,11 @@ class TestManager(unittest.TestCase):
             port=80,
             interval=20,
             timeout=30,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_gtm_monitor_tcp_1.json'))
@@ -193,9 +197,11 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             ignore_down_response=True,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_gtm_monitor_tcp_1.json'))

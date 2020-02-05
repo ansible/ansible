@@ -6,7 +6,7 @@ Return Values
 .. contents:: Topics
 
 Ansible modules normally return a data structure that can be registered into a variable, or seen directly when output by
-the `ansible` program. Each module can optionally document its own unique return values (visible through ansible-doc and on the :ref:`main docsite<ansible_documentation>`.
+the `ansible` program. Each module can optionally document its own unique return values (visible through ansible-doc and on the :ref:`main docsite<ansible_documentation>`).
 
 This document covers return values common to all modules.
 
@@ -23,6 +23,11 @@ For those modules that implement `backup=no|yes` when manipulating files, a path
 changed
 ```````
 A boolean indicating if the task had to make changes.
+
+diff
+````
+
+Information on differences between the previous and current state. Often a dictionary with entries ``before`` and ``after``, which will then be formatted by the callback plugin to a diff view.
 
 failed
 ``````

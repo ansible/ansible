@@ -26,7 +26,7 @@ description:
     - Be careful while removing disk specified as this may lead to data loss.
 version_added: 2.8
 author:
-    - Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+    - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
     - Tested on vSphere 6.0 and 6.5
 requirements:
@@ -36,11 +36,19 @@ options:
    name:
      description:
      - Name of the virtual machine.
-     - This is a required parameter, if parameter C(uuid) is not supplied.
+     - This is a required parameter, if parameter C(uuid) or C(moid) is not supplied.
+     type: str
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
-     - This is a required parameter, if parameter C(name) is not supplied.
+     - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
+     type: str
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
+     type: str
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -56,10 +64,18 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
+     type: str
    datacenter:
      description:
      - The datacenter name to which virtual machine belongs to.
      required: True
+     type: str
+   use_instance_uuid:
+     description:
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
+     default: no
+     type: bool
+     version_added: '2.8'
    disk:
      description:
      - A list of disks to add.
@@ -68,28 +84,73 @@ options:
      - 'Valid attributes are:'
      - ' - C(size[_tb,_gb,_mb,_kb]) (integer): Disk storage size in specified unit.'
      - '   If C(size) specified then unit must be specified. There is no space allowed in between size number and unit.'
-     - '   Only first occurance in disk element will be considered, even if there are multiple size* parameters available.'
+     - '   Only first occurrence in disk element will be considered, even if there are multiple size* parameters available.'
      - ' - C(type) (string): Valid values are:'
      - '     - C(thin) thin disk'
      - '     - C(eagerzeroedthick) eagerzeroedthick disk'
      - '     - C(thick) thick disk'
      - '     Default: C(thick) thick disk, no eagerzero.'
+     - ' - C(disk_mode) (string): Type of disk mode. Valid values are:'
+     - '     - C(persistent) Changes are immediately and permanently written to the virtual disk. This is default.'
+     - '     - C(independent_persistent) Same as persistent, but not affected by snapshots.'
+     - '     - C(independent_nonpersistent) Changes to virtual disk are made to a redo log and discarded at power off, but not affected by snapshots.'
      - ' - C(datastore) (string): Name of datastore or datastore cluster to be used for the disk.'
      - ' - C(autoselect_datastore) (bool): Select the less used datastore. Specify only if C(datastore) is not specified.'
      - ' - C(scsi_controller) (integer): SCSI controller number. Valid value range from 0 to 3.'
      - '   Only 4 SCSI controllers are allowed per VM.'
      - '   Care should be taken while specifying C(scsi_controller) is 0 and C(unit_number) as 0 as this disk may contain OS.'
      - ' - C(unit_number) (integer): Disk Unit Number. Valid value range from 0 to 15. Only 15 disks are allowed per SCSI Controller.'
-     - ' - C(scsi_type) (string): Type of SCSI controller. This value is required only for the first occurance of SCSI Controller.'
+     - ' - C(scsi_type) (string): Type of SCSI controller. This value is required only for the first occurrence of SCSI Controller.'
      - '   This value is ignored, if SCSI Controller is already present or C(state) is C(absent).'
      - '   Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual).'
      - '   C(paravirtual) is default value for this parameter.'
+     - ' - C(destroy) (bool): If C(state) is C(absent), make sure the disk file is deleted from the datastore (default C(yes)).'
+     - '   Added in version 2.10.'
+     - ' - C(filename) (string): Existing disk image to be used. Filename must already exist on the datastore.'
+     - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.10.'
      - ' - C(state) (string): State of disk. This is either "absent" or "present".'
      - '   If C(state) is set to C(absent), disk will be removed permanently from virtual machine configuration and from VMware storage.'
      - '   If C(state) is set to C(present), disk will be added if not present at given SCSI Controller and Unit Number.'
      - '   If C(state) is set to C(present) and disk exists with different size, disk size is increased.'
      - '   Reducing disk size is not allowed.'
+     suboptions:
+       iolimit:
+         description:
+           - Section specifies the shares and limit for storage I/O resource.
+         suboptions:
+           limit:
+             description:
+               - Section specifies values for limit where the utilization of a virtual machine will not exceed, even if there are available resources.
+           shares:
+             description:
+               - Specifies different types of shares user can add for the given disk.
+             suboptions:
+               level:
+                 description:
+                   - Specifies different level for the shares section.
+                   - Valid values are low, normal, high, custom.
+               level_value:
+                 description:
+                   - Custom value when C(level) is set as C(custom).
+                 type: int
+             type: list
+             elements: dict
+       shares:
+         description:
+           - section for iolimit section tells about what are all different types of shares user can add for disk.
+         suboptions:
+           level:
+             description:
+               - tells about different level for the shares section, valid values are low,normal,high,custom.
+             type: str
+           level_value:
+             description:
+               - custom value when level is set as custom.
+             type: int
+         type: list
+         elements: dict
      default: []
+     type: list
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -110,6 +171,7 @@ EXAMPLES = '''
         scsi_controller: 1
         unit_number: 1
         scsi_type: 'paravirtual'
+        disk_mode: 'persistent'
       - size_gb: 10
         type: eagerzeroedthick
         state: present
@@ -117,6 +179,7 @@ EXAMPLES = '''
         scsi_controller: 2
         scsi_type: 'buslogic'
         unit_number: 12
+        disk_mode: 'independent_persistent'
       - size: 10Gb
         type: eagerzeroedthick
         state: present
@@ -124,8 +187,54 @@ EXAMPLES = '''
         scsi_controller: 2
         scsi_type: 'buslogic'
         unit_number: 1
+        disk_mode: 'independent_nonpersistent'
+      - filename: "[datastore1] path/to/existing/disk.vmdk"
   delegate_to: localhost
   register: disk_facts
+
+- name: Add disks with specified shares to the virtual machine
+  vmware_guest_disk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    disk:
+      - size_gb: 1
+        type: thin
+        datastore: datacluster0
+        state: present
+        scsi_controller: 1
+        unit_number: 1
+        disk_mode: 'independent_persistent'
+        shares:
+          level: custom
+          level_value: 1300
+  delegate_to: localhost
+  register: test_custom_shares
+
+- name: create new disk with custom IO limits and shares in IO Limits
+  vmware_guest_disk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    disk:
+      - size_gb: 1
+        type: thin
+        datastore: datacluster0
+        state: present
+        scsi_controller: 1
+        unit_number: 1
+        disk_mode: 'independent_persistent'
+        iolimit:
+            limit: 1506
+            shares:
+              level: custom
+              level_value: 1305
+  delegate_to: localhost
+  register: test_custom_IoLimit_shares
 
 - name: Remove disks from virtual machine using name
   vmware_guest_disk:
@@ -139,6 +248,37 @@ EXAMPLES = '''
       - state: absent
         scsi_controller: 1
         unit_number: 1
+  delegate_to: localhost
+  register: disk_facts
+
+- name: Remove disk from virtual machine using moid
+  vmware_guest_disk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    moid: vm-42
+    disk:
+      - state: absent
+        scsi_controller: 1
+        unit_number: 1
+  delegate_to: localhost
+  register: disk_facts
+
+- name: Remove disk from virtual machine but keep the VMDK file on the datastore
+  vmware_guest_disk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    name: VM_225
+    disk:
+      - state: absent
+        scsi_controller: 1
+        unit_number: 2
+        destroy: no
   delegate_to: localhost
   register: disk_facts
 '''
@@ -212,24 +352,31 @@ class PyVmomiHelper(PyVmomi):
         return scsi_ctl
 
     @staticmethod
-    def create_scsi_disk(scsi_ctl_key, disk_index):
+    def create_scsi_disk(scsi_ctl_key, disk_index, disk_mode, disk_filename):
         """
         Create Virtual Device Spec for virtual disk
         Args:
             scsi_ctl_key: Unique SCSI Controller Key
             disk_index: Disk unit number at which disk needs to be attached
+            disk_mode: Disk mode
+            disk_filename: Path to the disk file on the datastore
 
         Returns: Virtual Device Spec for virtual disk
 
         """
         disk_spec = vim.vm.device.VirtualDeviceSpec()
         disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-        disk_spec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
         disk_spec.device = vim.vm.device.VirtualDisk()
         disk_spec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
-        disk_spec.device.backing.diskMode = 'persistent'
+        disk_spec.device.backing.diskMode = disk_mode
         disk_spec.device.controllerKey = scsi_ctl_key
         disk_spec.device.unitNumber = disk_index
+
+        if disk_filename is not None:
+            disk_spec.device.backing.fileName = disk_filename
+        else:
+            disk_spec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
+
         return disk_spec
 
     def reconfigure_vm(self, config_spec, device_type):
@@ -256,6 +403,26 @@ class PyVmomiHelper(PyVmomi):
                                       " product versioning restrictions: %s" % to_native(e.msg))
 
         return changed, results
+
+    def get_ioandshares_diskconfig(self, disk_spec, disk):
+        io_disk_spec = vim.StorageResourceManager.IOAllocationInfo()
+        if 'iolimit' in disk:
+            io_disk_spec.limit = disk['iolimit']['limit']
+            if 'shares' in disk['iolimit']:
+                shares_spec = vim.SharesInfo()
+                shares_spec.level = disk['iolimit']['shares']['level']
+                if shares_spec.level == 'custom':
+                    shares_spec.shares = disk['iolimit']['shares']['level_value']
+                io_disk_spec.shares = shares_spec
+            disk_spec.device.storageIOAllocation = io_disk_spec
+        if 'shares' in disk:
+            shares_spec = vim.SharesInfo()
+            shares_spec.level = disk['shares']['level']
+            if shares_spec.level == 'custom':
+                shares_spec.shares = disk['shares']['level_value']
+            io_disk_spec.shares = shares_spec
+            disk_spec.device.storageIOAllocation = io_disk_spec
+        return disk_spec
 
     def ensure_disks(self, vm_obj=None):
         """
@@ -308,17 +475,23 @@ class PyVmomiHelper(PyVmomi):
             scsi_controller = disk['scsi_controller'] + 1000  # VMware auto assign 1000 + SCSI Controller
             if disk['disk_unit_number'] not in current_scsi_info[scsi_controller]['disks'] and disk['state'] == 'present':
                 # Add new disk
-                disk_spec = self.create_scsi_disk(scsi_controller, disk['disk_unit_number'])
-                disk_spec.device.capacityInKB = disk['size']
+                disk_spec = self.create_scsi_disk(scsi_controller, disk['disk_unit_number'], disk['disk_mode'], disk['filename'])
+                if disk['filename'] is None:
+                    disk_spec.device.capacityInKB = disk['size']
                 if disk['disk_type'] == 'thin':
                     disk_spec.device.backing.thinProvisioned = True
                 elif disk['disk_type'] == 'eagerzeroedthick':
                     disk_spec.device.backing.eagerlyScrub = True
-                disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (disk['datastore'].name,
-                                                                               vm_name, vm_name,
-                                                                               str(scsi_controller),
-                                                                               str(disk['disk_unit_number']))
+                if disk['filename'] is None:
+                    disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (
+                        disk['datastore'].name,
+                        vm_name, vm_name,
+                        str(scsi_controller),
+                        str(disk['disk_unit_number']))
+                else:
+                    disk_spec.device.backing.fileName = disk['filename']
                 disk_spec.device.backing.datastore = disk['datastore']
+                disk_spec = self.get_ioandshares_diskconfig(disk_spec, disk)
                 self.config_spec.deviceChange.append(disk_spec)
                 disk_change = True
                 current_scsi_info[scsi_controller]['disks'][disk['disk_unit_number']] = disk_spec.device
@@ -331,11 +504,12 @@ class PyVmomiHelper(PyVmomi):
                     # Edit and no resizing allowed
                     if disk['size'] < disk_spec.device.capacityInKB:
                         self.module.fail_json(msg="Given disk size at disk index [%s] is smaller than found (%d < %d)."
-                                                  " Reducing disks is not allowed." % (disk['disk_index'],
-                                                                                       disk['size'],
-                                                                                       disk_spec.device.capacityInKB))
+                                                  "Reducing disks is not allowed." % (disk['disk_index'],
+                                                                                      disk['size'],
+                                                                                      disk_spec.device.capacityInKB))
                     if disk['size'] != disk_spec.device.capacityInKB:
                         disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+                        disk_spec = self.get_ioandshares_diskconfig(disk_spec, disk)
                         disk_spec.device.capacityInKB = disk['size']
                         self.config_spec.deviceChange.append(disk_spec)
                         disk_change = True
@@ -347,7 +521,8 @@ class PyVmomiHelper(PyVmomi):
                     # Disk already exists, deleting
                     disk_spec = vim.vm.device.VirtualDeviceSpec()
                     disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
-                    disk_spec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.destroy
+                    if disk['destroy'] is True:
+                        disk_spec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.destroy
                     disk_spec.device = current_scsi_info[scsi_controller]['disks'][disk['disk_unit_number']]
                     self.config_spec.deviceChange.append(disk_spec)
                     disk_change = True
@@ -381,10 +556,13 @@ class PyVmomiHelper(PyVmomi):
             # Initialize default value for disk
             current_disk = dict(disk_index=disk_index,
                                 state='present',
+                                destroy=True,
+                                filename=None,
                                 datastore=None,
                                 autoselect_datastore=True,
                                 disk_unit_number=0,
-                                scsi_controller=0)
+                                scsi_controller=0,
+                                disk_mode='persistent')
             # Check state
             if 'state' in disk:
                 if disk['state'] not in ['absent', 'present']:
@@ -394,7 +572,9 @@ class PyVmomiHelper(PyVmomi):
                 else:
                     current_disk['state'] = disk['state']
 
-            if current_disk['state'] == 'present':
+            if current_disk['state'] == 'absent':
+                current_disk['destroy'] = disk['destroy']
+            elif current_disk['state'] == 'present':
                 # Select datastore or datastore cluster
                 if 'datastore' in disk:
                     if 'autoselect_datastore' in disk:
@@ -429,10 +609,13 @@ class PyVmomiHelper(PyVmomi):
                             datastore_freespace = ds.summary.freeSpace
                     current_disk['datastore'] = datastore
 
-                if 'datastore' not in disk and 'autoselect_datastore' not in disk:
+                if 'datastore' not in disk and 'autoselect_datastore' not in disk and 'filename' not in disk:
                     self.module.fail_json(msg="Either 'datastore' or 'autoselect_datastore' is"
                                               " required parameter while creating disk for "
                                               "disk index [%s]." % disk_index)
+
+                if 'filename' in disk:
+                    current_disk['filename'] = disk['filename']
 
                 if [x for x in disk.keys() if x.startswith('size_') or x == 'size']:
                     # size, size_tb, size_gb, size_mb, size_kb
@@ -489,7 +672,7 @@ class PyVmomiHelper(PyVmomi):
                                                                                     disk_index,
                                                                                     "', '".join(disk_units.keys())))
 
-                else:
+                elif current_disk['filename'] is None:
                     # No size found but disk, fail
                     self.module.fail_json(msg="No size, size_kb, size_mb, size_gb or size_tb"
                                               " attribute found into disk index [%s] configuration." % disk_index)
@@ -537,6 +720,13 @@ class PyVmomiHelper(PyVmomi):
                                           " 'disk_type' value from ['thin', 'thick', 'eagerzeroedthick']." % disk_index)
             current_disk['disk_type'] = disk_type
 
+            # Mode of Disk
+            temp_disk_mode = disk.get('disk_mode', 'persistent').lower()
+            if temp_disk_mode not in ['persistent', 'independent_persistent', 'independent_nonpersistent']:
+                self.module.fail_json(msg="Invalid 'disk_mode' specified for disk index [%s]. Please specify"
+                                          " 'disk_mode' value from ['persistent', 'independent_persistent', 'independent_nonpersistent']." % disk_index)
+            current_disk['disk_mode'] = temp_disk_mode
+
             # SCSI Controller Type
             scsi_contrl_type = disk.get('scsi_type', 'paravirtual').lower()
             if scsi_contrl_type not in self.scsi_device_type.keys():
@@ -544,7 +734,10 @@ class PyVmomiHelper(PyVmomi):
                                           " 'scsi_type' value from ['%s']" % (disk_index,
                                                                               "', '".join(self.scsi_device_type.keys())))
             current_disk['scsi_type'] = scsi_contrl_type
-
+            if 'shares' in disk:
+                current_disk['shares'] = disk['shares']
+            if 'iolimit' in disk:
+                current_disk['iolimit'] = disk['iolimit']
             disks_data.append(current_disk)
         return disks_data
 
@@ -572,7 +765,7 @@ class PyVmomiHelper(PyVmomi):
                 rec = self.content.storageResourceManager.RecommendDatastores(storageSpec=storage_spec)
                 rec_action = rec.recommendations[0].action[0]
                 return rec_action.destination.name
-            except Exception as e:
+            except Exception:
                 # There is some error so we fall back to general workflow
                 pass
         datastore = None
@@ -603,6 +796,11 @@ class PyVmomiHelper(PyVmomi):
         disk_index = 0
         for disk in vm_obj.config.hardware.device:
             if isinstance(disk, vim.vm.device.VirtualDisk):
+                if disk.storageIOAllocation is None:
+                    disk.storageIOAllocation = vim.StorageResourceManager.IOAllocationInfo()
+                    disk.storageIOAllocation.shares = vim.SharesInfo()
+                if disk.shares is None:
+                    disk.shares = vim.SharesInfo()
                 disks_facts[disk_index] = dict(
                     key=disk.key,
                     label=disk.deviceInfo.label,
@@ -615,6 +813,11 @@ class PyVmomiHelper(PyVmomi):
                     backing_eagerlyscrub=bool(disk.backing.eagerlyScrub),
                     controller_key=disk.controllerKey,
                     unit_number=disk.unitNumber,
+                    iolimit_limit=disk.storageIOAllocation.limit,
+                    iolimit_shares_level=disk.storageIOAllocation.shares.level,
+                    iolimit_shares_limit=disk.storageIOAllocation.shares.shares,
+                    shares_level=disk.shares.level,
+                    shares_limit=disk.shares.shares,
                     capacity_in_kb=disk.capacityInKB,
                     capacity_in_bytes=disk.capacityInBytes,
                 )
@@ -627,12 +830,18 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
-        disk=dict(type=list, default=[]),
+        disk=dict(type='list', default=[]),
+        use_instance_uuid=dict(type='bool', default=False),
     )
-    module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=[['name', 'uuid']])
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_one_of=[
+            ['name', 'uuid', 'moid']
+        ]
+    )
 
     if module.params['folder']:
         # FindByInventoryPath() does not require an absolute path
@@ -646,8 +855,9 @@ def main():
     if not vm:
         # We unable to find the virtual machine user specified
         # Bail out
+        vm_id = (module.params.get('name') or module.params.get('uuid') or module.params.get('moid'))
         module.fail_json(msg="Unable to manage disks for non-existing"
-                             " virtual machine '%s'." % (module.params.get('uuid') or module.params.get('name')))
+                             " virtual machine '%s'." % vm_id)
 
     # VM exists
     try:

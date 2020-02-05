@@ -29,17 +29,21 @@ options:
     description:
       - "Name of the s3 bucket"
     required: true
+    type: str
   expiration_date:
     description:
       - >
         Indicates the lifetime of the objects that are subject to the rule by the date they will expire. The value must be ISO-8601 format, the time must
         be midnight and a GMT timezone must be specified.
+    type: str
   expiration_days:
     description:
       - "Indicates the lifetime, in days, of the objects that are subject to the rule. The value must be a non-zero positive integer."
+    type: int
   prefix:
     description:
       - "Prefix identifying one or more objects to which the rule applies.  If no prefix is specified, the rule will apply to the whole bucket."
+    type: str
   purge_transitions:
     description:
       - >
@@ -54,6 +58,7 @@ options:
       - 'Delete noncurrent versions this many days after they become noncurrent'
     required: false
     version_added: 2.6
+    type: int
   noncurrent_version_storage_class:
     description:
       - 'Transition noncurrent versions to this storage class'
@@ -61,11 +66,13 @@ options:
     choices: ['glacier', 'onezone_ia', 'standard_ia']
     required: false
     version_added: 2.6
+    type: str
   noncurrent_version_transition_days:
     description:
       - 'Transition noncurrent versions this many days after they become noncurrent'
     required: false
     version_added: 2.6
+    type: int
   noncurrent_version_transitions:
     description:
       - >
@@ -74,34 +81,41 @@ options:
           I(transition_days)
           I(storage_class)
     version_added: 2.6
+    type: list
   rule_id:
     description:
       - "Unique identifier for the rule. The value cannot be longer than 255 characters. A unique value for the rule will be generated if no value is provided."
+    type: str
   state:
     description:
       - "Create or remove the lifecycle rule"
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   status:
     description:
       - "If 'enabled', the rule is currently being applied. If 'disabled', the rule is not currently being applied."
     default: enabled
     choices: [ 'enabled', 'disabled' ]
+    type: str
   storage_class:
     description:
       - "The storage class to transition to. Currently there are two supported values - 'glacier',  'onezone_ia', or 'standard_ia'."
       - "The 'standard_ia' class is only being available from Ansible version 2.2."
     default: glacier
     choices: [ 'glacier', 'onezone_ia', 'standard_ia']
+    type: str
   transition_date:
     description:
       - >
         Indicates the lifetime of the objects that are subject to the rule by the date they will transition to a different storage class.
         The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified. If transition_days is not specified,
         this parameter is required."
+    type: str
   transition_days:
     description:
       - "Indicates when, in days, an object transitions to a different storage class. If transition_date is not specified, this parameter is required."
+    type: int
   transitions:
     description:
       - A list of transition behaviors to be applied to the rule. Each storage class may be used only once. Each transition
@@ -110,6 +124,11 @@ options:
           I(transition_date)
           I(storage_class)
     version_added: 2.6
+    type: list
+  requester_pays:
+    description:
+      - The I(requester_pays) option does nothing and will be removed in Ansible 2.14.
+    type: bool
 extends_documentation_fragment:
     - aws
     - ec2
@@ -122,7 +141,7 @@ EXAMPLES = '''
 - s3_lifecycle:
     name: mybucket
     expiration_days: 30
-    prefix: /logs/
+    prefix: logs/
     status: enabled
     state: present
 
@@ -131,7 +150,7 @@ EXAMPLES = '''
     name: mybucket
     transition_days: 7
     expiration_days: 90
-    prefix: /logs/
+    prefix: logs/
     status: enabled
     state: present
 
@@ -142,27 +161,27 @@ EXAMPLES = '''
     name: mybucket
     transition_date: "2020-12-30T00:00:00.000Z"
     expiration_date: "2030-12-30T00:00:00.000Z"
-    prefix: /logs/
+    prefix: logs/
     status: enabled
     state: present
 
 # Disable the rule created above
 - s3_lifecycle:
     name: mybucket
-    prefix: /logs/
+    prefix: logs/
     status: disabled
     state: present
 
 # Delete the lifecycle rule created above
 - s3_lifecycle:
     name: mybucket
-    prefix: /logs/
+    prefix: logs/
     state: absent
 
 # Configure a lifecycle rule to transition all backup files older than 31 days in /backups/ to standard infrequent access class.
 - s3_lifecycle:
     name: mybucket
-    prefix: /backups/
+    prefix: backups/
     storage_class: standard_ia
     transition_days: 31
     state: present
@@ -171,7 +190,7 @@ EXAMPLES = '''
 # Configure a lifecycle rule to transition files to infrequent access after 30 days and glacier after 90
 - s3_lifecycle:
     name: mybucket
-    prefix: /logs/
+    prefix: logs/
     state: present
     status: enabled
     transitions:
@@ -435,7 +454,7 @@ def main():
         noncurrent_version_transition_days=dict(type='int'),
         noncurrent_version_transitions=dict(type='list'),
         prefix=dict(),
-        requester_pays=dict(default='no', type='bool'),
+        requester_pays=dict(type='bool', removed_in_version='2.14'),
         rule_id=dict(),
         state=dict(default='present', choices=['present', 'absent']),
         status=dict(default='enabled', choices=['enabled', 'disabled']),

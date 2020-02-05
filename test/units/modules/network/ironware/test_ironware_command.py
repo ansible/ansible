@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat.mock import patch
-from ansible.modules.network.ironware import ironware_command
 from units.modules.utils import set_module_args
+from ansible.modules.network.ironware import ironware_command
 from .ironware_module import TestIronwareModule, load_fixture
 
 

@@ -1,0 +1,160 @@
+# Test code for the vmware_guest_cross_vc_clone Operations.
+# Copyright: (c) 2020, Anusha Hegde <anushah@vmware.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_datacenter: true
+
+- name: Create VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    folder: "{{ f0 }}"
+    hardware:
+      num_cpus: 1
+      memory_mb: 512
+    disk:
+      - size: 1gb
+        type: thin
+        autoselect_datastore: True
+    state: present
+  register: create_vm_for_test
+
+- name: Create VM template
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm2
+    is_template: True
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    folder: "{{ f0 }}"
+    hardware:
+      num_cpus: 1
+      memory_mb: 512
+    disk:
+      - size: 1gb
+        type: thin
+        autoselect_datastore: True
+    state: present
+  register: create_vm_template_for_test
+
+- name: clone a template across VC
+  vmware_guest_cross_vc_clone:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "test_vm2"
+    destination_vm_name: "cloned_vm_from_template"
+    destination_vcenter: '{{ destination_vcenter_hostname }}'
+    destination_vcenter_username: '{{ destination_vcenter_username }}'
+    destination_vcenter_password: '{{ destination_vcenter_password }}'
+    destination_host: '{{ destination_esxi }}'
+    destination_datastore: '{{ destination_datastore }}'
+    destination_vm_folder: '{{ destination_vm_folder }}'
+    power_on: no
+  register: cross_vc_clone_from_template
+
+- name: assert that changes were made
+  assert:
+    that:
+        - cross_vc_clone_from_template is changed
+
+- name: clone a VM across VC
+  vmware_guest_cross_vc_clone:
+    hostname: '{{ destination_vcenter_hostname }}'
+    username: '{{ destination_vcenter_username }}'
+    password: "{{ destination_vcenter_password }}"
+    validate_certs: no
+    name: "test_vm1"
+    destination_vm_name: "cloned_vm_from_vm"
+    destination_vcenter: '{{ destination_vcenter_hostname }}'
+    destination_vcenter_username: '{{ destination_vcenter_username }}'
+    destination_vcenter_password: '{{ destination_vcenter_password }}'
+    destination_vcenter_port: '{{ destination_vcenter_port }}'
+    destination_vcenter_validate_certs: '{{ destination_vcenter_validate_certs }}'
+    destination_host: '{{ destination_esxi1 }}'
+    destination_datastore: '{{ destination_datastore }}'
+    destination_vm_folder: '{{ destination_vm_folder }}'
+    power_on: yes
+  register: cross_vc_clone_from_vm
+
+- name: assert that changes were made
+  assert:
+    that:
+        - cross_vc_clone_from_vm is changed
+
+- name: clone a VM across VC when datastore cluster is specified
+  vmware_guest_cross_vc_clone:
+    hostname: '{{ destination_vcenter_hostname }}'
+    username: '{{ destination_vcenter_username }}'
+    password: "{{ destination_vcenter_password }}"
+    validate_certs: no
+    name: "test_vm1"
+    destination_vm_name: "cloned_vm_from_vm"
+    destination_vcenter: '{{ destination_vcenter_hostname }}'
+    destination_vcenter_username: '{{ destination_vcenter_username }}'
+    destination_vcenter_password: '{{ destination_vcenter_password }}'
+    destination_host: '{{ destination_esxi1 }}'
+    destination_datastore: '{{ destination_datastore_cluster }}'
+    destination_vm_folder: '{{ destination_vm_folder }}'
+    power_on: yes
+  register: cross_vc_clone_from_vm_with_datastore_cluster
+
+- name: assert that changes were made
+  assert:
+    that:
+        - cross_vc_clone_from_vm_with_datastore_cluster is changed
+
+- name: clone in check mode
+  vmware_guest_cross_vc_clone:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "test_vm2"
+    destination_vm_name: "cloned_vm_from_template_in_check_mode"
+    destination_vcenter: '{{ destination_vcenter_hostname }}'
+    destination_vcenter_username: '{{ destination_vcenter_username }}'
+    destination_vcenter_password: '{{ destination_vcenter_password }}'
+    destination_host: '{{ destination_esxi }}'
+    destination_datastore: '{{ destination_datastore }}'
+    destination_vm_folder: '{{ destination_vm_folder }}'
+    power_on: no
+  check_mode: yes
+  register: check_mode_clone
+
+- debug:
+    var: check_mode_clone
+
+- name: idempotency check - VM name already exists
+  vmware_guest_cross_vc_clone:
+    hostname: '{{ destination_vcenter_hostname }}'
+    username: '{{ destination_vcenter_username }}'
+    password: "{{ destination_vcenter_password }}"
+    validate_certs: no
+    name: "test_vm1"
+    destination_vm_name: "cloned_vm_from_vm"
+    destination_vcenter: '{{ destination_vcenter_hostname }}'
+    destination_vcenter_username: '{{ destination_vcenter_username }}'
+    destination_vcenter_password: '{{ destination_vcenter_password }}'
+    destination_host: '{{ destination_esxi1 }}'
+    destination_datastore: '{{ destination_datastore }}'
+    destination_vm_folder: '{{ destination_vm_folder }}'
+    power_on: yes
+  register: idempotency_check
+
+- name: assert that no changes were made
+  assert:
+    that:
+        - idempotency_check is unchanged

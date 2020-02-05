@@ -1,0 +1,66 @@
+---
+- debug:
+    msg: "START ce_lldp merged integration tests on connection={{ ansible_connection }}"
+
+- block:
+
+  - include_tasks: cleanup.yaml
+
+  - name: Merge the provided configuration with the exisiting running configuration
+    ce_lldp: &merged
+      lldpenable: enabled
+      mdnstatus: rxOnly
+      interval: 35
+      hold_multiplier: 5
+      restart_delay: 3
+      transmit_delay: 5
+      notification_interval: 6
+      fast_count: 5
+      mdn_notification_interval: 10.1.1.1
+      management_address: 10.10.10.1
+      bind_name: vlanif100
+    register: result
+
+  - name: change ansible_connection to network_cli
+    set_fact:
+      ansible_connection: network_cli
+
+  - name: display lldp
+    ce_command:
+      commands:
+        - display current-configuration | include lldp
+    register: result_display
+
+  - name: change ansible_connection to netconf
+    set_fact:
+      ansible_connection: netconf
+ 
+  - name: Assert the configuration is reflected on host
+    assert:
+      that:
+        - "result['changed'] == true"
+        - "'lldp enable' in result_display.stdout[0]"
+        - "'undo lldp mdn disable' in result_display.stdout[0]"
+        - "'lldp transmit interval 35' in result_display.stdout[0]"
+        - "'lldp transmit multiplier 5' in result_display.stdout[0]"
+        - "'lldp restart 3' in result_display.stdout[0]"
+        - "'lldp transmit delay 5' in result_display.stdout[0]"
+        - "'lldp fast-count 5' in result_display.stdout[0]"
+        - "'lldp management-address 10.10.10.1' in result_display.stdout[0]"
+        - "'lldp mdn trap-interval 6' in result_display.stdout[0]"
+        - "'lldp trap-interval 6' in result_display.stdout[0]"
+        - "'lldp management-address bind interface vlanif100' in result_display.stdout[0]"
+
+  - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+    ce_lldp: *merged
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+      that:
+        - "result['changed'] == false"
+
+  - include_tasks: cleanup.yaml
+
+- debug:
+    msg: "END ce_lldp merged integration tests on connection={{ ansible_connection }}"

@@ -1,0 +1,28 @@
+- debug:
+    msg: executing testrole from legacy playbook-adjacent roles dir
+
+- name: exec a FQ module from a legacy role
+  testns.testcoll.testmodule:
+  register: coll_module_out
+
+- name: exec a legacy playbook-adjacent module from a legacy role
+  ping:
+  register: ping_out
+
+- name: sample collections list inside a legacy role (should be empty)
+  testns.testcoll.plugin_lookup:
+  register: plugin_lookup_out
+
+- debug:
+    msg: '{{ test_role_input | default("(undefined)") }}'
+  register: test_role_output
+
+- set_fact:
+    testrole_source: legacy roles dir
+
+- assert:
+    that:
+    - coll_module_out.source == 'user'
+    # ensure we used the library/ ping override, not the builtin or one from another collection
+    - ping_out.source == 'legacy_library_dir'
+    - not plugin_lookup_out.collection_list

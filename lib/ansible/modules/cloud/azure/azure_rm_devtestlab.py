@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlab
 version_added: "2.8"
-short_description: Manage Azure DevTest Lab instance.
+short_description: Manage Azure DevTest Lab instance
 description:
     - Create, update and delete instance of Azure DevTest Lab.
 
@@ -35,18 +35,18 @@ options:
             - The location of the resource.
     storage_type:
         description:
-            - Type of storage used by the lab. It can be either C(premium) or C(standard). Default is C(premium).
+            - Type of storage used by the lab. It can be either C(premium) or C(standard).
         choices:
             - 'standard'
             - 'premium'
     premium_data_disks:
         description:
-            - "Allow creation of C(premium) data disks."
+            - Allow creation of premium data disks.
         type: bool
     state:
       description:
-        - Assert the state of the DevTest Lab.
-        - Use C(present) to create or update an DevTest Lab and C(absent) to delete it.
+          - Assert the state of the DevTest Lab.
+          - Use C(present) to create or update an DevTest Lab and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -57,14 +57,14 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Create (or update) DevTest Lab
     azure_rm_devtestlab:
-      resource_group: testrg
+      resource_group: myResourceGroup
       name: mylab
       storage_type: standard
 '''
@@ -75,7 +75,7 @@ id:
         - The identifier of the resource.
     returned: always
     type: str
-    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/testrg/providers/microsoft.devtestlab/labs/mylab
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/mylab
 '''
 
 import time

@@ -1,0 +1,5 @@
+bugfixes:
+  - >
+     group - The group module was not correctly detecting whether a local
+     group is existing or not with local set to yes if the same group
+     exists in a non local group repository e.g. LDAP. (https://github.com/ansible/ansible/issues/58619)

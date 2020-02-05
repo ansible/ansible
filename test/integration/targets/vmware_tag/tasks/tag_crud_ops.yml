@@ -1,0 +1,112 @@
+# Test code for the vmware_tag CRUD Operations.
+# Copyright: (c) 2019, Pavan Bidkar <pbidkar@vmware.com>
+# Copyright: (c) 2019, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+    - &cat_create
+      name: Create Category
+      vmware_category:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: False
+        category_name: Sample_Cat_0006
+        category_description: Sample Description
+        category_cardinality: 'multiple'
+        state: present
+      register: category_create
+
+    - name: Check Category is created
+      assert:
+        that:
+          - category_create.changed
+
+    - <<: *cat_create
+      name: Create category again
+
+    - name: Check if no changes are made
+      assert:
+        that:
+          - not category_create.changed
+
+    - name: Set Cat_ID Paramter. Required for Tag creation
+      set_fact: Cat_ID={{ category_create['category_results']['category_id'] }}
+
+    # Testcase Create Tag
+    - &tag_create
+      name: Create a tag
+      vmware_tag:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        tag_name: Sample_Tag_0001
+        category_id: "{{ Cat_ID }}"
+        tag_description: Sample Description
+        state: present
+      register: tag_creation
+
+    - name: Check tag is created
+      assert:
+        that:
+          - tag_creation.changed
+
+    - <<: *tag_create
+      name: Create a tag again
+
+    - name: Check if no changes are made
+      assert:
+        that:
+          - not tag_creation.changed
+
+    # Testcase Update Tag Description (reconfig)
+    - &tag_update
+      name: Update Tag Description
+      vmware_tag:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        tag_name: Sample_Tag_0001
+        tag_description: Some fancy description
+        state: present
+      register: update_tag_desc
+
+    - name: Check tag description updated
+      assert:
+        that:
+          - update_tag_desc.changed
+
+    - <<: *tag_update
+      name: Update tag description again
+
+    - name: Check if no changes are made
+      assert:
+        that:
+          - not update_tag_desc.changed
+
+    # Testcase Delete the Tag
+    - &tag_delete
+      name: Delete Tag
+      vmware_tag:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        tag_name: Sample_Tag_0001
+        state: absent
+      register: delete_tag
+
+    - name: Check Tag is Deleted
+      assert:
+        that:
+          - delete_tag.changed
+    - <<: *tag_delete
+      name: Delete tag again
+
+    - name: Check if no changes are made
+      assert:
+        that:
+          - not delete_tag.changed

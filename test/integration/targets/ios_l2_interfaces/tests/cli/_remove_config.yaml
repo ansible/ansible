@@ -1,0 +1,19 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      interface GigabitEthernet 0/1
+      no switchport access vlan
+      no switchport trunk encapsulation
+      no switchport trunk native vlan
+      no switchport trunk allowed vlan
+      no switchport trunk pruning vlan
+      interface GigabitEthernet 0/2
+      no switchport access vlan
+      no switchport trunk encapsulation
+      no switchport trunk native vlan
+      no switchport trunk allowed vlan
+      no switchport trunk pruning vlan
+  when: ansible_net_version != "15.6(2)T"

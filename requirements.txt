@@ -5,5 +5,4 @@
 # be suitable)
 jinja2
 PyYAML
-paramiko
 cryptography

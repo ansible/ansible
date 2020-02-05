@@ -388,7 +388,7 @@ standard:
 .. Note:: You should only quote strings when it is absolutely
     necessary or required by YAML, and then use single quotes.
 
-The YAML specification considers the following `escape sequences <http://yaml.org/spec/current.html#id2517668>`_:
+The YAML specification considers the following `escape sequences <https://yaml.org/spec/current.html#id2517668>`_:
 
 * ``\0``, ``\\``, ``\"``, ``\_``, ``\a``, ``\b``, ``\e``, ``\f``, ``\n``, ``\r``, ``\t``,
   ``\v``, ``\L``, ``\N`` and ``\P`` -- Single character escape
@@ -402,9 +402,7 @@ The YAML specification considers the following `escape sequences <http://yaml.or
 
 * ``\U........`` -- 8-digit hex escape
 
-Here are some examples on how to write Windows paths:
-
-.. code-block:: yaml+jinja
+Here are some examples on how to write Windows paths::
 
     # GOOD
     tempdir: C:\Windows\Temp
@@ -418,11 +416,16 @@ Here are some examples on how to write Windows paths:
     tempdir: 'C:\\Windows\\Temp'
     tempdir: C:/Windows/Temp
 
+This is an example which will fail:
+
+.. code-block:: text
+
     # FAILS
     tempdir: "C:\Windows\Temp"
 
+This example shows the use of single quotes when they are required::
+
     ---
-    # Example of single quotes when they are required
     - name: Copy tomcat config
       win_copy:
         src: log4j.xml
@@ -498,11 +501,9 @@ guides for Windows modules differ substantially from those for standard standard
 
 .. seealso::
 
-   :doc:`index`
-       The documentation index
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell

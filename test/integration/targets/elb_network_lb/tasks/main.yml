@@ -9,6 +9,15 @@
         region: "{{ aws_region }}"
     no_log: yes
 
+  - name: create certificate
+    iam_cert:
+      name: test_cert
+      state: present
+      cert: "{{ lookup('file', 'cert.pem') }}"
+      key: "{{ lookup('file', 'key.pem') }}"
+      <<: *aws_connection_info
+    register: cert
+
   - name: create VPC
     ec2_vpc_net:
       cidr_block: 10.228.228.0/22
@@ -51,7 +60,7 @@
         public: False
     register: subnets
 
-  - ec2_vpc_subnet_facts:
+  - ec2_vpc_subnet_info:
       filters:
         vpc-id: "{{ vpc.vpc.id }}"
       <<: *aws_connection_info
@@ -101,6 +110,16 @@
       <<: *aws_connection_info
     register: tg
 
+  - name: create a target group for testing tcp_udp protocols
+    elb_target_group:
+      name: "{{ tg_tcpudp_name }}"
+      protocol: tcp_udp
+      port: 80
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: present
+      <<: *aws_connection_info
+    register: tg_tcpudp
+
   - include_tasks: test_nlb_bad_listener_options.yml
   - include_tasks: test_nlb_tags.yml
   - include_tasks: test_creating_nlb.yml
@@ -134,6 +153,23 @@
       delay: 3
       until: remove_tg is success
       when: tg is defined
+      ignore_errors: yes
+
+    - name: destroy tcp_udp target group if it was created
+      elb_target_group:
+        name: "{{ tg_tcpudp_name }}"
+        protocol: tcp_udp
+        port: 80
+        vpc_id: "{{ vpc.vpc.id }}"
+        state: absent
+        wait: yes
+        wait_timeout: 600
+        <<: *aws_connection_info
+      register: remove_tg
+      retries: 5
+      delay: 3
+      until: remove_tg is success
+      when: tg_tcpudp is defined
       ignore_errors: yes
 
     - name: destroy sec group
@@ -202,4 +238,11 @@
       retries: 10
       delay: 5
       until: remove_vpc is success
+      ignore_errors: yes
+
+    - name: destroy certificate
+      iam_cert:
+        name: test_cert
+        state: absent
+        <<: *aws_connection_info
       ignore_errors: yes

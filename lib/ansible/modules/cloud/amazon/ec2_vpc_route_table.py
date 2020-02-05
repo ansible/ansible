@@ -1,17 +1,9 @@
 #!/usr/bin/python
 #
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -36,8 +28,11 @@ options:
       route table will be created. To change tags of a route table you must look up by id.
     default: tag
     choices: [ 'tag', 'id' ]
+    type: str
   propagating_vgw_ids:
     description: Enable route propagation from virtual gateways specified by ID.
+    type: list
+    elements: str
   purge_routes:
     version_added: "2.3"
     description: Purge existing routes that are not found in routes.
@@ -50,32 +45,43 @@ options:
     type: bool
   purge_tags:
     version_added: "2.5"
-    description: Purge existing tags that are not found in route table
+    description: Purge existing tags that are not found in route table.
     type: bool
     default: 'no'
   route_table_id:
-    description: The ID of the route table to update or delete.
+    description:
+    - The ID of the route table to update or delete.
+    - Required when I(lookup=id).
+    type: str
   routes:
     description: List of routes in the route table.
         Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id',
         'instance_id', 'network_interface_id', or 'vpc_peering_connection_id'.
         If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
         Routes are required for present states.
+    type: list
+    elements: dict
   state:
-    description: Create or destroy the VPC route table
+    description: Create or destroy the VPC route table.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   subnets:
     description: An array of subnets to add to this route table. Subnets may be specified
       by either subnet ID, Name tag, or by a CIDR such as '10.0.0.0/24'.
+    type: list
+    elements: str
   tags:
     description: >
-      A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }. Tags are
+      A dictionary of resource tags of the form: C({ tag1: value1, tag2: value2 }). Tags are
       used to uniquely identify route tables within a VPC when the route_table_id is not supplied.
     aliases: [ "resource_tags" ]
+    type: dict
   vpc_id:
-    description: VPC ID of the VPC in which to create the route table.
-    required: true
+    description:
+    - VPC ID of the VPC in which to create the route table.
+    - Required when I(state=present) or I(lookup=tag).
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -228,7 +234,6 @@ import re
 from time import sleep
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.waiters import get_waiter
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, snake_dict_to_camel_dict
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
@@ -238,7 +243,7 @@ from ansible.module_utils.ec2 import compare_aws_tags, AWSRetry
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 CIDR_RE = re.compile(r'^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$')
@@ -709,21 +714,18 @@ def ensure_route_table_present(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            lookup=dict(default='tag', choices=['tag', 'id']),
-            propagating_vgw_ids=dict(type='list'),
-            purge_routes=dict(default=True, type='bool'),
-            purge_subnets=dict(default=True, type='bool'),
-            purge_tags=dict(default=False, type='bool'),
-            route_table_id=dict(),
-            routes=dict(default=[], type='list'),
-            state=dict(default='present', choices=['present', 'absent']),
-            subnets=dict(type='list'),
-            tags=dict(type='dict', aliases=['resource_tags']),
-            vpc_id=dict()
-        )
+    argument_spec = dict(
+        lookup=dict(default='tag', choices=['tag', 'id']),
+        propagating_vgw_ids=dict(type='list'),
+        purge_routes=dict(default=True, type='bool'),
+        purge_subnets=dict(default=True, type='bool'),
+        purge_tags=dict(default=False, type='bool'),
+        route_table_id=dict(),
+        routes=dict(default=[], type='list'),
+        state=dict(default='present', choices=['present', 'absent']),
+        subnets=dict(type='list'),
+        tags=dict(type='dict', aliases=['resource_tags']),
+        vpc_id=dict()
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -732,10 +734,7 @@ def main():
                                            ['state', 'present', ['vpc_id']]],
                               supports_check_mode=True)
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(module, conn_type='client', resource='ec2',
-                            region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ec2')
 
     state = module.params.get('state')
 

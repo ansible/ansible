@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_admin_session_timeout
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestAdminServiceModule(TestNvosModule):
@@ -38,19 +36,19 @@ class TestAdminServiceModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_timeout': '61s',
                          'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 admin-session-timeout-modify  timeout 61s'
+        expected_cmd = ' switch sw01 admin-session-timeout-modify  timeout 61s'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_admin_session_timeout_modify_t2(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_timeout': '1d',
                          'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 admin-session-timeout-modify  timeout 1d'
+        expected_cmd = ' switch sw01 admin-session-timeout-modify  timeout 1d'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_admin_session_timeout_modify_t3(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_timeout': '10d20m3h15s',
                          'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 admin-session-timeout-modify  timeout 10d20m3h15s'
+        expected_cmd = ' switch sw01 admin-session-timeout-modify  timeout 10d20m3h15s'
         self.assertEqual(result['cli_cmd'], expected_cmd)

@@ -62,15 +62,27 @@ options:
         description:
             - "List of dictionary of cluster limits, which is valid to specific cluster."
             - "If cluster isn't specified it's valid to all clusters in system:"
-            - "C(cluster) - Name of the cluster."
-            - "C(memory) - Memory limit (in GiB)."
-            - "C(cpu) - CPU limit."
+        suboptions:
+            cluster:
+                description:
+                    - Name of the cluster.
+            memory:
+                description:
+                    - Memory limit (in GiB).
+            cpu:
+                description:
+                    - CPU limit.
     storages:
         description:
             - "List of dictionary of storage limits, which is valid to specific storage."
             - "If storage isn't specified it's valid to all storages in system:"
-            - "C(storage) - Name of the storage."
-            - "C(size) - Size limit (in GiB)."
+        suboptions:
+            storage:
+                description:
+                    - Name of the storage.
+            size:
+                description:
+                    - Size limit (in GiB).
 extends_documentation_fragment: ovirt
 '''
 
@@ -205,7 +217,7 @@ class QuotasModule(BaseModule):
         # -- FIXME --
         # Note that we here always remove all cluster/storage limits, because
         # it's not currently possible to update them and then re-create the limits
-        # appropriatelly, this shouldn't have any side-effects, but it's not considered
+        # appropriately, this shouldn't have any side-effects, but it's not considered
         # as a correct approach.
         # This feature is tracked here: https://bugzilla.redhat.com/show_bug.cgi?id=1398576
         #

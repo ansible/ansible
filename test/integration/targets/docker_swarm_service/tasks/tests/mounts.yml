@@ -1,0 +1,601 @@
+- name: Registering service name
+  set_fact:
+    service_name: "{{ name_prefix ~ '-mounts' }}"
+    volume_name_1: "{{ name_prefix ~ '-volume-1' }}"
+    volume_name_2: "{{ name_prefix ~ '-volume-2' }}"
+
+- name: Registering service name
+  set_fact:
+    service_names: "{{ service_names + [service_name] }}"
+    volume_names: "{{ volume_names + [volume_name_1, volume_name_2] }}"
+
+- docker_volume:
+    name: "{{ volume_name }}"
+    state: present
+  loop:
+    - "{{ volume_name_1 }}"
+    - "{{ volume_name_2 }}"
+  loop_control:
+    loop_var: volume_name
+
+####################################################################
+## mounts ##########################################################
+####################################################################
+
+- name: mounts
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+  register: mounts_1
+
+- name: mounts (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+  register: mounts_2
+
+- name: mounts (add)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+      - source: "/tmp/"
+        target: "/tmp/{{ volume_name_2 }}"
+        type: "bind"
+  register: mounts_3
+
+- name: mounts (order idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "/tmp/"
+        target: "/tmp/{{ volume_name_2 }}"
+        type: "bind"
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+  register: mounts_4
+
+- name: mounts (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts: []
+  register: mounts_5
+
+- name: mounts (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts: []
+  register: mounts_6
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - mounts_1 is changed
+      - mounts_2 is not changed
+      - mounts_3 is changed
+      - mounts_4 is not changed
+      - mounts_5 is changed
+      - mounts_6 is not changed
+
+####################################################################
+## mounts.readonly #################################################
+####################################################################
+
+- name: mounts.readonly
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        readonly: true
+  register: mounts_readonly_1
+
+
+- name: mounts.readonly (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        readonly: true
+  register: mounts_readonly_2
+
+- name: mounts.readonly (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        readonly: false
+  register: mounts_readonly_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - mounts_readonly_1 is changed
+      - mounts_readonly_2 is not changed
+      - mounts_readonly_3 is changed
+
+####################################################################
+## mounts.propagation ##############################################
+####################################################################
+
+- name: mounts.propagation
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "/tmp"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "bind"
+        propagation: "slave"
+  register: mounts_propagation_1
+
+
+- name: mounts.propagation (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "/tmp"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "bind"
+        propagation: "slave"
+  register: mounts_propagation_2
+
+- name: mounts.propagation (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "/tmp"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "bind"
+        propagation: "rprivate"
+  register: mounts_propagation_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - mounts_propagation_1 is changed
+      - mounts_propagation_2 is not changed
+      - mounts_propagation_3 is changed
+
+####################################################################
+## mounts.labels ##################################################
+####################################################################
+
+- name: mounts.labels
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+        labels:
+          mylabel: hello-world
+          my-other-label: hello-mars
+  register: mounts_labels_1
+
+
+- name: mounts.labels (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+        labels:
+          mylabel: hello-world
+          my-other-label: hello-mars
+  register: mounts_labels_2
+
+- name: mounts.labels (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+        labels:
+          mylabel: hello-world
+  register: mounts_labels_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - mounts_labels_1 is changed
+      - mounts_labels_2 is not changed
+      - mounts_labels_3 is changed
+
+####################################################################
+## mounts.no_copy ##################################################
+####################################################################
+
+- name: mounts.no_copy
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+        no_copy: true
+  register: mounts_no_copy_1
+
+
+- name: mounts.no_copy (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+        no_copy: true
+  register: mounts_no_copy_2
+
+- name: mounts.no_copy (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+        no_copy: false
+  register: mounts_no_copy_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - mounts_no_copy_1 is changed
+      - mounts_no_copy_2 is not changed
+      - mounts_no_copy_3 is changed
+
+####################################################################
+## mounts.driver_config ############################################
+####################################################################
+
+- name: mounts.driver_config
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+        driver_config:
+          name: "nfs"
+          options:
+            addr: "127.0.0.1"
+  register: mounts_driver_config_1
+
+- name: mounts.driver_config
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+        driver_config:
+          name: "nfs"
+          options:
+            addr: "127.0.0.1"
+  register: mounts_driver_config_2
+
+- name: mounts.driver_config
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+        driver_config:
+          name: "local"
+  register: mounts_driver_config_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - mounts_driver_config_1 is changed
+      - mounts_driver_config_2 is not changed
+      - mounts_driver_config_3 is changed
+
+####################################################################
+## mounts.tmpfs_size ###############################################
+####################################################################
+
+- name: mounts.tmpfs_size
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+        tmpfs_size: "50M"
+  register: mounts_tmpfs_size_1
+  ignore_errors: yes
+
+- name: mounts.tmpfs_size (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+        tmpfs_size: "50M"
+  register: mounts_tmpfs_size_2
+  ignore_errors: yes
+
+- name: mounts.tmpfs_size (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+        tmpfs_size: "25M"
+  register: mounts_tmpfs_size_3
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - mounts_tmpfs_size_1 is changed
+      - mounts_tmpfs_size_2 is not changed
+      - mounts_tmpfs_size_3 is changed
+  when: docker_py_version is version('2.6.0', '>=')
+- assert:
+    that:
+    - mounts_tmpfs_size_1 is failed
+    - "'Minimum version required' in mounts_tmpfs_size_1.msg"
+  when: docker_py_version is version('2.6.0', '<')
+
+####################################################################
+## mounts.tmpfs_mode ###############################################
+####################################################################
+
+- name: mounts.tmpfs_mode
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+        tmpfs_mode: 0444
+  register: mounts_tmpfs_mode_1
+  ignore_errors: yes
+
+- name: mounts.tmpfs_mode (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+        tmpfs_mode: 0444
+  register: mounts_tmpfs_mode_2
+  ignore_errors: yes
+
+- name: mounts.tmpfs_mode (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+        tmpfs_mode: 0777
+  register: mounts_tmpfs_mode_3
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - mounts_tmpfs_mode_1 is changed
+      - mounts_tmpfs_mode_2 is not changed
+      - mounts_tmpfs_mode_3 is changed
+  when: docker_py_version is version('2.6.0', '>=')
+- assert:
+    that:
+    - mounts_tmpfs_size_1 is failed
+    - "'Minimum version required' in mounts_tmpfs_size_1.msg"
+  when: docker_py_version is version('2.6.0', '<')
+
+####################################################################
+## mounts.source ###################################################
+####################################################################
+
+- name: mounts.source (empty for tmpfs)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: ""
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+  register: mounts_tmpfs_source_1
+  ignore_errors: yes
+
+- name: mounts.source (empty for tmpfs idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: ""
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+  register: mounts_tmpfs_source_2
+  ignore_errors: yes
+
+- name: mounts.source (not specified for tmpfs idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+  register: mounts_tmpfs_source_3
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - mounts_tmpfs_source_1 is changed
+      - mounts_tmpfs_source_2 is not changed
+      - mounts_tmpfs_source_3 is not changed
+  when: docker_py_version is version('2.6.0', '>=')
+- assert:
+    that:
+    - mounts_tmpfs_source_1 is failed
+    - "'Minimum version required' in mounts_tmpfs_source_1.msg"
+  when: docker_py_version is version('2.6.0', '<')
+
+####################################################################
+####################################################################
+####################################################################
+
+- name: Delete volumes
+  docker_volume:
+    name: "{{ volume_name }}"
+    state: absent
+  loop:
+    - "{{ volume_name_1 }}"
+    - "{{ volume_name_2 }}"
+  loop_control:
+    loop_var: volume_name
+  ignore_errors: yes

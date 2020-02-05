@@ -4,12 +4,27 @@
   register: cryptography_version
 
 - block:
+  - name: Archive test files
+    archive:
+      path: "{{ role_path }}/files/"
+      dest: "{{ output_dir }}/files.tgz"
+
+  - name: Create temporary directory to store files
+    file:
+      state: directory
+      path: "{{ remote_tmp_dir }}/files/"
+
+  - name: Unarchive test files on testhost
+    unarchive:
+      src: "{{ output_dir }}/files.tgz"
+      dest: "{{ remote_tmp_dir }}/files/"
+
   # Cert 1: certificate for www.ansible.com, retrieved on 2018-08-15
   - name: Find root for cert 1
     certificate_complete_chain:
       input_chain: "{{ lookup('file', 'cert1-fullchain.pem', rstrip=False) }}"
       root_certificates:
-      - "{{ role_path }}/files/roots/"
+      - "{{ remote_tmp_dir }}/files/roots/"
     register: cert1_root
   - name: Verify root for cert 1
     assert:
@@ -21,9 +36,9 @@
     certificate_complete_chain:
       input_chain: "{{ lookup('file', 'cert1.pem', rstrip=False) }}"
       intermediate_certificates:
-      - "{{ role_path }}/files/cert1-chain.pem"
+      - "{{ remote_tmp_dir }}/files/cert1-chain.pem"
       root_certificates:
-      - "{{ role_path }}/files/roots.pem"
+      - "{{ remote_tmp_dir }}/files/roots.pem"
     register: cert1_rootchain
   - name: Verify rootchain for cert 1
     assert:
@@ -38,7 +53,7 @@
     certificate_complete_chain:
       input_chain: "{{ lookup('file', 'cert2-fullchain.pem', rstrip=False) }}"
       root_certificates:
-      - "{{ role_path }}/files/roots/"
+      - "{{ remote_tmp_dir }}/files/roots/"
     register: cert2_root
   - name: Verify root for cert 2
     assert:
@@ -50,9 +65,9 @@
     certificate_complete_chain:
       input_chain: "{{ lookup('file', 'cert2.pem', rstrip=False) }}"
       intermediate_certificates:
-      - "{{ role_path }}/files/cert2-chain.pem"
+      - "{{ remote_tmp_dir }}/files/cert2-chain.pem"
       root_certificates:
-      - "{{ role_path }}/files/roots.pem"
+      - "{{ remote_tmp_dir }}/files/roots.pem"
     register: cert2_rootchain
   - name: Verify rootchain for cert 2
     assert:
@@ -68,9 +83,9 @@
       # Remove line ending, make sure it is re-added by code
       input_chain: "{{ lookup('file', 'cert2.pem', rstrip=True) }}"
       intermediate_certificates:
-      - "{{ role_path }}/files/cert2-altchain.pem"
+      - "{{ remote_tmp_dir }}/files/cert2-altchain.pem"
       root_certificates:
-      - "{{ role_path }}/files/roots.pem"
+      - "{{ remote_tmp_dir }}/files/roots.pem"
     register: cert2_rootchain_alt
   - name: Verify rootchain for cert 2
     assert:

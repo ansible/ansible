@@ -29,8 +29,12 @@ options:
   name:
     description:
     - The registry property name to get information for, the return json will not include the sub_keys and properties entries for the I(key) specified.
+    - Set to an empty string to target the registry key's C((Default)) property value.
     type: str
     aliases: [ entry, value, property ]
+notes:
+- The C(properties) return value will contain an empty string key C("") that refers to the key's C(Default) value. If
+  the value has not been set then this key is not returned.
 seealso:
 - module: win_regedit
 - module: win_regmerge
@@ -49,6 +53,12 @@ EXAMPLES = r'''
     path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion
     name: CommonFilesDir
   register: common_files_dir
+
+- name: Obtain the registry key's (Default) property
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion
+    name: ''
+  register: current_version_default
 '''
 
 RETURN = r'''
@@ -67,6 +77,11 @@ properties:
   returned: success, path exists and property not specified
   type: dict
   sample: {
+    "" : {
+      "raw_value": "",
+      "type": "REG_SZ",
+      "value": ""
+    },
     "binary_property" : {
       "raw_value": ["0x01", "0x16"],
       "type": "REG_BINARY",
@@ -77,7 +92,7 @@ properties:
       "type": "REG_MULTI_SZ",
       "value": ["a", "b"]
     }
-    }
+  }
 sub_keys:
   description: A list of all the sub keys of the key specified.
   returned: success, path exists and property not specified

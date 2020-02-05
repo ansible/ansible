@@ -1,6 +1,6 @@
 ---
 # Run with --check
-- hosts: localhost
+- hosts: testhost
   gather_facts: False
   tasks:
   - command: 'echo ran'
@@ -11,7 +11,7 @@
       that:
       - '"check mode" in command_out["msg"]'
 
-- hosts: localhost
+- hosts: testhost
   gather_facts: False
   check_mode: False
   tasks:
@@ -23,7 +23,7 @@
       that:
       - '"ran" in command_out["stdout"]'
 
-- hosts: localhost
+- hosts: testhost
   gather_facts: False
   tasks:
   - command: 'echo ran'

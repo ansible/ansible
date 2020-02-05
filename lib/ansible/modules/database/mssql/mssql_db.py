@@ -38,7 +38,7 @@ options:
       - Host running the database
   login_port:
     description:
-      - Port of the MSSQL server. Requires login_host be defined as other then localhost if login_port is used
+      - Port of the MSSQL server. Requires login_host be defined as other than localhost if login_port is used
     default: 1433
   state:
     description:
@@ -86,15 +86,18 @@ RETURN = '''
 '''
 
 import os
+import traceback
 
+PYMSSQL_IMP_ERR = None
 try:
     import pymssql
 except ImportError:
+    PYMSSQL_IMP_ERR = traceback.format_exc()
     mssql_found = False
 else:
     mssql_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 def db_exists(conn, cursor, db):
@@ -119,8 +122,7 @@ def db_delete(conn, cursor, db):
 
 def db_import(conn, cursor, module, db, target):
     if os.path.isfile(target):
-        backup = open(target, 'r')
-        try:
+        with open(target, 'r') as backup:
             sqlQuery = "USE [%s]\n" % db
             for line in backup:
                 if line is None:
@@ -132,8 +134,6 @@ def db_import(conn, cursor, module, db, target):
                     sqlQuery += line
             cursor.execute(sqlQuery)
             conn.commit()
-        finally:
-            backup.close()
         return 0, "import successful", ""
     else:
         return 1, "cannot find target file", "cannot find target file"
@@ -155,7 +155,7 @@ def main():
     )
 
     if not mssql_found:
-        module.fail_json(msg="pymssql python module is required")
+        module.fail_json(msg=missing_required_lib('pymssql'), exception=PYMSSQL_IMP_ERR)
 
     db = module.params['name']
     state = module.params['state']

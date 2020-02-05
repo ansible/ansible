@@ -1,0 +1,142 @@
+- name: Install pip packages
+  pip:
+    name: paho-mqtt>=1.4.0
+    state: present
+
+- name: MQTT non-TLS endpoint
+  mqtt:
+    topic: /node/s/bar/blurb
+    payload: foo
+    qos: 1
+    client_id: me001
+  register: result
+
+- assert:
+    that:
+      - result is success
+
+- name: Send a test message to TLS1.1 endpoint, no client version specified
+  mqtt:
+    topic: /node/s/bar/blurb
+    payload: foo-tls
+    qos: 1
+    client_id: me001
+    ca_certs: /tls/ca_certificate.pem
+    certfile: /tls/client_certificate.pem
+    keyfile: /tls/client_key.pem
+    port: 8883
+  register: result
+
+- assert:
+    that:
+      - result is success
+
+- name: Send a test message to TLS1.2 endpoint, no client version specified
+  mqtt:
+    topic: /node/s/bar/blurb
+    payload: foo-tls
+    qos: 1
+    client_id: me001
+    ca_certs: /tls/ca_certificate.pem
+    certfile: /tls/client_certificate.pem
+    keyfile: /tls/client_key.pem
+    port: 8884
+  register: result
+
+- assert:
+    that:
+      - result is success
+
+# TODO(Uncomment when TLS1.3 is supported in moquitto and ubuntu version)
+#
+# - name: Send a test message to TLS1.3 endpoint
+#  mqtt:
+#    topic: /node/s/bar/blurb
+#    payload: foo-tls
+#    qos: 1
+#    client_id: me001
+#    ca_certs: /tls/ca_certificate.pem
+#    certfile: /tls/client_certificate.pem
+#    keyfile: /tls/client_key.pem
+#    port: 8885
+#  register: result
+
+#- assert:
+#    that:
+#      - result is success
+
+- name: Send a message, client TLS1.1, server (required) TLS1.2 - Expected failure
+  mqtt:
+    topic: /node/s/bar/blurb
+    payload: foo-tls
+    qos: 1
+    client_id: me001
+    ca_certs: /tls/ca_certificate.pem
+    certfile: /tls/client_certificate.pem
+    keyfile: /tls/client_key.pem
+    tls_version: tlsv1.1
+    port: 8884
+  register: result
+  failed_when: result is success
+
+- assert:
+    that:
+      - result is success
+
+# TODO(Uncomment when TLS1.3 is supported in moquitto and ubuntu version)
+#
+# - name: Send a message, client TLS1.1, server (required) TLS1.3 - Expected failure
+#  mqtt:
+#    topic: /node/s/bar/blurb
+#    payload: foo-tls
+#    qos: 1
+#    client_id: me001
+#    ca_certs: /tls/ca_certificate.pem
+#    certfile: /tls/client_certificate.pem
+#    keyfile: /tls/client_key.pem
+#    tls_version: tlsv1.1
+#    port: 8885
+#  register: result
+#  failed_when: result is success
+
+# - assert:
+#    that:
+#      - result is success
+
+- name: Send a message, client TLS1.2, server (required) TLS1.1 - Expected failure
+  mqtt:
+    topic: /node/s/bar/blurb
+    payload: foo-tls
+    qos: 1
+    client_id: me001
+    ca_certs: /tls/ca_certificate.pem
+    certfile: /tls/client_certificate.pem
+    keyfile: /tls/client_key.pem
+    tls_version: tlsv1.2
+    port: 8883
+  register: result
+  failed_when: result is success
+
+- assert:
+    that:
+      - result is success
+
+# TODO(Uncomment when TLS1.3 is supported in moquitto and ubuntu version)
+#
+# - name: Send a message, client TLS1.2, server (required) TLS1.3 - Expected failure
+#  mqtt:
+#    topic: /node/s/bar/blurb
+#    payload: foo-tls
+#    qos: 1
+#    client_id: me001
+#    ca_certs: /tls/ca_certificate.pem
+#    certfile: /tls/client_certificate.pem
+#    keyfile: /tls/client_key.pem
+#    tls_version: tlsv1.2
+#    port: 8885
+#  register: result
+#  failed_when: result is success
+
+# - assert:
+#    that:
+#      - result is success

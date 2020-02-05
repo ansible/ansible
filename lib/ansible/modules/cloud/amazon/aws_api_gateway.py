@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -22,7 +24,7 @@ description:
        this is run.
      - Beware that there are very hard limits on the rate that
        you can call API Gateway's REST API.  You may need to patch
-       your boto.  See https://github.com/boto/boto3/issues/876
+       your boto.  See U(https://github.com/boto/boto3/issues/876)
        and discuss with your AWS rep.
      - swagger_file and swagger_text are passed directly on to AWS
        transparently whilst swagger_dict is an ansible dict which is
@@ -33,32 +35,40 @@ options:
   api_id:
     description:
       - The ID of the API you want to manage.
+    type: str
   state:
     description:
       - NOT IMPLEMENTED Create or delete API - currently we always create.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   swagger_file:
     description:
       - JSON or YAML file containing swagger definitions for API.
         Exactly one of swagger_file, swagger_text or swagger_dict must
         be present.
+    type: path
+    aliases: ['src', 'api_file']
   swagger_text:
     description:
       - Swagger definitions for API in JSON or YAML as a string direct
         from playbook.
+    type: str
   swagger_dict:
     description:
       - Swagger definitions API ansible dictionary which will be
         converted to JSON and uploaded.
+    type: json
   stage:
     description:
       - The name of the stage the API should be deployed to.
+    type: str
   deploy_desc:
     description:
       - Description of the deployment - recorded and visible in the
         AWS console.
     default: Automatic deployment by Ansible.
+    type: str
 author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:
@@ -181,7 +191,7 @@ def get_api_definitions(module, swagger_file=None, swagger_dict=None, swagger_te
             with open(swagger_file) as f:
                 apidata = f.read()
         except OSError as e:
-            msg = "Failed trying to read swagger file {}: {}".format(str(swagger_file), str(e))
+            msg = "Failed trying to read swagger file {0}: {1}".format(str(swagger_file), str(e))
             module.fail_json(msg=msg, exception=traceback.format_exc())
     if swagger_dict is not None:
         apidata = json.dumps(swagger_dict)
@@ -216,7 +226,7 @@ def delete_rest_api(module, client, api_id):
     try:
         delete_response = delete_api(client, api_id=api_id)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
-        module.fail_json_aws(e, msg="deleting API {}".format(api_id))
+        module.fail_json_aws(e, msg="deleting API {0}".format(api_id))
     return delete_response
 
 
@@ -235,7 +245,7 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stag
     try:
         configure_response = configure_api(client, api_data=api_data, api_id=api_id)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
-        module.fail_json_aws(e, msg="configuring API {}".format(api_id))
+        module.fail_json_aws(e, msg="configuring API {0}".format(api_id))
 
     deploy_response = None
 
@@ -244,7 +254,7 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stag
             deploy_response = create_deployment(client, api_id=api_id, stage=stage,
                                                 description=deploy_desc)
         except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
-            msg = "deploying api {} to stage {}".format(api_id, stage)
+            msg = "deploying api {0} to stage {1}".format(api_id, stage)
             module.fail_json_aws(e, msg)
 
     return configure_response, deploy_response

@@ -103,10 +103,10 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory or role root directory, if
-        playbook is part of an ansible role. If the directory does not exist,
-        it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -119,6 +119,7 @@ options:
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
         config for this module.
+    type: str
     aliases: ['config']
     version_added: "2.4"
   defaults:
@@ -181,7 +182,30 @@ options:
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
+    type: str
     version_added: "2.4"
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -221,6 +245,14 @@ EXAMPLES = """
       - shutdown
     # parents: int eth1
     parents: interface Ethernet1
+
+- name: configurable backup path
+  eos_config:
+    src: eos_template.j2
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -239,6 +271,26 @@ backup_path:
   returned: when backup is yes
   type: str
   sample: /playbooks/ansible/backup/eos_config.2016-07-16@22:28:34
+filename:
+  description: The name of the backup file
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: eos_config.2016-07-16@22:28:34
+shortname:
+  description: The full path to the backup file excluding the timestamp
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: /playbooks/ansible/backup/eos_config
+date:
+  description: The date extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "2016-07-16"
+time:
+  description: The time extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "22:28:34"
 """
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
@@ -247,7 +299,6 @@ from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.eos.eos import get_config, load_config, get_connection
 from ansible.module_utils.network.eos.eos import run_commands
 from ansible.module_utils.network.eos.eos import eos_argument_spec
-from ansible.module_utils.network.eos.eos import check_args
 
 
 def get_candidate(module):
@@ -286,6 +337,10 @@ def save_config(module, result):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -300,6 +355,7 @@ def main():
 
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
 
         save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
@@ -327,7 +383,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:
@@ -338,6 +393,10 @@ def main():
     contents = None
     flags = ['all'] if module.params['defaults'] else []
     connection = get_connection(module)
+
+    # Refuse to diff_against: session if sessions are disabled
+    if module.params['diff_against'] == 'session' and not connection.supports_sessions:
+        module.fail_json(msg="Cannot diff against sessions when sessions are disabled. Please change diff_against to another value")
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
         contents = get_config(module, flags=flags)
@@ -378,13 +437,16 @@ def main():
 
             response = load_config(module, commands, replace=replace, commit=commit)
 
-            if 'diff' in response and module.params['diff_against'] == 'session':
-                result['diff'] = {'prepared': response['diff']}
+            result['changed'] = True
+
+            if module.params['diff_against'] == 'session':
+                if 'diff' in response:
+                    result['diff'] = {'prepared': response['diff']}
+                else:
+                    result['changed'] = False
 
             if 'session' in response:
                 result['session'] = response['session']
-
-            result['changed'] = True
 
     running_config = module.params['running_config']
     startup_config = None

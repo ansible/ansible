@@ -33,24 +33,41 @@ options:
    name:
      description:
      - Name of the VM to work with.
-     - This is required if C(uuid) parameter is not supplied.
+     - This is required if C(uuid) or C(moid) parameter is not supplied.
+     type: str
    uuid:
      description:
-     - UUID of the instance to manage if known, this is VMware's BIOS UUID.
-     - This is required if C(name) parameter is not supplied.
+     - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
+     - This is required if C(name) or C(moid) parameter is not supplied.
+     type: str
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
+     type: str
+   use_instance_uuid:
+     description:
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
+     default: no
+     type: bool
+     version_added: '2.8'
    boot_order:
      description:
      - List of the boot devices.
      default: []
+     type: list
    name_match:
      description:
      - If multiple virtual machines matching the name, use the first or last found.
      default: 'first'
      choices: ['first', 'last']
+     type: str
    boot_delay:
      description:
      - Delay in milliseconds before starting the boot sequence.
      default: 0
+     type: int
    enter_bios_setup:
      description:
      - If set to C(True), the virtual machine automatically enters BIOS setup the next time it boots.
@@ -68,10 +85,12 @@ options:
      - Specify the time in milliseconds between virtual machine boot failure and subsequent attempt to boot again.
      - If set, will automatically set C(boot_retry_enabled) to C(True) as this parameter is required.
      default: 0
+     type: int
    boot_firmware:
      description:
      - Choose which firmware should be used to boot the virtual machine.
      choices: ["bios", "efi"]
+     type: str
    secure_boot_enabled:
      description:
      - Choose if EFI secure boot should be enabled.  EFI secure boot can only be enabled with boot_firmware = efi
@@ -88,6 +107,26 @@ EXAMPLES = r'''
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     name: testvm
+    boot_delay: 2000
+    enter_bios_setup: True
+    boot_retry_enabled: True
+    boot_retry_delay: 22300
+    boot_firmware: bios
+    secure_boot_enabled: False
+    boot_order:
+      - floppy
+      - cdrom
+      - ethernet
+      - disk
+  delegate_to: localhost
+  register: vm_boot_order
+
+- name: Change virtual machine's boot order using Virtual Machine MoID
+  vmware_guest_boot_manager:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    moid: vm-42
     boot_delay: 2000
     enter_bios_setup: True
     boot_retry_enabled: True
@@ -142,7 +181,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_vm_by_id, wait_for_task, TaskError
 
 try:
-    from pyVmomi import vim
+    from pyVmomi import vim, VmomiSupport
 except ImportError:
     pass
 
@@ -152,13 +191,18 @@ class VmBootManager(PyVmomi):
         super(VmBootManager, self).__init__(module)
         self.name = self.params['name']
         self.uuid = self.params['uuid']
+        self.moid = self.params['moid']
+        self.use_instance_uuid = self.params['use_instance_uuid']
         self.vm = None
 
     def _get_vm(self):
         vms = []
 
         if self.uuid:
-            vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="uuid")
+            if self.use_instance_uuid:
+                vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="instance_uuid")
+            else:
+                vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="uuid")
             if vm_obj is None:
                 self.module.fail_json(msg="Failed to find the virtual machine with UUID : %s" % self.uuid)
             vms = [vm_obj]
@@ -168,6 +212,11 @@ class VmBootManager(PyVmomi):
             for temp_vm_object in objects:
                 if temp_vm_object.obj.name == self.name:
                     vms.append(temp_vm_object.obj)
+
+        elif self.moid:
+            vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.module.params['moid'], self.si._stub)
+            if vm_obj:
+                vms.append(vm_obj)
 
         if vms:
             if self.params.get('name_match') == 'first':
@@ -263,7 +312,7 @@ class VmBootManager(PyVmomi):
             if self.params.get('secure_boot_enabled') and \
                self.params.get('boot_firmware') is None and \
                self.vm.config.firmware == 'bios':
-                    self.module.fail_json(msg="EFI secure boot cannot be enabled when boot_firmware = bios.  VM's boot_firmware currently set to bios")
+                self.module.fail_json(msg="EFI secure boot cannot be enabled when boot_firmware = bios.  VM's boot_firmware currently set to bios")
 
             kwargs.update({'efiSecureBootEnabled': self.params.get('secure_boot_enabled')})
             change_needed = True
@@ -314,6 +363,8 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         boot_order=dict(
             type='list',
             default=[],
@@ -351,10 +402,10 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_one_of=[
-            ['name', 'uuid']
+            ['name', 'uuid', 'moid']
         ],
         mutually_exclusive=[
-            ['name', 'uuid']
+            ['name', 'uuid', 'moid']
         ],
     )
 

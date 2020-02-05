@@ -107,7 +107,7 @@ changed:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.nxos.nxos import check_args, load_config, nxos_argument_spec, run_commands
+from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
 
 
 def execute_show_command(command, module, command_type='cli_show'):
@@ -317,7 +317,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     server = module.params['server'] or None
     peer = module.params['peer'] or None

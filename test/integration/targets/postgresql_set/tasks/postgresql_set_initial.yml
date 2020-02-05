@@ -1,0 +1,283 @@
+# Test code for the postgresql_set module
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# Notice: assertions are different for Ubuntu 16.04 and FreeBSD because they don't work
+# correctly for these tests. There are some stranges exactly in Shippable CI.
+# However I checked it manually for all points (including Ubuntu 16.05 and FreeBSD)
+# and it worked as expected.
+
+- vars:
+    task_parameters: &task_parameters
+      become_user: '{{ pg_user }}'
+      become: yes
+    pg_parameters: &pg_parameters
+      login_user: '{{ pg_user }}'
+      login_db: postgres
+
+  block:
+  - name: postgresql_set - preparation to the next step
+    <<: *task_parameters
+    become_user: "{{ pg_user }}"
+    become: yes
+    postgresql_set:
+      <<: *pg_parameters
+      name: work_mem
+      reset: yes
+
+  #####################
+  # Testing check_mode:
+  - name: postgresql_set - get work_mem initial value
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SHOW work_mem
+    register: before
+
+  - name: postgresql_set - set work_mem (restart is not required), check_mode
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: work_mem
+      value: 12MB
+    register: set_wm
+    check_mode: yes
+
+  - assert:
+      that:
+      - set_wm.name == 'work_mem'
+      - set_wm.changed == true
+      - set_wm.prev_val_pretty == before.query_result[0].work_mem
+      - set_wm.value_pretty == '12MB'
+      - set_wm.restart_required == false
+
+  - name: postgresql_set - get work_mem value to check, must be the same as initial
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SHOW work_mem
+    register: after
+
+  - assert:
+      that:
+      - before.query_result[0].work_mem == after.query_result[0].work_mem
+  ######
+  #
+
+  - name: postgresql_set - set work_mem (restart is not required)
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: work_mem
+      value: 12MB
+    register: set_wm
+
+  - assert:
+      that:
+      - set_wm.name == 'work_mem'
+      - set_wm.changed == true
+      - set_wm.value_pretty == '12MB'
+      - set_wm.value_pretty != set_wm.prev_val_pretty
+      - set_wm.restart_required == false
+      - set_wm.value.value == 12582912
+      - set_wm.value.unit == 'b'
+    when:
+    - ansible_distribution != "Ubuntu"
+    - ansible_distribution_major_version != '16'
+    - ansible_distribution != "FreeBSD"
+
+  - assert:
+      that:
+      - set_wm.name == 'work_mem'
+      - set_wm.changed == true
+      - set_wm.restart_required == false
+    when:
+    - ansible_distribution == "Ubuntu"
+    - ansible_distribution_major_version == '16'
+
+  - name: postgresql_set - reset work_mem (restart is not required)
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: work_mem
+      reset: yes
+    register: reset_wm
+
+  - assert:
+      that:
+      - reset_wm.name == 'work_mem'
+      - reset_wm.changed == true
+      - reset_wm.value_pretty != reset_wm.prev_val_pretty
+      - reset_wm.restart_required == false
+      - reset_wm.value.value != '12582912' 
+    when:
+    - ansible_distribution != "Ubuntu"
+    - ansible_distribution_major_version != '16'
+    - ansible_distribution != "FreeBSD"
+
+  - assert:
+      that:
+      - reset_wm.name == 'work_mem'
+      - reset_wm.changed == true
+      - reset_wm.restart_required == false
+    when:
+    - ansible_distribution == "Ubuntu"
+    - ansible_distribution_major_version == '16'
+
+  - name: postgresql_set - reset work_mem again to check that nothing changed (restart is not required)
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: work_mem
+      reset: yes
+    register: reset_wm2
+
+  - assert:
+      that:
+      - reset_wm2.name == 'work_mem'
+      - reset_wm2.changed == false
+      - reset_wm2.value_pretty == reset_wm2.prev_val_pretty
+      - reset_wm2.restart_required == false
+    when:
+    - ansible_distribution != "Ubuntu"
+    - ansible_distribution_major_version != '16'
+
+  - assert:
+      that:
+      - reset_wm2.name == 'work_mem'
+      - reset_wm2.changed == false
+      - reset_wm2.restart_required == false
+    when:
+    - ansible_distribution == "Ubuntu"
+    - ansible_distribution_major_version == '16'
+
+  - name: postgresql_set - preparation to the next step
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: work_mem
+      value: 14MB
+
+  - name: postgresql_set - set work_mem to initial state (restart is not required)
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: work_mem
+      value: default
+    register: def_wm
+
+  - assert:
+      that:
+      - def_wm.name == 'work_mem'
+      - def_wm.changed == true
+      - def_wm.value_pretty != def_wm.prev_val_pretty
+      - def_wm.restart_required == false
+      - def_wm.value.value != '14680064' 
+    when:
+    - ansible_distribution != "Ubuntu"
+    - ansible_distribution_major_version != '16'
+    - ansible_distribution != 'FreeBSD'
+
+  - assert:
+      that:
+      - def_wm.name == 'work_mem'
+      - def_wm.changed == true
+      - def_wm.restart_required == false
+    when:
+    - ansible_distribution == "Ubuntu"
+    - ansible_distribution_major_version == '16'
+    - ansible_distribution != 'FreeBSD'
+
+  - name: postgresql_set - set shared_buffers (restart is required)
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: shared_buffers
+      value: 111MB
+    register: set_shb
+
+  - assert:
+      that:
+      - set_shb.name == 'shared_buffers'
+      - set_shb.changed == true
+      - set_shb.restart_required == true
+
+  # We don't check value.unit because it is none
+  - name: postgresql_set - set autovacuum (enabled by default, restart is not required)
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: autovacuum
+      value: off
+    register: set_aut
+
+  - assert:
+      that:
+      - set_aut.name == 'autovacuum'
+      - set_aut.changed == true
+      - set_aut.restart_required == false
+      - set_aut.value.value == 'off'
+
+  # Test check_mode, step 1. At the previous test we set autovacuum = 'off'
+  - name: postgresql - try to change autovacuum again in check_mode
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: autovacuum
+      value: on
+    register: set_aut
+    check_mode: yes
+
+  - assert:
+      that:
+      - set_aut.name == 'autovacuum'
+      - set_aut.changed == true
+      - set_aut.restart_required == false
+      - set_aut.value.value == 'off'
+
+  # Test check_mode, step 2
+  - name: postgresql - check that autovacuum wasn't actually changed after change in check_mode
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: autovacuum
+      value: off
+    register: set_aut
+    check_mode: yes
+
+  - assert:
+      that:
+      - set_aut.name == 'autovacuum'
+      - set_aut.changed == false
+      - set_aut.restart_required == false
+      - set_aut.value.value == 'off'
+
+  # Additional check by SQL query:
+  - name: postgresql_set - get autovacuum value to check, must be off
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SHOW autovacuum
+    register: result
+
+  - assert:
+      that:
+      - result.query_result[0].autovacuum == 'off'
+
+  # Test check_mode, step 3. It is different from
+  # the prev test - it runs without check_mode: yes.
+  # Before the check_mode tests autovacuum was off
+  - name: postgresql - check that autovacuum wasn't actually changed after change in check_mode
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: autovacuum
+      value: off
+    register: set_aut
+
+  - assert:
+      that:
+      - set_aut.name == 'autovacuum'
+      - set_aut.changed == false
+      - set_aut.restart_required == false
+      - set_aut.value.value == 'off'

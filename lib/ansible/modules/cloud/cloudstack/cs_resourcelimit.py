@@ -4,6 +4,9 @@
 # Copyright (c) 2016, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
@@ -15,12 +18,13 @@ module: cs_resourcelimit
 short_description: Manages resource limits on Apache CloudStack based clouds.
 description:
     - Manage limits of resources for domains, accounts and projects.
-version_added: "2.1"
-author: "René Moser (@resmo)"
+version_added: '2.1'
+author: René Moser (@resmo)
 options:
   resource_type:
     description:
       - Type of the resource.
+    type: str
     required: true
     choices:
       - instance
@@ -34,40 +38,44 @@ options:
       - memory
       - primary_storage
       - secondary_storage
-    aliases: [ 'type' ]
+    aliases: [ type ]
   limit:
     description:
       - Maximum number of the resource.
       - Default is unlimited C(-1).
+    type: int
     default: -1
-    aliases: [ 'max' ]
+    aliases: [ max ]
   domain:
     description:
       - Domain the resource is related to.
+    type: str
   account:
     description:
       - Account the resource is related to.
+    type: str
   project:
     description:
       - Name of the project the resource is related to.
+    type: str
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: Update a resource limit for instances of a domain
-  local_action:
-    module: cs_resourcelimit
+  cs_resourcelimit:
     type: instance
     limit: 10
     domain: customers
+  delegate_to: localhost
 
 - name: Update a resource limit for instances of an account
-  local_action:
-    module: cs_resourcelimit
+  cs_resourcelimit:
     type: instance
     limit: 12
     account: moserre
     domain: customers
+  delegate_to: localhost
 '''
 
 RETURN = '''

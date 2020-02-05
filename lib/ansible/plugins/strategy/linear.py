@@ -205,6 +205,9 @@ class StrategyModule(StrategyBase):
         # iterate over each task, while there is one left to run
         result = self._tqm.RUN_OK
         work_to_do = True
+
+        self._set_hosts_cache(iterator._play)
+
         while work_to_do and not self._tqm._terminated:
 
             try:
@@ -275,7 +278,8 @@ class StrategyModule(StrategyBase):
                                 break
 
                         display.debug("getting variables")
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
+                                                                    _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
@@ -324,16 +328,12 @@ class StrategyModule(StrategyBase):
 
                 self.update_active_connections(results)
 
-                try:
-                    included_files = IncludedFile.process_include_results(
-                        host_results,
-                        iterator=iterator,
-                        loader=self._loader,
-                        variable_manager=self._variable_manager
-                    )
-                except AnsibleError as e:
-                    # this is a fatal error, so we abort here regardless of block state
-                    return self._tqm.RUN_ERROR
+                included_files = IncludedFile.process_include_results(
+                    host_results,
+                    iterator=iterator,
+                    loader=self._loader,
+                    variable_manager=self._variable_manager
+                )
 
                 include_failure = False
                 if len(included_files) > 0:
@@ -362,10 +362,12 @@ class StrategyModule(StrategyBase):
                             for new_block in new_blocks:
                                 task_vars = self._variable_manager.get_vars(
                                     play=iterator._play,
-                                    task=new_block._parent
+                                    task=new_block._parent,
+                                    _hosts=self._hosts_cache,
+                                    _hosts_all=self._hosts_cache_all,
                                 )
                                 display.debug("filtering new block on tags")
-                                final_block = new_block.filter_tagged_tasks(play_context, task_vars)
+                                final_block = new_block.filter_tagged_tasks(task_vars)
                                 display.debug("done filtering new block on tags")
 
                                 noop_block = self._prepare_and_create_noop_block_from(final_block, task._parent, iterator)
@@ -413,6 +415,9 @@ class StrategyModule(StrategyBase):
                     dont_fail_states = frozenset([iterator.ITERATING_RESCUE, iterator.ITERATING_ALWAYS])
                     for host in hosts_left:
                         (s, _) = iterator.get_next_task_for_host(host, peek=True)
+                        # the state may actually be in a child state, use the get_active_state()
+                        # method in the iterator to figure out the true active state
+                        s = iterator.get_active_state(s)
                         if s.run_state not in dont_fail_states or \
                            s.run_state == iterator.ITERATING_RESCUE and s.fail_state & iterator.FAILED_RESCUE != 0:
                             self._tqm._failed_hosts[host.name] = True

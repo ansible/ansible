@@ -1,0 +1,254 @@
+---
+- name: test create a new RAP (check mode)
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    user_groups:
+      - administrators
+      - users@builtin
+    state: present
+  register: new_rap_check
+  check_mode: yes
+
+- name: get result of create a new RAP (check mode)
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Test-Path "RDS:\GatewayServer\RAP\{{ test_win_rds_rap_name }}")
+  register: new_rap_actual_check
+
+- name: assert results of create a new RAP (check mode)
+  assert:
+    that:
+    - new_rap_check.changed == true
+    - new_rap_actual_check.stdout_lines[0] == "False"
+
+- name: test create a new RAP
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    user_groups:
+      - administrators
+      - users@builtin
+    state: present
+  register: new_rap
+
+- name: get result of create a new RAP
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Test-Path "RDS:\GatewayServer\RAP\{{ test_win_rds_rap_name }}")
+  register: new_rap_actual
+
+- name: assert results of create a new RAP
+  assert:
+    that:
+    - new_rap.changed == true
+    - new_rap_actual.stdout_lines[0] == "True"
+
+- name: test create a new RAP (idempotent)
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    user_groups:
+      - administrators
+      - users@builtin
+    state: present
+  register: new_rap_again
+
+- name: get result of create a new RAP (idempotent)
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Test-Path "RDS:\GatewayServer\RAP\{{ test_win_rds_rap_name }}")
+  register: new_rap_actual_again
+
+- name: assert results of create a new RAP (idempotent)
+  assert:
+    that:
+    - new_rap_again.changed == false
+    - new_rap_actual_again.stdout_lines[0] == "True"
+
+- name: test edit a RAP
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    description: 'Description of {{ test_win_rds_rap_name }}'
+    user_groups:
+      # Test with different group name formats
+      - users@builtin
+      - .\guests
+    computer_group_type: ad_network_resource_group
+    computer_group: administrators
+    allowed_ports:
+      - 3389
+      - 3390
+      - 3391
+    state: disabled
+  register: edit_rap
+
+- name: get result of edit a RAP
+  win_shell: |
+    Import-Module RemoteDesktopServices;
+    $rap_path = "RDS:\GatewayServer\RAP\{{ test_win_rds_rap_name }}"
+    $rap = @{}
+    Get-ChildItem -Path "$rap_path" | foreach { $rap.Add($_.Name,$_.CurrentValue) }
+    $rap.UserGroups = @(Get-ChildItem -Path "$rap_path\UserGroups" | Select -ExpandProperty Name)
+    $rap | ConvertTo-Json
+  register: edit_rap_actual_json
+
+- name: parse result of edit a RAP.
+  set_fact:
+    edit_rap_actual: '{{ edit_rap_actual_json.stdout | from_json }}'
+
+- name: assert results of edit a RAP
+  assert:
+    that:
+    - edit_rap.changed == true
+    - edit_rap_actual.Status == "0"
+    - edit_rap_actual.Description == "Description of {{ test_win_rds_rap_name }}"
+    - edit_rap_actual.PortNumbers == "3389,3390,3391"
+    - edit_rap_actual.UserGroups | length == 2
+    - edit_rap_actual.UserGroups[0] == "Users@BUILTIN"
+    - edit_rap_actual.UserGroups[1] == "Guests@BUILTIN"
+    - edit_rap_actual.ComputerGroupType == "1"
+    - edit_rap_actual.ComputerGroup == "Administrators@BUILTIN"
+
+- name: test edit a RAP (indempotent)
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    description: 'Description of {{ test_win_rds_rap_name }}'
+    user_groups:
+      - users@builtin
+      - guests@builtin
+    computer_group_type: ad_network_resource_group
+    computer_group: Administrators@BUILTIN
+    allowed_ports:
+      - 3389
+      - 3390
+      - 3391
+    state: disabled
+  register: edit_rap_again
+
+- name: assert results of edit a RAP (indempotent)
+  assert:
+    that:
+    - edit_rap_again.changed == false
+
+- name: test allow all ports
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    allowed_ports: any
+  register: edit_rap_allow_all_ports
+
+- name: get result of allow all ports
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Get-Item "RDS:\GatewayServer\RAP\{{ test_win_rds_rap_name }}\PortNumbers").CurrentValue
+  register: edit_rap_allow_all_ports_actual
+
+- name: assert results of allow all ports
+  assert:
+    that:
+    - edit_rap_allow_all_ports.changed == true
+    - edit_rap_allow_all_ports_actual.stdout_lines[0] == "*"
+
+- name: test remove RAP (check mode)
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    state: absent
+  register: remove_rap_check
+  check_mode: yes
+
+- name: get result of remove RAP (check mode)
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Test-Path "RDS:\GatewayServer\RAP\{{ test_win_rds_rap_name }}")
+  register: remove_rap_actual_check
+
+- name: assert results of remove RAP (check mode)
+  assert:
+    that:
+    - remove_rap_check.changed == true
+    - remove_rap_actual_check.stdout_lines[0] == "True"
+
+- name: test remove RAP
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    state: absent
+  register: remove_rap
+
+- name: get result of remove RAP
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Test-Path "RDS:\GatewayServer\RAP\{{ test_win_rds_rap_name }}")
+  register: remove_rap_actual
+
+- name: assert results of remove RAP
+  assert:
+    that:
+    - remove_rap.changed == true
+    - remove_rap_actual.stdout_lines[0] == "False"
+
+- name: test remove RAP (idempotent)
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    state: absent
+  register: remove_rap_again
+
+- name: get result of remove RAP (idempotent)
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Test-Path "RDS:\GatewayServer\RAP\{{ test_win_rds_rap_name }}")
+  register: remove_rap_actual_again
+
+- name: assert results of remove RAP (idempotent)
+  assert:
+    that:
+    - remove_rap_again.changed == false
+    - remove_rap_actual_again.stdout_lines[0] == "False"
+
+- name: fail when create a new RAP without user group
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    state: present
+  register: new_rap_without_group
+  check_mode: yes
+  failed_when: "new_rap_without_group.msg != 'User groups must be defined to create a new RAP.'"
+
+- name: fail when create a new RAP with an empty user group list
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    user_groups: []
+    state: present
+  register: new_rap_empty_group_list
+  check_mode: yes
+  failed_when: "new_rap_empty_group_list.msg is not search('cannot be an empty list')"
+
+- name: fail when create a new RAP with an invalid user group
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    user_groups:
+      - fake_group
+    state: present
+  register: new_rap_invalid_group
+  check_mode: yes
+  failed_when: new_rap_invalid_group.changed != false or new_rap_invalid_group.msg is not search('is not a valid account')
+
+- name: fail when create a new RAP with an invalid AD computer group
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    user_groups:
+      - administrators
+    computer_group_type: ad_network_resource_group
+    computer_group: fake_ad_group
+    state: present
+  register: new_rap_invalid_ad_computer_group
+  check_mode: yes
+  failed_when: new_rap_invalid_ad_computer_group.changed != false or new_rap_invalid_ad_computer_group.msg is not search('is not a valid account')
+
+- name: fail when create a new RAP with an invalid gateway managed computer group
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    user_groups:
+      - administrators
+    computer_group_type: rdg_group
+    computer_group: fake_rdg_group
+    state: present
+  register: new_rap_invalid_rdg_computer_group
+  check_mode: yes
+  failed_when: new_rap_invalid_rdg_computer_group.changed != false or new_rap_invalid_rdg_computer_group.msg is not search('is not a valid gateway managed computer group')
+
+- name: fail when create a new RAP with invalid port numbers
+  win_rds_rap:
+    name: '{{ test_win_rds_rap_name }}'
+    user_groups:
+      - administrators
+    allowed_ports:
+      - '{{ item }}'
+    state: present
+  loop:
+    - invalid_port_number
+    - 65536
+  register: new_rap_invalid_port
+  check_mode: yes
+  failed_when: new_rap_invalid_port.changed != false or new_rap_invalid_port.msg is not search('is not a valid port number')

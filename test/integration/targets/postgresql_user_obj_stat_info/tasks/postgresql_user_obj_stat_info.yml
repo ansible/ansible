@@ -1,0 +1,189 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- vars:
+    task_parameters: &task_parameters
+      become_user: '{{ pg_user }}'
+      become: yes
+      register: result
+    pg_parameters: &pg_parameters
+      login_user: '{{ pg_user }}'
+      login_db: '{{ db_default }}'
+
+  block:
+  # Preparation:
+  # 0. create test schema
+  # 1. create test tables
+  # 2. create test indexes
+  # 3. create test functions
+  # 4. enable track_functions and restart
+
+  - name: Create schema
+    <<: *task_parameters
+    postgresql_schema:
+      <<: *pg_parameters
+      name: '{{ test_schema1 }}'
+
+  - name: Create test tables
+    <<: *task_parameters
+    postgresql_table:
+      <<: *pg_parameters
+      name: '{{ item }}'
+      columns:
+      - id int
+    loop:
+    - '{{ test_table1 }}'
+    - '{{ test_table2 }}'
+
+  - name: Create test table in another schema
+    <<: *task_parameters
+    postgresql_table:
+      <<: *pg_parameters
+      name: '{{ test_schema1 }}.{{ test_table3 }}'
+
+  - name: Create test indexes
+    <<: *task_parameters
+    postgresql_idx:
+      <<: *pg_parameters
+      name: '{{ item }}'
+      table: '{{ test_table1 }}'
+      columns:
+      - id
+    loop:
+    - '{{ test_idx1 }}'
+    - '{{ test_idx2 }}'
+
+  - name: Set track_function (restart is required)
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: track_functions
+      value: all
+
+  - name: Restart PostgreSQL
+    become: yes
+    service:
+      name: "{{ postgresql_service }}"
+      state: restarted
+
+  - name: Create test functions
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: 'CREATE FUNCTION {{ item }}() RETURNS boolean AS $$ BEGIN RETURN 1; END; $$ LANGUAGE PLPGSQL'
+    loop:
+    - '{{ test_func1 }}'
+    - '{{ test_func2 }}'
+    - '{{ test_schema1 }}.{{ test_func3 }}'
+
+  - name: Touch test functions
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: 'SELECT {{ item }}()'
+    loop:
+    - '{{ test_func1 }}'
+    - '{{ test_func2 }}'
+    - '{{ test_schema1 }}.{{ test_func3 }}'
+
+  #######
+  # Tests
+  #######
+  # 0. Without filter
+  - name: Collect all stats
+    <<: *task_parameters
+    postgresql_user_obj_stat_info:
+      <<: *pg_parameters
+
+  - assert:
+      that:
+      - result is not changed
+      - result.tables.public.{{ test_table1 }}.size == 0
+      - result.tables.public.{{ test_table1 }}.size == 0
+      - result.tables.{{ test_schema1 }}.{{ test_table3 }}.size == 0
+      - result.functions.public.{{ test_func1 }}.calls == 1
+      - result.functions.public.{{ test_func2 }}.calls == 1
+      - result.functions.{{ test_schema1 }}.{{ test_func3 }}.calls == 1
+      - result.indexes.public.{{ test_idx1 }}.idx_scan == 0
+      - result.indexes.public.{{ test_idx2 }}.idx_scan == 0
+
+  # 1. With filter
+  - name: Collect stats with filter
+    <<: *task_parameters
+    postgresql_user_obj_stat_info:
+      <<: *pg_parameters
+      filter: tables, indexes
+
+  - assert:
+      that:
+      - result is not changed
+      - result.tables.public.{{ test_table1 }}.size == 0
+      - result.tables.public.{{ test_table1 }}.size == 0
+      - result.tables.{{ test_schema1 }}.{{ test_table3 }}.size == 0
+      - result.functions == {}
+      - result.indexes.public.{{ test_idx1 }}.idx_scan == 0
+      - result.indexes.public.{{ test_idx2 }}.idx_scan == 0
+
+  # 2. With schema
+  - name: Collect stats for objects in certain schema
+    <<: *task_parameters
+    postgresql_user_obj_stat_info:
+      <<: *pg_parameters
+      schema: public
+
+  - assert:
+      that:
+      - result is not changed
+      - result.tables.public.{{ test_table1 }}.size == 0
+      - result.tables.public.{{ test_table1 }}.size == 0
+      - result.indexes.public.{{ test_idx1 }}.idx_scan == 0
+      - result.indexes.public.{{ test_idx2 }}.idx_scan == 0
+      - result.functions.public.{{ test_func1 }}.calls == 1
+      - result.functions.public.{{ test_func2 }}.calls == 1
+      - result.tables.{{ test_schema1 }} is not defined
+
+
+  # 3. With wrong schema
+  - name: Try to collect data in nonexistent schema
+    <<: *task_parameters
+    postgresql_user_obj_stat_info:
+      <<: *pg_parameters
+      schema: nonexistent
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - result is failed
+      - result.msg == "Schema 'nonexistent' does not exist"
+
+  ##########
+  # Clean up
+  ##########
+  - name: Drop schema
+    <<: *task_parameters
+    postgresql_schema:
+      <<: *pg_parameters
+      name: '{{ test_schema1 }}'
+      state: absent
+      cascade_drop: yes
+
+  - name: Drop test tables
+    <<: *task_parameters
+    postgresql_table:
+      <<: *pg_parameters
+      name: '{{ item }}'
+      state: absent
+    loop:
+    - '{{ test_table1 }}'
+    - '{{ test_table2 }}'
+
+  - name: Drop test functions
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: 'DROP FUNCTION {{ item }}()'
+    loop:
+    - '{{ test_func1 }}'
+    - '{{ test_func2 }}'
+    - '{{ test_schema1 }}.{{ test_func3 }}'
+    ignore_errors: yes

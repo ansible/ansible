@@ -23,10 +23,12 @@ options:
   name:
     description:
       - Specifies the name of the timer policy.
+    type: str
     required: True
   description:
     description:
       - Specifies descriptive text that identifies the timer policy.
+    type: str
   rules:
     description:
       - Rules that you want assigned to the timer policy
@@ -34,6 +36,7 @@ options:
       name:
         description:
           - The name of the rule.
+        type: str
         required: True
       protocol:
         description:
@@ -45,6 +48,7 @@ options:
             that match the flow, the flow matches all the other ip-protocol rules.
           - When specifying rules, if this parameter is not specified, the default of
             C(all-other) will be used.
+        type: str
         choices:
           - all-other
           - ah
@@ -72,6 +76,7 @@ options:
             dash (-).
           - This field is only available if you have selected the C(sctp), C(tcp), or
             C(udp) protocol.
+        type: list
       idle_timeout:
         description:
           - Specifies an idle timeout, in seconds, for protocol and port pairs that
@@ -80,18 +85,22 @@ options:
             the timer policy rule have no idle timeout.
           - When specifying rules, if this parameter is not specified, the default of
             C(unspecified) will be used.
+        type: str
+    type: list
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the resource exists.
       - When C(absent), ensures the resource is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -150,23 +159,17 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
-    from library.module_utils.network.f5.common import compare_complex_list
+    from library.module_utils.network.f5.compare import compare_complex_list
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
-    from ansible.module_utils.network.f5.common import compare_complex_list
+    from ansible.module_utils.network.f5.compare import compare_complex_list
 
 
 class Parameters(AnsibleF5Parameters):
@@ -375,7 +378,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -621,16 +624,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

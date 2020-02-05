@@ -18,21 +18,6 @@ short_description: Direct access to the Cisco APIC REST API
 description:
 - Enables the management of the Cisco ACI fabric through direct access to the Cisco APIC REST API.
 - Thanks to the idempotent nature of the APIC, this module is idempotent and reports changes.
-notes:
-- Certain payloads are known not to be idempotent, so be careful when constructing payloads,
-  e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
-  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
-- Certain payloads (and used paths) are known to report no changes happened when changes did happen.
-  This is a known APIC problem and has been reported to the vendor. A workaround for this issue exists.
-  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
-- XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
-seealso:
-- module: aci_tenant
-- name: Cisco APIC REST API Configuration Guide
-  description: More information about the APIC REST API.
-  link: http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.4'
 requirements:
 - lxml (when using XML payload)
@@ -65,13 +50,28 @@ options:
     type: raw
   src:
     description:
-    - Name of the absolute path of the filname that includes the body
+    - Name of the absolute path of the filename that includes the body
       of the HTTP request being sent to the ACI fabric.
     - If you require a templated payload, use the C(content) parameter
       together with the C(template) lookup plugin, or use M(template).
     type: path
     aliases: [ config_file ]
 extends_documentation_fragment: aci
+notes:
+- Certain payloads are known not to be idempotent, so be careful when constructing payloads,
+  e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- Certain payloads (and used paths) are known to report no changes happened when changes did happen.
+  This is a known APIC problem and has been reported to the vendor. A workaround for this issue exists.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
+seealso:
+- module: aci_tenant
+- name: Cisco APIC REST API Configuration Guide
+  description: More information about the APIC REST API.
+  link: http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -107,7 +107,7 @@ EXAMPLES = r'''
       fvTenant:
         attributes:
           name: Sales
-          descr: Sales departement
+          descr: Sales department
   delegate_to: localhost
 
 - name: Add a tenant using a JSON string
@@ -123,7 +123,7 @@ EXAMPLES = r'''
         "fvTenant": {
           "attributes": {
             "name": "Sales",
-            "descr": "Sales departement"
+            "descr": "Sales department"
           }
         }
       }
@@ -335,9 +335,9 @@ def main():
         mutually_exclusive=[['content', 'src']],
     )
 
-    content = module.params['content']
-    path = module.params['path']
-    src = module.params['src']
+    content = module.params.get('content')
+    path = module.params.get('path')
+    src = module.params.get('src')
 
     # Report missing file
     file_exists = False
@@ -394,36 +394,36 @@ def main():
                 module.fail_json(msg='Failed to parse provided XML payload: %s' % to_text(e), payload=payload)
 
     # Perform actual request using auth cookie (Same as aci.request(), but also supports XML)
-    if 'port' in aci.params and aci.params['port'] is not None:
+    if 'port' in aci.params and aci.params.get('port') is not None:
         aci.url = '%(protocol)s://%(host)s:%(port)s/' % aci.params + path.lstrip('/')
     else:
         aci.url = '%(protocol)s://%(host)s/' % aci.params + path.lstrip('/')
-    if aci.params['method'] != 'get':
+    if aci.params.get('method') != 'get':
         path += '?rsp-subtree=modified'
         aci.url = update_qsl(aci.url, {'rsp-subtree': 'modified'})
 
     # Sign and encode request as to APIC's wishes
-    if aci.params['private_key'] is not None:
+    if aci.params.get('private_key') is not None:
         aci.cert_auth(path=path, payload=payload)
 
-    aci.method = aci.params['method'].upper()
+    aci.method = aci.params.get('method').upper()
 
     # Perform request
     resp, info = fetch_url(module, aci.url,
                            data=payload,
                            headers=aci.headers,
                            method=aci.method,
-                           timeout=aci.params['timeout'],
-                           use_proxy=aci.params['use_proxy'])
+                           timeout=aci.params.get('timeout'),
+                           use_proxy=aci.params.get('use_proxy'))
 
-    aci.response = info['msg']
-    aci.status = info['status']
+    aci.response = info.get('msg')
+    aci.status = info.get('status')
 
     # Report failure
-    if info['status'] != 200:
+    if info.get('status') != 200:
         try:
             # APIC error
-            aci.response_type(info['body'], rest_type)
+            aci.response_type(info.get('body'), rest_type)
             aci.fail_json(msg='APIC Error %(code)s: %(text)s' % aci.error)
         except KeyError:
             # Connection error

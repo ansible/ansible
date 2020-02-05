@@ -1,0 +1,91 @@
+- name: Test podman_container_info
+  when:
+    - ansible_facts.virtualization_type != 'docker'
+    - ansible_facts.distribution == 'RedHat'
+  block:
+
+    - name: Generate random value for container name
+      set_fact:
+        container_name: "{{ 'ansible-test-podman-%0x' % ((2**32) | random) }}"
+
+    - name: Make sure container doesn't exist
+      command: podman container rm -f {{ container_name }}
+      ignore_errors: true
+
+    - name: Get missing container info
+      podman_container_info:
+        name: "{{ container_name }}"
+      register: nonexist
+
+    - name: Check results of missing container info
+      assert:
+        that:
+          - "'containers' in nonexist"
+          - nonexist is succeeded
+          - nonexist.containers == []
+
+    - name: Get missing multiple container info
+      podman_container_info:
+        name:
+          - "{{ container_name }}"
+          - neverexist
+          - whatever
+      register: nonexist2
+      ignore_errors: true
+
+    - name: Check results of missing multiple container info
+      assert:
+        that:
+          - "'containers' in nonexist2"
+          - nonexist2 is succeeded
+          - nonexist2.containers == []
+
+    - name: Make sure container exists
+      command: podman container run -d --name {{ container_name }} alpine sleep 15m
+
+    - name: Get existing container info
+      podman_container_info:
+        name: "{{ container_name }}"
+      register: existing_container
+
+    - name: Get mixed existing and non-existing container info
+      podman_container_info:
+        name:
+          - "{{ container_name }}"
+          - whatever
+      register: mixed_existing_container
+
+    - name: Get all containers info
+      podman_container_info:
+      register: all_containers
+
+    - name: Dump podman container inspect result
+      debug: var=existing_container
+
+    - name: Comparison with 'podman container inspect'
+      command: podman container inspect "{{ container_name }}"
+      register: podman_inspect
+
+    - name: Convert podman inspect output to JSON
+      set_fact:
+        podman_inspect_result: "{{ podman_inspect.stdout | from_json }}"
+
+    - name: Cleanup
+      command: podman container rm -f {{ container_name }}
+
+    - name: Make checks
+      assert:
+        that:
+          - "'containers' in existing_container"
+          - existing_container.containers
+          - "existing_container.containers == podman_inspect_result"
+          - all_containers.containers == existing_container.containers
+          - "'containers' in mixed_existing_container"
+          - mixed_existing_container.containers
+          - existing_container.containers == mixed_existing_container.containers
+
+  always:
+
+    - name: Cleanup
+      command: podman container rm -f {{ container_name }}
+      ignore_errors: true

@@ -1,0 +1,310 @@
+---
+# Pre-test setup
+- name: create a vpc
+  hwc_network_vpc:
+    cidr: "192.168.100.0/24"
+    name: "ansible_network_vpc_test"
+    state: present
+  register: vpc
+- name: create a subnet
+  hwc_vpc_subnet:
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: true
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    state: present
+  register: subnet
+- name: create a eip
+  hwc_vpc_eip:
+    dedicated_bandwidth:
+      charge_mode: "traffic"
+      name: "ansible_test_dedicated_bandwidth"
+      size: 1
+    type: "5_bgp"
+    state: present
+  register: eip
+- name: create a disk
+  hwc_evs_disk:
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: present
+  register: disk
+- name: delete a instance
+  hwc_ecs_instance:
+    data_volumes:
+      - volume_id: "{{ disk.id }}"
+    enable_auto_recovery: false
+    eip_id: "{{ eip.id }}"
+    name: "ansible_ecs_instance_test"
+    availability_zone: "cn-north-1a"
+    nics:
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.33"
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.34"
+    server_tags:
+      my_server: "my_server"
+    image_id: "8da46d6d-6079-4e31-ad6d-a7167efff892"
+    flavor_name: "s3.small.1"
+    vpc_id: "{{ vpc.id }}"
+    root_volume:
+      volume_type: "SAS"
+    state: absent
+#----------------------------------------------------------
+- name: create a instance (check mode)
+  hwc_ecs_instance:
+    data_volumes:
+      - volume_id: "{{ disk.id }}"
+    enable_auto_recovery: false
+    eip_id: "{{ eip.id }}"
+    name: "ansible_ecs_instance_test"
+    availability_zone: "cn-north-1a"
+    nics:
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.33"
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.34"
+    server_tags:
+      my_server: "my_server"
+    image_id: "8da46d6d-6079-4e31-ad6d-a7167efff892"
+    flavor_name: "s3.small.1"
+    vpc_id: "{{ vpc.id }}"
+    root_volume:
+      volume_type: "SAS"
+    state: present
+  check_mode: yes
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+#----------------------------------------------------------
+- name: create a instance
+  hwc_ecs_instance:
+    data_volumes:
+      - volume_id: "{{ disk.id }}"
+    enable_auto_recovery: false
+    eip_id: "{{ eip.id }}"
+    name: "ansible_ecs_instance_test"
+    availability_zone: "cn-north-1a"
+    nics:
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.33"
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.34"
+    server_tags:
+      my_server: "my_server"
+    image_id: "8da46d6d-6079-4e31-ad6d-a7167efff892"
+    flavor_name: "s3.small.1"
+    vpc_id: "{{ vpc.id }}"
+    root_volume:
+      volume_type: "SAS"
+    state: present
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      result is changed
+#----------------------------------------------------------
+- name: create a instance (idemponent)
+  hwc_ecs_instance:
+    data_volumes:
+      - volume_id: "{{ disk.id }}"
+    enable_auto_recovery: false
+    eip_id: "{{ eip.id }}"
+    name: "ansible_ecs_instance_test"
+    availability_zone: "cn-north-1a"
+    nics:
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.33"
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.34"
+    server_tags:
+      my_server: "my_server"
+    image_id: "8da46d6d-6079-4e31-ad6d-a7167efff892"
+    flavor_name: "s3.small.1"
+    vpc_id: "{{ vpc.id }}"
+    root_volume:
+      volume_type: "SAS"
+    state: present
+  check_mode: yes
+  register: result
+- name: idemponent
+  assert:
+    that:
+      - not result.changed
+# ----------------------------------------------------------------------------
+- name: create a instance that already exists
+  hwc_ecs_instance:
+    data_volumes:
+      - volume_id: "{{ disk.id }}"
+    enable_auto_recovery: false
+    eip_id: "{{ eip.id }}"
+    name: "ansible_ecs_instance_test"
+    availability_zone: "cn-north-1a"
+    nics:
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.33"
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.34"
+    server_tags:
+      my_server: "my_server"
+    image_id: "8da46d6d-6079-4e31-ad6d-a7167efff892"
+    flavor_name: "s3.small.1"
+    vpc_id: "{{ vpc.id }}"
+    root_volume:
+      volume_type: "SAS"
+    state: present
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
+#----------------------------------------------------------
+- name: delete a instance (check mode)
+  hwc_ecs_instance:
+    data_volumes:
+      - volume_id: "{{ disk.id }}"
+    enable_auto_recovery: false
+    eip_id: "{{ eip.id }}"
+    name: "ansible_ecs_instance_test"
+    availability_zone: "cn-north-1a"
+    nics:
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.33"
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.34"
+    server_tags:
+      my_server: "my_server"
+    image_id: "8da46d6d-6079-4e31-ad6d-a7167efff892"
+    flavor_name: "s3.small.1"
+    vpc_id: "{{ vpc.id }}"
+    root_volume:
+      volume_type: "SAS"
+    state: absent
+  check_mode: yes
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+#----------------------------------------------------------
+- name: delete a instance
+  hwc_ecs_instance:
+    data_volumes:
+      - volume_id: "{{ disk.id }}"
+    enable_auto_recovery: false
+    eip_id: "{{ eip.id }}"
+    name: "ansible_ecs_instance_test"
+    availability_zone: "cn-north-1a"
+    nics:
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.33"
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.34"
+    server_tags:
+      my_server: "my_server"
+    image_id: "8da46d6d-6079-4e31-ad6d-a7167efff892"
+    flavor_name: "s3.small.1"
+    vpc_id: "{{ vpc.id }}"
+    root_volume:
+      volume_type: "SAS"
+    state: absent
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      result is changed
+#----------------------------------------------------------
+- name: delete a instance (idemponent)
+  hwc_ecs_instance:
+    data_volumes:
+      - volume_id: "{{ disk.id }}"
+    enable_auto_recovery: false
+    eip_id: "{{ eip.id }}"
+    name: "ansible_ecs_instance_test"
+    availability_zone: "cn-north-1a"
+    nics:
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.33"
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.34"
+    server_tags:
+      my_server: "my_server"
+    image_id: "8da46d6d-6079-4e31-ad6d-a7167efff892"
+    flavor_name: "s3.small.1"
+    vpc_id: "{{ vpc.id }}"
+    root_volume:
+      volume_type: "SAS"
+    state: absent
+  register: result
+- name: idemponent
+  assert:
+    that:
+      - not result.changed
+# ----------------------------------------------------------------------------
+- name: delete a instance that does not exist
+  hwc_ecs_instance:
+    data_volumes:
+      - volume_id: "{{ disk.id }}"
+    enable_auto_recovery: false
+    eip_id: "{{ eip.id }}"
+    name: "ansible_ecs_instance_test"
+    availability_zone: "cn-north-1a"
+    nics:
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.33"
+      - subnet_id: "{{ subnet.id }}"
+        ip_address: "192.168.100.34"
+    server_tags:
+      my_server: "my_server"
+    image_id: "8da46d6d-6079-4e31-ad6d-a7167efff892"
+    flavor_name: "s3.small.1"
+    vpc_id: "{{ vpc.id }}"
+    root_volume:
+      volume_type: "SAS"
+    state: absent
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
+#---------------------------------------------------------
+# Post-test teardown
+- name: delete a disk
+  hwc_evs_disk:
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: absent
+  register: disk
+- name: delete a eip
+  hwc_vpc_eip:
+    dedicated_bandwidth:
+      charge_mode: "traffic"
+      name: "ansible_test_dedicated_bandwidth"
+      size: 1
+    type: "5_bgp"
+    state: absent
+  register: eip
+- name: delete a subnet
+  hwc_vpc_subnet:
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: true
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    state: absent
+  register: subnet
+- name: delete a vpc
+  hwc_network_vpc:
+    cidr: "192.168.100.0/24"
+    name: "ansible_network_vpc_test"
+    state: absent
+  register: vpc

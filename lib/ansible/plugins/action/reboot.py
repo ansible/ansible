@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.collections import is_string
+from ansible.module_utils.common.validation import check_type_str
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -24,7 +26,16 @@ class TimedOutException(Exception):
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('connect_timeout', 'msg', 'post_reboot_delay', 'pre_reboot_delay', 'test_command', 'reboot_timeout'))
+    _VALID_ARGS = frozenset((
+        'boot_time_command',
+        'connect_timeout',
+        'msg',
+        'post_reboot_delay',
+        'pre_reboot_delay',
+        'test_command',
+        'reboot_timeout',
+        'search_paths'
+    ))
 
     DEFAULT_REBOOT_TIMEOUT = 600
     DEFAULT_CONNECT_TIMEOUT = None
@@ -130,13 +141,32 @@ class ActionModule(ActionBase):
 
     def get_shutdown_command(self, task_vars, distribution):
         shutdown_bin = self._get_value_from_facts('SHUTDOWN_COMMANDS', distribution, 'DEFAULT_SHUTDOWN_COMMAND')
+        default_search_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
+        search_paths = self._task.args.get('search_paths', default_search_paths)
 
-        display.debug('{action}: running find module to get path for "{command}"'.format(action=self._task.action, command=shutdown_bin))
+        # FIXME: switch all this to user arg spec validation methods when they are available
+        # Convert bare strings to a list
+        if is_string(search_paths):
+            search_paths = [search_paths]
+
+        # Error if we didn't get a list
+        err_msg = "'search_paths' must be a string or flat list of strings, got {0}"
+        try:
+            incorrect_type = any(not is_string(x) for x in search_paths)
+            if not isinstance(search_paths, list) or incorrect_type:
+                raise TypeError
+        except TypeError:
+            raise AnsibleError(err_msg.format(search_paths))
+
+        display.debug('{action}: running find module looking in {paths} to get path for "{command}"'.format(
+            action=self._task.action,
+            command=shutdown_bin,
+            paths=search_paths))
         find_result = self._execute_module(
             task_vars=task_vars,
             module_name='find',
             module_args={
-                'paths': ['/sbin', '/usr/sbin', '/usr/local/sbin'],
+                'paths': search_paths,
                 'patterns': [shutdown_bin],
                 'file_type': 'any'
             }
@@ -144,7 +174,7 @@ class ActionModule(ActionBase):
 
         full_path = [x['path'] for x in find_result['files']]
         if not full_path:
-            raise AnsibleError('Unable to find command "{0}" in system paths.'.format(shutdown_bin))
+            raise AnsibleError('Unable to find command "{0}" in search paths: {1}'.format(shutdown_bin, search_paths))
         self._shutdown_command = full_path[0]
         return self._shutdown_command
 
@@ -158,6 +188,14 @@ class ActionModule(ActionBase):
 
     def get_system_boot_time(self, distribution):
         boot_time_command = self._get_value_from_facts('BOOT_TIME_COMMANDS', distribution, 'DEFAULT_BOOT_TIME_COMMAND')
+        if self._task.args.get('boot_time_command'):
+            boot_time_command = self._task.args.get('boot_time_command')
+
+            try:
+                check_type_str(boot_time_command, allow_conversion=False)
+            except TypeError as e:
+                raise AnsibleError("Invalid value given for 'boot_time_command': %s." % to_native(e))
+
         display.debug("{action}: getting boot time with command: '{command}'".format(action=self._task.action, command=boot_time_command))
         command_result = self._low_level_execute_command(boot_time_command, sudoable=self.DEFAULT_SUDOABLE)
 
@@ -217,7 +255,7 @@ class ActionModule(ActionBase):
                 out=to_native(command_result['stdout']))
             raise RuntimeError(msg)
 
-        display.vvv("{action}: system sucessfully rebooted".format(action=self._task.action))
+        display.vvv("{action}: system successfully rebooted".format(action=self._task.action))
 
     def do_until_success_or_timeout(self, action, reboot_timeout, action_desc, distribution, action_kwargs=None):
         max_end_time = datetime.utcnow() + timedelta(seconds=reboot_timeout)
@@ -273,7 +311,7 @@ class ActionModule(ActionBase):
             reboot_result = self._low_level_execute_command(reboot_command, sudoable=self.DEFAULT_SUDOABLE)
         except AnsibleConnectionFailure as e:
             # If the connection is closed too quickly due to the system being shutdown, carry on
-            display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_native(e)))
+            display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_text(e)))
             reboot_result['rc'] = 0
 
         result['start'] = datetime.utcnow()
@@ -307,7 +345,7 @@ class ActionModule(ActionBase):
             # Get the connect_timeout set on the connection to compare to the original
             try:
                 connect_timeout = self._connection.get_option('connection_timeout')
-            except AnsibleError:
+            except KeyError:
                 pass
             else:
                 if original_connection_timeout != connect_timeout:
@@ -380,7 +418,7 @@ class ActionModule(ActionBase):
         try:
             original_connection_timeout = self._connection.get_option('connection_timeout')
             display.debug("{action}: saving original connect_timeout of {timeout}".format(action=self._task.action, timeout=original_connection_timeout))
-        except AnsibleError:
+        except KeyError:
             display.debug("{action}: connect_timeout connection option has not been set".format(action=self._task.action))
         # Initiate reboot
         reboot_result = self.perform_reboot(task_vars, distribution)

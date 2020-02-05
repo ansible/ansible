@@ -24,12 +24,14 @@
 
 import os
 import re
+import traceback
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six.moves import configparser
 from os.path import expanduser
 from uuid import UUID
 
+LIBCLOUD_IMP_ERR = None
 try:
     from libcloud.common.dimensiondata import API_ENDPOINTS, DimensionDataAPIException, DimensionDataStatus
     from libcloud.compute.base import Node, NodeLocation
@@ -40,6 +42,7 @@ try:
 
     HAS_LIBCLOUD = True
 except ImportError:
+    LIBCLOUD_IMP_ERR = traceback.format_exc()
     HAS_LIBCLOUD = False
 
 # MCP 2.x version patten for location (datacenter) names.
@@ -69,7 +72,7 @@ class DimensionDataModule(object):
         self.module = module
 
         if not HAS_LIBCLOUD:
-            self.module.fail_json(msg='libcloud is required for this module.')
+            self.module.fail_json(msg=missing_required_lib('libcloud'), exception=LIBCLOUD_IMP_ERR)
 
         # Credentials are common to all Dimension Data modules.
         credentials = self.get_credentials()

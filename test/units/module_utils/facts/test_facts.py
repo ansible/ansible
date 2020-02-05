@@ -514,7 +514,11 @@ MTAB_ENTRIES = [
         '0',
         '0'
     ],
-    ['fusectl', '/sys/fs/fuse/connections', 'fusectl', 'rw,relatime', '0', '0']]
+    ['fusectl', '/sys/fs/fuse/connections', 'fusectl', 'rw,relatime', '0', '0'],
+    # Mount path with space in the name
+    # The space is encoded as \040 since the fields in /etc/mtab are space-delimeted
+    ['/dev/sdz9', r'/mnt/foo\040bar', 'ext4', 'rw,relatime', '0', '0'],
+]
 
 BIND_MOUNTS = ['/not/a/real/bind_mount']
 
@@ -554,6 +558,11 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         self.assertIn('mounts', mount_facts)
         self.assertIsInstance(mount_facts['mounts'], list)
         self.assertIsInstance(mount_facts['mounts'][0], dict)
+
+        # Find mounts with space in the mountpoint path
+        mounts_with_space = [x for x in mount_facts['mounts'] if ' ' in x['mount']]
+        self.assertEqual(len(mounts_with_space), 1)
+        self.assertEqual(mounts_with_space[0]['mount'], '/mnt/foo bar')
 
     @patch('ansible.module_utils.facts.hardware.linux.get_file_content', return_value=MTAB)
     def test_get_mtab_entries(self, mock_get_file_content):

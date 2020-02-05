@@ -43,6 +43,7 @@ options:
           between the stop and start command.
         - This helps to work around badly-behaving init scripts that exit immediately
           after signaling a process to stop.
+        - Not all service managers support sleep, i.e when using systemd this setting will be ignored.
         type: int
         version_added: "1.3"
     pattern:
@@ -71,8 +72,8 @@ options:
         aliases: [ args ]
     use:
         description:
-            - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
-            - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
+        - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
+        - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
         type: str
         default: auto
         version_added: 2.2
@@ -143,10 +144,11 @@ import time
 if platform.system() != 'SunOS':
     from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.service import fail_if_missing
 from ansible.module_utils.six import PY2, b
-from ansible.module_utils._text import to_bytes, to_text
 
 
 class Service(object):
@@ -167,7 +169,8 @@ class Service(object):
     distribution = None
 
     def __new__(cls, *args, **kwargs):
-        return load_platform_subclass(Service, args, kwargs)
+        new_cls = get_platform_subclass(Service)
+        return super(cls, new_cls).__new__(new_cls)
 
     def __init__(self, module):
         self.module = module
@@ -319,7 +322,7 @@ class Service(object):
             lines = psout.split("\n")
             for line in lines:
                 if self.pattern in line and "pattern=" not in line:
-                    # so as to not confuse ./hacking/test-module
+                    # so as to not confuse ./hacking/test-module.py
                     self.running = True
                     break
 
@@ -1156,7 +1159,7 @@ class OpenBsdService(Service):
 
     def service_control(self):
         if self.enable_cmd:
-            return self.execute_command("%s -f %s %s" % (self.svc_cmd, self.action, self.name))
+            return self.execute_command("%s -f %s %s" % (self.svc_cmd, self.action, self.name), daemonize=True)
         else:
             return self.execute_command("%s -f %s" % (self.svc_cmd, self.action))
 

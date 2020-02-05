@@ -1,0 +1,367 @@
+# Test code for the vmware_vmware_host_auto_start.
+# Copyright: (c) 2019, sky-joker <sky.jokerxx@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Update enabled param of autoStart defaults parameters for ESXi via vCenter.
+  vmware_host_auto_start:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    system_defaults:
+      enabled: yes
+  register: changed_system_defaults_result
+
+- name: Check return parameters.
+  assert:
+    that:
+      - changed_system_defaults_result.system_defaults_config.enabled is sameas true
+      - changed_system_defaults_result.system_defaults_config.start_delay == 120
+      - changed_system_defaults_result.system_defaults_config.stop_action == 'powerOff'
+      - changed_system_defaults_result.system_defaults_config.start_delay == 120
+      - changed_system_defaults_result.system_defaults_config.wait_for_heartbeat is sameas false
+
+- name: Gather facts for autoStart defaults parameters from ESXi.
+  vmware_host_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    schema: vsphere
+    properties:
+      - config.autoStart
+  register: auto_start_defaults_result
+
+- name: After update parameters, check system default parameters.
+  assert:
+    that:
+      - auto_start_defaults_result.ansible_facts.config.autoStart.defaults.enabled is sameas true
+      - auto_start_defaults_result.ansible_facts.config.autoStart.defaults.startDelay == 120
+      - auto_start_defaults_result.ansible_facts.config.autoStart.defaults.stopAction == 'powerOff'
+      - auto_start_defaults_result.ansible_facts.config.autoStart.defaults.stopDelay == 120
+      - auto_start_defaults_result.ansible_facts.config.autoStart.defaults.waitForHeartbeat is sameas false
+
+- name: Update all param of autoStart defaults parameters for ESXi via vCenter.
+  vmware_host_auto_start:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    system_defaults:
+      enabled: yes
+      start_delay: 200
+      stop_action: guestShutdown
+      stop_delay: 300
+      wait_for_heartbeat: yes
+
+- name: Gather facts for autoStart defaults parameters from ESXi.
+  vmware_host_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    schema: vsphere
+    properties:
+      - config.autoStart
+  register: auto_start_defaults_result
+
+- name: After update parameters, check system default parameters.
+  assert:
+    that:
+      - auto_start_defaults_result.ansible_facts.config.autoStart.defaults.enabled is sameas true
+      - auto_start_defaults_result.ansible_facts.config.autoStart.defaults.startDelay == 200
+      - auto_start_defaults_result.ansible_facts.config.autoStart.defaults.stopAction == 'guestShutdown'
+      - auto_start_defaults_result.ansible_facts.config.autoStart.defaults.stopDelay == 300
+      - auto_start_defaults_result.ansible_facts.config.autoStart.defaults.waitForHeartbeat is sameas true
+
+- name: Gather facts summary propertie from VM.
+  vmware_guest_info:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    name: test_vm1
+    schema: vsphere
+    properties:
+      - summary.vm
+  register: vm_summary_result
+
+- name: Update start_action parameters of autoStart powerInfo parameters for VM via vCenter.
+  vmware_host_auto_start:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    name: test_vm1
+    power_info:
+      start_action: powerOn
+  register: changed_vm_power_info_result
+
+- name: Check return parameters.
+  assert:
+    that:
+      - changed_vm_power_info_result.power_info_config.start_action == 'powerOn'
+      - changed_vm_power_info_result.power_info_config.start_delay == -1
+      - changed_vm_power_info_result.power_info_config.start_order == -1
+      - changed_vm_power_info_result.power_info_config.stop_action == 'systemDefault'
+      - changed_vm_power_info_result.power_info_config.stop_delay == -1
+      - changed_vm_power_info_result.power_info_config.wait_for_heartbeat == 'systemDefault'
+
+- name: Gather facts for autoStart config of VM from ESXi.
+  vmware_host_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    schema: vsphere
+    properties:
+      - config.autoStart
+  register: auto_start_defaults_result
+
+- name: After update parameters, check VM powerInfo parameters.
+  assert:
+    that:
+      - item.startAction == 'powerOn'
+      - item.startDelay == -1
+      - item.startOrder == -1
+      - item.stopAction == 'systemDefault'
+      - item.stopDelay == -1
+      - item.waitForHeartbeat == 'systemDefault'
+  when: item.key == vm_summary_result.instance.summary.vm
+  loop: "{{ auto_start_defaults_result.ansible_facts.config.autoStart.powerInfo }}"
+
+- name: Update all parameters of autoStart powerInfo parameters for VM via vCenter.
+  vmware_host_auto_start:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    name: test_vm1
+    power_info:
+      start_action: powerOn
+      start_delay: 200
+      start_order: 1
+      stop_action: suspend
+      stop_delay: 250
+      wait_for_heartbeat: "yes"
+
+- name: Gather facts for autoStart config of VM from ESXi.
+  vmware_host_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    schema: vsphere
+    properties:
+      - config.autoStart
+  register: auto_start_defaults_result
+
+- name: After update parameters, check VM all powerInfo parameters.
+  assert:
+    that:
+      - item.startAction == 'powerOn'
+      - item.startDelay == 200
+      - item.startOrder == 1
+      - item.stopAction == 'suspend'
+      - item.stopDelay == 250
+      - item.waitForHeartbeat == 'yes'
+  when: item.key == vm_summary_result.instance.summary.vm
+  loop: "{{ auto_start_defaults_result.ansible_facts.config.autoStart.powerInfo }}"
+
+- name: Gather facts summary propertie from VM.
+  vmware_guest_info:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    name: test_vm2
+    schema: vsphere
+    properties:
+      - summary.vm
+  register: vm_summary_result
+
+- name: Update all parameters of autoStart powerInfo parameters for other VM via vCenter.
+  vmware_host_auto_start:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    name: test_vm2
+    power_info:
+      start_action: powerOn
+      start_delay: 100
+      start_order: 2
+      stop_action: suspend
+      stop_delay: 20
+      wait_for_heartbeat: "no"
+
+- name: Gather facts for autoStart config of other VM from ESXi.
+  vmware_host_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    schema: vsphere
+    properties:
+      - config.autoStart
+  register: auto_start_defaults_result
+
+- name: After update parameters, check other VM all powerInfo parameters.
+  assert:
+    that:
+      - item.startAction == 'powerOn'
+      - item.startDelay == 100
+      - item.startOrder == 2
+      - item.stopAction == 'suspend'
+      - item.stopDelay == 20
+      - item.waitForHeartbeat == 'no'
+  when: item.key == vm_summary_result.instance.summary.vm
+  loop: "{{ auto_start_defaults_result.ansible_facts.config.autoStart.powerInfo }}"
+
+- name: Check the operation of check_mode and diff.
+  vmware_host_auto_start:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    name: test_vm2
+    power_info:
+      start_action: powerOn
+      start_delay: 100
+      start_order: -1
+      stop_action: suspend
+      stop_delay: 20
+  check_mode: yes
+  diff: yes
+
+- name: Gather facts for autoStart config of other VM from ESXi.
+  vmware_host_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    schema: vsphere
+    properties:
+      - config.autoStart
+  register: auto_start_defaults_result
+
+- name: After update parameters, check other VM all powerInfo parameters.
+  assert:
+    that:
+      - item.startAction == 'powerOn'
+      - item.startDelay == 100
+      - item.startOrder == 2
+      - item.stopAction == 'suspend'
+      - item.stopDelay == 20
+      - item.waitForHeartbeat == 'no'
+  when: item.key == vm_summary_result.instance.summary.vm
+  loop: "{{ auto_start_defaults_result.ansible_facts.config.autoStart.powerInfo }}"
+
+- name: Gather facts instanceUuid and moid propertie from VM.
+  vmware_guest_info:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    name: test_vm2
+    schema: vsphere
+    properties:
+      - config.instanceUuid
+      - _moId
+  register: vm_instanceUuid_and_moid_result
+
+- name: Update all parameters of autoStart powerInfo parameters for VM using instanceUuid via vCenter.
+  vmware_host_auto_start:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    uuid: "{{ vm_instanceUuid_and_moid_result.instance.config.instanceUuid }}"
+    use_instance_uuid: yes
+    power_info:
+      start_action: powerOn
+      start_delay: 300
+      start_order: 1
+      stop_action: none
+      stop_delay: 20
+      wait_for_heartbeat: "no"
+
+- name: Gather facts for autoStart config of other VM from ESXi.
+  vmware_host_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    schema: vsphere
+    properties:
+      - config.autoStart
+  register: auto_start_defaults_result
+
+- name: After update parameters, check other VM all powerInfo parameters.
+  assert:
+    that:
+      - item.startAction == 'powerOn'
+      - item.startDelay == 300
+      - item.startOrder == 1
+      - item.stopAction == 'none'
+      - item.stopDelay == 20
+      - item.waitForHeartbeat == 'no'
+  when: item.key == vm_summary_result.instance.summary.vm
+  loop: "{{ auto_start_defaults_result.ansible_facts.config.autoStart.powerInfo }}"
+
+- name: Update all parameters of autoStart powerInfo parameters for VM using moid via vCenter.
+  vmware_host_auto_start:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    moid: "{{ vm_instanceUuid_and_moid_result.instance._moId }}"
+    power_info:
+      start_action: powerOn
+      start_delay: 200
+      start_order: 1
+      stop_action: powerOff
+      stop_delay: 300
+      wait_for_heartbeat: "yes"
+
+- name: Gather facts for autoStart config of other VM from ESXi.
+  vmware_host_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    schema: vsphere
+    properties:
+      - config.autoStart
+  register: auto_start_defaults_result
+
+- name: After update parameters, check other VM all powerInfo parameters.
+  assert:
+    that:
+      - item.startAction == 'powerOn'
+      - item.startDelay == 200
+      - item.startOrder == 1
+      - item.stopAction == 'powerOff'
+      - item.stopDelay == 300
+      - item.waitForHeartbeat == 'yes'
+  when: item.key == vm_summary_result.instance.summary.vm
+  loop: "{{ auto_start_defaults_result.ansible_facts.config.autoStart.powerInfo }}"

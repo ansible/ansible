@@ -16,18 +16,6 @@ module: aci_l3out
 short_description: Manage Layer 3 Outside (L3Out) objects (l3ext:Out)
 description:
 - Manage Layer 3 Outside (L3Out) on Cisco ACI fabrics.
-notes:
-- The C(tenant) and C(domain) and C(vrf) used must exist before using this module in your playbook.
-  The M(aci_tenant) and M(aci_domain) and M(aci_vrf) modules can be used for this.
-seealso:
-- module: aci_tenant
-- module: aci_domain
-- module: aci_vrf
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(l3ext:Out).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Rostyslav Davydenko (@rost-d)
 version_added: '2.6'
 options:
   tenant:
@@ -92,6 +80,18 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) and C(domain) and C(vrf) used must exist before using this module in your playbook.
+  The M(aci_tenant) and M(aci_domain) and M(aci_vrf) modules can be used for this.
+seealso:
+- module: aci_tenant
+- module: aci_domain
+- module: aci_vrf
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(l3ext:Out).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Rostyslav Davydenko (@rost-d)
 '''
 
 EXAMPLES = r'''
@@ -236,17 +236,17 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        l3out=dict(type='str', aliases=['l3out_name', 'name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
+        l3out=dict(type='str', aliases=['l3out_name', 'name']),  # Not required for querying all objects
         domain=dict(type='str', aliases=['ext_routed_domain_name', 'routed_domain']),
         vrf=dict(type='str', aliases=['vrf_name']),
-        tenant=dict(type='str', aliases=['tenant_name']),
         description=dict(type='str', aliases=['descr']),
         route_control=dict(type='list', choices=['export', 'import'], aliases=['route_control_enforcement']),
         dscp=dict(type='str',
@@ -269,21 +269,22 @@ def main():
 
     aci = ACIModule(module)
 
-    l3out = module.params['l3out']
-    domain = module.params['domain']
-    dscp = module.params['dscp']
-    description = module.params['description']
-    enforceRtctrl = module.params['route_control']
-    vrf = module.params['vrf']
-    l3protocol = module.params['l3protocol']
-    asn = module.params['asn']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    l3out = module.params.get('l3out')
+    domain = module.params.get('domain')
+    dscp = module.params.get('dscp')
+    description = module.params.get('description')
+    enforceRtctrl = module.params.get('route_control')
+    vrf = module.params.get('vrf')
+    l3protocol = module.params.get('l3protocol')
+    asn = module.params.get('asn')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
-    if 'eigrp' in l3protocol and asn is None:
-        module.fail_json(msg="Parameter 'asn' is required when l3protocol is 'eigrp'")
-    if 'eigrp' not in l3protocol and asn is not None:
-        module.warn("Parameter 'asn' is only applicable when l3protocol is 'eigrp'. The ASN will be ignored")
+    if l3protocol:
+        if 'eigrp' in l3protocol and asn is None:
+            module.fail_json(msg="Parameter 'asn' is required when l3protocol is 'eigrp'")
+        if 'eigrp' not in l3protocol and asn is not None:
+            module.warn("Parameter 'asn' is only applicable when l3protocol is 'eigrp'. The ASN will be ignored")
 
     enforce_ctrl = ''
     if enforceRtctrl is not None:

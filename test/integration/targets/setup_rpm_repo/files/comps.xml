@@ -1,0 +1,36 @@
+<!DOCTYPE comps PUBLIC "-//Red Hat, Inc.//DTD Comps info//EN" "comps.dtd">
+<comps>
+  <group>
+    <id>customgroup</id>
+    <name>Custom Group</name>
+    <description></description>
+    <default>false</default>
+    <uservisible>true</uservisible>
+    <display_order>1024</display_order>
+    <packagelist>
+      <packagereq type="mandatory">dinginessentail</packagereq>
+    </packagelist>
+  </group>
+
+  <group>
+    <id>customenvgroup</id>
+    <name>Custom Environment Group</name>
+    <description></description>
+    <default>false</default>
+    <uservisible>false</uservisible>
+    <display_order>1024</display_order>
+    <packagelist>
+      <packagereq type="mandatory">landsidescalping</packagereq>
+    </packagelist>
+  </group>
+
+  <environment>
+    <id>customenvgroup-environment</id>
+    <name>Custom Environment Group</name>
+    <description></description>
+    <display_order>1024</display_order>
+    <grouplist>
+      <groupid>customenvgroup</groupid>
+    </grouplist>
+  </environment>
+</comps>

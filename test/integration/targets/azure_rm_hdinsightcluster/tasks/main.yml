@@ -1,0 +1,244 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create storage account
+  azure_rm_storageaccount:
+      resource_group: "{{ resource_group }}"
+      name: "storage{{ rpfx }}"
+      account_type: Standard_LRS
+      location: eastus2
+
+- name: Sample for Azure REST API - StorageAccounts_ListKeys
+  azure_rm_resource:
+    api_version: '2018-07-01'
+    method: POST
+    resource_group: "{{ resource_group }}"
+    provider: storage
+    resource_type: storageaccounts
+    resource_name: "storage{{ rpfx }}"
+    subresource:
+      - type: listkeys
+  register: storage_output
+
+- debug:
+    var: storage_output
+
+- name: Create instance of Cluster -- check mode
+  azure_rm_hdinsightcluster:
+    resource_group: "{{ resource_group }}"
+    name: "cluster{{ rpfx }}"
+    location: eastus2
+    cluster_version: 3.6
+    os_type: linux
+    tier: standard
+    cluster_definition:
+      kind: spark
+      gateway_rest_username: http-user
+      gateway_rest_password: MuABCPassword!!@123 
+    storage_accounts:
+      - name: storage{{ rpfx }}.blob.core.windows.net 
+        is_default: yes
+        container: "cluster{{ rpfx }}"
+        key: "{{ storage_output['response']['keys'][0]['value'] }}"
+    compute_profile_roles:
+      - name: headnode
+        target_instance_count: 1
+        vm_size: Standard_D3
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+      - name: workernode
+        target_instance_count: 1
+        vm_size: Standard_D3
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+      - name: zookeepernode
+        target_instance_count: 3
+        vm_size: Medium
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of Cluster
+  azure_rm_hdinsightcluster:
+    resource_group: "{{ resource_group }}"
+    name: "cluster{{ rpfx }}"
+    location: eastus2
+    cluster_version: 3.6
+    os_type: linux
+    tier: standard
+    cluster_definition:
+      kind: spark
+      gateway_rest_username: http-user
+      gateway_rest_password: MuABCPassword!!@123 
+    storage_accounts:
+      - name: storage{{ rpfx }}.blob.core.windows.net 
+        is_default: yes
+        container: "cluster{{ rpfx }}"
+        key: "{{ storage_output['response']['keys'][0]['value'] }}"
+    compute_profile_roles:
+      - name: headnode
+        target_instance_count: 1
+        vm_size: Standard_D3
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+      - name: workernode
+        target_instance_count: 1
+        vm_size: Standard_D3
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+      - name: zookeepernode
+        target_instance_count: 3
+        vm_size: Medium
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+  register: output
+
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create again instance of Cluster -- idempotent
+  azure_rm_hdinsightcluster:
+    resource_group: "{{ resource_group }}"
+    name: "cluster{{ rpfx }}"
+    location: eastus2
+    cluster_version: 3.6
+    os_type: linux
+    tier: standard
+    cluster_definition:
+      kind: spark
+      gateway_rest_username: http-user
+      gateway_rest_password: MuABCPassword!!@123 
+    storage_accounts:
+      - name: storage{{ rpfx }}.blob.core.windows.net 
+        is_default: yes
+        container: "cluster{{ rpfx }}"
+        key: "{{ storage_output['response']['keys'][0]['value'] }}"
+    compute_profile_roles:
+      - name: headnode
+        target_instance_count: 1
+        vm_size: Standard_D3
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+      - name: workernode
+        target_instance_count: 1
+        vm_size: Standard_D3
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+      - name: zookeepernode
+        target_instance_count: 3
+        vm_size: Medium
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Create again instance of Cluster -- resize and add tags
+  azure_rm_hdinsightcluster:
+    resource_group: "{{ resource_group }}"
+    name: "cluster{{ rpfx }}"
+    location: eastus2
+    cluster_version: 3.6
+    os_type: linux
+    tier: standard
+    cluster_definition:
+      kind: spark
+      gateway_rest_username: http-user
+      gateway_rest_password: MuABCPassword!!@123 
+    storage_accounts:
+      - name: storage{{ rpfx }}.blob.core.windows.net 
+        is_default: yes
+        container: "cluster{{ rpfx }}"
+        key: "{{ storage_output['response']['keys'][0]['value'] }}"
+    compute_profile_roles:
+      - name: headnode
+        target_instance_count: 1
+        vm_size: Standard_D3
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+      - name: workernode
+        target_instance_count: 2
+        vm_size: Standard_D3
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+      - name: zookeepernode
+        target_instance_count: 3
+        vm_size: Medium
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+    tags:
+      aaa: bbb
+  register: output
+- debug:
+    var: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Get facts of Cluster
+  azure_rm_hdinsightcluster_info:
+    resource_group: "{{ resource_group }}"
+    name: "cluster{{ rpfx }}"
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.clusters[0]['id'] != None
+      - output.clusters[0]['resource_group'] != None
+      - output.clusters[0]['name'] != None
+      - output.clusters[0]['location'] != None
+      - output.clusters[0]['cluster_version'] != None
+      - output.clusters[0]['os_type'] != None
+      - output.clusters[0]['tier'] != None
+      - output.clusters[0]['cluster_definition'] != None
+      - output.clusters[0]['compute_profile_roles'] != None
+      - output.clusters[0]['connectivity_endpoints'] != None
+
+- name: Delete instance of Cluster -- check mode
+  azure_rm_hdinsightcluster:
+    resource_group: "{{ resource_group }}"
+    name: "cluster{{ rpfx }}"
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of Cluster
+  azure_rm_hdinsightcluster:
+    resource_group: "{{ resource_group }}"
+    name: "cluster{{ rpfx }}"
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed

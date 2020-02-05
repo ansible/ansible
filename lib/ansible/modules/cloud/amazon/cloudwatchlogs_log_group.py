@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: cloudwatchlogs_log_group
 short_description: create or delete log_group in CloudWatchLogs
 notes:
-    - for details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/logs.html)
+    - For details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/logs.html).
 description:
     - Create or delete log_group in CloudWatchLogs.
 version_added: "2.5"
@@ -26,33 +26,38 @@ requirements: [ json, botocore, boto3 ]
 options:
     state:
       description:
-        - Whether the rule is present, absent or get
+        - Whether the rule is present or absent.
       choices: ["present", "absent"]
       default: present
       required: false
+      type: str
     log_group_name:
       description:
         - The name of the log group.
       required: true
+      type: str
     kms_key_id:
       description:
         - The Amazon Resource Name (ARN) of the CMK to use when encrypting log data.
       required: false
+      type: str
     tags:
       description:
         - The key-value pairs to use for the tags.
       required: false
+      type: dict
     retention:
       description:
-        - "The number of days to retain the log events in the specified log group.
-           Valid values are: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]"
+        - The number of days to retain the log events in the specified log group.
+        - "Valid values are: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]"
       required: false
+      type: int
     overwrite:
-     description:
+      description:
         - Whether an existing log group should be overwritten on create.
-     default: false
-     required: false
-     type: bool
+      default: false
+      required: false
+      type: bool
 extends_documentation_fragment:
     - aws
     - ec2
@@ -83,7 +88,7 @@ EXAMPLES = '''
 
 RETURN = '''
 log_groups:
-    description: Return the list of complex objetcs representing log groups
+    description: Return the list of complex objects representing log groups
     returned: success
     type: complex
     contains:
@@ -242,14 +247,14 @@ def main():
 
     if state == 'present':
         if found_log_group and module.params['overwrite'] is True:
-                changed = True
-                delete_log_group(client=logs, log_group_name=module.params['log_group_name'], module=module)
-                found_log_group = create_log_group(client=logs,
-                                                   log_group_name=module.params['log_group_name'],
-                                                   kms_key_id=module.params['kms_key_id'],
-                                                   tags=module.params['tags'],
-                                                   retention=module.params['retention'],
-                                                   module=module)
+            changed = True
+            delete_log_group(client=logs, log_group_name=module.params['log_group_name'], module=module)
+            found_log_group = create_log_group(client=logs,
+                                               log_group_name=module.params['log_group_name'],
+                                               kms_key_id=module.params['kms_key_id'],
+                                               tags=module.params['tags'],
+                                               retention=module.params['retention'],
+                                               module=module)
         elif not found_log_group:
             changed = True
             found_log_group = create_log_group(client=logs,

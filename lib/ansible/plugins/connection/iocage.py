@@ -19,7 +19,6 @@ DOCUMENTATION = """
       remote_addr:
         description:
             - Path to the jail
-        default: The set user as per docker's configuration
         vars:
             - name: ansible_host
             - name: ansible_iocage_host
@@ -32,8 +31,9 @@ DOCUMENTATION = """
 """
 
 import subprocess
-from ansible.plugins.connection.jail import Connection as Jail
 
+from ansible.plugins.connection.jail import Connection as Jail
+from ansible.module_utils._text import to_native
 from ansible.errors import AnsibleError
 from ansible.utils.display import Display
 
@@ -67,6 +67,13 @@ class Connection(Jail):
                              stderr=subprocess.STDOUT)
 
         stdout, stderr = p.communicate()
+
+        if stdout is not None:
+            stdout = to_native(stdout)
+
+        if stderr is not None:
+            stderr = to_native(stderr)
+
         # otherwise p.returncode would not be set
         p.wait()
 

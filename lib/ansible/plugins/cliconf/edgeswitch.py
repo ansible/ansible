@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: edgeswitch
+short_description: Use edgeswitch cliconf to run command on EdgeSwitch platform
+description:
+  - This edgeswitch plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Ubiquiti EdgeSwitch network devices.
+version_added: "2.8"
+"""
+
 import re
 import time
 import json
@@ -94,19 +104,17 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def get_capabilities(self):
-        result = dict()
-        result['rpc'] = self.get_base_rpc() + ['run_commands']
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['rpc'] += ['run_commands']
         return json.dumps(result)
 
     def run_commands(self, commands=None, check_rc=True):

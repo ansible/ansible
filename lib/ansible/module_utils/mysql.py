@@ -31,9 +31,12 @@ import os
 
 try:
     import pymysql as mysql_driver
+    _mysql_cursor_param = 'cursor'
 except ImportError:
     try:
         import MySQLdb as mysql_driver
+        import MySQLdb.cursors
+        _mysql_cursor_param = 'cursorclass'
     except ImportError:
         mysql_driver = None
 
@@ -41,7 +44,7 @@ mysql_driver_fail_msg = 'The PyMySQL (Python 2.7 and Python 3.X) or MySQL-python
 
 
 def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None,
-                  connect_timeout=30):
+                  connect_timeout=30, autocommit=False):
     config = {}
 
     if ssl_ca is not None or ssl_key is not None or ssl_cert is not None:
@@ -73,8 +76,31 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
     if connect_timeout is not None:
         config['connect_timeout'] = connect_timeout
 
-    db_connection = mysql_driver.connect(**config)
-    if cursor_class is not None:
-        return db_connection.cursor(cursorclass=mysql_driver.cursors.DictCursor)
+    if _mysql_cursor_param == 'cursor':
+        # In case of PyMySQL driver:
+        db_connection = mysql_driver.connect(autocommit=autocommit, **config)
     else:
-        return db_connection.cursor()
+        # In case of MySQLdb driver
+        db_connection = mysql_driver.connect(**config)
+        if autocommit:
+            db_connection.autocommit(True)
+
+    if cursor_class == 'DictCursor':
+        return db_connection.cursor(**{_mysql_cursor_param: mysql_driver.cursors.DictCursor}), db_connection
+    else:
+        return db_connection.cursor(), db_connection
+
+
+def mysql_common_argument_spec():
+    return dict(
+        login_user=dict(type='str', default=None),
+        login_password=dict(type='str', no_log=True),
+        login_host=dict(type='str', default='localhost'),
+        login_port=dict(type='int', default=3306),
+        login_unix_socket=dict(type='str'),
+        config_file=dict(type='path', default='~/.my.cnf'),
+        connect_timeout=dict(type='int', default=30),
+        client_cert=dict(type='path', aliases=['ssl_cert']),
+        client_key=dict(type='path', aliases=['ssl_key']),
+        ca_cert=dict(type='path', aliases=['ssl_ca']),
+    )

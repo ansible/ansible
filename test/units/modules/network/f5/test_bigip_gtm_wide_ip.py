@@ -120,7 +120,7 @@ class TestParameters(unittest.TestCase):
         with pytest.raises(F5ModuleError) as excinfo:
             p = ModuleParameters(params=args)
             assert p.name == 'foo'
-        assert 'The provided name must be a valid FQDN' in str(excinfo)
+        assert 'The provided name must be a valid FQDN' in str(excinfo.value)
 
 
 class TestUntypedManager(unittest.TestCase):
@@ -143,9 +143,11 @@ class TestUntypedManager(unittest.TestCase):
         set_module_args(dict(
             name='foo.baz.bar',
             lb_method='round-robin',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -157,6 +159,7 @@ class TestUntypedManager(unittest.TestCase):
         tm = UntypedManager(module=module, params=module.params)
         tm.exists = Mock(return_value=False)
         tm.create_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -192,9 +195,11 @@ class TestTypedManager(unittest.TestCase):
             name='foo.baz.bar',
             lb_method='round-robin',
             type='a',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -206,6 +211,7 @@ class TestTypedManager(unittest.TestCase):
         tm = TypedManager(module=module, params=module.params)
         tm.exists = Mock(return_value=False)
         tm.create_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -218,70 +224,6 @@ class TestTypedManager(unittest.TestCase):
         assert results['name'] == 'foo.baz.bar'
         assert results['state'] == 'present'
         assert results['lb_method'] == 'round-robin'
-
-    def test_create_wideip_deprecated_lb_method1(self, *args):
-        set_module_args(dict(
-            name='foo.baz.bar',
-            lb_method='round_robin',
-            type='a',
-            password='password',
-            server='localhost',
-            user='admin'
-        ))
-
-        module = AnsibleModule(
-            argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
-        )
-
-        # Override methods in the specific type of manager
-        tm = TypedManager(module=module, params=module.params)
-        tm.exists = Mock(return_value=False)
-        tm.create_on_device = Mock(return_value=True)
-
-        # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(module=module)
-        mm.version_is_less_than_12 = Mock(return_value=False)
-        mm.get_manager = Mock(return_value=tm)
-
-        results = mm.exec_module()
-
-        assert results['changed'] is True
-        assert results['name'] == 'foo.baz.bar'
-        assert results['state'] == 'present'
-        assert results['lb_method'] == 'round-robin'
-
-    def test_create_wideip_deprecated_lb_method2(self, *args):
-        set_module_args(dict(
-            name='foo.baz.bar',
-            lb_method='global_availability',
-            type='a',
-            password='password',
-            server='localhost',
-            user='admin'
-        ))
-
-        module = AnsibleModule(
-            argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
-        )
-
-        # Override methods in the specific type of manager
-        tm = TypedManager(module=module, params=module.params)
-        tm.exists = Mock(return_value=False)
-        tm.create_on_device = Mock(return_value=True)
-
-        # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(module=module)
-        mm.version_is_less_than_12 = Mock(return_value=False)
-        mm.get_manager = Mock(return_value=tm)
-
-        results = mm.exec_module()
-
-        assert results['changed'] is True
-        assert results['name'] == 'foo.baz.bar'
-        assert results['state'] == 'present'
-        assert results['lb_method'] == 'global-availability'
 
     def test_create_wideip_with_pool(self, *args):
         set_module_args(dict(
@@ -294,9 +236,11 @@ class TestTypedManager(unittest.TestCase):
                     ratio=10
                 )
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -308,6 +252,7 @@ class TestTypedManager(unittest.TestCase):
         tm = TypedManager(module=module, params=module.params)
         tm.exists = Mock(return_value=False)
         tm.create_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -332,9 +277,11 @@ class TestTypedManager(unittest.TestCase):
                     ratio=10
                 )
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_gtm_wide_ip_with_pools.json'))
@@ -347,6 +294,7 @@ class TestTypedManager(unittest.TestCase):
         tm = TypedManager(module=module, params=module.params)
         tm.exists = Mock(return_value=True)
         tm.read_current_from_device = Mock(return_value=current)
+        tm.version_is_less_than_12 = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -372,9 +320,11 @@ class TestTypedManager(unittest.TestCase):
                     ratio=100
                 )
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_gtm_wide_ip_with_pools.json'))
@@ -388,6 +338,7 @@ class TestTypedManager(unittest.TestCase):
         tm.exists = Mock(return_value=True)
         tm.read_current_from_device = Mock(return_value=current)
         tm.update_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)

@@ -27,10 +27,11 @@ def fake_old_module_open(mocker):
     else:
         mocker.patch('builtins.open', m)
 
-
-def test_shebang(fake_old_module_open, templar):
-    (data, style, shebang) = modify_module('fake_module', 'fake_path', {}, templar)
-    assert shebang == '#!/usr/bin/python'
+# this test no longer makes sense, since a Python module will always either have interpreter discovery run or
+# an explicit interpreter passed (so we'll never default to the module shebang)
+# def test_shebang(fake_old_module_open, templar):
+#     (data, style, shebang) = modify_module('fake_module', 'fake_path', {}, templar)
+#     assert shebang == '#!/usr/bin/python'
 
 
 def test_shebang_task_vars(fake_old_module_open, templar):

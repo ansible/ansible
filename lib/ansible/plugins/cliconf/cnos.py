@@ -16,11 +16,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: cnos
+short_description: Use cnos cliconf to run command on Lenovo CNOS platform
+description:
+  - This cnos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Lenovo CNOS network devices.
+version_added: 2.6
+"""
+
 import re
 import json
 
-from itertools import chain
-
+from ansible.errors import AnsibleConnectionFailure
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
@@ -65,7 +75,7 @@ class Cliconf(CliconfBase):
         return "NA"
 
     @enable_mode
-    def get_config(self, source='running', format='text'):
+    def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
             msg = "fetching configuration from %s is not supported"
             return self.invalid_params(msg % source)
@@ -76,16 +86,51 @@ class Cliconf(CliconfBase):
         return self.send_command(cmd)
 
     @enable_mode
-    def edit_config(self, command):
-        for cmd in chain(['configure terminal'], to_list(command), ['end']):
-            self.send_command(cmd)
+    def edit_config(self, candidate=None, commit=True,
+                    replace=None, comment=None):
+        resp = {}
+        results = []
+        requests = []
+        if commit:
+            self.send_command('configure terminal')
+            for line in to_list(candidate):
+                if not isinstance(line, Mapping):
+                    line = {'command': line}
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
-        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+                cmd = line['command']
+                if cmd != 'end' and cmd[0] != '!':
+                    results.append(self.send_command(**line))
+                    requests.append(cmd)
+
+            self.send_command('end')
+        else:
+            raise ValueError('check mode is not supported')
+
+        resp['request'] = requests
+        resp['response'] = results
+        return resp
+
+    def get(self, command, prompt=None, answer=None, sendonly=False, newline=True, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            out = self._connection.get_prompt()
+
+            if out is None:
+                raise AnsibleConnectionFailure(message=u'cli prompt is not identified from the last received'
+                                                       u' response window: %s' % self._connection._last_recv_window)
+
+            if to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+                self._connection.queue_message('vvvv', 'In Config mode, sending exit to device')
+                self._connection.send_command('exit')
+            else:
+                self._connection.send_command('enable')

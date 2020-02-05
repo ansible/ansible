@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ted Elhourani <ted@bigswitch.com>
+# Copyright: (c) 2017, Ted Elhourani <ted@bigswitch.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -101,7 +101,7 @@ def switch(module, check_mode):
 
     response = rest.get('switch-config', data={})
     if response.status_code != 200:
-        module.fail_json(msg="failed to obtain existing switch config: {}".format(response.json['description']))
+        module.fail_json(msg="failed to obtain existing switch config: {0}".format(response.json['description']))
 
     config_present = False
     for switch in response.json:
@@ -127,14 +127,14 @@ def switch(module, check_mode):
         if response.status_code == 204:
             module.exit_json(changed=True)
         else:
-            module.fail_json(msg="error configuring switch '{}': {}".format(name, response.json['description']))
+            module.fail_json(msg="error configuring switch '{0}': {1}".format(name, response.json['description']))
 
     if state in ('absent'):
         response = rest.delete('switch-config[name="%s"]' % name, data={})
         if response.status_code == 204:
             module.exit_json(changed=True)
         else:
-            module.fail_json(msg="error deleting switch '{}': {}".format(name, response.json['description']))
+            module.fail_json(msg="error deleting switch '{0}': {1}".format(name, response.json['description']))
 
 
 def main():

@@ -26,34 +26,40 @@ options:
     description:
       - Name of the record.
     default: ""
+    type: str
   domain:
     description:
       - Domain the record is related to.
     required: true
+    type: str
   record_type:
     description:
       - Type of the record.
     default: A
     choices: [ A, ALIAS, CNAME, MX, SPF, URL, TXT, NS, SRV, NAPTR, PTR, AAAA, SSHFP, HINFO, POOL ]
     aliases: [ rtype, type ]
+    type: str
   content:
     description:
       - Content of the record.
       - Required if C(state=present) or C(multiple=yes).
-    aliases: ['value', 'address']
+    aliases: [ value, address ]
+    type: str
   ttl:
     description:
       - TTL of the record in seconds.
     default: 3600
+    type: int
   prio:
     description:
       - Priority of the record.
     aliases: [ priority ]
+    type: int
   multiple:
     description:
-      - Whether there are more than one records with similar C(name) and C(record_type).
+      - Whether there are more than one records with similar I(name) and I(record_type).
       - Only allowed for a few record types, e.g. C(record_type=A), C(record_type=NS) or C(record_type=MX).
-      - C(content) will not be updated, instead it is used as a key to find existing records.
+      - I(content) will not be updated, instead it is used as a key to find existing records.
     type: bool
     default: no
   state:
@@ -61,43 +67,39 @@ options:
       - State of the record.
     default: present
     choices: [ present, absent ]
+    type: str
 extends_documentation_fragment: exoscale
 '''
 
 EXAMPLES = '''
 - name: Create or update an A record
-  local_action:
-    module: exo_dns_record
+  exo_dns_record:
     name: web-vm-1
     domain: example.com
     content: 1.2.3.4
 
 - name: Update an existing A record with a new IP
-  local_action:
-    module: exo_dns_record
+  exo_dns_record:
     name: web-vm-1
     domain: example.com
     content: 1.2.3.5
 
 - name: Create another A record with same name
-  local_action:
-    module: exo_dns_record
+  exo_dns_record:
     name: web-vm-1
     domain: example.com
     content: 1.2.3.6
     multiple: yes
 
 - name: Create or update a CNAME record
-  local_action:
-    module: exo_dns_record
+  exo_dns_record:
     name: www
     domain: example.com
     record_type: CNAME
     content: web-vm-1
 
 - name: Create another MX record
-  local_action:
-    module: exo_dns_record
+  exo_dns_record:
     domain: example.com
     record_type: MX
     content: mx1.example.com
@@ -105,8 +107,7 @@ EXAMPLES = '''
     multiple: yes
 
 - name: Delete one MX record out of multiple
-  local_action:
-    module: exo_dns_record
+  exo_dns_record:
     domain: example.com
     record_type: MX
     content: mx1.example.com
@@ -114,8 +115,7 @@ EXAMPLES = '''
     state: absent
 
 - name: Remove a single A record
-  local_action:
-    module: exo_dns_record
+  exo_dns_record:
     name: www
     domain: example.com
     state: absent
@@ -310,14 +310,14 @@ class ExoDnsRecord(ExoDns):
 def main():
     argument_spec = exo_dns_argument_spec()
     argument_spec.update(dict(
-        name=dict(default=""),
-        record_type=dict(choices=EXO_RECORD_TYPES, aliases=['rtype', 'type'], default='A'),
-        content=dict(aliases=['value', 'address']),
+        name=dict(type='str', default=''),
+        record_type=dict(type='str', choices=EXO_RECORD_TYPES, aliases=['rtype', 'type'], default='A'),
+        content=dict(type='str', aliases=['value', 'address']),
         multiple=(dict(type='bool', default=False)),
         ttl=dict(type='int', default=3600),
         prio=dict(type='int', aliases=['priority']),
-        domain=dict(required=True),
-        state=dict(choices=['present', 'absent'], default='present'),
+        domain=dict(type='str', required=True),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
     ))
 
     module = AnsibleModule(

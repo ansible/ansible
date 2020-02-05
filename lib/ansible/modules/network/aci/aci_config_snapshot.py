@@ -18,17 +18,6 @@ description:
 - Manage Config Snapshots on Cisco ACI fabrics.
 - Creating new Snapshots is done using the configExportP class.
 - Removing Snapshots is done using the configSnapshot class.
-notes:
-- The APIC does not provide a mechanism for naming the snapshots.
-- 'Snapshot files use the following naming structure: ce_<config export policy name>-<yyyy>-<mm>-<dd>T<hh>:<mm>:<ss>.<mss>+<hh>:<mm>.'
-- 'Snapshot objects use the following naming structure: run-<yyyy>-<mm>-<dd>T<hh>-<mm>-<ss>.'
-seealso:
-- module: aci_config_rollback
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC classes B(config:Snapshot) and B(config:ExportP).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   description:
@@ -70,6 +59,17 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The APIC does not provide a mechanism for naming the snapshots.
+- 'Snapshot files use the following naming structure: ce_<config export policy name>-<yyyy>-<mm>-<dd>T<hh>:<mm>:<ss>.<mss>+<hh>:<mm>.'
+- 'Snapshot objects use the following naming structure: run-<yyyy>-<mm>-<dd>T<hh>-<mm>-<ss>.'
+seealso:
+- module: aci_config_rollback
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(config:Snapshot) and B(config:ExportP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -219,8 +219,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
@@ -246,20 +246,20 @@ def main():
 
     aci = ACIModule(module)
 
-    description = module.params['description']
-    export_policy = module.params['export_policy']
-    file_format = module.params['format']
-    include_secure = aci.boolean(module.params['include_secure'])
-    max_count = module.params['max_count']
+    description = module.params.get('description')
+    export_policy = module.params.get('export_policy')
+    file_format = module.params.get('format')
+    include_secure = aci.boolean(module.params.get('include_secure'))
+    max_count = module.params.get('max_count')
     if max_count is not None:
         if max_count in range(1, 11):
             max_count = str(max_count)
         else:
             module.fail_json(msg="Parameter 'max_count' must be a number between 1 and 10")
-    snapshot = module.params['snapshot']
+    snapshot = module.params.get('snapshot')
     if snapshot is not None and not snapshot.startswith('run-'):
         snapshot = 'run-' + snapshot
-    state = module.params['state']
+    state = module.params.get('state')
 
     if state == 'present':
         aci.construct_url(

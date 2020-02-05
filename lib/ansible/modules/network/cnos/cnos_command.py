@@ -37,54 +37,14 @@ description:
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
 options:
-  provider:
-    version_added: "2.6"
-    description:
-      - A dict object containing connection details.
-    suboptions:
-      host:
-        description:
-          - Specifies the DNS host name or address for connecting to the remote
-            device over the specified transport.  The value of host is used as
-            the destination address for the transport.
-        required: true
-      port:
-        description:
-          - Specifies the port to use when building the connection to the remote device.
-        default: 22
-      username:
-        description:
-          - Configures the username to use to authenticate the connection to
-            the remote device.  This value is used to authenticate
-            the SSH session. If the value is not specified in the task, the
-            value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
-      password:
-        description:
-          - Specifies the password to use to authenticate the connection to
-            the remote device.   This value is used to authenticate
-            the SSH session. If the value is not specified in the task, the
-            value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
-      timeout:
-        description:
-          - Specifies the timeout in seconds for communicating with the network device
-            for either connecting or sending commands.  If the timeout is
-            exceeded before the operation is completed, the module will error.
-        default: 10
-      ssh_keyfile:
-        description:
-          - Specifies the SSH key to use to authenticate the connection to
-            the remote device.   This value is the path to the
-            key used to authenticate the SSH session. If the value is not specified
-            in the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
-            will be used instead.
   commands:
     version_added: "2.6"
     description:
-      - List of commands to send to the remote device over the
-        configured provider. The resulting output from the command
-        is returned. If the I(wait_for) argument is provided, the
-        module is not returned until the condition is satisfied or
-        the number of retires as expired.
+      - List of commands to send to the remote device.
+        The resulting output from the command is returned.
+        If the I(wait_for) argument is provided, the module is not
+        returned until the condition is satisfied or the number of
+        retires is expired.
     required: true
   wait_for:
     version_added: "2.6"
@@ -124,17 +84,6 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    port: 22
-    username: admin
-    password: admin
-    timeout: 30
-
 ---
 - name: test contains operator
   cnos_command:
@@ -144,7 +93,6 @@ vars:
     wait_for:
       - "result[0] contains 'Lenovo'"
       - "result[1] contains 'MemFree'"
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -155,7 +103,6 @@ vars:
 - name: get output for single command
   cnos_command:
     commands: ['show version']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -168,7 +115,6 @@ vars:
     commands:
       - show version
       - show interface information
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -200,7 +146,6 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cnos.cnos import run_commands, check_args
-from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
@@ -223,8 +168,6 @@ def main():
         retries=dict(default=10, type='int'),
         interval=dict(default=1, type='int')
     )
-
-    spec.update(cnos_argument_spec)
 
     module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
     result = {'changed': False}

@@ -1,0 +1,29 @@
+<!--- Based on https://github.com/rtfd/sphinx_rtd_theme/pull/438/files -->
+{# Creates dropdown version selection in the top-left navigation. #}
+<div class="version">
+  {% if not READTHEDOCS %}
+    <div class="version-dropdown">
+      <select class="version-list" id="version-list" onchange="javascript:location.href = this.value;">
+        <script> x = document.getElementById("version-list"); </script>
+        {% for slug in available_versions %}
+          <script>
+            current_url = window.location.href;
+            option = document.createElement("option");
+            option.text = "{{ slug }}";
+            if ( "{{ slug }}" == "{{ current_version }}" ) {
+              option.selected = true;
+            }
+            if (current_url.search("{{ current_version }}") > -1) {
+              option.value = current_url.replace("{{ current_version }}","{{ slug }}");
+            } else {
+              option.value = current_url.replace("latest","{{ slug }}");
+            }
+            x.add(option);
+          </script>
+        {% endfor %}
+      </select>
+    </div>
+  {% else %}
+    {{ nav_version }}
+  {% endif %}
+</div>

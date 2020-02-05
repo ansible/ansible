@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: lambda_alias
-short_description: Creates, updates or deletes AWS Lambda function aliases.
+short_description: Creates, updates or deletes AWS Lambda function aliases
 description:
     - This module allows the management of AWS Lambda functions aliases via the Ansible
       framework.  It is idempotent and supports "Check" mode.    Use module M(lambda) to manage the lambda function
@@ -28,27 +28,29 @@ options:
     description:
       - The name of the function alias.
     required: true
+    type: str
   state:
     description:
       - Describes the desired state.
-    required: true
     default: "present"
     choices: ["present", "absent"]
+    type: str
   name:
     description:
       - Name of the function alias.
     required: true
     aliases: ['alias_name']
+    type: str
   description:
     description:
       - A short, user-defined function alias description.
-    required: false
-  version:
+    type: str
+  function_version:
     description:
       -  Version associated with the Lambda function alias.
          A value of 0 (or omitted parameter) sets the alias to the $LATEST version.
-    required: false
-    aliases: ['function_version']
+    aliases: ['version']
+    type: int
 requirements:
     - boto3
 extends_documentation_fragment:
@@ -83,33 +85,37 @@ EXAMPLES = '''
       memory_size: 128
       role: "arn:aws:iam::{{ account }}:role/API2LambdaExecRole"
 
+  - name: Get information
+    lambda_info:
+      name: myLambdaFunction
+    register: lambda_info
   - name: show results
     debug:
-      var: lambda_facts
+      msg: "{{ lambda_info['lambda_facts'] }}"
 
 # The following will set the Dev alias to the latest version ($LATEST) since version is omitted (or = 0)
-  - name: "alias 'Dev' for function {{ lambda_facts.FunctionName }} "
+  - name: "alias 'Dev' for function {{ lambda_info.lambda_facts.FunctionName }} "
     lambda_alias:
       state: "{{ state | default('present') }}"
-      function_name: "{{ lambda_facts.FunctionName }}"
+      function_name: "{{ lambda_info.lambda_facts.FunctionName }}"
       name: Dev
       description: Development is $LATEST version
 
 # The QA alias will only be created when a new version is published (i.e. not = '$LATEST')
-  - name: "alias 'QA' for function {{ lambda_facts.FunctionName }} "
+  - name: "alias 'QA' for function {{ lambda_info.lambda_facts.FunctionName }} "
     lambda_alias:
       state: "{{ state | default('present') }}"
-      function_name: "{{ lambda_facts.FunctionName }}"
+      function_name: "{{ lambda_info.lambda_facts.FunctionName }}"
       name: QA
-      version: "{{ lambda_facts.Version }}"
-      description: "QA is version {{ lambda_facts.Version }}"
-    when: lambda_facts.Version != "$LATEST"
+      version: "{{ lambda_info.lambda_facts.Version }}"
+      description: "QA is version {{ lambda_info.lambda_facts.Version }}"
+    when: lambda_info.lambda_facts.Version != "$LATEST"
 
 # The Prod alias will have a fixed version based on a variable
-  - name: "alias 'Prod' for function {{ lambda_facts.FunctionName }} "
+  - name: "alias 'Prod' for function {{ lambda_info.lambda_facts.FunctionName }} "
     lambda_alias:
       state: "{{ state | default('present') }}"
-      function_name: "{{ lambda_facts.FunctionName }}"
+      function_name: "{{ lambda_info.lambda_facts.FunctionName }}"
       name: Prod
       version: "{{ production_version }}"
       description: "Production is version {{ production_version }}"
@@ -352,8 +358,8 @@ def main():
     argument_spec.update(
         dict(
             state=dict(required=False, default='present', choices=['present', 'absent']),
-            function_name=dict(required=True, default=None),
-            name=dict(required=True, default=None, aliases=['alias_name']),
+            function_name=dict(required=True),
+            name=dict(required=True, aliases=['alias_name']),
             function_version=dict(type='int', required=False, default=0, aliases=['version']),
             description=dict(required=False, default=None),
         )

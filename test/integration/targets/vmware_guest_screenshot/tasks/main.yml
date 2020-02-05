@@ -1,0 +1,54 @@
+# Test code for the vmware_guest_screenshot module
+# Copyright: (c) 2019, Diane Wang (Tomorrow9) <dianew@vmware.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_attach_host: true
+      setup_datastore: true
+      setup_virtualmachines: true
+
+  - name: set VM state to powered on 
+    vmware_guest:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ dc1 }}"
+      folder: "{{ virtual_machines[0].folder }}"
+      name: "{{ virtual_machines[0].name }}"
+      state: poweredon
+
+  - name: take screenshot of virtual machine's console
+    vmware_guest_screenshot:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines[0].name }}"
+    register: take_screenshot
+  - debug: var=take_screenshot
+  - name: assert the screenshot captured
+    assert:
+      that:
+        - "take_screenshot.changed == true"
+
+  - name: take screenshot of virtual machine's console and download to local
+    vmware_guest_screenshot:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines[0].name }}"
+      local_path: "/tmp/screenshot_test.png"
+      datacenter: "{{ dc1 }}"
+      folder: "{{ virtual_machines[0].folder }}"
+    register: take_screenshot
+  - debug: var=take_screenshot
+  - name: assert the screenshot captured
+    assert:
+      that:
+        - "take_screenshot.changed == true"

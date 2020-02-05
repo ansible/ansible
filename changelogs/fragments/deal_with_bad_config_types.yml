@@ -1,2 +1,0 @@
-bugfixes:
-    - better error message when bad type in config, deal with EVNAR= more gracefully https://github.com/ansible/ansible/issues/22470

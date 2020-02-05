@@ -25,21 +25,26 @@ options:
   state:
     description:
       - Specifies whether the subnet should be present or absent.
-    default: 'present'
+    required: true
     choices: ['present', 'absent' ]
+    type: str
   group_name:
     description:
       - Cluster subnet group name.
     required: true
     aliases: ['name']
+    type: str
   group_description:
     description:
       - Database subnet group description.
     aliases: ['description']
+    type: str
   group_subnets:
     description:
       - List of subnet IDs that make up the cluster subnet group.
     aliases: ['subnets']
+    type: list
+    elements: str
 requirements: [ 'boto' ]
 extends_documentation_fragment:
   - aws
@@ -121,7 +126,7 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
-        module.fail_json(msg=str("region not specified and unable to determine region from EC2_REGION."))
+        module.fail_json(msg=str("Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file"))
 
     # Connect to the Redshift endpoint.
     try:

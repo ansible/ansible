@@ -1,3 +1,0 @@
-bugfixes:
-    - remove rendundant path uniquifying in inventory plugins.  This removes
-      use of md5 hashing and fixes inventory plugins when run in FIPS mode.

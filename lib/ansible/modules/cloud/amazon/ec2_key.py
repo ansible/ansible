@@ -24,10 +24,12 @@ options:
     description:
       - Name of the key pair.
     required: true
+    type: str
   key_material:
     description:
       - Public key material.
     required: false
+    type: str
   force:
     description:
       - Force overwrite of already existing key pair if key has changed.
@@ -41,19 +43,18 @@ options:
     required: false
     choices: [ present, absent ]
     default: 'present'
+    type: str
   wait:
     description:
-      - Wait for the specified action to complete before returning. This option has no effect since version 2.5.
-    required: false
-    default: false
-    type: bool
+      - This option has no effect since version 2.5 and will be removed in 2.14.
     version_added: "1.6"
+    type: bool
   wait_timeout:
     description:
-      - How long before wait gives up, in seconds. This option has no effect since version 2.5.
-    required: false
-    default: 300
+      - This option has no effect since version 2.5 and will be removed in 2.14.
     version_added: "1.6"
+    type: int
+    required: false
 
 extends_documentation_fragment:
   - aws
@@ -133,13 +134,12 @@ key:
 import uuid
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
 from ansible.module_utils._text import to_bytes
 
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass
+    pass  # caught by AnsibleAWSModule
 
 
 def extract_key_data(key):
@@ -180,6 +180,8 @@ def find_key_pair(module, ec2_client, name):
         if err.response['Error']['Code'] == "InvalidKeyPair.NotFound":
             return None
         module.fail_json_aws(err, msg="error finding keypair")
+    except IndexError:
+        key = None
     return key
 
 
@@ -241,23 +243,18 @@ def delete_key_pair(module, ec2_client, name, finish_task=True):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            key_material=dict(),
-            force=dict(type='bool', default=True),
-            state=dict(default='present', choices=['present', 'absent']),
-            wait=dict(type='bool', default=False),
-            wait_timeout=dict(default=300)
-        )
+    argument_spec = dict(
+        name=dict(required=True),
+        key_material=dict(),
+        force=dict(type='bool', default=True),
+        state=dict(default='present', choices=['present', 'absent']),
+        wait=dict(type='bool', removed_in_version='2.14'),
+        wait_timeout=dict(type='int', removed_in_version='2.14')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    ec2_client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+    ec2_client = module.client('ec2')
 
     name = module.params['name']
     state = module.params.get('state')

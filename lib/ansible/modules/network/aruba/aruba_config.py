@@ -84,9 +84,9 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory. If the directory does not exist, it is created.
     type: bool
     default: 'no'
   running_config:
@@ -105,13 +105,13 @@ options:
         changes are not copied to non-volatile storage by default.  Using
         this argument will change that before.  If the argument is set to
         I(always), then the running-config will always be copied to the
-        startup-config and the I(modified) flag will always be set to
+        startup configuration and the I(modified) flag will always be set to
         True.  If the argument is set to I(modified), then the running-config
-        will only be copied to the startup-config if it has changed since
-        the last save to startup-config.  If the argument is set to
+        will only be copied to the startup configuration if it has changed since
+        the last save to startup configuration.  If the argument is set to
         I(never), the running-config will never be copied to the
-        startup-config.  If the argument is set to I(changed), then the running-config
-        will only be copied to the startup-config if the task has made a change.
+        startup configuration.  If the argument is set to I(changed), then the running-config
+        will only be copied to the startup configuration if the task has made a change.
     default: never
     choices: ['always', 'never', 'modified', 'changed']
     version_added: "2.5"
@@ -120,7 +120,7 @@ options:
       - When using the C(ansible-playbook --diff) command line argument
         the module can generate diffs against different sources.
       - When this option is configure as I(startup), the module will return
-        the diff of the running-config against the startup-config.
+        the diff of the running-config against the startup configuration.
       - When this option is configured as I(intended), the module will
         return the diff of the running-config against the configuration
         provided in the C(intended_config) argument.
@@ -152,6 +152,28 @@ options:
     type: bool
     default: 'yes'
     version_added: "2.5"
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -162,7 +184,7 @@ EXAMPLES = """
 - name: diff the running-config against a provided config
   aruba_config:
     diff_against: intended
-    intended: "{{ lookup('file', 'master.cfg') }}"
+    intended_config: "{{ lookup('file', 'master.cfg') }}"
 
 - name: configure interface settings
   aruba_config:
@@ -179,6 +201,14 @@ EXAMPLES = """
     parents: ip access-list standard 1
     before: no ip access-list standard 1
     match: exact
+
+- name: configurable backup path
+  aruba_config:
+    backup: yes
+    lines: hostname {{ inventory_hostname }}
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -231,9 +261,9 @@ def get_candidate(module):
 def save_config(module, result):
     result['changed'] = True
     if not module.check_mode:
-        run_commands(module, 'copy running-config startup-config')
+        run_commands(module, 'write memory')
     else:
-        module.warn('Skipping command `copy running-config startup-config` '
+        module.warn('Skipping command `write memory` '
                     'due to check_mode.  Configuration not copied to '
                     'non-volatile storage')
 
@@ -241,6 +271,10 @@ def save_config(module, result):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -257,6 +291,7 @@ def main():
         intended_config=dict(),
 
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
 
         save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
@@ -334,7 +369,7 @@ def main():
     if module.params['save_when'] == 'always':
         save_config(module, result)
     elif module.params['save_when'] == 'modified':
-        output = run_commands(module, ['show running-config', 'show startup-config'])
+        output = run_commands(module, ['show running-config', 'show configuration'])
 
         running_config = NetworkConfig(contents=output[0], ignore_lines=diff_ignore_lines)
         startup_config = NetworkConfig(contents=output[1], ignore_lines=diff_ignore_lines)
@@ -364,7 +399,7 @@ def main():
 
         elif module.params['diff_against'] == 'startup':
             if not startup_config:
-                output = run_commands(module, 'show startup-config')
+                output = run_commands(module, 'show configuration')
                 contents = output[0]
             else:
                 contents = startup_config.config_text

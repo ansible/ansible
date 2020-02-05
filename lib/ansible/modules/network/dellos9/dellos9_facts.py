@@ -252,13 +252,13 @@ class Interfaces(FactsBase):
         data = self.responses[0]
         interfaces = self.parse_interfaces(data)
 
-        for key in interfaces.keys():
+        for key in list(interfaces.keys()):
             if "ManagementEthernet" in key:
                 temp_parsed = interfaces[key]
                 del interfaces[key]
                 interfaces.update(self.parse_mgmt_interfaces(temp_parsed))
 
-        for key in interfaces.keys():
+        for key in list(interfaces.keys()):
             if "Vlan" in key:
                 temp_parsed = interfaces[key]
                 del interfaces[key]

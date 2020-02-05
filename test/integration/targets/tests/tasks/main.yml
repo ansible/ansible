@@ -1,0 +1,35 @@
+- name: Assert truthy tests work
+  assert:
+    that:
+      - '"string" is truthy'
+      - '"" is not truthy'
+      - True is truthy
+      - False is not truthy
+      - true is truthy
+      - false is not truthy
+      - 1 is truthy
+      - 0 is not truthy
+      - '[""] is truthy'
+      - '[] is not truthy'
+      - '"on" is truthy(convert_bool=True)'
+      - '"off" is not truthy(convert_bool=True)'
+      - '{} is not truthy'
+      - '{"key": "value"} is truthy'      
+
+- name: Assert falsy tests work
+  assert:
+    that:
+      - '"string" is not falsy'
+      - '"" is falsy'
+      - True is not falsy
+      - False is falsy
+      - true is not falsy
+      - false is falsy
+      - 1 is not falsy
+      - 0 is falsy
+      - '[""] is not falsy'
+      - '[] is falsy'
+      - '"on" is not falsy(convert_bool=True)'
+      - '"off" is falsy(convert_bool=True)'
+      - '{} is falsy'
+      - '{"key": "value"} is not falsy'

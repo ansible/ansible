@@ -1,0 +1,2 @@
+minor_changes:
+  - vultr_server_info, vultr_server - Improved handling of discontinued plans (https://github.com/ansible/ansible/issues/66707).

@@ -36,6 +36,7 @@ options:
       - The C(type), C(control) and C(module_path) all must match a rule to be modified.
     type: str
     required: true
+    choices: [ account, -account, auth, -auth, password, -password, session, -session ]
   control:
     description:
       - The control of the PAM rule being modified.
@@ -54,6 +55,7 @@ options:
     description:
     - The new type to assign to the new rule.
     type: str
+    choices: [ account, -account, auth, -auth, password, -password, session, -session ]
   new_control:
     description:
     - The new control to assign to the new rule.
@@ -87,9 +89,9 @@ options:
     default: updated
   path:
     description:
-    - This is the path to the PAM service files
+    - This is the path to the PAM service files.
     type: path
-    default: /etc/pam.d/
+    default: /etc/pam.d
   backup:
      description:
        - Create a backup file including the timestamp information so you can
@@ -224,7 +226,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 change_count:
-    description: How many rules were changed
+    description: How many rules were changed.
     type: int
     sample: 1
     returned: success
@@ -349,6 +351,8 @@ class PamdRule(PamdLine):
     valid_control_actions = ['ignore', 'bad', 'die', 'ok', 'done', 'reset']
 
     def __init__(self, rule_type, rule_control, rule_path, rule_args=None):
+        self.prev = None
+        self.next = None
         self._control = None
         self._args = None
         self.rule_type = rule_type
@@ -476,11 +480,12 @@ class PamdService(object):
             if current_line.matches(rule_type, rule_control, rule_path):
                 if current_line.prev is not None:
                     current_line.prev.next = current_line.next
-                    current_line.next.prev = current_line.prev
+                    if current_line.next is not None:
+                        current_line.next.prev = current_line.prev
                 else:
                     self._head = current_line.next
                     current_line.next.prev = None
-            changed += 1
+                changed += 1
 
             current_line = current_line.next
         return changed
@@ -603,7 +608,7 @@ class PamdService(object):
             if next_rule is not None and not next_rule.matches(new_type, new_control, new_path):
                 # If the previous rule doesn't match we'll insert our new rule.
 
-                # Second set the original next rule's previuous to the new_rule
+                # Second set the original next rule's previous to the new_rule
                 next_rule.prev = new_rule
                 # Third, set the new_rule's next to the original next rule
                 new_rule.next = next_rule
@@ -791,9 +796,9 @@ def main():
             ("state", "before", ["new_module_path"]),
             ("state", "after", ["new_control"]),
             ("state", "after", ["new_type"]),
-            ("state", "after", ["new_module_path"])
+            ("state", "after", ["new_module_path"]),
 
-        ]
+        ],
     )
     content = str()
     fname = os.path.join(module.params["path"], module.params["name"])
@@ -808,7 +813,7 @@ def main():
                             file %s with error %s.' %
                          (fname, str(e)))
 
-    # Assuming we didnt fail, create the service
+    # Assuming we didn't fail, create the service
     service = PamdService(content)
     # Set the action
     action = module.params['state']

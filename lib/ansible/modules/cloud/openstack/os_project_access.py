@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: os_project_access
-short_description: Manage OpenStack compute flavors acceess
+short_description: Manage OpenStack compute flavors access
 extends_documentation_fragment: openstack
 version_added: "2.5"
 author: "Roberto Polli (@ioggstream)"

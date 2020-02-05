@@ -123,7 +123,7 @@ EXAMPLES = '''
   register: my_droplet
 
 - debug:
-    msg: "ID is {{ my_droplet.droplet.id }}"
+    msg: "ID is {{ my_droplet.data.droplet.id }}, IP is {{ my_droplet.data.ip_address }}"
 
 - name: ensure a droplet is present
   digital_ocean_droplet:
@@ -252,7 +252,9 @@ class DODroplet(object):
             self.module.exit_json(changed=False, data=droplet_data)
         if self.module.check_mode:
             self.module.exit_json(changed=True)
-        response = self.rest.post('droplets', data=self.module.params)
+        request_params = dict(self.module.params)
+        del request_params['id']
+        response = self.rest.post('droplets', data=request_params)
         json_data = response.json
         if response.status_code >= 400:
             self.module.fail_json(changed=False, msg=json_data['message'])

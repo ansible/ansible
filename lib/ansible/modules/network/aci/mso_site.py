@@ -37,17 +37,12 @@ options:
     type: str
     required: yes
     default: admin
-  site_id:
-    description:
-    - The ID of the site.
-    type: str
   site:
     description:
     - The name of the site.
-    - Alternative to the name, you can use C(site_id).
     type: str
     required: yes
-    aliases: [ name, site_name ]
+    aliases: [ name ]
   labels:
     description:
     - The labels for this site.
@@ -56,6 +51,7 @@ options:
   location:
     description:
     - Location of the site.
+    type: dict
     suboptions:
       latitude:
         description:
@@ -63,7 +59,7 @@ options:
         type: float
       longitude:
         description:
-        - The longititude of the location of the site.
+        - The longitude of the location of the site.
         type: float
   urls:
     description:
@@ -153,8 +149,7 @@ def main():
         apic_username=dict(type='str', default='admin'),
         labels=dict(type='list'),
         location=dict(type='dict', options=location_arg_spec),
-        site=dict(type='str', required=False, aliases=['name', 'site_name']),
-        site_id=dict(type='str', required=False),
+        site=dict(type='str', aliases=['name']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         urls=dict(type='list'),
     )
@@ -168,43 +163,34 @@ def main():
         ],
     )
 
-    apic_username = module.params['apic_username']
-    apic_password = module.params['apic_password']
-    apic_site_id = module.params['apic_site_id']
-    site = module.params['site']
-    site_id = module.params['site_id']
-    location = module.params['location']
+    apic_username = module.params.get('apic_username')
+    apic_password = module.params.get('apic_password')
+    apic_site_id = module.params.get('apic_site_id')
+    site = module.params.get('site')
+    location = module.params.get('location')
     if location is not None:
-        latitude = module.params['location']['latitude']
-        longitude = module.params['location']['longitude']
-    state = module.params['state']
-    urls = module.params['urls']
+        latitude = module.params.get('location')['latitude']
+        longitude = module.params.get('location')['longitude']
+    state = module.params.get('state')
+    urls = module.params.get('urls')
 
     mso = MSOModule(module)
 
+    site_id = None
     path = 'sites'
 
     # Convert labels
-    labels = mso.lookup_labels(module.params['labels'], 'site')
+    labels = mso.lookup_labels(module.params.get('labels'), 'site')
 
     # Query for mso.existing object(s)
-    if site_id is None and site is None:
-        mso.existing = mso.query_objs(path)
-    elif site_id is None:
+    if site:
         mso.existing = mso.get_obj(path, name=site)
         if mso.existing:
-            site_id = mso.existing['id']
-    elif site is None:
-        mso.existing = mso.get_obj(path, id=site_id)
+            site_id = mso.existing.get('id')
+            # If we found an existing object, continue with it
+            path = 'sites/{id}'.format(id=site_id)
     else:
-        mso.existing = mso.get_obj(path, id=site_id)
-        existing_by_name = mso.get_obj(path, name=site)
-        if existing_by_name and site_id != existing_by_name['id']:
-            mso.fail_json(msg="Provided site '{0}' with id '{1}' does not match existing id '{2}'.".format(site, site_id, existing_by_name['id']))
-
-    # If we found an existing object, continue with it
-    if site_id:
-        path = 'sites/{id}'.format(id=site_id)
+        mso.existing = mso.query_objs(path)
 
     if state == 'query':
         pass

@@ -30,6 +30,7 @@ from units.compat.mock import patch
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.loader import become_loader
 # from ansible.plugins.connection.accelerate import Connection as AccelerateConnection
 # from ansible.plugins.connection.chroot import Connection as ChrootConnection
 # from ansible.plugins.connection.funcd import Connection as FuncdConnection
@@ -250,6 +251,8 @@ debug1: Sending command: /bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzm
                 pass
 
         c = ConnectionFoo(self.play_context, self.in_stream)
+        c.set_become_plugin(become_loader.get('sudo'))
+        c.become.prompt = '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
 
         self.assertTrue(c.check_password_prompt(local))
         self.assertTrue(c.check_password_prompt(ssh_pipelining_vvvv))

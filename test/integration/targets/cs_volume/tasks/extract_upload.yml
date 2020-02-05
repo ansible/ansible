@@ -1,0 +1,190 @@
+---
+- name: setup
+  cs_volume:
+    zone: "{{ cs_common_zone_adv }}"
+    name: "{{ cs_resource_prefix }}_upload"
+    state: absent
+  register: uploaded_vol
+- name: verify setup
+  assert:
+    that:
+    - uploaded_vol is successful
+
+- name: setup network
+  cs_network:
+    name: "cs_volume_network"
+    zone: "{{ cs_common_zone_adv }}"
+    network_offering: DefaultSharedNetworkOffering
+    vlan: 2435
+    start_ip: 10.100.129.11
+    end_ip: 10.100.129.250
+    gateway: 10.100.129.1
+    netmask: 255.255.255.0
+  register: net
+- name: verify setup network
+  assert:
+    that:
+    - net is successful
+    - net.name == "cs_volume_network"
+
+- name: setup instance
+  cs_instance:
+    zone: "{{ cs_common_zone_adv }}"
+    name: "{{ test_cs_instance_3 }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    network: cs_volume_network
+  register: instance
+- name: verify setup instance
+  assert:
+    that:
+    - instance is successful
+
+- name: setup stop instance
+  cs_instance:
+    zone: "{{ cs_common_zone_adv }}"
+    name: "{{ test_cs_instance_3 }}"
+    state: stopped
+  register: instance
+- name: verify stop instance
+  assert:
+    that:
+    - instance is successful
+    - instance.state == 'Stopped'
+
+- name: setup get instance info
+  cs_instance_info:
+    name: "{{ test_cs_instance_3 }}"
+  register: instance
+- name: verify setup get instance info
+  assert:
+    that:
+    - instance is successful
+
+- name: test extract volume in check mode
+  cs_volume:
+    zone: "{{ cs_common_zone_adv }}"
+    state: extracted
+    name: "{{ instance.instances[0].volumes[0].name }}"
+  check_mode: yes
+  register: extracted_vol
+- name: verify test extract volume in check mode
+  assert:
+    that:
+    - extracted_vol is successful
+    - extracted_vol is changed
+    - extracted_vol.state == "Ready"
+    - extracted_vol.name == "{{ instance.instances[0].volumes[0].name }}"
+    - extracted_vol.url is not defined
+
+- name: test extract volume
+  cs_volume:
+    zone: "{{ cs_common_zone_adv }}"
+    state: extracted
+    name: "{{ instance.instances[0].volumes[0].name }}"
+  register: extracted_vol
+- name: verify test extract volume
+  assert:
+    that:
+    - extracted_vol is successful
+    - extracted_vol is changed
+    - extracted_vol.state == "DOWNLOAD_URL_CREATED"
+    - extracted_vol.name == "{{ instance.instances[0].volumes[0].name }}"
+    - extracted_vol.url is defined
+
+- name: test upload volume with missing param
+  cs_volume:
+    zone: "{{ cs_common_zone_adv }}"
+    state: uploaded
+    name: "{{ cs_resource_prefix }}_upload"
+    url: "{{ test_cs_volume_to_upload }}"
+  ignore_errors: yes
+  register: uploaded_vol
+- name: verify upload volume with missing param
+  assert:
+    that:
+    - uploaded_vol is failed
+    - uploaded_vol is not changed
+    - 'uploaded_vol.msg == "state is uploaded but all of the following are missing: format"'
+
+- name: test upload volume in check mode
+  cs_volume:
+    zone: "{{ cs_common_zone_adv }}"
+    state: uploaded
+    name: "{{ cs_resource_prefix }}_upload"
+    format: VHD
+    url: "{{ test_cs_volume_to_upload }}"
+  check_mode: yes
+  register: uploaded_vol
+- name: verify upload volume in check mode
+  assert:
+    that:
+    - uploaded_vol is successful
+    - uploaded_vol is changed
+    - uploaded_vol.name is not defined
+
+- name: test upload volume
+  cs_volume:
+    zone: "{{ cs_common_zone_adv }}"
+    state: uploaded
+    name: "{{ cs_resource_prefix }}_upload"
+    format: VHD
+    url: "{{ test_cs_volume_to_upload }}"
+  register: uploaded_vol
+- name: verify upload volume
+  assert:
+    that:
+    - uploaded_vol is successful
+    - uploaded_vol is changed
+    - uploaded_vol.name == "{{ cs_resource_prefix }}_upload"
+    - uploaded_vol.state == "Uploaded"
+
+- name: test upload volume idempotence
+  cs_volume:
+    zone: "{{ cs_common_zone_adv }}"
+    state: uploaded
+    name: "{{ cs_resource_prefix }}_upload"
+    format: VHD
+    url: "{{ test_cs_volume_to_upload }}"
+  register: uploaded_vol
+- name: verify upload volume idempotence
+  assert:
+    that:
+    - uploaded_vol is successful
+    - uploaded_vol is not changed
+    - uploaded_vol.name == "{{ cs_resource_prefix }}_upload"
+    - uploaded_vol.state == "Uploaded"
+
+- name: delete volume
+  cs_volume:
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+    name: "{{ cs_resource_prefix }}_upload"
+  register: uploaded_vol
+- name: verify delete volume
+  assert:
+    that:
+    - uploaded_vol is successful
+    - uploaded_vol is changed
+
+- name: destroy instance
+  cs_instance:
+    zone: "{{ cs_common_zone_adv }}"
+    name: "{{ test_cs_instance_3 }}"
+    state: expunged
+  register: instance
+- name: verify destroy instance
+  assert:
+    that:
+    - instance is successful
+
+- name: delete network
+  cs_network:
+    name: "cs_volume_network"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: net
+- name: verify delete network
+  assert:
+    that:
+    - net is successful

@@ -1,0 +1,25 @@
+---
+- name: Assign Floating IP to server test01
+  cloudscale_floating_ip:
+    ip_version: 6
+    server: '{{ test01.uuid }}'
+    reverse_ptr: '{{ cloudscale_resource_prefix }}-unassigned.example.com'
+  register: floating_ip
+
+# The only way to have an unassigned floating IP is to delete the server
+# where the floating IP is currently assigned.
+- name: Delete server test01
+  cloudscale_server:
+    uuid: '{{ test01.uuid }}'
+    state: 'absent'
+
+- name: Do not fail if floating IP is unassigned
+  cloudscale_floating_ip:
+    ip: '{{ floating_ip.ip }}'
+  register: floating_ip_not_fail
+- name: Verify do not fail if floating IP is unassigned
+  assert:
+    that:
+      - floating_ip_not_fail is successful
+      - floating_ip_not_fail is not changed
+      - floating_ip_not_fail.server == None

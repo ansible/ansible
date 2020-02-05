@@ -96,6 +96,13 @@ With earlier versions of Ansible, it was necessary to configure a
 suitable `ProxyCommand` for one or more hosts in `~/.ssh/config`,
 or globally by setting `ssh_args` in `ansible.cfg`.
 
+.. _ssh_serveraliveinterval:
+
+How do I get Ansible to notice a dead target in a timely manner?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+You can add ``-o ServerAliveInterval=NumberOfSeconds`` in ``ssh_args`` from ``ansible.cfg``. Without this option, SSH and therefore Ansible will wait until the TCP connection times out. Another solution is to add ``ServerAliveInterval`` into your global SSH configuration. A good value for ``ServerAliveInterval`` is up to you to decide; keep in mind that ``ServerAliveCountMax=3`` is the SSH default so any value you set will be tripled before terminating the SSH session.
+
 .. _ec2_cloud_performance:
 
 How do I speed up management inside EC2?
@@ -106,7 +113,7 @@ and run Ansible from there.
 
 .. _python_interpreters:
 
-How do I handle python not having a Python interpreter at /usr/bin/python on a remote machine?
+How do I handle not having a Python interpreter at /usr/bin/python on a remote machine?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 While you can write Ansible modules in any language, most Ansible modules are written in Python,
@@ -143,15 +150,20 @@ How do I handle the package dependencies required by Ansible package dependencie
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 While installing Ansible, sometimes you may encounter errors such as `No package 'libffi' found` or `fatal error: Python.h: No such file or directory`
-These errors are generally caused by the missing packages which are dependencies of the packages required by Ansible.
+These errors are generally caused by the missing packages, which are dependencies of the packages required by Ansible.
 For example, `libffi` package is dependency of `pynacl` and `paramiko` (Ansible -> paramiko -> pynacl -> libffi).
 
-In order to solve these kinds of dependency issue, you may need to install required packages using the OS native package managers (e.g., `yum`, `dnf` or `apt`) or as mentioned in the package installation guide.
+In order to solve these kinds of dependency issues, you might need to install required packages using the OS native package managers, such as `yum`, `dnf`, or `apt`, or as mentioned in the package installation guide.
 
-Please refer the documentation of the respective package for such dependencies and their installation methods.
+Refer to the documentation of the respective package for such dependencies and their installation methods.
 
 Common Platform Issues
 ++++++++++++++++++++++
+
+What customer platforms does Red Hat support?
+---------------------------------------------
+
+A number of them! For a definitive list please see this `Knowledge Base article <https://access.redhat.com/articles/3168091>`_.
 
 Running in a virtualenv
 -----------------------
@@ -173,8 +185,8 @@ If you want to run under Python 3 instead of Python 2 you may want to change tha
     $ pip install ansible
 
 If you need to use any libraries which are not available via pip (for instance, SELinux Python
-bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled) then you
-need to install them into the virtualenv.  There are two methods:
+bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled), then you
+need to install them into the virtualenv. There are two methods:
 
 * When you create the virtualenv, specify ``--system-site-packages`` to make use of any libraries
   installed in the system's Python:
@@ -214,7 +226,7 @@ is likely the problem. There are several workarounds:
 
     solaris1 ansible_remote_tmp=$HOME/.ansible/tmp
 
-* You can set :ref:`ansible_shell_executable<ansible_shell_executable>` to the path to a POSIX compatible shell.  For
+* You can set :ref:`ansible_shell_executable<ansible_shell_executable>` to the path to a POSIX compatible shell. For
   instance, many Solaris hosts have a POSIX shell located at :file:`/usr/xpg4/bin/sh` so you can set
   this in inventory like so::
 
@@ -229,19 +241,30 @@ There are a few common errors that one might run into when trying to execute Ans
 
 * Version 2.7.6 of python for z/OS will not work with Ansible because it represents strings internally as EBCDIC.
 
-To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ascii.  Version 2.7.13 is verified to work.
+  To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ASCII.  Version 2.7.13 is verified to work.
 
-.. error::
-  /usr/bin/python: EDC5129I No such file or directory
+* When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with
 
-To fix this set the path to the python installation in your inventory like so::
+  .. error::
+      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see https://python.org/dev/peps/pep-0263/ for details
+
+  To fix it set ``pipelining = True`` in `/etc/ansible/ansible.cfg`.
+
+* Python interpret cannot be found in default location ``/usr/bin/python`` on target host.
+
+  .. error::
+      /usr/bin/python: EDC5129I No such file or directory
+
+  To fix this set the path to the python installation in your inventory like so::
 
     zos1 ansible_python_interpreter=/usr/lpp/python/python-2017-04-12-py27/python27/bin/python
 
-.. error::
+* Start of python fails with ``The module libpython2.7.so was not found.``
+
+  .. error::
     EE3501S The module libpython2.7.so was not found.
 
-On z/OS, you must execute python from gnu bash.  If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
+  On z/OS, you must execute python from gnu bash.  If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
 
     zos1 ansible_shell_executable=/usr/lpp/bash/bin/bash
 
@@ -262,7 +285,7 @@ Where does the configuration file live and what can I configure in it?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-See :doc:`../installation_guide/intro_configuration`.
+See :ref:`intro_configuration`.
 
 .. _who_would_ever_want_to_disable_cowsay_but_ok_here_is_how:
 
@@ -356,8 +379,14 @@ via a role parameter or other input.  Variable names can be built by adding stri
 
     {{ hostvars[inventory_hostname]['ansible_' + which_interface]['ipv4']['address'] }}
 
-The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
+The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables.  ``inventory_hostname``
 is a magic variable that indicates the current host you are looping over in the host loop.
+
+In the example above, if your interface names have dashes, you must replace them with underscores:
+
+.. code-block:: jinja
+
+    {{ hostvars[inventory_hostname]['ansible_' + which_interface | replace('_', '-') ]['ipv4']['address'] }}
 
 Also see dynamic_variables_.
 
@@ -379,7 +408,7 @@ How do I access a variable of the first host in a group?
 
 What happens if we want the ip address of the first webserver in the webservers group?  Well, we can do that too.  Note that if we
 are using dynamic inventory, which host is the 'first' may not be consistent, so you wouldn't want to do this unless your inventory
-is static and predictable.  (If you are using :doc:`../reference_appendices/tower`, it will use database order, so this isn't a problem even if you are using cloud
+is static and predictable.  (If you are using :ref:`ansible_tower`, it will use database order, so this isn't a problem even if you are using cloud
 based inventory scripts).
 
 Anyway, here's the trick:
@@ -461,7 +490,7 @@ Once the library is ready, SHA512 password values can then be generated as follo
     python -c "from passlib.hash import sha512_crypt; import getpass; print(sha512_crypt.using(rounds=5000).hash(getpass.getpass()))"
 
 Use the integrated :ref:`hash_filters` to generate a hashed version of a password.
-You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :doc:`../user_guide/playbooks_vault` to encrypt sensitive data.
+You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :ref:`playbooks_vault` to encrypt sensitive data.
 
 In OpenBSD, a similar option is available in the base system called encrypt(1):
 
@@ -471,8 +500,8 @@ In OpenBSD, a similar option is available in the base system called encrypt(1):
 
 .. _dot_or_array_notation:
 
-Ansible supports dot notation and array notation for variables. Which notation should I use?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Ansible allows dot notation and array notation for variables. Which notation should I use?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 The dot notation comes from Jinja and works fine for variables without special
 characters. If your variable contains dots (.), colons (:), or dashes (-), if
@@ -541,7 +570,7 @@ We also offer free web-based training classes on a regular basis. See our `webin
 Is there a web interface / REST API / etc?
 ++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :doc:`../reference_appendices/tower`.
+Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :ref:`ansible_tower`.
 
 
 .. _docs_contributions:
@@ -557,7 +586,7 @@ Great question!  Documentation for Ansible is kept in the main project git repos
 How do I keep secret data in my playbook?
 +++++++++++++++++++++++++++++++++++++++++
 
-If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :doc:`../user_guide/playbooks_vault`.
+If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :ref:`playbooks_vault`.
 
 If you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
 
@@ -615,9 +644,8 @@ For 'non host vars' you can use the :ref:`vars lookup<vars_lookup>` plugin:
 Why don't you ship in X format?
 +++++++++++++++++++++++++++++++
 
-Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
-In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
-
+In most cases it has to do with maintainability. There are many ways to ship software and we do not have the resources to release Ansible on every platform.
+In some cases there are technical issues. For example, our dependencies are not present on Python Wheels.
 
 .. _ansible_host_delegated:
 
@@ -629,8 +657,34 @@ but you can still access the original via ``hostvars``::
 
    original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
-This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
+This works for all overridden connection variables, like ``ansible_user``, ``ansible_port``, etc.
 
+
+.. _scp_protocol_error_filename:
+
+How do I fix 'protocol error: filename does not match request' when fetching a file?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Newer releases of OpenSSH have a `bug <https://bugzilla.mindrot.org/show_bug.cgi?id=2966>`_ in the SCP client that can trigger this error on the Ansible controller when using SCP as the file transfer mechanism::
+
+    failed to transfer file to /tmp/ansible/file.txt\r\nprotocol error: filename does not match request
+
+In these releases, SCP tries to validate that the path of the file to fetch matches the requested path.
+The validation
+fails if the remote filename requires quotes to escape spaces or non-ascii characters in its path. To avoid this error:
+
+* Use SFTP instead of SCP by setting ``scp_if_ssh`` to ``smart`` (which tries SFTP first) or to ``False``. You can do this in one of four ways:
+    * Rely on the default setting, which is ``smart`` - this works if ``scp_if_ssh`` is not explicitly set anywhere
+    * Set a :ref:`host variable <host_variables>` or :ref:`group variable <group_variables>` in inventory: ``ansible_scp_if_ssh: False``
+    * Set an environment variable on your control node: ``export ANSIBLE_SCP_IF_SSH=False``
+    * Pass an environment variable when you run Ansible: ``ANSIBLE_SCP_IF_SSH=smart ansible-playbook``
+    * Modify your ``ansible.cfg`` file: add ``scp_if_ssh=False`` to the ``[ssh_connection]`` section
+* If you must use SCP, set the ``-T`` arg to tell the SCP client to ignore path validation. You can do this in one of three ways:
+    * Set a :ref:`host variable <host_variables>` or :ref:`group variable <group_variables>`: ``ansible_scp_extra_args=-T``,
+    * Export or pass an environment variable: ``ANSIBLE_SCP_EXTRA_ARGS=-T``
+    * Modify your ``ansible.cfg`` file: add ``scp_extra_args=-T`` to the ``[ssh_connection]`` section
+
+.. note:: If you see an ``invalid argument`` error when using ``-T``, then your SCP client is not performing filename validation and will not trigger this error.
 
 .. _i_dont_see_my_question:
 
@@ -641,9 +695,9 @@ Please see the section below for a link to IRC and the Google Group, where you c
 
 .. seealso::
 
-   :doc:`../user_guide/playbooks`
+   :ref:`working_with_playbooks`
        An introduction to playbooks
-   :doc:`../user_guide/playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

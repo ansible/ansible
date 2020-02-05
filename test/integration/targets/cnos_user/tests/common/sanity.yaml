@@ -1,0 +1,84 @@
+---
+- debug: msg="START connection={{ ansible_connection }} cnos_user parameter test"
+
+
+- block:
+  - name: Create user
+    cnos_user: &configure
+      name: netend
+      configured_password: Hello!234
+      update_password: on_create
+      roles: network-operator
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - 'result.changed == true'
+
+  - block:
+    - name: conf idempotency
+      cnos_user: *configure
+      register: result
+
+    - assert: &false
+        that:
+          - 'result.changed == false'
+
+  - name: Remove user
+    cnos_user: &remove
+      name: netend
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: remove idempotency
+    cnos_user: *remove
+    register: result
+
+  - assert: *false
+
+  - name: Collection of users
+    cnos_user: &coll
+      users:
+        - name: test1
+        - name: test2
+      configured_password: Hello!234
+      update_password: on_create
+      state: present
+      roles: 
+        - network-admin
+        - network-operator
+    register: result
+
+  - assert: *true
+
+  - block:
+    - name: users idempotency
+      cnos_user: *coll
+      register: result
+
+    - assert: *true
+
+  - name: tearDown
+    cnos_user: &tear
+      name: ansible
+      purge: yes
+    register: result
+
+  - assert: *true
+
+  - name: teardown idempotency
+    cnos_user: *tear
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: tearDown
+    cnos_user: *tear
+    register: result
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} cnos_user parameter test"

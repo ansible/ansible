@@ -17,15 +17,6 @@ module: aci_interface_policy_leaf_policy_group
 short_description: Manage fabric interface policy leaf policy groups (infra:AccBndlGrp, infra:AccPortGrp)
 description:
 - Manage fabric interface policy leaf policy groups on Cisco ACI fabrics.
-notes:
-- When using the module please select the appropriate link_aggregation_type (lag_type).
-  C(link) for Port Channel(PC), C(node) for Virtual Port Channel(VPC) and C(leaf) for Leaf Access Port Policy Group.
-seealso:
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC classes B(infra:AccBndlGrp) and B(infra:AccPortGrp).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 options:
   policy_group:
@@ -136,6 +127,15 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- When using the module please select the appropriate link_aggregation_type (lag_type).
+  C(link) for Port Channel(PC), C(node) for Virtual Port Channel(VPC) and C(leaf) for Leaf Access Port Policy Group.
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:AccBndlGrp) and B(infra:AccPortGrp).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Bruno Calogero (@brunocalogero)
 '''
 
 EXAMPLES = r'''
@@ -313,18 +313,18 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        policy_group=dict(type='str', aliases=['name', 'policy_group_name']),  # Not required for querying all objects
-        description=dict(type='str', aliases=['descr']),
         # NOTE: Since this module needs to include both infra:AccBndlGrp (for PC and VPC) and infra:AccPortGrp (for leaf access port policy group):
         # NOTE: I'll allow the user to make the choice here (link(PC), node(VPC), leaf(leaf-access port policy group))
         lag_type=dict(type='str', required=True, aliases=['lag_type_name'], choices=['leaf', 'link', 'node']),
+        policy_group=dict(type='str', aliases=['name', 'policy_group_name']),  # Not required for querying all objects
+        description=dict(type='str', aliases=['descr']),
         link_level_policy=dict(type='str', aliases=['link_level_policy_name']),
         cdp_policy=dict(type='str', aliases=['cdp_policy_name']),
         mcp_policy=dict(type='str', aliases=['mcp_policy_name']),
@@ -353,26 +353,26 @@ def main():
         ],
     )
 
-    policy_group = module.params['policy_group']
-    description = module.params['description']
-    lag_type = module.params['lag_type']
-    link_level_policy = module.params['link_level_policy']
-    cdp_policy = module.params['cdp_policy']
-    mcp_policy = module.params['mcp_policy']
-    lldp_policy = module.params['lldp_policy']
-    stp_interface_policy = module.params['stp_interface_policy']
-    egress_data_plane_policing_policy = module.params['egress_data_plane_policing_policy']
-    ingress_data_plane_policing_policy = module.params['ingress_data_plane_policing_policy']
-    priority_flow_control_policy = module.params['priority_flow_control_policy']
-    fibre_channel_interface_policy = module.params['fibre_channel_interface_policy']
-    slow_drain_policy = module.params['slow_drain_policy']
-    port_channel_policy = module.params['port_channel_policy']
-    monitoring_policy = module.params['monitoring_policy']
-    storm_control_interface_policy = module.params['storm_control_interface_policy']
-    l2_interface_policy = module.params['l2_interface_policy']
-    port_security_policy = module.params['port_security_policy']
-    aep = module.params['aep']
-    state = module.params['state']
+    policy_group = module.params.get('policy_group')
+    description = module.params.get('description')
+    lag_type = module.params.get('lag_type')
+    link_level_policy = module.params.get('link_level_policy')
+    cdp_policy = module.params.get('cdp_policy')
+    mcp_policy = module.params.get('mcp_policy')
+    lldp_policy = module.params.get('lldp_policy')
+    stp_interface_policy = module.params.get('stp_interface_policy')
+    egress_data_plane_policing_policy = module.params.get('egress_data_plane_policing_policy')
+    ingress_data_plane_policing_policy = module.params.get('ingress_data_plane_policing_policy')
+    priority_flow_control_policy = module.params.get('priority_flow_control_policy')
+    fibre_channel_interface_policy = module.params.get('fibre_channel_interface_policy')
+    slow_drain_policy = module.params.get('slow_drain_policy')
+    port_channel_policy = module.params.get('port_channel_policy')
+    monitoring_policy = module.params.get('monitoring_policy')
+    storm_control_interface_policy = module.params.get('storm_control_interface_policy')
+    l2_interface_policy = module.params.get('l2_interface_policy')
+    port_security_policy = module.params.get('port_security_policy')
+    aep = module.params.get('aep')
+    state = module.params.get('state')
 
     if lag_type == 'leaf':
         aci_class_name = 'infraAccPortGrp'

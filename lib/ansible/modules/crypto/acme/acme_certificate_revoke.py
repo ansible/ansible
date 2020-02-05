@@ -21,7 +21,7 @@ version_added: "2.7"
 short_description: Revoke certificates with the ACME protocol
 description:
    - "Allows to revoke certificates issued by a CA supporting the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-18),
+      L(ACME protocol,https://tools.ietf.org/html/rfc8555),
       such as L(Let's Encrypt,https://letsencrypt.org/)."
 notes:
    - "Exactly one of C(account_key_src), C(account_key_content),
@@ -37,8 +37,8 @@ seealso:
                  Provides useful information for example on rate limits.
     link: https://letsencrypt.org/docs/
   - name: Automatic Certificate Management Environment (ACME)
-    description: The current draft specification of the ACME protocol.
-    link: https://tools.ietf.org/html/draft-ietf-acme-acme-18
+    description: The specification of the ACME protocol (RFC 8555).
+    link: https://tools.ietf.org/html/rfc8555
   - module: acme_inspect
     description: Allows to debug problems.
 extends_documentation_fragment:
@@ -47,6 +47,7 @@ options:
   certificate:
     description:
       - "Path to the certificate to revoke."
+    type: path
     required: yes
   account_key_src:
     description:
@@ -57,6 +58,7 @@ options:
          private keys in PEM format can be used as well."
       - "Mutually exclusive with C(account_key_content)."
       - "Required if C(account_key_content) is not used."
+    type: path
   account_key_content:
     description:
       - "Content of the ACME account RSA or Elliptic Curve key."
@@ -71,11 +73,13 @@ options:
          temporary file. It can still happen that it is written to disk by
          Ansible in the process of moving the module with its argument to
          the node where it is executed."
+    type: str
   private_key_src:
     description:
       - "Path to the certificate's private key."
       - "Note that exactly one of C(account_key_src), C(account_key_content),
          C(private_key_src) or C(private_key_content) must be specified."
+    type: path
   private_key_content:
     description:
       - "Content of the certificate's private key."
@@ -90,6 +94,7 @@ options:
          temporary file. It can still happen that it is written to disk by
          Ansible in the process of moving the module with its argument to
          the node where it is executed."
+    type: str
   revoke_reason:
     description:
       - "One of the revocation reasonCodes defined in
@@ -99,6 +104,7 @@ options:
          C(5) (cessationOfOperation), C(6) (certificateHold),
          C(8) (removeFromCRL), C(9) (privilegeWithdrawn),
          C(10) (aACompromise)"
+    type: int
 '''
 
 EXAMPLES = '''
@@ -117,27 +123,27 @@ RETURN = '''
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, ACMEAccount, nopad_b64, pem_to_der, set_crypto_backend,
+    ModuleFailException,
+    ACMEAccount,
+    nopad_b64,
+    pem_to_der,
+    handle_standard_module_arguments,
+    get_default_argspec,
 )
 
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
+    argument_spec = get_default_argspec()
+    argument_spec.update(dict(
+        private_key_src=dict(type='path'),
+        private_key_content=dict(type='str', no_log=True),
+        certificate=dict(type='path', required=True),
+        revoke_reason=dict(type='int'),
+    ))
     module = AnsibleModule(
-        argument_spec=dict(
-            account_key_src=dict(type='path', aliases=['account_key']),
-            account_key_content=dict(type='str', no_log=True),
-            account_uri=dict(required=False, type='str'),
-            acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
-            acme_version=dict(required=False, default=1, choices=[1, 2], type='int'),
-            validate_certs=dict(required=False, default=True, type='bool'),
-            private_key_src=dict(type='path'),
-            private_key_content=dict(type='str', no_log=True),
-            certificate=dict(required=True, type='path'),
-            revoke_reason=dict(required=False, type='int'),
-            select_crypto_backend=dict(required=False, choices=['auto', 'openssl', 'cryptography'], default='auto', type='str'),
-        ),
+        argument_spec=argument_spec,
         required_one_of=(
             ['account_key_src', 'account_key_content', 'private_key_src', 'private_key_content'],
         ),
@@ -146,12 +152,7 @@ def main():
         ),
         supports_check_mode=False,
     )
-    set_crypto_backend(module)
-
-    if not module.params.get('validate_certs'):
-        module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +
-                            'This should only be done for testing against a local ACME server for ' +
-                            'development purposes, but *never* for production purposes.')
+    handle_standard_module_arguments(module)
 
     try:
         account = ACMEAccount(module)
@@ -196,7 +197,7 @@ def main():
             result, info = account.send_signed_request(endpoint, payload)
         if info['status'] != 200:
             already_revoked = False
-            # Standarized error from draft 14 on (https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.6)
+            # Standardized error from draft 14 on (https://tools.ietf.org/html/rfc8555#section-7.6)
             if result.get('type') == 'urn:ietf:params:acme:error:alreadyRevoked':
                 already_revoked = True
             else:

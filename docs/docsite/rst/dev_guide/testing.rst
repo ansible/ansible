@@ -207,7 +207,7 @@ The code coverage reports only cover the ``devel`` branch of Ansible where new f
 development takes place.  Pull requests and new code will be missing from the codecov.io
 coverage reports so local reporting is needed.  Most ``ansible-test`` commands allow you
 to collect code coverage, this is particularly useful to indicate where to extend
-testing. See :doc:`testing_running_locally` for more information.
+testing. See :ref:`testing_running_locally` for more information.
 
 
 Want to know more about testing?

@@ -28,8 +28,8 @@
 - name: Get output for multiple commands that call less explicitly
   vyos_command:
     commands:
-        # NOTE: We only test show commands that will output <ANSIBLE_VYOS_TERMINAL_LENGTH
-        # Otherwise you will get ": "command timeout triggered"
+      # NOTE: We only test show commands that will output <ANSIBLE_VYOS_TERMINAL_LENGTH
+      # Otherwise you will get ": "command timeout triggered"
       - show hardware cpu detail
       - show hardware mem
       - show license

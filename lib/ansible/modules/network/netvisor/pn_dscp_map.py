@@ -80,6 +80,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
@@ -91,10 +92,11 @@ def check_cli(module, cli):
     """
     name = module.params['pn_name']
 
-    cli += ' dscp-map-show name %s format name no-show-headers' % name
-    out = module.run_command(cli.split(), use_unsafe_shell=True)[1]
+    cli += ' dscp-map-show format name no-show-headers'
+    out = run_commands(module, cli)[1]
 
-    out = out.split()
+    if out:
+        out = out.split()
 
     return True if name in out else False
 
@@ -102,7 +104,6 @@ def check_cli(module, cli):
 def main():
     """ This section is for arguments parsing """
 
-    global state_map
     state_map = dict(
         present='dscp-map-create',
         absent='dscp-map-delete'

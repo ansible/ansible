@@ -16,17 +16,6 @@ module: aci_filter_entry
 short_description: Manage filter entries (vz:Entry)
 description:
 - Manage filter entries for a filter on Cisco ACI fabrics.
-notes:
-- The C(tenant) and C(filter) used must exist before using this module in your playbook.
-  The M(aci_tenant) and M(aci_filter) modules can be used for this.
-seealso:
-- module: aci_tenant
-- module: aci_filter
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(vz:Entry).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   arp_flag:
@@ -108,6 +97,17 @@ options:
     type: str
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) and C(filter) used must exist before using this module in your playbook.
+  The M(aci_tenant) and M(aci_filter) modules can be used for this.
+seealso:
+- module: aci_tenant
+- module: aci_filter
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(vz:Entry).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -230,8 +230,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 VALID_ARP_FLAGS = ['arp_reply', 'arp_request', 'unspecified']
 VALID_ETHER_TYPES = ['arp', 'fcoe', 'ip', 'mac_security', 'mpls_ucast', 'trill', 'unspecified']
@@ -279,32 +279,32 @@ def main():
 
     aci = ACIModule(module)
 
-    arp_flag = module.params['arp_flag']
+    arp_flag = module.params.get('arp_flag')
     if arp_flag is not None:
-        arp_flag = ARP_FLAG_MAPPING[arp_flag]
-    description = module.params['description']
-    dst_port = module.params['dst_port']
-    if dst_port in FILTER_PORT_MAPPING.keys():
-        dst_port = FILTER_PORT_MAPPING[dst_port]
-    dst_end = module.params['dst_port_end']
-    if dst_end in FILTER_PORT_MAPPING.keys():
-        dst_end = FILTER_PORT_MAPPING[dst_end]
-    dst_start = module.params['dst_port_start']
-    if dst_start in FILTER_PORT_MAPPING.keys():
-        dst_start = FILTER_PORT_MAPPING[dst_start]
-    entry = module.params['entry']
-    ether_type = module.params['ether_type']
-    filter_name = module.params['filter']
-    icmp_msg_type = module.params['icmp_msg_type']
+        arp_flag = ARP_FLAG_MAPPING.get(arp_flag)
+    description = module.params.get('description')
+    dst_port = module.params.get('dst_port')
+    if FILTER_PORT_MAPPING.get(dst_port) is not None:
+        dst_port = FILTER_PORT_MAPPING.get(dst_port)
+    dst_end = module.params.get('dst_port_end')
+    if FILTER_PORT_MAPPING.get(dst_end) is not None:
+        dst_end = FILTER_PORT_MAPPING.get(dst_end)
+    dst_start = module.params.get('dst_port_start')
+    if FILTER_PORT_MAPPING.get(dst_start) is not None:
+        dst_start = FILTER_PORT_MAPPING.get(dst_start)
+    entry = module.params.get('entry')
+    ether_type = module.params.get('ether_type')
+    filter_name = module.params.get('filter')
+    icmp_msg_type = module.params.get('icmp_msg_type')
     if icmp_msg_type is not None:
-        icmp_msg_type = ICMP_MAPPING[icmp_msg_type]
-    icmp6_msg_type = module.params['icmp6_msg_type']
+        icmp_msg_type = ICMP_MAPPING.get(icmp_msg_type)
+    icmp6_msg_type = module.params.get('icmp6_msg_type')
     if icmp6_msg_type is not None:
-        icmp6_msg_type = ICMP6_MAPPING[icmp6_msg_type]
-    ip_protocol = module.params['ip_protocol']
-    state = module.params['state']
-    stateful = aci.boolean(module.params['stateful'])
-    tenant = module.params['tenant']
+        icmp6_msg_type = ICMP6_MAPPING.get(icmp6_msg_type)
+    ip_protocol = module.params.get('ip_protocol')
+    state = module.params.get('state')
+    stateful = aci.boolean(module.params.get('stateful'))
+    tenant = module.params.get('tenant')
 
     # validate that dst_port is not passed with dst_start or dst_end
     if dst_port is not None and (dst_end is not None or dst_start is not None):

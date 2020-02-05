@@ -1,0 +1,256 @@
+---
+- name: Create volume in check mode
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-vol'
+    size_gb: 50
+    tags:
+      project: ansible-test
+      stage: production
+      sla: 24-7
+  check_mode: yes
+  register: vol
+- name: 'VERIFY: Create volume in check mode'
+  assert:
+    that:
+      - vol is successful
+      - vol is changed
+      - vol.state == 'absent'
+
+- name: Create volume
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-vol'
+    size_gb: 50
+    tags:
+      project: ansible-test
+      stage: production
+      sla: 24-7
+  register: vol
+- name: 'VERIFY: Create volume'
+  assert:
+    that:
+      - vol is successful
+      - vol is changed
+      - vol.size_gb == 50
+      - vol.name == '{{ cloudscale_resource_prefix }}-vol'
+      - vol.tags.project == 'ansible-test'
+      - vol.tags.stage == 'production'
+      - vol.tags.sla == '24-7'
+
+- name: Create volume indempotence
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-vol'
+    size_gb: 50
+    tags:
+      project: ansible-test
+      stage: production
+      sla: 24-7
+  register: vol
+- name: 'VERIFY: Create volume indempotence'
+  assert:
+    that:
+      - vol is successful
+      - vol is not changed
+      - vol.size_gb == 50
+      - vol.name == '{{ cloudscale_resource_prefix }}-vol'
+      - vol.tags.project == 'ansible-test'
+      - vol.tags.stage == 'production'
+      - vol.tags.sla == '24-7'
+
+- name: Attach existing volume by name to server in check mode
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-vol'
+    server_uuids:
+      - '{{ server.uuid }}'
+  check_mode: yes
+  register: vol
+- name: 'VERIFY: Attach existing volume by name to server in check mode'
+  assert:
+    that:
+      - vol is successful
+      - vol is changed
+      - server.uuid not in vol.server_uuids
+
+- name: Attach existing volume by name to server
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-vol'
+    server_uuids:
+      - '{{ server.uuid }}'
+  register: vol
+- name: 'VERIFY: Attach existing volume by name to server'
+  assert:
+    that:
+      - vol is successful
+      - vol is changed
+      - server.uuid in vol.server_uuids
+
+- name: Attach existing volume by name to server indempotence
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-vol'
+    server_uuids:
+      - '{{ server.uuid }}'
+  register: vol
+- name: 'VERIFY: Attach existing volume by name to server indempotence'
+  assert:
+    that:
+      - vol is successful
+      - vol is not changed
+      - server.uuid in vol.server_uuids
+
+- name: Resize attached volume by UUID in check mode
+  cloudscale_volume:
+    uuid: '{{ vol.uuid }}'
+    size_gb: 100
+  check_mode: yes
+  register: vol
+- name: 'VERIFY: Resize attached volume by UUID in check mode'
+  assert:
+    that:
+      - vol is successful
+      - vol is changed
+      - vol.size_gb == 50
+
+- name: Resize attached volume by UUID
+  cloudscale_volume:
+    uuid: '{{ vol.uuid }}'
+    size_gb: 100
+  register: vol
+- name: 'VERIFY: Resize attached volume by UUID'
+  assert:
+    that:
+      - vol is successful
+      - vol is changed
+      - vol.size_gb == 100
+
+- name: Resize attached volume by UUID indempotence
+  cloudscale_volume:
+    uuid: '{{ vol.uuid }}'
+    size_gb: 100
+  register: vol
+- name: 'VERIFY: Resize attached volume by UUID indempotence'
+  assert:
+    that:
+      - vol is successful
+      - vol is not changed
+      - vol.size_gb == 100
+
+- name: Delete attached volume by UUID in check mode
+  cloudscale_volume:
+    uuid: '{{ vol.uuid }}'
+    state: 'absent'
+  check_mode: yes
+  register: deleted
+- name: 'VERIFY: Delete attached volume by UUID in check mode'
+  assert:
+    that:
+      - deleted is successful
+      - deleted is changed
+      - deleted.state == 'present'
+      - deleted.uuid == vol.uuid
+      - deleted.name == '{{ cloudscale_resource_prefix }}-vol'
+
+- name: Delete attached volume by UUID
+  cloudscale_volume:
+    uuid: '{{ vol.uuid }}'
+    state: 'absent'
+  register: deleted
+- name: 'VERIFY: Delete attached volume by UUID'
+  assert:
+    that:
+      - deleted is successful
+      - deleted is changed
+      - deleted.state == 'absent'
+      - deleted.uuid == vol.uuid
+      - deleted.name == '{{ cloudscale_resource_prefix }}-vol'
+
+- name: Delete attached volume by UUID indempotence
+  cloudscale_volume:
+    uuid: '{{ vol.uuid }}'
+    state: 'absent'
+  register: deleted
+- name: 'VERIFY: Delete attached volume by UUID indempotence'
+  assert:
+    that:
+      - deleted is successful
+      - deleted is not changed
+      - deleted.state == 'absent'
+      - deleted.uuid == vol.uuid
+      - not deleted.name
+
+- name: Create bulk volume and attach
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-bulk'
+    type: bulk
+    size_gb: 100
+    server_uuids:
+      - '{{ server.uuid }}'
+  register: bulk
+- name: 'VERIFY: Create bulk volume and attach'
+  assert:
+    that:
+      - bulk is successful
+      - bulk is changed
+      - bulk.size_gb == 100
+      - server.uuid in bulk.server_uuids
+
+- name: Detach volume by UUID
+  cloudscale_volume:
+    uuid: '{{ bulk.uuid }}'
+    server_uuids: []
+  register: bulk
+- name: 'VERIFY: Detach volume by UUID'
+  assert:
+    that:
+      - bulk is successful
+      - bulk is changed
+      - bulk.server_uuids == []
+
+- name: Resize detached volume by name
+  cloudscale_volume:
+    name: '{{ bulk.name }}'
+    size_gb: 200
+  register: bulk
+- name: 'VERIFY: Resize detached volume by name'
+  assert:
+    that:
+      - bulk is successful
+      - bulk is changed
+      - bulk.size_gb == 200
+
+- name: Delete volume by name in check mode
+  cloudscale_volume:
+    name: '{{ bulk.name }}'
+    state: 'absent'
+  check_mode: yes
+  register: bulk
+- name: 'VERIFY: Delete volume by name'
+  assert:
+    that:
+      - bulk is successful
+      - bulk is changed
+      - bulk.state == 'present'
+
+- name: Delete volume by name
+  cloudscale_volume:
+    name: '{{ bulk.name }}'
+    state: 'absent'
+  register: bulk
+- name: 'VERIFY: Delete volume by name'
+  assert:
+    that:
+      - bulk is successful
+      - bulk is changed
+      - bulk.state == 'absent'
+
+- name: Delete volume by name idempotence
+  cloudscale_volume:
+    name: '{{ bulk.name }}'
+    state: 'absent'
+  register: bulk
+- name: 'VERIFY: Delete volume by name idempotence'
+  assert:
+    that:
+      - bulk is successful
+      - bulk is not changed
+      - bulk.state == 'absent'
+
+- import_tasks: failures.yml

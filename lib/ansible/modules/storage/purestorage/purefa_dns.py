@@ -20,26 +20,29 @@ description:
 - Set or erase configuration for the DNS settings.
 - Nameservers provided will overwrite any existing nameservers.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   state:
     description:
     - Set or delete directory service configuration
     default: present
+    type: str
     choices: [ absent, present ]
   domain:
     description:
-    - Domain suffix to be appended when perofrming DNS lookups.
+    - Domain suffix to be appended when performing DNS lookups.
+    type: str
   nameservers:
     description:
     - List of up to 3 unique DNS server IP addresses. These can be
       IPv4 or IPv6 - No validation is done of the addresses is performed.
+    type: list
 extends_documentation_fragment:
 - purestorage.fa
 '''
 
 EXAMPLES = r'''
-- name: Delete exisitng DNS settings
+- name: Delete existing DNS settings
   purefa_dns:
     state: absent
     fa_url: 10.10.10.2
@@ -82,7 +85,7 @@ def delete_dns(module, array):
             array.set_dns(domain='', nameservers=[])
             changed = True
         except Exception:
-            module.fail_json(msg='Delete DNS settigs failed')
+            module.fail_json(msg='Delete DNS settings failed')
     module.exit_json(changed=changed)
 
 

@@ -75,6 +75,9 @@ notes:
   Feature "Web-Scripting-Tools" must be enabled.
 seealso:
 - module: win_acl_inheritance
+- module: win_file
+- module: win_owner
+- module: win_stat
 author:
 - Phil Schwartz (@schwartzmx)
 - Trond Hindenes (@trondhindenes)

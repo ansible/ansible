@@ -1,5 +1,5 @@
-shippable/posix/group2
+shippable/posix/group5
 skip/osx
 skip/freebsd
+skip/aix
 destructive
-skip/rhel8.0

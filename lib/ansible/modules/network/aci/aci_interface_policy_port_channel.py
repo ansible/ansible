@@ -16,12 +16,6 @@ module: aci_interface_policy_port_channel
 short_description: Manage port channel interface policies (lacp:LagPol)
 description:
 - Manage port channel interface policies on Cisco ACI fabrics.
-seealso:
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(lacp:LagPol).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.4'
 options:
   port_channel:
@@ -97,6 +91,12 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(lacp:LagPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -217,18 +217,18 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        port_channel=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
+        port_channel=dict(type='str', aliases=['name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         min_links=dict(type='int'),
         max_links=dict(type='int'),
-        mode=dict(type='str', choices=['off', 'mac-pin', 'active', 'passive', 'mac-pin-nicload']),
+        mode=dict(type='str', choices=['active', 'mac-pin', 'mac-pin-nicload', 'off', 'passive']),
         fast_select=dict(type='bool'),
         graceful_convergence=dict(type='bool'),
         load_defer=dict(type='bool'),
@@ -246,28 +246,28 @@ def main():
         ],
     )
 
-    port_channel = module.params['port_channel']
-    description = module.params['description']
-    min_links = module.params['min_links']
+    port_channel = module.params.get('port_channel')
+    description = module.params.get('description')
+    min_links = module.params.get('min_links')
     if min_links is not None and min_links not in range(1, 17):
         module.fail_json(msg='The "min_links" must be a value between 1 and 16')
-    max_links = module.params['max_links']
+    max_links = module.params.get('max_links')
     if max_links is not None and max_links not in range(1, 17):
         module.fail_json(msg='The "max_links" must be a value between 1 and 16')
-    mode = module.params['mode']
-    state = module.params['state']
+    mode = module.params.get('mode')
+    state = module.params.get('state')
 
     # Build ctrl value for request
     ctrl = []
-    if module.params['fast_select'] is True:
+    if module.params.get('fast_select') is True:
         ctrl.append('fast-sel-hot-stdby')
-    if module.params['graceful_convergence'] is True:
+    if module.params.get('graceful_convergence') is True:
         ctrl.append('graceful-conv')
-    if module.params['load_defer'] is True:
+    if module.params.get('load_defer') is True:
         ctrl.append('load-defer')
-    if module.params['suspend_individual'] is True:
+    if module.params.get('suspend_individual') is True:
         ctrl.append('susp-individual')
-    if module.params['symmetric_hash'] is True:
+    if module.params.get('symmetric_hash') is True:
         ctrl.append('symmetric-hash')
     if not ctrl:
         ctrl = None

@@ -1,0 +1,25 @@
+---
+
+- name: load vmware common vars
+  include_vars:
+    file: common.yml
+
+- when: vcsim is not defined
+  block:
+  - when: esxi1_hostname is not defined and esxi2_hostname is not defined
+    include_vars:
+      file: vcenter_only.yml
+
+  - when: esxi1_hostname is defined and esxi2_hostname is not defined
+    include_vars:
+      file: vcenter_1esxi.yml
+
+  - when: esxi1_hostname is defined and esxi2_hostname is defined
+    include_vars:
+      file: vcenter_2esxi.yml
+
+  - when: vcsim is not defined
+    include_tasks: init_real_lab.yml
+
+- when: vcsim is defined
+  include_tasks: init_vcsim.yml

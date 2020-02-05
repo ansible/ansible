@@ -24,7 +24,7 @@ author: Adam Števko (@xen0l)
 options:
     protocol:
         description:
-            - Specifies the procotol for which we want to manage properties.
+            - Specifies the protocol for which we want to manage properties.
         required: true
     property:
         description:

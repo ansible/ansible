@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -27,23 +30,29 @@ options:
     choices: ['present', 'absent']
     default: present
     required: no
+    type: str
   customer_gateway_id:
     description:
       - The ID of the customer gateway.
+    type: str
   connection_type:
     description:
       - The type of VPN connection.
-    choices: ['ipsec.1']
+      - At this time only 'ipsec.1' is supported.
     default: ipsec.1
+    type: str
   vpn_gateway_id:
     description:
       - The ID of the virtual private gateway.
+    type: str
   vpn_connection_id:
     description:
       - The ID of the VPN connection. Required to modify or delete a connection if the filters option does not provide a unique match.
+    type: str
   tags:
     description:
       - Tags to attach to the VPN connection.
+    type: dict
   purge_tags:
     description:
       - Whether or not to delete VPN connections tags that are associated with the connection but not specified in the task.
@@ -62,6 +71,15 @@ options:
         the aforementioned keys.
     required: no
     version_added: "2.5"
+    type: list
+    elements: dict
+    suboptions:
+        TunnelInsideCidr:
+            type: str
+            description: The range of inside IP addresses for the tunnel.
+        PreSharedKey:
+            type: str
+            description: The pre-shared key (PSK) to establish initial authentication between the virtual private gateway and customer gateway.
   filters:
     description:
       - An alternative to using vpn_connection_id. If multiple matches are found, vpn_connection_id is required.
@@ -103,13 +121,30 @@ options:
       cgw:
         description:
           - The customer gateway id as a string or a list of those strings.
+    type: dict
   routes:
     description:
       - Routes to add to the connection.
+    type: list
+    elements: str
   purge_routes:
     description:
       - Whether or not to delete VPN connections routes that are not specified in the task.
     type: bool
+  wait_timeout:
+    description:
+      - How long before wait gives up, in seconds.
+    default: 600
+    type: int
+    required: false
+    version_added: "2.8"
+  delay:
+    description:
+      - The time to wait before checking operation again. in seconds.
+    required: false
+    type: int
+    default: 15
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -434,11 +469,10 @@ def find_connection_response(connections=None):
             return connections['VpnConnections'][0]
 
 
-def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_id, connection_type, tunnel_options=None):
+def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_id, connection_type, max_attempts, delay, tunnel_options=None):
     """ Creates a VPN connection """
 
     options = {'StaticRoutesOnly': static_only}
-
     if tunnel_options and len(tunnel_options) <= 2:
         t_opt = []
         for m in tunnel_options:
@@ -458,7 +492,10 @@ def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_
                                                CustomerGatewayId=customer_gateway_id,
                                                VpnGatewayId=vpn_gateway_id,
                                                Options=options)
-        connection.get_waiter('vpn_connection_available').wait(VpnConnectionIds=[vpn['VpnConnection']['VpnConnectionId']])
+        connection.get_waiter('vpn_connection_available').wait(
+            VpnConnectionIds=[vpn['VpnConnection']['VpnConnectionId']],
+            WaiterConfig={'Delay': delay, 'MaxAttempts': max_attempts}
+        )
     except WaiterError as e:
         raise VPNConnectionException(msg="Failed to wait for VPN connection {0} to be available".format(vpn['VpnConnection']['VpnConnectionId']),
                                      exception=e)
@@ -469,11 +506,14 @@ def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_
     return vpn['VpnConnection']
 
 
-def delete_connection(connection, vpn_connection_id):
+def delete_connection(connection, vpn_connection_id, delay, max_attempts):
     """ Deletes a VPN connection """
     try:
         connection.delete_vpn_connection(VpnConnectionId=vpn_connection_id)
-        connection.get_waiter('vpn_connection_deleted').wait(VpnConnectionIds=[vpn_connection_id])
+        connection.get_waiter('vpn_connection_deleted').wait(
+            VpnConnectionIds=[vpn_connection_id],
+            WaiterConfig={'Delay': delay, 'MaxAttempts': max_attempts}
+        )
     except WaiterError as e:
         raise VPNConnectionException(msg="Failed to wait for VPN connection {0} to be removed".format(vpn_connection_id),
                                      exception=e)
@@ -641,6 +681,8 @@ def ensure_present(connection, module_params, check_mode=False):
     """ Creates and adds tags to a VPN connection. If the connection already exists update tags. """
     vpn_connection = find_connection(connection, module_params)
     changed = False
+    delay = module_params.get('delay')
+    max_attempts = module_params.get('wait_timeout') // delay
 
     # No match but vpn_connection_id was specified.
     if not vpn_connection and module_params.get('vpn_connection_id'):
@@ -665,9 +707,11 @@ def ensure_present(connection, module_params, check_mode=False):
                                            static_only=module_params.get('static_only'),
                                            vpn_gateway_id=module_params.get('vpn_gateway_id'),
                                            connection_type=module_params.get('connection_type'),
-                                           tunnel_options=module_params.get('tunnel_options'))
+                                           tunnel_options=module_params.get('tunnel_options'),
+                                           max_attempts=max_attempts,
+                                           delay=delay)
         changes = check_for_update(connection, module_params, vpn_connection['VpnConnectionId'])
-        _ = make_changes(connection, vpn_connection['VpnConnectionId'], changes)
+        make_changes(connection, vpn_connection['VpnConnectionId'], changes)
 
     # get latest version if a change has been made and make tags output nice before returning it
     if vpn_connection:
@@ -685,8 +729,11 @@ def ensure_absent(connection, module_params, check_mode=False):
     if check_mode:
         return get_check_mode_results(connection, module_params, vpn_connection['VpnConnectionId'] if vpn_connection else None)
 
+    delay = module_params.get('delay')
+    max_attempts = module_params.get('wait_timeout') // delay
+
     if vpn_connection:
-        delete_connection(connection, vpn_connection['VpnConnectionId'])
+        delete_connection(connection, vpn_connection['VpnConnectionId'], delay=delay, max_attempts=max_attempts)
         changed = True
     else:
         changed = False
@@ -708,6 +755,8 @@ def main():
         purge_tags=dict(type='bool', default=False),
         routes=dict(type='list', default=[]),
         purge_routes=dict(type='bool', default=False),
+        wait_timeout=dict(type='int', default=600),
+        delay=dict(type='int', default=15),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True)

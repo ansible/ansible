@@ -24,7 +24,6 @@ try:
     # In Ansible 2.8, Ansible changed import paths.
     from test.units.compat import unittest
     from test.units.compat.mock import Mock
-    from test.units.compat.mock import patch
 
     from test.units.modules.utils import set_module_args
 except ImportError:
@@ -35,7 +34,6 @@ except ImportError:
     # Ansible 2.8 imports
     from units.compat import unittest
     from units.compat.mock import Mock
-    from units.compat.mock import patch
 
     from units.modules.utils import set_module_args
 
@@ -101,9 +99,11 @@ class TestManager(unittest.TestCase):
         # Configure the arguments that would be sent to the Ansible module
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -124,9 +124,11 @@ class TestManager(unittest.TestCase):
         # Configure the arguments that would be sent to the Ansible module
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current1 = Parameters(params=load_fixture('load_sys_application_template_w_new_checksum.json'))
@@ -153,10 +155,12 @@ class TestManager(unittest.TestCase):
     def test_delete_iapp_template(self, *args):
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='password',
-            server='localhost',
-            user='admin',
-            state='absent'
+            state='absent',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -176,10 +180,12 @@ class TestManager(unittest.TestCase):
     def test_delete_iapp_template_idempotent(self, *args):
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='password',
-            server='localhost',
-            user='admin',
-            state='absent'
+            state='absent',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

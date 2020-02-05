@@ -19,53 +19,87 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+netconf: ce
+short_description: Use ce netconf plugin to run netconf commands on Huawei Cloudengine platform
+description:
+  - This ce plugin provides low level abstraction apis for
+    sending and receiving netconf commands from Huawei Cloudengine network devices.
+version_added: "2.9"
+options:
+  ncclient_device_handler:
+    type: str
+    default: huawei
+    description:
+      - Specifies the ncclient device handler name for Huawei Cloudengine.
+        To identify the ncclient device handler name refer ncclient library documentation.
+"""
+
 import json
 import re
 
-from ansible import constants as C
-from ansible.module_utils._text import to_text, to_bytes, to_native
-from ansible.errors import AnsibleConnectionFailure, AnsibleError
-from ansible.plugins.netconf import NetconfBase
-from ansible.plugins.netconf import ensure_connected
+from ansible.module_utils._text import to_text, to_bytes
+from ansible.errors import AnsibleConnectionFailure
+from ansible.plugins.netconf import NetconfBase, ensure_ncclient
 
 try:
     from ncclient import manager
     from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
     from ncclient.xml_ import to_ele, to_xml, new_ele
+    HAS_NCCLIENT = True
+except (ImportError, AttributeError):  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+    HAS_NCCLIENT = False
+
+try:
+    from lxml.etree import fromstring
 except ImportError:
-    raise AnsibleError("ncclient is not installed")
+    from xml.etree.ElementTree import fromstring
 
 
 class Netconf(NetconfBase):
 
+    @ensure_ncclient
     def get_text(self, ele, tag):
         try:
             return to_text(ele.find(tag).text, errors='surrogate_then_replace').strip()
         except AttributeError:
             pass
 
+    @ensure_ncclient
     def get_device_info(self):
         device_info = dict()
         device_info['network_os'] = 'ce'
-        ele = new_ele('get-software-information')
-        data = self.execute_rpc(to_xml(ele))
-        reply = to_ele(to_bytes(data, errors='surrogate_or_strict'))
-        sw_info = reply.find('.//software-information')
+        filter_xml = '''<filter type="subtree">
+                          <system xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+                            <systemInfo>
+                              <sysName></sysName>
+                              <sysContact></sysContact>
+                              <productVer></productVer>
+                              <platformVer></platformVer>
+                              <productName></productName>
+                            </systemInfo>
+                          </system>
+                        </filter>'''
+        data = self.get(filter_xml)
+        data = re.sub(r'xmlns=".+?"', r'', data)
+        reply = fromstring(to_bytes(data, errors='surrogate_or_strict'))
+        sw_info = reply.find('.//systemInfo')
 
-        device_info['network_os_version'] = self.get_text(sw_info, 'ce-version')
-        device_info['network_os_hostname'] = self.get_text(sw_info, 'host-name')
-        device_info['network_os_model'] = self.get_text(sw_info, 'product-model')
+        device_info['network_os_version'] = self.get_text(sw_info, 'productVer')
+        device_info['network_os_hostname'] = self.get_text(sw_info, 'sysName')
+        device_info['network_os_platform_version'] = self.get_text(sw_info, 'platformVer')
+        device_info['network_os_platform'] = self.get_text(sw_info, 'productName')
 
         return device_info
 
-    @ensure_connected
     def execute_rpc(self, name):
         """RPC to be execute on remote device
            :name: Name of rpc in string format"""
         return self.rpc(name)
 
-    @ensure_connected
+    @ensure_ncclient
     def load_configuration(self, *args, **kwargs):
         """Loads given configuration on device
         :format: Format of configuration (xml, text, set)
@@ -84,9 +118,8 @@ class Netconf(NetconfBase):
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'validate', 'lock', 'unlock', 'copy_copy',
-                                               'execute_rpc', 'load_configuration', 'get_configuration', 'command',
-                                               'reboot', 'halt']
+        result['rpc'] = self.get_base_rpc() + ['execute_rpc', 'load_configuration', 'get_configuration', 'compare_configuration',
+                                               'execute_action', 'halt', 'reboot', 'execute_nc_cli', 'dispatch_rpc']
         result['network_api'] = 'netconf'
         result['device_info'] = self.get_device_info()
         result['server_capabilities'] = [c for c in self.m.server_capabilities]
@@ -95,8 +128,8 @@ class Netconf(NetconfBase):
         return json.dumps(result)
 
     @staticmethod
+    @ensure_ncclient
     def guess_network_os(obj):
-
         try:
             m = manager.connect(
                 host=obj._play_context.remote_addr,
@@ -107,10 +140,13 @@ class Netconf(NetconfBase):
                 hostkey_verify=obj.get_option('host_key_checking'),
                 look_for_keys=obj.get_option('look_for_keys'),
                 allow_agent=obj._play_context.allow_agent,
-                timeout=obj.get_option('persistent_connect_timeout')
+                timeout=obj.get_option('persistent_connect_timeout'),
+                # We need to pass in the path to the ssh_config file when guessing
+                # the network_os so that a jumphost is correctly used if defined
+                ssh_config=obj._ssh_config
             )
         except SSHUnknownHostError as exc:
-            raise AnsibleConnectionFailure(to_native(exc))
+            raise AnsibleConnectionFailure(to_text(exc))
 
         guessed_os = None
         for c in m.server_capabilities:
@@ -121,7 +157,6 @@ class Netconf(NetconfBase):
         m.close_session()
         return guessed_os
 
-    @ensure_connected
     def get_configuration(self, *args, **kwargs):
         """Retrieve all or part of a specified configuration.
            :format: format in configuration should be retrieved
@@ -129,13 +164,12 @@ class Netconf(NetconfBase):
            (by default entire configuration is retrieved)"""
         return self.m.get_configuration(*args, **kwargs).data_xml
 
-    @ensure_connected
     def compare_configuration(self, *args, **kwargs):
         """Compare configuration
            :rollback: rollback id"""
         return self.m.compare_configuration(*args, **kwargs).data_xml
 
-    @ensure_connected
+    @ensure_ncclient
     def execute_action(self, xml_str):
         """huawei execute-action"""
         con_obj = None
@@ -146,66 +180,69 @@ class Netconf(NetconfBase):
 
         return con_obj.xml
 
-    @ensure_connected
     def halt(self):
         """reboot the device"""
         return self.m.halt().data_xml
 
-    @ensure_connected
     def reboot(self):
         """reboot the device"""
         return self.m.reboot().data_xml
 
-    @ensure_connected
-    def halt(self):
-        """reboot the device"""
-        return self.m.halt().data_xml
-
-    @ensure_connected
+    @ensure_ncclient
     def get(self, *args, **kwargs):
         try:
+            if_rpc_reply = kwargs.pop('if_rpc_reply', False)
+            if if_rpc_reply:
+                return self.m.get(*args, **kwargs).xml
             return self.m.get(*args, **kwargs).data_xml
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
-    @ensure_connected
+    @ensure_ncclient
     def get_config(self, *args, **kwargs):
         try:
             return self.m.get_config(*args, **kwargs).data_xml
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
-    @ensure_connected
+    @ensure_ncclient
     def edit_config(self, *args, **kwargs):
         try:
             return self.m.edit_config(*args, **kwargs).xml
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
-    @ensure_connected
+    @ensure_ncclient
     def execute_nc_cli(self, *args, **kwargs):
         try:
             return self.m.cli(*args, **kwargs).xml
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
-    @ensure_connected
+    @ensure_ncclient
     def commit(self, *args, **kwargs):
         try:
             return self.m.commit(*args, **kwargs).data_xml
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
-    @ensure_connected
     def validate(self, *args, **kwargs):
         return self.m.validate(*args, **kwargs).data_xml
 
-    @ensure_connected
     def discard_changes(self, *args, **kwargs):
         return self.m.discard_changes(*args, **kwargs).data_xml
 
-    @ensure_connected
-    def execute_rpc(self, name):
-        """RPC to be execute on remote device
-           :name: Name of rpc in string format"""
-        return self.rpc(name)
+    @ensure_ncclient
+    def dispatch_rpc(self, rpc_command=None, source=None, filter=None):
+        """
+        Execute rpc on the remote device eg. dispatch('get-next')
+        :param rpc_command: specifies rpc command to be dispatched either in plain text or in xml element format (depending on command)
+        :param source: name of the configuration datastore being queried
+        :param filter: specifies the portion of the configuration to retrieve (by default entire configuration is retrieved)
+        :return: Returns xml string containing the rpc-reply response received from remote host
+        """
+        if rpc_command is None:
+            raise ValueError('rpc_command value must be provided')
+        resp = self.m.dispatch(fromstring(rpc_command), source=source, filter=filter)
+        # just return rpc-reply xml
+        return resp.xml

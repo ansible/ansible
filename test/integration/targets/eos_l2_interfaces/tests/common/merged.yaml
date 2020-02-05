@@ -1,0 +1,52 @@
+---
+- include_tasks: reset_config.yml
+
+- set_fact:
+    config:
+      - name: Ethernet1
+        trunk:
+          native_vlan: 10
+      - name: Ethernet2
+        access:
+          vlan: 30
+
+- eos_facts:
+    gather_network_resources: l2_interfaces
+  become: yes
+
+- name: Merge provided configuration with device configuration
+  eos_l2_interfaces:
+    config: "{{ config }}"
+    state: merged
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.before) == []"
+
+- eos_facts:
+    gather_network_resources: l2_interfaces
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.after) == []"
+
+- set_fact:
+    expected_config:
+      - name: Ethernet1
+        access:
+          vlan: 20
+        trunk:
+          native_vlan: 10
+      - name: Ethernet2
+        access:
+          vlan: 30
+        trunk:
+          native_vlan: 20
+      - name: Management1
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(expected_config) == []"

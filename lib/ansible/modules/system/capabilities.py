@@ -24,6 +24,7 @@ options:
             - Specifies the path to the file to be managed.
         type: str
         required: yes
+        aliases: [ key ]
     capability:
         description:
             - Desired capability to set (with operator and flags, if state is C(present)) or remove (if state is C(absent))
@@ -112,7 +113,7 @@ class CapabilitiesModule(object):
         #   '/foo ='
         # If file xattrs are unset the output will be:
         #   '/foo'
-        # If the file does not eixst the output will be (with rc == 0...):
+        # If the file does not exist the output will be (with rc == 0...):
         #   '/foo (No such file or directory)'
         if rc != 0 or (stdout.strip() != path and stdout.count(' =') != 1):
             self.module.fail_json(msg="Unable to get capabilities of %s" % path, stdout=stdout.strip(), stderr=stderr)

@@ -1,2 +1,0 @@
-minor_changes:
-- Windows/PSRP - Ensure that a connection timeout or connection error results in host being unreachable

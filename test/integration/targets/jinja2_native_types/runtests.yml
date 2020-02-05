@@ -32,7 +32,7 @@
       yaml_none: ~
   tasks:
       - name: check jinja version
-        shell: python -c 'import jinja2; print(jinja2.__version__)'
+        command: "{{ ansible_python_interpreter }} -c 'import jinja2; print(jinja2.__version__)'"
         register: jinja2_version
 
       - name: make sure jinja is the right version

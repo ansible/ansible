@@ -3,21 +3,7 @@
 #
 # (c) 2018, Gregor Riepl <onitake@gmail.com>
 # based on cs_sshkeypair (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -37,51 +23,58 @@ description:
     - Requires cloud-init to be installed in the virtual machine.
     - The passwordenabled flag must be set on the template associated with the VM.
 version_added: '2.8'
-author: "Gregor Riepl (@onitake)"
+author: Gregor Riepl (@onitake)
 options:
   vm:
     description:
       - Name of the virtual machine to reset the password on.
+    type: str
     required: true
   domain:
     description:
       - Name of the domain the virtual machine belongs to.
+    type: str
   account:
     description:
       - Account the virtual machine belongs to.
+    type: str
   project:
     description:
       - Name of the project the virtual machine belongs to.
+    type: str
   zone:
     description:
       - Name of the zone in which the instance is deployed.
       - If not set, the default zone is used.
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: yes
     type: bool
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: stop the virtual machine before resetting the password
-  local_action:
-    module: cs_instance
+  cs_instance:
     name: myvirtualmachine
     state: stopped
+  delegate_to: localhost
+
 - name: reset and get new default password
-  local_action:
-    module: cs_instance_password_reset
+  cs_instance_password_reset:
     vm: myvirtualmachine
   register: root
+  delegate_to: localhost
 - debug:
     msg: "new default password is {{ root.password }}"
+
 - name: boot the virtual machine to activate the new password
-  local_action:
-    module: cs_instance
+  cs_instance:
     name: myvirtualmachine
     state: started
+  delegate_to: localhost
   when: root is changed
 '''
 

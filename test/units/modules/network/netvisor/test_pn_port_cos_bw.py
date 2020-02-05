@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_port_cos_bw
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestAdminServiceModule(TestNvosModule):
@@ -38,12 +36,12 @@ class TestAdminServiceModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_port': '1',
                          'pn_cos': '0', 'pn_min_bw_guarantee': '60', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 port-cos-bw-modify  cos 0 port 1 min-bw-guarantee 60'
+        expected_cmd = ' switch sw01 port-cos-bw-modify  cos 0 port 1 min-bw-guarantee 60'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_pn_port_cos_bw_modify_t2(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_port': 'all',
                          'pn_cos': '1', 'pn_weight': 'priority', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 port-cos-bw-modify  cos 1 port all weight priority'
+        expected_cmd = ' switch sw01 port-cos-bw-modify  cos 1 port all weight priority'
         self.assertEqual(result['cli_cmd'], expected_cmd)

@@ -30,6 +30,9 @@ description:
 author: Zhijin Zhou (@QijunPan)
 notes:
     - Ensure that a VPN instance has been created and the IPv4 address family has been enabled for the VPN instance.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     vrf:
         description:
@@ -260,7 +263,7 @@ def get_interface_type(interface):
 
 
 class VrfInterface(object):
-    """Manange vpn instance"""
+    """Manage vpn instance"""
 
     def __init__(self, argument_spec):
         self.spec = argument_spec
@@ -353,7 +356,7 @@ class VrfInterface(object):
         for l3vpn_ifinfo in l3vpn_if:
             for ele in l3vpn_ifinfo:
                 if ele.tag in ['ifName']:
-                    if ele.text == self.vpn_interface:
+                    if ele.text.lower() == self.vpn_interface.lower():
                         self.intf_info['vrfName'] = vpn_name
 
     def get_interface_vpn(self):
@@ -371,14 +374,13 @@ class VrfInterface(object):
         # get global vrf interface info
         root = ElementTree.fromstring(xml_str)
         vpns = root.findall(
-            "data/l3vpn/l3vpncomm/l3vpnInstances/l3vpnInstance")
+            "l3vpn/l3vpncomm/l3vpnInstances/l3vpnInstance")
         if vpns:
             for vpnele in vpns:
                 vpn_name = None
                 for vpninfo in vpnele:
                     if vpninfo.tag == 'vrfName':
                         vpn_name = vpninfo.text
-
                     if vpninfo.tag == 'l3vpnIfs':
                         self.get_interface_vpn_name(vpninfo, vpn_name)
 
@@ -408,7 +410,7 @@ class VrfInterface(object):
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
         root = ElementTree.fromstring(xml_str)
-        interface = root.find("data/ifm/interfaces/interface")
+        interface = root.find("ifm/interfaces/interface")
         if interface:
             for eles in interface:
                 if eles.tag in ["isL2SwitchPort"]:
@@ -484,7 +486,7 @@ class VrfInterface(object):
             self.changed = True
 
     def work(self):
-        """excute task"""
+        """execute task"""
 
         self.get_intf_conf_info()
         self.check_params()

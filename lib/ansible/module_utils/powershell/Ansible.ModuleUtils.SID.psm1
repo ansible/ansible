@@ -79,13 +79,13 @@ Function Convert-ToSID {
             $account = New-Object System.Security.Principal.NTAccount($username)
         }
     }
-    
+
     try {
         $account_sid = $account.Translate([System.Security.Principal.SecurityIdentifier])
     } catch {
         Fail-Json @{} "account_name $account_name is not a valid account, cannot get SID: $($_.Exception.Message)"
     }
-    
+
     return $account_sid.Value
 }
 

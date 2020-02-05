@@ -17,24 +17,26 @@ module: purefb_s3acc
 version_added: '2.8'
 short_description: Create or delete FlashBlade Object Store accounts
 description:
-- Create or delete object store accounts on a Pure Stoage FlashBlade.
+- Create or delete object store accounts on a Pure Storage FlashBlade.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   state:
     description:
     - Create or delete object store account
     default: present
     choices: [ absent, present ]
+    type: str
   name:
     description:
     - The name of object store account
+    type: str
 extends_documentation_fragment:
 - purestorage.fb
 '''
 
 EXAMPLES = r'''
-- name: Crrate object store account foo
+- name: Create object store account foo
   purefb_s3acc:
     name: foo
     fb_url: 10.10.10.2

@@ -22,7 +22,7 @@
         when: "limit_to in ['*', 'openvswitch_db']"
       rescue:
         - set_fact:
-            failed_modules: "{{ failed_modules }} + [ 'openvswitch_db' ]"
+            failed_modules: "{{ failed_modules + [ 'openvswitch_db' ]}}"
             test_failed: true
 
 

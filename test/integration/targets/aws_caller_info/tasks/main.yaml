@@ -1,0 +1,15 @@
+- name: retrieve caller facts
+  aws_caller_info:
+    region: "{{ aws_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    security_token: "{{ security_token }}"
+  register: result
+
+- name: assert correct keys are returned
+  assert:
+    that:
+      - result.account is not none
+      - result.arn is not none
+      - result.user_id is not none
+      - result.account_alias is not none

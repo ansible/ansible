@@ -1,0 +1,2 @@
+minor_changes:
+  - luks_device - add ``keysize`` parameter to set key size at LUKS container creation

@@ -17,22 +17,21 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_route
 version_added: "2.7"
-short_description: Manage Azure route resource.
+short_description: Manage Azure route resource
 description:
     - Create, update or delete a route.
 options:
     resource_group:
         description:
-            - name of resource group.
+            - Name of resource group.
         required: true
     name:
         description:
-            - name of the route.
+            - Name of the route.
         required: true
     state:
         description:
-            - Assert the state of the route. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the route. Use C(present) to create or update and C(absent) to delete.
         default: present
         choices:
             - absent
@@ -65,31 +64,33 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
 EXAMPLES = '''
     - name: Create a route
       azure_rm_route:
-        name: foobar
-        resource_group: Testing
+        resource_group: myResourceGroup
+        name: myRoute
         address_prefix: 10.1.0.0/16
         next_hop_type: virtual_network_gateway
         route_table_name: table
 
     - name: Delete a route
       azure_rm_route:
-        name: foobar
-        resource_group: Testing
+        resource_group: myResourceGroup
+        name: myRoute
         route_table_name: table
         state: absent
 '''
 RETURN = '''
 id:
-    description: Current state of the route.
+    description:
+        - Current state of the route.
     returned: success
     type: str
+    sample: "/subscriptions/xxxx...xxxx/resourceGroups/v-xisuRG/providers/Microsoft.Network/routeTables/tableb57/routes/routeb57"
 '''
 
 try:

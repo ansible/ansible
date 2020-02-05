@@ -7,6 +7,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import os
 import errno
 import json
 from itertools import product
@@ -27,7 +28,7 @@ def atomic_am(am, mocker):
 
 
 @pytest.fixture
-def atomic_mocks(mocker):
+def atomic_mocks(mocker, monkeypatch):
     environ = dict()
     mocks = {
         'chmod': mocker.patch('os.chmod'),
@@ -53,6 +54,9 @@ def atomic_mocks(mocker):
     mocks['umask'].side_effect = [18, 0]
     mocks['rename'].return_value = None
 
+    # normalize OS specific features
+    monkeypatch.delattr(os, 'chflags', raising=False)
+
     yield mocks
 
 
@@ -62,6 +66,7 @@ def fake_stat(mocker):
     stat1.st_mode = 0o0644
     stat1.st_uid = 0
     stat1.st_gid = 0
+    stat1.st_flags = 0
     yield stat1
 
 
@@ -197,7 +202,7 @@ def test_rename_perms_fail_temp_succeeds(atomic_am, atomic_mocks, fake_stat, moc
     mock_context = atomic_am.selinux_default_context.return_value
     atomic_mocks['path_exists'].return_value = False
     atomic_mocks['rename'].side_effect = [OSError(errno.EPERM, 'failing with EPERM'), None]
-    atomic_mocks['stat'].return_value = [fake_stat, fake_stat, fake_stat]
+    atomic_mocks['stat'].return_value = fake_stat
     atomic_mocks['stat'].side_effect = None
     atomic_mocks['mkstemp'].return_value = (None, '/path/to/tempfile')
     atomic_mocks['mkstemp'].side_effect = None

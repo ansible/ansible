@@ -4,7 +4,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import sys
 import copy
 
 from units.compat import unittest
@@ -30,7 +29,7 @@ class TestNiosApi(unittest.TestCase):
         self.mock_connector.stop()
 
     def test_get_provider_spec(self):
-        provider_options = ['host', 'username', 'password', 'ssl_verify', 'silent_ssl_warnings',
+        provider_options = ['host', 'username', 'password', 'validate_certs', 'silent_ssl_warnings',
                             'http_request_timeout', 'http_pool_connections',
                             'http_pool_maxsize', 'max_retries', 'wapi_version', 'max_results']
         res = api.WapiBase.provider_spec

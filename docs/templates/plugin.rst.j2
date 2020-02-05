@@ -50,13 +50,9 @@ Synopsis
 --------
 {% if description -%}
 
-{%   if description is string -%}
-- @{ description | rst_ify }@
-{%   else %}
-{%     for desc in description %}
+{%   for desc in description %}
 - @{ desc | rst_ify }@
-{%     endfor %}
-{%   endif %}
+{%   endfor %}
 
 {% endif %}
 
@@ -110,7 +106,7 @@ Parameters
             <th width="100%">Comments</th>
         </tr>
         {% for key, value in options|dictsort recursive %}
-            <tr>
+            <tr id="parameter-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}">
                 {# indentation based on nesting level #}
                 {% for i in range(1, loop.depth) %}
                     <td class="elbow-placeholder"></td>
@@ -118,8 +114,10 @@ Parameters
                 {# parameter name with required and/or introduced label #}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
+                    <a class="ansibleOptionLink" href="#parameter-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}" title="Permalink to this option">¶</a>
                     <div style="font-size: small">
                         <span style="color: purple">@{ value.type | documented_type }@</span>
+                        {% if value.get('elements') %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
                         {% if value.get('required', False) %} / <span style="color: red">required</span>{% endif %}
                     </div>
                     {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
@@ -155,7 +153,7 @@ Parameters
                     {% endif %}
                     {# Show default value, when multiple choice or no choices #}
                     {% if value.default is defined and value.default not in value.choices %}
-                        <b>Default:</b><br/><div style="color: blue">@{ value.default | escape }@</div>
+                        <b>Default:</b><br/><div style="color: blue">@{ value.default | tojson | escape }@</div>
                     {% endif %}
                 </td>
                 {# configuration #}
@@ -182,13 +180,9 @@ Parameters
                 {% endif %}
                 {# description #}
                 <td>
-                    {% if value.description is string %}
-                        <div>@{ value.description | replace('\n', '\n    ') | html_ify }@</div>
-                    {% else %}
-                        {% for desc in value.description %}
-                            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-                        {% endfor %}
-                    {% endif %}
+                    {% for desc in value.description %}
+                        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+                    {% endfor %}
                     {% if 'aliases' in value and value.aliases %}
                         <div style="font-size: small; color: darkgreen"><br/>aliases: @{ value.aliases|join(', ') }@</div>
                     {% endif %}
@@ -289,13 +283,17 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
             <th width="100%">Description</th>
         </tr>
         {% for key, value in returnfacts|dictsort recursive %}
-            <tr>
+            <tr id="return-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}">
                 {% for i in range(1, loop.depth) %}
                     <td class="elbow-placeholder"></td>
                 {% endfor %}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
-                    <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
+                    <a class="ansibleOptionLink" href="#return-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}" title="Permalink to this fact">¶</a>
+                    <div style="font-size: small">
+                      <span style="color: purple">@{ value.type | documented_type }@</span>
+                      {% if value.elements %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
+                    </div>
                     {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
@@ -361,13 +359,17 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
             <th width="100%">Description</th>
         </tr>
         {% for key, value in returndocs|dictsort recursive %}
-            <tr>
+            <tr id="return-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}">
                 {% for i in range(1, loop.depth) %}
                     <td class="elbow-placeholder">&nbsp;</td>
                 {% endfor %}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
-                    <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
+                    <a class="ansibleOptionLink" href="#return-{% for part in value.full_key %}@{ part }@{% if not loop.last %}/{% endif %}{% endfor %}" title="Permalink to this return value">¶</a>
+                    <div style="font-size: small">
+                      <span style="color: purple">@{ value.type | documented_type }@</span>
+                      {% if value.elements %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
+                    </div>
                     {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
@@ -416,7 +418,7 @@ Status
 {% else %}
 
 {%   set support = { 'core': 'the Ansible Core Team', 'network': 'the Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'the Ansible Community', 'curated': 'a Third Party'} %}
-{%   set module_states = { 'preview': 'not guaranteed to have a backwards compatible interface', 'stableinterface': 'guaranteed to have no backward incompatible interface changes going forward'} %}
+{%   set module_states = { 'preview': 'not guaranteed to have a backwards compatible interface', 'stableinterface': 'guaranteed to have backward compatible interface changes going forward'} %}
 
 {%   if metadata %}
 {%     if metadata.status %}
@@ -456,7 +458,11 @@ Authors
 
 .. hint::
 {%   if plugin_type == 'module' %}
-    If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/@{ source }@?description=%3C!---%20Your%20description%20here%20--%3E%0A%0A%2Blabel:%20docsite_pr>`_ to improve it.
+    If you notice any issues in this documentation, you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/@{ source }@?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr>`_ to improve it.
 {% else %}
-    If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/plugins/@{ plugin_type }@/@{ source }@>`_ to improve it.
+    If you notice any issues in this documentation, you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/plugins/@{ plugin_type }@/@{ source }@?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr>`_ to improve it.
+
+
+.. hint::
+    Configuration entries for each entry type have a low to high priority order. For example, a variable that is lower in the list will override a variable that is higher up.
 {% endif %}

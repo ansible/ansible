@@ -17,12 +17,6 @@ module: aci_access_port_block_to_access_port
 short_description: Manage port blocks of Fabric interface policy leaf profile interface selectors (infra:HPortS, infra:PortBlk)
 description:
 - Manage port blocks of Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics.
-seealso:
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC classes B(infra:HPortS) and B(infra:PortBlk).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Simon Metzger (@smnmtzgr)
 version_added: '2.8'
 options:
   leaf_interface_profile:
@@ -46,6 +40,7 @@ options:
   leaf_port_blk_description:
     description:
     - The description to assign to the C(leaf_port_blk).
+    type: str
   from_port:
     description:
     - The beginning (from-range) of the port range block for the leaf access port block.
@@ -76,6 +71,12 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:HPortS) and B(infra:PortBlk).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Simon Metzger (@smnmtzgr)
 '''
 
 EXAMPLES = r'''
@@ -255,8 +256,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
@@ -266,8 +267,8 @@ def main():
         access_port_selector=dict(type='str', aliases=['name', 'access_port_selector_name']),  # Not required for querying all objects
         leaf_port_blk=dict(type='str', aliases=['leaf_port_blk_name']),  # Not required for querying all objects
         leaf_port_blk_description=dict(type='str'),
-        from_port=dict(type='str', aliases=['from', 'fromPort', 'from_port_range']),  # Not required for querying all objects and deleting port blocks
-        to_port=dict(type='str', aliases=['to', 'toPort', 'to_port_range']),  # Not required for querying all objects and deleting port blocks
+        from_port=dict(type='str', aliases=['from', 'fromPort', 'from_port_range']),
+        to_port=dict(type='str', aliases=['to', 'toPort', 'to_port_range']),
         from_card=dict(type='str', aliases=['from_card_range']),
         to_card=dict(type='str', aliases=['to_card_range']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -282,15 +283,15 @@ def main():
         ],
     )
 
-    leaf_interface_profile = module.params['leaf_interface_profile']
-    access_port_selector = module.params['access_port_selector']
-    leaf_port_blk = module.params['leaf_port_blk']
-    leaf_port_blk_description = module.params['leaf_port_blk_description']
-    from_port = module.params['from_port']
-    to_port = module.params['to_port']
-    from_card = module.params['from_card']
-    to_card = module.params['to_card']
-    state = module.params['state']
+    leaf_interface_profile = module.params.get('leaf_interface_profile')
+    access_port_selector = module.params.get('access_port_selector')
+    leaf_port_blk = module.params.get('leaf_port_blk')
+    leaf_port_blk_description = module.params.get('leaf_port_blk_description')
+    from_port = module.params.get('from_port')
+    to_port = module.params.get('to_port')
+    from_card = module.params.get('from_card')
+    to_card = module.params.get('to_card')
+    state = module.params.get('state')
 
     aci = ACIModule(module)
     aci.construct_url(

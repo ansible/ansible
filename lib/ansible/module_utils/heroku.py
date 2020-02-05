@@ -4,14 +4,17 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import env_fallback
+import traceback
+
+from ansible.module_utils.basic import env_fallback, missing_required_lib
 
 HAS_HEROKU = False
+HEROKU_IMP_ERR = None
 try:
     import heroku3
     HAS_HEROKU = True
 except ImportError:
-    pass
+    HEROKU_IMP_ERR = traceback.format_exc()
 
 
 class HerokuHelper():
@@ -22,7 +25,7 @@ class HerokuHelper():
 
     def check_lib(self):
         if not HAS_HEROKU:
-            self.module.fail_json(msg='heroku3 library required for this module (pip install heroku3)')
+            self.module.fail_json(msg=missing_required_lib('heroku3'), exception=HEROKU_IMP_ERR)
 
     @staticmethod
     def heroku_argument_spec():

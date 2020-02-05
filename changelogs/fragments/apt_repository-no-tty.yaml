@@ -1,2 +1,0 @@
-bugfixes:
-  - apt_repository - do not require a tty to prevent errors parsing GPG keys (https://github.com/ansible/ansible/issues/49949)

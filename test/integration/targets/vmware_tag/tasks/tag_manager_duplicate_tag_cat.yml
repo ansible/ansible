@@ -1,0 +1,163 @@
+# Test code for the vmware_tag_manager
+# Copyright: (c) 2019, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+    - name: Create first category
+      vmware_category:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        category_name: "{{ cat_one }}"
+        category_cardinality: 'multiple'
+        state: present
+      register: category_one_create
+
+    - name: Create second category
+      vmware_category:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        category_name: "{{ cat_two }}"
+        category_cardinality: 'multiple'
+        state: present
+      register: category_two_create
+
+    - name: Check categories are created
+      assert:
+        that:
+          - category_two_create.changed
+          - category_one_create.changed
+
+    - name: Set category one id
+      set_fact: cat_one_id={{ category_one_create['category_results']['category_id'] }}
+
+    - name: Set category two id
+      set_fact: cat_two_id={{ category_two_create['category_results']['category_id'] }}
+
+    - name: Create duplicate tags in two different categories
+      vmware_tag:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        tag_name: "{{ tag_one }}"
+        category_id: "{{ cat_one_id }}"
+        state: present
+      register: tag_one_create
+
+    - name: Check tag is created
+      assert:
+        that:
+          - tag_one_create.changed
+
+    - name: Create duplicate tags in two different categories
+      vmware_tag:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        tag_name: "{{ tag_one }}"
+        category_id: "{{ cat_two_id }}"
+        state: present
+      register: tag_two_create
+
+    - name: Check tag is created
+      assert:
+        that:
+          - tag_two_create.changed
+
+    - name: Create duplicate tags in two different categories
+      vmware_tag:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        tag_name: "{{ tag_two }}"
+        category_id: "{{ cat_one_id }}"
+        state: present
+      register: tag_one_create
+
+    - name: Check tag is created
+      assert:
+        that:
+          - tag_one_create.changed
+
+    - name: Create duplicate tags in two different categories
+      vmware_tag:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        tag_name: "{{ tag_two }}"
+        category_id: "{{ cat_two_id }}"
+        state: present
+      register: tag_two_create
+
+    - name: Check tag is created
+      assert:
+        that:
+          - tag_two_create.changed
+
+    - name: Get VM Facts
+      vmware_vm_facts:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+      register: vm_facts
+
+    - set_fact: vm_name="{{ vm_facts['virtual_machines'][0]['guest_name'] }}"
+
+    - name: Assign tags to given virtual machine
+      vmware_tag_manager:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        tag_names:
+          - "{{ cat_one }}:{{ tag_one }}"
+        object_name: "{{ vm_name }}"
+        object_type: VirtualMachine
+        state: add
+      delegate_to: localhost
+      register: vm_tag_info
+
+    - name: Check if we assigned correct tags
+      assert:
+        that:
+          - vm_tag_info.changed
+
+    - name: Delete Tags
+      vmware_tag:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        tag_name: "{{ item }}"
+        state: absent
+      register: delete_tag
+      with_items:
+        - "{{ tag_one }}"
+        - "{{ tag_two }}"
+
+    - name: Delete Categories
+      vmware_category:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        category_name: "{{ item }}"
+        state: absent
+      register: delete_categories
+      with_items:
+        - "{{ cat_one }}"
+        - "{{ cat_two }}"
+  vars:
+    cat_one: category_1001
+    cat_two: category_1002
+    tag_one: tag_1001
+    tag_two: tag_1002

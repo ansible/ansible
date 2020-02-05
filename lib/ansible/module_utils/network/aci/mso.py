@@ -3,6 +3,9 @@
 # Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule, json
 from ansible.module_utils.six import PY3
@@ -87,6 +90,33 @@ def mso_argument_spec():
     )
 
 
+def mso_reference_spec():
+    return dict(
+        name=dict(type='str', required=True),
+        schema=dict(type='str'),
+        template=dict(type='str'),
+    )
+
+
+def mso_subnet_spec():
+    return dict(
+        subnet=dict(type='str', required=True, aliases=['ip']),
+        description=dict(type='str'),
+        scope=dict(type='str', choices=['private', 'public']),
+        shared=dict(type='bool'),
+        no_default_gateway=dict(type='bool'),
+    )
+
+
+def mso_contractref_spec():
+    return dict(
+        name=dict(type='str', required=True),
+        schema=dict(type='str'),
+        template=dict(type='str'),
+        type=dict(type='str', required=True, choices=['consumer', 'provider']),
+    )
+
+
 class MSOModule(object):
 
     def __init__(self, module):
@@ -104,6 +134,7 @@ class MSOModule(object):
         self.sent = dict()
 
         # debug output
+        self.has_modified = False
         self.filter_string = ''
         self.method = None
         self.path = None
@@ -115,7 +146,7 @@ class MSOModule(object):
         self.params['protocol'] = 'https' if self.params.get('use_ssl', True) else 'http'
 
         # Set base_uri
-        if 'port' in self.params and self.params['port'] is not None:
+        if self.params.get('port') is not None:
             self.baseuri = '{protocol}://{host}:{port}/api/v1/'.format(**self.params)
         else:
             self.baseuri = '{protocol}://{host}/api/v1/'.format(**self.params)
@@ -124,7 +155,7 @@ class MSOModule(object):
             self.module.warn('Enable debug output because ANSIBLE_DEBUG was set.')
             self.params['output_level'] = 'debug'
 
-        if self.params['password']:
+        if self.params.get('password'):
             # Perform password-based authentication, log on using password
             self.login()
         else:
@@ -135,19 +166,19 @@ class MSOModule(object):
 
         # Perform login request
         self.url = urljoin(self.baseuri, 'auth/login')
-        payload = {'username': self.params['username'], 'password': self.params['password']}
+        payload = {'username': self.params.get('username'), 'password': self.params.get('password')}
         resp, auth = fetch_url(self.module,
                                self.url,
                                data=json.dumps(payload),
                                method='POST',
                                headers=self.headers,
-                               timeout=self.params['timeout'],
-                               use_proxy=self.params['use_proxy'])
+                               timeout=self.params.get('timeout'),
+                               use_proxy=self.params.get('use_proxy'))
 
         # Handle MSO response
-        if auth['status'] != 201:
-            self.response = auth['msg']
-            self.status = auth['status']
+        if auth.get('status') != 201:
+            self.response = auth.get('msg')
+            self.status = auth.get('status')
             self.fail_json(msg='Authentication failed: {msg}'.format(**auth))
 
         payload = json.loads(resp.read())
@@ -161,6 +192,10 @@ class MSOModule(object):
         if method is not None:
             self.method = method
 
+        # If we PATCH with empty operations, return
+        if method == 'PATCH' and not data:
+            return {}
+
         self.url = urljoin(self.baseuri, path)
 
         if qs is not None:
@@ -171,17 +206,25 @@ class MSOModule(object):
                                headers=self.headers,
                                data=json.dumps(data),
                                method=self.method,
-                               timeout=self.params['timeout'],
-                               use_proxy=self.params['use_proxy'],
+                               timeout=self.params.get('timeout'),
+                               use_proxy=self.params.get('use_proxy'),
                                )
-        self.response = info['msg']
-        self.status = info['status']
+        self.response = info.get('msg')
+        self.status = info.get('status')
+
+        # self.result['info'] = info
+
+        # Get change status from HTTP headers
+        if 'modified' in info:
+            self.has_modified = True
+            if info.get('modified') == 'false':
+                self.result['changed'] = False
+            elif info.get('modified') == 'true':
+                self.result['changed'] = True
 
         # 200: OK, 201: Created, 202: Accepted, 204: No Content
         if self.status in (200, 201, 202, 204):
             output = resp.read()
-#            if self.method in ('DELETE', 'PATCH', 'POST', 'PUT') and self.status in (200, 201, 204):
-#                self.result['changed'] = True
             if output:
                 return json.loads(output)
 
@@ -194,9 +237,13 @@ class MSOModule(object):
         # 500: Internal Server Error, 501: Not Implemented
         elif self.status >= 400:
             try:
-                payload = json.loads(resp.read())
-            except Exception:
-                payload = json.loads(info['body'])
+                output = resp.read()
+                payload = json.loads(output)
+            except (ValueError, AttributeError):
+                try:
+                    payload = json.loads(info['body'])
+                except Exception:
+                    self.fail_json(msg='MSO Error:', data=data, info=info)
             if 'code' in payload:
                 self.fail_json(msg='MSO Error {code}: {message}'.format(**payload), data=data, info=info, payload=payload)
             else:
@@ -209,8 +256,14 @@ class MSOModule(object):
         found = []
         objs = self.request(path, method='GET')
 
+        if objs == {}:
+            return found
+
         if key is None:
             key = path
+
+        if key not in objs:
+            self.fail_json(msg="Key '%s' missing from data", data=objs)
 
         for obj in objs[key]:
             for kw_key, kw_value in kwargs.items():
@@ -231,6 +284,18 @@ class MSOModule(object):
             self.fail_json(msg='More than one object matches unique filter: {0}'.format(kwargs))
         return objs[0]
 
+    def lookup_schema(self, schema):
+        ''' Look up schema and return its id '''
+        if schema is None:
+            return schema
+
+        s = self.get_obj('schemas', displayName=schema)
+        if not s:
+            self.module.fail_json(msg="Schema '%s' is not a valid schema name." % schema)
+        if 'id' not in s:
+            self.module.fail_json(msg="Schema lookup failed for schema '%s': %s" % (schema, s))
+        return s.get('id')
+
     def lookup_domain(self, domain):
         ''' Look up a domain and return its id '''
         if domain is None:
@@ -238,10 +303,10 @@ class MSOModule(object):
 
         d = self.get_obj('auth/domains', key='domains', name=domain)
         if not d:
-            self.module.fail_json(msg="Domain '%s' is not valid." % domain)
+            self.module.fail_json(msg="Domain '%s' is not a valid domain name." % domain)
         if 'id' not in d:
-                self.module.fail_json(msg="Domain lookup failed for '%s': %s" % (domain, d))
-        return d['id']
+            self.module.fail_json(msg="Domain lookup failed for domain '%s': %s" % (domain, d))
+        return d.get('id')
 
     def lookup_roles(self, roles):
         ''' Look up roles and return their ids '''
@@ -252,11 +317,23 @@ class MSOModule(object):
         for role in roles:
             r = self.get_obj('roles', name=role)
             if not r:
-                self.module.fail_json(msg="Role '%s' is not valid." % role)
+                self.module.fail_json(msg="Role '%s' is not a valid role name." % role)
             if 'id' not in r:
-                self.module.fail_json(msg="Role lookup failed for '%s': %s" % (role, r))
-            ids.append(dict(roleId=r['id']))
+                self.module.fail_json(msg="Role lookup failed for role '%s': %s" % (role, r))
+            ids.append(dict(roleId=r.get('id')))
         return ids
+
+    def lookup_site(self, site):
+        ''' Look up a site and return its id '''
+        if site is None:
+            return site
+
+        s = self.get_obj('sites', name=site)
+        if not s:
+            self.module.fail_json(msg="Site '%s' is not a valid site name." % site)
+        if 'id' not in s:
+            self.module.fail_json(msg="Site lookup failed for site '%s': %s" % (site, s))
+        return s.get('id')
 
     def lookup_sites(self, sites):
         ''' Look up sites and return their ids '''
@@ -267,11 +344,23 @@ class MSOModule(object):
         for site in sites:
             s = self.get_obj('sites', name=site)
             if not s:
-                self.module.fail_json(msg="Site '%s' is not valid." % site)
+                self.module.fail_json(msg="Site '%s' is not a valid site name." % site)
             if 'id' not in s:
-                self.module.fail_json(msg="Site lookup failed for '%s': %s" % (site, s))
-            ids.append(dict(siteId=s['id'], securityDomains=[]))
+                self.module.fail_json(msg="Site lookup failed for site '%s': %s" % (site, s))
+            ids.append(dict(siteId=s.get('id'), securityDomains=[]))
         return ids
+
+    def lookup_tenant(self, tenant):
+        ''' Look up a tenant and return its id '''
+        if tenant is None:
+            return tenant
+
+        t = self.get_obj('tenants', key='tenants', name=tenant)
+        if not t:
+            self.module.fail_json(msg="Tenant '%s' is not valid tenant name." % tenant)
+        if 'id' not in t:
+            self.module.fail_json(msg="Tenant lookup failed for tenant '%s': %s" % (tenant, t))
+        return t.get('id')
 
     def lookup_users(self, users):
         ''' Look up users and return their ids '''
@@ -282,10 +371,10 @@ class MSOModule(object):
         for user in users:
             u = self.get_obj('users', username=user)
             if not u:
-                self.module.fail_json(msg="User '%s' is not valid." % user)
+                self.module.fail_json(msg="User '%s' is not a valid user name." % user)
             if 'id' not in u:
-                self.module.fail_json(msg="User lookup failed for '%s': %s" % (user, u))
-            ids.append(dict(userId=u['id']))
+                self.module.fail_json(msg="User lookup failed for user '%s': %s" % (user, u))
+            ids.append(dict(userId=u.get('id')))
         return ids
 
     def create_label(self, label, label_type):
@@ -303,21 +392,103 @@ class MSOModule(object):
             if not l:
                 l = self.create_label(label, label_type)
             if 'id' not in l:
-                self.module.fail_json(msg="Label lookup failed for '%s': %s" % (label, l))
-            ids.append(l['id'])
+                self.module.fail_json(msg="Label lookup failed for label '%s': %s" % (label, l))
+            ids.append(l.get('id'))
         return ids
 
-    def sanitize(self, updates, collate=False, required_keys=None):
+    def anp_ref(self, **data):
+        ''' Create anpRef string '''
+        return '/schemas/{schema_id}/templates/{template}/anps/{anp}'.format(**data)
+
+    def epg_ref(self, **data):
+        ''' Create epgRef string '''
+        return '/schemas/{schema_id}/templates/{template}/anps/{anp}/epgs/{epg}'.format(**data)
+
+    def bd_ref(self, **data):
+        ''' Create bdRef string '''
+        return '/schemas/{schema_id}/templates/{template}/bds/{bd}'.format(**data)
+
+    def contract_ref(self, **data):
+        ''' Create contractRef string '''
+        # Support the contract argspec
+        if 'name' in data:
+            data['contract'] = data.get('name')
+        return '/schemas/{schema_id}/templates/{template}/contracts/{contract}'.format(**data)
+
+    def filter_ref(self, **data):
+        ''' Create a filterRef string '''
+        return '/schemas/{schema_id}/templates/{template}/filters/{filter}'.format(**data)
+
+    def vrf_ref(self, **data):
+        ''' Create vrfRef string '''
+        return '/schemas/{schema_id}/templates/{template}/vrfs/{vrf}'.format(**data)
+
+    def make_reference(self, data, reftype, schema_id, template):
+        ''' Create a reference from a dictionary '''
+        # Removes entry from payload
+        if data is None:
+            return None
+
+        if data.get('schema') is not None:
+            schema_obj = self.get_obj('schemas', displayName=data.get('schema'))
+            if not schema_obj:
+                self.fail_json(msg="Referenced schema '{schema}' in {reftype}ref does not exist".format(reftype=reftype, **data))
+            schema_id = schema_obj.get('id')
+
+        if data.get('template') is not None:
+            template = data.get('template')
+
+        refname = '%sName' % reftype
+
+        return {
+            refname: data.get('name'),
+            'schemaId': schema_id,
+            'templateName': template,
+        }
+
+    def make_subnets(self, data):
+        ''' Create a subnets list from input '''
+        if data is None:
+            return None
+
+        subnets = []
+        for subnet in data:
+            subnets.append(dict(
+                ip=subnet.get('ip'),
+                description=subnet.get('description', subnet.get('ip')),
+                scope=subnet.get('scope', 'private'),
+                shared=subnet.get('shared', False),
+                noDefaultGateway=subnet.get('no_default_gateway', False),
+            ))
+
+        return subnets
+
+    def sanitize(self, updates, collate=False, required=None, unwanted=None):
         ''' Clean up unset keys from a request payload '''
-        if required_keys is None:
-            required_keys = []
+        if required is None:
+            required = []
+        if unwanted is None:
+            unwanted = []
         self.proposed = deepcopy(self.existing)
         self.sent = deepcopy(self.existing)
+
+        for key in self.existing:
+            # Remove References
+            if key.endswith('Ref'):
+                del(self.proposed[key])
+                del(self.sent[key])
+                continue
+
+            # Removed unwanted keys
+            elif key in unwanted:
+                del(self.proposed[key])
+                del(self.sent[key])
+                continue
 
         # Clean up self.sent
         for key in updates:
             # Always retain 'id'
-            if key in required_keys:
+            if key in required:
                 pass
 
             # Remove unspecified values
@@ -341,26 +512,27 @@ class MSOModule(object):
     def exit_json(self, **kwargs):
         ''' Custom written method to exit from module. '''
 
-        if self.params['state'] in ('absent', 'present'):
-            if self.params['output_level'] in ('debug', 'info'):
+        if self.params.get('state') in ('absent', 'present'):
+            if self.params.get('output_level') in ('debug', 'info'):
                 self.result['previous'] = self.previous
-            if self.previous != self.existing:
+            # FIXME: Modified header only works for PATCH
+            if not self.has_modified and self.previous != self.existing:
                 self.result['changed'] = True
 
         # Return the gory details when we need it
-        if self.params['output_level'] == 'debug':
+        if self.params.get('output_level') == 'debug':
             self.result['method'] = self.method
             self.result['response'] = self.response
             self.result['status'] = self.status
             self.result['url'] = self.url
 
-            if self.params['state'] in ('absent', 'present'):
+            if self.params.get('state') in ('absent', 'present'):
                 self.result['sent'] = self.sent
                 self.result['proposed'] = self.proposed
 
         self.result['current'] = self.existing
 
-        if self.module._diff:
+        if self.module._diff and self.result.get('changed') is True:
             self.result['diff'] = dict(
                 before=self.previous,
                 after=self.existing,
@@ -372,21 +544,22 @@ class MSOModule(object):
     def fail_json(self, msg, **kwargs):
         ''' Custom written method to return info on failure. '''
 
-        if self.params['state'] in ('absent', 'present'):
-            if self.params['output_level'] in ('debug', 'info'):
+        if self.params.get('state') in ('absent', 'present'):
+            if self.params.get('output_level') in ('debug', 'info'):
                 self.result['previous'] = self.previous
-            if self.previous != self.existing:
+            # FIXME: Modified header only works for PATCH
+            if not self.has_modified and self.previous != self.existing:
                 self.result['changed'] = True
 
         # Return the gory details when we need it
-        if self.params['output_level'] == 'debug':
+        if self.params.get('output_level') == 'debug':
             if self.url is not None:
                 self.result['method'] = self.method
                 self.result['response'] = self.response
                 self.result['status'] = self.status
                 self.result['url'] = self.url
 
-            if self.params['state'] in ('absent', 'present'):
+            if self.params.get('state') in ('absent', 'present'):
                 self.result['sent'] = self.sent
                 self.result['proposed'] = self.proposed
 

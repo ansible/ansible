@@ -1,0 +1,125 @@
+- block:
+    - name: Create a namespace
+      k8s:
+        name: "{{ playbook_namespace }}"
+        kind: Namespace
+
+    - copy:
+        src: files
+        dest: "{{ remote_tmp_dir }}"
+
+    - name: incredibly simple ConfigMap
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: hello
+            namespace: "{{ playbook_namespace }}"
+        validate:
+          fail_on_error: yes
+      register: k8s_with_validate
+
+    - name: assert that k8s_with_validate succeeds
+      assert:
+        that:
+          - k8s_with_validate is successful
+
+    - name: extra property does not fail without strict
+      k8s:
+        src: "{{ remote_tmp_dir }}/files/kuard-extra-property.yml"
+        namespace: "{{ playbook_namespace }}"
+        validate:
+          fail_on_error: yes
+          strict: no
+
+    - name: extra property fails with strict
+      k8s:
+        src: "{{ remote_tmp_dir }}/files/kuard-extra-property.yml"
+        namespace: "{{ playbook_namespace }}"
+        validate:
+          fail_on_error: yes
+          strict: yes
+      ignore_errors: yes
+      register: extra_property
+
+    - name: check that extra property fails with strict
+      assert:
+        that:
+          - extra_property is failed
+
+    - name: invalid type fails at validation stage
+      k8s:
+        src: "{{ remote_tmp_dir }}/files/kuard-invalid-type.yml"
+        namespace: "{{ playbook_namespace }}"
+        validate:
+          fail_on_error: yes
+          strict: no
+      ignore_errors: yes
+      register: invalid_type
+
+    - name: check that invalid type fails
+      assert:
+        that:
+          - invalid_type is failed
+
+    - name: invalid type fails with warnings when fail_on_error is False
+      k8s:
+        src: "{{ remote_tmp_dir }}/files/kuard-invalid-type.yml"
+        namespace: "{{ playbook_namespace }}"
+        validate:
+          fail_on_error: no
+          strict: no
+      ignore_errors: yes
+      register: invalid_type_no_fail
+
+    - name: check that invalid type fails
+      assert:
+        that:
+          - invalid_type_no_fail is failed
+
+    - name: setup custom resource definition
+      k8s:
+        src: "{{ remote_tmp_dir }}/files/setup-crd.yml"
+
+    - name: wait a few seconds
+      pause:
+        seconds: 5
+
+    - name: add custom resource definition
+      k8s:
+        src: "{{ remote_tmp_dir }}/files/crd-resource.yml"
+        namespace: "{{ playbook_namespace }}"
+        validate:
+          fail_on_error: yes
+          strict: yes
+      register: unknown_kind
+
+    - name: check that unknown kind warns
+      assert:
+        that:
+          - unknown_kind is successful
+          - "'warnings' in unknown_kind"
+
+  always:
+    - name: remove custom resource
+      k8s:
+        definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
+        namespace: "{{ playbook_namespace }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: remove custom resource definitions
+      k8s:
+        definition: "{{ lookup('file', role_path + '/files/setup-crd.yml') }}"
+        state: absent
+
+    - name: Delete namespace
+      k8s:
+        state: absent
+        definition:
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: "{{ playbook_namespace }}"
+      ignore_errors: yes

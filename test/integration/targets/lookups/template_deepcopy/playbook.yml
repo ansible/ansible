@@ -1,0 +1,10 @@
+- hosts: h1
+  gather_facts: no
+  tasks:
+    - set_fact:
+        templated_foo: "{{ lookup('template', 'template.in') }}"
+
+    - name: Test that the hostvar was templated correctly
+      assert:
+        that:
+          - templated_foo == "foo\n"

@@ -1,0 +1,11 @@
+### REQUIRED
+{% for option in required_config %}
+{{ option.description | comment_ify }}
+{{ {option.key: option.value} | to_yaml }}
+{% endfor %}
+
+### OPTIONAL but strongly recommended
+{% for option in optional_config %}
+{{ option.description | comment_ify }}
+{{ {option.key: option.value} | to_yaml }}
+{% endfor %}

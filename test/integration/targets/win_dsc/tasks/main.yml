@@ -3,32 +3,37 @@
   win_shell: $PSVersionTable.PSVersion.Major
   register: powershell_version
 
-- name: run smoke tests when we can't run the full suite
-  include_tasks: smoke.yml
+- name: expect failure when running on old PS hosts
+  win_dsc:
+    resource_name: File
+  register: fail_dsc_old
+  failed_when: '"This module cannot run as it requires a minimum PowerShell version of 5.0" not in fail_dsc_old.msg'
   when: powershell_version.stdout_lines[0]|int < 5
 
-- block:
-  - name: run non-destructive tests
+- name: run tests when PSv5+
+  when: powershell_version.stdout_lines[0]|int >= 5
+  block:
+  - name: add remote temp dir to PSModulePath
+    win_path:
+      name: PSModulePath
+      state: present
+      scope: machine
+      elements:
+      - '{{ remote_tmp_dir }}'
+
+  - name: copy custom DSC resources to remote temp dir
+    win_copy:
+      src: xTestDsc
+      dest: '{{ remote_tmp_dir }}'
+
+  - name: run tests
     include_tasks: tests.yml
-  
-  - name: run destructive tests if flag is set
-    include_tasks: destructive.yml
-    when: test_win_dsc_run_desctructive == True
 
   always:
-  - name: remove test feature
-    win_feature:
-      name: '{{test_win_dsc_feature_name}}'
+  - name: remove remote tmp dir from PSModulePath
+    win_path:
+      name: PSModulePath
       state: absent
-  
-  - name: remove test folder
-    win_file:
-      path: '{{test_win_dsc_folder}}'
-      state: absent
-  
-  - name: remove custom DSC resource folder
-    win_file:
-      path: C:\Program Files\WindowsPowerShell\Modules\xTestDsc
-      state: absent
-
-  when: powershell_version.stdout_lines[0]|int >= 5
+      scope: machine
+      elements:
+      - '{{ remote_tmp_dir }}'

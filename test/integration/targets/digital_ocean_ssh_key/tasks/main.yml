@@ -1,0 +1,29 @@
+---
+- name: Test API key is provided.
+  fail:
+    msg: do_api_key should be defined in integration_config.yml
+  when: do_api_key is not defined
+
+- name: Create ssh key
+  digital_ocean_sshkey:
+    name: test-key1
+    ssh_pub_key: "{{ dummy_ssh_pub_key }}"
+    oauth_token: "{{ do_api_key }}"
+  register: result
+
+- name: Verify that SSH key was created
+  assert:
+    that:
+      - "result.changed"
+
+- name: "Delete ssh key"
+  digital_ocean_sshkey:
+    state: "absent"
+    fingerprint: "{{ result.data.ssh_key.fingerprint }}"
+    oauth_token: "{{ do_api_key }}"
+  register: result
+
+- name: Verify that SSH key was deleted
+  assert:
+    that:
+      - "result.changed"

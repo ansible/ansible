@@ -98,14 +98,14 @@ options:
 
 requirements:
   - python >= 2.7
-  - ovirt-engine-sdk-python >= 4.2.4
+  - ovirt-engine-sdk-python >= 4.3.0
 notes:
   - "Everytime you use ovirt_auth module to obtain ticket, you need to also revoke the ticket,
      when you no longer need it, otherwise the ticket would be revoked by engine when it expires.
      For an example of how to achieve that, please take a look at I(examples) section."
   - "In order to use this module you have to install oVirt/RHV Python SDK.
      To ensure it's installed with correct version you can create the following task:
-     I(pip: name=ovirt-engine-sdk-python version=4.2.4)"
+     I(pip: name=ovirt-engine-sdk-python version=4.3.0)"
   - "Note that in oVirt/RHV 4.1 if you want to use a user which is not administrator
      you must enable the I(ENGINE_API_FILTER_BY_DEFAULT) variable in engine. In
      oVirt/RHV 4.2 and later it's enabled by default."
@@ -126,7 +126,7 @@ EXAMPLES = '''
 
        # Previous task generated I(ovirt_auth) fact, which you can later use
        # in different modules as follows:
-       - ovirt_vms:
+       - ovirt_vm:
            auth: "{{ ovirt_auth }}"
            state: absent
            name: myvm
@@ -144,7 +144,7 @@ EXAMPLES = '''
 # User can login the oVirt using environment variable instead of variables
 # in yaml file.
 # This is mainly useful when using Ansible Tower or AWX, as it will work
-# for Red Hat Virtualization creadentials type.
+# for Red Hat Virtualization credentials type.
   - name: Obtain SSO token
     ovirt_auth:
       state: present
@@ -169,7 +169,7 @@ ovirt_auth:
         ca_file:
             description: CA file, which is used to verify SSL/TLS connection.
             returned: success
-            type: path
+            type: str
             sample: "ca.pem"
         insecure:
             description: Flag indicating if insecure connection is used.

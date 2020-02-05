@@ -9,7 +9,7 @@ if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | g
     stub=""
 
     # shellcheck disable=SC2086
-    test/runner/ansible-test coverage xml -v --requirements --group-by command --group-by version ${stub:+"$stub"}
+    bin/ansible-test coverage xml -v --requirements --group-by command --group-by version ${stub:+"$stub"}
 
     # upload coverage report to codecov.io
     for file in test/results/reports/coverage=*.xml; do

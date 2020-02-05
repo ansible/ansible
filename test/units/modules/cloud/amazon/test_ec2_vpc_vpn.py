@@ -1,25 +1,13 @@
 # (c) 2017 Red Hat Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import pytest
 import os
 from units.utils.amazon_placebo_fixtures import placeboify, maybe_sleep
 from ansible.modules.cloud.amazon import ec2_vpc_vpn
-from ansible.module_utils._text import to_text
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, boto3_tag_list_to_ansible_dict
 
 
@@ -96,7 +84,9 @@ def make_params(cgw, vgw, tags=None, filters=None, routes=None):
             'purge_tags': True,
             'tags': tags,
             'filters': filters,
-            'routes': routes}
+            'routes': routes,
+            'delay': 15,
+            'wait_timeout': 600}
 
 
 def make_conn(placeboify, module, connection):
@@ -111,7 +101,7 @@ def make_conn(placeboify, module, connection):
 
 
 def tear_down_conn(placeboify, connection, vpn_connection_id):
-    ec2_vpc_vpn.delete_connection(connection, vpn_connection_id)
+    ec2_vpc_vpn.delete_connection(connection, vpn_connection_id, delay=15, max_attempts=40)
 
 
 def test_find_connection_vpc_conn_id(placeboify, maybe_sleep):
@@ -164,8 +154,8 @@ def test_find_connection_insufficient_filters(placeboify, maybe_sleep):
     params2 = make_params(cgw[1], vgw[1], tags={'Correct': 'Tag'})
     m, conn = setup_mod_conn(placeboify, params)
     m2, conn2 = setup_mod_conn(placeboify, params2)
-    _, vpn1 = ec2_vpc_vpn.ensure_present(conn, m.params)
-    _, vpn2 = ec2_vpc_vpn.ensure_present(conn2, m2.params)
+    vpn1 = ec2_vpc_vpn.ensure_present(conn, m.params)[1]
+    vpn2 = ec2_vpc_vpn.ensure_present(conn2, m2.params)[1]
 
     # reset the parameters so only filtering by tags will occur
     m.params = {'filters': {'tags': {'Correct': 'Tag'}}}
@@ -251,7 +241,7 @@ def test_delete_connection(placeboify, maybe_sleep):
 
 def test_delete_nonexistent_connection(placeboify, maybe_sleep):
     # create parameters and ensure any connection matching (None) is deleted
-    params = {'filters': {'tags': {'ThisConnection': 'DoesntExist'}}}
+    params = {'filters': {'tags': {'ThisConnection': 'DoesntExist'}}, 'delay': 15, 'wait_timeout': 600}
     m, conn = setup_mod_conn(placeboify, params)
     changed, vpn = ec2_vpc_vpn.ensure_absent(conn, m.params)
 
@@ -353,7 +343,7 @@ def setup_req(placeboify, number_of_results=1):
     for each in range(0, number_of_results):
         params = make_params(cgw[each], vgw[each])
         m, conn = setup_mod_conn(placeboify, params)
-        _, vpn = ec2_vpc_vpn.ensure_present(conn, params)
+        vpn = ec2_vpc_vpn.ensure_present(conn, params)[1]
 
         results.append({'module': m, 'connection': conn, 'vpn': vpn, 'params': params})
     if number_of_results == 1:

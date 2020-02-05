@@ -1,0 +1,2 @@
+minor_changes:
+- luks_device - added the ``type`` option that allows user explicit define the LUKS container format version

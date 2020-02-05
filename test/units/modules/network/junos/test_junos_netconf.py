@@ -38,9 +38,6 @@ class TestJunosCommandModule(TestJunosModule):
         self.mock_unlock_configuration = patch('ansible.module_utils.network.junos.junos.unlock_configuration')
         self.unlock_configuration = self.mock_unlock_configuration.start()
 
-        self.mock_commit_configuration = patch('ansible.modules.network.junos.junos_netconf.commit_configuration')
-        self.commit_configuration = self.mock_commit_configuration.start()
-
         self.mock_conn = patch('ansible.module_utils.connection.Connection')
         self.conn = self.mock_conn.start()
 
@@ -58,7 +55,6 @@ class TestJunosCommandModule(TestJunosModule):
         super(TestJunosCommandModule, self).tearDown()
         self.mock_lock_configuration.stop()
         self.mock_unlock_configuration.stop()
-        self.mock_commit_configuration.stop()
         self.mock_conn.stop()
         self.mock_netconf.stop()
         self.mock_netconf_rpc.stop()

@@ -24,33 +24,39 @@ options:
   name:
     description:
       - Specifies the name of the SMTP server configuration.
+    type: str
     required: True
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   smtp_server:
     description:
       - SMTP server host name in the format of a fully qualified domain name.
       - This value is required when create a new SMTP configuration.
+    type: str
   smtp_server_port:
     description:
       - Specifies the SMTP port number.
       - When creating a new SMTP configuration, the default is C(25) when
-        C(encryption) is C(none) or C(tls). The default is C(465) when C(ssl)
-         is selected.
+        C(encryption) is C(none) or C(tls). The default is C(465) when C(ssl) is selected.
+    type: int
   local_host_name:
     description:
       - Host name used in SMTP headers in the format of a fully qualified
         domain name. This setting does not refer to the BIG-IP system's hostname.
+    type: str
   from_address:
     description:
       - Email address that the email is being sent from. This is the "Reply-to"
         address that the recipient sees.
+    type: str
   encryption:
     description:
       - Specifies whether the SMTP server requires an encrypted connection in
         order to send mail.
+    type: str
     choices:
       - none
       - ssl
@@ -67,17 +73,20 @@ options:
   smtp_server_username:
     description:
       - User name that the SMTP server requires when validating a user.
+    type: str
   smtp_server_password:
     description:
       - Password that the SMTP server requires when validating a user.
+    type: str
   state:
     description:
       - When C(present), ensures that the SMTP configuration exists.
       - When C(absent), ensures that the SMTP configuration does not exist.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   update_password:
     description:
       - Passwords are stored encrypted, so the module cannot know if the supplied
@@ -87,10 +96,11 @@ options:
       - When C(always), will always update the password.
       - When C(on_create), will only set the password for newly created SMTP server
         configurations.
-    default: always
+    type: str
     choices:
       - always
       - on_create
+    default: always
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -153,10 +163,7 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import is_valid_hostname
     from library.module_utils.network.f5.ipaddress import is_valid_ip
@@ -164,10 +171,7 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import is_valid_hostname
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
@@ -332,7 +336,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -552,16 +556,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

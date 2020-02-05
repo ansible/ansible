@@ -27,13 +27,16 @@ DOCUMENTATION = """
 
 module: ce_command
 version_added: "2.3"
-author: "JackyGao2016 (@JackyGao2016)"
+author: "JackyGao2016 (@CloudEngine-Ansible)"
 short_description: Run arbitrary command on HUAWEI CloudEngine devices.
 description:
   - Sends an arbitrary command to an HUAWEI CloudEngine node and returns
     the results read from the device.  The ce_command module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
+notes:
+  - Recommended connection is C(network_cli).
+  - This module also works with C(local) connections for legacy playbooks.
 options:
   commands:
     description:
@@ -168,7 +171,7 @@ def parse_commands(module, warnings):
         command=dict(key=True),
         output=dict(),
         prompt=dict(),
-        response=dict()
+        answer=dict()
     ), module)
 
     commands = transform(module.params['commands'])

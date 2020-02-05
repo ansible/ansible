@@ -1,0 +1,5 @@
+bugfixes:
+- >
+  **security issue** - TaskExecutor - Ensure we don't erase unsafe context in TaskExecutor.run on bytes.
+  Only present in 2.9.0beta1
+  (https://github.com/ansible/ansible/issues/62237)

@@ -19,7 +19,7 @@ Example callback plugins
 The :ref:`log_plays <log_plays_callback>` callback is an example of how to record playbook events to a log file,
 and the :ref:`mail <mail_callback>` callback sends email on playbook failures.
 
-The :ref:`osx_say <osx_say_callback>` callback responds with computer synthesized speech on macOS in relation to playbook events.
+The :ref:`say <say_callback>` callback responds with computer synthesized speech in relation to playbook events.
 
 .. _enabling_callbacks:
 
@@ -34,7 +34,7 @@ Most callbacks shipped with Ansible are disabled by default and need to be white
 
 .. code-block:: ini
 
-  #callback_whitelist = timer, mail, profile_roles
+  #callback_whitelist = timer, mail, profile_roles, collection_namespace.collection_name.custom_callback
 
 Setting a callback plugin for ``ansible-playbook``
 --------------------------------------------------

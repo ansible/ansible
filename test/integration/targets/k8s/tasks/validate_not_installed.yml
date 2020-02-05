@@ -1,0 +1,23 @@
+  - python_requirements_info:
+      dependencies:
+        - openshift
+        - kubernetes
+        - kubernetes-validate
+
+  - k8s:
+      definition:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: hello
+          namespace: default
+      validate:
+        fail_on_error: yes
+    ignore_errors: yes
+    register: k8s_no_validate
+
+  - name: assert that k8s_no_validate fails gracefully
+    assert:
+      that:
+        - k8s_no_validate is failed
+        - "k8s_no_validate.msg == 'kubernetes-validate python library is required to validate resources'"

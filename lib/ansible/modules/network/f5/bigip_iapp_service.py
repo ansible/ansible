@@ -25,6 +25,7 @@ options:
   name:
     description:
       - The name of the iApp service that you want to deploy.
+    type: str
     required: True
   template:
     description:
@@ -32,6 +33,7 @@ options:
         template must exist on your BIG-IP before you can successfully
         create a service.
       - When creating a new service, this parameter is required.
+    type: str
   parameters:
     description:
       - A hash of all the required template variables for the iApp template.
@@ -40,6 +42,7 @@ options:
         to supply the expected parameters.
       - These parameters typically consist of the C(lists), C(tables), and
         C(variables) fields.
+    type: dict
   force:
     description:
       - Forces the updating of an iApp service even if the parameters to the
@@ -47,19 +50,21 @@ options:
         the iApp template that underlies the service has been updated in-place.
         This option is equivalent to re-configuring the iApp if that template
         has changed.
-    default: no
     type: bool
+    default: no
   state:
     description:
       - When C(present), ensures that the iApp service is created and running.
         When C(absent), ensures that the iApp service has been removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   strict_updates:
@@ -74,8 +79,8 @@ options:
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
-    default: yes
     type: bool
+    default: yes
     version_added: 2.5
   traffic_group:
     description:
@@ -85,6 +90,7 @@ options:
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
+    type: str
     version_added: 2.5
   metadata:
     description:
@@ -92,6 +98,7 @@ options:
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
+    type: list
     version_added: 2.7
   description:
     description:
@@ -99,6 +106,7 @@ options:
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
+    type: str
     version_added: 2.7
   device_group:
     description:
@@ -106,6 +114,7 @@ options:
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
+    type: str
     version_added: 2.7
 extends_documentation_fragment: f5
 author:
@@ -264,11 +273,8 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.urls import build_service_uri
@@ -276,11 +282,8 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.urls import build_service_uri
@@ -676,7 +679,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
@@ -979,16 +982,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

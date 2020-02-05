@@ -16,17 +16,6 @@ module: aci_epg
 short_description: Manage End Point Groups (EPG) objects (fv:AEPg)
 description:
 - Manage End Point Groups (EPG) on Cisco ACI fabrics.
-notes:
-- The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
-  The M(aci_tenant) and M(aci_ap) modules can be used for this.
-seealso:
-- module: aci_tenant
-- module: aci_ap
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(fv:AEPg).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Swetha Chunduri (@schunduri)
 version_added: '2.4'
 options:
   tenant:
@@ -89,6 +78,17 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
+  The M(aci_tenant) and M(aci_ap) modules can be used for this.
+seealso:
+- module: aci_tenant
+- module: aci_ap
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:AEPg).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Swetha Chunduri (@schunduri)
 '''
 
 EXAMPLES = r'''
@@ -286,8 +286,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
@@ -316,16 +316,16 @@ def main():
 
     aci = ACIModule(module)
 
-    epg = module.params['epg']
-    bd = module.params['bd']
-    description = module.params['description']
-    priority = module.params['priority']
-    intra_epg_isolation = module.params['intra_epg_isolation']
-    fwd_control = module.params['fwd_control']
-    preferred_group = aci.boolean(module.params['preferred_group'], 'include', 'exclude')
-    state = module.params['state']
-    tenant = module.params['tenant']
-    ap = module.params['ap']
+    epg = module.params.get('epg')
+    bd = module.params.get('bd')
+    description = module.params.get('description')
+    priority = module.params.get('priority')
+    intra_epg_isolation = module.params.get('intra_epg_isolation')
+    fwd_control = module.params.get('fwd_control')
+    preferred_group = aci.boolean(module.params.get('preferred_group'), 'include', 'exclude')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
+    ap = module.params.get('ap')
 
     aci.construct_url(
         root_class=dict(

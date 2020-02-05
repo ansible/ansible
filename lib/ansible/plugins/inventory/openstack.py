@@ -16,7 +16,7 @@ DOCUMENTATION = '''
       - Jesse Keating <jesse.keating@rackspace.com>
     short_description: OpenStack inventory source
     requirements:
-        - openstacksdk
+        - "openstacksdk >= 0.28"
     extends_documentation_fragment:
         - inventory_cache
         - constructed
@@ -81,6 +81,12 @@ DOCUMENTATION = '''
                 inventory script's option fail_on_errors)
             type: bool
             default: 'no'
+        all_projects:
+            description: |
+                Lists servers from all projects
+            type: bool
+            default: 'no'
+            version_added: 2.10
         clouds_yaml_path:
             description: |
                 Override path to clouds.yaml file. If this value is given it
@@ -88,7 +94,9 @@ DOCUMENTATION = '''
                 ansible inventory adds /etc/ansible/openstack.yaml and
                 /etc/ansible/openstack.yml to the regular locations documented
                 at https://docs.openstack.org/os-client-config/latest/user/configuration.html#config-files
-            type: string
+            type: list
+            env:
+                - name: OS_CLIENT_CONFIG_FILE
         compose:
             description: Create vars from jinja2 expressions.
             type: dictionary
@@ -105,9 +113,11 @@ EXAMPLES = '''
 plugin: openstack
 expand_hostvars: yes
 fail_on_errors: yes
+all_projects: yes
 '''
 
 import collections
+import sys
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
@@ -155,14 +165,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if 'clouds' in self._config_data:
             self._config_data = {}
 
+        # update cache if the user has caching enabled and the cache is being refreshed
+        # will update variable below in the case of an expired cache
+        cache_needs_update = not cache and self.get_option('cache')
+
         if cache:
             cache = self.get_option('cache')
         source_data = None
         if cache:
             try:
-                source_data = self.cache.get(cache_key)
+                source_data = self._cache[cache_key]
             except KeyError:
-                pass
+                # cache expired or doesn't exist yet
+                cache_needs_update = True
 
         if not source_data:
             clouds_yaml_path = self._config_data.get('clouds_yaml_path')
@@ -172,8 +187,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             else:
                 config_files = None
 
+            # Redict logging to stderr so it does not mix with output
+            # particular ansible-inventory JSON output
             # TODO(mordred) Integrate openstack's logging with ansible's logging
-            sdk.enable_logging()
+            sdk.enable_logging(stream=sys.stderr)
 
             cloud_inventory = sdk_inventory.OpenStackInventory(
                 config_files=config_files,
@@ -192,12 +209,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             expand_hostvars = self._config_data.get('expand_hostvars', False)
             fail_on_errors = self._config_data.get('fail_on_errors', False)
+            all_projects = self._config_data.get('all_projects', False)
 
             source_data = cloud_inventory.list_hosts(
-                expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
+                expand=expand_hostvars, fail_on_cloud_config=fail_on_errors,
+                all_projects=all_projects)
 
-            if self.cache is not None:
-                self.cache.set(cache_key, source_data)
+            if cache_needs_update:
+                self._cache[cache_key] = source_data
 
         self._populate_from_source(source_data)
 
@@ -255,9 +274,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 self._config_data.get('keyed_groups'), hostvars[host], host)
 
         for group_name, group_hosts in groups.items():
-            self.inventory.add_group(group_name)
+            gname = self.inventory.add_group(group_name)
             for host in group_hosts:
-                self.inventory.add_child(group_name, host)
+                self.inventory.add_child(gname, host)
 
     def _get_groups_from_server(self, server_vars, namegroup=True):
         groups = []

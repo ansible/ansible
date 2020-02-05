@@ -1,0 +1,28 @@
+# Important parameters:
+listen_addresses='*'
+port = {{ replica_port }}
+wal_level = logical
+max_wal_senders = 8
+track_commit_timestamp = on
+max_replication_slots = 10
+
+# Unimportant parameters:
+max_connections=10
+shared_buffers=8MB
+dynamic_shared_memory_type=posix
+log_destination='stderr'
+logging_collector=on
+log_directory='log'
+log_filename='postgresql-%a.log'
+log_truncate_on_rotation=on
+log_rotation_age=1d
+log_rotation_size=0 
+log_line_prefix='%m[%p]'
+log_timezone='W-SU'
+datestyle='iso,mdy'
+timezone='W-SU'
+lc_messages='en_US.UTF-8'           
+lc_monetary='en_US.UTF-8'           
+lc_numeric='en_US.UTF-8'            
+lc_time='en_US.UTF-8'               
+default_text_search_config='pg_catalog.english'

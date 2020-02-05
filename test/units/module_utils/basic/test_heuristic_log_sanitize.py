@@ -53,7 +53,7 @@ class TestHeuristicLogSanitize(unittest.TestCase):
         return hostvars
 
     def test_did_not_hide_too_much(self):
-        self.assertEquals(heuristic_log_sanitize(self.clean_data), self.clean_data)
+        self.assertEqual(heuristic_log_sanitize(self.clean_data), self.clean_data)
 
     def test_hides_url_secrets(self):
         url_output = heuristic_log_sanitize(self.url_data)

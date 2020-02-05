@@ -34,7 +34,7 @@ module: nso_action
 extends_documentation_fragment: nso
 short_description: Executes Cisco NSO actions and verifies output.
 description:
-  - This module provices support for executing Cisco NSO actions and then
+  - This module provides support for executing Cisco NSO actions and then
     verifying that the output is as expected.
 requirements:
   - Cisco NSO version 3.4 or higher.

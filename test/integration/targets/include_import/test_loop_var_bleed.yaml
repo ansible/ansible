@@ -1,0 +1,9 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - include_role:
+        name: loop_name_assert
+      loop:
+        - name_from_loop_var
+      loop_control:
+        loop_var: name

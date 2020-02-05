@@ -25,7 +25,6 @@ try:
     # In Ansible 2.8, Ansible changed import paths.
     from test.units.compat import unittest
     from test.units.compat.mock import Mock
-    from test.units.compat.mock import patch
 
     from test.units.modules.utils import set_module_args
 except ImportError:
@@ -37,7 +36,6 @@ except ImportError:
     # Ansible 2.8 imports
     from units.compat import unittest
     from units.compat.mock import Mock
-    from units.compat.mock import patch
 
     from units.modules.utils import set_module_args
 
@@ -109,9 +107,11 @@ class TestManagerEcho(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             description='my description',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -133,9 +133,11 @@ class TestManagerEcho(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             description='my description',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_tm_auth_partition.json'))
@@ -158,9 +160,11 @@ class TestManagerEcho(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             description='another description',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_tm_auth_partition.json'))
@@ -185,9 +189,11 @@ class TestManagerEcho(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             route_domain=1,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_tm_auth_partition.json'))

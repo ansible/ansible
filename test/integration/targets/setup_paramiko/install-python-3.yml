@@ -1,0 +1,3 @@
+- name: Install Paramiko for Python 3
+  package:
+    name: python3-paramiko

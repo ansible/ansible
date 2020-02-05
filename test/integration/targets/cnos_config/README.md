@@ -1,4 +1,4 @@
-# Ansible Role: cnos_config - Exceutes any Configuration command on switch and results are displayed.
+# Ansible Role: cnos_config - Executes any Configuration command on switch and results are displayed.
 ---
 <add role description below>
 
@@ -47,19 +47,6 @@ Variable | Description
 `admin`  |  Enters into administration configuration mode for making config changes to the device.
 
 
-Need to specify these variables in vars/main.yml under variable `cli`
-
-Variable | Description
---- | ---
-`host`  | Has to be "{{ inventory_hostname }}"
-`port`  | Has to be`22`
-`username`  | User Name of switch
-`password`  | Password of switch
-`timeout`  | time out value for CLI
-`authorixe`  | Whether u have to enter enable mode for data collection.
-`auth_pass`| Enable Password if required
-
-
 ## Dependencies
 ---
 <add dependencies information below>
@@ -96,7 +83,7 @@ To execute an Ansible playbook, use the following command:
 ansible-playbook cnos_config_sample.yml -vvv
 ```
 
-`-vvv` is an optional verbos command that helps identify what is happening during playbook execution. The playbook for each role is located in the main directory of the solution.
+`-vvv` is an optional verbose command that helps identify what is happening during playbook execution. The playbook for each role is located in the main directory of the solution.
 
 ```
  - name: Module to  do some CLI Command configurations

@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2014, Dan Keder <dan.keder@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -10,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: seport
 short_description: Manages SELinux network port type definitions
@@ -20,33 +21,37 @@ version_added: "2.0"
 options:
   ports:
     description:
-      - Ports or port ranges. Can be a list (since 2.6) or comma separated string.
+      - Ports or port ranges.
+      - Can be a list (since 2.6) or comma separated string.
+    type: list
     required: true
   proto:
     description:
       - Protocol for the specified port.
+    type: str
     required: true
     choices: [ tcp, udp ]
   setype:
     description:
       - SELinux type for the specified port.
+    type: str
     required: true
   state:
     description:
       - Desired boolean value.
-    required: true
+    type: str
     choices: [ absent, present ]
     default: present
   reload:
     description:
       - Reload SELinux policy after commit.
     type: bool
-    default: 'yes'
+    default: yes
   ignore_selinux_state:
     description:
     - Run independent of selinux runtime state
     type: bool
-    default: false
+    default: no
     version_added: '2.8'
 notes:
    - The changes are persistent across reboots.
@@ -58,7 +63,7 @@ author:
 - Dan Keder (@dankeder)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Allow Apache to listen on tcp port 8888
   seport:
     ports: 8888
@@ -92,19 +97,23 @@ EXAMPLES = '''
 
 import traceback
 
+SELINUX_IMP_ERR = None
 try:
     import selinux
     HAVE_SELINUX = True
 except ImportError:
+    SELINUX_IMP_ERR = traceback.format_exc()
     HAVE_SELINUX = False
 
+SEOBJECT_IMP_ERR = None
 try:
     import seobject
     HAVE_SEOBJECT = True
 except ImportError:
+    SEOBJECT_IMP_ERR = traceback.format_exc()
     HAVE_SEOBJECT = False
 
-from ansible.module_utils.basic import AnsibleModule, HAVE_SELINUX
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -147,9 +156,13 @@ def semanage_port_get_type(seport, port, proto):
     :rtype: tuple
     :return: Tuple containing the SELinux type and MLS/MCS level, or None if not found.
     """
-    ports = port.split('-', 1)
-    if len(ports) == 1:
-        ports.extend(ports)
+    if isinstance(port, str):
+        ports = port.split('-', 1)
+        if len(ports) == 1:
+            ports.extend(ports)
+    else:
+        ports = (port, port)
+
     key = (int(ports[0]), int(ports[1]), proto)
 
     records = seport.get_all()
@@ -254,17 +267,17 @@ def main():
             ports=dict(type='list', required=True),
             proto=dict(type='str', required=True, choices=['tcp', 'udp']),
             setype=dict(type='str', required=True),
-            state=dict(type='str', required=True, choices=['absent', 'present']),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
             reload=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
     )
 
     if not HAVE_SELINUX:
-        module.fail_json(msg="This module requires libselinux-python")
+        module.fail_json(msg=missing_required_lib("libselinux-python"), exception=SELINUX_IMP_ERR)
 
     if not HAVE_SEOBJECT:
-        module.fail_json(msg="This module requires policycoreutils-python")
+        module.fail_json(msg=missing_required_lib("policycoreutils-python"), exception=SEOBJECT_IMP_ERR)
 
     ignore_selinux_state = module.params['ignore_selinux_state']
 

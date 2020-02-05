@@ -37,6 +37,8 @@
       select_crypto_backend: pyopenssl
 
   - import_tasks: ../tests/validate.yml
+    vars:
+      select_crypto_backend: pyopenssl
 
   # FIXME: minimal pyOpenSSL version?!
   when: pyopenssl_version.stdout is version('0.6', '>=')
@@ -58,6 +60,8 @@
       select_crypto_backend: cryptography
 
   - import_tasks: ../tests/validate.yml
+    vars:
+      select_crypto_backend: cryptography
 
   when: cryptography_version.stdout is version('0.5', '>=')
 
@@ -84,6 +88,11 @@
     - RSA
     - DSA
     register: fingerprint_cryptography
+
+  - name: Verify that keys were not regenerated
+    assert:
+      that:
+        - fingerprint_cryptography is not changed
 
   - name: Verify that fingerprints match
     assert:

@@ -30,6 +30,8 @@ Variable names should be letters, numbers, and underscores.  Variables should al
 
 ``foo-port``, ``foo port``, ``foo.port`` and ``12`` are not valid variable names.
 
+`Python keywords <https://docs.python.org/3/reference/lexical_analysis.html#keywords>`_  such as ``async`` and ``lambda`` are not valid variable names and thus must be avoided.
+
 YAML also supports dictionaries which map keys to values.  For instance::
 
   foo:
@@ -1006,28 +1008,28 @@ If multiple variables of the same name are defined in different places, they get
 
 Here is the order of precedence from least to greatest (the last listed variables winning prioritization):
 
-  * command line values (eg "-u user")
-  * role defaults [1]_
-  * inventory file or script group vars [2]_
-  * inventory group_vars/all [3]_
-  * playbook group_vars/all [3]_
-  * inventory group_vars/* [3]_
-  * playbook group_vars/* [3]_
-  * inventory file or script host vars [2]_
-  * inventory host_vars/* [3]_
-  * playbook host_vars/* [3]_
-  * host facts / cached set_facts [4]_
-  * play vars
-  * play vars_prompt
-  * play vars_files
-  * role vars (defined in role/vars/main.yml)
-  * block vars (only for tasks in block)
-  * task vars (only for the task)
-  * include_vars
-  * set_facts / registered vars
-  * role (and include_role) params
-  * include params
-  * extra vars (always win precedence)
+  #. command line values (eg "-u user")
+  #. role defaults [1]_
+  #. inventory file or script group vars [2]_
+  #. inventory group_vars/all [3]_
+  #. playbook group_vars/all [3]_
+  #. inventory group_vars/* [3]_
+  #. playbook group_vars/* [3]_
+  #. inventory file or script host vars [2]_
+  #. inventory host_vars/* [3]_
+  #. playbook host_vars/* [3]_
+  #. host facts / cached set_facts [4]_
+  #. play vars
+  #. play vars_prompt
+  #. play vars_files
+  #. role vars (defined in role/vars/main.yml)
+  #. block vars (only for tasks in block)
+  #. task vars (only for the task)
+  #. include_vars
+  #. set_facts / registered vars
+  #. role (and include_role) params
+  #. include params
+  #. extra vars (always win precedence)
 
 Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
 
@@ -1044,10 +1046,10 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           If you define a variable twice in a play's ``vars:`` section, the second one wins.
 .. note:: The previous describes the default config ``hash_behaviour=replace``, switch to ``merge`` to only partially overwrite.
 .. note:: Group loading follows parent/child relationships. Groups of the same 'parent/child' level are then merged following alphabetical order.
-          This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
+          This last one can be superseded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
           This variable, ``ansible_group_priority``, can only be set in the inventory source and not in group_vars/ as the variable is used in the loading of group_vars/.
 
-Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example, if your inventory specifies ``ansible_ssh_user: ramon`` and you run::
+Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords. See :ref:`general_precedence_rules` for more details. For example, if your inventory specifies ``ansible_user: ramon`` and you run::
 
     ansible -u lola myhost
 
@@ -1060,7 +1062,7 @@ For plays/tasks this is also true for ``remote_user``. Assuming the same invento
     - command: I'll connect as ramon still
       remote_user: lola
 
-will have the value of ``remote_user`` overwritten by ``ansible_ssh_user`` in the inventory.
+will have the value of ``remote_user`` overwritten by ``ansible_user`` in the inventory.
 
 This is done so host-specific settings can override the general settings. These variables are normally defined per host or group in inventory,
 but they behave like other variables.
@@ -1069,7 +1071,11 @@ If you want to override the remote user globally (even over inventory) you can u
 
     ansible... -e "ansible_user=maria" -u lola
 
-the ``lola`` value is still ignored, but ``ansible_user=maria`` takes precedence over all other places where ``ansible_user`` (or ``ansible_ssh_user``, or ``remote_user``) might be set.
+the ``lola`` value is still ignored, but ``ansible_user=maria`` takes precedence over all other places where ``ansible_user`` (or ``remote_user``) might be set.
+
+A connection-specific version of a variable takes precedence over more generic
+versions.  For example, ``ansible_ssh_user`` specified as a group_var would have
+a higher precedence than ``ansible_user`` specified as a host_var.
 
 You can also override as a normal variable in a play::
 
@@ -1180,7 +1186,7 @@ This can often be used for things that might apply to some hosts multiple times.
            myname: John
 
 In this example, the same role was invoked multiple times.  It's quite likely there was
-no default for ``name`` supplied at all.  Ansible can warn you when variables aren't defined -- it's the default behavior in fact.
+no default for ``myname`` supplied at all.  Ansible can warn you when variables aren't defined -- it's the default behavior in fact.
 
 There are a few other things that go on with roles.
 
@@ -1225,7 +1231,7 @@ For information about advanced YAML syntax used to declare variables and have mo
        Best practices in playbooks
    :ref:`special_variables`
        List of special variables
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

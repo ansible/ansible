@@ -13,9 +13,10 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $category_names = Get-AnsibleParam -obj $params -name "category_names" -type "list" -default @("CriticalUpdates", "SecurityUpdates", "UpdateRollups")
 $log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "installed" -validateset "installed", "searched"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "installed" -validateset "installed", "searched", "downloaded"
 $blacklist = Get-AnsibleParam -obj $params -name "blacklist" -type "list"
 $whitelist = Get-AnsibleParam -obj $params -name "whitelist" -type "list"
+$server_selection = Get-AnsibleParam -obj $params -name "server_selection" -type "string" -default "default" -validateset "default", "managed_server", "windows_update"
 
 # For backwards compatibility
 Function Get-CategoryMapping ($category_name) {
@@ -39,7 +40,7 @@ $common_functions = {
         $msg = "$date_str $msg"
 
         Write-Debug -Message $msg
-        if ($log_path -ne $null -and (-not $check_mode)) {
+        if ($null -ne $log_path -and (-not $check_mode)) {
             Add-Content -Path $log_path -Value $msg
         }
     }
@@ -59,7 +60,8 @@ $update_script_block = {
             $log_path,
             $state,
             $blacklist,
-            $whitelist
+            $whitelist,
+            $server_selection
         )
 
         $result = @{
@@ -83,6 +85,23 @@ $update_script_block = {
         } catch {
             $result.failed = $true
             $result.msg = "Failed to create Windows Update search from session: $($_.Exception.Message)"
+            return $result
+        }
+
+        Write-DebugLog -msg "Setting the Windows Update Agent source catalog..."
+        Write-DebugLog -msg "Requested search source is '$($server_selection)'"
+        try {
+            $server_selection_value = switch ($server_selection) {
+                "default" { 0 ; break }
+                "managed_server" { 1 ; break }
+                "windows_update" { 2 ; break }
+            }
+            $searcher.serverselection = $server_selection_value
+            Write-DebugLog -msg "Search source set to '$($server_selection)' (ServerSelection = $($server_selection_value))"
+        }
+        catch {
+            $result.failed = $true
+            $result.msg = "Failed to set Windows Update Agent search source: $($_.Exception.Message)"
             return $result
         }
 
@@ -219,7 +238,7 @@ $update_script_block = {
                 $result.msg = "A reboot is required before more updates can be installed"
                 return $result
             }
-            Write-DebugLog -msg "No reboot is pending..."    
+            Write-DebugLog -msg "No reboot is pending..."
         } else {
             # no updates to install exit here
             return $result
@@ -275,6 +294,14 @@ $update_script_block = {
 
             $result.changed = $true
             $update_index++
+        }
+
+        # Early exit for download-only
+        if ($state -eq "downloaded") {
+            Write-DebugLog -msg "Downloaded $($updates_to_install.Count) updates..."
+            $result.failed = $false
+            $result.msg = "Downloaded $($updates_to_install.Count) updates"
+            return $result
         }
 
         Write-DebugLog -msg "Installing updates..."
@@ -402,6 +429,7 @@ Function Start-Natively($common_functions, $script) {
             blacklist = $blacklist
             whitelist = $whitelist
             check_mode = $check_mode
+            server_selection = $server_selection
         }) > $null
 
         $output = $ps_pipeline.Invoke()
@@ -428,7 +456,7 @@ Function Start-Natively($common_functions, $script) {
 Function Remove-ScheduledJob($name) {
     $scheduled_job = Get-ScheduledJob -Name $name -ErrorAction SilentlyContinue
 
-    if ($scheduled_job -ne $null) {
+    if ($null -ne $scheduled_job) {
         Write-DebugLog -msg "Scheduled Job $name exists, ensuring it is not running..."
         $scheduler = New-Object -ComObject Schedule.Service
         Write-DebugLog -msg "Connecting to scheduler service..."
@@ -441,8 +469,8 @@ Function Remove-ScheduledJob($name) {
             $task_to_stop.Stop()
         }
 
-        <# FUTURE: add a global waithandle for this to release any other waiters. Wait-Job 
-        and/or polling will block forever, since the killed job object in the parent 
+        <# FUTURE: add a global waithandle for this to release any other waiters. Wait-Job
+        and/or polling will block forever, since the killed job object in the parent
         session doesn't know it's been killed :( #>
         Unregister-ScheduledJob -Name $name
     }
@@ -463,6 +491,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
                 blacklist = $blacklist
                 whitelist = $whitelist
                 check_mode = $check_mode
+                server_selection = $server_selection
             }
         )
         ErrorAction = "Stop"
@@ -488,7 +517,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
     Write-DebugLog -msg "Waiting for job completion..."
 
     # Wait-Job can fail for a few seconds until the scheduled task starts - poll for it...
-    while ($job -eq $null) {
+    while ($null -eq $job) {
         Start-Sleep -Milliseconds 100
         if ($sw.ElapsedMilliseconds -ge 30000) { # tasks scheduled right after boot on 2008R2 can take awhile to start...
             Fail-Json -msg "Timed out waiting for scheduled task to start"
@@ -502,7 +531,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
     # NB: output from scheduled jobs is delayed after completion (including the sub-objects after the primary Output object is available)
-    while (($job.Output -eq $null -or -not ($job.Output | Get-Member -Name Key -ErrorAction Ignore) -or -not $job.Output.Key.Contains("job_output")) -and $sw.ElapsedMilliseconds -lt 15000) {
+    while (($null -eq $job.Output -or -not ($job.Output | Get-Member -Name Key -ErrorAction Ignore) -or -not $job.Output.Key.Contains("job_output")) -and $sw.ElapsedMilliseconds -lt 15000) {
         Write-DebugLog -msg "Waiting for job output to populate..."
         Start-Sleep -Milliseconds 500
     }
@@ -515,13 +544,13 @@ Function Start-AsScheduledTask($common_functions, $script) {
         DebugOutput = $job.Debug
     }
 
-    if ($job.Output -eq $null -or -not $job.Output.Keys.Contains('job_output')) {
+    if ($null -eq $job.Output -or -not $job.Output.Keys.Contains('job_output')) {
         $ret.Output = @{failed = $true; msg = "job output was lost"}
     } else {
         $ret.Output = $job.Output.job_output # sub-object returned, can only be accessed as a property for some reason
     }
 
-    try { # this shouldn't be fatal, but can fail with both Powershell errors and COM Exceptions, hence the dual error-handling... 
+    try { # this shouldn't be fatal, but can fail with both Powershell errors and COM Exceptions, hence the dual error-handling...
         Unregister-ScheduledJob -Name $job_name -Force -ErrorAction Continue
     } catch {
         Write-DebugLog "Error unregistering job after execution: $($_.Exception.ToString()) $($_.ScriptStackTrace)"
@@ -555,9 +584,8 @@ if ($wua_available) {
     Write-DebugLog -msg "WUA is available in current logon process, running natively"
     $result = Start-Natively -common_functions $common_functions -script $update_script_block
 } else {
-    Write-DebugLog -msg "WUA is not avialable in current logon process, running with scheduled task"
+    Write-DebugLog -msg "WUA is not available in current logon process, running with scheduled task"
     $result = Start-AsScheduledTask -common_functions $common_functions -script $update_script_block
 }
 
 Exit-Json -obj $result
-

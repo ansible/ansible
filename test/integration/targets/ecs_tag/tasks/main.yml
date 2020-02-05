@@ -1,0 +1,320 @@
+- module_defaults:
+    group/aws:
+      aws_access_key: '{{ aws_access_key | default(omit) }}'
+      aws_secret_key: '{{ aws_secret_key | default(omit) }}'
+      security_token: '{{ security_token | default(omit) }}'
+      region: '{{ aws_region | default(omit) }}'
+  block:
+    - name: create ecs cluster
+      ecs_cluster:
+        name: "{{ resource_prefix }}"
+        state: present
+      register: cluster_info
+
+    - name: create ecs_taskdefinition
+      ecs_taskdefinition:
+        containers:
+          - name: my_container
+            image: ubuntu
+            memory: 128
+        family: "{{ resource_prefix }}"
+        state: present
+      register: ecs_taskdefinition_creation
+
+    # even after deleting the cluster and recreating with a different name
+    # the previous service can prevent the current service from starting
+    # while it's in a draining state. Check the service info and sleep
+    # if the service does not report as inactive.
+
+    - name: check if service is still running from a previous task
+      ecs_service_info:
+        service: "{{ resource_prefix }}"
+        cluster: "{{ resource_prefix }}"
+        details: yes
+      register: ecs_service_info_results
+
+    - name: delay if the service was not inactive
+      pause:
+        seconds: 30
+      when:
+        - ecs_service_info_results.services|length >0
+        - ecs_service_info_results.services[0]['status'] != 'INACTIVE'
+
+    - name: create ecs_service
+      ecs_service:
+        name: "{{ resource_prefix }}"
+        cluster: "{{ resource_prefix }}"
+        task_definition: "{{ resource_prefix }}"
+        desired_count: 1
+        state: present
+      register: ecs_service_creation
+
+    - name: ecs_service up
+      assert:
+        that:
+          - ecs_service_creation.changed
+
+    # Test tagging cluster resource
+
+    - name: cluster tags - Add tags to cluster
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}"
+        resource: "{{resource_prefix}}"
+        resource_type: cluster
+        state: present
+        tags:
+          Name: "{{ resource_prefix }}"
+          another: foobar
+      register: taglist
+
+    - name: cluster tags - tags should be there
+      assert:
+        that:
+          - taglist.changed == true
+          - taglist.added_tags.Name == "{{ resource_prefix }}"
+          - taglist.added_tags.another == "foobar"
+
+    - name: cluster tags - Add tags to cluster again
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}"
+        resource: "{{resource_prefix}}"
+        resource_type: cluster
+        state: present
+        tags:
+          Name: "{{ resource_prefix }}"
+          another: foobar
+      register: taglist
+
+    - name: cluster tags - No change after adding again
+      assert:
+        that:
+          - taglist.changed == false
+
+    - name: cluster tags - List tags
+      ecs_tag:
+        cluster_name: "{{ resource_prefix}}"
+        resource: "{{ resource_prefix}}"
+        resource_type: cluster
+        state: list
+      register: taglist
+
+    - name: cluster tags - should have 2 tags
+      assert:
+        that:
+          - taglist.tags|list|length == 2
+          - taglist.failed == false
+          - taglist.changed == false
+
+    - name: cluster tags - remove tag another
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}"
+        resource: "{{resource_prefix}}"
+        resource_type: cluster
+        state: absent
+        tags:
+          another:
+      register: taglist
+
+    - name: cluster tags - tag another should be gone
+      assert:
+        that:
+          - taglist.changed == true
+          - '"another" not in taglist.tags'
+
+    - name: cluster tags - remove tag when not present
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}"
+        resource: "{{resource_prefix}}"
+        resource_type: cluster
+        state: absent
+        tags:
+          temp:
+          temp_two:
+      register: taglist
+      ignore_errors: yes
+
+    - name: cluster tags - check that there was no fail, but changed is false
+      assert:
+        that:
+          - taglist.failed == false
+          - taglist.changed == false
+
+
+    - name: cluster tags - invalid cluster name
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}-foo"
+        resource: "{{resource_prefix}}-foo"
+        resource_type: cluster
+        state: absent
+        tags:
+          temp:
+          temp_two:
+      register: taglist
+      ignore_errors: yes
+
+    - name: cluster tags - Make sure invalid clustername is handled
+      assert:
+        that:
+          - taglist.failed == true
+          - taglist.changed == false
+          - 'taglist.msg is regex("Failed to find cluster ansible-test-.*-foo")'
+
+    # Test tagging service resource
+
+    - name: services tags - Add name tag
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}"
+        resource: "{{ecs_service_creation.service.serviceName}}"
+        resource_type: service
+        state: present
+        tags:
+          Name: "service-{{resource_prefix}}"
+      register: taglist
+
+    - name: service tag - name tags should be there
+      assert:
+        that:
+          - taglist.changed == true
+          - taglist.added_tags.Name == "service-{{ resource_prefix }}"
+          - taglist.tags.Name == "service-{{ resource_prefix }}"
+
+    - name: services tags - Add name tag again - see no change
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}"
+        resource: "{{ecs_service_creation.service.serviceName}}"
+        resource_type: service
+        state: present
+        tags:
+          Name: "service-{{resource_prefix}}"
+      register: taglist
+
+    - name: service tag - test adding tag twice has no effect
+      assert:
+        that:
+          - taglist.changed == false
+          - taglist.tags.Name == "service-{{ resource_prefix }}"
+
+    - name: service tags - remove service tags
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}"
+        resource: "{{ecs_service_creation.service.serviceName}}"
+        resource_type: service
+        state: absent
+        tags:
+          Name:
+      register: taglist
+
+    - name: service tags - all tags gone
+      assert:
+        that:
+          - taglist.tags|list|length == 0
+          - taglist.changed == true
+          - '"Name" not in taglist.tags'
+
+
+    # Test tagging task_definition resource
+
+    - name: task_definition tags - Add name tag
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}"
+        resource: "{{ecs_taskdefinition_creation.taskdefinition.family}}"
+        resource_type: task_definition
+        state: present
+        tags:
+          Name: "task_definition-{{resource_prefix}}"
+      register: taglist
+
+    - name: task_definition tag - name tags should be there
+      assert:
+        that:
+          - taglist.changed == true
+          - taglist.added_tags.Name == "task_definition-{{ resource_prefix }}"
+          - taglist.tags.Name == "task_definition-{{ resource_prefix }}"
+
+    - name: task_definition tags - Add name tag again - see no change
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}"
+        resource: "{{ecs_taskdefinition_creation.taskdefinition.family}}"
+        resource_type: task_definition
+        state: present
+        tags:
+          Name: "task_definition-{{resource_prefix}}"
+      register: taglist
+
+    - name: task_definition tag - test adding tag twice has no effect
+      assert:
+        that:
+          - taglist.changed == false
+          - taglist.tags.Name == "task_definition-{{ resource_prefix }}"
+
+    - name: task_definition tags - retrieve all tags on a task_definition
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}"
+        resource: "{{ecs_taskdefinition_creation.taskdefinition.family}}"
+        resource_type: task_definition
+        state: list
+      register: taglist
+
+    - name: task_definition tags - should have 1 tag
+      assert:
+        that:
+          - taglist.tags|list|length == 1
+          - taglist.failed == false
+          - taglist.changed == false
+
+    - name: task_definition tags - remove task_definition tags
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}"
+        resource: "{{ecs_taskdefinition_creation.taskdefinition.family}}"
+        resource_type: task_definition
+        state: absent
+        tags:
+          Name:
+      register: taglist
+
+    - name: task_definition tags - all tags gone
+      assert:
+        that:
+          - taglist.tags|list|length == 0
+          - taglist.changed == true
+          - '"Name" not in taglist.tags'
+
+  always:
+    - name: scale down ecs service
+      ecs_service:
+        name: "{{ resource_prefix }}"
+        cluster: "{{ resource_prefix }}"
+        task_definition: "{{ resource_prefix }}"
+        desired_count: 0
+        state: present
+      ignore_errors: yes
+
+    - name: pause to wait for scale down
+      pause:
+        seconds: 30
+
+    - name: remove ecs service
+      ecs_service:
+        name: "{{ resource_prefix }}"
+        cluster: "{{ resource_prefix }}"
+        task_definition: "{{ resource_prefix }}"
+        desired_count: 1
+        state: absent
+      ignore_errors: yes
+
+    - name: remove ecs task definition
+      ecs_taskdefinition:
+        containers:
+          - name: my_container
+            image: ubuntu
+            memory: 128
+        family: "{{ resource_prefix }}"
+        revision: "{{ ecs_taskdefinition_creation.taskdefinition.revision }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: remove ecs cluster
+      ecs_cluster:
+        name: "{{ resource_prefix }}"
+        state: absent
+      ignore_errors: yes

@@ -8,32 +8,37 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.six.moves.urllib import parse as urllib_parse
 from mimetypes import MimeTypes
 
-import json
 import os
+import json
+import traceback
 
+PIKA_IMP_ERR = None
 try:
     import pika
+    import pika.exceptions
     from pika import spec
     HAS_PIKA = True
 except ImportError:
+    PIKA_IMP_ERR = traceback.format_exc()
     HAS_PIKA = False
 
 
 def rabbitmq_argument_spec():
     return dict(
-        login_user=dict(default='guest', type='str'),
-        login_password=dict(default='guest', type='str', no_log=True),
-        login_host=dict(default='localhost', type='str'),
-        login_port=dict(default='15672', type='str'),
-        login_protocol=dict(default='http', choices=['http', 'https'], type='str'),
-        cacert=dict(required=False, type='path', default=None),
-        cert=dict(required=False, type='path', default=None),
-        key=dict(required=False, type='path', default=None),
-        vhost=dict(default='/', type='str'),
+        login_user=dict(type='str', default='guest'),
+        login_password=dict(type='str', default='guest', no_log=True),
+        login_host=dict(type='str', default='localhost'),
+        login_port=dict(type='str', default='15672'),
+        login_protocol=dict(type='str', default='http', choices=['http', 'https']),
+        ca_cert=dict(type='path', aliases=['cacert']),
+        client_cert=dict(type='path', aliases=['cert']),
+        client_key=dict(type='path', aliases=['key']),
+        vhost=dict(type='str', default='/'),
     )
 
 
@@ -53,15 +58,21 @@ class RabbitClient():
         self.vhost = self.params['vhost']
         self.queue = self.params['queue']
         self.headers = self.params['headers']
+        self.cafile = self.params['cafile']
+        self.certfile = self.params['certfile']
+        self.keyfile = self.params['keyfile']
 
         if self.host is not None:
             self.build_url()
+
+        if self.cafile is not None:
+            self.append_ssl_certs()
 
         self.connect_to_rabbitmq()
 
     def check_required_library(self):
         if not HAS_PIKA:
-            self.module.fail_json(msg="Unable to find 'pika' Python library which is required.")
+            self.module.fail_json(msg=missing_required_lib("pika"), exception=PIKA_IMP_ERR)
 
     def check_host_params(self):
         # Fail if url is specified and other conflicting parameters have been specified
@@ -72,17 +83,28 @@ class RabbitClient():
         if self.params['url'] is None and any(self.params[k] is None for k in ['proto', 'host', 'port', 'password', 'username', 'vhost']):
             self.module.fail_json(msg="Connection parameters must be passed via url, or,  proto, host, port, vhost, username or password.")
 
+    def append_ssl_certs(self):
+        ssl_options = {}
+        if self.cafile:
+            ssl_options['cafile'] = self.cafile
+        if self.certfile:
+            ssl_options['certfile'] = self.certfile
+        if self.keyfile:
+            ssl_options['keyfile'] = self.keyfile
+
+        self.url = self.url + '?ssl_options=' + urllib_parse.quote(json.dumps(ssl_options))
+
     @staticmethod
     def rabbitmq_argument_spec():
         return dict(
-            url=dict(default=None, type='str'),
-            proto=dict(default=None, type='str', choices=['amqps', 'amqp']),
-            host=dict(default=None, type='str'),
-            port=dict(default=None, type='int'),
-            username=dict(default=None, type='str'),
-            password=dict(default=None, type='str', no_log=True),
-            vhost=dict(default=None, type='str'),
-            queue=dict(default=None, type='str')
+            url=dict(type='str'),
+            proto=dict(type='str', choices=['amqp', 'amqps']),
+            host=dict(type='str'),
+            port=dict(type='int'),
+            username=dict(type='str'),
+            password=dict(type='str', no_log=True),
+            vhost=dict(type='str'),
+            queue=dict(type='str')
         )
 
     ''' Consider some file size limits here '''
@@ -191,4 +213,8 @@ class RabbitClient():
         if args['exchange'] is None:
             args['exchange'] = ''
 
-        return self.conn_channel.basic_publish(**args)
+        try:
+            self.conn_channel.basic_publish(**args)
+            return True
+        except pika.exceptions.UnroutableError:
+            return False

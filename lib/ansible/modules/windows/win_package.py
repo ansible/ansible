@@ -32,7 +32,7 @@ options:
       module will escape the arguments as necessary, it is recommended to use a
       string when dealing with MSI packages due to the unique escaping issues
       with msiexec.
-    type: str
+    type: raw
   chdir:
     description:
     - Set the specified path as the current working directory before installing
@@ -41,7 +41,7 @@ options:
     version_added: '2.8'
   creates_path:
     description:
-    - Will check the existance of the path specified and use the result to
+    - Will check the existence of the path specified and use the result to
       determine whether the package is already installed.
     - You can use this in conjunction with C(product_id) and other C(creates_*).
     type: path
@@ -97,9 +97,9 @@ options:
       getting the uninstall information if C(state=absent).
     - You can find product ids for installed programs in the Windows registry
       editor either at
-      C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit
+      C(HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit
       programs at
-      C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall).
+      C(HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall).
     - This SHOULD be set when the package is not an MSI, or the path is a url
       or a network share and credential delegation is not being used. The
       C(creates_*) options can be used instead but is not recommended.
@@ -130,6 +130,13 @@ options:
     type: bool
     default: yes
     version_added: '2.4'
+  log_path:
+    description:
+    - Specifies the path to a log file that is persisted after an MSI package is installed or uninstalled.
+    - When omitted, a temporary log file is used for MSI packages.
+    - This is only valid for MSI files, use C(arguments) for other package types.
+    type: path
+    version_added: '2.8'
 notes:
 - When C(state=absent) and the product is an exe, the path may be different
   from what was used to install the package originally. If path is not set then
@@ -163,7 +170,7 @@ EXAMPLES = r'''
     product_id: '{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}'
     arguments: /install /passive /norestart
 
-- name: Install Visual C thingy with list of arguments instead of a string
+- name: Install Visual C thingy with list of arguments instead of a string, and permanent log
   win_package:
     path: http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x64.exe
     product_id: '{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}'
@@ -171,6 +178,7 @@ EXAMPLES = r'''
     - /install
     - /passive
     - /norestart
+    log_path: D:\logs\vcredist_x64-exe-{{lookup('pipe', 'date +%Y%m%dT%H%M%S')}}.log
 
 - name: Install Remote Desktop Connection Manager from msi
   win_package:
@@ -235,12 +243,12 @@ EXAMPLES = r'''
 RETURN = r'''
 log:
   description: The contents of the MSI log.
-  returned: change occured and package is an MSI
+  returned: installation/uninstallation failure for MSI packages
   type: str
   sample: Installation completed successfully
 rc:
   description: The return code of the package process.
-  returned: change occured
+  returned: change occurred
   type: int
   sample: 0
 reboot_required:

@@ -23,16 +23,18 @@ options:
   name:
     description:
       - The name of the policy exported to create a file on the remote device for downloading.
+    type: str
     required: True
   dest:
     description:
       - A directory to save the policy file into.
-      - This option is ignored when C(inline) is set to c(yes).
+      - This option is ignored when C(inline) is set to C(yes).
     type: path
   file:
     description:
       - The name of the file to be create on the remote device for downloading.
       - When C(binary) is set to C(no) the ASM policy will be in XML format.
+    type: str
   inline:
     description:
       - If C(yes), the ASM policy will be exported C(inline) as a string instead of a file.
@@ -55,12 +57,13 @@ options:
     type: bool
   force:
     description:
-      - If C(no), the file will only be transferred if it does not exist in the the destination.
+      - If C(no), the file will only be transferred if it does not exist in the destination.
     default: yes
     type: bool
   partition:
     description:
       - Device partition which contains ASM policy to export.
+    type: str
     default: Common
 extends_documentation_fragment: f5
 author:
@@ -177,25 +180,19 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import flatten_boolean
-    from library.module_utils.network.f5.icontrol import download_file
+    from library.module_utils.network.f5.icontrol import download_asm_file
     from library.module_utils.network.f5.icontrol import module_provisioned
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import flatten_boolean
-    from ansible.module_utils.network.f5.icontrol import download_file
+    from ansible.module_utils.network.f5.icontrol import download_asm_file
     from ansible.module_utils.network.f5.icontrol import module_provisioned
 
 
@@ -353,7 +350,7 @@ class ReportableChanges(Changes):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
 
@@ -595,7 +592,7 @@ class ModuleManager(object):
             self.want.file
         )
         try:
-            download_file(self.client, url, dest)
+            download_asm_file(self.client, url, dest)
         except F5ModuleError:
             raise F5ModuleError(
                 "Failed to download the file."
@@ -679,16 +676,12 @@ def main():
         mutually_exclusive=spec.mutually_exclusive,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

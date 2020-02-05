@@ -136,10 +136,7 @@ import re
 import argparse
 import sys
 
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
+from ansible.module_utils.six.moves import configparser
 
 
 def get_log_filename():
@@ -201,7 +198,7 @@ except ImportError as e:
     sys.exit("""failed=True msg='python-consul required for this module.
 See https://python-consul.readthedocs.io/en/latest/#installation'""")
 
-from six import iteritems
+from ansible.module_utils.six import iteritems
 
 
 class ConsulInventory(object):

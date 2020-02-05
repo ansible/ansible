@@ -2,100 +2,124 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: '{{ lookup("env", "vcenter_host") }}'
+- when: vcsim is not defined
+  block:
+  - import_role:
+      name: prepare_vmware_tests
 
-- debug:
-    var: vcsim
+  - name: Add a datastore cluster to datacenter (check-mode)
+    vmware_datastore_cluster: &add_datastore_cluster
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      datacenter_name: "{{ dc1 }}"
+      datastore_cluster_name: DSC1
+      enable_sdrs: False
+      state: present
+    check_mode: yes
+    register: add_dsc_check
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: '{{ vcsim }}'
-    port: 5000
-    state: started
+  - assert:
+      that:
+       - add_dsc_check.changed
 
-- name: Kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
+  - name: Add a datastore cluster to datacenter
+    vmware_datastore_cluster: *add_datastore_cluster
+    register: add_dsc
 
-- name: Start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?cluster=2
-  register: vcsim_instance
+  - assert:
+      that:
+       - add_dsc.changed
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: '{{ vcsim }}'
-    port: 443
-    state: started
+  - name: Add a datastore cluster to datacenter again
+    vmware_datastore_cluster: *add_datastore_cluster
+    register: add_dsc
 
-- debug:
-    var: vcsim_instance
+  - assert:
+      that:
+       - not add_dsc.changed
 
-- name: Get datacenter
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=DC
-  register: datacenters
+  - name: Enable SDRS on a datastore cluster (check-mode)
+    vmware_datastore_cluster: &enable_sdrs
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      datacenter_name: "{{ dc1 }}"
+      datastore_cluster_name: DSC1
+      enable_sdrs: True
+      state: present
+    check_mode: yes
+    register: enable_sdrs_check
 
-- name: store the vcenter container ip
-  set_fact:
-    dc1: "{{ datacenters['json'][0] | basename }}"
+  - assert:
+      that:
+       - enable_sdrs_check.changed
 
+  - name: Enable SDRS on a datastore cluster
+    vmware_datastore_cluster: *enable_sdrs
+    register: enable_sdrs
 
-- name: Add a datastore cluster to datacenter (check-mode)
-  vmware_datastore_cluster: &add_datastore_cluster
-    hostname: '{{ vcsim }}'
-    username: '{{ vcsim_instance.json.username }}'
-    password: '{{ vcsim_instance.json.password }}'
-    validate_certs: no
-    datacenter_name: "{{ dc1 }}"
-    datastore_cluster_name: DSC1
-    state: present
-  check_mode: yes
-  register: add_dsc_check
+  - assert:
+      that:
+       - enable_sdrs.changed
 
-- assert:
-    that:
-     - add_dsc_check.changed == true
+  - name: Enable SDRS on a datastore cluster again
+    vmware_datastore_cluster: *enable_sdrs
+    register: enable_sdrs_again
 
-- name: Add a datastore cluster to datacenter
-  vmware_datastore_cluster: *add_datastore_cluster
-  register: add_dsc
+  - assert:
+      that:
+       - not enable_sdrs_again.changed
 
-- assert:
-    that:
-     - add_dsc.changed == true
+  - name: Create a datastore folder on given Datacenter
+    vcenter_folder:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      datacenter: '{{ dc1 }}'
+      folder_name: 'my_datastore_folder'
+      folder_type: datastore
+      state: present
+      validate_certs: no
+    register: my_datastore_folder
 
-- name: Add a datastore cluster to datacenter again
-  vmware_datastore_cluster: *add_datastore_cluster
-  register: add_dsc
+  - name: Add a datastore cluster using folder
+    vmware_datastore_cluster:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      folder: "{{ my_datastore_folder.result.path }}"
+      datastore_cluster_name: DSC2
+      state: present
+    register: add_dsc_folder_check
 
-- assert:
-    that:
-     - add_dsc.changed == false
+  - assert:
+      that:
+       - add_dsc_folder_check.changed
 
-- name: Delete a datastore cluster to datacenter (check-mode)
-  vmware_datastore_cluster: &delete_datastore_cluster
-    hostname: '{{ vcsim }}'
-    username: '{{ vcsim_instance.json.username }}'
-    password: '{{ vcsim_instance.json.password }}'
-    validate_certs: no
-    datacenter_name: "{{ dc1 }}"
-    datastore_cluster_name: DSC1
-    state: absent
-  check_mode: yes
-  register: delete_dsc_check
+  - name: Delete a datastore cluster to datacenter (check-mode)
+    vmware_datastore_cluster: &delete_datastore_cluster
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      datacenter_name: "{{ dc1 }}"
+      datastore_cluster_name: DSC1
+      state: absent
+    check_mode: yes
+    register: delete_dsc_check
 
-- assert:
-    that:
-     - delete_dsc_check.changed == true
+  - assert:
+      that:
+       - delete_dsc_check.changed
 
-# TODO: vcsim does not support delete operation on datastore cluster
-#- name: Delete a datastore cluster to datacenter
-#  vmware_datastore_cluster: *delete_datastore_cluster
-#  register: delete_dsc_check
+  - name: Delete a datastore cluster to datacenter
+    vmware_datastore_cluster: *delete_datastore_cluster
+    register: delete_dsc_check
 
-#- assert:
-#    that:
-#     - delete_dsc_check.changed == true
+  - assert:
+      that:
+        - delete_dsc_check.changed

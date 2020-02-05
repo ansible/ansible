@@ -105,9 +105,11 @@ class TestModuleManager(unittest.TestCase):
                 max_clients='20',
                 redirect_http_to_https='yes',
                 ssl_port=8443,
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 
@@ -130,9 +132,11 @@ class TestModuleManager(unittest.TestCase):
         set_module_args(
             dict(
                 ssl_cipher_suite='ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384',
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 
@@ -159,9 +163,11 @@ class TestModuleManager(unittest.TestCase):
                     'ECDHE-RSA-AES128-GCM-SHA256',
                     'ECDHE-RSA-AES256-GCM-SHA384'
                 ],
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 
@@ -185,9 +191,11 @@ class TestModuleManager(unittest.TestCase):
         set_module_args(
             dict(
                 ssl_cipher_suite='default',
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 
@@ -211,9 +219,11 @@ class TestModuleManager(unittest.TestCase):
         set_module_args(
             dict(
                 ssl_protocols='all -SSLv2',
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 
@@ -231,7 +241,7 @@ class TestModuleManager(unittest.TestCase):
 
         results = mm.exec_module()
         assert results['changed'] is True
-        assert results['ssl_protocols'] == '-SSLv2 all'
+        assert results['ssl_protocols'] == 'all -SSLv2'
 
     def test_update_issue_00587_as_list(self, *args):
         set_module_args(
@@ -240,9 +250,11 @@ class TestModuleManager(unittest.TestCase):
                     'all',
                     '-SSLv2'
                 ],
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 
@@ -260,15 +272,17 @@ class TestModuleManager(unittest.TestCase):
 
         results = mm.exec_module()
         assert results['changed'] is True
-        assert results['ssl_protocols'] == '-SSLv2 all'
+        assert results['ssl_protocols'] == 'all -SSLv2'
 
     def test_update_issue_00587_default(self, *args):
         set_module_args(
             dict(
                 ssl_protocols='default',
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 

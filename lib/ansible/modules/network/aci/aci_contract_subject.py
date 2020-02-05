@@ -16,17 +16,6 @@ module: aci_contract_subject
 short_description: Manage initial Contract Subjects (vz:Subj)
 description:
 - Manage initial Contract Subjects on Cisco ACI fabrics.
-notes:
-- The C(tenant) and C(contract) used must exist before using this module in your playbook.
-  The M(aci_tenant) and M(aci_contract) modules can be used for this.
-seealso:
-- module: aci_contract
-- module: aci_tenant
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(vz:Subj).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Swetha Chunduri (@schunduri)
 version_added: '2.4'
 options:
   tenant:
@@ -89,6 +78,17 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) and C(contract) used must exist before using this module in your playbook.
+  The M(aci_tenant) and M(aci_contract) modules can be used for this.
+seealso:
+- module: aci_contract
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(vz:Subj).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Swetha Chunduri (@schunduri)
 '''
 
 EXAMPLES = r'''
@@ -245,10 +245,15 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
-MATCH_MAPPING = dict(all='All', at_least_one='AtleastOne', at_most_one='AtmostOne', none='None')
+MATCH_MAPPING = dict(
+    all='All',
+    at_least_one='AtleastOne',
+    at_most_one='AtmostOne',
+    none='None',
+)
 
 
 def main():
@@ -266,8 +271,6 @@ def main():
         consumer_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        directive=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
-        filter=dict(type='str', aliases=['filter_name'], removed_in_version='2.4'),  # Deprecated starting from v2.4
     )
 
     module = AnsibleModule(
@@ -281,25 +284,20 @@ def main():
 
     aci = ACIModule(module)
 
-    subject = module.params['subject']
-    priority = module.params['priority']
-    reverse_filter = aci.boolean(module.params['reverse_filter'])
-    contract = module.params['contract']
-    dscp = module.params['dscp']
-    description = module.params['description']
-    filter_name = module.params['filter']
-    directive = module.params['directive']
-    consumer_match = module.params['consumer_match']
+    subject = module.params.get('subject')
+    priority = module.params.get('priority')
+    reverse_filter = aci.boolean(module.params.get('reverse_filter'))
+    contract = module.params.get('contract')
+    dscp = module.params.get('dscp')
+    description = module.params.get('description')
+    consumer_match = module.params.get('consumer_match')
     if consumer_match is not None:
-        consumer_match = MATCH_MAPPING[consumer_match]
-    provider_match = module.params['provider_match']
+        consumer_match = MATCH_MAPPING.get(consumer_match)
+    provider_match = module.params.get('provider_match')
     if provider_match is not None:
-        provider_match = MATCH_MAPPING[provider_match]
-    state = module.params['state']
-    tenant = module.params['tenant']
-
-    if directive is not None or filter_name is not None:
-        module.fail_json(msg="Managing Contract Subjects to Filter bindings has been moved to module 'aci_subject_bind_filter'")
+        provider_match = MATCH_MAPPING.get(provider_match)
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci.construct_url(
         root_class=dict(

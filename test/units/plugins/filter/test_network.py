@@ -20,12 +20,8 @@ __metaclass__ = type
 import os
 import sys
 
-import pytest
-
 from units.compat import unittest
 from ansible.plugins.filter.network import parse_xml, type5_pw, hash_salt, comp_type5, vlan_parser
-
-from ansible.errors import AnsibleFilterError
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'network')
 
@@ -143,7 +139,7 @@ class TestHashSalt(unittest.TestCase):
     def test_unparseable_salt(self):
         password = '$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
         with self.assertRaises(Exception) as e:
-            parsed = hash_salt(password)
+            hash_salt(password)
         self.assertEqual("Could not parse salt out password correctly from $nTc1$Z28sUTcWfXlvVe2x.3XAa.", str(e.exception))
 
 
@@ -161,7 +157,7 @@ class TestCompareType5(unittest.TestCase):
         parsed = comp_type5(unencrypted_password, encrypted_password, True)
         self.assertEqual(parsed, '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.')
 
-    def test_compate_type5_fail(self):
+    def test_compare_type5_fail(self):
         unencrypted_password = 'invalid_password'
         encrypted_password = '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
         parsed = comp_type5(unencrypted_password, encrypted_password)

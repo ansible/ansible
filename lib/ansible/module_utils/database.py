@@ -38,7 +38,16 @@ class UnclosedQuoteError(SQLParseError):
 # maps a type of identifier to the maximum number of dot levels that are
 # allowed to specify that identifier.  For example, a database column can be
 # specified by up to 4 levels: database.schema.table.column
-_PG_IDENTIFIER_TO_DOT_LEVEL = dict(database=1, schema=2, table=3, column=4, role=1)
+_PG_IDENTIFIER_TO_DOT_LEVEL = dict(
+    database=1,
+    schema=2,
+    table=3,
+    column=4,
+    role=1,
+    tablespace=1,
+    sequence=3,
+    publication=1,
+)
 _MYSQL_IDENTIFIER_TO_DOT_LEVEL = dict(database=1, table=2, column=3, role=1, vars=1)
 
 
@@ -120,7 +129,7 @@ def pg_quote_identifier(identifier, id_type):
 
 def mysql_quote_identifier(identifier, id_type):
     identifier_fragments = _identifier_parse(identifier, quote_char='`')
-    if len(identifier_fragments) > _MYSQL_IDENTIFIER_TO_DOT_LEVEL[id_type]:
+    if (len(identifier_fragments) - 1) > _MYSQL_IDENTIFIER_TO_DOT_LEVEL[id_type]:
         raise SQLParseError('MySQL does not support %s with more than %i dots' % (id_type, _MYSQL_IDENTIFIER_TO_DOT_LEVEL[id_type]))
 
     special_cased_fragments = []

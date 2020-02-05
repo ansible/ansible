@@ -1,4 +1,4 @@
 destructive
-shippable/posix/group1
+shippable/posix/group4
 needs/httptester
-needs/file/test/runner/requirements/constraints.txt
+skip/aix

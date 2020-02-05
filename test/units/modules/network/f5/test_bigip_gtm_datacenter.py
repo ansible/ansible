@@ -134,11 +134,13 @@ class TestManager(unittest.TestCase):
 
     def test_create_datacenter(self, *args):
         set_module_args(dict(
+            name='foo',
             state='present',
-            password='admin',
-            server='localhost',
-            user='admin',
-            name='foo'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -158,11 +160,14 @@ class TestManager(unittest.TestCase):
 
     def test_create_disabled_datacenter(self, *args):
         set_module_args(dict(
+            name='foo',
             state='disabled',
-            password='admin',
-            server='localhost',
-            user='admin',
-            name='foo'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
+
         ))
 
         module = AnsibleModule(
@@ -183,11 +188,14 @@ class TestManager(unittest.TestCase):
 
     def test_create_enabled_datacenter(self, *args):
         set_module_args(dict(
+            name='foo',
             state='enabled',
-            password='admin',
-            server='localhost',
-            user='admin',
-            name='foo'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
+
         ))
 
         module = AnsibleModule(
@@ -208,11 +216,14 @@ class TestManager(unittest.TestCase):
 
     def test_idempotent_disable_datacenter(self, *args):
         set_module_args(dict(
+            name='foo',
             state='disabled',
-            password='admin',
-            server='localhost',
-            user='admin',
-            name='foo'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
+
         ))
 
         module = AnsibleModule(

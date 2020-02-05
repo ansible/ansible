@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat.mock import patch
-from ansible.modules.network.nos import nos_facts
 from units.modules.utils import set_module_args
+from ansible.modules.network.nos import nos_facts
 from .nos_module import TestNosModule, load_fixture
 
 

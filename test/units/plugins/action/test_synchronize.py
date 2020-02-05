@@ -12,11 +12,8 @@
 
 import json
 import os
-import sys
 import unittest
 import yaml
-
-from pprint import pprint
 
 import ansible.plugins
 from units.compat.mock import patch, MagicMock

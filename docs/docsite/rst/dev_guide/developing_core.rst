@@ -14,9 +14,9 @@ those pieces work together.
 
 .. seealso::
 
-   :doc:`developing_api`
+   :ref:`developing_api`
        Learn about the Python API for task execution
-   :doc:`developing_plugins`
+   :ref:`developing_plugins`
        Learn about developing plugins
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list

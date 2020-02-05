@@ -26,7 +26,21 @@ If (-not $sam_account_name.EndsWith("$")) {
 }
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true
 $description = Get-AnsibleParam -obj $params -name "description" -default $null
+$domain_username = Get-AnsibleParam -obj $params -name "domain_username" -type "str"
+$domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "str" -failifempty ($null -ne $domain_username)
+$domain_server = Get-AnsibleParam -obj $params -name "domain_server" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -ValidateSet "present","absent" -default "present"
+
+$extra_args = @{}
+if ($null -ne $domain_username) {
+    $domain_password = ConvertTo-SecureString $domain_password -AsPlainText -Force
+    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $domain_username, $domain_password
+    $extra_args.Credential = $credential
+}
+if ($null -ne $domain_server) {
+    $extra_args.Server = $domain_server
+}
+
 If ($state -eq "present") {
   $dns_hostname = Get-AnsibleParam -obj $params -name "dns_hostname" -failifempty $true -resultobj $result
   $ou = Get-AnsibleParam -obj $params -name "ou" -failifempty $true -resultobj $result
@@ -45,6 +59,7 @@ If ($state -eq "present") {
 } Else {
   $desired_state = [ordered]@{
     name = $name
+    sam_account_name = $sam_account_name
     state = $state
   }
 }
@@ -54,8 +69,9 @@ Function Get-InitialState($desired_state) {
   # Test computer exists
   $computer = Try {
     Get-ADComputer `
-      -Identity $desired_state.name `
-      -Properties DistinguishedName,DNSHostName,Enabled,Name,SamAccountName,Description,ObjectClass
+      -Identity $desired_state.sam_account_name `
+      -Properties DistinguishedName,DNSHostName,Enabled,Name,SamAccountName,Description,ObjectClass `
+      @extra_args
   } Catch { $null }
   If ($computer) {
       $initial_state = [ordered]@{
@@ -72,6 +88,7 @@ Function Get-InitialState($desired_state) {
   } Else {
     $initial_state = [ordered]@{
       name = $desired_state.name
+      sam_account_name = $desired_state.sam_account_name
       state = "absent"
     }
   }
@@ -88,7 +105,8 @@ Function Set-ConstructedState($initial_state, $desired_state) {
       -DNSHostName $desired_state.dns_hostname `
       -Enabled $desired_state.enabled `
       -Description $desired_state.description `
-      -WhatIf:$check_mode
+      -WhatIf:$check_mode `
+      @extra_args
   } Catch {
     Fail-Json -obj $result -message "Failed to set the AD object $($desired_state.name): $($_.Exception.Message)"
   }
@@ -96,13 +114,14 @@ Function Set-ConstructedState($initial_state, $desired_state) {
   If ($initial_state.distinguished_name -cne $desired_state.distinguished_name) {
     # Move computer to OU
     Try {
-      Get-ADComputer -Identity $desired_state.name |
+      Get-ADComputer -Identity $desired_state.sam_account_name @extra_args |
           Move-ADObject `
             -TargetPath $desired_state.ou `
             -Confirm:$False `
-            -WhatIf:$check_mode
+            -WhatIf:$check_mode `
+            @extra_args
     } Catch {
-      Fail-Json -obj $result -message "Failed to move the AD object $($desired_state.name) to $($desired_state.ou) OU: $($_.Exception.Message)"
+      Fail-Json -obj $result -message "Failed to move the AD object $($initial_state.distinguished_name) to $($desired_state.distinguished_name): $($_.Exception.Message)"
     }
   }
   $result.changed = $true
@@ -118,7 +137,8 @@ Function Add-ConstructedState($desired_state) {
       -Path $desired_state.ou `
       -Enabled $desired_state.enabled `
       -Description $desired_state.description `
-      -WhatIf:$check_mode
+      -WhatIf:$check_mode `
+      @extra_args
     } Catch {
       Fail-Json -obj $result -message "Failed to create the AD object $($desired_state.name): $($_.Exception.Message)"
     }
@@ -129,11 +149,12 @@ Function Add-ConstructedState($desired_state) {
 # ------------------------------------------------------------------------------
 Function Remove-ConstructedState($initial_state) {
   Try {
-    Get-ADComputer $initial_state.name `
-    | Remove-ADObject `
-      -Recursive `
-      -Confirm:$False `
-      -WhatIf:$check_mode
+    Get-ADComputer -Identity $initial_state.sam_account_name @extra_args |
+      Remove-ADObject `
+        -Recursive `
+        -Confirm:$False `
+        -WhatIf:$check_mode `
+        @extra_args
   } Catch {
     Fail-Json -obj $result -message "Failed to remove the AD object $($desired_state.name): $($_.Exception.Message)"
   }

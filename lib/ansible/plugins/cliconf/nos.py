@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: nos
+short_description: Use nos cliconf to run command on Extreme NOS platform
+description:
+  - This nos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Extreme NOS network devices.
+version_added: "2.7"
+"""
+
 import re
 import json
 
@@ -95,12 +105,9 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+    def get(self, command, prompt=None, answer=None, sendonly=False, newline=True, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)

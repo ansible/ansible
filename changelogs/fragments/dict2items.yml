@@ -1,0 +1,2 @@
+minor_changes:
+- Simplify dict2items filter example in loop documentation (https://github.com/ansible/ansible/issues/65505).

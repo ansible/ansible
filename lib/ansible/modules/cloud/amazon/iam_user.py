@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -11,7 +14,7 @@ DOCUMENTATION = '''
 module: iam_user
 short_description: Manage AWS IAM users
 description:
-  - Manage AWS IAM users
+  - Manage AWS IAM users.
 version_added: "2.5"
 author: Josh Souza (@joshsouza)
 options:
@@ -19,21 +22,27 @@ options:
     description:
       - The name of the user to create.
     required: true
-  managed_policy:
+    type: str
+  managed_policies:
     description:
-      - A list of managed policy ARNs or friendly names to attach to the user. To embed an inline policy, use M(iam_policy).
+      - A list of managed policy ARNs or friendly names to attach to the user.
+      - To embed an inline policy, use M(iam_policy).
     required: false
+    type: list
+    aliases: ['managed_policy']
   state:
     description:
-      - Create or remove the IAM user
+      - Create or remove the IAM user.
     required: true
     choices: [ 'present', 'absent' ]
-  purge_policy:
+    type: str
+  purge_policies:
     description:
-      - Detach policies which are not included in managed_policy list
+      - When I(purge_policies=true) any managed policies not listed in I(managed_policies) will be detatched.
     required: false
     default: false
     type: bool
+    aliases: ['purge_policy', 'purge_managed_policies']
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws
@@ -54,7 +63,7 @@ EXAMPLES = '''
 # Create a user and attach a managed policy using its ARN
 - iam_user:
     name: testuser1
-    managed_policy:
+    managed_policies:
       - arn:aws:iam::aws:policy/AmazonSNSFullAccess
     state: present
 
@@ -62,7 +71,7 @@ EXAMPLES = '''
 - iam_user:
     name: testuser1
     state: present
-    purge_policy: true
+    purge_policies: true
 
 # Delete the user
 - iam_user:
@@ -99,16 +108,15 @@ user:
 '''
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import HAS_BOTO3
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 import traceback
 
 try:
-    from botocore.exceptions import ClientError, ParamValidationError
+    from botocore.exceptions import ClientError, ParamValidationError, BotoCoreError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def compare_attached_policies(current_attached_policies, new_attached_policies):
@@ -151,8 +159,8 @@ def create_or_update_user(connection, module):
 
     params = dict()
     params['UserName'] = module.params.get('name')
-    managed_policies = module.params.get('managed_policy')
-    purge_policy = module.params.get('purge_policy')
+    managed_policies = module.params.get('managed_policies')
+    purge_policies = module.params.get('purge_policies')
     changed = False
     if managed_policies:
         managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
@@ -183,7 +191,7 @@ def create_or_update_user(connection, module):
             current_attached_policies_arn_list.append(policy['PolicyArn'])
 
         # If managed_policies has a single empty element we want to remove all attached policies
-        if purge_policy:
+        if purge_policies:
             # Detach policies not present
             for policy_arn in list(set(current_attached_policies_arn_list) - set(managed_policies)):
                 changed = True
@@ -227,38 +235,72 @@ def create_or_update_user(connection, module):
 
 def destroy_user(connection, module):
 
-    params = dict()
-    params['UserName'] = module.params.get('name')
+    user_name = module.params.get('name')
 
-    if get_user(connection, module, params['UserName']):
-        # Check mode means we would remove this user
-        if module.check_mode:
-            module.exit_json(changed=True)
-
-        # Remove any attached policies otherwise deletion fails
-        try:
-            for policy in get_attached_policy_list(connection, module, params['UserName']):
-                connection.detach_user_policy(UserName=params['UserName'], PolicyArn=policy['PolicyArn'])
-        except ClientError as e:
-            module.fail_json(msg="Unable to detach policy {0} from user {1}: {2}".format(
-                             policy['PolicyArn'], params['UserName'], to_native(e)),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-        except ParamValidationError as e:
-            module.fail_json(msg="Unable to detach policy {0} from user {1}: {2}".format(
-                             policy['PolicyArn'], params['UserName'], to_native(e)),
-                             exception=traceback.format_exc())
-
-        try:
-            connection.delete_user(**params)
-        except ClientError as e:
-            module.fail_json(msg="Unable to delete user {0}: {1}".format(params['UserName'], to_native(e)),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-        except ParamValidationError as e:
-            module.fail_json(msg="Unable to delete user {0}: {1}".format(params['UserName'], to_native(e)),
-                             exception=traceback.format_exc())
-
-    else:
+    user = get_user(connection, module, user_name)
+    # User is not present
+    if not user:
         module.exit_json(changed=False)
+
+    # Check mode means we would remove this user
+    if module.check_mode:
+        module.exit_json(changed=True)
+
+    # Remove any attached policies otherwise deletion fails
+    try:
+        for policy in get_attached_policy_list(connection, module, user_name):
+            connection.detach_user_policy(UserName=user_name, PolicyArn=policy['PolicyArn'])
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to delete user {0}".format(user_name))
+
+    try:
+        # Remove user's access keys
+        access_keys = connection.list_access_keys(UserName=user_name)["AccessKeyMetadata"]
+        for access_key in access_keys:
+            connection.delete_access_key(UserName=user_name, AccessKeyId=access_key["AccessKeyId"])
+
+        # Remove user's login profile (console password)
+        delete_user_login_profile(connection, module, user_name)
+
+        # Remove user's ssh public keys
+        ssh_public_keys = connection.list_ssh_public_keys(UserName=user_name)["SSHPublicKeys"]
+        for ssh_public_key in ssh_public_keys:
+            connection.delete_ssh_public_key(UserName=user_name, SSHPublicKeyId=ssh_public_key["SSHPublicKeyId"])
+
+        # Remove user's service specific credentials
+        service_credentials = connection.list_service_specific_credentials(UserName=user_name)["ServiceSpecificCredentials"]
+        for service_specific_credential in service_credentials:
+            connection.delete_service_specific_credential(
+                UserName=user_name,
+                ServiceSpecificCredentialId=service_specific_credential["ServiceSpecificCredentialId"]
+            )
+
+        # Remove user's signing certificates
+        signing_certificates = connection.list_signing_certificates(UserName=user_name)["Certificates"]
+        for signing_certificate in signing_certificates:
+            connection.delete_signing_certificate(
+                UserName=user_name,
+                CertificateId=signing_certificate["CertificateId"]
+            )
+
+        # Remove user's MFA devices
+        mfa_devices = connection.list_mfa_devices(UserName=user_name)["MFADevices"]
+        for mfa_device in mfa_devices:
+            connection.deactivate_mfa_device(UserName=user_name, SerialNumber=mfa_device["SerialNumber"])
+
+        # Remove user's inline policies
+        inline_policies = connection.list_user_policies(UserName=user_name)["PolicyNames"]
+        for policy_name in inline_policies:
+            connection.delete_user_policy(UserName=user_name, PolicyName=policy_name)
+
+        # Remove user's group membership
+        user_groups = connection.list_groups_for_user(UserName=user_name)["Groups"]
+        for group in user_groups:
+            connection.remove_user_from_group(UserName=user_name, GroupName=group["GroupName"])
+
+        connection.delete_user(UserName=user_name)
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to delete user {0}".format(user_name))
 
     module.exit_json(changed=True)
 
@@ -286,32 +328,35 @@ def get_attached_policy_list(connection, module, name):
         if e.response['Error']['Code'] == 'NoSuchEntity':
             return None
         else:
-            module.fail_json(msg="Unable to get policies for user {0}: {1}".format(name, to_native(e)),
-                             **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="Unable to get policies for user {0}".format(name))
+
+
+def delete_user_login_profile(connection, module, user_name):
+
+    try:
+        return connection.delete_login_profile(UserName=user_name)
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "NoSuchEntity":
+            return None
+        else:
+            module.fail_json_aws(e, msg="Unable to delete login profile for user {0}".format(user_name))
 
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True, type='str'),
-            managed_policy=dict(default=[], type='list'),
-            state=dict(choices=['present', 'absent'], required=True),
-            purge_policy=dict(default=False, type='bool')
-        )
+    argument_spec = dict(
+        name=dict(required=True, type='str'),
+        managed_policies=dict(default=[], type='list', aliases=['managed_policy']),
+        state=dict(choices=['present', 'absent'], required=True),
+        purge_policies=dict(default=False, type='bool', aliases=['purge_policy', 'purge_managed_policies'])
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('iam')
 
     state = module.params.get("state")
 

@@ -21,12 +21,6 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
 from collections import defaultdict
 
-try:
-    from icontrol.exceptions import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
-except ImportError:
-    HAS_F5SDK = False
-
 
 MANAGED_BY_ANNOTATION_VERSION = 'f5-ansible.version'
 MANAGED_BY_ANNOTATION_MODIFIED = 'f5-ansible.last_modified'
@@ -38,6 +32,7 @@ f5_provider_spec = {
     ),
     'server_port': dict(
         type='int',
+        default=443,
         fallback=(env_fallback, ['F5_SERVER_PORT'])
     ),
     'user': dict(
@@ -53,6 +48,7 @@ f5_provider_spec = {
     ),
     'validate_certs': dict(
         type='bool',
+        default='yes',
         fallback=(env_fallback, ['F5_VALIDATE_CERTS'])
     ),
     'transport': dict(
@@ -61,42 +57,11 @@ f5_provider_spec = {
     ),
     'timeout': dict(type='int'),
     'auth_provider': dict(),
-    'proxy_to': dict(),
 }
 
 f5_argument_spec = {
     'provider': dict(type='dict', options=f5_provider_spec),
 }
-
-f5_top_spec = {
-    'server': dict(
-        removed_in_version=2.9,
-    ),
-    'user': dict(
-        removed_in_version=2.9,
-    ),
-    'password': dict(
-        removed_in_version=2.9,
-        no_log=True,
-        aliases=['pass', 'pwd'],
-    ),
-    'validate_certs': dict(
-        removed_in_version=2.9,
-        type='bool',
-    ),
-    'server_port': dict(
-        removed_in_version=2.9,
-        type='int',
-    ),
-    'transport': dict(
-        removed_in_version=2.9,
-        choices=['cli', 'rest']
-    ),
-    'auth_provider': dict(
-        default=None
-    )
-}
-f5_argument_spec.update(f5_top_spec)
 
 
 def get_provider_argspec():
@@ -116,19 +81,6 @@ def is_empty_list(seq):
         if seq[0] == '' or seq[0] == 'none':
             return True
     return False
-
-
-# Fully Qualified name (with the partition)
-def fqdn_name(partition, value):
-    """This method is not used
-
-    This was the original name of a method that was used throughout all
-    the F5 Ansible modules. This is now deprecated, and should be removed
-    in 2.9. All modules should be changed to use ``fq_name``.
-
-    TODO(Remove in Ansible 2.9)
-    """
-    return fq_name(partition, value)
 
 
 def fq_name(partition, value, sub_path=''):
@@ -193,7 +145,7 @@ def fq_name(partition, value, sub_path=''):
 def fq_list_names(partition, list_names):
     if list_names is None:
         return None
-    return map(lambda x: fqdn_name(partition, x), list_names)
+    return map(lambda x: fq_name(partition, x), list_names)
 
 
 def to_commands(module, commands):
@@ -220,47 +172,14 @@ def run_commands(module, commands, check_rc=True):
 
 
 def flatten_boolean(value):
-    truthy = list(BOOLEANS_TRUE) + ['enabled', 'True']
-    falsey = list(BOOLEANS_FALSE) + ['disabled', 'False']
+    truthy = list(BOOLEANS_TRUE) + ['enabled', 'True', 'true']
+    falsey = list(BOOLEANS_FALSE) + ['disabled', 'False', 'false']
     if value is None:
         return None
     elif value in truthy:
         return 'yes'
     elif value in falsey:
         return 'no'
-
-
-def cleanup_tokens(client=None):
-    # TODO(Remove this. No longer needed with iControlRestSession destructor)
-    if client is None:
-        return
-    try:
-        # isinstance cannot be used here because to import it creates a
-        # circular dependency with teh module_utils.network.f5.bigip file.
-        #
-        # TODO(consider refactoring cleanup_tokens)
-        if 'F5RestClient' in type(client).__name__:
-            token = client._client.headers.get('X-F5-Auth-Token', None)
-            if not token:
-                return
-            uri = "https://{0}:{1}/mgmt/shared/authz/tokens/{2}".format(
-                client.provider['server'],
-                client.provider['server_port'],
-                token
-            )
-            resp = client.api.delete(uri)
-            try:
-                resp.json()
-            except ValueError as ex:
-                raise F5ModuleError(str(ex))
-            return True
-        else:
-            resource = client.api.shared.authz.tokens_s.token.load(
-                name=client.api.icrs.token
-            )
-            resource.delete()
-    except Exception as ex:
-        pass
 
 
 def is_cli(module):
@@ -333,6 +252,7 @@ def transform_name(partition='', name='', sub_path=''):
 
     if name:
         name = name.replace('/', '~')
+        name = name.replace('%', '%25')
 
     if partition:
         partition = partition.replace('/', '~')
@@ -354,76 +274,10 @@ def transform_name(partition='', name='', sub_path=''):
     return result
 
 
-def compare_complex_list(want, have):
-    """Performs a complex list comparison
-
-    A complex list is a list of dictionaries
-
-    Args:
-        want (list): List of dictionaries to compare with second parameter.
-        have (list): List of dictionaries compare with first parameter.
-
-    Returns:
-        bool:
-    """
-    if want == [] and have is None:
-        return None
-    if want is None:
-        return None
-    w = []
-    h = []
-    for x in want:
-        tmp = [(str(k), str(v)) for k, v in iteritems(x)]
-        w += tmp
-    for x in have:
-        tmp = [(str(k), str(v)) for k, v in iteritems(x)]
-        h += tmp
-    if set(w) == set(h):
-        return None
-    else:
-        return want
-
-
-def compare_dictionary(want, have):
-    """Performs a dictionary comparison
-
-    Args:
-        want (dict): Dictionary to compare with second parameter.
-        have (dict): Dictionary to compare with first parameter.
-
-    Returns:
-        bool:
-    """
-    if want == {} and have is None:
-        return None
-    if want is None:
-        return None
-    w = [(str(k), str(v)) for k, v in iteritems(want)]
-    h = [(str(k), str(v)) for k, v in iteritems(have)]
-    if set(w) == set(h):
-        return None
-    else:
-        return want
-
-
 def is_ansible_debug(module):
     if module._debug and module._verbosity >= 4:
         return True
     return False
-
-
-def fail_json(module, ex, client=None):
-    # TODO(Remove this. No longer needed with iControlRestSession destructor)
-    if is_ansible_debug(module) and client:
-        module.fail_json(msg=str(ex), __f5debug__=client.api.debug_output)
-    module.fail_json(msg=str(ex))
-
-
-def exit_json(module, results, client=None):
-    # TODO(Remove this. No longer needed with iControlRestSession destructor)
-    if is_ansible_debug(module) and client:
-        results['__f5debug__'] = client.api.debug_output
-    module.exit_json(**results)
 
 
 def is_uuid(uuid=None):
@@ -563,15 +417,12 @@ class F5BaseClient(object):
         self.merge_provider_auth_provider_param(result, provider)
         self.merge_provider_user_param(result, provider)
         self.merge_provider_password_param(result, provider)
-        self.merge_proxy_to_param(result, provider)
 
         return result
 
     def merge_provider_server_param(self, result, provider):
         if self.validate_params('server', provider):
             result['server'] = provider['server']
-        elif self.validate_params('server', self.params):
-            result['server'] = self.params['server']
         elif self.validate_params('F5_SERVER', os.environ):
             result['server'] = os.environ['F5_SERVER']
         else:
@@ -580,8 +431,6 @@ class F5BaseClient(object):
     def merge_provider_server_port_param(self, result, provider):
         if self.validate_params('server_port', provider):
             result['server_port'] = provider['server_port']
-        elif self.validate_params('server_port', self.params):
-            result['server_port'] = self.params['server_port']
         elif self.validate_params('F5_SERVER_PORT', os.environ):
             result['server_port'] = os.environ['F5_SERVER_PORT']
         else:
@@ -590,8 +439,6 @@ class F5BaseClient(object):
     def merge_provider_validate_certs_param(self, result, provider):
         if self.validate_params('validate_certs', provider):
             result['validate_certs'] = provider['validate_certs']
-        elif self.validate_params('validate_certs', self.params):
-            result['validate_certs'] = self.params['validate_certs']
         elif self.validate_params('F5_VALIDATE_CERTS', os.environ):
             result['validate_certs'] = os.environ['F5_VALIDATE_CERTS']
         else:
@@ -604,8 +451,6 @@ class F5BaseClient(object):
     def merge_provider_auth_provider_param(self, result, provider):
         if self.validate_params('auth_provider', provider):
             result['auth_provider'] = provider['auth_provider']
-        elif self.validate_params('auth_provider', self.params):
-            result['auth_provider'] = self.params['auth_provider']
         elif self.validate_params('F5_AUTH_PROVIDER', os.environ):
             result['auth_provider'] = os.environ['F5_AUTH_PROVIDER']
         else:
@@ -629,8 +474,6 @@ class F5BaseClient(object):
     def merge_provider_user_param(self, result, provider):
         if self.validate_params('user', provider):
             result['user'] = provider['user']
-        elif self.validate_params('user', self.params):
-            result['user'] = self.params['user']
         elif self.validate_params('F5_USER', os.environ):
             result['user'] = os.environ.get('F5_USER')
         elif self.validate_params('ANSIBLE_NET_USERNAME', os.environ):
@@ -641,20 +484,12 @@ class F5BaseClient(object):
     def merge_provider_password_param(self, result, provider):
         if self.validate_params('password', provider):
             result['password'] = provider['password']
-        elif self.validate_params('password', self.params):
-            result['password'] = self.params['password']
         elif self.validate_params('F5_PASSWORD', os.environ):
             result['password'] = os.environ.get('F5_PASSWORD')
         elif self.validate_params('ANSIBLE_NET_PASSWORD', os.environ):
             result['password'] = os.environ.get('ANSIBLE_NET_PASSWORD')
         else:
             result['password'] = None
-
-    def merge_proxy_to_param(self, result, provider):
-        if self.validate_params('proxy_to', provider):
-            result['proxy_to'] = provider['proxy_to']
-        else:
-            result['proxy_to'] = None
 
 
 class AnsibleF5Parameters(object):

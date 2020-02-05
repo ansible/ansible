@@ -1,0 +1,48 @@
+---
+- name: (Expired, {{select_crypto_backend}}) Generate privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/has_expired_privatekey.pem'
+
+- name: (Expired, {{select_crypto_backend}}) Generate CSR
+  openssl_csr:
+    path: '{{ output_dir }}/has_expired_csr.csr'
+    privatekey_path: '{{ output_dir }}/has_expired_privatekey.pem'
+    subject:
+      commonName: www.example.com
+
+- name: (Expired, {{select_crypto_backend}}) Generate expired selfsigned certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/has_expired_cert.pem'
+    csr_path: '{{ output_dir }}/has_expired_csr.csr'
+    privatekey_path: '{{ output_dir }}/has_expired_privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    selfsigned_not_after: "-1s"
+    selfsigned_not_before: "-100s"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend == 'pyopenssl' # cryptography won't allow creating expired certificates
+
+- name: (Expired, {{select_crypto_backend}}) Generate expired selfsigned certificate
+  command: "openssl x509 -req -days -1 -in {{ output_dir }}/has_expired_csr.csr -signkey {{ output_dir }}/has_expired_privatekey.pem -out {{ output_dir }}/has_expired_cert.pem"
+  when: select_crypto_backend == 'cryptography' # So we create it with 'command'
+
+- name: "(Expired) Check task fails because cert is expired (has_expired: false)"
+  openssl_certificate:
+    provider: assertonly
+    path: "{{ output_dir }}/has_expired_cert.pem"
+    has_expired: false
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: true
+  register: expired_cert_check
+
+- name: (Expired, {{select_crypto_backend}}) Ensure previous task failed
+  assert:
+    that: expired_cert_check is failed
+
+- name: "(Expired) Check expired cert check is ignored (has_expired: true)"
+  openssl_certificate:
+    provider: assertonly
+    path: "{{ output_dir }}/has_expired_cert.pem"
+    has_expired: true
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: expired_cert_skip

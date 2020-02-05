@@ -1,0 +1,101 @@
+- name: add cron task (check mode enabled, cron task not already created)
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+  check_mode: yes
+  register: check_mode_enabled_state_present
+
+- assert:
+    that: check_mode_enabled_state_present is changed
+
+- name: add cron task (check mode disabled, task hasn't already been created)
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+  register: add_cron_task
+
+- assert:
+    that: add_cron_task is changed
+
+- name: add cron task (check mode enabled, cron task already exists)
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+  check_mode: yes
+  register: check_mode_enabled_state_present_cron_task_already_exists
+
+- assert:
+    that: check_mode_enabled_state_present_cron_task_already_exists is not changed
+
+- name: add cron task (check mode disabled, cron task already created)
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+  register: cron_task_already_created
+
+- assert:
+    that: cron_task_already_created is not changed
+
+- block:
+    - name: wait for canary creation
+      wait_for:
+        path: '{{ remote_dir }}/cron_canary1'
+        timeout: '{{ 20 if faketime_pkg else 70 }}'
+      register: wait_canary
+  always:
+    - name: display some logs in case of failure
+      command: 'journalctl -u {{ cron_service }}'
+      when: wait_canary is failed and ansible_service_mgr == 'systemd'
+
+- debug:
+    msg: 'elapsed time waiting for canary: {{ wait_canary.elapsed }}'
+
+- name: Check check_mode
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+    state: absent
+  check_mode: yes
+  register: check_check_mode
+
+- assert:
+    that: check_check_mode is changed
+
+- name: Remove a cron task
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+    state: absent
+  register: remove_task
+
+- assert:
+    that: remove_task is changed
+
+- name: 'cron task missing: check idempotence (check mode enabled, state=absent)'
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+    state: absent
+  register: check_mode_enabled_remove_task_idempotence
+
+- assert:
+    that: check_mode_enabled_remove_task_idempotence is not changed
+
+- name: 'cron task missing: check idempotence (check mode disabled, state=absent)'
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+    state: absent
+  register: remove_task_idempotence
+
+- assert:
+    that: remove_task_idempotence is not changed
+
+- name: Check that removing a cron task with cron_file and without specifying an user is allowed (#58493)
+  cron:
+    cron_file: unexistent_cron_file
+    state: absent
+  register: remove_cron_file
+
+- assert:
+    that: remove_cron_file is not changed

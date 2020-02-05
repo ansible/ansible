@@ -17,7 +17,7 @@ from ansible.modules.storage.netapp.na_ontap_svm \
     import NetAppOntapSVM as svm_module  # module under test
 
 if not netapp_utils.has_netapp_lib():
-    pytestmark = pytest.skip('skipping as missing required netapp_lib')
+    pytestmark = pytest.mark.skip('skipping as missing required netapp_lib')
 
 
 def set_module_args(args):
@@ -77,6 +77,7 @@ class MockONTAPConnection(object):
             'root-volume': vserver['root_volume'],
             'root-volume-aggregate': vserver['root_volume_aggregate'],
             'language': vserver['language'],
+            'comment': vserver['comment'],
             'snapshot-policy': vserver['snapshot_policy'],
             'vserver-subtype': vserver['subtype'],
             'allowed-protocols': [{'protocol': 'nfs'}, {'protocol': 'cifs'}],
@@ -100,10 +101,12 @@ class TestMyModule(unittest.TestCase):
             'name': 'test_svm',
             'root_volume': 'ansible_vol',
             'root_volume_aggregate': 'ansible_aggr',
+            'aggr_list': 'aggr_1,aggr_2',
             'ipspace': 'ansible_ipspace',
             'subtype': 'default',
             'language': 'c.utf_8',
-            'snapshot_policy': 'old_snapshot_policy'
+            'snapshot_policy': 'old_snapshot_policy',
+            'comment': 'this is a comment'
         }
 
     def mock_args(self):
@@ -111,7 +114,9 @@ class TestMyModule(unittest.TestCase):
             'name': self.mock_vserver['name'],
             'root_volume': self.mock_vserver['root_volume'],
             'root_volume_aggregate': self.mock_vserver['root_volume_aggregate'],
+            'aggr_list': self.mock_vserver['aggr_list'],
             'ipspace': self.mock_vserver['ipspace'],
+            'comment': self.mock_vserver['comment'],
             'subtype': 'default',
             'hostname': 'test',
             'username': 'test_user',

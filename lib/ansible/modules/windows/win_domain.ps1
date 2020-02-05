@@ -16,7 +16,9 @@ Function Ensure-Prereqs {
 
         # NOTE: AD-Domain-Services includes: RSAT-AD-AdminCenter, RSAT-AD-Powershell and RSAT-ADDS-Tools
         $awf = Add-WindowsFeature AD-Domain-Services -WhatIf:$check_mode
+        $result.reboot_required = $awf.RestartNeeded
         # FUTURE: Check if reboot necessary
+
         return $true
     }
     return $false
@@ -29,9 +31,11 @@ $domain_netbios_name = Get-AnsibleParam -obj $params -name "domain_netbios_name"
 $safe_mode_admin_password = Get-AnsibleParam -obj $params -name "safe_mode_password" -failifempty $true
 $database_path = Get-AnsibleParam -obj $params -name "database_path" -type "path"
 $sysvol_path = Get-AnsibleParam -obj $params -name "sysvol_path" -type "path"
+$log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
 $create_dns_delegation = Get-AnsibleParam -obj $params -name "create_dns_delegation" -type "bool"
 $domain_mode = Get-AnsibleParam -obj $params -name "domain_mode" -type "str"
 $forest_mode = Get-AnsibleParam -obj $params -name "forest_mode" -type "str"
+$install_dns = Get-AnsibleParam -obj $params -name "install_dns" -type "bool" -default $true
 
 # FUTURE: Support down to Server 2012?
 if ([System.Environment]::OSVersion.Version -lt [Version]"6.3.9600.0") {
@@ -59,20 +63,23 @@ if ($check_mode -and $installed) {
 
 # Check that we got a valid domain_mode
 $valid_domain_modes = [Enum]::GetNames((Get-Command -Name Install-ADDSForest).Parameters.DomainMode.ParameterType)
-if (($domain_mode -ne $null) -and -not ($domain_mode -in $valid_domain_modes)) {
+if (($null -ne $domain_mode) -and -not ($domain_mode -in $valid_domain_modes)) {
     Fail-Json -obj $result -message "The parameter 'domain_mode' does not accept '$domain_mode', please use one of: $valid_domain_modes"
 }
 
 # Check that we got a valid forest_mode
 $valid_forest_modes = [Enum]::GetNames((Get-Command -Name Install-ADDSForest).Parameters.ForestMode.ParameterType)
-if (($forest_mode -ne $null) -and -not ($forest_mode -in $valid_forest_modes)) {
+if (($null -ne $forest_mode) -and -not ($forest_mode -in $valid_forest_modes)) {
     Fail-Json -obj $result -message "The parameter 'forest_mode' does not accept '$forest_mode', please use one of: $valid_forest_modes"
 }
 
 $forest = $null
 try {
-    $forest = Get-ADForest $dns_domain_name -ErrorAction SilentlyContinue
-} catch { }
+    # Cannot use Get-ADForest as that requires credential delegation, the below does not
+    $forest_context = New-Object -TypeName System.DirectoryServices.ActiveDirectory.DirectoryContext -ArgumentList Forest, $dns_domain_name
+    $forest = [System.DirectoryServices.ActiveDirectory.Forest]::GetForest($forest_context)
+} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] {
+} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryOperationException] { }
 
 if (-not $forest) {
     $result.changed = $true
@@ -84,7 +91,7 @@ if (-not $forest) {
         SafeModeAdministratorPassword=$sm_cred;
         Confirm=$false;
         SkipPreChecks=$true;
-        InstallDns=$true;
+        InstallDns=$install_dns;
         NoRebootOnCompletion=$true;
         WhatIf=$check_mode;
     }
@@ -97,11 +104,15 @@ if (-not $forest) {
         $install_params.SysvolPath = $sysvol_path
     }
 
+    if ($log_path) {
+        $install_params.LogPath = $log_path
+    }
+
     if ($domain_netbios_name) {
         $install_params.DomainNetBiosName = $domain_netbios_name
     }
 
-    if ($create_dns_delegation -ne $null) {
+    if ($null -ne $create_dns_delegation) {
         $install_params.CreateDnsDelegation = $create_dns_delegation
     }
 
@@ -113,13 +124,24 @@ if (-not $forest) {
         $install_params.ForestMode = $forest_mode
     }
 
-    $iaf = Install-ADDSForest @install_params
+    $iaf = $null
+    try {
+        $iaf = Install-ADDSForest @install_params
+    } catch [Microsoft.DirectoryServices.Deployment.DCPromoExecutionException] {
+        # ExitCode 15 == 'Role change is in progress or this computer needs to be restarted.'
+        # DCPromo exit codes details can be found at https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/troubleshooting-domain-controller-deployment
+        if ($_.Exception.ExitCode -in @(15, 19)) {
+            $result.reboot_required = $true
+        } else {
+            Fail-Json -obj $result -message "Failed to install ADDSForest, DCPromo exited with $($_.Exception.ExitCode): $($_.Exception.Message)"
+        }
+    }
 
     if ($check_mode) {
         # the return value after -WhatIf does not have RebootRequired populated
         # manually set to True as the domain would have been installed
         $result.reboot_required = $true
-    } else {
+    } elseif ($null -ne $iaf) {
         $result.reboot_required = $iaf.RebootRequired
 
         # The Netlogon service is set to auto start but is not started. This is

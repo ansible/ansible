@@ -1,0 +1,61 @@
+- name: install htop in check mode to verify changes dict returned
+  yum:
+    name: htop
+    state: present
+  check_mode: yes
+  register: yum_changes_check_mode_result
+
+- name: install verify changes dict returned in check mode
+  assert:
+    that:
+      - "yum_changes_check_mode_result is success"
+      - "yum_changes_check_mode_result is changed"
+      - "'changes' in yum_changes_check_mode_result"
+      - "'installed' in yum_changes_check_mode_result['changes']"
+      - "'htop' in yum_changes_check_mode_result['changes']['installed']"
+
+- name: install htop to verify changes dict returned
+  yum:
+    name: htop
+    state: present
+  register: yum_changes_result
+
+- name: install verify changes dict returned
+  assert:
+    that:
+      - "yum_changes_result is success"
+      - "yum_changes_result is changed"
+      - "'changes' in yum_changes_result"
+      - "'installed' in yum_changes_result['changes']"
+      - "'htop' in yum_changes_result['changes']['installed']"
+
+- name: remove htop in check mode to verify changes dict returned
+  yum:
+    name: htop
+    state: absent
+  check_mode: yes
+  register: yum_changes_check_mode_result
+
+- name: remove verify changes dict returned in check mode
+  assert:
+    that:
+      - "yum_changes_check_mode_result is success"
+      - "yum_changes_check_mode_result is changed"
+      - "'changes' in yum_changes_check_mode_result"
+      - "'removed' in yum_changes_check_mode_result['changes']"
+      - "'htop' in yum_changes_check_mode_result['changes']['removed']"
+
+- name: remove htop to verify changes dict returned
+  yum:
+    name: htop
+    state: absent
+  register: yum_changes_result
+
+- name: remove verify changes dict returned
+  assert:
+    that:
+      - "yum_changes_result is success"
+      - "yum_changes_result is changed"
+      - "'changes' in yum_changes_result"
+      - "'removed' in yum_changes_result['changes']"
+      - "'htop' in yum_changes_result['changes']['removed']"

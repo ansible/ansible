@@ -1,0 +1,7 @@
+minor_changes:
+- "openssl_certificate_info - allow to provide certificate content via ``content`` option (https://github.com/ansible/ansible/issues/64776)."
+- "openssl_csr_info - allow to provide CSR content via ``content`` option."
+- "openssl_privatekey_info - allow to provide private key content via ``content`` option."
+- "openssl_certificate - allow to provide content of some input files via the ``csr_content``, ``privatekey_content``, ``ownca_privatekey_content`` and ``ownca_content`` options."
+- "openssl_csr - allow to provide private key content via ``private_key_content`` option."
+- "openssl_publickey - allow to provide private key content via ``private_key_content`` option."

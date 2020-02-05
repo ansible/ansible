@@ -1,0 +1,65 @@
+---
+- debug:
+    msg: "Start nxos_vlans overridden integration tests connection={{ ansible_connection }}"
+
+- name: setup1
+  cli_config: &cleanup
+    config: |
+      no vlan 2-100
+
+- block:
+  - name: setup
+    cli_config:
+      config: |
+        vlan 5
+          name test-vlan5
+        state suspend
+          vlan 6
+          exit
+
+  - name: Gather vlans facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: vlans
+
+  - name: Overridden
+    nxos_vlans: &overridden
+      config:
+        - vlan_id: 9
+          name: test-vlan9
+          enabled: false
+      state: overridden
+    register: result
+
+  - assert:
+      that:
+        - "result.before|length == (ansible_facts.network_resources.vlans|length - 1)"
+        - "result.changed == true"
+        - "'no vlan 5' in result.commands"
+        - "'no vlan 6' in result.commands"
+        - "'vlan 9' in result.commands"
+        - "'name test-vlan9' in result.commands"
+        - "'shutdown' in result.commands"
+        - "result.commands|length == 5"
+
+  - name: Gather vlans post facts
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "result.after|length == (ansible_facts.network_resources.vlans|length - 1)"
+
+  - name: Idempotence - Overridden
+    nxos_vlans: *overridden
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *cleanup

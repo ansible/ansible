@@ -16,8 +16,15 @@
       state: directory
       mode: 0755
 
+  - name: Copy package specs to remote
+    copy:
+      src: "{{ item }}"
+      dest: "{{ remote_tmp_dir }}/{{ item | basename }}"
+    with_fileglob:
+      - "files/package_specs/*"
+
   - name: Create deb files
-    shell: "equivs-build {{ item }}"
+    shell: "equivs-build {{ remote_tmp_dir }}/{{ item | basename }}"
     args:
       chdir: "{{ repodir }}"
     with_fileglob:

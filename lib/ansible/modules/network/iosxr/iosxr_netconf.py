@@ -51,7 +51,8 @@ options:
     default: present
     choices: ['present', 'absent']
 notes:
-  - Tested against Cisco IOS XR Software, Version 6.1.2
+  - This module works with connection C(network_cli). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
+  - Tested against Cisco IOS XR Software, Version 6.1.3
 """
 
 EXAMPLES = """

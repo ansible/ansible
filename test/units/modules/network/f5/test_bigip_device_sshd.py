@@ -25,7 +25,6 @@ try:
     # In Ansible 2.8, Ansible changed import paths.
     from test.units.compat import unittest
     from test.units.compat.mock import Mock
-    from test.units.compat.mock import patch
 
     from test.units.modules.utils import set_module_args
 except ImportError:
@@ -37,7 +36,6 @@ except ImportError:
     # Ansible 2.8 imports
     from units.compat import unittest
     from units.compat.mock import Mock
-    from units.compat.mock import patch
 
     from units.modules.utils import set_module_args
 
@@ -74,9 +72,6 @@ class TestParameters(unittest.TestCase):
             log_level='debug',
             login='enabled',
             port=1010,
-            server='localhost',
-            user='admin',
-            password='password'
         )
         p = ModuleParameters(params=args)
         assert p.allow == ['all']
@@ -102,9 +97,11 @@ class TestManager(unittest.TestCase):
             log_level='debug',
             login='enabled',
             port=1010,
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the

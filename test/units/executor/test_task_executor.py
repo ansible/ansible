@@ -19,24 +19,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import mock
+
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
-from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
+from ansible.module_utils.six import text_type
 
 from units.mock.loader import DictDataLoader
 
 
 class TestTaskExecutor(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     def test_task_executor_init(self):
         fake_loader = DictDataLoader({})
@@ -99,6 +96,28 @@ class TestTaskExecutor(unittest.TestCase):
         te._get_loop_items = MagicMock(side_effect=AnsibleError(""))
         res = te.run()
         self.assertIn("failed", res)
+
+    def test_task_executor_run_clean_res(self):
+        te = TaskExecutor(None, MagicMock(), None, None, None, None, None, None)
+        te._get_loop_items = MagicMock(return_value=[1])
+        te._run_loop = MagicMock(
+            return_value=[
+                {
+                    'unsafe_bytes': AnsibleUnsafeBytes(b'{{ $bar }}'),
+                    'unsafe_text': AnsibleUnsafeText(u'{{ $bar }}'),
+                    'bytes': b'bytes',
+                    'text': u'text',
+                    'int': 1,
+                }
+            ]
+        )
+        res = te.run()
+        data = res['results'][0]
+        self.assertIsInstance(data['unsafe_bytes'], AnsibleUnsafeText)
+        self.assertIsInstance(data['unsafe_text'], AnsibleUnsafeText)
+        self.assertIsInstance(data['bytes'], text_type)
+        self.assertIsInstance(data['text'], text_type)
+        self.assertIsInstance(data['int'], int)
 
     def test_task_executor_get_loop_items(self):
         fake_loader = DictDataLoader({})
@@ -355,6 +374,110 @@ class TestTaskExecutor(unittest.TestCase):
         # self.assertEqual(mock_task.args, {'name': '{{item.name}}', 'state': '{{item.state}}'})
         self.assertEqual(new_items, items)
         self.assertEqual(mock_task.args, {'name': '{{item.name}}', 'state': '{{item.state}}'})
+
+    def test_task_executor_get_action_handler(self):
+        te = TaskExecutor(
+            host=MagicMock(),
+            task=MagicMock(),
+            job_vars={},
+            play_context=MagicMock(),
+            new_stdin=None,
+            loader=DictDataLoader({}),
+            shared_loader_obj=MagicMock(),
+            final_q=MagicMock(),
+        )
+
+        action_loader = te._shared_loader_obj.action_loader
+        action_loader.has_plugin.return_value = True
+        action_loader.get.return_value = mock.sentinel.handler
+
+        mock_connection = MagicMock()
+        mock_templar = MagicMock()
+        action = 'namespace.prefix_suffix'
+        te._task.action = action
+
+        handler = te._get_action_handler(mock_connection, mock_templar)
+
+        self.assertIs(mock.sentinel.handler, handler)
+
+        action_loader.has_plugin.assert_called_once_with(
+            action, collection_list=te._task.collections)
+
+        action_loader.get.assert_called_once_with(
+            te._task.action, task=te._task, connection=mock_connection,
+            play_context=te._play_context, loader=te._loader,
+            templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
+            collection_list=te._task.collections)
+
+    def test_task_executor_get_handler_prefix(self):
+        te = TaskExecutor(
+            host=MagicMock(),
+            task=MagicMock(),
+            job_vars={},
+            play_context=MagicMock(),
+            new_stdin=None,
+            loader=DictDataLoader({}),
+            shared_loader_obj=MagicMock(),
+            final_q=MagicMock(),
+        )
+
+        action_loader = te._shared_loader_obj.action_loader
+        action_loader.has_plugin.side_effect = [False, True]
+        action_loader.get.return_value = mock.sentinel.handler
+        action_loader.__contains__.return_value = True
+
+        mock_connection = MagicMock()
+        mock_templar = MagicMock()
+        action = 'namespace.netconf_suffix'
+        module_prefix = action.split('_')[0]
+        te._task.action = action
+
+        handler = te._get_action_handler(mock_connection, mock_templar)
+
+        self.assertIs(mock.sentinel.handler, handler)
+        action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),
+                                                   mock.call(module_prefix, collection_list=te._task.collections)])
+
+        action_loader.get.assert_called_once_with(
+            module_prefix, task=te._task, connection=mock_connection,
+            play_context=te._play_context, loader=te._loader,
+            templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
+            collection_list=te._task.collections)
+
+    def test_task_executor_get_handler_normal(self):
+        te = TaskExecutor(
+            host=MagicMock(),
+            task=MagicMock(),
+            job_vars={},
+            play_context=MagicMock(),
+            new_stdin=None,
+            loader=DictDataLoader({}),
+            shared_loader_obj=MagicMock(),
+            final_q=MagicMock(),
+        )
+
+        action_loader = te._shared_loader_obj.action_loader
+        action_loader.has_plugin.return_value = False
+        action_loader.get.return_value = mock.sentinel.handler
+        action_loader.__contains__.return_value = False
+
+        mock_connection = MagicMock()
+        mock_templar = MagicMock()
+        action = 'namespace.prefix_suffix'
+        module_prefix = action.split('_')[0]
+        te._task.action = action
+        handler = te._get_action_handler(mock_connection, mock_templar)
+
+        self.assertIs(mock.sentinel.handler, handler)
+
+        action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),
+                                                   mock.call(module_prefix, collection_list=te._task.collections)])
+
+        action_loader.get.assert_called_once_with(
+            'normal', task=te._task, connection=mock_connection,
+            play_context=te._play_context, loader=te._loader,
+            templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
+            collection_list=None)
 
     def test_task_executor_execute(self):
         fake_loader = DictDataLoader({})

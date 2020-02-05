@@ -73,7 +73,9 @@ options:
         type: bool
     force:
         description:
-            - "If True host will be forcibly moved to desired state."
+            - "Indicates that the host should be removed even if it is non-responsive,
+               or if it is part of a Gluster Storage cluster and has volume bricks on it."
+            - "WARNING: It doesn't forcibly remove the host if another host related operation is being executed on the host at the same time."
         default: False
         type: bool
     override_display:
@@ -124,7 +126,27 @@ options:
              used to discover targets"
           - "If C(state) is I(iscsilogin) it means that the iscsi attribute is being
              used to login to the specified targets passed as part of the iscsi attribute"
-        version_added: "2.4"
+        suboptions:
+            username:
+                description:
+                    - "A CHAP user name for logging into a target."
+            password:
+                description:
+                    - "A CHAP password for logging into a target."
+            address:
+                description:
+                    - "Address of the iSCSI storage server."
+            target:
+                description:
+                    - "The target IQN for the storage device."
+            port:
+                description:
+                    - "The port being used to connect with iscsi."
+            portal:
+                description:
+                    - "The portal being used to connect with iscsi."
+                version_added: 2.10
+        version_added: 2.4
     check_upgrade:
         description:
             - "If I(true) and C(state) is I(upgraded) run check for upgrade
@@ -138,6 +160,15 @@ options:
         default: True
         type: bool
         version_added: 2.6
+    vgpu_placement:
+        description:
+            - If I(consolidated), each vGPU is placed on the first physical card with
+              available space. This is the default placement, utilizing all available
+              space on the physical cards.
+            - If I(separated), each vGPU is placed on a separate physical card, if
+              possible. This can be useful for improving vGPU performance.
+        choices: ['consolidated', 'separated']
+        version_added: 2.8
 extends_documentation_fragment: ovirt
 '''
 
@@ -223,6 +254,15 @@ EXAMPLES = '''
     name: myhost
     force: True
 
+# Retry removing host when failed (https://bugzilla.redhat.com/show_bug.cgi?id=1719271)
+- ovirt_host:
+    state: absent
+    name: myhost
+  register: result
+  until: not result.failed
+  retries: 6
+  delay: 20
+
 # Change host Name
 - ovirt_host:
     id: 00000000-0000-0000-0000-000000000000
@@ -269,6 +309,9 @@ from ansible.module_utils.ovirt import (
 
 
 class HostsModule(BaseModule):
+    def __init__(self, start_event=None, *args, **kwargs):
+        super(HostsModule, self).__init__(*args, **kwargs)
+        self.start_event = start_event
 
     def build_entity(self):
         return otypes.Host(
@@ -297,6 +340,9 @@ class HostsModule(BaseModule):
                 enabled=self.param('power_management_enabled'),
                 kdump_detection=self.param('kdump_integration') == 'enabled',
             ) if self.param('power_management_enabled') is not None or self.param('kdump_integration') else None,
+            vgpu_placement=otypes.VgpuPlacement(
+                self.param('vgpu_placement')
+            ) if self.param('vgpu_placement') is not None else None,
         )
 
     def update_check(self, entity):
@@ -308,6 +354,7 @@ class HostsModule(BaseModule):
             equal(self.param('name'), entity.name) and
             equal(self.param('power_management_enabled'), entity.power_management.enabled) and
             equal(self.param('override_display'), getattr(entity.display, 'address', None)) and
+            equal(self.param('vgpu_placement'), str(entity.vgpu_placement)) and
             equal(
                 sorted(kernel_params) if kernel_params else None,
                 sorted(entity.os.custom_kernel_cmdline.split(' '))
@@ -331,13 +378,24 @@ class HostsModule(BaseModule):
             timeout=self.param('timeout'),
         )
 
+    def raise_host_exception(self):
+        events = self._connection.system_service().events_service().list(from_=int(self.start_event.index))
+        error_events = [
+            event.description for event in events
+            if event.host is not None and (event.host.id == self.param('id') or event.host.name == self.param('name')) and
+            event.severity in [otypes.LogSeverity.WARNING, otypes.LogSeverity.ERROR]
+        ]
+        if error_events:
+            raise Exception("Error message: %s" % error_events)
+        return True
+
     def failed_state_after_reinstall(self, host, count=0):
         if host.status in [
             hoststate.ERROR,
             hoststate.INSTALL_FAILED,
             hoststate.NON_OPERATIONAL,
         ]:
-            return True
+            return self.raise_host_exception()
 
         # If host is in non-responsive state after upgrade/install
         # let's wait for few seconds and re-check again the state:
@@ -349,7 +407,7 @@ class HostsModule(BaseModule):
                     count + 1,
                 )
             else:
-                return True
+                return self.raise_host_exception()
 
         return False
 
@@ -430,6 +488,7 @@ def main():
         iscsi=dict(default=None, type='dict'),
         check_upgrade=dict(default=True, type='bool'),
         reboot_after_upgrade=dict(default=True, type='bool'),
+        vgpu_placement=dict(default=None, choices=['consolidated', 'separated']),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -446,10 +505,12 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         hosts_service = connection.system_service().hosts_service()
+        start_event = connection.system_service().events_service().list(max=1)[0]
         hosts_module = HostsModule(
             connection=connection,
             module=module,
             service=hosts_service,
+            start_event=start_event,
         )
 
         state = module.params['state']
@@ -459,7 +520,8 @@ def main():
                 deploy_hosted_engine=(
                     module.params.get('hosted_engine') == 'deploy'
                 ) if module.params.get('hosted_engine') is not None else None,
-                result_state=hoststate.UP if host is None else None,
+                activate=module.params['activate'],
+                result_state=(hoststate.MAINTENANCE if module.params['activate'] is False else hoststate.UP) if host is None else None,
                 fail_condition=hosts_module.failed_state_after_reinstall if host is None else lambda h: False,
             )
             if module.params['activate'] and host is not None:
@@ -539,6 +601,7 @@ def main():
                     username=iscsi_param.get('username'),
                     password=iscsi_param.get('password'),
                     address=iscsi_param.get('address'),
+                    portal=iscsi_param.get('portal'),
                 ),
             )
             ret = {
@@ -557,6 +620,7 @@ def main():
                     password=iscsi_param.get('password'),
                     address=iscsi_param.get('address'),
                     target=iscsi_param.get('target'),
+                    portal=iscsi_param.get('portal'),
                 ),
             )
         elif state == 'started':

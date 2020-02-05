@@ -1,0 +1,99 @@
+---
+- debug:
+    msg: "Start nxos_l2_interfaces merged integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+
+- name: setup
+  cli_config: &cleanup
+    config: |
+      default interface {{ test_int1 }}
+  ignore_errors: yes
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        interface {{ test_int1 }}
+          switchport
+
+  - name: Merged
+    nxos_l2_interfaces: &merged
+      config:
+        - name: "{{ test_int1 }}"
+          access:
+            vlan: 6
+          trunk:
+            allowed_vlans: 200
+      state:  merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "result.before|length == 0"
+        - "'interface {{ test_int1 }}' in result.commands"
+        - "'switchport access vlan 6' in result.commands"
+        - "result.commands|length == 3"
+
+  - name: Gather l2_interfaces facts
+    nxos_facts:
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: l2_interfaces
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.after)|length == 0"
+
+  - name: Idempotence - Merged
+    nxos_l2_interfaces: *merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  - name: Merge with existing vlans
+    nxos_l2_interfaces: &vlanadd
+      config:
+        - name: "{{ test_int1 }}"
+          trunk:
+            allowed_vlans: "10-12"
+      state:  merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'interface {{ test_int1 }}' in result.commands"
+        - "'switchport trunk allowed vlan add 10,11,12' in result.commands"
+        - "result.commands|length == 2"
+
+  - name: Gather l2_interfaces facts
+    nxos_facts:
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: l2_interfaces
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.after)|length == 0"
+
+  - name: Idempotence - with newly added vlans
+    nxos_l2_interfaces: *vlanadd
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+
+  always:
+  - name: teardown
+    cli_config: *cleanup
+    ignore_errors: yes

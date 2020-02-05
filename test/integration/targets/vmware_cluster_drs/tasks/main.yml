@@ -1,0 +1,97 @@
+# Test code for the vmware_cluster module.
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+# Setup: Create test cluster
+- name: Create test cluster
+  vmware_cluster:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_drs
+    state: present
+
+# Testcase 0001: Enable DRS
+- name: Enable DRS
+  vmware_cluster_drs:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_drs
+    enable_drs: yes
+  register: cluster_drs_result_0001
+
+- name: Ensure DRS is enabled
+  assert:
+    that:
+        - "{{ cluster_drs_result_0001.changed == true }}"
+
+# Testcase 0002: Disable DRS
+- name: Disable DRS
+  vmware_cluster_drs:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_drs
+    enable_drs: no
+  register: cluster_drs_result_0002
+
+- name: Ensure DRS is disabled
+  assert:
+    that:
+        - "{{ cluster_drs_result_0002.changed == true }}"
+
+- when: vcsim is not defined
+  block:
+  - name: Change advanced setting "TryBalanceVmsPerHost" (check-mode)
+    vmware_cluster_drs: &change_balance_vms
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter_name: "{{ dc1 }}"
+      cluster_name: test_cluster_drs
+      advanced_settings:
+          'TryBalanceVmsPerHost': '1'
+    check_mode: yes
+    register: change_balance_vms_check
+
+  - assert:
+      that:
+        - change_balance_vms_check.changed
+
+  - name: Change advanced setting "TryBalanceVmsPerHost"
+    vmware_cluster_drs: *change_balance_vms
+    register: change_balance_vms
+
+  - assert:
+      that:
+        - change_balance_vms.changed
+
+  - name: Change advanced setting "TryBalanceVmsPerHost" again
+    vmware_cluster_drs: *change_balance_vms
+    register: change_balance_vms_again
+
+  - assert:
+      that:
+        - not change_balance_vms_again.changed
+
+  # Delete test cluster
+  - name: Delete test cluster
+    vmware_cluster:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter_name: "{{ dc1 }}"
+      cluster_name: test_cluster_drs
+      state: absent

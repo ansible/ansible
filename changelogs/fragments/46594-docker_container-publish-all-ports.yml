@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_container - ``publish_ports: all`` was not used correctly when checking idempotency."

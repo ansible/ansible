@@ -1,0 +1,7 @@
+# Test code for the vmware_tag Operations.
+# Copyright: (c) 2019, Pavan Bidkar <pbidkar@vmware.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- include: tag_crud_ops.yml
+- include: tag_manager_ops.yml
+- include: tag_manager_duplicate_tag_cat.yml

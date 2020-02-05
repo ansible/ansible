@@ -17,7 +17,6 @@ if sys.version_info < (2, 7):
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigip_apm_policy_fetch import ApiParameters
     from library.modules.bigip_apm_policy_fetch import ModuleParameters
     from library.modules.bigip_apm_policy_fetch import ModuleManager
     from library.modules.bigip_apm_policy_fetch import ArgumentSpec
@@ -29,7 +28,6 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    from ansible.modules.network.f5.bigip_apm_policy_fetch import ApiParameters
     from ansible.modules.network.f5.bigip_apm_policy_fetch import ModuleParameters
     from ansible.modules.network.f5.bigip_apm_policy_fetch import ModuleManager
     from ansible.modules.network.f5.bigip_apm_policy_fetch import ArgumentSpec
@@ -70,9 +68,11 @@ class TestParameters(unittest.TestCase):
             dest='/tmp/',
             force='yes',
             file='foo_export',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         )
         p = ModuleParameters(params=args)
         assert p.file == 'foo_export'
@@ -102,9 +102,11 @@ class TestManager(unittest.TestCase):
             name='fake_policy',
             file='foo_export',
             dest='/tmp/',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

@@ -1,0 +1,4 @@
+- name: Install EPEL
+  yum:
+    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
+  when: ansible_facts.distribution in ['RedHat', 'CentOS']

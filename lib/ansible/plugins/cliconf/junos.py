@@ -19,6 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+cliconf: junos
+short_description: Use junos cliconf to run command on Juniper Junos OS platform
+description:
+  - This junos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Juniper Junos OS network devices.
+version_added: "2.4"
+"""
+
 import json
 import re
 
@@ -98,7 +109,7 @@ class Cliconf(CliconfBase):
         requests = []
 
         if replace:
-            candidate = 'load replace {0}'.format(replace)
+            candidate = 'load override {0}'.format(replace)
 
         for line in to_list(candidate):
             if not isinstance(line, Mapping):
@@ -122,17 +133,17 @@ class Cliconf(CliconfBase):
                 self.discard_changes()
 
         else:
-            for cmd in ['top', 'exit']:
-                self.send_command(cmd)
+            self.send_command('top')
+            self.discard_changes()
 
         resp['request'] = requests
         resp['response'] = results
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if output:
             command = self._get_command_with_output(command, output)
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     @configure
     def commit(self, comment=None, confirmed=False, at_time=None, synchronize=False):
@@ -182,7 +193,7 @@ class Cliconf(CliconfBase):
         resp = self.send_command(command)
 
         r = resp.splitlines()
-        if len(r) == 1 and '[edit]' in r[0]:
+        if len(r) == 1 and '[edit]' in r[0] or len(r) == 4 and r[1].startswith('- version'):
             resp = ''
 
         return resp
@@ -229,13 +240,19 @@ class Cliconf(CliconfBase):
         }
 
     def get_capabilities(self):
-        result = dict()
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'run_commands', 'compare_configuration', 'validate', 'get_diff']
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['rpc'] += ['commit', 'discard_changes', 'run_commands', 'compare_configuration', 'validate', 'get_diff']
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            self._update_cli_prompt_context(config_context='#')
 
     def _get_command_with_output(self, command, output):
         options_values = self.get_option_values()

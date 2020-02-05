@@ -37,7 +37,7 @@ options:
     timeout:
       description:
         - If waiting for the workflow to complete this will abort after this
-        - ammount of seconds
+          amount of seconds
 
 requirements:
   - "python >= 2.6"
@@ -51,7 +51,7 @@ tower_version:
     type: str
     sample: '3.4.0'
 job_info:
-    description: dictionnary containing information about the workflow executed
+    description: dictionary containing information about the workflow executed
     returned: If workflow launched
     type: dict
 '''

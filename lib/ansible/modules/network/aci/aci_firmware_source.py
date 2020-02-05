@@ -17,13 +17,7 @@ module: aci_firmware_source
 short_description: Manage firmware image sources (firmware:OSource)
 description:
 - Manage firmware image sources on Cisco ACI fabrics.
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.5'
-seealso:
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(firmware:OSource).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
 options:
   source:
     description:
@@ -62,6 +56,12 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(firmware:OSource).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -211,8 +211,8 @@ url:
 '''
 
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
@@ -236,13 +236,13 @@ def main():
         ],
     )
 
-    polling_interval = module.params['polling_interval']
-    url_protocol = module.params['url_protocol']
-    state = module.params['state']
-    source = module.params['source']
-    url = module.params['url']
-    url_password = module.params['url_password']
-    url_username = module.params['url_username']
+    polling_interval = module.params.get('polling_interval')
+    url_protocol = module.params.get('url_protocol')
+    state = module.params.get('state')
+    source = module.params.get('source')
+    url = module.params.get('url')
+    url_password = module.params.get('url_password')
+    url_username = module.params.get('url_username')
 
     aci = ACIModule(module)
     aci.construct_url(

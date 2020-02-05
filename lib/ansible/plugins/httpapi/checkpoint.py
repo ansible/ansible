@@ -14,6 +14,14 @@ description:
   - This HttpApi plugin provides methods to connect to Checkpoint
     devices over a HTTP(S)-based api.
 version_added: "2.8"
+options:
+  domain:
+    type: str
+    description:
+      - Specifies the domain of the Check Point device
+    vars:
+      - name: ansible_checkpoint_domain
+    version_added: "2.10"
 """
 
 import json
@@ -32,7 +40,11 @@ BASE_HEADERS = {
 class HttpApi(HttpApiBase):
     def login(self, username, password):
         if username and password:
-            payload = {'user': username, 'password': password}
+            cp_domain = self.get_option('domain')
+            if cp_domain:
+                payload = {'user': username, 'password': password, 'domain': cp_domain}
+            else:
+                payload = {'user': username, 'password': password}
             url = '/web_api/login'
             response, response_data = self.send_request(url, payload)
         else:
@@ -63,7 +75,7 @@ class HttpApi(HttpApiBase):
 
             return response.getcode(), self._response_to_json(value)
         except AnsibleConnectionFailure as e:
-            return 404, 'Object not found'
+            return 404, e.message
         except HTTPError as e:
             error = json.loads(e.read())
             return e.code, error

@@ -1,0 +1,664 @@
+---
+- name: Setup server groups
+  cloudscale_server_group:
+    name: '{{ cloudscale_resource_prefix }}-group-{{ item }}'
+    type: anti-affinity
+  with_sequence: count=2
+
+- name: Test create a running server in check mode
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags:
+      project: ansible-test
+      stage: production
+      sla: 24-7
+  register: server
+  check_mode: yes
+- name: Verify create a running server in check mode
+  assert:
+    that:
+      - server is changed
+      - server.state == 'absent'
+
+- name: Test create a running server
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags:
+      project: ansible-test
+      stage: production
+      sla: 24-7
+  register: server
+- name: Verify create a running server
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.tags.project == 'ansible-test'
+      - server.tags.stage == 'production'
+      - server.tags.sla == '24-7'
+
+- name: Test create a running server idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags:
+      project: ansible-test
+      stage: production
+      sla: 24-7
+  register: server
+- name: Verify create a running server idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.tags.project == 'ansible-test'
+      - server.tags.stage == 'production'
+      - server.tags.sla == '24-7'
+
+- name: Test update tags in check mode
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags:
+      project: ansible-test
+      stage: staging
+      sla: 8-5
+  register: server
+  check_mode: yes
+- name: Verify update tags in check mode
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.tags.project == 'ansible-test'
+      - server.tags.stage == 'production'
+      - server.tags.sla == '24-7'
+
+- name: Test update tags
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags:
+      project: ansible-test
+      stage: staging
+      sla: 8-5
+  register: server
+- name: Verify update tags
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.tags.project == 'ansible-test'
+      - server.tags.stage == 'staging'
+      - server.tags.sla == '8-5'
+
+- name: Test update tags idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags:
+      project: ansible-test
+      stage: staging
+      sla: 8-5
+  register: server
+- name: Verify update tags idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.tags.project == 'ansible-test'
+      - server.tags.stage == 'staging'
+      - server.tags.sla == '8-5'
+
+- name: Test omit tags idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+  register: server
+- name: Verify update tags idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.tags.project == 'ansible-test'
+      - server.tags.stage == 'staging'
+      - server.tags.sla == '8-5'
+
+- name: Test delete tags
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags: {}
+  register: server
+- name: Verify delete tags
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - not server.tags
+
+- name: Test delete tags idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags: {}
+  register: server
+- name: Verify delete tags idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - not server.tags
+
+- name: Test update flavor of a running server without force in check mode
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor_2 }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    force: no
+  register: server
+  check_mode: yes
+- name: Verify update flavor of a running server without force in check mode
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.flavor.slug == '{{ cloudscale_test_flavor }}'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+
+- name: Test update flavor of a running server without force
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor_2 }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    force: no
+  register: server
+- name: Verify update flavor of a running server without force
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.flavor.slug == '{{ cloudscale_test_flavor }}'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+
+- name: Test update flavor of a running server without force idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor_2 }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    force: no
+  register: server
+- name: Verify update flavor of a running server without force idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.flavor.slug == '{{ cloudscale_test_flavor }}'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+
+- name: Test update flavor and name of a running server without force in check mode
+  cloudscale_server:
+    uuid: '{{ server.uuid }}'
+    name: '{{ cloudscale_resource_prefix }}-test-renamed'
+    flavor: '{{ cloudscale_test_flavor_2 }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    force: no
+  register: server
+  check_mode: yes
+- name: Verify update flavor and name of a running server without force in check mode
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+      - server.flavor.slug == '{{ cloudscale_test_flavor }}'
+      - server.name == '{{ cloudscale_resource_prefix }}-test'
+
+- name: Test update flavor and name of a running server without force
+  cloudscale_server:
+    uuid: '{{ server.uuid }}'
+    name: '{{ cloudscale_resource_prefix }}-test-renamed'
+    flavor: '{{ cloudscale_test_flavor_2 }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    force: no
+  register: server
+- name: Verify update flavor and name of a running server without force
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+      - server.flavor.slug == '{{ cloudscale_test_flavor }}'
+      - server.name == '{{ cloudscale_resource_prefix }}-test-renamed'
+
+- name: Test update flavor and name of a running server without force idempotence
+  cloudscale_server:
+    uuid: '{{ server.uuid }}'
+    name: '{{ cloudscale_resource_prefix }}-test-renamed'
+    flavor: '{{ cloudscale_test_flavor_2 }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    force: no
+  register: server
+- name: Verify update flavor and name of a running server without force idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.flavor.slug == '{{ cloudscale_test_flavor }}'
+      - server.name == '{{ cloudscale_resource_prefix }}-test-renamed'
+
+- name: Test update flavor of a running server with force in check mode
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-renamed'
+    flavor: '{{ cloudscale_test_flavor_2 }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    force: yes
+  register: server
+  check_mode: yes
+- name: Verify update flavor of a running server with force in check mode
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+      - server.flavor.slug == '{{ cloudscale_test_flavor }}'
+      - server.name == '{{ cloudscale_resource_prefix }}-test-renamed'
+
+- name: Test update flavor of a running server with force
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-renamed'
+    flavor: '{{ cloudscale_test_flavor_2 }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    force: yes
+  register: server
+- name: Verify update flavor of a running server with force
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+      - server.flavor.slug == '{{ cloudscale_test_flavor_2 }}'
+      - server.name == '{{ cloudscale_resource_prefix }}-test-renamed'
+
+- name: Test update a running server with force idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-renamed'
+    flavor: '{{ cloudscale_test_flavor_2 }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    force: yes
+  register: server
+- name: Verify update flavor of a running server with force idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.flavor.slug == '{{ cloudscale_test_flavor_2 }}'
+      - server.name == '{{ cloudscale_resource_prefix }}-test-renamed'
+
+- name: Remember uuid of running server for anti affinity
+  set_fact:
+    running_server_uuid: '{{ server.uuid }}'
+
+- name: Test create server stopped in anti affinity and private network only in check mode
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-stopped'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    use_public_network: no
+    use_private_network: yes
+    state: stopped
+  check_mode: yes
+  register: server_stopped
+- name: Verify create server stopped in anti affinity and private network only in check mode
+  assert:
+    that:
+      - server_stopped is changed
+      - server_stopped.state == 'absent'
+
+- name: Test create server stopped in anti affinity and private network only
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-stopped'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    use_public_network: no
+    use_private_network: yes
+    state: stopped
+  register: server_stopped
+- name: Verify create server stopped in anti affinity and private network only
+  assert:
+    that:
+      - server_stopped is changed
+      - server_stopped.state == 'stopped'
+      - server_stopped.anti_affinity_with.0.uuid == running_server_uuid
+      - server_stopped.interfaces.0.type == 'private'
+      - server_stopped.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+
+- name: Test create server stopped in anti affinity and private network only idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-stopped'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    use_public_network: no
+    use_private_network: yes
+    state: stopped
+  register: server_stopped
+- name: Verify create server stopped in anti affinity and private network only idempotence
+  assert:
+    that:
+      - server_stopped is not changed
+      - server_stopped.state == 'stopped'
+      - server_stopped.anti_affinity_with.0.uuid == running_server_uuid
+      - server_stopped.interfaces.0.type == 'private'
+      - server_stopped.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+
+- name: Test change server group not changed
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-stopped'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-2'
+    use_public_network: no
+    use_private_network: yes
+    state: stopped
+  register: server_stopped
+- name: Verify Test update server group not changed
+  assert:
+    that:
+      - server_stopped is not changed
+      - server_stopped.state == 'stopped'
+      - server_stopped.anti_affinity_with.0.uuid == running_server_uuid
+      - server_stopped.interfaces.0.type == 'private'
+      - server_stopped.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+
+- name: Test create server with password in check mode
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-password'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    password: '{{ cloudscale_test_password }}'
+  check_mode: yes
+  register: server_password
+- name: Verify create server with password in check mode
+  assert:
+    that:
+      - server_password is changed
+      - server_password.state == 'absent'
+      # Verify password is not logged
+      - server_password.diff.after.password != cloudscale_test_password
+
+- name: Test create server with password
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-password'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    password: '{{ cloudscale_test_password }}'
+  register: server_password
+- name: Verify create server with password
+  assert:
+    that:
+      - server_password is changed
+      - server_password.state == 'running'
+      # Verify password is not logged
+      - server_password.diff.after.password != cloudscale_test_password
+
+- name: Test create server with password idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-password'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    password: '{{ cloudscale_test_password }}'
+  register: server_password
+- name: Verify create server with password idempotence
+  assert:
+    that:
+      - server_password is not changed
+      - server_password.state == 'running'
+
+- name: Test create server failure without required parameters
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-failed'
+  register: server_failed
+  ignore_errors: yes
+- name: Verify create server failure without required parameters
+  assert:
+    that:
+      - server_failed is failed
+      - "'Failure while calling the cloudscale.ch API with POST for \"servers\".' in server_failed.msg"
+      - "'This field is required.' in server_failed.fetch_url_info.body"
+
+- name: Test stop running server in check mode
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-renamed'
+    state: stopped
+  check_mode: yes
+  register: server
+- name: Verify stop running server in check mode
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+
+- name: Test stop running server
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-renamed'
+    state: stopped
+  register: server
+- name: Verify stop running server
+  assert:
+    that:
+      - server is changed
+      - server.state == 'stopped'
+
+- name: Test stop running server idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-renamed'
+    state: 'stopped'
+  register: server
+- name: Verify stop running server idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'stopped'
+
+- name: Test update a stopped server in check mode
+  cloudscale_server:
+    uuid: '{{ server.uuid }}'
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    state: stopped
+  register: server
+  check_mode: yes
+- name: Verify update a stopped server in check mode
+  assert:
+    that:
+      - server is changed
+      - server.state == 'stopped'
+      - server.flavor.slug == '{{ cloudscale_test_flavor_2 }}'
+      - server.name == '{{ cloudscale_resource_prefix }}-test-renamed'
+
+- name: Test update a stopped server without force
+  cloudscale_server:
+    uuid: '{{ server.uuid }}'
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    state: stopped
+  register: server
+- name: Verify update a stopped server without force
+  assert:
+    that:
+      - server is changed
+      - server.state == 'stopped'
+      - server.flavor.slug == '{{ cloudscale_test_flavor }}'
+      - server.name == '{{ cloudscale_resource_prefix }}-test'
+
+- name: Test update a stopped server idempotence
+  cloudscale_server:
+    uuid: '{{ server.uuid }}'
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    state: stopped
+  register: server
+- name: Verify update a stopped server idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'stopped'
+      - server.flavor.slug == '{{ cloudscale_test_flavor }}'
+      - server.name == '{{ cloudscale_resource_prefix }}-test'
+
+- name: Test server running in check mode
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    state: running
+  register: server
+  check_mode: yes
+- name: Verify server running in check mode
+  assert:
+    that:
+      - server is changed
+      - server.state == 'stopped'
+
+- name: Test server running
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    state: running
+  register: server
+- name: Verify server running
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+
+- name: Test server running idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    state: running
+  register: server
+- name: Verify server running idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+
+- name: Test running server deletion by name in check mode
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    state: absent
+  register: server
+  check_mode: yes
+- name: Verify running server deletion by name in check mode
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+
+- name: Test running server deletion by name
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    state: absent
+  register: server
+- name: Verify running server deletion by name
+  assert:
+    that:
+      - server is changed
+      - server.state == 'absent'
+
+- name: Test running server deletion by name idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    state: absent
+  register: server
+- name: Verify running server deletion by name idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'absent'
+
+- name: Test stopped server deletion by uuid in check mode
+  cloudscale_server:
+    uuid: '{{ server_stopped.uuid }}'
+    state: absent
+  register: server_stopped
+  check_mode: yes
+- name: Verify stopped server deletion by uuid in check mode
+  assert:
+    that:
+      - server_stopped is changed
+      - server_stopped.state == 'stopped'
+
+- name: Test stopped server deletion by uuid
+  cloudscale_server:
+    uuid: '{{ server_stopped.uuid }}'
+    state: absent
+  register: server_stopped
+- name: Verify stopped server deletion by uuid
+  assert:
+    that:
+      - server_stopped is changed
+      - server_stopped.state == 'absent'
+
+- name: Test stopped server deletion by uuid idempotence
+  cloudscale_server:
+    uuid: '{{ server_stopped.uuid }}'
+    state: absent
+  register: server_stopped
+- name: Verify stopped server deletion by uuid idempotence
+  assert:
+    that:
+      - server_stopped is not changed
+      - server_stopped.state == 'absent'

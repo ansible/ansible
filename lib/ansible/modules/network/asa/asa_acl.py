@@ -79,7 +79,7 @@ options:
         against the contents of source.  There are times when it is not
         desirable to have the task get the current running-config for
         every task in a playbook.  The I(config) argument allows the
-        implementer to pass in the configuruation to use as the base
+        implementer to pass in the configuration to use as the base
         config for comparison.
 """
 
@@ -185,35 +185,35 @@ def main():
     lines = module.params['lines']
 
     result = {'changed': False}
+    if len(lines) > 0:
+        candidate = NetworkConfig(indent=1)
+        candidate.add(lines)
 
-    candidate = NetworkConfig(indent=1)
-    candidate.add(lines)
+        acl_name = parse_acl_name(module)
 
-    acl_name = parse_acl_name(module)
+        if not module.params['force']:
+            contents = get_acl_config(module, acl_name)
+            config = NetworkConfig(indent=1, contents=contents)
 
-    if not module.params['force']:
-        contents = get_acl_config(module, acl_name)
-        config = NetworkConfig(indent=1, contents=contents)
+            commands = candidate.difference(config)
+            commands = dumps(commands, 'commands').split('\n')
+            commands = [str(c) for c in commands if c]
+        else:
+            commands = str(candidate).split('\n')
 
-        commands = candidate.difference(config)
-        commands = dumps(commands, 'commands').split('\n')
-        commands = [str(c) for c in commands if c]
-    else:
-        commands = str(candidate).split('\n')
+        if commands:
+            if module.params['before']:
+                commands[:0] = module.params['before']
 
-    if commands:
-        if module.params['before']:
-            commands[:0] = module.params['before']
+            if module.params['after']:
+                commands.extend(module.params['after'])
 
-        if module.params['after']:
-            commands.extend(module.params['after'])
+            if not module.check_mode:
+                load_config(module, commands)
 
-        if not module.check_mode:
-            load_config(module, commands)
+            result['changed'] = True
 
-        result['changed'] = True
-
-    result['updates'] = commands
+        result['updates'] = commands
 
     module.exit_json(**result)
 

@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_igmp_snooping
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestAdminServiceModule(TestNvosModule):
@@ -38,7 +36,7 @@ class TestAdminServiceModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_vxlan': True,
                          'pn_enable_vlans': '1-399,401-4092', 'pn_no_snoop_linklocal_vlans': 'none', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 igmp-snooping-modify  vxlan  enable-vlans '
+        expected_cmd = ' switch sw01 igmp-snooping-modify  vxlan  enable-vlans '
         expected_cmd += '1-399,401-4092 no-snoop-linklocal-vlans none'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
@@ -46,12 +44,12 @@ class TestAdminServiceModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_scope': 'local',
                          'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 igmp-snooping-modify  scope local'
+        expected_cmd = ' switch sw01 igmp-snooping-modify  scope local'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_igmp_snooping_modify_t3(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_vxlan': False,
                          'pn_enable_vlans': '1-399', 'pn_igmpv3_vlans': '1-399', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 igmp-snooping-modify  no-vxlan  igmpv3-vlans 1-399 enable-vlans 1-399'
+        expected_cmd = ' switch sw01 igmp-snooping-modify  no-vxlan  igmpv3-vlans 1-399 enable-vlans 1-399'
         self.assertEqual(result['cli_cmd'], expected_cmd)

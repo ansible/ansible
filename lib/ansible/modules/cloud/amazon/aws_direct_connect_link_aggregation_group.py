@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -10,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: aws_direct_connect_link_aggregation_group
-short_description: Manage Direct Connect LAG bundles.
+short_description: Manage Direct Connect LAG bundles
 description:
   - Create, delete, or modify a Direct Connect link aggregation group.
 version_added: "2.4"
@@ -28,24 +31,32 @@ options:
     choices:
       - present
       - absent
+    type: str
+    required: true
   name:
     description:
       - The name of the Direct Connect link aggregation group.
+    type: str
   link_aggregation_group_id:
     description:
       - The ID of the Direct Connect link aggregation group.
+    type: str
   num_connections:
     description:
-      - The number of connections with which to intialize the link aggregation group.
+      - The number of connections with which to initialize the link aggregation group.
+    type: int
   min_links:
     description:
       - The minimum number of physical connections that must be operational for the LAG itself to be operational.
+    type: int
   location:
     description:
       - The location of the link aggregation group.
+    type: str
   bandwidth:
     description:
       - The bandwidth of the link aggregation group.
+    type: str
   force_delete:
     description:
       - This allows the minimum number of links to be set to 0, any hosted connections disassociated,
@@ -54,19 +65,22 @@ options:
   connection_id:
     description:
       - A connection ID to link with the link aggregation group upon creation.
+    type: str
   delete_with_disassociation:
     description:
       - To be used with I(state=absent) to delete connections after disassociating them with the LAG.
     type: bool
   wait:
     description:
-      - Whether or not to wait for the operation to complete. May be useful when waiting for virtual interfaces
-        to be deleted. May modify the time of waiting with C(wait_timeout).
+      - Whether or not to wait for the operation to complete.
+      - May be useful when waiting for virtual interfaces to be deleted.
+      - The time to wait can be controlled by setting I(wait_timeout).
     type: bool
   wait_timeout:
     description:
-      - The duration in seconds to wait if I(wait) is True.
+      - The duration in seconds to wait if I(wait=true).
     default: 120
+    type: int
 """
 
 EXAMPLES = """
@@ -353,7 +367,7 @@ def ensure_absent(client, lag_id, lag_name, force_delete, delete_with_disassocia
 
     latest_status = lag_status(client, lag_id)
 
-    # determinine the associated connections and virtual interfaces to disassociate
+    # determine the associated connections and virtual interfaces to disassociate
     virtual_interfaces, connections = get_connections_and_virtual_interfaces(client, lag_id)
 
     # If min_links is not 0, there are associated connections, or if there are virtual interfaces, ask for force_delete

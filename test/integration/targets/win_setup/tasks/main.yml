@@ -92,7 +92,7 @@
     - setup_result.ansible_facts.gather_subset is defined
     - setup_result.ansible_facts.gather_subset[0] == '!all'
     - setup_result.ansible_facts.gather_subset[1] == '!min'
-    - setup_result.ansible_facts.keys() | union(['gather_subset','module_setup']) | length == 2
+    - setup_result.ansible_facts.keys() | list | union(['gather_subset','module_setup']) | length == 2
 
 - name: test gather_subset "!all,!min,interfaces" with list
   setup:
@@ -117,7 +117,7 @@
     - setup_result.ansible_facts.ansible_interfaces[0].interface_name
     - setup_result.ansible_facts.ansible_interfaces[0].connection_name
     - setup_result.ansible_facts.ansible_interfaces[0].interface_index
-    - setup_result.ansible_facts.keys() | union(['ansible_interfaces','gather_subset','module_setup']) | length == 3
+    - setup_result.ansible_facts.keys() | list | union(['ansible_interfaces','gather_subset','module_setup']) | length == 3
 
 - name: test gather_subset "!all,!min,bogus" with list
   setup:
@@ -136,6 +136,6 @@
     - setup_result.ansible_facts.gather_subset is defined
     - setup_result.ansible_facts.gather_subset[0] == '!all'
     - setup_result.ansible_facts.gather_subset[1] == '!min'
-    - setup_result.ansible_facts.keys() | union(['gather_subset','module_setup']) | length == 2
+    - setup_result.ansible_facts.keys() | list | union(['gather_subset','module_setup']) | length == 2
     - setup_result.warnings | length == 1
     - setup_result.warnings[0] | regex_search('bogus')

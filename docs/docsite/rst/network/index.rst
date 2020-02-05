@@ -1,3 +1,5 @@
+:orphan:
+
 .. _network_guide:
 
 ******************************
@@ -15,3 +17,4 @@ For documentation on using a particular network module, consult the :ref:`list o
 
    getting_started/index
    user_guide/index
+   dev_guide/index

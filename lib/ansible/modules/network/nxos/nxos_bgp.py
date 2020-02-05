@@ -38,7 +38,7 @@ notes:
       C(vrf=default) or the whole VRF instance within the BGP process when
       using a different VRF.
     - Default when supported restores params default value.
-    - Configuring global parmas is only permitted if C(vrf=default).
+    - Configuring global params is only permitted if C(vrf=default).
 options:
     asn:
         description:
@@ -235,7 +235,7 @@ commands:
 import re
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 
@@ -601,7 +601,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
     result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
@@ -650,7 +649,8 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        load_config(module, candidate)
+        if not module.check_mode:
+            load_config(module, candidate)
         result['changed'] = True
         result['commands'] = candidate
     else:

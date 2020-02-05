@@ -1,0 +1,12 @@
+[windows]
+{% for host in vars.groups.windows %}
+{{ host }}  ansible_host={{ hostvars[host]['ansible_host'] }} ansible_user={{ hostvars[host]['ansible_user'] }}{{ ' ansible_ssh_private_key_file=' ~ hostvars[host]['ansible_ssh_private_key_file'] if (hostvars[host]['ansible_ssh_private_key_file']|default()) else '' }}
+{% endfor %}
+
+[windows:vars]
+ansible_shell_type={{ test_shell_type }}
+ansible_connection=ssh
+ansible_port=22
+# used to preserve the existing environment and not touch existing files
+ansible_ssh_extra_args="-o UserKnownHostsFile=/dev/null"
+ansible_ssh_host_key_checking=False

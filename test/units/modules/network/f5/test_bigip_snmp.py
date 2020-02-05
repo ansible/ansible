@@ -25,7 +25,6 @@ try:
     # In Ansible 2.8, Ansible changed import paths.
     from test.units.compat import unittest
     from test.units.compat.mock import Mock
-    from test.units.compat.mock import patch
 
     from test.units.modules.utils import set_module_args
 except ImportError:
@@ -37,7 +36,6 @@ except ImportError:
     # Ansible 2.8 imports
     from units.compat import unittest
     from units.compat.mock import Mock
-    from units.compat.mock import patch
 
     from units.modules.utils import set_module_args
 
@@ -72,9 +70,6 @@ class TestParameters(unittest.TestCase):
             contact='Alice@foo.org',
             device_warning_traps='enabled',
             location='Lunar orbit',
-            password='password',
-            server='localhost',
-            user='admin'
         )
         p = ModuleParameters(params=args)
         assert p.agent_status_traps == 'enabled'
@@ -88,9 +83,6 @@ class TestParameters(unittest.TestCase):
             agent_status_traps='disabled',
             agent_authentication_traps='disabled',
             device_warning_traps='disabled',
-            password='password',
-            server='localhost',
-            user='admin'
         )
         p = ModuleParameters(params=args)
         assert p.agent_status_traps == 'disabled'
@@ -132,9 +124,11 @@ class TestManager(unittest.TestCase):
     def test_update_agent_status_traps(self, *args):
         set_module_args(dict(
             agent_status_traps='enabled',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -168,9 +162,11 @@ class TestManager(unittest.TestCase):
                 'foo',
                 'baz.foo.com'
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -204,9 +200,11 @@ class TestManager(unittest.TestCase):
             allowed_addresses=[
                 'default'
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -236,9 +234,11 @@ class TestManager(unittest.TestCase):
     def test_update_allowed_addresses_empty(self, *args):
         set_module_args(dict(
             allowed_addresses=[''],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the

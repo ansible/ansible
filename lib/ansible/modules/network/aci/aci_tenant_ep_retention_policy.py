@@ -16,16 +16,6 @@ module: aci_tenant_ep_retention_policy
 short_description: Manage End Point (EP) retention protocol policies (fv:EpRetPol)
 description:
 - Manage End Point (EP) retention protocol policies on Cisco ACI fabrics.
-notes:
-- The C(tenant) used must exist before using this module in your playbook.
-  The M(aci_tenant) module can be used for this.
-seealso:
-- module: aci_tenant
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(fv:EpRetPol).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Swetha Chunduri (@schunduri)
 version_added: '2.4'
 options:
   tenant:
@@ -76,7 +66,7 @@ options:
     type: int
   description:
     description:
-    - Description for the End point rentention policy.
+    - Description for the End point retention policy.
     type: str
     aliases: [ descr ]
   state:
@@ -87,11 +77,21 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:EpRetPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Swetha Chunduri (@schunduri)
 '''
 
 EXAMPLES = r'''
 - name: Add a new EPR policy
-  aci_epr_policy:
+  aci_tenant_ep_retention_policy:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -107,7 +107,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove an EPR policy
-  aci_epr_policy:
+  aci_tenant_ep_retention_policy:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -117,7 +117,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query an EPR policy
-  aci_epr_policy:
+  aci_tenant_ep_retention_policy:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -128,7 +128,7 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all EPR policies
-  aci_epr_policy:
+  aci_tenant_ep_retention_policy:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -242,17 +242,20 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
-BOUNCE_TRIG_MAPPING = dict(coop='protocol', rarp='rarp-flood')
+BOUNCE_TRIG_MAPPING = dict(
+    coop='protocol',
+    rarp='rarp-flood',
+)
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
-        epr_policy=dict(type='str', aliases=['epr_name', 'name']),
+        epr_policy=dict(type='str', aliases=['epr_name', 'name']),  # Not required for querying all objects
         bounce_age=dict(type='int'),
         bounce_trigger=dict(type='str', choices=['coop', 'flood']),
         hold_interval=dict(type='int'),
@@ -272,36 +275,36 @@ def main():
         ],
     )
 
-    epr_policy = module.params['epr_policy']
-    bounce_age = module.params['bounce_age']
+    epr_policy = module.params.get('epr_policy')
+    bounce_age = module.params.get('bounce_age')
     if bounce_age is not None and bounce_age != 0 and bounce_age not in range(150, 65536):
         module.fail_json(msg="The bounce_age must be a value of 0 or between 150 and 65535")
     if bounce_age == 0:
         bounce_age = 'infinite'
-    bounce_trigger = module.params['bounce_trigger']
+    bounce_trigger = module.params.get('bounce_trigger')
     if bounce_trigger is not None:
         bounce_trigger = BOUNCE_TRIG_MAPPING[bounce_trigger]
-    description = module.params['description']
-    hold_interval = module.params['hold_interval']
+    description = module.params.get('description')
+    hold_interval = module.params.get('hold_interval')
     if hold_interval is not None and hold_interval not in range(5, 65536):
         module.fail_json(msg="The hold_interval must be a value between 5 and 65535")
-    local_ep_interval = module.params['local_ep_interval']
+    local_ep_interval = module.params.get('local_ep_interval')
     if local_ep_interval is not None and local_ep_interval != 0 and local_ep_interval not in range(120, 65536):
         module.fail_json(msg="The local_ep_interval must be a value of 0 or between 120 and 65535")
     if local_ep_interval == 0:
         local_ep_interval = "infinite"
-    move_frequency = module.params['move_frequency']
+    move_frequency = module.params.get('move_frequency')
     if move_frequency is not None and move_frequency not in range(65536):
         module.fail_json(msg="The move_frequency must be a value between 0 and 65535")
     if move_frequency == 0:
         move_frequency = "none"
-    remote_ep_interval = module.params['remote_ep_interval']
+    remote_ep_interval = module.params.get('remote_ep_interval')
     if remote_ep_interval is not None and remote_ep_interval not in range(120, 65536):
         module.fail_json(msg="The remote_ep_interval must be a value of 0 or between 120 and 65535")
     if remote_ep_interval == 0:
         remote_ep_interval = "infinite"
-    state = module.params['state']
-    tenant = module.params['tenant']
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci = ACIModule(module)
     aci.construct_url(

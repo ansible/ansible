@@ -1,0 +1,7 @@
+lag LAG1 dynamic id 100
+ ports ethe 1/1/3 ethe 1/1/5 to 1/1/8 
+ disable ethe 1/1/3 ethe 1/1/5 to 1/1/8 
+!
+lag LAG2 dynamic id 200
+ ports ethe 1/1/11 ethe 1/1/13 ethe 1/1/15 
+ disable ethe 1/1/11 ethe 1/1/13 ethe 1/1/15

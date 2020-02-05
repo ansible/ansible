@@ -8,7 +8,8 @@ __metaclass__ = type
 
 from units.compat import unittest
 
-from ansible.module_utils.basic import return_values, remove_values
+from ansible.module_utils.basic import remove_values
+from ansible.module_utils.common.parameters import _return_datastructure_name
 
 
 class TestReturnValues(unittest.TestCase):
@@ -40,12 +41,12 @@ class TestReturnValues(unittest.TestCase):
         ('Toshio くらとみ', frozenset(['Toshio くらとみ'])),
     )
 
-    def test_return_values(self):
+    def test_return_datastructure_name(self):
         for data, expected in self.dataset:
-            self.assertEquals(frozenset(return_values(data)), expected)
+            self.assertEqual(frozenset(_return_datastructure_name(data)), expected)
 
     def test_unknown_type(self):
-        self.assertRaises(TypeError, frozenset, return_values(object()))
+        self.assertRaises(TypeError, frozenset, _return_datastructure_name(object()))
 
 
 class TestRemoveValues(unittest.TestCase):
@@ -122,11 +123,11 @@ class TestRemoveValues(unittest.TestCase):
 
     def test_no_removal(self):
         for value, no_log_strings in self.dataset_no_remove:
-            self.assertEquals(remove_values(value, no_log_strings), value)
+            self.assertEqual(remove_values(value, no_log_strings), value)
 
     def test_strings_to_remove(self):
         for value, no_log_strings, expected in self.dataset_remove:
-            self.assertEquals(remove_values(value, no_log_strings), expected)
+            self.assertEqual(remove_values(value, no_log_strings), expected)
 
     def test_unknown_type(self):
         self.assertRaises(TypeError, remove_values, object(), frozenset())
@@ -148,12 +149,12 @@ class TestRemoveValues(unittest.TestCase):
         inner_list = actual_data_list
         while inner_list:
             if isinstance(inner_list, list):
-                self.assertEquals(len(inner_list), 1)
+                self.assertEqual(len(inner_list), 1)
             else:
                 levels -= 1
                 break
             inner_list = inner_list[0]
             levels += 1
 
-        self.assertEquals(inner_list, self.OMIT)
-        self.assertEquals(levels, 10000)
+        self.assertEqual(inner_list, self.OMIT)
+        self.assertEqual(levels, 10000)

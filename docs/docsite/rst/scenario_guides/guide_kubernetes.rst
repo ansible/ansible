@@ -1,5 +1,5 @@
-Getting Started with Kubernetes and OpenShift
-=============================================
+Kubernetes and OpenShift Guide
+==============================
 
 Modules for interacting with the Kubernetes (K8s) and OpenShift API are under development, and can be used in preview mode. To use them, review the requirements, and then follow the installation and use instructions.
 
@@ -8,7 +8,7 @@ Requirements
 
 To use the modules, you'll need the following:
 
-- Run Ansible from source. For assistance, view `running from source <./intro_installation.html/#running-from-source>`_
+- Run Ansible from source. For assistance, view :ref:`from_source`.
 - `OpenShift Rest Client <https://github.com/openshift/openshift-restclient-python>`_ installed on the host that will execute the modules
 
 
@@ -53,4 +53,3 @@ Filing issues
 If you find a bug or have a suggestion regarding individual modules or the role, please file issues at `OpenShift Rest Client issues <https://github.com/openshift/openshift-restclient-python/issues>`_.
 
 There is also a utility module, k8s_common.py, that is part of the `Ansible <https://github.com/ansible/ansible>`_ repo. If you find a bug or have suggestions regarding it, please file issues at `Ansible issues <https://github.com/ansible/ansible/issues>`_.
-

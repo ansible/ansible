@@ -63,7 +63,6 @@ class Connection(ConnectionBase):
     # String used to identify this Connection class from other classes
     transport = 'buildah'
     has_pipelining = True
-    become_methods = frozenset(C.BECOME_METHODS)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -121,7 +120,7 @@ class Connection(ConnectionBase):
         # shlex.split has a bug with text strings on Python-2.6 and can only handle text strings on Python-3
         cmd_args_list = shlex.split(to_native(cmd, errors='surrogate_or_strict'))
 
-        rc, stdout, stderr = self._buildah("run", cmd_args_list)
+        rc, stdout, stderr = self._buildah("run", cmd_args_list, in_data)
 
         display.vvvvv("STDOUT %r STDERR %r" % (stderr, stderr))
         return rc, stdout, stderr

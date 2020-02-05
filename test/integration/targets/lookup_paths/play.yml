@@ -1,6 +1,5 @@
 - name: setup state
-  hosts: testhost
-  connection: local
+  hosts: localhost
   gather_facts: false
   tasks:
     - file: path={{playbook_dir}}/files state=directory
@@ -42,8 +41,7 @@
     play_out: in local
 
 - name: cleanup
-  hosts: testhost
-  connection: local
+  hosts: localhost
   gather_facts: false
   tasks:
     - file: path={{playbook_dir}}/testfile state=absent

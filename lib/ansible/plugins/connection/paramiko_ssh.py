@@ -51,7 +51,9 @@ DOCUMENTATION = """
         vars:
             - name: ansible_password
             - name: ansible_ssh_pass
+            - name: ansible_ssh_password
             - name: ansible_paramiko_pass
+            - name: ansible_paramiko_password
               version_added: '2.5'
       host_key_auto_add:
         description: 'TODO: write it'
@@ -127,7 +129,6 @@ DOCUMENTATION = """
 #timeout=self._play_context.timeout,
 """
 
-import warnings
 import os
 import socket
 import tempfile
@@ -140,13 +141,13 @@ from termios import tcflush, TCIFLUSH
 from distutils.version import LooseVersion
 from binascii import hexlify
 
-from ansible import constants as C
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
     AnsibleError,
     AnsibleFileNotFound,
 )
+from ansible.module_utils.compat.paramiko import PARAMIKO_IMPORT_ERR, paramiko
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
@@ -165,16 +166,6 @@ Are you sure you want to continue connecting (yes/no)?
 
 # SSH Options Regex
 SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
-
-# prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
-HAVE_PARAMIKO = False
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import paramiko
-        HAVE_PARAMIKO = True
-    except ImportError:
-        pass
 
 
 class MyAddPolicy(object):
@@ -304,8 +295,8 @@ class Connection(ConnectionBase):
     def _connect_uncached(self):
         ''' activates the connection object '''
 
-        if not HAVE_PARAMIKO:
-            raise AnsibleError("paramiko is not installed")
+        if paramiko is None:
+            raise AnsibleError("paramiko is not installed: %s" % to_native(PARAMIKO_IMPORT_ERR))
 
         port = self._play_context.port or 22
         display.vvv("ESTABLISH PARAMIKO SSH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
@@ -361,7 +352,7 @@ class Connection(ConnectionBase):
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
         except paramiko.ssh_exception.AuthenticationException as e:
-            msg = 'Invalid/incorrect username/password. {0}'.format(to_text(e))
+            msg = 'Failed to authenticate: {0}'.format(to_text(e))
             raise AnsibleAuthenticationFailure(msg)
         except Exception as e:
             msg = to_text(e)
@@ -412,7 +403,7 @@ class Connection(ConnectionBase):
 
         try:
             chan.exec_command(cmd)
-            if self._play_context.prompt:
+            if self.become and self.become.expect_prompt():
                 passprompt = False
                 become_sucess = False
                 while not (become_sucess or passprompt):
@@ -422,7 +413,9 @@ class Connection(ConnectionBase):
                     display.debug("chunk is: %s" % chunk)
                     if not chunk:
                         if b'unknown user' in become_output:
-                            raise AnsibleError('user %s does not exist' % self._play_context.become_user)
+                            n_become_user = to_native(self.become.get_option('become_user',
+                                                                             playcontext=self._play_context))
+                            raise AnsibleError('user %s does not exist' % n_become_user)
                         else:
                             break
                             # raise AnsibleError('ssh connection closed waiting for password prompt')
@@ -431,16 +424,17 @@ class Connection(ConnectionBase):
                     # need to check every line because we might get lectured
                     # and we might get the middle of a line in a chunk
                     for l in become_output.splitlines(True):
-                        if self.check_become_success(l):
+                        if self.become.check_success(l):
                             become_sucess = True
                             break
-                        elif self.check_password_prompt(l):
+                        elif self.become.check_password_prompt(l):
                             passprompt = True
                             break
 
                 if passprompt:
-                    if self._play_context.become and self._play_context.become_pass:
-                        chan.sendall(to_bytes(self._play_context.become_pass) + b'\n')
+                    if self.become:
+                        become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
+                        chan.sendall(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
                     else:
                         raise AnsibleError("A password is required but none was supplied")
                 else:
@@ -521,25 +515,23 @@ class Connection(ConnectionBase):
         path = os.path.expanduser("~/.ssh")
         makedirs_safe(path)
 
-        f = open(filename, 'w')
+        with open(filename, 'w') as f:
 
-        for hostname, keys in iteritems(self.ssh._host_keys):
+            for hostname, keys in iteritems(self.ssh._host_keys):
 
-            for keytype, key in iteritems(keys):
+                for keytype, key in iteritems(keys):
 
-                # was f.write
-                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
-                if not added_this_time:
-                    f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+                    # was f.write
+                    added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                    if not added_this_time:
+                        f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
-        for hostname, keys in iteritems(self.ssh._host_keys):
+            for hostname, keys in iteritems(self.ssh._host_keys):
 
-            for keytype, key in iteritems(keys):
-                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
-                if added_this_time:
-                    f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
-
-        f.close()
+                for keytype, key in iteritems(keys):
+                    added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                    if added_this_time:
+                        f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
     def reset(self):
         self.close()

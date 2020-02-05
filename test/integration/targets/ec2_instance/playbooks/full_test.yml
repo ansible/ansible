@@ -1,5 +1,0 @@
-- hosts: localhost
-  connection: local
-
-  roles:
-    - ec2_instance

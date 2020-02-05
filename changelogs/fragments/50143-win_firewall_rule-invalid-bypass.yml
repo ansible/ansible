@@ -1,3 +1,0 @@
----
-bugfixes:
-- win_firewall_rule - Remove invalid 'bypass' action

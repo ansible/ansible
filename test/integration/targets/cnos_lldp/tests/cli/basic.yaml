@@ -1,0 +1,44 @@
+---
+- debug: msg="START cnos_lldp cli/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Enable LLDP service
+  cnos_lldp:
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"lldp receive" in result.commands'
+      - '"lldp transmit" in result.commands'
+
+- name: Enable LLDP service again (idempotent)
+  cnos_lldp:
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- name: Disable LLDP service
+  cnos_lldp:
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no lldp receive" in result.commands'
+      - '"no lldp transmit" in result.commands' 
+
+- name: Disable LLDP service (idempotent)
+  cnos_lldp:
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- debug: msg="END cnos_lldp cli/basic.yaml on connection={{ ansible_connection }}"

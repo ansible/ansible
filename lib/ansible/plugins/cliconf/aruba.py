@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: aruba
+short_description: Use aruba cliconf to run command on Aruba platform
+description:
+  - This aruba plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Aruba network devices.
+version_added: 2.4
+"""
+
 import re
 import json
 
@@ -56,13 +66,13 @@ class Cliconf(CliconfBase):
         return device_info
 
     @enable_mode
-    def get_config(self, source='running', format='text'):
+    def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
         if source == 'running':
             cmd = 'show running-config all'
         else:
-            cmd = 'show startup-config'
+            cmd = 'show configuration'
         return self.send_command(cmd)
 
     @enable_mode
@@ -70,12 +80,17 @@ class Cliconf(CliconfBase):
         for cmd in chain(['configure terminal'], to_list(command), ['end']):
             self.send_command(cmd)
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
-        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+    def get(self, command, prompt=None, answer=None, sendonly=False, newline=True, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            self._update_cli_prompt_context(config_context=')#')

@@ -84,6 +84,7 @@ To pass Active Directory username/password via the environment, define the follo
 
 * AZURE_AD_USER
 * AZURE_PASSWORD
+* AZURE_SUBSCRIPTION_ID
 
 To pass Active Directory username/password in ADFS via the environment, define the following variables:
 
@@ -109,6 +110,8 @@ for credentials in ``$HOME/.azure/credentials``. This file is an ini style file.
     secret=xxxxxxxxxxxxxxxxx
     tenant=xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
+.. note:: If your secret values contain non-ASCII characters, you must `URL Encode <https://www.w3schools.com/tags/ref_urlencode.asp>`_ them to avoid login errors.
+
 It is possible to store multiple sets of credentials within the credentials file by creating multiple sections. Each
 section is considered a profile. The modules look for the [default] profile automatically. Define AZURE_PROFILE in the
 environment or pass a profile parameter to specify a specific profile.
@@ -127,6 +130,7 @@ Or, pass the following parameters for Active Directory username/password:
 
 * ad_user
 * password
+* subscription_id
 
 Or, pass the following parameters for ADFS username/pasword:
 
@@ -251,6 +255,30 @@ virtual network already with an existing subnet, you can run the following to cr
         publisher: OpenLogic
         sku: '7.1'
         version: latest
+
+
+Creating a Virtual Machine in Availability Zones
+..................................................
+
+If you want to create a VM in an availability zone,
+consider the following:
+
+* Both OS disk and data disk must be a 'managed disk', not an 'unmanaged disk'.
+* When creating a VM with the ``azure_rm_virtualmachine`` module,
+  you need to explicitly set the ``managed_disk_type`` parameter
+  to change the OS disk to a managed disk.
+  Otherwise, the OS disk becomes  an unmanaged disk..
+* When you create a data disk with  the ``azure_rm_manageddisk`` module,
+  you need to  explicitly specify the  ``storage_account_type`` parameter
+  to make it a  managed disk.
+  Otherwise, the data disk will be an unmanaged disk.
+* A managed disk does not require a storage account or a storage container,
+  unlike  a n unmanaged disk.
+  In particular, note that once a VM is created on an unmanaged disk,
+  an unnecessary storage container named "vhds" is automatically created.
+* When you create an IP address with the ``azure_rm_publicipaddress`` module,
+  you must set the  ``sku`` parameter to ``standard``.
+  Otherwise, the IP address cannot be used in an availability zone.
 
 
 Dynamic Inventory Script
@@ -407,8 +435,8 @@ Here are some examples using the inventory script:
     # Execute win_ping on all Windows instances
     $ ansible -i azure_rm.py windows -m win_ping
 
-    # Execute win_ping on all Windows instances
-    $ ansible -i azure_rm.py winux -m ping
+    # Execute ping on all Linux instances
+    $ ansible -i azure_rm.py linux -m ping
 
     # Use the inventory script to print instance specific information
     $ ./ansible/contrib/inventory/azure_rm.py --host my_instance_host_name --resource-groups=Testing --pretty

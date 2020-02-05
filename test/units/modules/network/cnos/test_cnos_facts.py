@@ -67,10 +67,10 @@ class TestCnosFacts(TestCnosModule):
         self.assertIn('hardware', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
-        self.assertEquals('ip10-241-107-39', ansible_facts['ansible_net_hostname'])
+        self.assertEqual('ip10-241-107-39', ansible_facts['ansible_net_hostname'])
         self.assertIn('Ethernet1/1', ansible_facts['ansible_net_interfaces'].keys())
-        self.assertEquals(3985.8046875, ansible_facts['ansible_net_memtotal_mb'])
-        self.assertEquals(3070.40234375, ansible_facts['ansible_net_memfree_mb'])
+        self.assertEqual(3985.8046875, ansible_facts['ansible_net_memtotal_mb'])
+        self.assertEqual(3070.40234375, ansible_facts['ansible_net_memfree_mb'])
 
     def test_cnos_facts_gather_subset_config(self):
         set_module_args({'gather_subset': 'config'})
@@ -78,5 +78,5 @@ class TestCnosFacts(TestCnosModule):
         ansible_facts = result['ansible_facts']
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('config', ansible_facts['ansible_net_gather_subset'])
-        self.assertEquals('ip10-241-107-39', ansible_facts['ansible_net_hostname'])
+        self.assertEqual('ip10-241-107-39', ansible_facts['ansible_net_hostname'])
         self.assertIn('ansible_net_config', ansible_facts)

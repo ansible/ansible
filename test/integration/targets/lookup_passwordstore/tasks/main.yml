@@ -1,6 +1,7 @@
 - block:
-    - include: "package.yml"
-    - include: "tests.yml"
+    - include_tasks: package.yml
+    - include_tasks: tests.yml
   when:
-    - not (ansible_distribution == 'RedHat')  # requires EPEL
-    - not (ansible_distribution == 'CentOS' and ansible_distribution_version is version_compare('7', '<'))
+    # The pass package is no longer available in EPEL, so only test on Fedora, OpenSUSE, FreeBSD, macOS, and Ubuntu
+    # https://lists.zx2c4.com/pipermail/password-store/2019-July/003689.html
+    - ansible_facts.distribution in ['FreeBSD', 'MacOSX', 'openSUSE Leap', 'Ubuntu']

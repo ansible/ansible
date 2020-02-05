@@ -1,0 +1,40 @@
+---
+- name: get shell when shell_type is not defined
+  test_shell:
+  register: shell_type_default
+  failed_when: shell_type_default.shell != 'sh'
+  vars:
+    ansible_connection: test_connection_default
+
+- name: get shell when shell_type is not defined but is overridden
+  test_shell:
+  register: shell_type_default_override
+  failed_when: shell_type_default_override.shell != item
+  vars:
+    ansible_connection: test_connection_default
+    ansible_shell_type: '{{ item }}'
+  with_items:
+  - csh
+  - fish
+  - powershell
+  - sh
+
+- name: get shell when shell_type is defined
+  test_shell:
+  register: shell_type_defined
+  failed_when: shell_type_defined.shell != 'powershell'
+  vars:
+    ansible_connection: test_connection_override
+
+- name: get shell when shell_type is defined but is overridden
+  test_shell:
+  register: shell_type_defined_override
+  failed_when: shell_type_defined_override.shell != item
+  vars:
+    ansible_connection: test_connection_default
+    ansible_shell_type: '{{ item }}'
+  with_items:
+  - csh
+  - fish
+  - powershell
+  - sh

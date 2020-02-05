@@ -88,7 +88,7 @@ options:
   replace:
     description:
       - Instructs the module on the way to perform the configuration
-        on the device.  If the replace argument is set to I(line) then
+        on the device. If the replace argument is set to I(line) then
         the modified lines are pushed to the device in configuration
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
@@ -107,10 +107,10 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory or role root directory, if
-        playbook is part of an ansible role. If the directory does not exist,
-        it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -118,7 +118,7 @@ options:
     description:
       - The module, by default, will connect to the remote device and
         retrieve the current running-config to use as a base for comparing
-        against the contents of source.  There are times when it is not
+        against the contents of source. There are times when it is not
         desirable to have the task get the current running-config for
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
@@ -176,12 +176,34 @@ options:
     description:
       - The C(intended_config) provides the master configuration that
         the node should conform to and is used to check the final
-        running-config against.   This argument will not modify any settings
+        running-config against. This argument will not modify any settings
         on the remote device and is strictly used to check the compliance
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
     version_added: "2.4"
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -266,6 +288,14 @@ EXAMPLES = """
   ios_config:
     backup: yes
     src: ios_template.j2
+
+- name: configurable backup path
+  ios_config:
+    src: ios_template.j2
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -284,6 +314,26 @@ backup_path:
   returned: when backup is yes
   type: str
   sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
+filename:
+  description: The name of the backup file
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: ios_config.2016-07-16@22:28:34
+shortname:
+  description: The full path to the backup file excluding the timestamp
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: /playbooks/ansible/backup/ios_config
+date:
+  description: The date extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "2016-07-16"
+time:
+  description: The time extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "22:28:34"
 """
 import json
 
@@ -292,13 +342,11 @@ from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.ios.ios import run_commands, get_config
 from ansible.module_utils.network.ios.ios import get_defaults_flag, get_connection
 from ansible.module_utils.network.ios.ios import ios_argument_spec
-from ansible.module_utils.network.ios.ios import check_args as ios_check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
 def check_args(module, warnings):
-    ios_check_args(module, warnings)
     if module.params['multiline_delimiter']:
         if len(module.params['multiline_delimiter']) != 1:
             module.fail_json(msg='multiline_delimiter value can only be a '
@@ -306,7 +354,9 @@ def check_args(module, warnings):
 
 
 def edit_config_or_macro(connection, commands):
-    if "macro name" in commands[0]:
+    # only catch the macro configuration command,
+    # not negated 'no' variation.
+    if commands[0].startswith("macro name"):
         connection.edit_macro(candidate=commands)
     else:
         connection.edit_config(candidate=commands)
@@ -350,6 +400,10 @@ def save_config(module, result):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -368,7 +422,7 @@ def main():
 
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
-
+        backup_options=dict(type='dict', options=backup_spec),
         save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
         diff_against=dict(choices=['startup', 'intended', 'running']),

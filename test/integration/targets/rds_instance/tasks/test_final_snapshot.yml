@@ -48,7 +48,7 @@
             - "result.final_snapshot.db_instance_identifier == '{{ instance_id }}'"
 
       - name: Check that snapshot exists
-        rds_snapshot_facts:
+        rds_snapshot_info:
           db_snapshot_identifier: "{{ instance_id }}"
           <<: *aws_connection_info
         register: result
@@ -59,22 +59,12 @@
             - "result.snapshots.0.engine == 'mariadb'"
 
     always:
-
-      - name: Use AWS CLI to delete the snapshot
-        command: "aws rds delete-db-snapshot --db-snapshot-identifier '{{ instance_id }}'"
-        environment:
-          AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
-          AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
-          AWS_SESSION_TOKEN: "{{ security_token }}"
-          AWS_DEFAULT_REGION: "{{ aws_region }}"
-
-      # TODO: Uncomment once rds_snapshot module exists
-      #- name: Remove the snapshot
-      #  rds_snapshot:
-      #    db_snapshot_identifier: "{{ instance_id }}"
-      #    state: absent
-      #    <<: *aws_connection_info
-      #  ignore_errors: yes
+      - name: Remove the snapshot
+        rds_snapshot:
+          db_snapshot_identifier: "{{ instance_id }}"
+          state: absent
+          <<: *aws_connection_info
+        ignore_errors: yes
 
       - name: Remove the DB instance
         rds_instance:

@@ -3,41 +3,37 @@
 - set_fact: snmp_version="v2c"
 
 - debug: msg="START connection={{ ansible_connection }} nxos_snmp_host {{ snmp_type }} {{ snmp_version }} sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"
-  when: not (platform is match("N5K"))
+  when: platform is not search('N5K|N6K')
 
 - name: Setup - Remove snmp_host if configured
   nxos_snmp_host: &remove
     snmp_host: 192.0.2.3
     community: TESTING
-    version: "{{ snmp_version }}" 
-    snmp_type: "{{ snmp_type }}" 
+    version: "{{ snmp_version }}"
+    snmp_type: "{{ snmp_type }}"
     vrf: management
     vrf_filter: management
     src_intf: "{{ intname|default(omit) }}"
     udp: 222
-    provider: "{{ connection }}"
-    state: absent 
+    state: absent
   ignore_errors: yes
 
 - block:
 
-  - name: Configure snmp host 
+  - name: Configure snmp host
     nxos_snmp_host: &config
       snmp_host: 192.0.2.3
       community: TESTING
-      version: "{{ snmp_version }}" 
-      snmp_type: "{{ snmp_type }}" 
+      version: "{{ snmp_version }}"
+      snmp_type: "{{ snmp_type }}"
       vrf: management
       vrf_filter: management
       src_intf: "{{ intname|default(omit) }}"
       udp: 222
-      provider: "{{ connection }}"
-      state: present 
+      state: present
     register: result
 
   - assert: &true
@@ -58,8 +54,7 @@
         snmp_host: 192.0.2.3
         vrf_filter: default
         udp: 222
-        provider: "{{ connection }}"
-        state: present 
+        state: present
       register: result
 
     - assert: *true
@@ -69,7 +64,7 @@
       register: result
 
     - assert: *false
-    when: not (platform is match('N35|N5K'))
+    when: platform is not search('N35|N5K|N6K')
 
   - name: remove some configuration
     nxos_snmp_host: &rem1
@@ -78,7 +73,6 @@
       src_intf: "{{ intname|default(omit) }}"
       vrf: management
       vrf_filter: management
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -96,7 +90,6 @@
         snmp_host: 192.0.2.3
         udp: 222
         vrf_filter: default
-        provider: "{{ connection }}"
         state: absent
       register: result
 
@@ -107,7 +100,7 @@
       register: result
 
     - assert: *false
-    when: not (platform is match('N35|N5K'))
+    when: platform is not search('N35|N5K|N6K')
 
   - name: Cleanup
     nxos_snmp_host: *remove

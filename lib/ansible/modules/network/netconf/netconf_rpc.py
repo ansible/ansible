@@ -26,6 +26,7 @@ description:
       the IETF. It is documented in RFC 6241.
     - This module allows the user to execute NETCONF RPC requests as defined
       by IETF RFC standards as well as proprietary requests.
+extends_documentation_fragment: network_agnostic
 options:
   rpc:
     description:
@@ -136,7 +137,7 @@ output:
                or pretty XML string response (human-readable) or response with
                namespace removed from XML string.
   returned: when the display format is selected as JSON it is returned as dict type, if the
-            display format is xml or pretty pretty it is retured as a string apart from low-level
+            display format is xml or pretty pretty it is returned as a string apart from low-level
             errors (such as action plugin).
   type: complex
   contains:

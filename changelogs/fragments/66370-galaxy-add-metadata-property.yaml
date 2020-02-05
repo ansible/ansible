@@ -1,0 +1,2 @@
+minor_changes:
+  - CollectionRequirement - Add a metadata property to update and retrieve the _metadata attribute.

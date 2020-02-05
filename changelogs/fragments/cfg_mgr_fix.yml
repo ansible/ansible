@@ -1,2 +1,0 @@
-bugfixes:
-    - configuration retrieval would fail on non primed plugins

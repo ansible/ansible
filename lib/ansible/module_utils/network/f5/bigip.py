@@ -6,6 +6,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import time
 
 try:
     from library.module_utils.network.f5.common import F5BaseClient
@@ -24,6 +25,7 @@ class F5RestClient(F5BaseClient):
         self.headers = {
             'Content-Type': 'application/json'
         }
+        self.retries = 0
 
     @property
     def api(self):
@@ -57,8 +59,15 @@ class F5RestClient(F5BaseClient):
         )
 
         if response.status not in [200]:
-            return None, response.content
+            if b'Configuration Utility restarting...' in response.content and self.retries < 3:
+                time.sleep(30)
+                self.retries += 1
+                return self.connect_via_token_auth()
+            else:
+                self.retries = 0
+                return None, response.content
 
+        self.retries = 0
         session.request.headers['X-F5-Auth-Token'] = response.json()['token']['token']
         return session, None
 
@@ -78,5 +87,12 @@ class F5RestClient(F5BaseClient):
         )
 
         if response.status not in [200]:
-            return None, response.content
+            if b'Configuration Utility restarting...' in response.content and self.retries < 3:
+                time.sleep(30)
+                self.retries += 1
+                return self.connect_via_basic_auth()
+            else:
+                self.retries = 0
+                return None, response.content
+        self.retries = 0
         return session, None

@@ -23,10 +23,10 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
-from ansible.plugins.loader import get_all_plugin_loaders
+from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.display import Display
 
 display = Display()
@@ -62,14 +62,9 @@ class Playbook:
         cur_basedir = self._loader.get_basedir()
         self._loader.set_basedir(self._basedir)
 
-        self._file_name = file_name
+        add_all_plugin_dirs(self._basedir)
 
-        # dynamically load any plugins from the playbook directory
-        for name, obj in get_all_plugin_loaders():
-            if obj.subdir:
-                plugin_path = os.path.join(self._basedir, obj.subdir)
-                if os.path.isdir(to_bytes(plugin_path)):
-                    obj.add_directory(plugin_path)
+        self._file_name = file_name
 
         try:
             ds = self._loader.load_from_file(os.path.basename(file_name))
@@ -77,12 +72,14 @@ class Playbook:
             raise AnsibleParserError("Could not read playbook (%s) due to encoding issues: %s" % (file_name, to_native(e)))
 
         # check for errors and restore the basedir in case this error is caught and handled
-        if not ds:
+        if ds is None:
             self._loader.set_basedir(cur_basedir)
             raise AnsibleParserError("Empty playbook, nothing to do", obj=ds)
         elif not isinstance(ds, list):
             self._loader.set_basedir(cur_basedir)
             raise AnsibleParserError("A playbook must be a list of plays, got a %s instead" % type(ds), obj=ds)
+        elif not ds:
+            display.deprecated("Empty plays will currently be skipped, in the future they will cause a syntax error", version='2.12')
 
         # Parse the playbook entries. For plays, we simply parse them
         # using the Play() object, and includes are parsed using the

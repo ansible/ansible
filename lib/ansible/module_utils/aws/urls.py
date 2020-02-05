@@ -1,6 +1,9 @@
 # Copyright: (c) 2018, Aaron Haaf <aabonh@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import datetime
 import hashlib
 import hmac
@@ -154,7 +157,7 @@ def signed_request(
         if session_in_query:
             query["X-Amz-Security-Token"] = session_token
 
-    if method is "GET":
+    if method == "GET":
         body = ""
 
     # Derived data
@@ -194,7 +197,7 @@ def signed_request(
 
     url = "https://" + host + uri
 
-    if query_string is not "":
+    if query_string != "":
         url = url + "?" + query_string
 
     final_headers = {

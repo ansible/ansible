@@ -36,11 +36,13 @@ options:
     - Name of cluster.
     - All host systems from given cluster used to manage lockdown.
     - Required parameter, if C(esxi_hostname) is not set.
+    type: str
   esxi_hostname:
     description:
     - List of ESXi hostname to manage lockdown.
     - Required parameter, if C(cluster_name) is not set.
     - See examples for specifications.
+    type: list
   state:
     description:
     - State of hosts system
@@ -51,6 +53,7 @@ options:
     default: present
     choices: [ present, absent ]
     version_added: 2.5
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -195,7 +198,7 @@ def main():
     argument_spec.update(
         cluster_name=dict(type='str', required=False),
         esxi_hostname=dict(type='list', required=False),
-        state=dict(str='str', default='present', choices=['present', 'absent'], required=False),
+        state=dict(type='str', default='present', choices=['present', 'absent'], required=False),
     )
 
     module = AnsibleModule(

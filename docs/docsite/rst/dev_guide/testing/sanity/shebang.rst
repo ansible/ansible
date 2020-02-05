@@ -1,5 +1,5 @@
-Sanity Tests » shebang
-======================
+shebang
+=======
 
 Most executable files should only use one of the following shebangs:
 

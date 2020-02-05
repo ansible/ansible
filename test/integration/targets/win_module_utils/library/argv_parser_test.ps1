@@ -48,14 +48,14 @@ Function Run-Process($executable, $arguments) {
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
     $psi.UseShellExecute = $false
-    
-    $proc.Start() | Out-Null # will always return $true for non shell-exec cases  
+
+    $proc.Start() > $null # will always return $true for non shell-exec cases
     $stdout = $stderr = [string] $null
-    
-    [Ansible.Command.NativeUtil]::GetProcessOutput($proc.StandardOutput, $proc.StandardError, [ref] $stdout, [ref] $stderr) | Out-Null
-    $proc.WaitForExit() | Out-Null
+
+    [Ansible.Command.NativeUtil]::GetProcessOutput($proc.StandardOutput, $proc.StandardError, [ref] $stdout, [ref] $stderr) > $null
+    $proc.WaitForExit() > $null
     $actual_args = $stdout.Substring(0, $stdout.Length - 2) -split "`r`n"
-    
+
     return $actual_args
 }
 

@@ -17,19 +17,6 @@ module: aci_aaa_user
 short_description: Manage AAA users (aaa:User)
 description:
 - Manage AAA users on Cisco ACI fabrics.
-notes:
-- This module is not idempotent when C(aaa_password) is being used
-  (even if that password was already set identically). This
-  appears to be an inconsistency wrt. the idempotent nature
-  of the APIC REST API. The vendor has been informed.
-  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
-seealso:
-- module: aci_aaa_user_certificate
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(aaa:User).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Dag Wieers (@dagwieers)
 requirements:
 - python-dateutil
 version_added: '2.5'
@@ -96,6 +83,19 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- This module is not idempotent when C(aaa_password) is being used
+  (even if that password was already set identically). This
+  appears to be an inconsistency wrt. the idempotent nature
+  of the APIC REST API. The vendor has been informed.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+seealso:
+- module: aci_aaa_user_certificate
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(aaa:User).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -249,15 +249,15 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
-from ansible.module_utils.basic import AnsibleModule
-
 try:
     from dateutil.tz import tzutc
     import dateutil.parser
     HAS_DATEUTIL = True
 except ImportError:
     HAS_DATEUTIL = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
@@ -266,7 +266,7 @@ def main():
         aaa_password=dict(type='str', no_log=True),
         aaa_password_lifetime=dict(type='int'),
         aaa_password_update_required=dict(type='bool'),
-        aaa_user=dict(type='str', required=True, aliases=['name']),  # Not required for querying all objects
+        aaa_user=dict(type='str', aliases=['name']),  # Not required for querying all objects
         clear_password_history=dict(type='bool'),
         description=dict(type='str', aliases=['descr']),
         email=dict(type='str'),
@@ -294,26 +294,26 @@ def main():
     if not HAS_DATEUTIL:
         module.fail_json(msg='dateutil required for this module')
 
-    aaa_password = module.params['aaa_password']
-    aaa_password_lifetime = module.params['aaa_password_lifetime']
-    aaa_password_update_required = aci.boolean(module.params['aaa_password_update_required'])
-    aaa_user = module.params['aaa_user']
-    clear_password_history = module.params['clear_password_history']
-    description = module.params['description']
-    email = module.params['email']
-    enabled = aci.boolean(module.params['enabled'], 'active', 'inactive')
-    expires = aci.boolean(module.params['expires'])
-    first_name = module.params['first_name']
-    last_name = module.params['last_name']
-    phone = module.params['phone']
-    state = module.params['state']
+    aaa_password = module.params.get('aaa_password')
+    aaa_password_lifetime = module.params.get('aaa_password_lifetime')
+    aaa_password_update_required = aci.boolean(module.params.get('aaa_password_update_required'))
+    aaa_user = module.params.get('aaa_user')
+    clear_password_history = aci.boolean(module.params.get('clear_password_history'), 'yes', 'no')
+    description = module.params.get('description')
+    email = module.params.get('email')
+    enabled = aci.boolean(module.params.get('enabled'), 'active', 'inactive')
+    expires = aci.boolean(module.params.get('expires'))
+    first_name = module.params.get('first_name')
+    last_name = module.params.get('last_name')
+    phone = module.params.get('phone')
+    state = module.params.get('state')
 
-    expiration = module.params['expiration']
+    expiration = module.params.get('expiration')
     if expiration is not None and expiration != 'never':
         try:
             expiration = aci.iso8601_format(dateutil.parser.parse(expiration).replace(tzinfo=tzutc()))
         except Exception as e:
-            module.fail_json(msg="Failed to parse date format '%s', %s" % (module.params['expiration'], e))
+            module.fail_json(msg="Failed to parse date format '%s', %s" % (module.params.get('expiration'), e))
 
     aci.construct_url(
         root_class=dict(
@@ -331,6 +331,7 @@ def main():
             class_config=dict(
                 accountStatus=enabled,
                 clearPwdHistory=clear_password_history,
+                descr=description,
                 email=email,
                 expiration=expiration,
                 expires=expires,

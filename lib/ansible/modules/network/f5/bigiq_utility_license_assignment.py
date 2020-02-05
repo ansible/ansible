@@ -28,19 +28,22 @@ options:
       - Depending on your license, you may have different units of measures
         available to you. If a particular unit is not available to you, the module
         will notify you at licensing time.
-    default: hourly
+    type: str
     choices:
       - hourly
       - daily
       - monthly
       - yearly
+    default: hourly
   key:
     description:
       - The registration key that you want choose an offering from.
+    type: str
     required: True
   offering:
     description:
       - Name of the license offering to assign to the device.
+    type: str
   device:
     description:
       - When C(managed) is C(no), specifies the address, or hostname, where the BIG-IQ
@@ -51,6 +54,7 @@ options:
         one device with the same name. BIG-IQ internally recognizes devices by their ID,
         and therefore, this module's cannot guarantee that the correct device will be
         registered. The device returned is the device that will be used.
+    type: str
   managed:
     description:
       - Whether the specified device is a managed or un-managed device.
@@ -60,6 +64,7 @@ options:
     description:
       - Specifies the port of the remote device to connect to.
       - If this parameter is not specified, the default of C(443) will be used.
+    type: int
     default: 443
   device_username:
     description:
@@ -67,19 +72,22 @@ options:
       - This username should be one that has sufficient privileges on the remote device
         to do licensing. Usually this is the C(Administrator) role.
       - When C(managed) is C(no), this parameter is required.
+    type: str
   device_password:
     description:
       - The password of the C(device_username).
       - When C(managed) is C(no), this parameter is required.
+    type: str
   state:
     description:
       - When C(present), ensures that the device is assigned the specified license.
       - When C(absent), ensures the license is revokes from the remote device and freed
         on the BIG-IQ.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -141,16 +149,12 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
 except ImportError:
     from ansible.module_utils.network.f5.bigiq import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
@@ -406,7 +410,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params, client=self.client)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -629,14 +633,12 @@ def main():
         required_if=spec.required_if
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

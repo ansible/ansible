@@ -4,26 +4,32 @@
   nxos_install_os:
     system_image_file: "{{ si }}"
     issu: "{{ issu }}"
-    provider: "{{ connection }}"
   register: result
   when: not force
 
-- name: "Set OS image {{ si }} boot pointers"
+- name: "Remove old boot pointers if any"
   nxos_config:
     lines:
       - no boot nxos
       - no boot kickstart
       - no boot system
+    match: line
+  ignore_errors: yes
+  when: force
+
+- name: "Set OS image {{ si }} boot pointers"
+  nxos_config:
+    lines:
       - "boot nxos bootflash:{{ si }}"
       - copy run start
     match: line
-    provider: "{{ connection }}"
   when: force
 
 - name: "Boot image {{ si }} using reload"
-  nxos_command:
-    commands: 'terminal dont-ask ; reload'
-    provider: "{{ connection }}"
+  nxos_config:
+    lines:
+      - 'terminal dont-ask'
+      - 'reload'
   ignore_errors: yes
   when: force
 

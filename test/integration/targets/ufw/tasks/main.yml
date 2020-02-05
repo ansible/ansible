@@ -1,15 +1,16 @@
 ---
 # Make sure ufw is installed
 - name: Install EPEL repository (RHEL only)
-  yum:
-    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
-    state: present
+  include_role:
+    name: setup_epel
   when: ansible_distribution == 'RedHat'
 - name: Install iptables (SuSE only)
   package:
     name: iptables
+  become: yes
   when: ansible_os_family == 'Suse'
 - name: Install ufw
+  become: yes
   package:
     name: ufw
 
@@ -18,6 +19,7 @@
   - include_tasks: run-test.yml
     with_fileglob:
     - "tests/*.yml"
+  become: yes
 
   # Cleanup
   always:

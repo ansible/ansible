@@ -273,8 +273,8 @@ class DataLoader:
         :returns: An absolute path to the filename ``source`` if found
         :raises: An AnsibleFileNotFound Exception if the file is found to exist in the search paths
         '''
-        b_dirname = to_bytes(dirname)
-        b_source = to_bytes(source)
+        b_dirname = to_bytes(dirname, errors='surrogate_or_strict')
+        b_source = to_bytes(source, errors='surrogate_or_strict')
 
         result = None
         search = []
@@ -290,12 +290,12 @@ class DataLoader:
             for path in paths:
                 upath = unfrackpath(path, follow=False)
                 b_upath = to_bytes(upath, errors='surrogate_or_strict')
-                b_mydir = os.path.dirname(b_upath)
+                b_pb_base_dir = os.path.dirname(b_upath)
 
                 # if path is in role and 'tasks' not there already, add it into the search
-                if (is_role or self._is_role(path)) and b_mydir.endswith(b'tasks'):
-                        search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
-                        search.append(os.path.join(b_mydir, b_source))
+                if (is_role or self._is_role(path)) and b_pb_base_dir.endswith(b'/tasks'):
+                    search.append(os.path.join(os.path.dirname(b_pb_base_dir), b_dirname, b_source))
+                    search.append(os.path.join(b_pb_base_dir, b_source))
                 else:
                     # don't add dirname if user already is using it in source
                     if b_source.split(b'/')[0] != dirname:
@@ -305,8 +305,8 @@ class DataLoader:
             # always append basedir as last resort
             # don't add dirname if user already is using it in source
             if b_source.split(b'/')[0] != dirname:
-                search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
-            search.append(os.path.join(to_bytes(self.get_basedir()), b_source))
+                search.append(os.path.join(to_bytes(self.get_basedir(), errors='surrogate_or_strict'), b_dirname, b_source))
+            search.append(os.path.join(to_bytes(self.get_basedir(), errors='surrogate_or_strict'), b_source))
 
             display.debug(u'search_path:\n\t%s' % to_text(b'\n\t'.join(search)))
             for b_candidate in search:
@@ -316,7 +316,7 @@ class DataLoader:
                     break
 
         if result is None:
-            raise AnsibleFileNotFound(file_name=source, paths=[to_text(p) for p in search])
+            raise AnsibleFileNotFound(file_name=source, paths=[to_native(p) for p in search])
 
         return result
 
@@ -389,7 +389,7 @@ class DataLoader:
             try:
                 self.cleanup_tmp_file(f)
             except Exception as e:
-                display.warning("Unable to cleanup temp files: %s" % to_native(e))
+                display.warning("Unable to cleanup temp files: %s" % to_text(e))
 
     def find_vars_files(self, path, name, extensions=None, allow_dir=True):
         """

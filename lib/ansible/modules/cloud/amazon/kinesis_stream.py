@@ -26,22 +26,28 @@ author: Allen Sanabria (@linuxdynasty)
 options:
   name:
     description:
-      - "The name of the Kinesis Stream you are managing."
+      - The name of the Kinesis Stream you are managing.
     required: true
+    type: str
   shards:
     description:
-      - "The number of shards you want to have with this stream."
-      - "This is required when state == present"
+      - The number of shards you want to have with this stream.
+      - This is required when I(state=present)
+    type: int
   retention_period:
     description:
-      - "The default retention period is 24 hours and can not be less than 24
-      hours."
-      - "The retention period can be modified during any point in time."
+      - The length of time (in hours) data records are accessible after they are added to
+        the stream.
+      - The default retention period is 24 hours and can not be less than 24 hours.
+      - The maximum retention period is 168 hours.
+      - The retention period can be modified during any point in time.
+    type: int
   state:
     description:
-      - "Create or Delete the Kinesis Stream."
+      - Create or Delete the Kinesis Stream.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   wait:
     description:
       - Wait for operation to complete before returning.
@@ -51,24 +57,30 @@ options:
     description:
       - How many seconds to wait for an operation to complete before timing out.
     default: 300
+    type: int
   tags:
     description:
-      - "A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }."
+      - "A dictionary of resource tags of the form: C({ tag1: value1, tag2: value2 })."
     aliases: [ "resource_tags" ]
+    type: dict
   encryption_state:
     description:
-      - "Enable or Disable encryption on the Kinesis Stream."
+      - Enable or Disable encryption on the Kinesis Stream.
     choices: [ 'enabled', 'disabled' ]
     version_added: "2.5"
+    type: str
   encryption_type:
     description:
-      - "The type of encryption."
-    default: KMS
+      - The type of encryption.
+      - Defaults to C(KMS)
+    choices: ['KMS', 'NONE']
     version_added: "2.5"
+    type: str
   key_id:
     description:
-      - "The GUID or alias for the KMS key."
+      - The GUID or alias for the KMS key.
     version_added: "2.5"
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -424,15 +436,15 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
                         status_achieved = True
                         break
 
-            elif status == 'DELETING' and not check_mode:
+            else:
                 if not find_success:
                     status_achieved = True
                     break
 
-            else:
-                time.sleep(polling_increment_secs)
         except botocore.exceptions.ClientError as e:
             err_msg = to_native(e)
+
+        time.sleep(polling_increment_secs)
 
     if not status_achieved:
         err_msg = "Wait time out reached, while waiting for results"
@@ -477,7 +489,7 @@ def tags_action(client, stream_name, tags, action='create', check_mode=False):
                 client.add_tags_to_stream(**params)
                 success = True
             elif action == 'delete':
-                params['TagKeys'] = tags.keys()
+                params['TagKeys'] = list(tags)
                 client.remove_tags_from_stream(**params)
                 success = True
             else:
@@ -516,7 +528,6 @@ def recreate_tags_from_list(list_of_tags):
     """
     tags = list()
     i = 0
-    list_of_tags = list_of_tags
     for i in range(len(list_of_tags)):
         key_name = list_of_tags[i][0]
         key_val = list_of_tags[i][1]
@@ -965,11 +976,11 @@ def update(client, current_stream, stream_name, number_of_shards=1, retention_pe
                 return success, changed, err_msg
 
     if tags:
-        _, _, err_msg = (
+        tag_success, tag_changed, err_msg = (
             update_tags(client, stream_name, tags, check_mode=check_mode)
         )
     if wait:
-        success, err_msg, _ = (
+        success, err_msg, status_stream = (
             wait_for_status(
                 client, stream_name, 'ACTIVE', wait_timeout,
                 check_mode=check_mode
@@ -1030,11 +1041,6 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
                 check_mode=check_mode
             )
         )
-
-    if stream_found and not check_mode:
-        if current_stream['ShardsCount'] != number_of_shards:
-            err_msg = 'Can not change the number of shards in a Kinesis Stream'
-            return success, changed, err_msg, results
 
     if stream_found and current_stream.get('StreamStatus') != 'DELETING':
         success, changed, err_msg = update(
@@ -1108,10 +1114,10 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
                 changed = True
 
     if success:
-        _, _, results = (
+        stream_found, stream_msg, results = (
             find_stream(client, stream_name, check_mode=check_mode)
         )
-        _, _, current_tags = (
+        tag_success, tag_msg, current_tags = (
             get_tags(client, stream_name, check_mode=check_mode)
         )
         if current_tags and not check_mode:
@@ -1329,7 +1335,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name=dict(default=None, required=True),
+            name=dict(required=True),
             shards=dict(default=None, required=False, type='int'),
             retention_period=dict(default=None, required=False, type='int'),
             tags=dict(default=None, required=False, type='dict', aliases=['resource_tags']),

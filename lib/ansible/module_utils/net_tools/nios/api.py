@@ -61,12 +61,13 @@ NIOS_IPV6_FIXED_ADDRESS = 'ipv6fixedaddress'
 NIOS_NEXT_AVAILABLE_IP = 'func:nextavailableip'
 NIOS_IPV4_NETWORK_CONTAINER = 'networkcontainer'
 NIOS_IPV6_NETWORK_CONTAINER = 'ipv6networkcontainer'
+NIOS_MEMBER = 'member'
 
 NIOS_PROVIDER_SPEC = {
     'host': dict(fallback=(env_fallback, ['INFOBLOX_HOST'])),
     'username': dict(fallback=(env_fallback, ['INFOBLOX_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['INFOBLOX_PASSWORD']), no_log=True),
-    'ssl_verify': dict(type='bool', default=False, fallback=(env_fallback, ['INFOBLOX_SSL_VERIFY'])),
+    'validate_certs': dict(type='bool', default=False, fallback=(env_fallback, ['INFOBLOX_SSL_VERIFY']), aliases=['ssl_verify']),
     'silent_ssl_warnings': dict(type='bool', default=True),
     'http_request_timeout': dict(type='int', default=10, fallback=(env_fallback, ['INFOBLOX_HTTP_REQUEST_TIMEOUT'])),
     'http_pool_connections': dict(type='int', default=10),
@@ -88,7 +89,7 @@ def get_connector(*args, **kwargs):
                         'to be installed.  It can be installed using the '
                         'command `pip install infoblox-client`')
 
-    if not set(kwargs.keys()).issubset(NIOS_PROVIDER_SPEC.keys()):
+    if not set(kwargs.keys()).issubset(list(NIOS_PROVIDER_SPEC.keys()) + ['ssl_verify']):
         raise Exception('invalid or unsupported keyword argument for connector')
     for key, value in iteritems(NIOS_PROVIDER_SPEC):
         if key not in kwargs:
@@ -102,6 +103,10 @@ def get_connector(*args, **kwargs):
             env = ('INFOBLOX_%s' % key).upper()
             if env in os.environ:
                 kwargs[key] = os.environ.get(env)
+
+    if 'validate_certs' in kwargs.keys():
+        kwargs['ssl_verify'] = kwargs['validate_certs']
+        kwargs.pop('validate_certs', None)
 
     return Connector(kwargs)
 
@@ -134,6 +139,37 @@ def flatten_extattrs(value):
         }
     '''
     return dict([(k, v['value']) for k, v in iteritems(value)])
+
+
+def member_normalize(member_spec):
+    ''' Transforms the member module arguments into a valid WAPI struct
+    This function will transform the arguments into a structure that
+    is a valid WAPI structure in the format of:
+        {
+            key: <value>,
+        }
+    It will remove any arguments that are set to None since WAPI will error on
+    that condition.
+    The remainder of the value validation is performed by WAPI
+    Some parameters in ib_spec are passed as a list in order to pass the validation for elements.
+    In this function, they are converted to dictionary.
+    '''
+    member_elements = ['vip_setting', 'ipv6_setting', 'lan2_port_setting', 'mgmt_port_setting',
+                       'pre_provisioning', 'network_setting', 'v6_network_setting',
+                       'ha_port_setting', 'lan_port_setting', 'lan2_physical_setting',
+                       'lan_ha_port_setting', 'mgmt_network_setting', 'v6_mgmt_network_setting']
+    for key in member_spec.keys():
+        if key in member_elements and member_spec[key] is not None:
+            member_spec[key] = member_spec[key][0]
+        if isinstance(member_spec[key], dict):
+            member_spec[key] = member_normalize(member_spec[key])
+        elif isinstance(member_spec[key], list):
+            for x in member_spec[key]:
+                if isinstance(x, dict):
+                    x = member_normalize(x)
+        elif member_spec[key] is None:
+            del member_spec[key]
+    return member_spec
 
 
 class WapiBase(object):
@@ -221,7 +257,6 @@ class WapiModule(WapiBase):
 
         # get object reference
         ib_obj_ref, update, new_name = self.get_object_ref(self.module, ib_obj_type, obj_filter, ib_spec)
-
         proposed_object = {}
         for key, value in iteritems(ib_spec):
             if self.module.params[key] is not None:
@@ -230,24 +265,59 @@ class WapiModule(WapiBase):
                 else:
                     proposed_object[key] = self.module.params[key]
 
+        # If configure_by_dns is set to False, then delete the default dns set in the param else throw exception
+        if not proposed_object.get('configure_for_dns') and proposed_object.get('view') == 'default'\
+                and ib_obj_type == NIOS_HOST_RECORD:
+            del proposed_object['view']
+        elif not proposed_object.get('configure_for_dns') and proposed_object.get('view') != 'default'\
+                and ib_obj_type == NIOS_HOST_RECORD:
+            self.module.fail_json(msg='DNS Bypass is not allowed if DNS view is set other than \'default\'')
+
         if ib_obj_ref:
             if len(ib_obj_ref) > 1:
                 for each in ib_obj_ref:
-                    if ('ipv4addr' in each) and ('ipv4addr' in proposed_object)\
-                            and each['ipv4addr'] == proposed_object['ipv4addr']:
+                    # To check for existing A_record with same name with input A_record by IP
+                    if each.get('ipv4addr') and each.get('ipv4addr') == proposed_object.get('ipv4addr'):
                         current_object = each
+                    # To check for existing Host_record with same name with input Host_record by IP
+                    elif each.get('ipv4addrs')[0].get('ipv4addr') and each.get('ipv4addrs')[0].get('ipv4addr')\
+                            == proposed_object.get('ipv4addrs')[0].get('ipv4addr'):
+                        current_object = each
+                    # Else set the current_object with input value
+                    else:
+                        current_object = obj_filter
+                        ref = None
             else:
                 current_object = ib_obj_ref[0]
             if 'extattrs' in current_object:
                 current_object['extattrs'] = flatten_extattrs(current_object['extattrs'])
-            ref = current_object.pop('_ref')
+            if current_object.get('_ref'):
+                ref = current_object.pop('_ref')
         else:
             current_object = obj_filter
             ref = None
+        # checks if the object type is member to normalize the attributes being passed
+        if (ib_obj_type == NIOS_MEMBER):
+            proposed_object = member_normalize(proposed_object)
 
         # checks if the name's field has been updated
         if update and new_name:
             proposed_object['name'] = new_name
+
+        check_remove = []
+        if (ib_obj_type == NIOS_HOST_RECORD):
+            # this check is for idempotency, as if the same ip address shall be passed
+            # add param will be removed, and same exists true for remove case as well.
+            if 'ipv4addrs' in [current_object and proposed_object]:
+                for each in current_object['ipv4addrs']:
+                    if each['ipv4addr'] == proposed_object['ipv4addrs'][0]['ipv4addr']:
+                        if 'add' in proposed_object['ipv4addrs'][0]:
+                            del proposed_object['ipv4addrs'][0]['add']
+                            break
+                    check_remove += each.values()
+                if proposed_object['ipv4addrs'][0]['ipv4addr'] not in check_remove:
+                    if 'remove' in proposed_object['ipv4addrs'][0]:
+                        del proposed_object['ipv4addrs'][0]['remove']
 
         res = None
         modified = not self.compare_objects(current_object, proposed_object)
@@ -262,29 +332,52 @@ class WapiModule(WapiBase):
                 if not self.module.check_mode:
                     self.create_object(ib_obj_type, proposed_object)
                 result['changed'] = True
+            # Check if NIOS_MEMBER and the flag to call function create_token is set
+            elif (ib_obj_type == NIOS_MEMBER) and (proposed_object['create_token']):
+                proposed_object = None
+                # the function creates a token that can be used by a pre-provisioned member to join the grid
+                result['api_results'] = self.call_func('create_token', ref, proposed_object)
+                result['changed'] = True
             elif modified:
-                self.check_if_recordname_exists(obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object)
+                if 'ipv4addrs' in proposed_object:
+                    if ('add' not in proposed_object['ipv4addrs'][0]) and ('remove' not in proposed_object['ipv4addrs'][0]):
+                        self.check_if_recordname_exists(obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object)
 
                 if (ib_obj_type in (NIOS_HOST_RECORD, NIOS_NETWORK_VIEW, NIOS_DNS_VIEW)):
+                    run_update = True
                     proposed_object = self.on_update(proposed_object, ib_spec)
-                    res = self.update_object(ref, proposed_object)
-                if (ib_obj_type in (NIOS_A_RECORD, NIOS_AAAA_RECORD)):
-                    # popping 'view' key as update of 'view' is not supported with respect to a:record/aaaa:record
+                    if 'ipv4addrs' in proposed_object:
+                        if ('add' or 'remove') in proposed_object['ipv4addrs'][0]:
+                            run_update, proposed_object = self.check_if_add_remove_ip_arg_exists(proposed_object)
+                            if run_update:
+                                res = self.update_object(ref, proposed_object)
+                                result['changed'] = True
+                            else:
+                                res = ref
+                if (ib_obj_type in (NIOS_A_RECORD, NIOS_AAAA_RECORD, NIOS_PTR_RECORD, NIOS_SRV_RECORD)):
+                    # popping 'view' key as update of 'view' is not supported with respect to a:record/aaaa:record/srv:record/ptr:record
                     proposed_object = self.on_update(proposed_object, ib_spec)
                     del proposed_object['view']
                     res = self.update_object(ref, proposed_object)
+                    result['changed'] = True
                 elif 'network_view' in proposed_object:
                     proposed_object.pop('network_view')
+                    result['changed'] = True
                 if not self.module.check_mode and res is None:
                     proposed_object = self.on_update(proposed_object, ib_spec)
                     self.update_object(ref, proposed_object)
-                result['changed'] = True
+                    result['changed'] = True
 
         elif state == 'absent':
             if ref is not None:
-                if not self.module.check_mode:
+                if 'ipv4addrs' in proposed_object:
+                    if 'remove' in proposed_object['ipv4addrs'][0]:
+                        self.check_if_add_remove_ip_arg_exists(proposed_object)
+                        self.update_object(ref, proposed_object)
+                        result['changed'] = True
+                elif not self.module.check_mode:
                     self.delete_object(ref)
-                result['changed'] = True
+                    result['changed'] = True
 
         return result
 
@@ -321,6 +414,34 @@ class WapiModule(WapiBase):
                 proposed_object['ipv4addr'] = NIOS_NEXT_AVAILABLE_IP + ':' + ip_range
 
         return proposed_object
+
+    def check_if_add_remove_ip_arg_exists(self, proposed_object):
+        '''
+            This function shall check if add/remove param is set to true and
+            is passed in the args, then we will update the proposed dictionary
+            to add/remove IP to existing host_record, if the user passes false
+            param with the argument nothing shall be done.
+            :returns: True if param is changed based on add/remove, and also the
+            changed proposed_object.
+        '''
+        update = False
+        if 'add' in proposed_object['ipv4addrs'][0]:
+            if proposed_object['ipv4addrs'][0]['add']:
+                proposed_object['ipv4addrs+'] = proposed_object['ipv4addrs']
+                del proposed_object['ipv4addrs']
+                del proposed_object['ipv4addrs+'][0]['add']
+                update = True
+            else:
+                del proposed_object['ipv4addrs'][0]['add']
+        elif 'remove' in proposed_object['ipv4addrs'][0]:
+            if proposed_object['ipv4addrs'][0]['remove']:
+                proposed_object['ipv4addrs-'] = proposed_object['ipv4addrs']
+                del proposed_object['ipv4addrs']
+                del proposed_object['ipv4addrs-'][0]['remove']
+                update = True
+            else:
+                del proposed_object['ipv4addrs'][0]['remove']
+        return update, proposed_object
 
     def issubset(self, item, objects):
         ''' Checks if item is a subset of objects
@@ -398,18 +519,66 @@ class WapiModule(WapiBase):
                     test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
             elif (ib_obj_type == NIOS_IPV4_FIXED_ADDRESS or ib_obj_type == NIOS_IPV6_FIXED_ADDRESS and 'mac' in obj_filter):
                 test_obj_filter = dict([['mac', obj_filter['mac']]])
+            elif (ib_obj_type == NIOS_A_RECORD):
+                # resolves issue where a_record with uppercase name was returning null and was failing
+                test_obj_filter = obj_filter
+                test_obj_filter['name'] = test_obj_filter['name'].lower()
+                # resolves issue where multiple a_records with same name and different IP address
+                try:
+                    ipaddr_obj = self.module._check_type_dict(obj_filter['ipv4addr'])
+                    ipaddr = ipaddr_obj['old_ipv4addr']
+                except TypeError:
+                    ipaddr = obj_filter['ipv4addr']
+                test_obj_filter['ipv4addr'] = ipaddr
+            elif (ib_obj_type == NIOS_TXT_RECORD):
+                # resolves issue where multiple txt_records with same name and different text
+                test_obj_filter = obj_filter
+                try:
+                    text_obj = self.module._check_type_dict(obj_filter['text'])
+                    txt = text_obj['old_text']
+                except TypeError:
+                    txt = obj_filter['text']
+                test_obj_filter['text'] = txt
             # check if test_obj_filter is empty copy passed obj_filter
             else:
                 test_obj_filter = obj_filter
+            ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
+        elif (ib_obj_type == NIOS_A_RECORD):
+            # resolves issue where multiple a_records with same name and different IP address
+            test_obj_filter = obj_filter
+            try:
+                ipaddr_obj = self.module._check_type_dict(obj_filter['ipv4addr'])
+                ipaddr = ipaddr_obj['old_ipv4addr']
+            except TypeError:
+                ipaddr = obj_filter['ipv4addr']
+            test_obj_filter['ipv4addr'] = ipaddr
+            ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
+        elif (ib_obj_type == NIOS_TXT_RECORD):
+            # resolves issue where multiple txt_records with same name and different text
+            test_obj_filter = obj_filter
+            try:
+                text_obj = self.module._check_type_dict(obj_filter['text'])
+                txt = text_obj['old_text']
+            except TypeError:
+                txt = obj_filter['text']
+            test_obj_filter['text'] = txt
             ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
         elif (ib_obj_type == NIOS_ZONE):
             # del key 'restart_if_needed' as nios_zone get_object fails with the key present
             temp = ib_spec['restart_if_needed']
             del ib_spec['restart_if_needed']
             ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
-            # reinstate restart_if_needed key if it's set to true in play
-            if module.params['restart_if_needed']:
+            # reinstate restart_if_needed if ib_obj is none, meaning there's no existing nios_zone ref
+            if not ib_obj:
                 ib_spec['restart_if_needed'] = temp
+        elif (ib_obj_type == NIOS_MEMBER):
+            # del key 'create_token' as nios_member get_object fails with the key present
+            temp = ib_spec['create_token']
+            del ib_spec['create_token']
+            ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+            if temp:
+                # reinstate 'create_token' key
+                ib_spec['create_token'] = temp
         else:
             ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
         return ib_obj, update, new_name

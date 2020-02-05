@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -28,6 +30,7 @@ options:
   name:
     description:
       - The name of the GCE instance template.
+    required: True
   size:
     description:
       - The desired machine type for the instance template.
@@ -416,7 +419,7 @@ def create_instance_template(module, gce):
             changed = True
         except GoogleBaseError as err:
             module.fail_json(
-                msg='Unexpected error attempting to create instance {}, error: {}'
+                msg='Unexpected error attempting to create instance {0}, error: {1}'
                 .format(
                     instance,
                     err.value
@@ -528,7 +531,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(choices=['present', 'absent'], default='present'),
-            name=dict(require=True, aliases=['base_name']),
+            name=dict(required=True, aliases=['base_name']),
             size=dict(default='f1-micro'),
             source=dict(),
             image=dict(),
@@ -569,7 +572,7 @@ def main():
     try:
         gce = gce_connect(module)
     except GoogleBaseError as e:
-        module.fail_json(msg='GCE Connexion failed %s' % to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg='GCE Connection failed %s' % to_native(e), exception=traceback.format_exc())
 
     if module.check_mode:
         (changed, output) = check_if_system_state_would_be_changed(module, gce)

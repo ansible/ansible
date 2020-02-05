@@ -15,11 +15,80 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-import os
-import sys
+from units.compat import unittest
+from ansible.module_utils.gcp_utils import (GcpRequest,
+                                            navigate_hash,
+                                            remove_nones_from_dict,
+                                            replace_resource_dict)
 
-from units.compat import mock, unittest
-from ansible.module_utils.gcp_utils import GcpRequest
+
+class ReplaceResourceDictTestCase(unittest.TestCase):
+    def test_given_dict(self):
+        value = {
+            'selfLink': 'value'
+        }
+        self.assertEqual(replace_resource_dict(value, 'selfLink'), value['selfLink'])
+
+    def test_given_array(self):
+        value = {
+            'selfLink': 'value'
+        }
+        self.assertEqual(replace_resource_dict([value] * 3, 'selfLink'), [value['selfLink']] * 3)
+
+
+class NavigateHashTestCase(unittest.TestCase):
+    def test_one_level(self):
+        value = {
+            'key': 'value'
+        }
+        self.assertEqual(navigate_hash(value, ['key']), value['key'])
+
+    def test_multilevel(self):
+        value = {
+            'key': {
+                'key2': 'value'
+            }
+        }
+        self.assertEqual(navigate_hash(value, ['key', 'key2']), value['key']['key2'])
+
+    def test_default(self):
+        value = {
+            'key': 'value'
+        }
+        default = 'not found'
+        self.assertEqual(navigate_hash(value, ['key', 'key2'], default), default)
+
+
+class RemoveNonesFromDictTestCase(unittest.TestCase):
+    def test_remove_nones(self):
+        value = {
+            'key': None,
+            'good': 'value'
+        }
+        value_correct = {
+            'good': 'value'
+        }
+        self.assertEqual(remove_nones_from_dict(value), value_correct)
+
+    def test_remove_empty_arrays(self):
+        value = {
+            'key': [],
+            'good': 'value'
+        }
+        value_correct = {
+            'good': 'value'
+        }
+        self.assertEqual(remove_nones_from_dict(value), value_correct)
+
+    def test_remove_empty_dicts(self):
+        value = {
+            'key': {},
+            'good': 'value'
+        }
+        value_correct = {
+            'good': 'value'
+        }
+        self.assertEqual(remove_nones_from_dict(value), value_correct)
 
 
 class GCPRequestDifferenceTestCase(unittest.TestCase):
@@ -29,7 +98,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
             'test': 'original'
         }
         request = GcpRequest(value1)
-        self.assertEquals(request, request)
+        self.assertEqual(request, request)
 
     def test_simple_different(self):
         value1 = {
@@ -46,7 +115,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
         request1 = GcpRequest(value1)
         request2 = GcpRequest(value2)
         self.assertNotEquals(request1, request2)
-        self.assertEquals(request1.difference(request2), difference)
+        self.assertEqual(request1.difference(request2), difference)
 
     def test_nested_dictionaries_no_difference(self):
         value1 = {
@@ -59,7 +128,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
             'test': 'original'
         }
         request = GcpRequest(value1)
-        self.assertEquals(request, request)
+        self.assertEqual(request, request)
 
     def test_nested_dictionaries_with_difference(self):
         value1 = {
@@ -91,7 +160,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
         request1 = GcpRequest(value1)
         request2 = GcpRequest(value2)
         self.assertNotEquals(request1, request2)
-        self.assertEquals(request1.difference(request2), difference)
+        self.assertEqual(request1.difference(request2), difference)
 
     def test_arrays_strings_no_difference(self):
         value1 = {
@@ -101,7 +170,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
             ]
         }
         request = GcpRequest(value1)
-        self.assertEquals(request, request)
+        self.assertEqual(request, request)
 
     def test_arrays_strings_with_difference(self):
         value1 = {
@@ -125,7 +194,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
         request1 = GcpRequest(value1)
         request2 = GcpRequest(value2)
         self.assertNotEquals(request1, request2)
-        self.assertEquals(request1.difference(request2), difference)
+        self.assertEqual(request1.difference(request2), difference)
 
     def test_arrays_dicts_with_no_difference(self):
         value1 = {
@@ -140,7 +209,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
             ]
         }
         request = GcpRequest(value1)
-        self.assertEquals(request, request)
+        self.assertEqual(request, request)
 
     def test_arrays_dicts_with_difference(self):
         value1 = {
@@ -173,4 +242,4 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
         request1 = GcpRequest(value1)
         request2 = GcpRequest(value2)
         self.assertNotEquals(request1, request2)
-        self.assertEquals(request1.difference(request2), difference)
+        self.assertEqual(request1.difference(request2), difference)

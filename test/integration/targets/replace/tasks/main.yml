@@ -1,0 +1,265 @@
+# setup
+- set_fact: output_dir_test={{output_dir}}/test_replace
+
+- name: make sure our testing sub-directory does not exist
+  file: path="{{ output_dir_test }}" state=absent
+
+- name: create our testing sub-directory
+  file: path="{{ output_dir_test }}" state=directory
+
+# tests
+- name: create test files
+  copy:
+      content: |-
+                The quick brown fox jumps over the lazy dog.
+                We promptly judged antique ivory buckles for the next prize.
+                Jinxed wizards pluck ivy from the big quilt.
+                Jaded zombies acted quaintly but kept driving their oxen forward.
+      dest: "{{ output_dir_test }}/pangrams.{{ item }}.txt"
+  with_sequence: start=0 end=6 format=%02x #increment as needed
+
+
+## test `before` option
+- name: remove all spaces before "quilt"
+  replace:
+    path: "{{ output_dir_test }}/pangrams.00.txt"
+    before: 'quilt'
+    regexp: ' '
+  register: replace_test0
+
+- command: "cat {{ output_dir_test }}/pangrams.00.txt"
+  register: replace_cat0
+
+- name: validate before assertions
+  assert:
+    that:
+      - replace_test0 is successful
+      - replace_test0 is changed
+      - replace_cat0.stdout_lines[0] == 'Thequickbrownfoxjumpsoverthelazydog.'
+      - replace_cat0.stdout_lines[-1] == 'Jaded zombies acted quaintly but kept driving their oxen forward.'
+
+
+## test `after` option
+- name: remove all spaces after "promptly"
+  replace:
+    path: "{{ output_dir_test }}/pangrams.01.txt"
+    after: 'promptly'
+    regexp: ' '
+  register: replace_test1
+
+- command: "cat {{ output_dir_test }}/pangrams.01.txt"
+  register: replace_cat1
+
+- name: validate after assertions
+  assert:
+    that:
+      - replace_test1 is successful
+      - replace_test1 is changed
+      - replace_cat1.stdout_lines[0] == 'The quick brown fox jumps over the lazy dog.'
+      - replace_cat1.stdout_lines[-1] == 'Jadedzombiesactedquaintlybutkeptdrivingtheiroxenforward.'
+
+
+## test combined `before` and `after` options
+- name: before "promptly" but after "quilt", replace every "e" with a "3"
+  replace:
+    path: "{{ output_dir_test }}/pangrams.02.txt"
+    before: 'promptly'
+    after: 'quilt'
+    regexp: 'e'
+    replace: '3'
+  register: replace_test2
+
+- name: validate after+before assertions
+  assert:
+    that:
+      - replace_test2 is successful
+      - not replace_test2 is changed
+      - replace_test2.msg.startswith("Pattern for before/after params did not match the given file")
+
+- name: before "quilt" but after "promptly", replace every "e" with a "3"
+  replace:
+    path: "{{ output_dir_test }}/pangrams.03.txt"
+    before: 'quilt'
+    after: 'promptly'
+    regexp: 'e'
+    replace: '3'
+  register: replace_test3
+
+- command: "cat {{ output_dir_test }}/pangrams.03.txt"
+  register: replace_cat3
+
+- name: validate before+after assertions
+  assert:
+    that:
+      - replace_test3 is successful
+      - replace_test3 is changed
+      - replace_cat3.stdout_lines[1] == 'We promptly judg3d antiqu3 ivory buckl3s for th3 n3xt priz3.'
+
+
+## test ^$ behavior in MULTILINE, and . behavior in absense of DOTALL
+- name: quote everything between bof and eof
+  replace:
+    path: "{{ output_dir_test }}/pangrams.04.txt"
+    regexp: ^([\S\s]+)$
+    replace: '"\1"'
+  register: replace_test4_0
+
+- command: "cat {{ output_dir_test }}/pangrams.04.txt"
+  register: replace_cat4_0
+
+- name: quote everything between bol and eol
+  replace:
+    path: "{{ output_dir_test }}/pangrams.04.txt"
+    regexp: ^(.+)$
+    replace: '"\1"'
+  register: replace_test4_1
+
+- command: "cat {{ output_dir_test }}/pangrams.04.txt"
+  register: replace_cat4_1
+
+- name: validate before+after assertions
+  assert:
+    that:
+      - replace_test4_0 is successful
+      - replace_test4_0 is changed
+      - replace_test4_1 is successful
+      - replace_test4_1 is changed
+      - replace_cat4_0.stdout_lines[0] == '"The quick brown fox jumps over the lazy dog.'
+      - replace_cat4_0.stdout_lines[-1] == 'Jaded zombies acted quaintly but kept driving their oxen forward."'
+      - replace_cat4_1.stdout_lines[0] == '""The quick brown fox jumps over the lazy dog."'
+      - replace_cat4_1.stdout_lines[-1] == '"Jaded zombies acted quaintly but kept driving their oxen forward.""'
+
+
+## test \b escaping in short and long form
+- name: short form with unescaped word boundaries
+  replace: path="{{ output_dir_test }}/pangrams.05.txt" regexp='\b(.+)\b' replace='"\1"'
+  register: replace_test5_0
+
+- name: short form with escaped word boundaries
+  replace: path="{{ output_dir_test }}/pangrams.05.txt" regexp='\\b(.+)\\b' replace='"\1"'
+  register: replace_test5_1
+
+- command: "cat {{ output_dir_test }}/pangrams.05.txt"
+  register: replace_cat5_1
+
+- name: long form with unescaped word boundaries
+  replace:
+    path: "{{ output_dir_test }}/pangrams.05.txt"
+    regexp: '\b(.+)\b'
+    replace: '"\1"'
+  register: replace_test5_2
+
+- command: "cat {{ output_dir_test }}/pangrams.05.txt"
+  register: replace_cat5_2
+
+- name: long form with escaped word boundaries
+  replace:
+    path: "{{ output_dir_test }}/pangrams.05.txt"
+    regexp: '\\b(.+)\\b'
+    replace: '"\1"'
+  register: replace_test5_3
+
+- name: validate before+after assertions
+  assert:
+    that:
+      - not replace_test5_0 is changed
+      - replace_test5_1 is changed
+      - replace_test5_2 is changed
+      - not replace_test5_3 is changed
+      - replace_cat5_1.stdout_lines[0] == '"The quick brown fox jumps over the lazy dog".'
+      - replace_cat5_1.stdout_lines[-1] == '"Jaded zombies acted quaintly but kept driving their oxen forward".'
+      - replace_cat5_2.stdout_lines[0] == '""The quick brown fox jumps over the lazy dog"".'
+      - replace_cat5_2.stdout_lines[-1] == '""Jaded zombies acted quaintly but kept driving their oxen forward"".'
+
+
+## test backup behaviors
+- name: replacement with backup
+  replace:
+    path: "{{ output_dir_test }}/pangrams.06.txt"
+    regexp: ^(.+)$
+    replace: '"\1"'
+    backup: true
+  register: replace_test6
+
+- command: "cat {{ output_dir_test }}/pangrams.06.txt"
+  register: replace_cat6_0
+
+- command: "cat {{ replace_test6.backup_file }}"
+  register: replace_cat6_1
+
+- name: validate backup
+  assert:
+    that:
+      - replace_test6 is successful
+      - replace_test6 is changed
+      - replace_test6.backup_file is search('/pangrams.06.txt.')
+      - replace_cat6_0.stdout != replace_cat6_1.stdout
+
+
+## test filesystem failures
+- name: fail on directory
+  replace:
+    path: "{{ output_dir_test }}"
+    regexp: ^(.+)$
+  register: replace_test7_1
+  ignore_errors: true
+
+- name: fail on missing file
+  replace:
+    path: "{{ output_dir_test }}/missing_file.txt"
+    regexp: ^(.+)$
+  register: replace_test7_2
+  ignore_errors: true
+
+- name: validate backup
+  assert:
+    that:
+      - replace_test7_1 is failure
+      - replace_test7_2 is failure
+      - replace_test7_1.msg.endswith(" is a directory !")
+      - replace_test7_2.msg.endswith(" does not exist !")
+
+
+## test subsection replacement when before/after potentially match more than once
+- name: test file for subsection replacement gone awry
+  copy:
+      content: |-
+                # start of group
+                0.0.0.0
+                127.0.0.1
+                127.0.1.1
+                # end of group
+
+                # start of group
+                0.0.0.0
+                127.0.0.1
+                127.0.1.1
+                # end of group
+
+                # start of group
+                0.0.0.0
+                127.0.0.1
+                127.0.1.1
+                # end of group
+      dest: "{{ output_dir_test }}/addresses.txt"
+
+- name: subsection madness
+  replace:
+    path: "{{ output_dir_test }}/addresses.txt"
+    after: '# start of group'
+    before: '# end of group'
+    regexp: '0'
+    replace: '9'
+  register: replace_test8
+
+- command: "cat {{ output_dir_test }}/addresses.txt"
+  register: replace_cat8
+
+- name: validate before+after assertions
+  assert:
+    that:
+      - replace_test8 is successful
+      - replace_test8 is changed
+      - replace_cat8.stdout_lines[1] == "9.9.9.9"
+      - replace_cat8.stdout_lines[7] == "0.0.0.0"
+      - replace_cat8.stdout_lines[13] == "0.0.0.0"

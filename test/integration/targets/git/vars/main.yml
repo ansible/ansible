@@ -8,6 +8,24 @@ git_archive_extensions:
     - tar
     - zip
 
+git_required_packages:
+  default:
+    - git
+    - gzip
+    - tar
+    - unzip
+    - zip
+  FreeBSD:
+    - git
+    - gzip
+    - unzip
+    - zip
+
+git_list_commands:
+  tar.gz: tar -tf
+  tar: tar -tf
+  tgz: tar -tf
+  zip: unzip -Z1
 
 checkout_dir: '{{ output_dir }}/git'
 repo_dir: '{{ output_dir }}/local_repos'
@@ -15,10 +33,8 @@ separate_git_dir: '{{ output_dir }}/sep_git_dir'
 repo_format1: 'https://github.com/jimi-c/test_role'
 repo_format2: 'git@github.com:jimi-c/test_role.git'
 repo_format3: 'ssh://git@github.com/jimi-c/test_role.git'
-repo_submodules: 'https://github.com/abadger/test_submodules.git'
-repo_submodules_newer: 'https://github.com/abadger/test_submodules_newer.git'
+repo_submodules: 'https://github.com/abadger/test_submodules_newer.git'
 repo_submodule1: 'https://github.com/abadger/test_submodules_subm1.git'
-repo_submodule1_newer: 'https://github.com/abadger/test_submodules_subm1_newer.git'
 repo_submodule2: 'https://github.com/abadger/test_submodules_subm2.git'
 repo_update_url_1: 'https://github.com/ansible-test-robinro/git-test-old'
 repo_update_url_2: 'https://github.com/ansible-test-robinro/git-test-new'

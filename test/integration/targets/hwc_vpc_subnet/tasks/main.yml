@@ -1,0 +1,143 @@
+---
+# Pre-test setup
+- name: create a vpc
+  hwc_network_vpc:
+    cidr: "192.168.100.0/24"
+    name: "ansible_network_vpc_test"
+    state: present
+  register: vpc
+- name: delete a subnet
+  hwc_vpc_subnet:
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: True
+    state: absent
+#----------------------------------------------------------
+- name: create a subnet (check mode)
+  hwc_vpc_subnet:
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: True
+    state: present
+  check_mode: yes
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - not result.id
+      - result.changed
+#----------------------------------------------------------
+- name: create a subnet
+  hwc_vpc_subnet:
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: True
+    state: present
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      result is changed
+#----------------------------------------------------------
+- name: create a subnet (idemponent)
+  hwc_vpc_subnet:
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: True
+    state: present
+  check_mode: yes
+  register: result
+- name: idemponent
+  assert:
+    that:
+      - not result.changed
+# ----------------------------------------------------------------------------
+- name: create a subnet that already exists
+  hwc_vpc_subnet:
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: True
+    state: present
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
+#----------------------------------------------------------
+- name: delete a subnet (check mode)
+  hwc_vpc_subnet:
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: True
+    state: absent
+  check_mode: yes
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+#----------------------------------------------------------
+- name: delete a subnet
+  hwc_vpc_subnet:
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: True
+    state: absent
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+#----------------------------------------------------------
+- name: delete a subnet (idemponent)
+  hwc_vpc_subnet:
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: True
+    state: absent
+  check_mode: yes
+  register: result
+- name: idemponent
+  assert:
+    that:
+      - not result.changed
+# ----------------------------------------------------------------------------
+- name: delete a subnet that does not exist
+  hwc_vpc_subnet:
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: True
+    state: absent
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
+#---------------------------------------------------------
+# Post-test teardown
+- name: delete a vpc
+  hwc_network_vpc:
+    cidr: "192.168.100.0/24"
+    name: "ansible_network_vpc_test"
+    state: absent
+  register: vpc

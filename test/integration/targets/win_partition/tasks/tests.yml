@@ -165,7 +165,7 @@
   win_partition:
     disk_number: 1
     partition_size: -1
-    mbr_type: IFS
+    mbr_type: ifs
     offline: True
   register: recreate_partition_check
   check_mode: True
@@ -174,7 +174,7 @@
   win_partition:
     disk_number: 1
     partition_size: -1
-    mbr_type: IFS
+    mbr_type: ifs
     offline: True
   register: recreate_partition
 
@@ -182,7 +182,7 @@
   win_partition:
     disk_number: 1
     partition_size: -1
-    mbr_type: IFS
+    mbr_type: ifs
     offline: True
   register: recreate_partition_idempotence_failure
   ignore_errors: True

@@ -1,0 +1,66 @@
+---
+- debug: msg="START nxos_file_copy input_validation test"
+
+- name: "Input Validation - param should be type <path>"
+  nxos_file_copy:
+    remote_file: 500
+    file_pull: True
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - not result is search('argument remote_file is of type')
+
+- name: "Input Validation - param should be type <int>"
+  nxos_file_copy:
+    file_pull_timeout: 'foobar'
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is search("argument file_pull_timeout is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> and we were unable to convert to int")
+
+- name: "Input Validation - param should be type <bool>"
+  nxos_file_copy:
+    file_pull: 'foobar'
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is search("argument file_pull is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> and we were unable to convert to bool")
+
+- name: "Input Validation - param <file_pull> <remote_file> dependency"
+  nxos_file_copy:
+    file_pull: True
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is search("Playbook parameter <remote_file> required when <file_pull> is True")
+
+- name: "Input Validation - param <file_pull> <remote_scp_server> dependency"
+  nxos_file_copy:
+    file_pull: True
+    remote_file: "/network-integration.cfg"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is search('Playbook parameter <remote_scp_server> required when <file_pull> is True')
+
+- name: "Input Validation - remote_scp_server params together"
+  nxos_file_copy:
+    remote_scp_server: "{{ inventory_hostname_short }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is search('Playbook parameters <remote_scp_server>, <remote_scp_server_user> must be set together')
+
+- debug: msg="END nxos_file_copy input_validation test"

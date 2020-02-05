@@ -18,10 +18,8 @@ from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.modules.bigip_asm_policy_manage import V1Parameters
-    from library.modules.bigip_asm_policy_manage import V2Parameters
     from library.modules.bigip_asm_policy_manage import ModuleManager
     from library.modules.bigip_asm_policy_manage import V1Manager
-    from library.modules.bigip_asm_policy_manage import V2Manager
     from library.modules.bigip_asm_policy_manage import ArgumentSpec
 
     from library.module_utils.network.f5.common import F5ModuleError
@@ -34,10 +32,8 @@ try:
     from test.units.modules.utils import set_module_args
 except ImportError:
     from ansible.modules.network.f5.bigip_asm_policy_manage import V1Parameters
-    from ansible.modules.network.f5.bigip_asm_policy_manage import V2Parameters
     from ansible.modules.network.f5.bigip_asm_policy_manage import ModuleManager
     from ansible.modules.network.f5.bigip_asm_policy_manage import V1Manager
-    from ansible.modules.network.f5.bigip_asm_policy_manage import V2Manager
     from ansible.modules.network.f5.bigip_asm_policy_manage import ArgumentSpec
 
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -112,9 +108,11 @@ class TestManager(unittest.TestCase):
             template='OWA Exchange 2007 (https)',
             state='present',
             active='yes',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = V1Parameters(params=load_fixture('load_asm_policy_inactive.json'))
@@ -149,9 +147,11 @@ class TestManager(unittest.TestCase):
             name='fake_policy',
             state='present',
             active='yes',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = V1Parameters(params=load_fixture('load_asm_policy_inactive.json'))
@@ -186,9 +186,11 @@ class TestManager(unittest.TestCase):
             name='fake_policy',
             state='present',
             active='yes',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = V1Parameters(params=load_fixture('load_asm_policy_inactive.json'))
@@ -219,9 +221,11 @@ class TestManager(unittest.TestCase):
             name='fake_policy',
             state='present',
             active='yes',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = V1Parameters(params=load_fixture('load_asm_policy_active.json'))
@@ -248,10 +252,12 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='fake_policy',
             state='present',
-            server='localhost',
-            password='password',
-            user='admin',
-            active='no'
+            active='no',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = V1Parameters(params=load_fixture('load_asm_policy_active.json'))
@@ -280,10 +286,12 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='fake_policy',
             state='present',
-            server='localhost',
-            password='password',
-            user='admin',
-            active='no'
+            active='no',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = V1Parameters(params=load_fixture('load_asm_policy_inactive.json'))
@@ -311,9 +319,11 @@ class TestManager(unittest.TestCase):
             name='fake_policy',
             template='LotusDomino 6.5 (http)',
             state='present',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = V1Parameters(params=load_fixture('load_asm_policy_inactive.json'))
@@ -346,9 +356,11 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='fake_policy',
             state='present',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = V1Parameters(params=load_fixture('load_asm_policy_inactive.json'))
@@ -382,9 +394,11 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='fake_policy',
             state='absent',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -411,9 +425,11 @@ class TestManager(unittest.TestCase):
             name='fake_policy',
             state='present',
             active='yes',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = V1Parameters(params=load_fixture('load_asm_policy_inactive.json'))
@@ -444,9 +460,11 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='fake_policy',
             state='present',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -474,9 +492,11 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='fake_policy',
             state='absent',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

@@ -1,0 +1,10 @@
+- name: Create Cluster
+  vmware_cluster:
+    datacenter_name: '{{ dc1 }}'
+    cluster_name: '{{ ccr1 }}'
+
+- name: Enable DRS on Cluster
+  vmware_cluster_drs:
+    datacenter_name: '{{ dc1 }}'
+    cluster_name: '{{ ccr1 }}'
+    enable_drs: yes

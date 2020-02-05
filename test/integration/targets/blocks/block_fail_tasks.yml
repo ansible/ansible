@@ -1,0 +1,9 @@
+- block:
+  - name: EXPECTED FAILURE
+    fail:
+      msg: failure
+
+  always:
+  - name: run always task
+    debug:
+      msg: TEST COMPLETE

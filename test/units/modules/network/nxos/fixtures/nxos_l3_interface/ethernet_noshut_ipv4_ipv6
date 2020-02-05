@@ -1,0 +1,5 @@
+interface Ethernet1/1
+  description Configured by Ansible
+  ip address 192.168.0.1/24
+  ipv6 address 2001:db8::1/124
+  no shutdown

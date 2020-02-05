@@ -66,6 +66,7 @@ options:
     vars:
       - name: ansible_password
       - name: ansible_ssh_pass
+      - name: ansible_ssh_password
   private_key_file:
     description:
       - The private SSH key or certificate file used to authenticate to the
@@ -155,10 +156,8 @@ class Connection(NetworkConnectionBase):
 
     def _connect(self):
         if not HAS_NAPALM:
-            raise AnsibleError(
-                'Napalm is required to use the napalm connection type.\n'
-                'Please run pip install napalm'
-            )
+            raise AnsibleError('The "napalm" python library is required to use the napalm connection type.\n')
+
         super(Connection, self)._connect()
 
         if not self.connected:
@@ -184,7 +183,7 @@ class Connection(NetworkConnectionBase):
 
             self.napalm.open()
 
-            self._sub_plugin = {'type': 'external', 'name': 'napalm', 'obj': self.napalm}
+            self._sub_plugin = {'name': 'napalm', 'obj': self.napalm}
             self.queue_message('vvvv', 'created napalm device for network_os %s' % self._network_os)
             self._connected = True
 

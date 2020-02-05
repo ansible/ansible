@@ -105,6 +105,7 @@ output:
 import json
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import http_cookiejar as cookiejar
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
@@ -113,6 +114,7 @@ from ansible.module_utils._text import to_native
 def is_csrf_protection_enabled(module):
     resp, info = fetch_url(module,
                            module.params['url'] + '/api/json',
+                           timeout=module.params['timeout'],
                            method='GET')
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
@@ -121,10 +123,12 @@ def is_csrf_protection_enabled(module):
     return json.loads(content).get('useCrumbs', False)
 
 
-def get_crumb(module):
+def get_crumb(module, cookies):
     resp, info = fetch_url(module,
                            module.params['url'] + '/crumbIssuer/api/json',
-                           method='GET')
+                           method='GET',
+                           timeout=module.params['timeout'],
+                           cookies=cookies)
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
 
@@ -163,8 +167,10 @@ def main():
         script_contents = module.params['script']
 
     headers = {}
+    cookies = None
     if is_csrf_protection_enabled(module):
-        crumb = get_crumb(module)
+        cookies = cookiejar.LWPCookieJar()
+        crumb = get_crumb(module, cookies)
         headers = {crumb['crumbRequestField']: crumb['crumb']}
 
     resp, info = fetch_url(module,
@@ -172,7 +178,8 @@ def main():
                            data=urlencode({'script': script_contents}),
                            headers=headers,
                            method="POST",
-                           timeout=module.params['timeout'])
+                           timeout=module.params['timeout'],
+                           cookies=cookies)
 
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')

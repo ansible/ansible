@@ -39,7 +39,6 @@ options:
   media:
     description:
     - The boot media to boot the system from
-    default: network
     choices: [ "cdrom", "floppy", "hdd", "network", "normal", "usb" ]
   image:
     description:
@@ -53,7 +52,7 @@ options:
     - The state of the boot media.
     - "no_boot: Do not boot from the device"
     - "boot_once: Boot from the device once and then notthereafter"
-    - "boot_always: Boot from the device each time the serveris rebooted"
+    - "boot_always: Boot from the device each time the server is rebooted"
     - "connect: Connect the virtual media device and set to boot_always"
     - "disconnect: Disconnects the virtual media device and set to no_boot"
     - "poweroff: Power off the server"
@@ -72,7 +71,7 @@ options:
     choices: [ "SSLv3", "SSLv23", "TLSv1", "TLSv1_1", "TLSv1_2" ]
     version_added: '2.4'
 requirements:
-- hpilo
+- python-hpilo
 notes:
 - To use a USB key image you need to specify floppy as boot media.
 - This module ought to be run from a system that can access the HP iLO
@@ -104,15 +103,18 @@ RETURN = '''
 '''
 
 import time
+import traceback
 import warnings
 
+HPILO_IMP_ERR = None
 try:
     import hpilo
     HAS_HPILO = True
 except ImportError:
+    HPILO_IMP_ERR = traceback.format_exc()
     HAS_HPILO = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 # Suppress warnings from hpilo
@@ -135,7 +137,7 @@ def main():
     )
 
     if not HAS_HPILO:
-        module.fail_json(msg='The hpilo python module is required')
+        module.fail_json(msg=missing_required_lib('python-hpilo'), exception=HPILO_IMP_ERR)
 
     host = module.params['host']
     login = module.params['login']

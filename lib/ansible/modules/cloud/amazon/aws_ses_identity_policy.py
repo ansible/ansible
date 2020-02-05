@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -25,15 +28,19 @@ options:
             The SES identity to attach or remove a policy from. This can be either the full ARN or just
             the verified email or domain.
         required: true
+        type: str
     policy_name:
         description: The name used to identify the policy within the scope of the identity it's attached to.
         required: true
+        type: str
     policy:
-        description: A properly formated JSON sending authorization policy. Required when I(state=present).
+        description: A properly formatted JSON sending authorization policy. Required when I(state=present).
+        type: json
     state:
         description: Whether to create(or update) or delete the authorization policy on the identity.
         default: present
         choices: [ 'present', 'absent' ]
+        type: str
 requirements: [ 'botocore', 'boto3' ]
 extends_documentation_fragment:
     - aws
@@ -87,7 +94,7 @@ import json
 try:
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def get_identity_policy(connection, module, identity, policy_name):

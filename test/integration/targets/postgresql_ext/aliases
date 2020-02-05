@@ -1,0 +1,8 @@
+destructive
+shippable/posix/group4
+skip/aix
+skip/osx
+skip/centos
+skip/redhat
+skip/freebsd
+skip/opensuse

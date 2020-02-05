@@ -1,0 +1,2 @@
+bugfixes:
+  - replace use of deprecated functions from ``ansible.module_utils.basic``.

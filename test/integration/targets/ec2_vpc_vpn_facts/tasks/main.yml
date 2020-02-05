@@ -49,7 +49,7 @@
 
   # ============================================================
   - name: test success with no parameters
-    ec2_vpc_vpn_facts:
+    ec2_vpc_vpn_info:
       <<: *aws_connection_info
     register: result
 
@@ -60,7 +60,7 @@
         - 'result.vpn_connections != []'
 
   - name: test success with customer gateway id as a filter
-    ec2_vpc_vpn_facts:
+    ec2_vpc_vpn_info:
       filters:
         customer-gateway-id: '{{ cgw.gateway.customer_gateway.customer_gateway_id }}'
         vpn-connection-id: '{{ vpn.vpn_connection_id }}'

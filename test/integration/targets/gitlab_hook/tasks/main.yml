@@ -1,0 +1,67 @@
+- name: Install required libs
+  pip:
+    name: python-gitlab
+    state: present
+
+- name: Create {{ gitlab_project_name }}
+  gitlab_project:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: False
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    state: present
+
+- name: Cleanup GitLab hook
+  gitlab_hook:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    hook_url: "{{ gitlab_hook_url }}"
+    project: "{{ gitlab_project_name }}"
+    state: absent
+
+- name: Create GitLab Hook
+  gitlab_hook:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    hook_url: "{{ gitlab_hook_url }}"
+    project: "{{ gitlab_project_name }}"
+    state: present
+  register: gitlab_hook_state
+
+- name: Test group created
+  assert:
+    that:
+      - gitlab_hook_state is changed
+
+
+- name: Create GitLab Hook ( Idempotency test )
+  gitlab_hook:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    hook_url: "{{ gitlab_hook_url }}"
+    project: "{{ gitlab_project_name }}"
+    state: present
+  register: gitlab_hook_state_again
+
+- name: Test module is idempotent
+  assert:
+    that:
+      - gitlab_hook_state_again is not changed
+
+- name: Remove GitLab hook
+  gitlab_hook:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    hook_url: "{{ gitlab_hook_url }}"
+    project: "{{ gitlab_project_name }}"
+    state: absent
+  register: gitlab_hook_state_absent
+
+- name: Assert hook has been removed
+  assert:
+    that:
+      - gitlab_hook_state_absent is changed

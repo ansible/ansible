@@ -22,15 +22,15 @@ __metaclass__ = type
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
+from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.utils.sentinel import Sentinel
 
 
-class Block(Base, Become, Conditional, Taggable):
+class Block(Base, Conditional, CollectionSearch, Taggable):
 
     # main block fields containing the task lists
     _block = FieldAttribute(isa='list', default=list, inherit=False)
@@ -362,10 +362,9 @@ class Block(Base, Become, Conditional, Taggable):
 
         return value
 
-    def filter_tagged_tasks(self, play_context, all_vars):
+    def filter_tagged_tasks(self, all_vars):
         '''
-        Creates a new block, with task lists filtered based on the tags contained
-        within the play_context object.
+        Creates a new block, with task lists filtered based on the tags.
         '''
 
         def evaluate_and_append_task(target):
@@ -374,8 +373,8 @@ class Block(Base, Become, Conditional, Taggable):
                 if isinstance(task, Block):
                     tmp_list.append(evaluate_block(task))
                 elif (task.action == 'meta' or
-                        (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) or
-                        task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars)):
+                        (task.action == 'include' and task.evaluate_tags([], self._play.skip_tags, all_vars=all_vars)) or
+                        task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars)):
                     tmp_list.append(task)
             return tmp_list
 

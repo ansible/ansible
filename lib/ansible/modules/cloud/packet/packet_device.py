@@ -290,7 +290,7 @@ ALLOWED_STATES = ['absent', 'active', 'inactive', 'rebooted', 'present']
 
 def serialize_device(device):
     """
-    Standard represenation for a device as returned by various tasks::
+    Standard representation for a device as returned by various tasks::
 
         {
             'id': 'device_id'
@@ -447,6 +447,11 @@ def create_single_device(module, packet_conn, hostname):
     locked = module.params.get('locked')
     ipxe_script_url = module.params.get('ipxe_script_url')
     always_pxe = module.params.get('always_pxe')
+    if operating_system != 'custom_ipxe':
+        for param in ('ipxe_script_url', 'always_pxe'):
+            if module.params.get(param):
+                raise Exception('%s parameter is not valid for non custom_ipxe operating_system.' % param)
+
     device = packet_conn.create_device(
         project_id=project_id,
         hostname=hostname,
@@ -454,7 +459,9 @@ def create_single_device(module, packet_conn, hostname):
         facility=facility,
         operating_system=operating_system,
         userdata=user_data,
-        locked=locked)
+        locked=locked,
+        ipxe_script_url=ipxe_script_url,
+        always_pxe=always_pxe)
     return device
 
 
@@ -609,8 +616,6 @@ def main():
         ),
         required_one_of=[('device_ids', 'hostnames',)],
         mutually_exclusive=[
-            ('always_pxe', 'operating_system'),
-            ('ipxe_script_url', 'operating_system'),
             ('hostnames', 'device_ids'),
             ('count', 'device_ids'),
             ('count_offset', 'device_ids'),
