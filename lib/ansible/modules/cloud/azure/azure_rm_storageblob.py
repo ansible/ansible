@@ -412,13 +412,10 @@ class AzureRMStorageBlob(AzureRMModuleBase):
     def src_is_valid(self):
         if not os.path.isfile(self.src):
             self.fail("The source path must be a file.")
-        try:
-            fp = open(self.src, 'r')
-            fp.close()
-        except IOError:
-            self.fail("Failed to access {0}. Make sure the file exists and that you have "
-                      "read access.".format(self.src))
-        return True
+        if os.access(self.src, os.R_OK):
+            return True
+        self.fail("Failed to access {0}. Make sure the file exists and that you have "
+                  "read access.".format(self.src))
 
     def dest_is_valid(self):
         if not self.check_mode:
