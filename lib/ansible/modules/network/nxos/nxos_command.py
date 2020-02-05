@@ -103,6 +103,15 @@ EXAMPLES = """
     commands:
       - command: show version
         output: json
+
+- name: run commands that require answering a prompt
+  nxos_command:
+    commands:
+      - configure terminal
+      - command: 'no feature npv'
+        prompt: 'Do you want to continue'
+        answer: 'y'
+
 """
 
 RETURN = """
