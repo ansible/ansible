@@ -1,0 +1,38 @@
+---
+  - debug: 
+      msg: Start nxos_acls gathered integration tests connection={{ansible_connection}}"  
+
+    - include_tasks: populate_config.yaml
+
+    - block:
+        - name: Gather acls facts
+            nxos_facts: &facts
+               gather_subset:
+                    - '!all'
+                    - '!min'
+                gather_network_resources: acls
+
+        - name: Parsed
+          nxos_acls: &parsed
+            running_config: |
+              ip access-list ACL1v4
+              50 deny tcp any lt 55 192.0.2.64 0.0.0.255 ack fin 
+              ipv6 access-list ACL1v6
+              10 permit sctp any any    
+            state: parsed
+          register: result
+
+        - assert:
+            that:
+            - "result.changed == false"
+            - "ansible_facts.network_resources.acls == result.parsed"
+
+        - name: Idempotence - Parsed
+          nxos_acls: *parsed
+          register: result
+
+        - assert:
+            that: "result.changed == false"
+
+        always:
+        - include_tasks: remove_config.yaml

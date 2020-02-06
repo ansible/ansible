@@ -192,12 +192,17 @@ class Acls(ConfigBase):
                                 del_dict.update(
                                     {'afi': have_afi['afi']})
                 else:
-                    del_dict['acls'] = have_afi['acls']
+                    acls = []
+                    for acl in have_afi['acls']:
+                        acls.append({'name': acl['name']})
+                    del_dict['acls'] = acls
             q(del_dict)
             if del_dict['acls']:
                 commands.extend(self._state_deleted([del_dict], have))
             q(commands)
-            commands.extend(self._state_merged(want, have))
+            # commands.extend(self._state_merged(want, have))
+            q('after merged')
+            q(commands)
             for i in range(1, len(commands)):
                 if commands[i] == commands[0]:
                     commands[i] = ''
@@ -259,7 +264,7 @@ class Acls(ConfigBase):
         commands = []
         q('inside deleted')
         q(want, have)
-        if want and have != want:
+        if want:  # and have != want:
             q('delete want')
             for w in want:
                 q(w)
@@ -343,15 +348,15 @@ class Acls(ConfigBase):
                     v4 = (acl['name'] for acl in h['acls'])
                     if 'match_local_traffic' in h.keys():
                         v4_local = True
-            q(v4)
+            # q(v4)
 
-            self.no_commands(v4, commands, v4_local, 'ipv4')
+            self.no_commands(v4, commands, v4_local, 'ip')
             self.no_commands(v6, commands, v6_local, 'ipv6')
 
-            # for name in v6:
-            #     commands.append('no ipv6 access-list ' + name)
-            # if v4_local:
-            #     commands.append('no ipv6 access-list match-local-traffic')
+            for name in v6:
+                commands.append('no ipv6 access-list ' + name)
+            if v4_local:
+                commands.append('no ipv6 access-list match-local-traffic')
 
         q(commands)
         return commands
@@ -400,6 +405,7 @@ class Acls(ConfigBase):
                                 ace_commands.insert(
                                     0, ip + 'access-list ' + name)
                             q(ace_commands, commands)
+
                         else:
                             q(commands, name)
                             commands.append(ip + 'access-list ' + name)
@@ -407,7 +413,8 @@ class Acls(ConfigBase):
                                 for w_ace in w_acl['aces']:
                                     commands.append(
                                         self.process_ace(w_ace).strip())
-                commands.extend(ace_commands)
+                    commands.extend(ace_commands)
+                    q(commands)
         else:
             if want.get('acls'):
                 for w_acl in want['acls']:
