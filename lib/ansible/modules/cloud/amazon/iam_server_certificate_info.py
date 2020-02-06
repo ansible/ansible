@@ -25,13 +25,13 @@ requirements: [boto3, botocore]
 options:
   name:
     description:
-      - The name of the server certificate you are retrieving attributes for. 
+      - The name of the server certificate you are retrieving attributes for.
       - This argument is mutually exclusive with I(path)
     type: str
     required: false
   path:
     description:
-      - The path to the server certificate you are retrieving attributes for. 
+      - The path to the server certificate you are retrieving attributes for.
       - This argument is mutually exclusive with I(name)
     type: str
     required: false
