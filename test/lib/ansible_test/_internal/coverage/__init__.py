@@ -83,18 +83,19 @@ def run_coverage(args, output_file, command, cmd):  # type: (CoverageConfig, str
 
 def get_python_coverage_files():  # type: () -> t.List[str]
     """Return the list of Python coverage file paths."""
-    coverage_dir = ResultType.COVERAGE.path
-    coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
-                      if '=coverage.' in f and '=python' in f]
-
-    return coverage_files
+    return get_coverage_files('python')
 
 
 def get_powershell_coverage_files():  # type: () -> t.List[str]
     """Return the list of PowerShell coverage file paths."""
+    return get_coverage_files('powershell')
+
+
+def get_coverage_files(language):  # type: (str) -> t.List[str]
+    """Return the list of coverage file paths for the given language."""
     coverage_dir = ResultType.COVERAGE.path
     coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
-                      if '=coverage.' in f and '=powershell' in f]
+                      if '=coverage.' in f and '=%s' % language in f]
 
     return coverage_files
 
