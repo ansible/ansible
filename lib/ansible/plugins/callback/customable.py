@@ -58,7 +58,7 @@ class CallbackModule(CallbackBase):
         else:
             if self.showNoHost is False:
                 buf = "%s | %s | rc=%s >>\n" % (host, caption, result.get('rc', -1))
-            else
+            else:
                 buf = ""
         buf += result.get('stdout', '')
         buf += result.get('stderr', '')
