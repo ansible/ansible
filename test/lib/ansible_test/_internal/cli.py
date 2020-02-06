@@ -679,7 +679,7 @@ def add_coverage_analyze(coverage_subparsers, coverage_common):  # type: (argpar
     targets_expand = targets_subparsers.add_parser(
         'expand',
         parents=[coverage_common],
-        help='expand target names in aggregated coverage',
+        help='expand target names from integers in aggregated coverage',
     )
 
     targets_expand.set_defaults(
@@ -748,7 +748,7 @@ def add_coverage_analyze(coverage_subparsers, coverage_common):  # type: (argpar
     targets_missing.add_argument(
         '--only-gaps',
         action='store_true',
-        help='consider any target coverage as fully covered',
+        help='report only arcs/lines not hit by any target',
     )
 
     targets_missing.add_argument(
