@@ -196,7 +196,7 @@ def main():
         ansible_info = {
             'hcloud_imagen_facts': result['hcloud_image_info']
         }
-        module.exit_json(ansible_s=ansible_info)
+        module.exit_json(ansible_facts=ansible_info)
     else:
         ansible_info = {
             'hcloud_image_info': result['hcloud_image_info']
