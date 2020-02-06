@@ -114,6 +114,9 @@
                   path "{{ vault_kv2_path }}/secret3" {
                     capabilities = ["deny"]
                   }
+                  path "{{ vault_kv2_multi_path }}/secrets" {
+                    capabilities = ["read"]
+                  }
 
             - name: 'Create generic secrets'
               command: '{{ vault_cmd }} write {{ vault_gen_path }}/secret{{ item }} value=foo{{ item }}'
@@ -126,6 +129,9 @@
             - name: 'Create KV v2 secrets'
               command: '{{ vault_cmd }} kv put {{ vault_kv2_path | regex_replace("/data") }}/secret{{ item }} value=foo{{ item }}'
               loop: [1, 2, 3]
+
+            - name: 'Create multiple KV v2 secrets under one path'
+              command: '{{ vault_cmd }} kv put {{ vault_kv2_multi_path | regex_replace("/data") }}/secrets value1=foo1 value2=foo2 value3=foo3'
 
             - name: setup approle auth
               import_tasks: approle_setup.yml

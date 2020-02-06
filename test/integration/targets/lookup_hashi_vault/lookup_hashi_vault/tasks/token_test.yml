@@ -9,6 +9,10 @@
         kv1_secret2: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_kv1_path ~ '/secret2 token=' ~ user_token) }}"
         kv2_secret1: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_kv2_path ~ '/secret1 auth_method=token token=' ~ user_token) }}"
         kv2_secret2: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_kv2_path ~ '/secret2 token=' ~ user_token) }}"
+        kv2_secret2_as_raw: "{{ lookup('hashi_vault', vault_kv2_path ~ '/secret2 ' ~  conn_params, auth_method='token', token=user_token, return_format='raw') }}"
+        kv2_secrets_as_dict: "{{ lookup('hashi_vault', vault_kv2_multi_path ~ '/secrets ' ~  conn_params, auth_method='token', token=user_token) }}"
+        kv2_secrets_as_values: "{{ query('hashi_vault', vault_kv2_multi_path ~ '/secrets ' ~  conn_params, auth_method='token', token=user_token, return_format='values') }}"
+        kv2_secrets_as_pairs: "{{ query('hashi_vault', vault_kv2_multi_path ~ '/secrets ' ~ conn_params, auth_method='token', token=user_token, return_format='pairs') }}"
 
     - name: 'Check secret generic values'
       fail:
@@ -24,6 +28,38 @@
       fail:
         msg: 'unexpected secret values'
       when: kv2_secret1['value'] != 'foo1' or kv2_secret2['value'] != 'foo2'
+
+    - name: 'Check kv2 secret raw return value'
+      fail:
+        msg:
+      when: >-
+        'data' not in kv2_secret2_as_raw
+        or 'data' not in kv2_secret2_as_raw['data']
+        or 'metadata' not in kv2_secret2_as_raw['data']
+
+    - name: "Check multiple secrets as dict"
+      fail:
+        msg: 'Return value was not dict or items do not match.'
+      when: (kv2_secrets_as_dict | type_debug != 'dict') or (kv2_secrets_as_dict['value{{ item }}'] != 'foo{{ item }}')
+      loop: [1, 2, 3]
+
+    - name: "Check multiple secrets as values"
+      fail:
+        msg: 'Return value was not list or items do not match.'
+      when: (kv2_secrets_as_values | type_debug != 'list') or ('foo{{ item }}' not in kv2_secrets_as_values)
+      loop: [1, 2, 3]
+
+    - name: "Check multiple secrets as pairs"
+      fail:
+        msg: 'Return value was not list of dicts or dict did not contain 1 item'
+      when: (item | type_debug != 'dict') or (item | length != 1)
+      loop: "{{ kv2_secrets_as_pairs }}"
+
+    - name: "Check multiple secrets as dict"
+      fail:
+        msg: 'Return value was not dict or items do not match.'
+      when: (kv2_secrets_as_dict | type_debug != 'dict') or (kv2_secrets_as_dict['value{{ item }}'] != 'foo{{ item }}')
+      loop: [1, 2, 3]
 
     - name: 'Failure expected when erroneous credentials are used'
       vars:
