@@ -58,12 +58,14 @@ options:
     choices: [ regional, global ]
     type: str
     default: regional
+    version_added: '2.10'
   region:
     description:
       - Region in which the floating IP resides (e.g. C(lgp) or C(rma)).
         If omitted, the region of the project default zone is used.
         This parameter must be omitted if I(type) is set to C(global).
     type: str
+    version_added: '2.10'
   prefix_length:
     description:
       - Only valid if I(ip_version) is 6.
@@ -254,7 +256,7 @@ def main():
         ip=dict(aliases=('network', ), type='str'),
         ip_version=dict(choices=(4, 6), type='int'),
         server=dict(type='str'),
-        type=dict(type='str', choices=('regional', 'global')),
+        type=dict(type='str', choices=('regional', 'global'), default='regional'),
         region=dict(type='str'),
         prefix_length=dict(choices=(56,), type='int'),
         reverse_ptr=dict(type='str'),

@@ -62,6 +62,7 @@ options:
       - Zone in which the volume resides (e.g. C(lgp1) or C(rma1)). Cannot be
         changed after creating the volume. Defaults to the project default zone.
     type: str
+    version_added: '2.10'
   server_uuids:
     description:
       - UUIDs of the servers this volume is attached to. Set this to C([]) to
