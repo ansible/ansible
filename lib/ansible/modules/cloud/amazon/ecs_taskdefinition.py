@@ -302,7 +302,7 @@ def main():
         revision=dict(required=False, type='int'),
         force_create=dict(required=False, default=False, type='bool'),
         containers=dict(required=False, type='list'),
-        network_mode=dict(required=False, default='bridge', choices=['default','bridge', 'host', 'none', 'awsvpc'], type='str'),
+        network_mode=dict(required=False, default='bridge', choices=['default', 'bridge', 'host', 'none', 'awsvpc'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
         execution_role_arn=dict(required=False, default='', type='str'),
         volumes=dict(required=False, type='list'),
