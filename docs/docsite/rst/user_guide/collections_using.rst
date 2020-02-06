@@ -86,17 +86,13 @@ If you have a pre-release or non-latest version of a collection installed you sh
 
    ansible-galaxy collection verify my_namespace.my_collection:1.0.0
 
-In addition to the my_namespace.collection_name:version format, you can provide the collection to verify as a path or URL to a tar.gz file, a directory to an installed collection, or in a ``requirements.yml`` file. Dependencies listed in ``requirements.yml`` are not included in the verify process and should be verified separately.
+In addition to the namespace.collection_name:version format, you can provide the collections to verify in a ``requirements.yml`` file. Dependencies listed in ``requirements.yml`` are not included in the verify process and should be verified separately.
 
 .. code-block:: bash
 
    ansible-galaxy collection verify -r requirements.yml
 
-   ansible-galaxy collection verify /path/to/my_namespace_my_collection-1.0.0.tar.gz
-
-   ansible-galaxy collection verify https://../../my_namespace_my_collection-1.0.0.tar.gz
-
-   ansible-galaxy collection verify collections/ansible_collections/my_namespace/my_collection
+Verifying against tar.gz files is not supported. If your ``requirements.yml`` contains paths to tarfiles or URLs for installation, you can use the ``--ignore-errors`` flag to ensure that all collections using the namespace.name format in the file are processed.
 
 
 Using collections in a Playbook
