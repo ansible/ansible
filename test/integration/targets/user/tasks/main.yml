@@ -789,6 +789,7 @@
     name: ansibulluser
     state: present
     generate_ssh_key: yes
+    force: yes
     ssh_key_file: "{{ output_dir }}/test_id_rsa"
     ssh_key_passphrase: secret_passphrase
 
@@ -994,9 +995,14 @@
   tags:
     - user_test_local_mode
 
-- name: Create test group
+- name: Create test groups
   group:
-    name: testgroup
+    name: "{{ item }}"
+  loop:
+    - testgroup1
+    - testgroup2
+    - testgroup3
+    - testgroup4
   tags:
     - user_test_local_mode
 
@@ -1005,7 +1011,7 @@
     name: local_ansibulluser
     state: present
     local: yes
-    groups: testgroup
+    groups: ['testgroup1', 'testgroup2']
   register: local_user_test_3
   ignore_errors: yes
   tags:
@@ -1016,6 +1022,7 @@
     name: local_ansibulluser
     state: present
     local: yes
+    groups: ['testgroup3', 'testgroup4']
     append: yes
   register: local_user_test_4
   ignore_errors: yes
@@ -1032,15 +1039,34 @@
   tags:
     - user_test_local_mode
 
+- name: Remove local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  tags:
+    - user_test_local_mode
+
+- name: Remove test groups
+  group:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - testgroup1
+    - testgroup2
+    - testgroup3
+    - testgroup4
+  tags:
+    - user_test_local_mode
+
 - name: Ensure local user accounts were created and removed properly
   assert:
     that:
       - local_user_test_1 is changed
       - local_user_test_2 is not changed
-      - local_user_test_3 is failed
-      - 'local_user_test_3["msg"] is search("parameters are mutually exclusive: groups|local")'
-      - local_user_test_4 is failed
-      - 'local_user_test_4["msg"] is search("parameters are mutually exclusive: groups|append")'
+      - local_user_test_3 is changed
+      - local_user_test_4 is changed
       - local_user_test_remove_1 is changed
       - local_user_test_remove_2 is not changed
   tags:
