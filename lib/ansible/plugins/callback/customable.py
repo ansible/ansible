@@ -12,7 +12,7 @@ DOCUMENTATION = '''
     short_description: minimal Ansible screen output with customable args
     description:
         - NOTE                                - To use only with ad-hoc
-        - ANSIBLE_CUSTOMABLE_SHOW_ONLY_HOST   - Display only the Hostnaöe
+        - ANSIBLE_CUSTOMABLE_SHOW_ONLY_HOST   - Display only the Hostname
         - ANSIBLE_CUSTOMABLE_NO_COLOR         - Disable Color Output
         - ANSIBLE_CUSTOMABLE_ONE_LINER        - Display as one liner
         - ANSIBLE_CUSTOMABLE_SHOW_NO_HOST     - Don't show the hostname only the result
