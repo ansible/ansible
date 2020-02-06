@@ -64,9 +64,6 @@ class TestEdgeosModule(ModuleTestCase):
             else:
                 self.assertEqual(commands, result['commands'], result['commands'])
 
-        if filtered is not None:
-            self.assertEqual(sorted(filtered), sorted(result['filtered']), result['filtered'])
-
         if unmanaged is not None:
             self.assertEqual(sorted(unmanaged), sorted(result['unmanaged']), result['unmanaged'])
 

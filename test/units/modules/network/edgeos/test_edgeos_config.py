@@ -145,18 +145,6 @@ class TestEdgeosConfigModule(TestEdgeosModule):
         ]
         self.execute_module(changed=True, commands=result_commands)
 
-    def test_edgeos_config_filtered(self):
-        candidate_config = ['set system login user test authentication encrypted-password test1']
-        set_module_args(dict(lines=candidate_config))
-        result_filtered = ['set system login user test authentication encrypted-password test1']
-        self.execute_module(changed=False, filtered=result_filtered)
-
-    def test_edgeos_config_filtered_src_brackets(self):
-        candidate_config = load_fixture('edgeos_config_filtered_src_brackets.cfg')
-        set_module_args(dict(src=candidate_config))
-        result_filtered = ['set system login user test authentication encrypted-password test1']
-        self.execute_module(changed=False, filtered=result_filtered)
-
     def test_edgeos_config_delete_unmanaged(self):
         candidate_config = ['set system host-name router']
         set_module_args(dict(lines=candidate_config, delete_unmanaged=True))
