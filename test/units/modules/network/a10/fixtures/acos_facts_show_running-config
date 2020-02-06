@@ -1,0 +1,72 @@
+ip dns primary 10.18.18.71
+!
+vlan 100
+  untagged ethernet 4
+  router-interface ve 100
+!
+partition ssli_in id 1
+!
+interface ethernet 1
+  name inter1
+  enable
+  ip address 10.43.12.24 255.255.255.0
+  ip address 10.43.2.34 255.255.255.0
+  ip helper-address 10.45.3.5
+!
+interface ethernet 2
+  enable
+  ipv6 address 2001:db8:85a3::8a2e:370:7334/22 anycast
+  ipv6 address 3001:db8:85a3::8a2e:370:7334/23
+!
+interface ethernet 3
+  enable
+  ip address 10.10.15.15 255.255.0.0
+!
+interface ethernet 4
+  enable
+!
+interface ethernet 5
+  enable
+  trunk-group 10
+!
+interface trunk 10
+  ip address 5.5.1.1 255.255.255.0
+!
+interface ve 100
+!
+interface loopback 1
+  ip address 3.1.1.1 255.255.255.0
+!
+interface lif 10
+  ip address 1.2.1.1 255.255.255.0
+!
+!
+ip route 0.0.0.0 /0 192.168.1.1
+!
+health monitor hm1
+!
+health monitor hm2
+  dsr-l2-strict
+  method tcp port 80
+!
+slb server server1 10.10.10.10
+!
+slb server server2 10.10.20.10
+  health-check hm1
+!
+slb service-group SG1 tcp
+!
+slb service-group SG2 udp
+  health-check hm1
+!
+slb template http template1
+!
+slb template http template2
+  url-switching contains abc service-group SG1
+!
+slb virtual-server vserver1 10.10.10.15
+  port 80 tcp
+    name vport1
+!
+slb virtual-server vserver2 fe80:cd00:0:cde:1257:0:211e:729c
+

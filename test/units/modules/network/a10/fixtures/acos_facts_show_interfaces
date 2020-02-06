@@ -1,0 +1,105 @@
+  Ethernet 1 is up, line protocol is up
+  Hardware is 10Gig, Address is fa16.3e22.90d5
+  Internet address is 10.43.12.24, Subnet mask is 255.255.255.0
+  Internet address is 10.43.2.34, Subnet mask is 255.255.255.0
+  Configured Speed auto, Actual 10Gbit, Configured Duplex auto, Actual fdx
+  Flow Control is disabled, IP MTU is 1500 bytes
+  Port as Mirror disabled, Monitoring this Port disabled
+  Interface name is inter1
+  470841 packets input,  19776422 bytes
+  Received 470829 broadcasts,  Received 12 multicasts,  Received 0 unicasts
+  0 input errors,  0 CRC  0 frame
+  0 runts  0 giants
+  0 packets output  0 bytes
+  Transmitted 0 broadcasts  0 multicasts  0 unicasts
+  0 output errors  0 collisions
+  300 second input rate: 40 bits/sec, 0 packets/sec, 0% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0% utilization
+
+  Ethernet 2 is up, line protocol is up
+  Hardware is 10Gig, Address is fa16.3e19.f8ad
+  Internet address is 0.0.0.0, Subnet mask is 0.0.0.0
+  IPv6 address is 2001:db8:85a3::8a2e:370:7334 Prefix 22 Type: anycast
+  IPv6 address is 3001:db8:85a3::8a2e:370:7334 Prefix 23 Type: unicast
+  IPv6 link-local address is fe80::f816:3eff:fe19:f8ad Prefix 64 Type: link-local
+  Configured Speed auto, Actual 10Gbit, Configured Duplex auto, Actual fdx
+  Member of L2 Vlan 1, Port is Untagged
+  Flow Control is disabled, IP MTU is 1500 bytes
+  Port as Mirror disabled, Monitoring this Port disabled
+  11 packets input,  918 bytes
+  Received 0 broadcasts,  Received 11 multicasts,  Received 0 unicasts
+  0 input errors,  0 CRC  0 frame
+  0 runts  0 giants
+  9 packets output  1054 bytes
+  Transmitted 0 broadcasts  9 multicasts  0 unicasts
+  0 output errors  0 collisions
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0% utilization
+
+  Ethernet 3 is up, line protocol is up
+  Hardware is 10Gig, Address is fa16.3e6d.95ec
+  Internet address is 10.10.15.15, Subnet mask is 255.255.0.0
+  Configured Speed auto, Actual 10Gbit, Configured Duplex auto, Actual fdx
+  Flow Control is disabled, IP MTU is 1500 bytes
+  Port as Mirror disabled, Monitoring this Port disabled
+  11 packets input,  918 bytes
+  Received 0 broadcasts,  Received 11 multicasts,  Received 0 unicasts
+  0 input errors,  0 CRC  0 frame
+  0 runts  0 giants
+  109842 packets output  6590520 bytes
+  Transmitted 109844 broadcasts  0 multicasts  18446744073709551614 unicasts
+  0 output errors  0 collisions
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0% utilization
+  300 second output rate: 592 bits/sec, 0 packets/sec, 0% utilization
+
+  Ethernet 4 is up, line protocol is up
+  Hardware is 10Gig, Address is fa16.3e5c.6a67
+  Internet address is 0.0.0.0, Subnet mask is 0.0.0.0
+  Configured Speed auto, Actual 10Gbit, Configured Duplex auto, Actual fdx
+  Member of L2 Vlan 100, Port is Untagged
+  Flow Control is disabled, IP MTU is 1500 bytes
+  Port as Mirror disabled, Monitoring this Port disabled
+  11 packets input,  918 bytes
+  Received 0 broadcasts,  Received 11 multicasts,  Received 0 unicasts
+  0 input errors,  0 CRC  0 frame
+  0 runts  0 giants
+  281376 packets output  16882560 bytes
+  Transmitted 281376 broadcasts  0 multicasts  0 unicasts
+  0 output errors  0 collisions
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0% utilization
+
+  Ethernet 5 is up, line protocol is up
+  Hardware is 10Gig, Address is fa16.3e4b.10c2
+  Internet address is 5.5.1.1, Subnet mask is 255.255.255.0
+  Configured Speed auto, Actual 10Gbit, Configured Duplex auto, Actual fdx
+  Flow Control is disabled, IP MTU is 1500 bytes
+  Port as Mirror disabled, Monitoring this Port disabled
+  Member of trunk group 10 Primary Port
+  22 packets input,  2656 bytes
+  Received 9 broadcasts,  Received 13 multicasts,  Received 0 unicasts
+  0 input errors,  0 CRC  0 frame
+  0 runts  0 giants
+  0 packets output  0 bytes
+  Transmitted 0 broadcasts  0 multicasts  0 unicasts
+  0 output errors  0 collisions
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0% utilization
+
+lif 10 is up, line protocol is up
+  Logical interface Lif, Address is fa16.3e6d.95ec
+  Internet address is 1.2.1.1, Subnet mask is 255.255.255.0
+  IP MTU is 1500 bytes
+  0 packets input  0 bytes
+  Received  0 broadcasts, Received 0 multicasts, Received 0 unicasts
+  0 packets output  0 bytes
+  Transmitted  0 broadcasts, Transmitted 0 multicasts, Transmitted 0 unicasts
+
+Loopback 1 is up, line protocol is up
+  Hardware is Loopback
+  Internet address is 3.1.1.1, Subnet mask is 255.255.255.0
+Trunk 10 is up, line protocol is up
+  Hardware is TrunkGroup, Address is fa16.3e4b.10c2
+  Internet address is 5.5.1.1, Subnet mask is 255.255.255.0
+  IP MTU is 1500 bytes
+
