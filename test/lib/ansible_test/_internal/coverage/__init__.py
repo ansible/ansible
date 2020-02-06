@@ -170,6 +170,7 @@ def enumerate_powershell_lines(path):  # type: (str) -> t.Generator[t.Tuple[str,
         if not filename:
             continue
 
+        # PowerShell unpacks arrays if there's only a single entry so this is a defensive check on that
         if not isinstance(hits, list):
             hits = [hits]
 
