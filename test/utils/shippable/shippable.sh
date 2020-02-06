@@ -33,6 +33,7 @@ pip list --disable-pip-version-check
 export PATH="${PWD}/bin:${PATH}"
 export PYTHONIOENCODING='utf-8'
 
+COMPLETE=yes
 if [ "${JOB_TRIGGERED_BY_NAME:-}" == "nightly-trigger" ]; then
     COVERAGE=yes
     COMPLETE=yes
