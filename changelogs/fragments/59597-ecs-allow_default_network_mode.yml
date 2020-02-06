@@ -1,2 +1,2 @@
 minor_changes:
-  - ecs_task_definition - Add use of default network mode as required by windows ECS tasks.
+  - ecs_task_definition - Add ``network_mode=default`` to support Windows ECS tasks.
