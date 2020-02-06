@@ -60,6 +60,8 @@ options:
         description:
             - The Docker networking mode to use for the containers in the task.
             - C(awsvpc) mode was added in Ansible 2.5
+            - Windows containers must use default mode, which will utilize docker NAT networking. Selecting this for a linux container will
+              use bridge mode.
         required: false
         default: bridge
         choices: [ 'default', 'bridge', 'host', 'none', 'awsvpc' ]
