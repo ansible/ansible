@@ -101,6 +101,8 @@ class CommonConfig:
         self.truncate = args.truncate  # type: int
         self.redact = args.redact  # type: bool
 
+        self.info_stderr = False  # type: bool
+
         self.cache = {}
 
     def get_ansible_config(self):  # type: () -> str
@@ -143,10 +145,15 @@ def named_temporary_file(args, prefix, suffix, directory, content):
             yield tempfile_fd.name
 
 
-def write_json_test_results(category, name, content, formatted=True):  # type: (ResultType, str, t.Union[t.List[t.Any], t.Dict[str, t.Any]], bool) -> None
+def write_json_test_results(category,  # type: ResultType
+                            name,  # type: str
+                            content,  # type: t.Union[t.List[t.Any], t.Dict[str, t.Any]]
+                            formatted=True,  # type: bool
+                            encoder=None,  # type: t.Optional[t.Callable[[t.Any], t.Any]]
+                            ):  # type: (...) -> None
     """Write the given json content to the specified test results path, creating directories as needed."""
     path = os.path.join(category.path, name)
-    write_json_file(path, content, create_directories=True, formatted=formatted)
+    write_json_file(path, content, create_directories=True, formatted=formatted, encoder=encoder)
 
 
 def write_text_test_results(category, name, content):  # type: (ResultType, str, str) -> None
