@@ -9,17 +9,12 @@ from ..util_common import (
 )
 
 from . import (
-    initialize_coverage,
     CoverageConfig,
 )
 
 
-def command_coverage_erase(args):
-    """
-    :type args: CoverageConfig
-    """
-    initialize_coverage(args)
-
+def command_coverage_erase(args):  # type: (CoverageConfig) -> None
+    """Erase code coverage data files collected during test runs."""
     coverage_dir = ResultType.COVERAGE.path
 
     for name in os.listdir(coverage_dir):
