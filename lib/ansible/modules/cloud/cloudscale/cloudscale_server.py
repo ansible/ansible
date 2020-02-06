@@ -227,7 +227,7 @@ image:
   type: dict
   sample: { "default_username": "ubuntu", "name": "Ubuntu 18.04 LTS", "operating_system": "Ubuntu", "slug": "ubuntu-18.04" }
 zone:
-  description: The zone this server is running in
+  description: The zone used for booting this server
   returned: success when not state == absent
   type: dict
   sample: { 'slug': 'lpg1' }

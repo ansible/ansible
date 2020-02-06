@@ -153,7 +153,7 @@ ip:
   type: str
   sample: 185.98.122.176
 region:
-  description: The region of the floating IP address or network.
+  description: The region of the floating IP.
   returned: success when state == present
   type: dict
   sample: {'slug': 'lpg'}
