@@ -23,8 +23,11 @@ version_added: "2.10"
 description:
     - "Manage DNS records for the Ericsson IPWorks DNS server. The module will use the ipwcli to deploy the DNS records."
 
+requirements:
+   - ipwcli (installed on Ericsson IPWorks)
+
 notes:
-    - To make the DNS record change affective, you need to run 'update dnsserver' on the ipwcli.
+    - To make the DNS record changes effective, you need to run 'update dnsserver' on the ipwcli.
 
 options:
     dnsname:
@@ -37,7 +40,7 @@ options:
             - Type of the record.
         required: true
         type: str
-        choices: [ NAPTR, SRV, A ]
+        choices: [ NAPTR, SRV, A, AAAA ]
     container:
         description:
             - Sets the container zone for the record.
@@ -45,8 +48,8 @@ options:
         type: str
     address:
         description:
-            - The IP address for the A record.
-            - Required for C(type=A)
+            - The IP address for the A or AAAA record.
+            - Required for C(type=A) or C(type=AAAA)
         type: str
     ttl:
         description:
@@ -218,8 +221,10 @@ class ResourceRecord(object):
         # create A record with the given params
         if not self.address:
             self.module.fail_json(msg='missing required arguments for A record: address')
+
+        if self.dnstype == 'AAAA':
+            record = 'aaaarecord %s %s -set ttl=%s;container=%s' % (self.dnsname, self.address, self.ttl, self.container)
         else:
-            # record = 'create arecord {} {} -set ttl={};container={}'.format(dnsname, address, ttl, container)
             record = 'arecord %s %s -set ttl=%s;container=%s' % (self.dnsname, self.address, self.ttl, self.container)
 
         return record
@@ -278,7 +283,7 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         dnsname=dict(type='str', required=True),
-        type=dict(type='str', required=True, choices=['A', 'SRV', 'NAPTR']),
+        type=dict(type='str', required=True, choices=['A', 'AAAA', 'SRV', 'NAPTR']),
         container=dict(type='str', required=True),
         address=dict(type='str', required=False),
         ttl=dict(type='int', required=False, default=3600),
@@ -317,7 +322,7 @@ def run_module():
         record = user.create_naptrrecord()
     elif user.dnstype == 'SRV':
         record = user.create_srvrecord()
-    elif user.dnstype == 'A':
+    elif user.dnstype == 'A' or user.dnstype == 'AAAA':
         record = user.create_arecord()
 
     found, rc, out, err = user.list_record(record)
