@@ -60,8 +60,8 @@ options:
         description:
             - The Docker networking mode to use for the containers in the task.
             - C(awsvpc) mode was added in Ansible 2.5
-            - Windows containers must use I(network_mode=default), which will utilize docker NAT networking.
-            - Setting I(network_mode=default) for a Linux container will use bridge mode.
+            - Windows containers must use network_mode=default, which will utilize docker NAT networking.
+            - Setting network_mode=default for a Linux container will use bridge mode.
               use bridge mode.
         required: false
         default: bridge
@@ -239,7 +239,7 @@ class EcsTaskManager:
             volumes=volumes
         )
         if network_mode != 'default':
-            params['networkMode'] = network_mode         
+            params['networkMode'] = network_mode
         if cpu:
             params['cpu'] = cpu
         if memory:
