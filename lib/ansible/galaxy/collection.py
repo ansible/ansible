@@ -247,8 +247,11 @@ class CollectionRequirement:
     def _verify_file_hash(self, b_path, filename, expected_hash, error_queue):
         b_file_path = to_bytes(os.path.join(to_text(b_path), filename), errors='surrogate_or_strict')
 
-        with open(b_file_path, mode='rb') as file_object:
-            actual_hash = _consume_file(file_object)
+        if not os.path.isfile(b_file_path):
+            actual_hash = None
+        else:
+            with open(b_file_path, mode='rb') as file_object:
+                actual_hash = _consume_file(file_object)
 
         if expected_hash != actual_hash:
             error_queue.append(ModifiedContent(filename=filename, expected=expected_hash, installed=actual_hash))
