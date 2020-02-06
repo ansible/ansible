@@ -10,7 +10,6 @@ DOCUMENTATION = '''
     callback: customable
     type: stdout
     short_description: minimal Ansible screen output with customable args
-    version_added: historical
     description:
         - Env Vars:
             ANSIBLE_CUSTOMABLE_SHOW_ONLY_HOST   - Display only the Hostnaöe
@@ -21,7 +20,8 @@ DOCUMENTATION = '''
             ANSIBLE_CUSTOMABLE_SHOW_CHANGED     - Display changed result
             ANSIBLE_CUSTOMABLE_SHOW_FAILED      - Display failed Result
 
-        Note: To use only with Ad-Hoc commands
+        - Note: 
+            To use only with Ad-Hoc commands
 '''
 
 import os
@@ -29,6 +29,7 @@ from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
 
 class CallbackModule(CallbackBase):
+
 
     CALLBACK_VERSION = 0.1
     CALLBACK_TYPE = 'stdout'
@@ -39,14 +40,29 @@ class CallbackModule(CallbackBase):
     oneLiner = False
     showNoHost = False
 
-    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_ONLY_HOST'): showOnlyHost = True
-    if os.getenv('ANSIBLE_CUSTOMABLE_NO_COLOR'): color = False
-    if os.getenv('ANSIBLE_CUSTOMABLE_ONE_LINER'): oneLiner = True
-    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_NO_HOST'): showNoHost = True
-    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_SUCCESS'): toDisplayArr.append('success')
-    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_CHANGED'): toDisplayArr.append('changed')
-    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_FAILED'): toDisplayArr.append('failed') 
-    if not toDisplayArr: toDisplayArr = ['success','changed','failed']
+    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_ONLY_HOST'): 
+        showOnlyHost = True
+    
+    if os.getenv('ANSIBLE_CUSTOMABLE_NO_COLOR'): 
+        color = False
+
+    if os.getenv('ANSIBLE_CUSTOMABLE_ONE_LINER'): 
+        oneLiner = True
+
+    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_NO_HOST'): 
+        showNoHost = True
+
+    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_SUCCESS'): 
+        toDisplayArr.append('success')
+
+    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_CHANGED'): 
+        toDisplayArr.append('changed')
+
+    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_FAILED'): 
+        toDisplayArr.append('failed')
+
+    if not toDisplayArr: 
+        toDisplayArr = ['success', 'changed', 'failed']
 
     def _command_generic_msg(self, host, result, caption):
         ''' output the result of a command run '''
