@@ -45,6 +45,12 @@ options:
     type: str
     default: present
     choices: [ absent, present, query ]
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 seealso:
 - module: aci_aep_to_domain
@@ -211,6 +217,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         infra_vlan=dict(type='bool', aliases=['infrastructure_vlan']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -226,7 +233,7 @@ def main():
     description = module.params.get('description')
     infra_vlan = module.params.get('infra_vlan')
     state = module.params.get('state')
-
+    nameAlias = module.params.get('nameAlias')
     if infra_vlan:
         child_configs = [dict(infraProvAcc=dict(attributes=dict(name='provacc')))]
     elif infra_vlan is False:
@@ -251,6 +258,7 @@ def main():
             class_config=dict(
                 name=aep,
                 descr=description,
+                nameAlias=nameAlias,
             ),
             child_configs=child_configs,
         )

@@ -46,6 +46,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 seealso:
 - name: APIC Management Information Model reference
@@ -185,6 +191,7 @@ def main():
         receive_state=dict(type='bool'),
         transmit_state=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -203,6 +210,7 @@ def main():
     receive_state = aci.boolean(module.params.get('receive_state'), 'enabled', 'disabled')
     transmit_state = aci.boolean(module.params.get('transmit_state'), 'enabled', 'disabled')
     state = module.params.get('state')
+    nameAlias = module.params.get('nameAlias')
 
     aci.construct_url(
         root_class=dict(
@@ -223,6 +231,7 @@ def main():
                 descr=description,
                 adminRxSt=receive_state,
                 adminTxSt=transmit_state,
+                nameAlias=nameAlias,
             ),
         )
 

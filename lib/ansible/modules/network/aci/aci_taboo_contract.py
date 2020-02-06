@@ -49,6 +49,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
@@ -221,6 +227,7 @@ def main():
         scope=dict(type='str', choices=['application-profile', 'context', 'global', 'tenant']),
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -237,6 +244,7 @@ def main():
     scope = module.params.get('scope')
     state = module.params.get('state')
     tenant = module.params.get('tenant')
+    nameAlias = module.params.get('nameAlias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -263,6 +271,7 @@ def main():
                 name=taboo_contract,
                 descr=description,
                 scope=scope,
+                nameAlias=nameAlias,
             ),
         )
 

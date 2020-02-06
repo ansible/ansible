@@ -128,6 +128,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 seealso:
 - name: APIC Management Information Model reference
@@ -305,6 +311,7 @@ def main():
         retransmit_interval=dict(type='int'),
         transmit_delay=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -321,6 +328,7 @@ def main():
     tenant = module.params.get('tenant')
     ospf = module.params.get('ospf')
     description = module.params.get('description')
+    nameAlias = module.params.get('nameAlias')
 
     if module.params.get('controls') is None:
         controls = None
@@ -381,6 +389,7 @@ def main():
                 prio=priority,
                 rexmitIntvl=retransmit_interval,
                 xmitDelay=transmit_delay,
+                nameAlias=nameAlias,
             ),
         )
 

@@ -76,6 +76,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
@@ -264,6 +270,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         move_frequency=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -305,6 +312,7 @@ def main():
         remote_ep_interval = "infinite"
     state = module.params.get('state')
     tenant = module.params.get('tenant')
+    nameAlias = module.params.get('nameAlias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -336,6 +344,7 @@ def main():
                 localEpAgeIntvl=local_ep_interval,
                 remoteEpAgeIntvl=remote_ep_interval,
                 moveFreq=move_frequency,
+                nameAlias=nameAlias,
             ),
         )
 

@@ -42,6 +42,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - This module does not manage EPGs, see M(aci_epg) to do this.
@@ -215,6 +221,7 @@ def main():
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name', 'name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -230,6 +237,7 @@ def main():
     description = module.params.get('description')
     state = module.params.get('state')
     tenant = module.params.get('tenant')
+    nameAlias = module.params.get('nameAlias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -255,6 +263,7 @@ def main():
             class_config=dict(
                 name=ap,
                 descr=description,
+                nameAlias=nameAlias,
             ),
         )
 

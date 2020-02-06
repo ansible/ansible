@@ -60,6 +60,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment:
 - aci
 notes:
@@ -201,6 +207,7 @@ def main():
         ignoreCompat=dict(type='bool'),
         adminst=dict(type='str', default='untriggered', choices=['triggered', 'untriggered']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -221,6 +228,7 @@ def main():
     adminst = module.params.get('adminst')
     graceful = aci.boolean(module.params.get('graceful'))
     ignoreCompat = aci.boolean(module.params.get('ignoreCompat'))
+    nameAlias = module.params.get('nameAlias')
 
     aci.construct_url(
         root_class=dict(
@@ -244,6 +252,7 @@ def main():
                 graceful=graceful,
                 adminSt=adminst,
                 ignoreCompat=ignoreCompat,
+                nameAlias=nameAlias,
             ),
             child_configs=[
                 dict(

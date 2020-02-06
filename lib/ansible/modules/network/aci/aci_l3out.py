@@ -79,6 +79,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - The C(tenant) and C(domain) and C(vrf) used must exist before using this module in your playbook.
@@ -255,7 +261,8 @@ def main():
                   aliases=['target']),
         l3protocol=dict(type='list', choices=['bgp', 'eigrp', 'ospf', 'pim', 'static']),
         asn=dict(type='int', aliases=['as_number']),
-        state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -279,6 +286,7 @@ def main():
     asn = module.params.get('asn')
     state = module.params.get('state')
     tenant = module.params.get('tenant')
+    nameAlias = module.params.get('nameAlias')
 
     if l3protocol:
         if 'eigrp' in l3protocol and asn is None:
@@ -343,7 +351,8 @@ def main():
                 descr=description,
                 dn='uni/tn-{0}/out-{1}'.format(tenant, l3out),
                 enforceRtctrl=enforce_ctrl,
-                targetDscp=dscp
+                targetDscp=dscp,
+                nameAlias=nameAlias,
             ),
             child_configs=child_configs,
         )

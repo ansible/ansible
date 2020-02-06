@@ -36,6 +36,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 seealso:
 - module: aci_switch_policy_leaf_profile
@@ -192,6 +198,7 @@ def main():
         leaf_profile=dict(type='str', aliases=['name', 'leaf_profile_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -206,6 +213,7 @@ def main():
     leaf_profile = module.params.get('leaf_profile')
     description = module.params.get('description')
     state = module.params.get('state')
+    nameAlias = module.params.get('nameAlias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -225,6 +233,7 @@ def main():
             class_config=dict(
                 name=leaf_profile,
                 descr=description,
+                nameAlias=nameAlias,
             ),
         )
 

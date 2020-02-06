@@ -50,6 +50,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
   vm_provider:
     description:
     - The VM platform for VMM Domains.
@@ -243,7 +249,8 @@ def main():
         description=dict(type='str', aliases=['descr']),
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        vm_provider=dict(type='str', choices=VM_PROVIDER_MAPPING.keys())
+        vm_provider=dict(type='str', choices=VM_PROVIDER_MAPPING.keys()),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -262,6 +269,7 @@ def main():
     domain = module.params.get('domain')
     state = module.params.get('state')
     vm_provider = module.params.get('vm_provider')
+    nameAlias = module.params.get('nameAlias')
 
     credential_class = 'vmmUsrAccP'
     usracc_mo = 'uni/vmmp-{0}/dom-{1}/usracc-{2}'.format(VM_PROVIDER_MAPPING.get(vm_provider), domain, name)
@@ -290,7 +298,8 @@ def main():
                 descr=description,
                 name=name,
                 pwd=credential_password,
-                usr=credential_username
+                usr=credential_username,
+                nameAlias=nameAlias,
             ),
         )
 

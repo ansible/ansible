@@ -49,6 +49,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 seealso:
 - module: aci_encap_pool_range
@@ -237,6 +243,7 @@ def main():
         pool=dict(type='str', aliases=['name', 'pool_name']),  # Not required for querying all objects
         pool_allocation_mode=dict(type='str', aliases=['allocation_mode', 'mode'], choices=['dynamic', 'static']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -253,6 +260,7 @@ def main():
     pool_type = module.params.get('pool_type')
     pool_allocation_mode = module.params.get('pool_allocation_mode')
     state = module.params.get('state')
+    nameAlias = module.params.get('nameAlias')
 
     aci_class = ACI_POOL_MAPPING[pool_type]['aci_class']
     aci_mo = ACI_POOL_MAPPING[pool_type]['aci_mo']
@@ -289,6 +297,7 @@ def main():
                 allocMode=pool_allocation_mode,
                 descr=description,
                 name=pool,
+                nameAlias=nameAlias,
             )
         )
 

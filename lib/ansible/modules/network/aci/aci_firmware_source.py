@@ -55,6 +55,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 seealso:
 - name: APIC Management Information Model reference
@@ -225,6 +231,7 @@ def main():
         url_password=dict(type='str', no_log=True),
         url_protocol=dict(type='str', default='scp', choices=['http', 'local', 'scp', 'usbkey'], aliases=['url_proto']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -243,6 +250,7 @@ def main():
     url = module.params.get('url')
     url_password = module.params.get('url_password')
     url_username = module.params.get('url_username')
+    nameAlias = module.params.get('nameAlias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -265,6 +273,7 @@ def main():
                 pollingInterval=polling_interval,
                 proto=url_protocol,
                 user=url_username,
+                nameAlias=nameAlias,
             ),
         )
 

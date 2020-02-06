@@ -71,6 +71,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - The C(pool) must exist in order to add or delete a range.
@@ -310,6 +316,7 @@ def main():
         range_name=dict(type='str', aliases=["name", "range"]),  # Not required for querying all objects
         range_start=dict(type='int', aliases=["start"]),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -330,6 +337,7 @@ def main():
     range_name = module.params.get('range_name')
     range_start = module.params.get('range_start')
     state = module.params.get('state')
+    nameAlias = module.params.get('nameAlias')
 
     if range_end is not None:
         encap_end = '{0}-{1}'.format(pool_type, range_end)
@@ -424,6 +432,7 @@ def main():
                 "from": encap_start,
                 "name": range_name,
                 "to": encap_end,
+                "nameAlias": nameAlias,
             },
         )
 

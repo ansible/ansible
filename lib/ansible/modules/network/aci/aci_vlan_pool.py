@@ -43,6 +43,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 seealso:
 - module: aci_encap_pool
@@ -214,6 +220,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         pool_allocation_mode=dict(type='str', aliases=['allocation_mode', 'mode'], choices=['dynamic', 'static']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -229,6 +236,7 @@ def main():
     pool = module.params.get('pool')
     pool_allocation_mode = module.params.get('pool_allocation_mode')
     state = module.params.get('state')
+    nameAlias = module.params.get('nameAlias')
 
     pool_name = pool
 
@@ -258,6 +266,7 @@ def main():
                 allocMode=pool_allocation_mode,
                 descr=description,
                 name=pool,
+                nameAlias=nameAlias,
             ),
         )
 

@@ -126,6 +126,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - When using the module please select the appropriate link_aggregation_type (lag_type).
@@ -342,6 +348,7 @@ def main():
         port_security_policy=dict(type='str', aliases=['port_security_policy_name']),
         aep=dict(type='str', aliases=['aep_name']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -373,6 +380,7 @@ def main():
     port_security_policy = module.params.get('port_security_policy')
     aep = module.params.get('aep')
     state = module.params.get('state')
+    nameAlias = module.params.get('nameAlias')
 
     if lag_type == 'leaf':
         aci_class_name = 'infraAccPortGrp'
@@ -380,6 +388,7 @@ def main():
         class_config_dict = dict(
             name=policy_group,
             descr=description,
+            nameAlias=nameAlias,
         )
         # Reset for target_filter
         lag_type = None
@@ -390,6 +399,7 @@ def main():
             name=policy_group,
             descr=description,
             lagT=lag_type,
+            nameAlias=nameAlias,
         )
 
     child_configs = [

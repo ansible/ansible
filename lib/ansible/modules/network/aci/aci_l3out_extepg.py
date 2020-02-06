@@ -61,6 +61,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - The C(tenant) and C(domain) and C(vrf) used must exist before using this module in your playbook.
@@ -234,7 +240,8 @@ def main():
                   choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42',
                            'AF43', 'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),
-        state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -255,6 +262,7 @@ def main():
     preferred_group = aci.boolean(module.params.get('preferred_group'), 'include', 'exclude')
     dscp = module.params.get('dscp')
     state = module.params.get('state')
+    nameAlias = module.params.get('nameAlias')
 
     aci.construct_url(
         root_class=dict(
@@ -286,7 +294,8 @@ def main():
                 name=extepg,
                 descr=description,
                 prefGrMemb=preferred_group,
-                targetDscp=dscp
+                targetDscp=dscp,
+                nameAlias=nameAlias,
             ),
         )
 

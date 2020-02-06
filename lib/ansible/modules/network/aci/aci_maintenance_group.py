@@ -38,6 +38,12 @@ options:
         type: str
         choices: [absent, present, query]
         default: present
+    nameAlias:
+        version_added: '2.10'
+        description:
+            - nameAlias field to alias the current object.
+        type: str
+        aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment:
     - aci
 author:
@@ -171,6 +177,7 @@ def main():
         group=dict(type='str'),  # Not required for querying all objects
         policy=dict(type='str'),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -185,7 +192,7 @@ def main():
     state = module.params.get('state')
     group = module.params.get('group')
     policy = module.params.get('policy')
-
+    nameAlias = module.params.get('nameAlias')
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
@@ -204,6 +211,7 @@ def main():
             aci_class='maintMaintGrp',
             class_config=dict(
                 name=group,
+                nameAlias=nameAlias,
             ),
             child_configs=[
                 dict(

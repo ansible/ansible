@@ -49,6 +49,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 seealso:
 - name: APIC Management Information Model reference
@@ -188,6 +194,7 @@ def main():
         max_end_points=dict(type='int'),
         port_security_timeout=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -203,6 +210,7 @@ def main():
     description = module.params.get('description')
     max_end_points = module.params.get('max_end_points')
     port_security_timeout = module.params.get('port_security_timeout')
+    nameAlias = module.params.get('nameAlias')
     if max_end_points is not None and max_end_points not in range(12001):
         module.fail_json(msg='The "max_end_points" must be between 0 and 12000')
     if port_security_timeout is not None and port_security_timeout not in range(60, 3601):
@@ -228,6 +236,7 @@ def main():
                 name=port_security,
                 descr=description,
                 maximum=max_end_points,
+                nameAlias=nameAlias,
             ),
         )
 

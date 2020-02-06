@@ -82,6 +82,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - This module is not idempotent when C(aaa_password) is being used
@@ -277,6 +283,7 @@ def main():
         last_name=dict(type='str'),
         phone=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -307,6 +314,7 @@ def main():
     last_name = module.params.get('last_name')
     phone = module.params.get('phone')
     state = module.params.get('state')
+    nameAlias = module.params.get('nameAlias')
 
     expiration = module.params.get('expiration')
     if expiration is not None and expiration != 'never':
@@ -342,6 +350,7 @@ def main():
                 pwd=aaa_password,
                 pwdLifeTime=aaa_password_lifetime,
                 pwdUpdateRequired=aaa_password_update_required,
+                nameAlias=nameAlias,
             ),
         )
 

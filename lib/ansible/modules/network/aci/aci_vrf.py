@@ -51,6 +51,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  nameAlias:
+    version_added: '2.10'
+    description:
+    - nameAlias field to alias the current object.
+    type: str
+    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
@@ -227,6 +233,7 @@ def main():
         policy_control_direction=dict(type='str', choices=['egress', 'ingress']),
         policy_control_preference=dict(type='str', choices=['enforced', 'unenforced']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -244,6 +251,7 @@ def main():
     state = module.params.get('state')
     tenant = module.params.get('tenant')
     vrf = module.params.get('vrf')
+    nameAlias = module.params.get('nameAlias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -271,6 +279,7 @@ def main():
                 pcEnfDir=policy_control_direction,
                 pcEnfPref=policy_control_preference,
                 name=vrf,
+                nameAlias=nameAlias,
             ),
         )
 
