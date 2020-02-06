@@ -1180,28 +1180,28 @@ class GalaxyCLI(CLI):
                 collection = CollectionRequirement.from_path(b_collection_path, False)
                 fqcn_width, version_width = _get_collection_widths(collection)
 
-                _display_header(path, 'Collection', 'Version', fqcn_width, version_width)
+                _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
                 _display_collection(collection, fqcn_width, version_width)
 
             else:
                 # list all collections
-                path = validate_collection_path(path)
-                if os.path.isdir(path):
-                    display.vvv("Searching {0} for collections".format(path))
-                    collections = find_existing_collections(path)
+                collection_path = validate_collection_path(path)
+                if os.path.isdir(collection_path):
+                    display.vvv("Searching {0} for collections".format(collection_path))
+                    collections = find_existing_collections(collection_path)
                 else:
                     # There was no 'ansible_collections/' directory in the path, so there
                     # or no collections here.
-                    display.vvv("No 'ansible_collections' directory found at {0}".format(path))
+                    display.vvv("No 'ansible_collections' directory found at {0}".format(collection_path))
                     continue
 
                 if not collections:
-                    display.vvv("No collections found at {0}".format(path))
+                    display.vvv("No collections found at {0}".format(collection_path))
                     continue
 
                 # Display header
                 fqcn_width, version_width = _get_collection_widths(collections)
-                _display_header(path, 'Collection', 'Version', fqcn_width, version_width)
+                _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
 
                 # Sort collections by the namespace and name
                 collections.sort(key=to_text)
