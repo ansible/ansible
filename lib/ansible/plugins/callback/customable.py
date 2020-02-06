@@ -11,25 +11,22 @@ DOCUMENTATION = '''
     type: stdout
     short_description: minimal Ansible screen output with customable args
     description:
-        - Env Vars:
-            ANSIBLE_CUSTOMABLE_SHOW_ONLY_HOST   - Display only the Hostnaöe
-            ANSIBLE_CUSTOMABLE_NO_COLOR         - Disable Color Output 
-            ANSIBLE_CUSTOMABLE_ONE_LINER        - Display as one liner
-            ANSIBLE_CUSTOMABLE_SHOW_NO_HOST     - Don't show the hostname only the result
-            ANSIBLE_CUSTOMABLE_SHOW_SUCCESS     - Display success result
-            ANSIBLE_CUSTOMABLE_SHOW_CHANGED     - Display changed result
-            ANSIBLE_CUSTOMABLE_SHOW_FAILED      - Display failed Result
-
-        - Note: 
-            To use only with Ad-Hoc commands
+        - NOTE                                - To use only with ad-hoc
+        - ANSIBLE_CUSTOMABLE_SHOW_ONLY_HOST   - Display only the Hostnaöe
+        - ANSIBLE_CUSTOMABLE_NO_COLOR         - Disable Color Output
+        - ANSIBLE_CUSTOMABLE_ONE_LINER        - Display as one liner
+        - ANSIBLE_CUSTOMABLE_SHOW_NO_HOST     - Don't show the hostname only the result
+        - ANSIBLE_CUSTOMABLE_SHOW_SUCCESS     - Display success result
+        - ANSIBLE_CUSTOMABLE_SHOW_CHANGED     - Display changed result
+        - ANSIBLE_CUSTOMABLE_SHOW_FAILED      - Display failed Result
 '''
 
 import os
 from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
 
-class CallbackModule(CallbackBase):
 
+class CallbackModule(CallbackBase):
 
     CALLBACK_VERSION = 0.1
     CALLBACK_TYPE = 'stdout'
@@ -40,28 +37,28 @@ class CallbackModule(CallbackBase):
     oneLiner = False
     showNoHost = False
 
-    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_ONLY_HOST'): 
+    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_ONLY_HOST'):
         showOnlyHost = True
-    
-    if os.getenv('ANSIBLE_CUSTOMABLE_NO_COLOR'): 
+
+    if os.getenv('ANSIBLE_CUSTOMABLE_NO_COLOR'):
         color = False
 
-    if os.getenv('ANSIBLE_CUSTOMABLE_ONE_LINER'): 
+    if os.getenv('ANSIBLE_CUSTOMABLE_ONE_LINER'):
         oneLiner = True
 
-    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_NO_HOST'): 
+    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_NO_HOST'):
         showNoHost = True
 
-    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_SUCCESS'): 
+    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_SUCCESS'):
         toDisplayArr.append('success')
 
-    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_CHANGED'): 
+    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_CHANGED'):
         toDisplayArr.append('changed')
 
-    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_FAILED'): 
+    if os.getenv('ANSIBLE_CUSTOMABLE_SHOW_FAILED'):
         toDisplayArr.append('failed')
 
-    if not toDisplayArr: 
+    if not toDisplayArr:
         toDisplayArr = ['success', 'changed', 'failed']
 
     def _command_generic_msg(self, host, result, caption):
