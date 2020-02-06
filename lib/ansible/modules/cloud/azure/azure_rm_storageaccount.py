@@ -160,6 +160,7 @@ EXAMPLES = '''
         resource_group: myResourceGroup
         name: clh0002
         type: Premium_LRS
+        kind: FileStorage
         tags:
           testing: testing
 
@@ -408,7 +409,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                           "attribute of type boolean.")
 
         if self.kind in ['FileStorage', 'BlockBlobStorage', ] and self.account_type != 'Premium_LRS':
-            self.fail("Parameter error: storage account {0} require account type is Premium_LRS".format(self.kind))
+            self.fail("Parameter error: storage account with {0} kind require account type is Premium_LRS".format(self.kind))
 
         self.account_dict = self.get_account()
 
