@@ -219,7 +219,7 @@ Using documentation fragments in collections
 
 To include documentation fragments in your collection:
 
-#. Create the documentation fragment under ``plugins/docfragment``.
+#. Create the documentation fragment: ``plugins/doc_fragments/fragment_name``.
 
 #. Refer to the documentation fragment with its FQCN.
 
