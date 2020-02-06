@@ -906,7 +906,7 @@ def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
         db=dict(type='str', aliases=['login_db']),
-        filter=dict(type='list'),
+        filter=dict(type='list', elements='str'),
         session_role=dict(type='str'),
     )
     module = AnsibleModule(

@@ -576,7 +576,7 @@ def main():
         name=dict(required=True),
         db=dict(type='str', aliases=['login_db']),
         state=dict(type='str', default='present', choices=['absent', 'present']),
-        tables=dict(type='list'),
+        tables=dict(type='list', elements='str'),
         parameters=dict(type='dict'),
         owner=dict(type='str'),
         cascade=dict(type='bool', default=False),

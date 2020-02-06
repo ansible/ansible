@@ -42,7 +42,6 @@ options:
       reload the server configuration you must pass I(value=default).
       With I(value=default) the playbook always returns changed is true.
     type: str
-    required: true
   reset:
     description:
     - Restore parameter to initial state (boot_val). Mutually exclusive with I(value).

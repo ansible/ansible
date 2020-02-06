@@ -473,8 +473,8 @@ def main():
         including=dict(type='str'),
         rename=dict(type='str'),
         truncate=dict(type='bool', default=False),
-        columns=dict(type='list'),
-        storage_params=dict(type='list'),
+        columns=dict(type='list', elements='str'),
+        storage_params=dict(type='list', elements='str'),
         session_role=dict(type='str'),
         cascade=dict(type='bool', default=False),
     )

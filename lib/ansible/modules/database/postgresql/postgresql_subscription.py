@@ -66,6 +66,7 @@ options:
     - The publication names on the publisher to use for the subscription.
     - Ignored when I(state) is not C(present).
     type: list
+    elements: str
   connparams:
     description:
     - The connection dict param-value to connect to the publisher.
@@ -612,10 +613,10 @@ class PgSubscription():
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
-        name=dict(required=True),
-        db=dict(type='str', aliases=['login_db']),
+        name=dict(type='str', required=True),
+        db=dict(type='str', required=True, aliases=['login_db']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'refresh', 'stat']),
-        publications=dict(type='list'),
+        publications=dict(type='list', elements='str'),
         connparams=dict(type='dict'),
         cascade=dict(type='bool', default=False),
         owner=dict(type='str'),

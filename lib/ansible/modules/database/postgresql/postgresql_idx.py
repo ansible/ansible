@@ -59,7 +59,6 @@ options:
     - Table to create index on it.
     - Mutually exclusive with I(state=absent).
     type: str
-    required: true
   columns:
     description:
     - List of index columns that need to be covered by index.
@@ -469,11 +468,11 @@ def main():
         unique=dict(type='bool', default=False),
         table=dict(type='str'),
         idxtype=dict(type='str', aliases=['type']),
-        columns=dict(type='list', aliases=['column']),
+        columns=dict(type='list', elements='str', aliases=['column']),
         cond=dict(type='str'),
         session_role=dict(type='str'),
         tablespace=dict(type='str'),
-        storage_params=dict(type='list'),
+        storage_params=dict(type='list', elements='str'),
         cascade=dict(type='bool', default=False),
         schema=dict(type='str'),
     )
