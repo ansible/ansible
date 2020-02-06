@@ -58,7 +58,7 @@ EXAMPLES = '''
       name: testaccount
 
   - name: List instances of Database Account
-    azure_rm_cosmosdbaccousnt_info:
+    azure_rm_cosmosdbaccount_info:
       resource_group: myResourceGroup
 '''
 
