@@ -13,21 +13,26 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: iam_server_certificate_info
-short_description: Retrieve the facts of a server certificate either based on name or path
+short_description: Retrieve the information of a server certificate
 description:
-  - Retrieve the attributes of a server certificate
+  - Retrieve the attributes of a server certificate.
+  - This module was called C(iam_server_certificate_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.2"
-author: "Vijayanand (@vijayanandsharma)"
+author:
+ - "Allen Sanabria (@linuxdynasty)"
+ - "Vijayanand (@vijayanandsharma)"
 requirements: [boto3, botocore]
 options:
   name:
     description:
-      - The name of the server certificate you are retrieving attributes for. This argument is mutually exclusive with I(path)
+      - The name of the server certificate you are retrieving attributes for. 
+      - This argument is mutually exclusive with I(path)
     type: str
     required: false
   path:
     description:
-      - The path to the server certificate you are retrieving attributes for. This argument is mutually exclusive with I(name)
+      - The path to the server certificate you are retrieving attributes for. 
+      - This argument is mutually exclusive with I(name)
     type: str
     required: false
     version_added: '2.10'
@@ -77,22 +82,22 @@ certificates:
             type: complex
             contains:
                 server_certificate_id:
-                    description: The 21 character certificate id
+                    description: The 21 character certificate id.
                     returned: always
                     type: str
                     sample: "ADWAJXWTZAXIPIMQHMJPO"
                 server_certificate_name:
-                    description: The name of the server certificate
+                    description: The name of the server certificate.
                     returned: always
                     type: str
                     sample: "server-cert-name"
                 arn:
-                    description: The Amazon resource name of the server certificate
+                    description: The Amazon resource name of the server certificate.
                     returned: always
                     type: str
                     sample: "arn:aws:iam::911277865346:server-certificate/server-cert-name"
                 path:
-                    description: The path of the server certificate
+                    description: The path of the server certificate.
                     returned: always
                     type: str
                     sample: "/"
@@ -123,8 +128,13 @@ def list_iam_server_certificates_with_backoff(connection, path):
     paginator = connection.get_paginator('list_server_certificates')
     if path:
         return paginator.paginate(PathPrefix=path).build_full_result()
-    else:
-        return paginator.paginate().build_full_result()
+
+    return paginator.paginate().build_full_result()
+
+
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def get_server_certificate_with_backoff(connection, name):
+    return connection.get_server_certificate(ServerCertificateName=name)['ServerCertificate']
 
 
 def _get_server_certs(connection, module, name, path):
@@ -139,18 +149,19 @@ def _get_server_certs(connection, module, name, path):
     """
 
     response = dict()
-    response['certificates'] = []
+    response['certificates'] = list()
+    server_certs = list()
 
     if name:
         try:
-            response['certificates'].append(connection.get_server_certificate(ServerCertificateName=name)['ServerCertificate'])
+            response['certificates'].append(get_server_certificate_with_backoff(connection, name))
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'NoSuchEntity':
                 return response['certificates']
             else:
-                module.fail_json_aws(e, msg="The specified server certificates could not be found ")
+                raise
         except botocore.exceptions.BotoCoreError as e:
-            module.fail_json_aws(e, msg="The specified server certificates could not be found ")
+            raise
     else:
         server_certs = list_iam_server_certificates_with_backoff(connection, path)['ServerCertificateMetadataList']
 
@@ -158,10 +169,14 @@ def _get_server_certs(connection, module, name, path):
         for server_cert in server_certs:
             try:
                 response['certificates'].append(
-                    connection.get_server_certificate(ServerCertificateName=server_cert['ServerCertificateName'])['ServerCertificate'])
+                    get_server_certificate_with_backoff(connection, server_cert['ServerCertificateName']))
             except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] == 'NoSuchEntity':
                     continue
+                else:
+                    raise
+            except botocore.exceptions.BotoCoreError as e:
+                raise
 
     return response['certificates']
 
@@ -175,7 +190,15 @@ def get_server_certs(connection, module):
     :param module: Ansible module
     """
 
-    list_of_server_certs = _get_server_certs(connection, module, module.params.get('name'), module.params.get('path'))
+    list_of_server_certs = list()
+
+    try:
+        list_of_server_certs = _get_server_certs(connection, module, module.params.get('name'),
+                                                 module.params.get('path'))
+    except botocore.exceptions.ClientError as e:
+        module.fail_json_aws(e, msg="The specified server certificates could not be found ")
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="The specified server certificates could not be found ")
 
     # Snake case the certificates results
     list_of_snaked_server_certs = list()
@@ -188,11 +211,9 @@ def get_server_certs(connection, module):
 
 
 def main():
-    argument_spec = (
-        dict(
-            name=dict(type='str'),
-            path=dict(type='str')
-        )
+    argument_spec = dict(
+        name=dict(type='str'),
+        path=dict(type='str')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
