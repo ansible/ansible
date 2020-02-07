@@ -509,6 +509,7 @@ def main():
             remote_src=dict(type='bool'),
             local_follow=dict(type='bool'),
             checksum=dict(type='str'),
+            follow=dict(type='bool', default=False),
         ),
         add_file_common_args=True,
         supports_check_mode=True,

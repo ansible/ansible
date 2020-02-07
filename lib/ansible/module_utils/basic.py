@@ -244,21 +244,6 @@ FILE_COMMON_ARGUMENTS = dict(
     selevel=dict(),
     setype=dict(),
     attributes=dict(aliases=['attr']),
-
-    # The following are not about perms and should not be in a rewritten file_common_args
-    src=dict(),  # Maybe dest or path would be appropriate but src is not
-    follow=dict(type='bool', default=False),  # Maybe follow is appropriate because it determines whether to follow symlinks for permission purposes too
-    force=dict(type='bool'),
-
-    # not taken by the file module, but other action plugins call the file module so this ignores
-    # them for now. In the future, the caller should take care of removing these from the module
-    # arguments before calling the file module.
-    content=dict(no_log=True),  # used by copy
-    backup=dict(),  # Used by a few modules to create a remote backup before updating the file
-    remote_src=dict(),  # used by assemble
-    regexp=dict(),  # used by assemble
-    delimiter=dict(),  # used by assemble
-    directory_mode=dict(),  # used by copy
     unsafe_writes=dict(type='bool'),  # should be available to any module using atomic_move
 )
 

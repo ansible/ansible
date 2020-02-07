@@ -666,6 +666,7 @@ def main():
     argument_spec = dict()
     argument_spec.update(
         address=dict(type='str', default='samehost', aliases=['source', 'src']),
+        backup=dict(type='bool', default=False),
         backup_file=dict(type='str'),
         contype=dict(type='str', default=None, choices=PG_HBA_TYPES),
         create=dict(type='bool', default=False),

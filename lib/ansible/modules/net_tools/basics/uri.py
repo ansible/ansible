@@ -584,6 +584,7 @@ def main():
         timeout=dict(type='int', default=30),
         headers=dict(type='dict', default={}),
         unix_socket=dict(type='path'),
+        remote_src=dict(type='bool', default=False),
     )
 
     module = AnsibleModule(
