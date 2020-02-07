@@ -137,7 +137,7 @@ options:
       description:
         - Desired state of the resource.
       default: "present"
-      choices: ["present", "absent"]
+      choices: ["present", "absent", "updated"]
     validate_certs:
       description:
         - Tower option to avoid certificates check.
@@ -302,6 +302,16 @@ def main():
             elif state == 'absent':
                 params['fail_on_missing'] = False
                 result = inventory_source.delete(**params)
+            elif state == 'updated':
+                try:
+                    params['inventory_source_id'] = inventory_source.get(name=params['name'])['id']
+                except (exc.NotFound) as excinfo:
+                    module.fail_json(
+                         msg='Failed to update inventory source, '
+                        'inventory not found: {0}'.format(excinfo),
+                        changed=False
+                    )
+                result = inventory_source.update(params['inventory_source_id'], wait=True)
 
         except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update inventory source: \
