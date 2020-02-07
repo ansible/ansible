@@ -214,7 +214,7 @@ def main():
         overwrite_vars=dict(type='bool', required=False),
         update_on_launch=dict(type='bool', required=False),
         update_cache_timeout=dict(type='int', required=False),
-        state=dict(choices=['present', 'absent'], default='present'),
+        state=dict(choices=['present', 'absent', 'updated'], default='present'),
     )
 
     module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -282,7 +282,7 @@ def main():
                 params['inventory'] = inventory_res.get(name=inventory)['id']
             except (exc.NotFound) as excinfo:
                 module.fail_json(
-                    msg='Failed to update inventory source, '
+                    msg='Failed to update inventory source,'
                     'inventory not found: {0}'.format(excinfo),
                     changed=False
                 )
