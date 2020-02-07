@@ -223,7 +223,7 @@ termination_policies:
 import re
 
 try:
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
@@ -335,8 +335,8 @@ def find_asgs(conn, module, name=None, tags=None):
     try:
         asgs_paginator = conn.get_paginator('describe_auto_scaling_groups')
         asgs = asgs_paginator.paginate().build_full_result()
-    except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to describe AutoScalingGroups')
 
     if not asgs:
         return asgs
@@ -381,6 +381,10 @@ def find_asgs(conn, module, name=None, tags=None):
                     except ClientError as e:
                         if e.response['Error']['Code'] == 'TargetGroupNotFound':
                             asg['target_group_names'] = []
+                        else:
+                            module.fail_json_aws(e, msg="Failed to describe Target Groups")
+                    except BotoCoreError as e:
+                        module.fail_json_aws(e, msg="Failed to describe Target Groups")
             else:
                 asg['target_group_names'] = []
             matched_asgs.append(asg)

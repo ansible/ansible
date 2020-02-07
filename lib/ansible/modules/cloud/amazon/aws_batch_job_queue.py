@@ -124,7 +124,7 @@ import re
 import traceback
 
 try:
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # Handled by AnsibleAWSModule
 
@@ -187,9 +187,8 @@ def create_job_queue(module, aws):
         if not module.check_mode:
             client.create_job_queue(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error creating compute environment: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Error creating compute environment')
 
     return changed
 
@@ -220,9 +219,8 @@ def remove_job_queue(module, aws):
         if not module.check_mode:
             client.delete_job_queue(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error removing job queue: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Error removing job queue')
     return changed
 
 
@@ -268,9 +266,8 @@ def manage_state(module, aws):
                         aws.client().update_job_queue(**job_kwargs)
                     changed = True
                     action_taken = "updated"
-                except (ParamValidationError, ClientError) as e:
-                    module.fail_json(msg="Unable to update job queue: {0}".format(to_native(e)),
-                                     exception=traceback.format_exc())
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Unable to update job queue")
 
         else:
             # Create Job Queue

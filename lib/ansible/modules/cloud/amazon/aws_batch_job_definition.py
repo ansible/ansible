@@ -235,7 +235,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 import traceback
 
 try:
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
     pass  # Handled by AnsibleAWSModule
 
@@ -307,9 +307,8 @@ def create_job_definition(module, aws):
         if not module.check_mode:
             client.register_job_definition(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error registering job definition: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Error registering job definition')
 
     return changed
 
@@ -350,9 +349,8 @@ def remove_job_definition(module, aws):
         if not module.check_mode:
             client.deregister_job_definition(jobDefinition=module.params['job_definition_arn'])
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error removing job definition: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Error removing job definition')
     return changed
 
 

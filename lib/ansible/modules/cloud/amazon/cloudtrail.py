@@ -265,7 +265,7 @@ trail:
 import traceback
 
 try:
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
     pass  # Handled by AnsibleAWSModule
 
@@ -286,8 +286,8 @@ def create_trail(module, client, ct_params):
     resp = {}
     try:
         resp = client.create_trail(**ct_params)
-    except ClientError as err:
-        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    except (BotoCoreError, ClientError) as err:
+        module.fail_json_aws(err, msg="Failed to create Trail")
 
     return resp
 
@@ -330,16 +330,16 @@ def tag_trail(module, client, tags, trail_arn, curr_tags=None, dry_run=False):
         if not dry_run:
             try:
                 client.remove_tags(ResourceId=trail_arn, TagsList=removes + updates)
-            except ClientError as err:
-                module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+            except (BotoCoreError, ClientError) as err:
+                module.fail_json_aws(err, msg="Failed to remove tags from Trail")
 
     if updates or adds:
         changed = True
         if not dry_run:
             try:
                 client.add_tags(ResourceId=trail_arn, TagsList=updates + adds)
-            except ClientError as err:
-                module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+            except (BotoCoreError, ClientError) as err:
+                module.fail_json_aws(err, msg="Failed to add tags to Trail")
 
     return changed
 
@@ -370,14 +370,14 @@ def set_logging(module, client, name, action):
         try:
             client.start_logging(Name=name)
             return client.get_trail_status(Name=name)
-        except ClientError as err:
-            module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+        except (BotoCoreError, ClientError) as err:
+            module.fail_json_aws(err, msg="Failed to start logging")
     elif action == 'stop':
         try:
             client.stop_logging(Name=name)
             return client.get_trail_status(Name=name)
-        except ClientError as err:
-            module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+        except (BotoCoreError, ClientError) as err:
+            module.fail_json_aws(err, msg="Failed to stop logging")
     else:
         module.fail_json(msg="Unsupported logging action")
 
@@ -393,8 +393,8 @@ def get_trail_facts(module, client, name):
     # get Trail info
     try:
         trail_resp = client.describe_trails(trailNameList=[name])
-    except ClientError as err:
-        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    except (BotoCoreError, ClientError) as err:
+        module.fail_json_aws(err, msg="Failed to describe Trail")
 
     # Now check to see if our trail exists and get status and tags
     if len(trail_resp['trailList']):
@@ -402,8 +402,8 @@ def get_trail_facts(module, client, name):
         try:
             status_resp = client.get_trail_status(Name=trail['Name'])
             tags_list = client.list_tags(ResourceIdList=[trail['TrailARN']])
-        except ClientError as err:
-            module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+        except (BotoCoreError, ClientError) as err:
+            module.fail_json_aws(err, msg="Failed to describe Trail")
 
         trail['IsLogging'] = status_resp['IsLogging']
         trail['tags'] = boto3_tag_list_to_ansible_dict(tags_list['ResourceTagList'][0]['TagsList'])
@@ -428,8 +428,8 @@ def delete_trail(module, client, trail_arn):
     """
     try:
         client.delete_trail(Name=trail_arn)
-    except ClientError as err:
-        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    except (BotoCoreError, ClientError) as err:
+        module.fail_json_aws(err, msg="Failed to delete Trail")
 
 
 def update_trail(module, client, ct_params):
@@ -442,8 +442,8 @@ def update_trail(module, client, ct_params):
     """
     try:
         client.update_trail(**ct_params)
-    except ClientError as err:
-        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    except (BotoCoreError, ClientError) as err:
+        module.fail_json_aws(err, msg="Failed to update Trail")
 
 
 def main():
@@ -584,8 +584,8 @@ def main():
             # Get the trail status
             try:
                 status_resp = client.get_trail_status(Name=created_trail['Name'])
-            except ClientError as err:
-                module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+            except (BotoCoreError, ClientError) as err:
+                module.fail_json_aws(err, msg="Failed to fetch Trail statuc")
             # Set the logging state for the trail to desired value
             if enable_logging and not status_resp['IsLogging']:
                 set_logging(module, client, name=ct_params['Name'], action='start')
@@ -600,7 +600,7 @@ def main():
             try:
                 sts_client = boto3_conn(module, conn_type='client', resource='sts', region=region, endpoint=ec2_url, **aws_connect_params)
                 acct_id = sts_client.get_caller_identity()['Account']
-            except ClientError:
+            except (BotoCoreError, ClientError):
                 pass
             trail = dict()
             trail.update(ct_params)

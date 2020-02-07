@@ -441,12 +441,8 @@ class EFSConnection(object):
             try:
                 self.connection.create_file_system(**params)
                 changed = True
-            except ClientError as e:
-                self.module.fail_json(msg="Unable to create file system: {0}".format(to_native(e)),
-                                      exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-            except BotoCoreError as e:
-                self.module.fail_json(msg="Unable to create file system: {0}".format(to_native(e)),
-                                      exception=traceback.format_exc())
+            except (ClientError, BotoCoreError) as e:
+                self.module.fail_json_aws(e, msg="Unable to create file system.")
 
         # we always wait for the state to be available when creating.
         # if we try to take any actions on the file system before it's available
@@ -483,12 +479,8 @@ class EFSConnection(object):
                 try:
                     self.connection.update_file_system(FileSystemId=fs_id, **params)
                     changed = True
-                except ClientError as e:
-                    self.module.fail_json(msg="Unable to update file system: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                except BotoCoreError as e:
-                    self.module.fail_json(msg="Unable to update file system: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc())
+                except (ClientError, BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Unable to update file system.")
         return changed
 
     def converge_file_system(self, name, tags, purge_tags, targets, throughput_mode, provisioned_throughput_in_mibps):
@@ -507,12 +499,8 @@ class EFSConnection(object):
                         FileSystemId=fs_id,
                         TagKeys=tags_to_delete
                     )
-                except ClientError as e:
-                    self.module.fail_json(msg="Unable to delete tags: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                except BotoCoreError as e:
-                    self.module.fail_json(msg="Unable to delete tags: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc())
+                except (ClientError, BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Unable to delete tags.")
 
                 result = True
 
@@ -522,12 +510,8 @@ class EFSConnection(object):
                         FileSystemId=fs_id,
                         Tags=ansible_dict_to_boto3_tag_list(tags_need_modify)
                     )
-                except ClientError as e:
-                    self.module.fail_json(msg="Unable to create tags: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                except BotoCoreError as e:
-                    self.module.fail_json(msg="Unable to create tags: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc())
+                except (ClientError, BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Unable to create tags.")
 
                 result = True
 

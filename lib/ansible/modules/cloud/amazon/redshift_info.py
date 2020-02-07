@@ -283,7 +283,7 @@ import re
 import traceback
 
 try:
-    from botocore.exception import ClientError
+    from botocore.exception import BotoCoreError, ClientError
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
@@ -306,8 +306,8 @@ def find_clusters(conn, module, identifier=None, tags=None):
     try:
         cluster_paginator = conn.get_paginator('describe_clusters')
         clusters = cluster_paginator.paginate().build_full_result()
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to fetch clusters.')
 
     matched_clusters = []
 

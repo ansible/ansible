@@ -98,7 +98,7 @@ security_groups:
 import traceback
 
 try:
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
@@ -141,8 +141,8 @@ def main():
         security_groups = connection.describe_security_groups(
             Filters=ansible_dict_to_boto3_filter_list(sanitized_filters)
         )
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to describe security groups')
 
     snaked_security_groups = []
     for security_group in security_groups['SecurityGroups']:

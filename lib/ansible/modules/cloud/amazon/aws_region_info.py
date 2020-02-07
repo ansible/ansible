@@ -98,13 +98,8 @@ def main():
         regions = connection.describe_regions(
             Filters=ansible_dict_to_boto3_filter_list(sanitized_filters)
         )
-    except ClientError as e:
-        module.fail_json(msg="Unable to describe regions: {0}".format(to_native(e)),
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
-    except BotoCoreError as e:
-        module.fail_json(msg="Unable to describe regions: {0}".format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg="Unable to describe regions.")
 
     module.exit_json(regions=[camel_dict_to_snake_dict(r) for r in regions['Regions']])
 

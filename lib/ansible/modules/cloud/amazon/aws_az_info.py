@@ -109,12 +109,8 @@ def main():
         availability_zones = connection.describe_availability_zones(
             Filters=ansible_dict_to_boto3_filter_list(sanitized_filters)
         )
-    except ClientError as e:
-        module.fail_json(msg="Unable to describe availability zones: {0}".format(to_native(e)),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    except BotoCoreError as e:
-        module.fail_json(msg="Unable to describe availability zones: {0}".format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg="Unable to describe availability zones.")
 
     # Turn the boto3 result into ansible_friendly_snaked_names
     snaked_availability_zones = [camel_dict_to_snake_dict(az) for az in availability_zones['AvailabilityZones']]

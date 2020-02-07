@@ -240,7 +240,7 @@ import re
 import traceback
 
 try:
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
     pass  # Handled by AnsibleAWSModule
 
@@ -344,9 +344,8 @@ def create_compute_environment(module, aws):
         if not module.check_mode:
             client.create_compute_environment(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error creating compute environment: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg='Error creating compute environment')
 
     return changed
 
@@ -370,9 +369,8 @@ def remove_compute_environment(module, aws):
         if not module.check_mode:
             client.delete_compute_environment(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error removing compute environment: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg='Error removing compute environment')
     return changed
 
 
@@ -428,9 +426,8 @@ def manage_state(module, aws):
                         module.fail_json(msg='Unable to get compute environment information after creating')
                     changed = True
                     action_taken = "updated"
-                except (ParamValidationError, ClientError) as e:
-                    module.fail_json(msg="Unable to update environment: {0}".format(to_native(e)),
-                                     exception=traceback.format_exc())
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Unable to update environment.")
 
         else:
             # Create Batch Compute Environment
