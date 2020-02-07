@@ -720,6 +720,26 @@ class ELBListenerRules(object):
                         current_condition['SourceIpConfig']['Values'][0] == condition['SourceIpConfig']['Values'][0]):
                     condition_found = True
                     break
+            elif current_condition.get('HttpHeaderConfig'):
+                if (current_condition['Field'] == condition['Field'] and current_condition['HttpHeaderConfig']['Values'][0] == condition['HttpHeaderConfig']['Values'][0]):
+                    condition_found = True
+                    break
+            elif current_condition.get('SourceIpConfig'):
+                if (current_condition['Field'] == condition['Field'] and current_condition['SourceIpConfig']['Values'][0] == condition['SourceIpConfig']['Values'][0]):
+                    condition_found = True
+                    break
+            elif current_condition.get('HttpRequestMethodConfig'):
+                if (current_condition['Field'] == condition['Field'] and current_condition['HttpRequestMethodConfig']['Values'][0] == condition['HttpRequestMethodConfig']['Values'][0]):
+                    condition_found = True
+                    break
+            elif current_condition.get('QueryStringConfig'):
+                if (current_condition['Field'] == condition['Field'] and current_condition['QueryStringConfig']['Values'][0]['Value'] == condition['QueryStringConfig']['Values'][0]['Value']):
+                    condition_found = True
+                    break
+            elif current_condition.get('PathPatternConfig'):
+                if (current_condition['Field'] == condition['Field'] and current_condition['PathPatternConfig']['Values'][0] == condition['PathPatternConfig']['Values'][0]):
+                    condition_found = True
+                    break
             elif current_condition['Field'] == condition['Field'] and sorted(current_condition['Values']) == sorted(condition['Values']):
                 condition_found = True
                 break
