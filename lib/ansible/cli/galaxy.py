@@ -147,13 +147,6 @@ class GalaxyCLI(CLI):
                                 help='The path to the directory containing your roles. The default is the first '
                                      'writable one configured via DEFAULT_ROLES_PATH: %s ' % default_roles_path)
 
-        default_collections_path = C.config.get_configuration_definition('COLLECTIONS_PATHS').get('default', '')
-        collections_path = opt_help.argparse.ArgumentParser(add_help=False)
-        collections_path.add_argument('-p', '--collections-path', dest='collections_path', type=opt_help.unfrack_path(pathsep=True),
-                                      default=C.COLLECTIONS_PATHS, action=opt_help.PrependListAction,
-                                      help='The path to the directory containing your collections. The default is the first '
-                                      'writable one configured via COLLECTIONS_PATHS: %s ' % default_collections_path)
-
         # Add sub parser for the Galaxy role type (role or collection)
         type_parser = self.parser.add_subparsers(metavar='TYPE', dest='type')
         type_parser.required = True
@@ -166,7 +159,7 @@ class GalaxyCLI(CLI):
         self.add_build_options(collection_parser, parents=[common, force])
         self.add_publish_options(collection_parser, parents=[common])
         self.add_install_options(collection_parser, parents=[common, force])
-        self.add_list_options(collection_parser, parents=[common, collections_path])
+        self.add_list_options(collection_parser, parents=[common])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
 
         # Add sub parser for the Galaxy role actions
@@ -176,7 +169,7 @@ class GalaxyCLI(CLI):
         self.add_init_options(role_parser, parents=[common, force, offline])
         self.add_remove_options(role_parser, parents=[common, roles_path])
         self.add_delete_options(role_parser, parents=[common, github])
-        self.add_list_options(role_parser, parents=[common, roles_path])
+        self.add_list_options(role_parser, parents=[common])
         self.add_search_options(role_parser, parents=[common])
         self.add_import_options(role_parser, parents=[common, github])
         self.add_setup_options(role_parser, parents=[common, roles_path])
@@ -225,11 +218,17 @@ class GalaxyCLI(CLI):
 
     def add_list_options(self, parser, parents=None):
         galaxy_type = 'role'
+        default = C.DEFAULT_ROLES_PATH
         if parser.metavar == 'COLLECTION_ACTION':
             galaxy_type = 'collection'
+            default = C.COLLECTIONS_PATHS
 
         list_parser = parser.add_parser('list', parents=parents,
                                         help='Show the name and version of each {0} installed in the {0}s_path.'.format(galaxy_type))
+
+        list_parser.add_argument('-p', '--{0}-path'.format(galaxy_type), dest='{0}s_path'.format(galaxy_type), type=opt_help.unfrack_path(pathsep=True),
+                                 default=default, action=opt_help.PrependListAction,
+                                 help='Additional path to search for {0}s.'.format(galaxy_type))
 
         list_parser.set_defaults(func=self.execute_list)
 
