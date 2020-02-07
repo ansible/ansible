@@ -142,7 +142,7 @@ For Junos for example:
 Developing network_cli plugins
 ==============================
 
-The :ref:`network_cli <network_cli_connection>` connection type uses ``paramiko_ssh`` under the hood which creates a pseudo terminal to send commands and receive responses.
+The :ref:`network_cli <network_cli_connection>` connection type uses the ``paramiko`` python module under the hood which creates a pseudo terminal to send commands and receive responses.
 ``network_cli`` loads two platform specific plugins based on the value of ``ansible_network_os``:
 
 * Terminal plugin (for example ``plugins/terminal/ios.py``) - Controls the parameters related to terminal, such as setting terminal length and width, page disabling and privilege escalation. Also defines regex to identify the command prompt and error prompts.
