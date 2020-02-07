@@ -1,5 +1,4 @@
 minor_changes:
-  - Network adapter information is returned now, including adapter name, index, GUID, and nameserver information.
   - Checks for and resolves a condition where effective nameservers are obfucated, usually by malware.
     See https://www.welivesecurity.com/2016/06/02/crouching-tiger-hidden-dns/
 bugfixes:

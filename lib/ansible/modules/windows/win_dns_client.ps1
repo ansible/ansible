@@ -14,10 +14,7 @@ Set-Variable -Visibility Public -Option ReadOnly,AllScope,Constant -Name "Addres
     [System.Net.Sockets.AddressFamily]::InterNetwork = 'IPv4'
 }
 
-$result = @{
-    changed = $false
-    adapters = @()
-}
+$result = @{changed=$false}
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 Set-Variable -Visibility Public -Option ReadOnly,AllScope,Constant -Name "log_path" -Value (
@@ -44,6 +41,26 @@ Function Write-DebugLog {
     }
 }
 
+Function ConvertTo-AnsibleCompatibleObject {
+    <#
+        .SYNOPSIS
+        Adds a ContainsKey method to any object so Get-AnsibleParam can be used
+        to easily get and verify properties from it.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(ValueFromPipeline=$true)]
+        [Object]$Obj
+    )
+
+    Process {
+        $Obj | Add-Member -MemberType ScriptMethod -Name ContainsKey -Value {
+            param($key)
+            $this.PSObject.Properties.Name.Contains($key)
+        } -Force -PassThru
+    }
+}
+
 Function Get-NetAdapterInfo {
     [CmdletBinding()]
     Param (
@@ -53,8 +70,7 @@ Function Get-NetAdapterInfo {
 
     Process {
         if (Get-Command -Name Get-NetAdapter -ErrorAction SilentlyContinue) {
-            $adapter_info = Get-NetAdapter @PSBoundParameters |
-                Select-Object -Property Name, InterfaceIndex, InterfaceGuid
+            $adapter_info = Get-NetAdapter @PSBoundParameters | Select-Object -Property Name, InterfaceIndex
         } else {
             # Older hosts 2008/2008R2 don't have Get-NetAdapter, fallback to deprecated Win32_NetworkAdapter
             $cim_params = @{
@@ -82,19 +98,21 @@ Function Get-NetAdapterInfo {
                 Property = "DNSServerSearchOrder", "IPEnabled", "SettingID"
             }
             $adapter_config = Get-CimInstance @cim_params |
-                Add-Member -MemberType AliasProperty -Name InterfaceGuid -Value SettingID -Force -PassThru
+                Select-Object -Property DNSServerSearchOrder, IPEnabled, @{
+                    Name = 'InterfaceGuid'
+                    Expression = { $_.SettingID }
+                }
 
             if ($adapter_config.IPEnabled -eq $false) {
                 return
             }
 
-            $reg_info = $adapter_config |
-                Get-RegistryNameServerInfo
+            $reg_info = $adapter_config | Get-RegistryNameServerInfo
 
             [PSCustomObject]@{
                 Name = $_.Name
                 InterfaceIndex = $_.InterfaceIndex
-                InterfaceGuid = $_.InterfaceGuid
+                InterfaceGuid = $adapter_config.InterfaceGuid
                 RegInfo = $reg_info
             }
         }
@@ -116,139 +134,51 @@ Function Get-RegistryNameServerInfo {
     )
 
     Begin {
-        Set-StrictMode -Off  # Current Scope
+        $protoItems = @{
+            [System.Net.Sockets.AddressFamily]::InterNetwork = @{
+                Interface = 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{{{0}}}'
+                StaticNameServer = 'NameServer'
+                DhcpNameServer = 'DhcpNameServer'
+                EnableDhcp = 'EnableDHCP'
+            }
 
-        $v4Items = @{
-            Interface = 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{{{0}}}'
-            StaticNameServer = 'NameServer'
-            DhcpNameServer = 'DhcpNameServer'
-            EnableDhcp = 'EnableDHCP'
-        }
-
-        $v6Items = @{
-            Interface = 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters\Interfaces\{{{0}}}'
-            StaticNameServer = 'NameServer'
-            DhcpNameServer = 'Dhcpv6DNSServers'
-            EnableDhcp = 'EnableDHCP'
+            [System.Net.Sockets.AddressFamily]::InterNetworkV6 = @{
+                Interface = 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters\Interfaces\{{{0}}}'
+                StaticNameServer = 'NameServer'
+                DhcpNameServer = 'Dhcpv6DNSServers'
+                EnableDhcp = 'EnableDHCP'
+            }
         }
     }
 
     Process {
-        $return = @()
+        foreach ($addrFamily in $AddressFamilies.Keys) {
+            $items = $protoItems[$addrFamily]
+            $regPath = $items.Interface -f $InterfaceGuid
 
-        $v4Path = $v4Items.Interface -f $InterfaceGuid
-        $v6Path = $v6Items.Interface -f $InterfaceGuid
+            if (($iface = Get-Item -LiteralPath $regPath -ErrorAction Ignore)) {
+                $iprop = $iface | Get-ItemProperty | ConvertTo-AnsibleCompatibleObject
+                $famInfo = @{
+                    AddressFamily = $addrFamily
+                    UsingDhcp = Get-AnsibleParam -obj $iprop -name $items.EnableDhcp -type bool
+                    EffectiveNameServers = @()
+                    DhcpAssignedNameServers = @()
+                    NameServerBadFormat = $false
+                }
 
-        if (($iface = Get-Item -LiteralPath $v4Path -ErrorAction Ignore)) {
-            $iprop = $iface | Get-ItemProperty
-            $v4Info = @{
-                AddressFamily = [System.Net.Sockets.AddressFamily]::InterNetwork
-                UsingDhcp = $iprop.($v4Items.EnableDhcp) -as [bool]
-                EffectiveNameServers = @()
-                DhcpAssignedNameServers = @()
-                NameServerBadFormat = $false
-            }
+                if (($ns = Get-AnsibleParam -obj $iprop -name $items.DhcpNameServer -type str)) {
+                    $famInfo.EffectiveNameServers = $famInfo.DhcpAssignedNameServers = $ns.Split(' ')
+                }
 
-            if (($ns = $iprop.($v4Items.DhcpNameServer))) {
-                $v4Info.EffectiveNameServers = $v4Info.DhcpAssignedNameServers = $ns.Split(' ')
-            }
+                if (($ns = Get-AnsibleParam -obj $iprop -name $items.StaticNameServer -type str)) {
+                    $famInfo.EffectiveNameServers = $famInfo.StaticNameServers = $ns -split '[,;\ ]'
+                    $famInfo.UsingDhcp = $false
+                    $famInfo.NameServerBadFormat = $ns -match '[;\ ]'
+                }
 
-            if (($ns = $iprop.($v4Items.StaticNameServer))) {
-                $v4Info.EffectiveNameServers = $v4Info.StaticNameServers = $ns -split '[,;\ ]'
-                $v4Info.UsingDhcp = $false
-                $v4Info.NameServerBadFormat = $ns -match '[;\ ]'
-            }
-
-            $v4Info
-        }
-
-        if (($iface = Get-Item -LiteralPath $v6Path -ErrorAction Ignore)) {
-            $iprop = $iface | Get-ItemProperty
-            $v6Info = @{
-                AddressFamily = [System.Net.Sockets.AddressFamily]::InterNetworkV6
-                UsingDhcp = $iprop.($v6Items.EnableDhcp) -as [bool]
-                EffectiveNameServers = @()
-                DhcpAssignedNameServers = @()
-                NameServerBadFormat = $false
-            }
-
-            if (($ns = $iprop.($v6Items.DhcpNameServer))) {
-                $v6Info.EffectiveNameServers = $v6Info.DhcpAssignedNameServers = $ns.Split(' ')
-            }
-
-            if (($ns = $iprop.($v6Items.StaticNameServer))) {
-                $v6Info.EffectiveNameServers = $v6Info.StaticNameServers = $ns -split '[,;\ ]'
-                $v6Info.UsingDhcp = $false
-                $v6Info.NameServerBadFormat = $ns -match '[;\ ]'
-            }
-
-            $v6Info
-        }
-
-        $return
-    }
-}
-
-Function Get-NetAdapterInfo {
-    [CmdletBinding()]
-    Param (
-        [Parameter(ValueFromPipeline=$true)]
-        [String]$Name = "*"
-    )
-
-    Process {
-        if (Get-Command -Name Get-NetAdapter -ErrorAction SilentlyContinue) {
-            $adapter_info = Get-NetAdapter @PSBoundParameters |
-                Select-Object -Property Name, InterfaceIndex, InterfaceGuid
-        } else {
-            # Older hosts 2008/2008R2 don't have Get-NetAdapter, fallback to deprecated Win32_NetworkAdapter
-            $cim_params = @{
-                ClassName = "Win32_NetworkAdapter"
-                Property = "InterfaceIndex", "NetConnectionID"
-            }
-
-            if ($Name.Contains("*")) {
-                $cim_params.Filter = "NetConnectionID LIKE '$($Name.Replace("*", "%"))'"
-            } else {
-                $cim_params.Filter = "NetConnectionID = '$Name'"
-            }
-
-            $adapter_info = Get-CimInstance @cim_params | Select-Object -Property @(
-                @{Name="Name"; Expression={$_.NetConnectionID}},
-                @{Name="InterfaceIndex"; Expression={$_.InterfaceIndex}}
-            )
-        }
-
-        # Need to filter the adapter that are not IPEnabled, while we are at it, also get the DNS config.
-        $net_info = $adapter_info | ForEach-Object -Process {
-            $cim_params = @{
-                ClassName = "Win32_NetworkAdapterConfiguration"
-                Filter = "InterfaceIndex = $($_.InterfaceIndex)"
-                Property = "DNSServerSearchOrder", "IPEnabled", "SettingID"
-            }
-            $adapter_config = Get-CimInstance @cim_params |
-                Add-Member -MemberType AliasProperty -Name InterfaceGuid -Value SettingID -Force -PassThru
-
-            if ($adapter_config.IPEnabled -eq $false) {
-                return
-            }
-
-            $reg_info = $adapter_config |
-                Get-RegistryNameServerInfo
-
-            [PSCustomObject]@{
-                Name = $_.Name
-                InterfaceIndex = $_.InterfaceIndex
-                InterfaceGuid = $_.InterfaceGuid
-                RegInfo = $reg_info
+                $famInfo
             }
         }
-
-        if (@($net_info).Count -eq 0 -and -not $Name.Contains("*")) {
-            throw "Get-NetAdapterInfo: Failed to find network adapter(s) that are IP enabled with the name '$Name'"
-        }
-
-        $net_info
     }
 }
 
@@ -379,39 +309,15 @@ Try {
 
     foreach($adapter_info in $adapters) {
         Write-DebugLog ("Validating adapter name {0}" -f $adapter_info.Name)
-        $thisAdapter = @{
-            name = $adapter_info.Name
-            interface_index = $adapter_info.InterfaceIndex
-            interface_guid = $adapter_info.InterfaceGuid
-        }
 
         if(-not (Test-DnsClientMatch $adapter_info $dns_servers)) {
             $result.changed = $true
             if(-not $check_mode) {
                 Set-DnsClientAddresses $adapter_info $dns_servers
-
-                # Get updated info for output
-                $adapter_info.RegInfo = $adapter_info | Get-RegistryNameServerInfo
             } else {
                 Write-DebugLog "Check mode, skipping"
             }
         }
-
-        foreach ($proto in $adapter_info.RegInfo) {
-            $prefix = $AddressFamilies[$proto.AddressFamily].ToLower()
-
-            foreach ($kv in $proto.GetEnumerator()) {
-                $key, $value = $kv.Key, $kv.Value
-
-                if ($null -eq $value -or $key -in @('AddressFamily')) {
-                    continue
-                }
-
-                $thisAdapter["${prefix}_${key}"] = $value
-            }
-        }
-
-        $result.adapters += $thisAdapter
     }
 
     Exit-Json $result
@@ -420,7 +326,7 @@ Try {
 Catch {
     $excep = $_
 
-    Write-DebugLog "Exception: $($excep | Out-String)"
+    Write-DebugLog "Exception: $($excep | out-string)"
 
     Throw
 }
