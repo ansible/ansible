@@ -231,13 +231,9 @@ output:
   type: dict
 '''
 
-from ansible.module_utils._text import to_native
-from ansible.module_utils.aws.batch import AWSConnection
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, HAS_BOTO3
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, camel_dict_to_snake_dict
 import re
-import traceback
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError

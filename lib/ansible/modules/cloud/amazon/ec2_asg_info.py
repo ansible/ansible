@@ -228,8 +228,7 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (get_aws_connection_info, boto3_conn, ec2_argument_spec,
-                                      camel_dict_to_snake_dict, HAS_BOTO3)
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 
 def match_asg_tags(tags_to_match, asg):

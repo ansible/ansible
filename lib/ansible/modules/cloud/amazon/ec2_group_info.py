@@ -95,17 +95,13 @@ security_groups:
     sample:
 '''
 
-import traceback
-
 try:
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, HAS_BOTO3, get_aws_connection_info,
-                                      boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_filter_list,
-                                      camel_dict_to_snake_dict)
+from ansible.module_utils.ec2 import (boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict)
 
 
 def main():

@@ -184,9 +184,7 @@ except ImportError:
     pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, boto_exception, ec2_argument_spec,
-                                      get_aws_connection_info, compare_policies,
-                                      sort_json_policy_dict)
+from ansible.module_utils.ec2 import boto_exception, compare_policies, sort_json_policy_dict
 from ansible.module_utils.six import string_types
 
 

@@ -237,7 +237,6 @@ tags:
 
 from time import sleep
 from time import time as timestamp
-import traceback
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError
@@ -245,10 +244,8 @@ except ImportError as e:
     pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict,
-                                      ec2_argument_spec, get_aws_connection_info, ansible_dict_to_boto3_tag_list,
-                                      compare_aws_tags, boto3_tag_list_to_ansible_dict)
+from ansible.module_utils.ec2 import (get_aws_connection_info, compare_aws_tags, camel_dict_to_snake_dict,
+                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
 
 
 def _index_by_key(key, items):

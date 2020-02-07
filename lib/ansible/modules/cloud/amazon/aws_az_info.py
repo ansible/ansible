@@ -71,11 +71,7 @@ availability_zones:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-
-import traceback
-from ansible.module_utils._text import to_native
-from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn
-from ansible.module_utils.ec2 import AWSRetry, ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict, HAS_BOTO3
+from ansible.module_utils.ec2 import AWSRetry, ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError

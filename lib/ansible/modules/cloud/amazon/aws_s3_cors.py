@@ -102,11 +102,7 @@ except Exception:
     pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-import traceback
-
-from ansible.module_utils._text import to_native
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info,
-                                      camel_dict_to_snake_dict, snake_dict_to_camel_dict, compare_policies)
+from ansible.module_utils.ec2 import snake_dict_to_camel_dict, compare_policies
 
 
 def create_or_update_bucket_cors(connection, module):

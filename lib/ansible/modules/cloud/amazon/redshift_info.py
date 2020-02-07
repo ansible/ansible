@@ -280,7 +280,6 @@ iam_roles:
 '''
 
 import re
-import traceback
 
 try:
     from botocore.exception import BotoCoreError, ClientError
@@ -288,8 +287,7 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 
 def match_tags(tags_to_match, cluster):
