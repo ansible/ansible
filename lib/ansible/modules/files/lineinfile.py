@@ -202,6 +202,34 @@ EXAMPLES = r'''
     validate: /usr/sbin/visudo -cf %s
 '''
 
+RETURN = r'''
+changed:
+  description: true if the file was changed during execution
+  returned: always
+  type: bool
+  sample: false
+msg:
+  description: Descriptive status of a task result.
+  returned: always
+  sample: line added
+backup:
+  description: The full name of the backup file created.
+  returned: Always, but when backup is not created returned is an empty string.
+  type: str
+  sample: '/etc/services.2243.2020-02-07@20:46:55~'
+diff:
+  description:
+  returned: On success when the parameter `--diff` is used.
+  type: complex
+  contains:
+    before:
+      description: The content of the changed file before a change. The content is converted to string.
+      type: str
+    after:
+      description: The content of the changed file after a change. The content is converted to string.
+      type: str
+'''
+
 import os
 import re
 import tempfile
