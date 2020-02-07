@@ -509,19 +509,16 @@ def main():
         policy=dict(required=False, type='json'),
         image_tag_mutability=dict(required=False, choices=['mutable', 'immutable'],
                                   default='mutable'),
-        purge_policy=dict(required=False, type='bool', aliases=['delete_policy']),
+        purge_policy=dict(required=False, type='bool', aliases=['delete_policy'],
+                          deprecated_aliases=[dict(name='delete_policy', version='2.14')]),
         lifecycle_policy=dict(required=False, type='json'),
-        purge_lifecycle_policy=dict(required=False, type='bool')))
+        purge_lifecycle_policy=dict(required=False, type='bool')
+    )
     mutually_exclusive = [
         ['policy', 'purge_policy'],
         ['lifecycle_policy', 'purge_lifecycle_policy']]
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True, mutually_exclusive=mutually_exclusive)
-    if module.params.get('delete_policy'):
-        module.deprecate(
-            'The alias "delete_policy" has been deprecated and will be removed, '
-            'use "purge_policy" instead',
-            version='2.14')
 
     ecr = EcsEcr(module)
     passed, result = run(ecr, module.params)
