@@ -486,7 +486,7 @@ DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, map_complex_type, get_ec2_security_group_ids_from_names
-import ansible.module_utils.ec2 as ec2
+from ansible.module_utils.ec2 import AWSRetry
 
 try:
     import botocore
@@ -533,7 +533,7 @@ class EcsServiceManager:
                 return c
         return None
 
-    @ec2.AWSRetry.backoff()
+    @AWSRetry.backoff()
     def describe_service(self, cluster_name, service_name):
         response = self.ecs.describe_services(
             cluster=cluster_name,
@@ -566,7 +566,7 @@ class EcsServiceManager:
 
         return True
 
-    @ec2.AWSRetry.backoff()
+    @AWSRetry.backoff()
     def create_service(self, service_name, cluster_name, task_definition, load_balancers,
                        desired_count, client_token, role, deployment_configuration,
                        placement_constraints, placement_strategy, health_check_grace_period_seconds,
@@ -600,7 +600,7 @@ class EcsServiceManager:
         response = self.ecs.create_service(**params)
         return self.jsonize(response['service'])
 
-    @ec2.AWSRetry.backoff()
+    @AWSRetry.backoff()
     def update_service(self, service_name, cluster_name, task_definition,
                        desired_count, deployment_configuration, network_configuration,
                        health_check_grace_period_seconds, force_new_deployment):
@@ -639,7 +639,7 @@ class EcsServiceManager:
                     e['createdAt'] = str(e['createdAt'])
         return service
 
-    @ec2.AWSRetry.backoff()
+    @AWSRetry.backoff()
     def delete_service(self, service, cluster=None):
         return self.ecs.delete_service(cluster=cluster, service=service)
 

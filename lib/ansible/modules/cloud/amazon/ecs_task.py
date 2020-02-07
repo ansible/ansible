@@ -222,7 +222,7 @@ task:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.ec2 import get_ec2_security_group_ids_from_names, ansible_dict_to_boto3_tag_list
-import ansible.module_utils.ec2 as ec2
+from ansible.module_utils.ec2 import AWSRetry
 
 try:
     import botocore
@@ -238,7 +238,7 @@ class EcsExecManager:
         self.ecs = module.client('ecs')
         self.ec2 = module.client('ec2')
 
-    @ec2.AWSRetry.backoff()
+    @AWSRetry.backoff()
     def format_network_configuration(self, network_config):
         result = dict()
         if 'subnets' in network_config:
@@ -256,7 +256,7 @@ class EcsExecManager:
             result['securityGroups'] = groups
         return dict(awsvpcConfiguration=result)
 
-    @ec2.AWSRetry.backoff()
+    @AWSRetry.backoff()
     def list_tasks(self, cluster_name, service_name, status):
         response = self.ecs.list_tasks(
             cluster=cluster_name,
@@ -269,8 +269,8 @@ class EcsExecManager:
                     return c
         return None
 
-    @ec2.AWSRetry.backoff()
-    def run_task(self, cluster, task_definition, overrides, count, startedBy, launch_type):
+    @AWSRetry.backoff()
+    def run_task(self, cluster, task_definition, overrides, count, startedBy, launch_type, tags):
         if overrides is None:
             overrides = dict()
         params = dict(cluster=cluster, taskDefinition=task_definition,
@@ -290,7 +290,7 @@ class EcsExecManager:
         # include tasks and failures
         return response['tasks']
 
-    @ec2.AWSRetry.backoff()
+    @AWSRetry.backoff()
     def start_task(self, cluster, task_definition, overrides, container_instances, startedBy, tags):
         args = dict()
         if cluster:
@@ -314,7 +314,7 @@ class EcsExecManager:
         # include tasks and failures
         return response['tasks']
 
-    @ec2.AWSRetry.backoff()
+    @AWSRetry.backoff()
     def stop_task(self, cluster, task):
         response = self.ecs.stop_task(cluster=cluster, task=task)
         return response['task']
