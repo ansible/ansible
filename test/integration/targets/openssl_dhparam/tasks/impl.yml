@@ -6,12 +6,15 @@
     size: 768
     path: '{{ output_dir }}/dh768.pem'
     select_crypto_backend: "{{ select_crypto_backend }}"
+    return_content: yes
+  register: dhparam
 
 - name: "[{{ select_crypto_backend }}] Don't regenerate parameters with no change"
   openssl_dhparam:
     size: 768
     path: '{{ output_dir }}/dh768.pem'
     select_crypto_backend: "{{ select_crypto_backend }}"
+    return_content: yes
   register: dhparam_changed
 
 - name: "[{{ select_crypto_backend }}] Generate parameters with size option"
@@ -87,6 +90,7 @@
     state: absent
     backup: yes
     select_crypto_backend: "{{ select_crypto_backend }}"
+    return_content: yes
   register: dhparam_backup_4
 - name: "[{{ select_crypto_backend }}] Generate params (remove, idempotent)"
   openssl_dhparam:

@@ -119,7 +119,8 @@ After the shebang, the UTF-8 coding, the copyright line, the license, and the ``
 Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts.
     * Descriptions should always start with a capital letter and end with a full stop. Consistency always helps.
     * Verify that arguments in doc and module spec dict are identical.
-    * For password / secret arguments no_log=True should be set.
+    * For password / secret arguments ``no_log=True`` should be set.
+    * For arguments that seem to contain sensitive information but **do not** contain secrets, such as "password_length", set ``no_log=False`` to disable the warning message.
     * If an option is only sometimes required, describe the conditions. For example, "Required when I(state=present)."
     * If your module allows ``check_mode``, reflect this fact in the documentation.
 
@@ -384,7 +385,7 @@ Otherwise, for each value returned, provide the following fields. All fields are
   :description:
     Detailed description of what this value represents. Capitalized and with trailing dot.
   :returned:
-    When this value is returned, such as ``always``, or ``on success``.
+    When this value is returned, such as ``always``, ``changed`` or ``success``. This is a string and can contain any human-readable content.
   :type:
     Data type.
   :elements:
@@ -420,7 +421,7 @@ Here are two example ``RETURN`` sections, one with three simple fields and one w
     RETURN = r'''
     packages:
         description: Information about package requirements
-        returned: On success
+        returned: success
         type: complex
         contains:
             missing:

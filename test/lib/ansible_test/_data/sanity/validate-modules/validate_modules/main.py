@@ -1149,7 +1149,7 @@ class ModuleValidator(Validator):
             )
             return
 
-        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema, 'AnsibleModule', 'invalid-ansiblemodule-schema')
+        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema(), 'AnsibleModule', 'invalid-ansiblemodule-schema')
 
         self._validate_argument_spec(docs, spec, kwargs)
 
@@ -1177,6 +1177,8 @@ class ModuleValidator(Validator):
         args_from_argspec = set()
         deprecated_args_from_argspec = set()
         doc_options = docs.get('options', {})
+        if doc_options is None:
+            doc_options = {}
         for arg, data in spec.items():
             if not isinstance(data, dict):
                 msg = "Argument '%s' in argument_spec" % arg
@@ -1210,6 +1212,13 @@ class ModuleValidator(Validator):
                     code='parameter-alias-repeated',
                     msg=msg
                 )
+            if not context and arg == 'state':
+                bad_states = set(['list', 'info', 'get']) & set(data.get('choices', set()))
+                for bad_state in bad_states:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='parameter-state-invalid-choice',
+                        msg="Argument 'state' includes the value '%s' as a choice" % bad_state)
             if not data.get('removed_in_version', None):
                 args_from_argspec.add(arg)
                 args_from_argspec.update(aliases)
@@ -1253,6 +1262,16 @@ class ModuleValidator(Validator):
                 _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
 
             _elements = data.get('elements')
+            if (_type == 'list') and not _elements:
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines type as list but elements is not defined"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='parameter-list-no-elements',
+                    msg=msg
+                )
             if _elements:
                 if not callable(_elements):
                     module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_elements)
@@ -1448,6 +1467,37 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     code='doc-required-mismatch',
+                    msg=msg
+                )
+
+            doc_elements = doc_options_arg.get('elements', None)
+            doc_type = doc_options_arg.get('type', 'str')
+            data_elements = data.get('elements', None)
+            if (doc_elements and not doc_type == 'list'):
+                msg = "Argument '%s " % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines parameter elements as %s but it is valid only when value of parameter type is list" % doc_elements
+                self.reporter.error(
+                    path=self.object_path,
+                    code='doc-elements-invalid',
+                    msg=msg
+                )
+            if (doc_elements or data_elements) and not (doc_elements == data_elements):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                if data_elements:
+                    msg += " specifies elements as %s," % data_elements
+                else:
+                    msg += " does not specify elements,"
+                if doc_elements:
+                    msg += "but elements is documented as being %s" % doc_elements
+                else:
+                    msg += "but elements is not documented"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='doc-elements-mismatch',
                     msg=msg
                 )
 

@@ -170,6 +170,10 @@ def find_datastore_by_name(content, datastore_name, datacenter_name=None):
     return find_object_by_name(content, datastore_name, [vim.Datastore], datacenter_name)
 
 
+def find_folder_by_name(content, folder_name):
+    return find_object_by_name(content, folder_name, [vim.Folder])
+
+
 def find_dvs_by_name(content, switch_name, folder=None):
     return find_object_by_name(content, switch_name, [vim.DistributedVirtualSwitch], folder=folder)
 
@@ -180,6 +184,10 @@ def find_hostsystem_by_name(content, hostname):
 
 def find_resource_pool_by_name(content, resource_pool_name):
     return find_object_by_name(content, resource_pool_name, [vim.ResourcePool])
+
+
+def find_resource_pool_by_cluster(content, resource_pool_name='Resources', cluster=None):
+    return find_object_by_name(content, resource_pool_name, [vim.ResourcePool], folder=cluster)
 
 
 def find_network_by_name(content, network_name):
@@ -500,12 +508,12 @@ def vmware_argument_spec():
     )
 
 
-def connect_to_api(module, disconnect_atexit=True, return_si=False):
-    hostname = module.params['hostname']
-    username = module.params['username']
-    password = module.params['password']
-    port = module.params.get('port', 443)
-    validate_certs = module.params['validate_certs']
+def connect_to_api(module, disconnect_atexit=True, return_si=False, hostname=None, username=None, password=None, port=None, validate_certs=None):
+    hostname = hostname if hostname else module.params['hostname']
+    username = username if username else module.params['username']
+    password = password if password else module.params['password']
+    port = port if port else module.params.get('port', 443)
+    validate_certs = validate_certs if validate_certs else module.params['validate_certs']
 
     if not hostname:
         module.fail_json(msg="Hostname parameter is missing."
@@ -841,6 +849,30 @@ def is_truthy(value):
     return False
 
 
+# options is the dict as defined in the module parameters, current_options is
+# the list of the currently set options as returned by the vSphere API.
+def option_diff(options, current_options):
+    current_options_dict = {}
+    for option in current_options:
+        current_options_dict[option.key] = option.value
+
+    change_option_list = []
+    for option_key, option_value in options.items():
+        if is_boolean(option_value):
+            option_value = VmomiSupport.vmodlTypes['bool'](is_truthy(option_value))
+        elif isinstance(option_value, int):
+            option_value = VmomiSupport.vmodlTypes['int'](option_value)
+        elif isinstance(option_value, float):
+            option_value = VmomiSupport.vmodlTypes['float'](option_value)
+        elif isinstance(option_value, str):
+            option_value = VmomiSupport.vmodlTypes['string'](option_value)
+
+        if option_key not in current_options_dict or current_options_dict[option_key] != option_value:
+            change_option_list.append(vim.option.OptionValue(key=option_key, value=option_value))
+
+    return change_option_list
+
+
 def quote_obj_name(object_name=None):
     """
     Replace special characters in object name
@@ -1029,7 +1061,11 @@ class PyVmomi(object):
                         break
             elif vms:
                 # Unique virtual machine found.
-                vm_obj = vms[0]
+                actual_vm_folder_path = self.get_vm_path(content=self.content, vm_name=vms[0])
+                if self.params.get('folder') is None:
+                    vm_obj = vms[0]
+                elif self.params['folder'] in actual_vm_folder_path:
+                    vm_obj = vms[0]
         elif 'moid' in self.params and self.params['moid']:
             vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.params['moid'], self.si._stub)
 
@@ -1324,6 +1360,17 @@ class PyVmomi(object):
 
         """
         return find_datastore_by_name(self.content, datastore_name=datastore_name, datacenter_name=datacenter_name)
+
+    def find_folder_by_name(self, folder_name):
+        """
+        Get vm folder managed object by name
+        Args:
+            folder_name: Name of the vm folder
+
+        Returns: vm folder managed object if found else None
+
+        """
+        return find_folder_by_name(self.content, folder_name=folder_name)
 
     # Datastore cluster
     def find_datastore_cluster_by_name(self, datastore_cluster_name):

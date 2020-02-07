@@ -19,9 +19,27 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+netconf: default
+short_description: Use default netconf plugin to run standard netconf commands as per RFC
+description:
+  - This default plugin provides low level abstraction apis for
+    sending and receiving netconf commands as per Netconf RFC specification.
+version_added: "2.9"
+options:
+  ncclient_device_handler:
+    type: str
+    default: default
+    description:
+      - Specifies the ncclient device handler name for network os that support default netconf
+        implementation as per Netconf RFC specification. To identify the ncclient device handler
+        name refer ncclient library documentation.
+"""
 import json
 
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_text
 from ansible.plugins.netconf import NetconfBase
 
 
@@ -40,9 +58,7 @@ class Netconf(NetconfBase):
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'validate', 'lock', 'unlock', 'copy_copy',
-                                               'execute_rpc', 'load_configuration', 'get_configuration', 'command',
-                                               'reboot', 'halt']
+        result['rpc'] = self.get_base_rpc()
         result['network_api'] = 'netconf'
         result['device_info'] = self.get_device_info()
         result['server_capabilities'] = [c for c in self.m.server_capabilities]

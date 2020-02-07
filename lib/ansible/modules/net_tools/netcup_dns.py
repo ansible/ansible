@@ -25,11 +25,11 @@ description:
 options:
   api_key:
     description:
-      - API key for authentification, must be obtained via the netcup CCP (U(https://ccp.netcup.net))
+      - API key for authentication, must be obtained via the netcup CCP (U(https://ccp.netcup.net))
     required: True
   api_password:
     description:
-      - API password for authentification, must be obtained via the netcup CCP (https://ccp.netcup.net)
+      - API password for authentication, must be obtained via the netcup CCP (https://ccp.netcup.net)
     required: True
   customer_id:
     description:

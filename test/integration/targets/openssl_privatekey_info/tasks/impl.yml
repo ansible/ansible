@@ -24,6 +24,17 @@
   set_fact:
     info_results: "{{ info_results | combine({'key1': result}) }}"
 
+- name: ({{select_crypto_backend}}) Get key 1 info directly
+  openssl_privatekey_info:
+    content: '{{ lookup("file", output_dir ~ "/privatekey_1.pem") }}'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result_direct
+
+- name: ({{select_crypto_backend}}) Compare output of direct and loaded info
+  assert:
+    that:
+      - result == result_direct
+
 - name: ({{select_crypto_backend}}) Get key 2 info
   openssl_privatekey_info:
     path: '{{ output_dir }}/privatekey_2.pem'

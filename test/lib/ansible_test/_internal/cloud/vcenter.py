@@ -153,8 +153,7 @@ class VcenterProvider(CloudProvider):
             if not self.args.docker and not container_id:
                 # publish the simulator ports when not running inside docker
                 publish_ports = [
-                    '-p', '80:80',
-                    '-p', '443:443',
+                    '-p', '1443:443',
                     '-p', '8080:8080',
                     '-p', '8989:8989',
                     '-p', '5000:5000',  # control port for flask app in simulator
@@ -245,11 +244,7 @@ class VcenterEnvironment(CloudEnvironment):
             parser = ConfigParser()
             parser.read(self.config_path)  # Worldstream and static
 
-            # Most of the test cases use ansible_vars, but we plan to refactor these
-            # to use env_vars, output both for now
-            env_vars = dict(
-                (key.upper(), value) for key, value in parser.items('DEFAULT', raw=True))
-
+            env_vars = dict()
             ansible_vars = dict(
                 resource_prefix=self.resource_prefix,
             )
@@ -263,7 +258,14 @@ class VcenterEnvironment(CloudEnvironment):
 
             ansible_vars = dict(
                 vcsim=self._get_cloud_config('vcenter_hostname'),
+                vcenter_hostname=self._get_cloud_config('vcenter_hostname'),
+                vcenter_username='user',
+                vcenter_password='pass',
             )
+            # Shippable starts ansible-test from withing an existing container,
+            # and in this case, we don't have to change the vcenter port.
+            if not self.args.docker and not get_docker_container_id():
+                ansible_vars['vcenter_port'] = '1443'
 
         for key, value in ansible_vars.items():
             if key.endswith('_password'):
@@ -274,10 +276,11 @@ class VcenterEnvironment(CloudEnvironment):
             ansible_vars=ansible_vars,
             module_defaults={
                 'group/vmware': {
-                    'hostname': env_vars['VCENTER_HOSTNAME'],
-                    'username': env_vars['VCENTER_USERNAME'],
-                    'password': env_vars['VCENTER_PASSWORD'],
-                    'validate_certs': env_vars.get('VMWARE_VALIDATE_CERTS', 'no'),
+                    'hostname': ansible_vars['vcenter_hostname'],
+                    'username': ansible_vars['vcenter_username'],
+                    'password': ansible_vars['vcenter_password'],
+                    'port': ansible_vars.get('vcenter_port', '443'),
+                    'validate_certs': ansible_vars.get('vmware_validate_certs', 'no'),
                 },
             },
         )

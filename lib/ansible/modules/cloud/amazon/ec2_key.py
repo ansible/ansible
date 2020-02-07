@@ -134,13 +134,12 @@ key:
 import uuid
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
 from ansible.module_utils._text import to_bytes
 
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass
+    pass  # caught by AnsibleAWSModule
 
 
 def extract_key_data(key):
@@ -181,6 +180,8 @@ def find_key_pair(module, ec2_client, name):
         if err.response['Error']['Code'] == "InvalidKeyPair.NotFound":
             return None
         module.fail_json_aws(err, msg="error finding keypair")
+    except IndexError:
+        key = None
     return key
 
 
@@ -242,23 +243,18 @@ def delete_key_pair(module, ec2_client, name, finish_task=True):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            key_material=dict(),
-            force=dict(type='bool', default=True),
-            state=dict(default='present', choices=['present', 'absent']),
-            wait=dict(type='bool', removed_in_version='2.14'),
-            wait_timeout=dict(type='int', removed_in_version='2.14')
-        )
+    argument_spec = dict(
+        name=dict(required=True),
+        key_material=dict(),
+        force=dict(type='bool', default=True),
+        state=dict(default='present', choices=['present', 'absent']),
+        wait=dict(type='bool', removed_in_version='2.14'),
+        wait_timeout=dict(type='int', removed_in_version='2.14')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    ec2_client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+    ec2_client = module.client('ec2')
 
     name = module.params['name']
     state = module.params.get('state')

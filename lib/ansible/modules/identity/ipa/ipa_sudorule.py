@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ipa_sudorule
 author: Thomas Krahn (@Nosmoht)
@@ -25,74 +25,94 @@ options:
     - Can not be changed as it is the unique identifier.
     required: true
     aliases: ['name']
+    type: str
   cmdcategory:
     description:
     - Command category the rule applies to.
     choices: ['all']
+    type: str
   cmd:
     description:
     - List of commands assigned to the rule.
     - If an empty list is passed all commands will be removed from the rule.
     - If option is omitted commands will not be checked or changed.
+    type: list
+    elements: str
   description:
     description:
     - Description of the sudo rule.
+    type: str
   host:
     description:
     - List of hosts assigned to the rule.
     - If an empty list is passed all hosts will be removed from the rule.
     - If option is omitted hosts will not be checked or changed.
     - Option C(hostcategory) must be omitted to assign hosts.
+    type: list
+    elements: str
   hostcategory:
     description:
     - Host category the rule applies to.
     - If 'all' is passed one must omit C(host) and C(hostgroup).
     - Option C(host) and C(hostgroup) must be omitted to assign 'all'.
     choices: ['all']
+    type: str
   hostgroup:
     description:
     - List of host groups assigned to the rule.
     - If an empty list is passed all host groups will be removed from the rule.
     - If option is omitted host groups will not be checked or changed.
     - Option C(hostcategory) must be omitted to assign host groups.
+    type: list
+    elements: str
   runasusercategory:
     description:
     - RunAs User category the rule applies to.
     choices: ['all']
     version_added: "2.5"
+    type: str
   runasgroupcategory:
     description:
       - RunAs Group category the rule applies to.
     choices: ['all']
     version_added: "2.5"
+    type: str
   sudoopt:
     description:
       - List of options to add to the sudo rule.
+    type: list
+    elements: str
   user:
     description:
     - List of users assigned to the rule.
     - If an empty list is passed all users will be removed from the rule.
     - If option is omitted users will not be checked or changed.
+    type: list
+    elements: str
   usercategory:
     description:
     - User category the rule applies to.
     choices: ['all']
+    type: str
   usergroup:
     description:
     - List of user groups assigned to the rule.
     - If an empty list is passed all user groups will be removed from the rule.
     - If option is omitted user groups will not be checked or changed.
+    type: list
+    elements: str
   state:
-    description: State to ensure
+    description: State to ensure.
     default: present
-    choices: ['present', 'absent', 'enabled', 'disabled']
+    choices: ['absent', 'disabled', 'enabled', 'present']
+    type: str
 extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''
 
-EXAMPLES = '''
-# Ensure sudo rule is present that's allows all every body to execute any command on any host without being asked for a password.
-- ipa_sudorule:
+EXAMPLES = r'''
+- name: Ensure sudo rule is present that's allows all every body to execute any command on any host without being asked for a password.
+  ipa_sudorule:
     name: sudo_all_nopasswd
     cmdcategory: all
     description: Allow to run every command with sudo without password
@@ -103,8 +123,9 @@ EXAMPLES = '''
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
-# Ensure user group developers can run every command on host group db-server as well as on host db01.example.com.
-- ipa_sudorule:
+
+- name: Ensure user group developers can run every command on host group db-server as well as on host db01.example.com.
+  ipa_sudorule:
     name: sudo_dev_dbserver
     description: Allow developers to run every command with sudo on all database server
     cmdcategory: all
@@ -121,7 +142,7 @@ EXAMPLES = '''
     ipa_pass: topsecret
 '''
 
-RETURN = '''
+RETURN = r'''
 sudorule:
   description: Sudorule as returned by IPA
   returned: always
@@ -345,20 +366,20 @@ def ensure(module, client):
 
 def main():
     argument_spec = ipa_argument_spec()
-    argument_spec.update(cmd=dict(type='list'),
+    argument_spec.update(cmd=dict(type='list', elements='str'),
                          cmdcategory=dict(type='str', choices=['all']),
                          cn=dict(type='str', required=True, aliases=['name']),
                          description=dict(type='str'),
-                         host=dict(type='list'),
+                         host=dict(type='list', elements='str'),
                          hostcategory=dict(type='str', choices=['all']),
-                         hostgroup=dict(type='list'),
+                         hostgroup=dict(type='list', elements='str'),
                          runasusercategory=dict(type='str', choices=['all']),
                          runasgroupcategory=dict(type='str', choices=['all']),
-                         sudoopt=dict(type='list'),
+                         sudoopt=dict(type='list', elements='str'),
                          state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']),
-                         user=dict(type='list'),
+                         user=dict(type='list', elements='str'),
                          usercategory=dict(type='str', choices=['all']),
-                         usergroup=dict(type='list'))
+                         usergroup=dict(type='list', elements='str'))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=[['cmdcategory', 'cmd'],

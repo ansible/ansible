@@ -66,6 +66,7 @@ options:
     - The publication names on the publisher to use for the subscription.
     - Ignored when I(state) is not C(present).
     type: list
+    elements: str
   connparams:
     description:
     - The connection dict param-value to connect to the publisher.
@@ -555,9 +556,9 @@ class PgSubscription():
                  "ON s.subdbid = d.oid "
                  "JOIN pg_catalog.pg_roles AS r "
                  "ON s.subowner = r.oid "
-                 "WHERE s.subname = '%s' AND d.datname = '%s'" % (self.name, self.db))
+                 "WHERE s.subname = %(name)s AND d.datname = %(db)s")
 
-        result = exec_sql(self, query, add_to_executed=False)
+        result = exec_sql(self, query, query_params={'name': self.name, 'db': self.db}, add_to_executed=False)
         if result:
             return result[0]
         else:
@@ -573,9 +574,9 @@ class PgSubscription():
                  "FROM pg_catalog.pg_subscription_rel r "
                  "JOIN pg_catalog.pg_subscription s ON s.oid = r.srsubid "
                  "JOIN pg_catalog.pg_class c ON c.oid = r.srrelid "
-                 "WHERE s.subname = '%s'" % self.name)
+                 "WHERE s.subname = %(name)s")
 
-        result = exec_sql(self, query, add_to_executed=False)
+        result = exec_sql(self, query, query_params={'name': self.name}, add_to_executed=False)
         if result:
             return [dict(row) for row in result]
         else:
@@ -612,10 +613,10 @@ class PgSubscription():
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
-        name=dict(required=True),
-        db=dict(type='str', aliases=['login_db']),
+        name=dict(type='str', required=True),
+        db=dict(type='str', required=True, aliases=['login_db']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'refresh', 'stat']),
-        publications=dict(type='list'),
+        publications=dict(type='list', elements='str'),
         connparams=dict(type='dict'),
         cascade=dict(type='bool', default=False),
         owner=dict(type='str'),

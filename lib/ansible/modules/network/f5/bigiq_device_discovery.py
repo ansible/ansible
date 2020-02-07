@@ -105,7 +105,7 @@ options:
     description:
       - List of modules to be discovered and imported into the device.
       - These modules must be provisioned on the target device otherwise operation will fail.
-      - The C(ltm) module must always be specified when performing discovery or re-discovery of the the device.
+      - The C(ltm) module must always be specified when performing discovery or re-discovery of the device.
       - When C(asm) or C(afm) are specified C(shared_security) module needs to also be declared.
     type: list
     choices:

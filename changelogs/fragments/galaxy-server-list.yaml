@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-galaxy - Treat the ``GALAXY_SERVER_LIST`` config entry that is defined but with no values as an empty list

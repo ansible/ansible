@@ -28,50 +28,36 @@ matrix:
     - env: T=units/3.7/2
     - env: T=units/3.8/2
 
-    - env: T=windows/2008/1
-    - env: T=windows/2008-R2/1
     - env: T=windows/2012/1
     - env: T=windows/2012-R2/1
     - env: T=windows/2016/1
     - env: T=windows/2019/1
 
-    - env: T=windows/2008/2
-    - env: T=windows/2008-R2/2
     - env: T=windows/2012/2
     - env: T=windows/2012-R2/2
     - env: T=windows/2016/2
     - env: T=windows/2019/2
 
-    - env: T=windows/2008/3
-    - env: T=windows/2008-R2/3
     - env: T=windows/2012/3
     - env: T=windows/2012-R2/3
     - env: T=windows/2016/3
     - env: T=windows/2019/3
 
-    - env: T=windows/2008/4
-    - env: T=windows/2008-R2/4
     - env: T=windows/2012/4
     - env: T=windows/2012-R2/4
     - env: T=windows/2016/4
     - env: T=windows/2019/4
 
-    - env: T=windows/2008/5
-    - env: T=windows/2008-R2/5
     - env: T=windows/2012/5
     - env: T=windows/2012-R2/5
     - env: T=windows/2016/5
     - env: T=windows/2019/5
 
-    - env: T=windows/2008/6
-    - env: T=windows/2008-R2/6
     - env: T=windows/2012/6
     - env: T=windows/2012-R2/6
     - env: T=windows/2016/6
     - env: T=windows/2019/6
 
-    - env: T=windows/2008/7
-    - env: T=windows/2008-R2/7
     - env: T=windows/2012/7
     - env: T=windows/2012-R2/7
     - env: T=windows/2016/7
@@ -79,6 +65,7 @@ matrix:
 
     - env: T=network
 
+    - env: T=aix/7.2/1
     - env: T=osx/10.11/1
     - env: T=rhel/7.6/1
     - env: T=rhel/8.1/1
@@ -94,6 +81,7 @@ matrix:
     - env: T=linux/ubuntu1604/1
     - env: T=linux/ubuntu1804/1
 
+    - env: T=aix/7.2/2
     - env: T=osx/10.11/2
     - env: T=rhel/7.6/2
     - env: T=rhel/8.1/2
@@ -109,6 +97,7 @@ matrix:
     - env: T=linux/ubuntu1604/2
     - env: T=linux/ubuntu1804/2
 
+    - env: T=aix/7.2/3
     - env: T=osx/10.11/3
     - env: T=rhel/7.6/3
     - env: T=rhel/8.1/3
@@ -124,6 +113,7 @@ matrix:
     - env: T=linux/ubuntu1604/3
     - env: T=linux/ubuntu1804/3
 
+    - env: T=aix/7.2/4
     - env: T=osx/10.11/4
     - env: T=rhel/7.6/4
     - env: T=rhel/8.1/4
@@ -139,11 +129,33 @@ matrix:
     - env: T=linux/ubuntu1604/4
     - env: T=linux/ubuntu1804/4
 
+    - env: T=aix/7.2/5
+    - env: T=osx/10.11/5
+    - env: T=rhel/7.6/5
+    - env: T=rhel/8.1/5
+    - env: T=freebsd/11.1/5
+    - env: T=freebsd/12.0/5
+    - env: T=linux/centos6/5
+    - env: T=linux/centos7/5
+    - env: T=linux/centos8/5
+    - env: T=linux/fedora30/5
+    - env: T=linux/fedora31/5
+    - env: T=linux/opensuse15py2/5
+    - env: T=linux/opensuse15/5
+    - env: T=linux/ubuntu1604/5
+    - env: T=linux/ubuntu1804/5
+
     - env: T=aws/2.7/1
     - env: T=aws/3.6/1
 
     - env: T=aws/2.7/2
     - env: T=aws/3.6/2
+
+    - env: T=aws/2.7/3
+    - env: T=aws/3.6/3
+
+    - env: T=aws/2.7/4
+    - env: T=aws/3.6/4
 
     - env: T=azure/2.7/1
     - env: T=azure/3.6/1
@@ -175,11 +187,20 @@ matrix:
     - env: T=azure/2.7/10
     - env: T=azure/3.6/10
 
+    - env: T=azure/2.7/11
+    - env: T=azure/3.6/11
+
     - env: T=vcenter/2.7/1
     - env: T=vcenter/3.6/1
 
+    - env: T=vcenter/2.7/2
+    - env: T=vcenter/3.6/2
+
     - env: T=cs/2.7/1
     - env: T=cs/3.6/1
+
+    - env: T=cs/2.7/2
+    - env: T=cs/3.6/2
 
     - env: T=tower/2.7/1
     - env: T=tower/3.6/1

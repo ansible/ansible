@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_proxy
 short_description: Create/delete/get/update Zabbix proxies
@@ -42,45 +42,62 @@ options:
         description:
             - Name of the proxy in Zabbix.
         required: true
+        type: str
+    proxy_address:
+        description:
+            - Comma-delimited list of IP/CIDR addresses or DNS names to accept active proxy requests from.
+            - Requires I(status=active).
+            - Works only with >= Zabbix 4.0. ( remove option for <= 4.0 )
+        required: false
+        version_added: '2.10'
+        type: str
     description:
         description:
             - Description of the proxy.
         required: false
+        type: str
     status:
         description:
             - Type of proxy. (4 - active, 5 - passive)
         required: false
         choices: ['active', 'passive']
         default: "active"
+        type: str
     tls_connect:
         description:
             - Connections to proxy.
         required: false
         choices: ['no_encryption','PSK','certificate']
         default: 'no_encryption'
+        type: str
     tls_accept:
         description:
             - Connections from proxy.
         required: false
         choices: ['no_encryption','PSK','certificate']
         default: 'no_encryption'
+        type: str
     ca_cert:
         description:
             - Certificate issuer.
         required: false
         aliases: [ tls_issuer ]
+        type: str
     tls_subject:
         description:
             - Certificate subject.
         required: false
+        type: str
     tls_psk_identity:
         description:
             - PSK identity. Required if either I(tls_connect) or I(tls_accept) has PSK enabled.
         required: false
+        type: str
     tls_psk:
         description:
             - The preshared key, at least 32 hex digits. Required if either I(tls_connect) or I(tls_accept) has PSK enabled.
         required: false
+        type: str
     state:
         description:
             - State of the proxy.
@@ -89,21 +106,63 @@ options:
         required: false
         choices: ['present', 'absent']
         default: "present"
+        type: str
     interface:
         description:
-            - Dictionary with params for the interface when proxy is in passive mode
-            - 'Available values are: dns, ip, main, port, type and useip.'
-            - Please review the interface documentation for more information on the supported properties
-            - U(https://www.zabbix.com/documentation/3.2/manual/api/reference/proxy/object#proxy_interface)
+            - Dictionary with params for the interface when proxy is in passive mode.
+            - For more information, review proxy interface documentation at
+            - U(https://www.zabbix.com/documentation/4.0/manual/api/reference/proxy/object#proxy_interface).
         required: false
+        suboptions:
+            useip:
+                type: int
+                description:
+                    - Connect to proxy interface with IP address instead of DNS name.
+                    - 0 (don't use ip), 1 (use ip).
+                default: 0
+                choices: [0, 1]
+            ip:
+                type: str
+                description:
+                    - IP address used by proxy interface.
+                    - Required if I(useip=1).
+                default: ''
+            dns:
+                type: str
+                description:
+                    - DNS name of the proxy interface.
+                    - Required if I(useip=0).
+                default: ''
+            port:
+                type: str
+                description:
+                    - Port used by proxy interface.
+                default: '10051'
+            type:
+                type: int
+                description:
+                    - Interface type to add.
+                    - This suboption is currently ignored for Zabbix proxy.
+                    - This suboption is deprecated since Ansible 2.10 and will eventually be removed in 2.14.
+                required: false
+                default: 0
+            main:
+                type: int
+                description:
+                    - Whether the interface is used as default.
+                    - This suboption is currently ignored for Zabbix proxy.
+                    - This suboption is deprecated since Ansible 2.10 and will eventually be removed in 2.14.
+                required: false
+                default: 0
         default: {}
+        type: dict
 
 extends_documentation_fragment:
     - zabbix
 '''
 
-EXAMPLES = '''
-- name: Create a new proxy or update an existing proxy
+EXAMPLES = r'''
+- name: Create or update a proxy with proxy type active
   local_action:
     module: zabbix_proxy
     server_url: http://monitor.example.com
@@ -113,16 +172,39 @@ EXAMPLES = '''
     description: ExampleProxy
     status: active
     state: present
+    proxy_address: ExampleProxy.local
+
+- name: Create a new passive proxy using only it's IP
+  local_action:
+    module: zabbix_proxy
+    server_url: http://monitor.example.com
+    login_user: username
+    login_password: password
+    proxy_name: ExampleProxy
+    description: ExampleProxy
+    status: passive
+    state: present
     interface:
-        type: 0
-        main: 1
-        useip: 1
-        ip: 10.xx.xx.xx
-        dns: ""
-        port: 10050
+      useip: 1
+      ip: 10.1.1.2
+      port: 10051
+
+- name: Create a new passive proxy using only it's DNS
+  local_action:
+    module: zabbix_proxy
+    server_url: http://monitor.example.com
+    login_user: username
+    login_password: password
+    proxy_name: ExampleProxy
+    description: ExampleProxy
+    status: passive
+    state: present
+    interface:
+      dns: proxy.example.com
+      port: 10051
 '''
 
-RETURN = ''' # '''
+RETURN = r''' # '''
 
 
 import traceback
@@ -165,6 +247,12 @@ class Proxy(object):
                 if data[item]:
                     parameters[item] = data[item]
 
+            if 'proxy_address' in data and data['status'] != '5':
+                parameters.pop('proxy_address', False)
+
+            if 'interface' in data and data['status'] != '6':
+                parameters.pop('interface', False)
+
             proxy_ids_list = self._zapi.proxy.create(parameters)
             self._module.exit_json(changed=True,
                                    result="Successfully added proxy %s (%s)" %
@@ -193,6 +281,9 @@ class Proxy(object):
            len(self.existing_data['interface']) > 0:
             old_interface = self.existing_data['interface']
 
+        for item in ['type', 'main']:
+            new_interface.pop(item, False)
+
         final_interface = old_interface.copy()
         final_interface.update(new_interface)
         final_interface = dict((k, str(v)) for k, v in final_interface.items())
@@ -215,6 +306,12 @@ class Proxy(object):
 
             if 'interface' in parameters:
                 parameters.pop('interface')
+
+            if 'proxy_address' in data and data['status'] != '5':
+                parameters.pop('proxy_address', False)
+
+            if 'interface' in data and data['status'] != '6':
+                parameters.pop('interface', False)
 
             if 'interface' in data and data['status'] == '6':
                 new_interface = self.compile_interface_params(data['interface'])
@@ -242,23 +339,36 @@ def main():
             login_user=dict(type='str', required=True),
             login_password=dict(type='str', required=True, no_log=True),
             proxy_name=dict(type='str', required=True),
+            proxy_address=dict(type='str', required=False),
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False,
                                      default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
-            status=dict(default="active", choices=['active', 'passive']),
-            state=dict(default="present", choices=['present', 'absent']),
+            status=dict(type='str', default="active", choices=['active', 'passive']),
+            state=dict(type='str', default="present", choices=['present', 'absent']),
             description=dict(type='str', required=False),
-            tls_connect=dict(default='no_encryption',
+            tls_connect=dict(type='str', default='no_encryption',
                              choices=['no_encryption', 'PSK', 'certificate']),
-            tls_accept=dict(default='no_encryption',
+            tls_accept=dict(type='str', default='no_encryption',
                             choices=['no_encryption', 'PSK', 'certificate']),
             ca_cert=dict(type='str', required=False, default=None, aliases=['tls_issuer']),
             tls_subject=dict(type='str', required=False, default=None),
             tls_psk_identity=dict(type='str', required=False, default=None),
             tls_psk=dict(type='str', required=False, default=None),
             timeout=dict(type='int', default=10),
-            interface=dict(type='dict', required=False, default={})
+            interface=dict(
+                type='dict',
+                required=False,
+                default={},
+                options=dict(
+                    useip=dict(type='int', choices=[0, 1], default=0),
+                    ip=dict(type='str', default=''),
+                    dns=dict(type='str', default=''),
+                    port=dict(type='str', default='10051'),
+                    type=dict(type='int', default=0, removed_in_version='2.14'),
+                    main=dict(type='int', default=0, removed_in_version='2.14')
+                ),
+            )
         ),
         supports_check_mode=True
     )
@@ -273,6 +383,7 @@ def main():
     http_login_password = module.params['http_login_password']
     validate_certs = module.params['validate_certs']
     proxy_name = module.params['proxy_name']
+    proxy_address = module.params['proxy_address']
     description = module.params['description']
     status = module.params['status']
     tls_connect = module.params['tls_connect']
@@ -334,7 +445,8 @@ def main():
                 'tls_subject': tls_subject,
                 'tls_psk_identity': tls_psk_identity,
                 'tls_psk': tls_psk,
-                'interface': interface
+                'interface': interface,
+                'proxy_address': proxy_address
             })
     else:
         if state == "absent":
@@ -351,7 +463,8 @@ def main():
             'tls_subject': tls_subject,
             'tls_psk_identity': tls_psk_identity,
             'tls_psk': tls_psk,
-            'interface': interface
+            'interface': interface,
+            'proxy_address': proxy_address
         })
 
 

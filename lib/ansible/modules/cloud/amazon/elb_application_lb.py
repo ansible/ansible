@@ -462,8 +462,7 @@ vpc_id:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, ec2_argument_spec, \
-    boto3_tag_list_to_ansible_dict, compare_aws_tags, HAS_BOTO3
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict, compare_aws_tags
 
 from ansible.module_utils.aws.elbv2 import ApplicationLoadBalancer, ELBListeners, ELBListener, ELBListenerRules, ELBListenerRule
 from ansible.module_utils.aws.elb_utils import get_elb_listener_rules
@@ -591,38 +590,35 @@ def delete_elb(elb_obj):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            access_logs_enabled=dict(type='bool'),
-            access_logs_s3_bucket=dict(type='str'),
-            access_logs_s3_prefix=dict(type='str'),
-            deletion_protection=dict(type='bool'),
-            http2=dict(type='bool'),
-            idle_timeout=dict(type='int'),
-            listeners=dict(type='list',
-                           elements='dict',
-                           options=dict(
-                               Protocol=dict(type='str', required=True),
-                               Port=dict(type='int', required=True),
-                               SslPolicy=dict(type='str'),
-                               Certificates=dict(type='list'),
-                               DefaultActions=dict(type='list', required=True),
-                               Rules=dict(type='list')
-                           )
-                           ),
-            name=dict(required=True, type='str'),
-            purge_listeners=dict(default=True, type='bool'),
-            purge_tags=dict(default=True, type='bool'),
-            subnets=dict(type='list'),
-            security_groups=dict(type='list'),
-            scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
-            state=dict(choices=['present', 'absent'], default='present'),
-            tags=dict(type='dict'),
-            wait_timeout=dict(type='int'),
-            wait=dict(default=False, type='bool'),
-            purge_rules=dict(default=True, type='bool')
-        )
+    argument_spec = dict(
+        access_logs_enabled=dict(type='bool'),
+        access_logs_s3_bucket=dict(type='str'),
+        access_logs_s3_prefix=dict(type='str'),
+        deletion_protection=dict(type='bool'),
+        http2=dict(type='bool'),
+        idle_timeout=dict(type='int'),
+        listeners=dict(type='list',
+                       elements='dict',
+                       options=dict(
+                           Protocol=dict(type='str', required=True),
+                           Port=dict(type='int', required=True),
+                           SslPolicy=dict(type='str'),
+                           Certificates=dict(type='list'),
+                           DefaultActions=dict(type='list', required=True),
+                           Rules=dict(type='list')
+                       )
+                       ),
+        name=dict(required=True, type='str'),
+        purge_listeners=dict(default=True, type='bool'),
+        purge_tags=dict(default=True, type='bool'),
+        subnets=dict(type='list'),
+        security_groups=dict(type='list'),
+        scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
+        state=dict(choices=['present', 'absent'], default='present'),
+        tags=dict(type='dict'),
+        wait_timeout=dict(type='int'),
+        wait=dict(default=False, type='bool'),
+        purge_rules=dict(default=True, type='bool')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,

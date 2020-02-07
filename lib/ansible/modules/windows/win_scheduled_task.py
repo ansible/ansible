@@ -353,7 +353,8 @@ options:
   execution_time_limit:
     description:
     - The amount of time allowed to complete the task.
-    - When not set, the time limit is infinite.
+    - When set to `PT0S`, the time limit is infinite.
+    - When omitted, the default time limit is 72 hours.
     - This is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
     type: str
     version_added: '2.5'

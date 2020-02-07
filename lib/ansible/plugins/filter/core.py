@@ -544,41 +544,15 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
     return dict((item[key_name], item[value_name]) for item in mylist)
 
 
-def random_mac(value, seed=None):
-    ''' takes string prefix, and return it completed with random bytes
-        to get a complete 6 bytes MAC address '''
-
-    if not isinstance(value, string_types):
-        raise AnsibleFilterError('Invalid value type (%s) for random_mac (%s)' % (type(value), value))
-
-    value = value.lower()
-    mac_items = value.split(':')
-
-    if len(mac_items) > 5:
-        raise AnsibleFilterError('Invalid value (%s) for random_mac: 5 colon(:) separated items max' % value)
-
-    err = ""
-    for mac in mac_items:
-        if len(mac) == 0:
-            err += ",empty item"
-            continue
-        if not re.match('[a-f0-9]{2}', mac):
-            err += ",%s not hexa byte" % mac
-    err = err.strip(',')
-
-    if len(err):
-        raise AnsibleFilterError('Invalid value (%s) for random_mac: %s' % (value, err))
-
-    if seed is None:
-        r = SystemRandom()
+def path_join(paths):
+    ''' takes a sequence or a string, and return a concatenation
+        of the different members '''
+    if isinstance(paths, string_types):
+        return os.path.join(paths)
+    elif is_sequence(paths):
+        return os.path.join(*paths)
     else:
-        r = Random(seed)
-    # Generate random int between x1000000000 and xFFFFFFFFFF
-    v = r.randint(68719476736, 1099511627775)
-    # Select first n chars to complement input prefix
-    remain = 2 * (6 - len(mac_items))
-    rnd = ('%x' % v)[:remain]
-    return value + re.sub(r'(..)', r':\1', rnd)
+        raise AnsibleFilterError("|path_join expects string or sequence, got %s instead." % type(paths))
 
 
 class FilterModule(object):
@@ -612,6 +586,7 @@ class FilterModule(object):
             'dirname': partial(unicode_wrap, os.path.dirname),
             'expanduser': partial(unicode_wrap, os.path.expanduser),
             'expandvars': partial(unicode_wrap, os.path.expandvars),
+            'path_join': path_join,
             'realpath': partial(unicode_wrap, os.path.realpath),
             'relpath': partial(unicode_wrap, os.path.relpath),
             'splitext': partial(unicode_wrap, os.path.splitext),
@@ -672,7 +647,4 @@ class FilterModule(object):
             'dict2items': dict_to_list_of_dict_key_value_elements,
             'items2dict': list_of_dict_key_value_elements_to_dict,
             'subelements': subelements,
-
-            # Misc
-            'random_mac': random_mac,
         }

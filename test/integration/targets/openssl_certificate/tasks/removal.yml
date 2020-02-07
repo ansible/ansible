@@ -27,6 +27,7 @@
     path: "{{ output_dir }}/removal_cert.pem"
     state: absent
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
   register: removal_1
 
 - name: "(Removal, {{select_crypto_backend}}) Check that file is gone"
@@ -48,3 +49,4 @@
     - removal_1 is changed
     - not removal_1_poststat.stat.exists
     - removal_2 is not changed
+    - removal_1.certificate is none

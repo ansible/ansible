@@ -129,6 +129,12 @@
     loop_control:
       loop_var: locale
 
+  - name: Reinstall internationalization files
+    shell: 'yum -y reinstall glibc-common || yum -y install glibc-common'
+    args:
+      warn: no
+    when: locale_present is failed
+
   - name: Generate locale (RedHat)
     command: 'localedef -f ISO-8859-1 -i {{ item.locale }} {{ item.locale }}'
     when: item is failed

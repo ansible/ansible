@@ -1,72 +1,179 @@
 .. _playbooks_reuse:
 
-Creating Reusable Playbooks
-===========================
+**************************
+Re-using Ansible artifacts
+**************************
 
-.. toctree::
-   :maxdepth: 1
+You can write a simple playbook in one very large file, and most users learn the one-file approach first. However, breaking tasks up into different files is an excellent way to organize complex sets of tasks and reuse them. Smaller, more distributed artifacts let you re-use the same variables, tasks, and plays in multiple playbooks to address different use cases. You can use distributed artifacts across multiple parent playbooks or even multiple times within one playbook. For example, you might want to update your customer database as part of several different playbooks. If you put all the tasks related to updating your database in a tasks file, you can re-use them in many playbooks while only maintaining them in one place.
 
-   playbooks_reuse_includes
-   playbooks_reuse_roles
+.. contents::
+   :local:
 
-While it is possible to write a playbook in one very large file (and you might start out learning playbooks this way), eventually you'll want to reuse files and start to organize things. In Ansible, there are three ways to do this: includes, imports, and roles.
+Creating re-usable files and roles
+==================================
 
-Includes and imports (added in Ansible version 2.4) allow users to break up large playbooks into smaller files, which can be used across multiple parent playbooks or even multiple times within the same Playbook.
+Ansible offers four distributed, re-usable artifacts: variables files, task files, playbooks, and roles.
 
-Roles allow more than just tasks to be packaged together and can include variables, handlers, or even modules and other plugins. Unlike includes and imports, roles can also be uploaded and shared via Ansible Galaxy.
+  - A variables file contains only variables.
+  - A task file contains only tasks.
+  - A playbook contains at least one play, and may contain variables, tasks, and other content. You can re-use tightly focused playbooks, but you can only re-use them statically, not dynamically.
+  - A role contains a set of related tasks, variables, defaults, handlers, and even modules or other plugins in a defined file-tree. Unlike variables files, task files, or playbooks, roles can be easily uploaded and shared via Ansible Galaxy. See :ref:`playbooks_reuse_roles` for details about creating and using roles.
+
+.. versionadded:: 2.4
+
+Re-using playbooks
+==================
+
+You can incorporate multiple playbooks into a master playbook. However, you can only use imports to re-use playbooks. For example:
+
+.. code-block:: yaml
+
+    - import_playbook: webservers.yml
+    - import_playbook: databases.yml
+
+Importing incorporates playbooks in other playbooks statically. Ansible runs the plays and tasks in each imported playbook in the order they are listed, just as if they had been defined directly in the master playbook.
+
+Re-using files and roles
+========================
+
+Ansible offers two ways to re-use files and roles in a playbook: dynamic and static.
+
+  - For dynamic re-use, add an ``include_*`` task in the tasks section of a play:
+
+    - :ref:`include_role <include_role_module>`
+    - :ref:`include_tasks <include_tasks_module>`
+    - :ref:`include_vars <include_vars_module>`
+
+  - For static re-use, add an ``import_*`` task in the tasks section of a play:
+
+    - :ref:`import_role <import_role_module>`
+    - :ref:`import_tasks <import_tasks_module>`
+
+Task include and import statements can be used at arbitrary depth.
+
+You can still use the bare :ref:`roles <roles_keyword>` keyword at the play level to incorporate a role in a playbook statically. However, the bare :ref:`include <include_module>` keyword, once used for both task files and playbook-level includes, is now deprecated.
+
+Includes: dynamic re-use
+------------------------
+
+Including roles, tasks, or variables adds them to a playbook dynamically. Ansible processes included files and roles as they come up in a playbook, so included tasks can be affected by the results of earlier tasks within the top-level playbook. Included roles and tasks are similar to handlers - they may or may not run, depending on the results of other tasks in the top-level playbook. The primary advantage of using ``include_*`` statements is looping. When a loop is used with an include, the included tasks or role will be executed once for each item in the loop.
+
+You can pass variables into includes. See :ref:`ansible_variable_precedence` for more details on variable inheritance and precedence.
+
+Imports: static re-use
+----------------------
+
+Importing roles, tasks, or playbooks adds them to a playbook statically. Ansible pre-processes imported files and roles before it runs any tasks in a playbook, so imported content is never affected by other tasks within the top-level playbook.
+
+You can pass variables to imports. You must pass variables if you want to run an imported file more than once in a playbook. For example:
+
+.. code-block:: yaml
+
+    tasks:
+    - import_tasks: wordpress.yml
+      vars:
+        wp_user: timmy
+    - import_tasks: wordpress.yml
+      vars:
+        wp_user: alice
+    - import_tasks: wordpress.yml
+      vars:
+        wp_user: bob
+
+See :ref:`ansible_variable_precedence` for more details on variable inheritance and precedence.
 
 .. _dynamic_vs_static:
 
-Dynamic vs. Static
-``````````````````
+Comparing includes and imports: dynamic vs. static
+--------------------------------------------------
 
-Ansible has two modes of operation for reusable content: dynamic and static.
+Each approach to re-using distributed Ansible artifacts has advantages and limitations. You may choose dynamic re-use for some playbooks and static re-use for others. Although you can use both dynamic and static re-use in a single playbook, it is best to select one approach per playbook. Mixing static and dynamic re-use can introduce difficult-to-diagnose bugs into your playbooks. This table summarizes the main differences so you can choose the best approach for each playbook you create.
 
-In Ansible 2.0, the concept of *dynamic* includes was introduced. Due to some limitations with making all includes dynamic in this way, the ability to force includes to be *static* was introduced in Ansible 2.1. Because the *include* task became overloaded to encompass both static and dynamic syntaxes, and because the default behavior of an include could change based on other options set on the Task, Ansible 2.4 introduces the concept of ``include`` vs. ``import``.
+.. table::
+   :class: documentation-table
 
-If you use any ``include*`` Task (``include_tasks``, ``include_role``, etc.), it will be *dynamic*.
-If you use any ``import*`` Task (``import_playbook``, ``import_tasks``, etc.), it will be *static*.
+   ========================= ======================================== ========================================
+   ..                        Include_*                                Import_*
+   ========================= ======================================== ========================================
+   Type of re-use            Dynamic                                  Static
 
-The bare ``include`` task (which was used for both Task files and Playbook-level includes) is still available, however it is now considered *deprecated*.
+   When processed            At runtime, when encountered             Pre-processed during playbook parsing
 
-Differences Between Dynamic and Static
-``````````````````````````````````````
+   Task or play              All includes are tasks                   ``import_playbook`` cannot be a task
 
-The two modes of operation are pretty simple:
+   Task options              Apply only to include task itself        Apply to all child tasks in import
 
-* Dynamic includes are processed during runtime at the point in which that task is encountered.
-* Ansible pre-processes all static imports during Playbook parsing time.
+   Calling from loops        Executed once for each loop item         Cannot be used in a loop
 
-When it comes to Ansible task options like ``tags`` and conditional statements (``when:``):
+   Using ``--list-tags``     Tags within includes not listed          All tags appear with ``--list-tags``
 
-* For dynamic includes, the task options will *only* apply to the dynamic task as it is evaluated, and will not be copied to child tasks.
-* For static imports, the parent task options will be copied to all child tasks contained within the import.
+   Using ``--list-tasks``    Tasks within includes not listed         All tasks appear with ``--list-tasks``
 
-.. note::
-    Roles are a somewhat special case. Prior to Ansible 2.3, roles were always statically included via the special ``roles:`` option for a given play and were always executed first before any other play tasks (unless ``pre_tasks`` were used). Roles can still be used this way, however, Ansible 2.3 introduced the ``include_role`` option to allow roles to be executed inline with other tasks.
+   Notifying handlers        Cannot trigger handlers within includes  Can trigger individual imported handlers
 
-Tradeoffs and Pitfalls Between Includes and Imports
-```````````````````````````````````````````````````
+   Using ``--start-at-task`` Cannot start at tasks within includes    Can start at imported tasks
 
-Using ``include*`` vs. ``import*`` has some advantages as well as some tradeoffs which users should consider when choosing to use each:
+   Using inventory variables Can ``include_*: {{ inventory_var }}``   Cannot ``import_*: {{ inventory_var }}``
 
-The primary advantage of using ``include*`` statements is looping. When a loop is used with an include, the included tasks or role will be executed once for each item in the loop.
+   With playbooks            No ``include_playbook``                  Can import full playbooks
 
-Using ``include*`` does have some limitations when compared to ``import*`` statements:
+   With variables files      Can include variables files              Use ``vars_files:`` to import variables
 
-* Tags which only exist inside a dynamic include will not show up in ``--list-tags`` output.
-* Tasks which only exist inside a dynamic include will not show up in ``--list-tasks`` output.
-* You cannot use ``notify`` to trigger a handler name which comes from inside a dynamic include (see note below).
-* You cannot use ``--start-at-task`` to begin execution at a task inside a dynamic include.
+   ========================= ======================================== ========================================
 
-Using ``import*`` can also have some limitations when compared to dynamic includes:
+Re-using tasks as handlers
+==========================
 
-* As noted above, loops cannot be used with imports at all.
-* When using variables for the target file or role name, variables from inventory sources (host/group vars, etc.) cannot be used.
-* Handlers using ``import*`` will not be triggered when notified by their name, as importing overwrites the handler's named task with the imported task list.
+You can also use includes and imports in the :ref:`handlers` section of a playbook. For instance, if you want to define how to restart Apache, you only have to do that once for all of your playbooks. You might make a ``restarts.yml`` file that looks like:
 
-.. note::
-    Regarding the use of ``notify`` for dynamic tasks: it is still possible to trigger the dynamic include itself, which would result in all tasks within the include being run.
+.. code-block:: yaml
+
+   # restarts.yml
+   - name: restart apache
+     service:
+       name: apache
+       state: restarted
+
+   - name: restart mysql
+     service:
+       name: mysql
+       state:restarted
+
+You can trigger handlers from either an import or an include, but the procedure is different for each method of re-use. If you include the file, you must notify the include itself, which triggers all the tasks in ``restarts.yml``. If you import the file, you must notify the individual task(s) within ``restarts.yml``. You can mix direct tasks and handlers with included or imported tasks and handlers.
+
+Triggering included (dynamic) handlers
+--------------------------------------
+
+Includes are executed at run-time, so the name of the include exists during play execution, but the included tasks do not exist until the include itself is triggered. To use the ``restart apache`` task with dynamic re-use, refer to the name of the include itself. This approach triggers all tasks in the included file as handlers. For example, with the task file shown above:
+
+.. code-block:: yaml
+
+   - trigger an included (dynamic) handler
+     hosts: localhost
+     handlers:
+       - name: restart services
+         include_tasks: restarts.yml
+     tasks:
+       - command: "true"
+         notify: restart services
+
+Triggering imported (static) handlers
+-------------------------------------
+
+Imports are processed before the play begins, so the name of the import no longer exists during play execution, but the names of the individual imported tasks do exist. To use the ``restart apache`` task with static re-use, refer to the name of each task or tasks within the imported file. For example, with the task file shown above:
+
+.. code-block:: yaml
+
+   - trigger an imported (static) handler
+     hosts: localhost
+     handlers:
+     - name: restart services
+       import_tasks: restarts.yml
+     tasks:
+       - command: "true"
+         notify: restart apache
+       - command: "true"
+         notify: restart mysql
 
 .. seealso::
 

@@ -556,6 +556,10 @@ def format_module_output(module):
             int(v['version_number']) == int(template['latest_version_number'])
         )
     ][0]
+    if "version_number" in output['default_template']:
+        output['default_version'] = output['default_template']['version_number']
+    if "version_number" in output['latest_template']:
+        output['latest_version'] = output['latest_template']['version_number']
     return output
 
 

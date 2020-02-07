@@ -1,22 +1,25 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_gir sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
+- set_fact: gir_run='{{ true if (platform is not search("N35")) else false }}'
 
-- set_fact: gir_run="true"
-- set_fact: gir_run="false"
-  when: platform is search("N35")
-#- name: "Setup"
-#  nxos_gir: &setup
-#    system_mode_maintenance: false
-#    provider: "{{ connection }}"
-#  ignore_errors: yes
+- name: Setup0
+  nxos_config: &cleanup0
+    lines:
+      - no system mode maintenance timeout 30
+      - no configure maintenance profile normal-mode
+      - no configure maintenance profile maintenance-mode
+    match: none
+  ignore_errors: yes
+
+- name: Setup1
+  nxos_gir:
+    system_mode_maintenance: false
+  ignore_errors: yes
 
 - block:
   - name: "Put system in maintenance mode with reload reset reason"
     nxos_gir: &reset_reason
       system_mode_maintenance_on_reload_reset_reason: manual_reload
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -35,7 +38,6 @@
     nxos_gir: &remove_reason
       system_mode_maintenance_on_reload_reset_reason: manual_reload
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -49,7 +51,6 @@
   - name: "Put system in maintenance mode with timeout"
     nxos_gir: &mtime
       system_mode_maintenance_timeout: 30
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -64,7 +65,6 @@
     nxos_gir: &remove_timeout
       system_mode_maintenance_timeout: 30
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -75,13 +75,12 @@
 
   - assert: *false
 
-#  - name: "Put system in maintenance mode"
-#    nxos_gir: &configure_system_mode_maintenance
-#      system_mode_maintenance: true
-#      provider: "{{ connection }}"
-#    register: result
-#
-#  - assert: *true
+  - name: "Put system in maintenance mode"
+    nxos_gir: &configure_system_mode_maintenance
+      system_mode_maintenance: true
+    register: result
+
+  - assert: *true
 
   when: gir_run
 
@@ -94,26 +93,20 @@
   - name: "Remove snapshots"
     nxos_snapshot:
       action: delete_all
-      provider: "{{ connection }}"
     ignore_errors: yes
 
-  - name: "Remove other config1"
-    nxos_config:
-      lines: no configure maintenance profile normal-mode
-      match: none
-      provider: "{{ connection }}"
+  - name: Teardown0
+    nxos_config: *cleanup0
     ignore_errors: yes
 
-  - name: "Remove other config2"
-    nxos_config:
-      lines: no configure maintenance profile maintenance-mode
-      match: none
-      provider: "{{ connection }}"
+  - name: "Put system back in normal mode"
+    nxos_gir:
+      system_mode_maintenance: false
+    # Try again if cli is blocking while changing modes
+    retries: 3
+    delay: 30
+    register: result
+    until: result is not failed
     ignore_errors: yes
-
-#  - name: "Put system back in normal mode"
-#    nxos_gir: *setup
-#    register: result
-#    ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_gir sanity test"

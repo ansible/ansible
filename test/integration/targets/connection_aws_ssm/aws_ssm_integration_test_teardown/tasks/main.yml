@@ -1,0 +1,85 @@
+---
+- name: Set up AWS connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{aws_access_key}}"
+      aws_secret_key: "{{aws_secret_key}}"
+      region: "{{aws_region}}"
+      security_token: "{{security_token}}"
+  no_log: true
+
+- name: Check if ec2_linux_vars_to_delete.yml is present
+  stat:
+    path: "{{playbook_dir}}/ec2_linux_vars_to_delete.yml"
+  register: ec2_linux_vars_file
+
+- name: Include variable file to delete EC2 Linux infra
+  include_vars: "{{playbook_dir}}/ec2_linux_vars_to_delete.yml"
+  when: ec2_linux_vars_file.stat.exists == true
+
+- name: Check if ec2_windows_vars_to_delete.yml is present
+  stat:
+    path: "{{playbook_dir}}/ec2_windows_vars_to_delete.yml"
+  register: ec2_windows_vars_file
+
+- name: Include variable file to delete EC2 Windows infra
+  include_vars: "{{playbook_dir}}/ec2_windows_vars_to_delete.yml"
+  when: ec2_windows_vars_file.stat.exists == true
+
+- name: Check if s3_vars_to_delete.yml is present
+  stat:
+    path: "{{playbook_dir}}/s3_vars_to_delete.yml"
+  register: s3_vars_file
+
+- name: Include variable file to delete S3 Infra infra
+  include_vars: "{{playbook_dir}}/s3_vars_to_delete.yml"
+  when: s3_vars_file.stat.exists == true
+
+- name: Check if iam_role_vars_to_delete.yml is present
+  stat:
+    path: "{{playbook_dir}}/iam_role_vars_to_delete.yml"
+  register: iam_role_vars_file
+
+- name: Include variable file to delete IAM Role infra
+  include_vars: "{{playbook_dir}}/iam_role_vars_to_delete.yml"
+  when: iam_role_vars_file.stat.exists == true
+
+- name: Terminate Windows EC2 instances that were previously launched
+  ec2:
+    instance_ids:
+      - "{{windows_instance_id}}"
+    state: absent
+    <<: *aws_connection_info
+  ignore_errors: yes
+  when: ec2_windows_vars_file.stat.exists == true
+
+- name: Terminate Linux EC2 instances that were previously launched
+  ec2:
+    instance_ids:
+      - "{{linux_instance_id}}"
+    state: absent
+    <<: *aws_connection_info
+  ignore_errors: yes
+  when: ec2_linux_vars_file.stat.exists == true
+
+- name: Delete S3 bucket
+  aws_s3:
+    bucket: "{{bucket_name}}"
+    mode: delete
+    <<: *aws_connection_info
+  ignore_errors: yes
+  when: s3_vars_file.stat.exists == true
+
+- name: Delete IAM role
+  iam_role:
+    name: "{{iam_role_name}}"
+    state: absent
+    <<: *aws_connection_info
+  ignore_errors: yes
+  when: iam_role_vars_file.stat.exists == true
+
+- name: Delete AWS keys environement
+  file:
+    path: "{{playbook_dir}}/aws-env-vars.sh"
+    state: absent
+  ignore_errors: yes

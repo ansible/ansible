@@ -1,0 +1,2 @@
+jinja2 < 2.11 ; python_version < '2.7' # jinja2 2.11 and later require python 2.7 or later
+jinja2 ; python_version >= '2.7'

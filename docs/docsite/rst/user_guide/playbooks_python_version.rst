@@ -1,29 +1,26 @@
 .. _pb-py-compat:
 
-Python Version and Templating
-=============================
+********************
+Python3 in templates
+********************
 
-Jinja2 templates leverage Python data types and standard functions.  This
-makes for a rich set of operations that can be performed on data.  However,
-this also means that certain specifics of the underlying Python becomes
-visible to template authors.  Since Ansible playbooks use Jinja2 for templates
-and variables, this means that playbook authors need to be aware of these
-specifics as well.
+Ansible uses Jinja2 to leverage Python data types and standard functions in templates and variables.
+You can use these data types and standard functions to perform a rich set of operations on your data. However,
+if you use templates, you must be aware of differences between Python versions.
 
-Unless otherwise noted, these differences are only of interest when running
-Ansible in Python2 versus Python3.  Changes within Python2 and Python3 are
-generally small enough that they are not visible at the jinja2 level.
+These topics help you design templates that work on both Python2 and Python3. They might also help if you are upgrading from Python2 to Python3. Upgrading within Python2 or Python3 does not usually introduce changes that affect Jinja2 templates.
 
 .. _pb-py-compat-dict-views:
 
-Dictionary Views
-----------------
+Dictionary views
+================
 
 In Python2, the :meth:`dict.keys`, :meth:`dict.values`, and :meth:`dict.items`
-methods returns a list.  Jinja2 returns that to Ansible via a string
-representation that Ansible can turn back into a list.  In Python3, those
-methods return a :ref:`dictionary view <python3:dict-views>` object.  The
-string representation that Jinja2 returns for dictionary views cannot be parsed back 
+methods return a list.  Jinja2 returns that to Ansible via a string
+representation that Ansible can turn back into a list.
+
+In Python3, those methods return a :ref:`dictionary view <python3:dict-views>` object. The
+string representation that Jinja2 returns for dictionary views cannot be parsed back
 into a list by Ansible.  It is, however, easy to make this portable by
 using the :func:`list <jinja2:list>` filter whenever using :meth:`dict.keys`,
 :meth:`dict.values`, or :meth:`dict.items`::
@@ -43,13 +40,11 @@ using the :func:`list <jinja2:list>` filter whenever using :meth:`dict.keys`,
 .. _pb-py-compat-iteritems:
 
 dict.iteritems()
-----------------
+================
 
-In Python2, dictionaries have :meth:`~dict.iterkeys`,
-:meth:`~dict.itervalues`, and :meth:`~dict.iteritems` methods.  These methods
-have been removed in Python3.  Playbooks and Jinja2 templates should use
-:meth:`dict.keys`, :meth:`dict.values`, and :meth:`dict.items` in order to be
-compatible with both Python2 and Python3::
+Python2 dictionaries have :meth:`~dict.iterkeys`, :meth:`~dict.itervalues`, and :meth:`~dict.iteritems` methods.
+
+Python3 dictionaries do not have these methods. Use :meth:`dict.keys`, :meth:`dict.values`, and :meth:`dict.items` to make your playbooks and templates compatible with both Python2 and Python3::
 
     vars:
       hosts:

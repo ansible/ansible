@@ -227,15 +227,13 @@ elasticache_clusters:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
-from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import get_aws_connection_info, camel_dict_to_snake_dict, AWSRetry, boto3_tag_list_to_ansible_dict
 
 
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 @AWSRetry.exponential_backoff()
@@ -262,9 +260,7 @@ def get_elasticache_tags_with_backoff(client, cluster_id):
 
 def get_aws_account_id(module):
     try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        client = boto3_conn(module, conn_type='client', resource='sts',
-                            region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        client = module.client('sts')
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Can't authorize connection")
 
@@ -274,7 +270,8 @@ def get_aws_account_id(module):
         module.fail_json_aws(e, msg="Couldn't obtain AWS account id")
 
 
-def get_elasticache_clusters(client, module, region):
+def get_elasticache_clusters(client, module):
+    region = get_aws_connection_info(module, boto3=True)[0]
     try:
         clusters = describe_cache_clusters_with_backoff(client, cluster_id=module.params.get('name'))
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -297,21 +294,16 @@ def get_elasticache_clusters(client, module, region):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=False),
-        )
+    argument_spec = dict(
+        name=dict(required=False),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._name == 'elasticache_facts':
         module.deprecate("The 'elasticache_facts' module has been renamed to 'elasticache_info'", version='2.13')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='elasticache',
-                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client('elasticache')
 
-    module.exit_json(elasticache_clusters=get_elasticache_clusters(client, module, region))
+    module.exit_json(elasticache_clusters=get_elasticache_clusters(client, module))
 
 
 if __name__ == '__main__':

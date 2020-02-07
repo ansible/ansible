@@ -14,6 +14,9 @@ from ansible.module_utils._text import to_native
 def removed_module(removed_in, msg='This module has been removed. The module documentation for'
                                    ' Ansible-%(version)s may contain hints for porting'):
     """
+    This function is deprecated and should not be used. Instead the module should just be
+    actually removed. This function is scheduled for removal for the 2.12 release.
+
     Returns module failure along with a message about the module being removed
 
     :arg removed_in: The version that the module was removed in
@@ -27,7 +30,15 @@ def removed_module(removed_in, msg='This module has been removed. The module doc
         if __name__ == '__main__':
             removed_module("2.4")
     """
-    results = {'failed': True}
+    results = {
+        'failed': True,
+        'deprecations': [
+            {
+                'msg': 'The removed_module function is deprecated',
+                'version': '2.12',
+            },
+        ]
+    }
 
     # Convert numbers into strings
     removed_in = to_native(removed_in)

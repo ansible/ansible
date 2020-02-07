@@ -22,8 +22,13 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
-from ansible.galaxy.collection import build_collection, install_collections, publish_collection, \
-    validate_collection_name
+from ansible.galaxy.collection import (
+    build_collection,
+    install_collections,
+    publish_collection,
+    validate_collection_name,
+    validate_collection_path,
+)
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
@@ -66,7 +71,7 @@ class GalaxyCLI(CLI):
         # Common arguments that apply to more than 1 action
         common = opt_help.argparse.ArgumentParser(add_help=False)
         common.add_argument('-s', '--server', dest='api_server', help='The Galaxy API server URL')
-        common.add_argument('--api-key', dest='api_key',
+        common.add_argument('--token', '--api-key', dest='api_key',
                             help='The Ansible Galaxy API key which can be found at '
                                  'https://galaxy.ansible.com/me/preferences. You can also use ansible-galaxy login to '
                                  'retrieve this key or set the token for the GALAXY_SERVER_LIST entry.')
@@ -92,6 +97,13 @@ class GalaxyCLI(CLI):
                                 default=C.DEFAULT_ROLES_PATH, action=opt_help.PrependListAction,
                                 help='The path to the directory containing your roles. The default is the first '
                                      'writable one configured via DEFAULT_ROLES_PATH: %s ' % default_roles_path)
+
+        default_collections_path = C.config.get_configuration_definition('COLLECTIONS_PATHS').get('default', '')
+        collections_path = opt_help.argparse.ArgumentParser(add_help=False)
+        collections_path.add_argument('-p', '--collections-path', dest='collections_path', type=opt_help.unfrack_path(pathsep=True),
+                                      default=C.COLLECTIONS_PATHS, action=opt_help.PrependListAction,
+                                      help='The path to the directory containing your collections. The default is the first '
+                                      'writable one configured via COLLECTIONS_PATHS: %s ' % default_collections_path)
 
         # Add sub parser for the Galaxy role type (role or collection)
         type_parser = self.parser.add_subparsers(metavar='TYPE', dest='type')
@@ -320,7 +332,10 @@ class GalaxyCLI(CLI):
                       ('auth_url', False)]
 
         config_servers = []
-        for server_key in (C.GALAXY_SERVER_LIST or []):
+
+        # Need to filter out empty strings or non truthy values as an empty server list env var is equal to [''].
+        server_list = [s for s in C.GALAXY_SERVER_LIST or [] if s]
+        for server_key in server_list:
             # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
             # section [galaxy_server.<server>] for the values url, username, password, and token.
             config_dict = dict((k, server_config_def(server_key, k, req)) for k, req in server_def)
@@ -420,7 +435,7 @@ class GalaxyCLI(CLI):
                     "Failed to parse the requirements yml at '%s' with the following error:\n%s"
                     % (to_native(requirements_file), to_native(err)))
 
-        if requirements_file is None:
+        if file_requirements is None:
             raise AnsibleError("No requirements found in file '%s'" % to_native(requirements_file))
 
         def parse_role_req(requirement):
@@ -824,9 +839,7 @@ class GalaxyCLI(CLI):
                                 "collections paths '%s'. The installed collection won't be picked up in an Ansible "
                                 "run." % (to_text(output_path), to_text(":".join(collections_path))))
 
-            if os.path.split(output_path)[1] != 'ansible_collections':
-                output_path = os.path.join(output_path, 'ansible_collections')
-
+            output_path = validate_collection_path(output_path)
             b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
             if not os.path.exists(b_output_path):
                 os.makedirs(b_output_path)

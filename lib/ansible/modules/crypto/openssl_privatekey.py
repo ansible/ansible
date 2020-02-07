@@ -156,6 +156,14 @@ options:
         type: bool
         default: no
         version_added: "2.8"
+    return_content:
+        description:
+            - If set to C(yes), will return the (current or generated) private key's content as I(privatekey).
+            - Note that especially if the private key is not encrypted, you have to make sure that the returned
+              value is treated appropriately and not accidentally written to logs etc.! Use with care!
+        type: bool
+        default: no
+        version_added: "2.10"
 extends_documentation_fragment:
 - files
 seealso:
@@ -232,9 +240,17 @@ backup_file:
     returned: changed and if I(backup) is C(yes)
     type: str
     sample: /path/to/privatekey.pem.2019-03-09@11:22~
+privatekey:
+    description:
+        - The (current or generated) private key's content.
+        - Will be Base64-encoded if the key is in raw format.
+    returned: if I(state) is C(present) and I(return_content) is C(yes)
+    type: str
+    version_added: "2.10"
 '''
 
 import abc
+import base64
 import os
 import traceback
 from distutils.version import LooseVersion
@@ -303,6 +319,8 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         self.fingerprint = {}
         self.format = module.params['format']
         self.format_mismatch = module.params['format_mismatch']
+        self.privatekey_bytes = None
+        self.return_content = module.params['return_content']
 
         self.backup = module.params['backup']
         self.backup_file = None
@@ -333,6 +351,8 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
                 self.backup_file = module.backup_local(self.path)
             self._generate_private_key()
             privatekey_data = self._get_private_key_data()
+            if self.return_content:
+                self.privatekey_bytes = privatekey_data
             crypto_utils.write_file(module, privatekey_data, 0o600)
             self.changed = True
         elif not self.check(module, perms_required=False, ignore_conversion=False):
@@ -340,6 +360,8 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
             if self.backup:
                 self.backup_file = module.backup_local(self.path)
             privatekey_data = self._get_private_key_data()
+            if self.return_content:
+                self.privatekey_bytes = privatekey_data
             crypto_utils.write_file(module, privatekey_data, 0o600)
             self.changed = True
 
@@ -393,6 +415,16 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
+        if self.return_content:
+            if self.privatekey_bytes is None:
+                self.privatekey_bytes = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
+            if self.privatekey_bytes:
+                if crypto_utils.identify_private_key_format(self.privatekey_bytes) == 'raw':
+                    result['privatekey'] = base64.b64encode(self.privatekey_bytes)
+                else:
+                    result['privatekey'] = self.privatekey_bytes.decode('utf-8')
+            else:
+                result['privatekey'] = None
 
         return result
 
@@ -606,7 +638,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
                 format=export_format,
                 encryption_algorithm=encryption_algorithm
             )
-        except ValueError as e:
+        except ValueError as dummy:
             self.module.fail_json(
                 msg='Cryptography backend cannot serialize the private key in the required format "{0}"'.format(self.format)
             )
@@ -744,6 +776,7 @@ def main():
             format=dict(type='str', default='auto_ignore', choices=['pkcs1', 'pkcs8', 'raw', 'auto', 'auto_ignore']),
             format_mismatch=dict(type='str', default='regenerate', choices=['regenerate', 'convert']),
             select_crypto_backend=dict(type='str', choices=['auto', 'pyopenssl', 'cryptography'], default='auto'),
+            return_content=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         add_file_common_args=True,

@@ -32,6 +32,7 @@
     provider: selfsigned
     selfsigned_digest: sha256
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
   register: selfsigned_certificate
 
 - name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate - idempotency
@@ -42,6 +43,7 @@
     provider: selfsigned
     selfsigned_digest: sha256
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
   register: selfsigned_certificate_idempotence
 
 - name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (check mode)

@@ -161,6 +161,7 @@ class TaskQueueManager:
         for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c)):
             # TODO: need to extend/duplicate the stdout callback check here (and possible move this ahead of the old way
             callback_obj = callback_loader.get(callback_plugin_name)
+            callback_obj.set_options()
             self._callback_plugins.append(callback_obj)
 
         self._callbacks_loaded = True

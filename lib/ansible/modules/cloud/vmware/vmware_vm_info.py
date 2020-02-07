@@ -146,6 +146,15 @@ EXAMPLES = r'''
         - "{{ vm_info.virtual_machines | json_query(query) }}"
       vars:
         query: "[?guest_name=='DC0_H0_VM0']"
+
+- name: Gather all VMs from a specific folder
+  vmware_vm_info:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    folder: "/Asia-Datacenter1/vm/prod"
+  delegate_to: localhost
+  register: vm_info
 '''
 
 RETURN = r'''

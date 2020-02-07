@@ -5,7 +5,7 @@ Playbook Debugger
 
 .. contents:: Topics
 
-Ansible includes a debugger as part of the strategy plugins. This debugger enables you to debug as task.
+Ansible includes a debugger as part of the strategy plugins. This debugger enables you to debug a task.
 You have access to all of the features of the debugger in the context of the task.  You can then, for example, check or set the value of variables, update module arguments, and re-run the task with the new variables and arguments to help resolve the cause of the failure.
 
 There are multiple ways to invoke the debugger.

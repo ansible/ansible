@@ -1,0 +1,2 @@
+bugfixes:
+  - edgeos_config - fix issue where module would silently filter out encrypted passwords

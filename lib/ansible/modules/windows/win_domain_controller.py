@@ -77,6 +77,12 @@ options:
       see U(https://docs.microsoft.com/en-us/powershell/module/addsdeployment/install-addsdomaincontroller).
     type: bool
     version_added: '2.10'
+  log_path:
+    description:
+    - The path to log any debug information when running the module.
+    - This option is deprecated and should not be used, it will be removed in Ansible 2.14.
+    - This does not relate to the C(-LogPath) paramter of the install controller cmdlet.
+    type: str
 seealso:
 - module: win_domain
 - module: win_domain_computer
@@ -103,7 +109,6 @@ EXAMPLES = r'''
     domain_admin_password: password123!
     safe_mode_password: password123!
     state: domain_controller
-    log_path: C:\ansible_win_domain_controller.txt
 
 # ensure a server is not a domain controller
 # note that without an action wrapper, in the case where a DC is demoted,
@@ -116,7 +121,6 @@ EXAMPLES = r'''
     domain_admin_password: password123!
     local_admin_password: password123!
     state: member_server
-    log_path: C:\ansible_win_domain_controller.txt
 
 - name: Promote server as a read only domain controller
   win_domain_controller:

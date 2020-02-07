@@ -793,6 +793,69 @@ test_no_log - Invoked with:
         $actual | Assert-DictionaryEquals -Expected $expected
     }
 
+    "Deprecated aliases" = {
+        $spec = @{
+            options = @{
+                option1 = @{ type = "str"; aliases = "alias1"; deprecated_aliases = @(@{name = "alias1"; version = "2.10"}) }
+                option2 = @{ type = "str"; aliases = "alias2"; deprecated_aliases = @(@{name = "alias2"; version = "2.11"}) }
+                option3 = @{
+                    type = "dict"
+                    options = @{
+                        option1 = @{ type = "str"; aliases = "alias1"; deprecated_aliases = @(@{name = "alias1"; version = "2.10"}) }
+                        option2 = @{ type = "str"; aliases = "alias2"; deprecated_aliases = @(@{name = "alias2"; version = "2.11"}) }
+                    }
+                }
+            }
+        }
+
+        $complex_args = @{
+            alias1 = "alias1"
+            option2 = "option2"
+            option3 = @{
+                option1 = "option1"
+                alias2 = "alias2"
+            }
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            invocation = @{
+                module_args = @{
+                    alias1 = "alias1"
+                    option1 = "alias1"
+                    option2 = "option2"
+                    option3 = @{
+                        option1 = "option1"
+                        option2 = "alias2"
+                        alias2 = "alias2"
+                    }
+                }
+            }
+            deprecations = @(
+                @{
+                    msg = "Alias 'alias1' is deprecated. See the module docs for more information"
+                    version = "2.10"
+                },
+                @{
+                    msg = "Alias 'alias2' is deprecated. See the module docs for more information - found in option3"
+                    version = "2.11"
+                }
+            )
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
     "Required by - single value" = {
         $spec = @{
             options = @{
@@ -1468,8 +1531,9 @@ test_no_log - Invoked with:
         $failed | Assert-Equals -Expected $true
 
         $expected_msg = "internal error: argument spec entry contains an invalid key 'invalid', valid keys: apply_defaults, "
-        $expected_msg += "aliases, choices, default, elements, mutually_exclusive, no_log, options, removed_in_version, "
-        $expected_msg += "required, required_by, required_if, required_one_of, required_together, supports_check_mode, type"
+        $expected_msg += "aliases, choices, default, deprecated_aliases, elements, mutually_exclusive, no_log, options, "
+        $expected_msg += "removed_in_version, required, required_by, required_if, required_one_of, required_together, "
+        $expected_msg += "supports_check_mode, type"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
         $actual.failed | Assert-Equals -Expected $true
@@ -1500,9 +1564,9 @@ test_no_log - Invoked with:
         $failed | Assert-Equals -Expected $true
 
         $expected_msg = "internal error: argument spec entry contains an invalid key 'invalid', valid keys: apply_defaults, "
-        $expected_msg += "aliases, choices, default, elements, mutually_exclusive, no_log, options, removed_in_version, "
-        $expected_msg += "required, required_by, required_if, required_one_of, required_together, supports_check_mode, type - "
-        $expected_msg += "found in option_key -> sub_option_key"
+        $expected_msg += "aliases, choices, default, deprecated_aliases, elements, mutually_exclusive, no_log, options, "
+        $expected_msg += "removed_in_version, required, required_by, required_if, required_one_of, required_together, "
+        $expected_msg += "supports_check_mode, type - found in option_key -> sub_option_key"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
         $actual.failed | Assert-Equals -Expected $true
@@ -1586,6 +1650,73 @@ test_no_log - Invoked with:
         $actual.failed | Assert-Equals -Expected $true
         $actual.msg | Assert-Equals -Expected $expected_msg
         ("exception" -cin $actual.Keys) | Assert-Equals -Expected $true
+    }
+
+    "Invalid deprecated aliases entry - no version" = {
+        $spec = @{
+            options = @{
+                option_key = @{
+                    type = "str"
+                    aliases = ,"alias_name"
+                    deprecated_aliases = @(
+                        @{name = "alias_name"}
+                    )
+                }
+            }
+        }
+
+        $failed = $false
+        try {
+            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 1"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected_msg = "internal error: version is required in a deprecated_aliases entry"
+
+        $actual.Keys.Count | Assert-Equals -Expected 3
+        $actual.failed | Assert-Equals -Expected $true
+        $actual.msg | Assert-Equals -Expected $expected_msg
+        ("exception" -cin $actual.Keys) | Assert-Equals -Expected $true
+    }
+
+    "Invalid deprecated aliases entry - no name (nested)" = {
+        $spec = @{
+            options = @{
+                option_key = @{
+                    type = "dict"
+                    options = @{
+                        sub_option_key = @{
+                            type = "str"
+                            aliases = ,"alias_name"
+                            deprecated_aliases = @(
+                                @{version = "2.10"}
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        $complex_args = @{
+            option_key = @{
+                sub_option_key = "a"
+            }
+        }
+
+        $failed = $false
+        try {
+            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        } catch [System.ArgumentException] {
+            $failed = $true
+            $expected_msg = "name is required in a deprecated_aliases entry - found in option_key"
+            $_.Exception.Message | Assert-Equals -Expected $expected_msg
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
     }
 
     "Spec required and default set at the same time" = {

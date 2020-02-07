@@ -27,13 +27,23 @@
           DefaultActions:
             - Type: forward
               TargetGroupName: "{{ tg_name }}"
+        - Protocol: UDP
+          Port: 13
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_tcpudp_name }}"
+        - Protocol: TCP_UDP
+          Port: 17
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_tcpudp_name }}"
       <<: *aws_connection_info
     register: nlb
 
   - assert:
       that:
         - nlb.changed
-        - nlb.listeners|length == 2
+        - nlb.listeners|length == 4
 
   - name: test idempotence creating NLB with listeners
     elb_network_lb:
@@ -53,10 +63,20 @@
           DefaultActions:
             - Type: forward
               TargetGroupName: "{{ tg_name }}"
+        - Protocol: UDP
+          Port: 13
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_tcpudp_name }}"
+        - Protocol: TCP_UDP
+          Port: 17
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_tcpudp_name }}"
       <<: *aws_connection_info
     register: nlb
 
   - assert:
       that:
         - not nlb.changed
-        - nlb.listeners|length == 2
+        - nlb.listeners|length == 4

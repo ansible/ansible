@@ -172,7 +172,7 @@ resources:
       type: str
     name:
       description:
-      - The ID of the instance or a fully qualified identifier for the instance. .
+      - The ID of the instance or a fully qualified identifier for the instance.
       returned: success
       type: str
     memorySizeGb:

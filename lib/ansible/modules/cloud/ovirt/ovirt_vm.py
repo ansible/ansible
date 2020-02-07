@@ -1241,6 +1241,18 @@ EXAMPLES = '''
     snapshot_name: myvm_snap
     name: myvm_clone
     state: present
+
+- name: Import external ova VM
+  ovirt_vm:
+    cluster: mycluster
+    name: myvm
+    host: myhost
+    timeout: 1800
+    poll_interval: 30
+    kvm:
+      name: myvm
+      url: ova:///path/myvm.ova
+      storage_domain: mystorage
 '''
 
 

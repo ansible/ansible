@@ -1,14 +1,11 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_interface sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: testint="{{ nxos_int1 }}"
 
 - name: "Setup: Enable feature interface-vlan"
   nxos_feature:
     feature: interface-vlan
-    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
@@ -16,7 +13,6 @@
   nxos_config: &intcleanup
     lines:
       - "default interface {{ testint }}"
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup: Remove possibly existing vlan interfaces"
@@ -26,7 +22,6 @@
       - "no interface vlan 710"
       - "no interface vlan 711"
       - "no interface vlan 712"
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -36,7 +31,6 @@
       mode: layer3
       description: 'Configured by Ansible - Layer3'
       admin_state: up
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -58,7 +52,6 @@
       mode: layer2
       description: 'Configured by Ansible - Layer2'
       admin_state: down
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -74,7 +67,6 @@
     nxos_interface: &createvlans
       interface: "{{ item.os_svi_int }}"
       description: "{{ item.os_svi_desc }}"
-      provider: "{{ connection }}"
     with_items: &vlanitems
       - {os_svi_int: vlan2, os_svi_desc: SVI_VLAN2}
       - {os_svi_int: vlan710, os_svi_desc: SVI_VLAN710}
@@ -91,7 +83,6 @@
         - {name: vlan710, ipv4: 192.168.3.1/24}
         - {name: vlan711, ipv4: 192.168.4.1/24}
         - {name: vlan712, ipv4: 192.168.5.1/24}
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -109,7 +100,7 @@
 
   - assert: *false
 
-  rescue:
+  always:
   - name: "Set interface back to default"
     nxos_config: *intcleanup
     ignore_errors: yes
@@ -120,9 +111,7 @@
   - name: "Setup: Disable feature interface-vlan"
     nxos_feature:
       feature: interface-vlan
-      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 
-  always:
   - debug: msg="END connection={{ ansible_connection }} nxos_interface sanity test"

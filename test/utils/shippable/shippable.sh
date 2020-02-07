@@ -73,15 +73,25 @@ find lib/ansible/modules -type d -empty -print -delete
 
 function cleanup
 {
+    # for complete on-demand coverage generate a report for all files with no coverage on the "sanity/5" job so we only have one copy
+    if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "sanity/5" ]; then
+        stub="--stub"
+        # trigger coverage reporting for stubs even if no other coverage data exists
+        mkdir -p test/results/coverage/
+    else
+        stub=""
+    fi
+
     if [ -d test/results/coverage/ ]; then
         if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
-            # for complete on-demand coverage generate a report for all files with no coverage on the "other" job so we only have one copy
-            if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "sanity/1" ]; then
-                stub="--stub"
-            else
-                stub=""
-            fi
+            process_coverage='yes'  # process existing coverage files
+        elif [ "${stub}" ]; then
+            process_coverage='yes'  # process coverage when stubs are enabled
+        else
+            process_coverage=''
+        fi
 
+        if [ "${process_coverage}" ]; then
             # use python 3.7 for coverage to avoid running out of memory during coverage xml processing
             # only use it for coverage to avoid the additional overhead of setting up a virtual environment for a potential no-op job
             virtualenv --python /usr/bin/python3.7 ~/ansible-venv
@@ -92,6 +102,9 @@ function cleanup
             # shellcheck disable=SC2086
             ansible-test coverage xml --color -v --requirements --group-by command --group-by version ${stub:+"$stub"}
             cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
+
+            # analyze and capture code coverage aggregated by integration test target
+            ansible-test coverage analyze targets generate -v shippable/testresults/coverage-analyze-targets.json
 
             # upload coverage report to codecov.io only when using complete on-demand coverage
             if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ]; then

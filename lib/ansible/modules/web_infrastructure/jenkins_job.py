@@ -20,7 +20,6 @@ description:
     - Manage Jenkins jobs by using Jenkins REST API.
 requirements:
   - "python-jenkins >= 0.4.12"
-  - "lxml >= 3.3.3"
 version_added: "2.2"
 author: "Sergio Millan Rodriguez (@sermilrod)"
 options:
@@ -147,6 +146,7 @@ url:
 '''
 
 import traceback
+import xml.etree.ElementTree as ET
 
 JENKINS_IMP_ERR = None
 try:
@@ -155,14 +155,6 @@ try:
 except ImportError:
     JENKINS_IMP_ERR = traceback.format_exc()
     python_jenkins_installed = False
-
-LXML_IMP_ERR = None
-try:
-    from lxml import etree as ET
-    python_lxml_installed = True
-except ImportError:
-    LXML_IMP_ERR = traceback.format_exc()
-    python_lxml_installed = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
@@ -216,7 +208,7 @@ class JenkinsJob:
             if "color" not in response:
                 return self.EXCL_STATE
             else:
-                return response['color'].encode('utf-8')
+                return to_native(response['color'])
 
         except Exception as e:
             self.module.fail_json(msg='Unable to fetch job information, %s' % to_native(e), exception=traceback.format_exc())
@@ -334,14 +326,9 @@ def test_dependencies(module):
                                      url="https://python-jenkins.readthedocs.io/en/latest/install.html"),
             exception=JENKINS_IMP_ERR)
 
-    if not python_lxml_installed:
-        module.fail_json(
-            msg=missing_required_lib("lxml", url="https://lxml.de/installation.html"),
-            exception=LXML_IMP_ERR)
-
 
 def job_config_to_string(xml_str):
-    return ET.tostring(ET.fromstring(xml_str))
+    return ET.tostring(ET.fromstring(xml_str)).decode('ascii')
 
 
 def main():

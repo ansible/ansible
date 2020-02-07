@@ -8,6 +8,24 @@ git_archive_extensions:
     - tar
     - zip
 
+git_required_packages:
+  default:
+    - git
+    - gzip
+    - tar
+    - unzip
+    - zip
+  FreeBSD:
+    - git
+    - gzip
+    - unzip
+    - zip
+
+git_list_commands:
+  tar.gz: tar -tf
+  tar: tar -tf
+  tgz: tar -tf
+  zip: unzip -Z1
 
 checkout_dir: '{{ output_dir }}/git'
 repo_dir: '{{ output_dir }}/local_repos'

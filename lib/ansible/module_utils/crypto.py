@@ -166,25 +166,53 @@ def get_fingerprint_of_bytes(source):
     return fingerprint
 
 
-def get_fingerprint(path, passphrase=None):
+def get_fingerprint(path, passphrase=None, content=None, backend='pyopenssl'):
     """Generate the fingerprint of the public key. """
 
-    privatekey = load_privatekey(path, passphrase, check_passphrase=False)
-    try:
-        publickey = crypto.dump_publickey(crypto.FILETYPE_ASN1, privatekey)
-    except AttributeError:
-        # If PyOpenSSL < 16.0 crypto.dump_publickey() will fail.
+    privatekey = load_privatekey(path, passphrase=passphrase, content=content, check_passphrase=False, backend=backend)
+
+    if backend == 'pyopenssl':
         try:
-            bio = crypto._new_mem_buf()
-            rc = crypto._lib.i2d_PUBKEY_bio(bio, privatekey._pkey)
-            if rc != 1:
-                crypto._raise_current_error()
-            publickey = crypto._bio_to_string(bio)
+            publickey = crypto.dump_publickey(crypto.FILETYPE_ASN1, privatekey)
         except AttributeError:
-            # By doing this we prevent the code from raising an error
-            # yet we return no value in the fingerprint hash.
-            return None
+            # If PyOpenSSL < 16.0 crypto.dump_publickey() will fail.
+            try:
+                bio = crypto._new_mem_buf()
+                rc = crypto._lib.i2d_PUBKEY_bio(bio, privatekey._pkey)
+                if rc != 1:
+                    crypto._raise_current_error()
+                publickey = crypto._bio_to_string(bio)
+            except AttributeError:
+                # By doing this we prevent the code from raising an error
+                # yet we return no value in the fingerprint hash.
+                return None
+    elif backend == 'cryptography':
+        publickey = privatekey.public_key().public_bytes(
+            serialization.Encoding.DER,
+            serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
     return get_fingerprint_of_bytes(publickey)
+
+
+def load_file_if_exists(path, module=None, ignore_errors=False):
+    try:
+        with open(path, 'rb') as f:
+            return f.read()
+    except EnvironmentError as exc:
+        if exc.errno == errno.ENOENT:
+            return None
+        if ignore_errors:
+            return None
+        if module is None:
+            raise
+        module.fail_json('Error while loading {0} - {1}'.format(path, str(exc)))
+    except Exception as exc:
+        if ignore_errors:
+            return None
+        if module is None:
+            raise
+        module.fail_json('Error while loading {0} - {1}'.format(path, str(exc)))
 
 
 def load_privatekey(path, passphrase=None, check_passphrase=True, content=None, backend='pyopenssl'):
@@ -252,12 +280,15 @@ def load_privatekey(path, passphrase=None, check_passphrase=True, content=None, 
         raise OpenSSLObjectError(exc)
 
 
-def load_certificate(path, backend='pyopenssl'):
+def load_certificate(path, content=None, backend='pyopenssl'):
     """Load the specified certificate."""
 
     try:
-        with open(path, 'rb') as cert_fh:
-            cert_content = cert_fh.read()
+        if content is None:
+            with open(path, 'rb') as cert_fh:
+                cert_content = cert_fh.read()
+        else:
+            cert_content = content
         if backend == 'pyopenssl':
             return crypto.load_certificate(crypto.FILETYPE_PEM, cert_content)
         elif backend == 'cryptography':
@@ -266,11 +297,14 @@ def load_certificate(path, backend='pyopenssl'):
         raise OpenSSLObjectError(exc)
 
 
-def load_certificate_request(path, backend='pyopenssl'):
+def load_certificate_request(path, content=None, backend='pyopenssl'):
     """Load the specified certificate signing request."""
     try:
-        with open(path, 'rb') as csr_fh:
-            csr_content = csr_fh.read()
+        if content is None:
+            with open(path, 'rb') as csr_fh:
+                csr_content = csr_fh.read()
+        else:
+            csr_content = content
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
     if backend == 'pyopenssl':

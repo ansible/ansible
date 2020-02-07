@@ -12,13 +12,13 @@ from .config import (
     TestConfig,
 )
 
+from .io import (
+    write_text_file,
+)
+
 from .util import (
     COVERAGE_CONFIG_NAME,
     remove_tree,
-)
-
-from .util_common import (
-    write_text_file,
 )
 
 from .data import (
