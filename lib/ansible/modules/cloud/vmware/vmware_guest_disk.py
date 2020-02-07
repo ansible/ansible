@@ -191,7 +191,7 @@ EXAMPLES = '''
       - filename: "[datastore1] path/to/existing/disk.vmdk"
   delegate_to: localhost
   register: disk_facts
-  
+
 - name: Add disks with specified shares to the virtual machine
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -212,7 +212,7 @@ EXAMPLES = '''
           level_value: 1300
   delegate_to: localhost
   register: test_custom_shares
-  
+
 - name: create new disk with custom IO limits and shares in IO Limits
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -235,7 +235,7 @@ EXAMPLES = '''
               level_value: 1305
   delegate_to: localhost
   register: test_custom_IoLimit_shares
-  
+
 - name: Remove disks from virtual machine using name
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -250,7 +250,7 @@ EXAMPLES = '''
         unit_number: 1
   delegate_to: localhost
   register: disk_facts
-  
+
 - name: Remove disk from virtual machine using moid
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -265,7 +265,7 @@ EXAMPLES = '''
         unit_number: 1
   delegate_to: localhost
   register: disk_facts
-  
+
 - name: Remove disk from virtual machine but keep the VMDK file on the datastore
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
