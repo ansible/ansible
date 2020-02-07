@@ -46,6 +46,7 @@ options:
             - The VLAN ID that should be configured with the portgroup, use 0 for no VLAN.
             - 'If C(vlan_trunk) is configured to be I(true), this can be a combination of multiple ranges and numbers, example: 1-200, 205, 400-4094.'
             - The valid C(vlan_id) range is from 0 to 4094. Overlapping ranges are allowed.
+            - 'If C(vlan_private) is configured to be I(true), the corresponding private VLAN should already be configured in the distributed vSwitch.'
         required: True
         type: str
     num_ports:
@@ -74,10 +75,19 @@ options:
     vlan_trunk:
         description:
             - Indicates whether this is a VLAN trunk or not.
+            - Mutually exclusive with C(vlan_private) parameter.
         required: False
         default: False
         type: bool
         version_added: '2.5'
+    vlan_private:
+        description:
+            - Indicates whether this is for a private VLAN or not.
+            - Mutually exclusive with C(vlan_trunk) parameter.
+        required: False
+        default: False
+        type: bool
+        version_added: '2.10'
     network_policy:
         description:
             - Dictionary which configures the different security values for portgroup.
@@ -170,6 +180,20 @@ EXAMPLES = '''
     switch_name: dvSwitch
     vlan_id: 1-1000, 1005, 1100-1200
     vlan_trunk: True
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+  delegate_to: localhost
+
+- name: Create private vlan portgroup
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: private-vlan-portrgoup
+    switch_name: dvSwitch
+    vlan_id: 1001
+    vlan_private: True
     num_ports: 120
     portgroup_type: earlyBinding
     state: present
@@ -275,6 +299,16 @@ class VMwareDvsPortgroup(PyVmomi):
         if self.module.params['vlan_trunk']:
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec()
             config.defaultPortConfig.vlan.vlanId = list(map(lambda x: vim.NumericRange(start=x[0], end=x[1]), self.create_vlan_list()))
+        elif self.module.params['vlan_private']:
+            # Check that private VLAN exists in dvs
+            if self.module.params['vlan_private']:
+                pvlan_exists = self.check_dvs_pvlan()
+                if not pvlan_exists:
+                    self.module.fail_json(msg="No private vlan with id %s in distributed vSwitch %s"
+                                          % (self.module.params['vlan_id'], self.module.params['switch_name']))
+
+            config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.PvlanSpec()
+            config.defaultPortConfig.vlan.pvlanId = int(self.module.params['vlan_id'])
         else:
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec()
             config.defaultPortConfig.vlan.vlanId = int(self.module.params['vlan_id'])
@@ -373,6 +407,14 @@ class VMwareDvsPortgroup(PyVmomi):
             changed, result = self.create_port_group()
         self.module.exit_json(changed=changed, result=str(result))
 
+    def check_dvs_pvlan(self):
+        for pvlan in self.dv_switch.config.pvlanConfig:
+            if pvlan.primaryVlanId == int(self.module.params['vlan_id']):
+                return True
+            if pvlan.secondaryVlanId == int(self.module.params['vlan_id']):
+                return True
+        return False
+
     def check_dvspg_state(self):
         self.dv_switch = find_dvs_by_name(self.content, self.module.params['switch_name'])
 
@@ -394,6 +436,11 @@ class VMwareDvsPortgroup(PyVmomi):
             if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec):
                 return 'update'
             if map(lambda x: (x.start, x.end), defaultPortConfig.vlan.vlanId) != self.create_vlan_list():
+                return 'update'
+        elif self.module.params['vlan_private']:
+            if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.PvlanSpec):
+                return 'update'
+            if defaultPortConfig.vlan.pvlanId != int(self.module.params['vlan_id']):
                 return 'update'
         else:
             if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec):
@@ -447,6 +494,7 @@ def main():
             portgroup_type=dict(required=True, choices=['earlyBinding', 'lateBinding', 'ephemeral'], type='str'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             vlan_trunk=dict(type='bool', default=False),
+            vlan_private=dict(type='bool', default=False),
             network_policy=dict(
                 type='dict',
                 options=dict(
@@ -517,6 +565,9 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=[
+                               ['vlan_trunk', 'vlan_private']
+                           ],
                            supports_check_mode=True)
 
     vmware_dvs_portgroup = VMwareDvsPortgroup(module)
