@@ -121,18 +121,18 @@ def test_execute_list_collection_all(mocker, capsys, mock_collection_objects):
     assert out_lines[1] == '# /root/.ansible/collections/ansible_collections'
     assert out_lines[2] == 'Collection        Version'
     assert out_lines[3] == '----------------- -------'
-    assert out_lines[4] == 'sandwiches.ham    1.0.0'
-    assert out_lines[5] == 'sandwiches.pbj    1.0.0'
-    assert out_lines[6] == 'sandwiches.pbj    1.5.0'
-    assert out_lines[7] == 'sandwiches.reuben 2.5.0'
+    assert out_lines[4] == 'sandwiches.ham    1.0.0  '
+    assert out_lines[5] == 'sandwiches.pbj    1.0.0  '
+    assert out_lines[6] == 'sandwiches.pbj    1.5.0  '
+    assert out_lines[7] == 'sandwiches.reuben 2.5.0  '
     assert out_lines[8] == ''
     assert out_lines[9] == '# /usr/share/ansible/collections/ansible_collections'
     assert out_lines[10] == 'Collection        Version'
     assert out_lines[11] == '----------------- -------'
-    assert out_lines[12] == 'sandwiches.ham    1.0.0'
-    assert out_lines[13] == 'sandwiches.pbj    1.0.0'
-    assert out_lines[14] == 'sandwiches.pbj    1.5.0'
-    assert out_lines[15] == 'sandwiches.reuben 2.5.0'
+    assert out_lines[12] == 'sandwiches.ham    1.0.0  '
+    assert out_lines[13] == 'sandwiches.pbj    1.0.0  '
+    assert out_lines[14] == 'sandwiches.pbj    1.5.0  '
+    assert out_lines[15] == 'sandwiches.reuben 2.5.0  '
 
 
 def test_execute_list_collection_specific(mocker, capsys, mock_collection_objects):
@@ -156,7 +156,7 @@ def test_execute_list_collection_specific(mocker, capsys, mock_collection_object
     assert out_lines[1] == '# /root/.ansible/collections/ansible_collections'
     assert out_lines[2] == 'Collection     Version'
     assert out_lines[3] == '-------------- -------'
-    assert out_lines[4] == 'sandwiches.ham 1.0.0'
+    assert out_lines[4] == 'sandwiches.ham 1.0.0  '
 
 
 def test_execute_list_collection_specific_invalid_fqcn(capsys, mock_collection_objects):

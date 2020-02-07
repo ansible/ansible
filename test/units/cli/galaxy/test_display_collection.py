@@ -12,27 +12,36 @@ from ansible.cli.galaxy import _display_collection
 
 @pytest.fixture
 def collection_object(mocker):
-    cobj = mocker.MagicMock(latest_version='1.5.0')
-    cobj.__str__.return_value = 'sandwiches.ham'
-    return cobj
+    def _cobj(fqcn='sandwiches.ham'):
+        cobj = mocker.MagicMock(latest_version='1.5.0')
+        cobj.__str__.return_value = fqcn
+        return cobj
+    return _cobj
 
 
 def test_display_collection(capsys, collection_object):
-    _display_collection(collection_object)
+    _display_collection(collection_object())
     out, err = capsys.readouterr()
 
-    assert out == 'sandwiches.ham                             1.5.0                 \n'
+    assert out == 'sandwiches.ham 1.5.0  \n'
 
 
-def test_display_collections_small_widths(capsys, collection_object):
-    _display_collection(collection_object, 1, 1)
+def test_display_collections_small_max_widths(capsys, collection_object):
+    _display_collection(collection_object(), 1, 1)
     out, err = capsys.readouterr()
 
-    assert out == 'sandwiches.ham 1.5.0\n'
+    assert out == 'sandwiches.ham 1.5.0  \n'
 
 
-def test_display_collections_large_widths(capsys, collection_object):
-    _display_collection(collection_object, 15, 20)
+def test_display_collections_large_max_widths(capsys, collection_object):
+    _display_collection(collection_object(), 20, 20)
     out, err = capsys.readouterr()
 
-    assert out == 'sandwiches.ham  1.5.0               \n'
+    assert out == 'sandwiches.ham       1.5.0               \n'
+
+
+def test_display_collection_small_minimum_widths(capsys, collection_object):
+    _display_collection(collection_object('a.b'), min_cwidth=0, min_vwidth=0)
+    out, err = capsys.readouterr()
+
+    assert out == 'a.b        1.5.0  \n'

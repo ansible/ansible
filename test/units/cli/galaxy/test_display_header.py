@@ -15,8 +15,8 @@ def test_display_header_default(capsys):
 
     assert out_lines[0] == ''
     assert out_lines[1] == '# /collections/path'
-    assert out_lines[2] == 'h1                                         h2                    '
-    assert out_lines[3] == '------------------------------------------ ----------------------'
+    assert out_lines[2] == 'h1         h2     '
+    assert out_lines[3] == '---------- -------'
 
 
 def test_display_header_widths(capsys):

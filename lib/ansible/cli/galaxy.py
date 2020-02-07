@@ -48,7 +48,7 @@ display = Display()
 urlparse = six.moves.urllib.parse.urlparse
 
 
-def _display_header(path, h1, h2, w1=42, w2=22):
+def _display_header(path, h1, h2, w1=10, w2=7):
     display.display('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
         path,
         h1,
@@ -70,13 +70,13 @@ def _display_role(gr):
     display.display("- %s, %s" % (gr.name, version))
 
 
-def _display_collection(collection, cwidth=42, vwidth=22):
+def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7):
     display.display('{fqcn:{cwidth}} {version:{vwidth}}'.format(
         fqcn=to_text(collection),
         version=collection.latest_version,
-        cwidth=cwidth,
-        vwidth=vwidth)
-    )
+        cwidth=max(cwidth, min_cwidth),  # Make sure the width isn't smaller than the header
+        vwidth=max(vwidth, min_vwidth)
+    ))
 
 
 def _get_collection_widths(collections):
