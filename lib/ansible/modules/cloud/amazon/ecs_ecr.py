@@ -181,7 +181,7 @@ import traceback
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass  # Taken care of by ec2.HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, boto_exception, ec2_argument_spec,
@@ -530,9 +530,6 @@ def main():
             'The alias "delete_policy" has been deprecated and will be removed, '
             'use "purge_policy" instead',
             version='2.14')
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     ecr = EcsEcr(module)
     passed, result = run(ecr, module.params)

@@ -69,7 +69,7 @@ from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, camel_di
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass  # will be detected by imported HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
 
 def main():
@@ -83,9 +83,6 @@ def main():
     module = AnsibleAWSModule(argument_spec=argument_spec)
     if module._name == 'aws_region_facts':
         module.deprecate("The 'aws_region_facts' module has been renamed to 'aws_region_info'", version='2.13')
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = boto3_conn(

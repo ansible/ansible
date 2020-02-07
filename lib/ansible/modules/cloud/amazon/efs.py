@@ -242,7 +242,7 @@ import traceback
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError as e:
-    pass  # Taken care of by ec2.HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils._text import to_native
@@ -728,8 +728,6 @@ def main():
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = EFSConnection(module, region, **aws_connect_params)

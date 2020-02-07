@@ -126,7 +126,7 @@ import traceback
 try:
     from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
 except ImportError:
-    pass  # Handled by HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
 # ---------------------------------------------------------------------------------------------------
 #
@@ -318,10 +318,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True
     )
-
-    # validate dependencies
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required for this module.')
 
     aws = AWSConnection(module, ['batch'])
 

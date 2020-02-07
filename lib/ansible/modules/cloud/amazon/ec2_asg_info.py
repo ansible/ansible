@@ -225,7 +225,7 @@ import re
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (get_aws_connection_info, boto3_conn, ec2_argument_spec,
@@ -400,9 +400,6 @@ def main():
     module = AnsibleAWSModule(argument_spec=argument_spec)
     if module._name == 'ec2_asg_facts':
         module.deprecate("The 'ec2_asg_facts' module has been renamed to 'ec2_asg_info'", version='2.13')
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     asg_name = module.params.get('name')
     asg_tags = module.params.get('tags')

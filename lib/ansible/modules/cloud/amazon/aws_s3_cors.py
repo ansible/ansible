@@ -99,8 +99,7 @@ rules:
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except Exception:
-    # handled by HAS_BOTO3 check in main
-    pass
+    pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 import traceback
@@ -179,9 +178,6 @@ def main():
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     client = boto3_conn(module, conn_type='client', resource='s3',

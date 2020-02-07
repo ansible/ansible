@@ -285,7 +285,7 @@ import traceback
 try:
     from botocore.exception import ClientError
 except ImportError:
-    pass  # will be picked up from imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
@@ -348,9 +348,6 @@ def main():
 
     cluster_identifier = module.params.get('cluster_identifier')
     cluster_tags = module.params.get('tags')
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
