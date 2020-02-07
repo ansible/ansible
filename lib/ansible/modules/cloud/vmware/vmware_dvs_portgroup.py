@@ -305,7 +305,7 @@ class VMwareDvsPortgroup(PyVmomi):
                 pvlan_exists = self.check_dvs_pvlan()
                 if not pvlan_exists:
                     self.module.fail_json(msg="No private vlan with id %s in distributed vSwitch %s"
-                                           % (self.module.params['vlan_id'], self.module.params['switch_name']))
+                                          % (self.module.params['vlan_id'], self.module.params['switch_name']))
 
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.PvlanSpec()
             config.defaultPortConfig.vlan.pvlanId = int(self.module.params['vlan_id'])
