@@ -18,21 +18,12 @@
 # Make sure we start fresh
 
 # Need unzip for unarchive module, and zip for archive creation.
-- name: Ensure zip and unzip is present to create test archive (yum)
-  yum: name=zip,unzip state=latest
-  when: ansible_pkg_mgr  ==  'yum'
-
-- name: Ensure zip is present to create test archive (dnf)
-  dnf: name=zip state=latest
-  when: ansible_pkg_mgr  ==  'dnf'
-
-- name: Ensure zip & unzip is present to create test archive (apt)
-  apt: name=zip,unzip state=latest
-  when: ansible_pkg_mgr  ==  'apt'
-
-- name: Ensure zip & unzip is present to create test archive (pkg)
-  pkgng: name=zip,unzip state=present
-  when: ansible_pkg_mgr  ==  'pkgng'
+- name: Ensure zip & unzip are present
+  package:
+    name:
+      - zip
+      - unzip
+  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
 
 - name: prep our file
   copy: src=foo.txt dest={{remote_tmp_dir}}/foo-unarchive.txt
