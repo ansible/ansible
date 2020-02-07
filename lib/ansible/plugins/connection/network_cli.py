@@ -15,6 +15,8 @@ description:
     SSH and implements a CLI shell.  This connection plugin is typically used by
     network devices for sending and receiving CLi commands to network devices.
 version_added: "2.3"
+requirements:
+  - paramiko
 options:
   host:
     description:
@@ -36,6 +38,13 @@ options:
       - name: ANSIBLE_REMOTE_PORT
     vars:
       - name: ansible_port
+  network_os:
+    description:
+      - Configures the device platform network operating system.  This value is
+        used to load the correct terminal and cliconf plugins to communicate
+        with the remote device.
+    vars:
+      - name: ansible_network_os
   remote_user:
     description:
       - The username used to authenticate to the remote device when the SSH
@@ -57,6 +66,14 @@ options:
       - name: ansible_password
       - name: ansible_ssh_pass
       - name: ansible_ssh_password
+  proxy_command:
+    default: ''
+    description:
+        - Proxy information for running the connection via a jumphost
+        - Also this plugin will scan 'ssh_args', 'ssh_extra_args' and 'ssh_common_args' from the 'ssh' plugin settings for proxy information if set.
+    env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
+    ini:
+      - {key: proxy_command, section: paramiko_connection}
   private_key_file:
     description:
       - The private SSH key or certificate file used to authenticate to the
@@ -86,19 +103,14 @@ options:
       - name: ANSIBLE_HOST_KEY_AUTO_ADD
   look_for_keys:
     default: True
-    description: 'TODO: write it'
-    env: [{name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS}]
-    ini:
-    - {key: look_for_keys, section: paramiko_connection}
-    type: boolean
-  proxy_command:
-    default: ''
     description:
-        - Proxy information for running the connection via a jumphost
-        - Also this plugin will scan 'ssh_args', 'ssh_extra_args' and 'ssh_common_args' from the 'ssh' plugin settings for proxy information if set.
-    env: [{name: ANSIBLE_PARAMIKO_PROXY_COMMAND}]
+      -  Enables looking for ssh keys in the usual locations for ssh keys (e.g. :file:`~/.ssh/id_*`).
+    env:
+      - name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS
     ini:
-      - {key: proxy_command, section: paramiko_connection}
+      - section: paramiko_connection
+        key: look_for_keys
+    type: boolean
   record_host_keys:
     default: True
     description: 'TODO: write it'
@@ -130,13 +142,6 @@ options:
         version_added: '2.5'
       - name: ansible_paramiko_host_key_checking
         version_added: '2.5'
-  network_os:
-    description:
-      - Configures the device platform network operating system.  This value is
-        used to load the correct terminal and cliconf plugins to communicate
-        with the remote device.
-    vars:
-      - name: ansible_network_os
   become:
     type: boolean
     description:
