@@ -953,7 +953,9 @@ files:
   $modules/network/f5/bigiq_utility_license.py:
     migrated_to: f5networks.f5_modules
   $modules/network/files/: $team_networking
-  $modules/network/fortios/: bjolivot
+  $modules/network/fortios/:
+    maintainers: bjolivot
+    migrated_to: fortinet.fortios
   $modules/network/fortimanager/: $team_fortimanager
   $modules/network/ftd/: &ftd
     keywords: [ firepower, ftd ]
@@ -1626,11 +1628,13 @@ files:
       - f5
   $module_utils/network/fortios:
     maintainers: bjolivot
+    migrated_to: fortinet.fortios
   $module_utils/network/fortimanager:
     maintainers: $team_fortimanager
     labels:
       - fortimanager
       - networking
+    migrated_to: fortinet.fortios
   $module_utils/network/ftd: *ftd
   $module_utils/network/ios:
     <<: *ios
@@ -2016,6 +2020,8 @@ files:
   $plugins/doc_fragments/docker.py:
     <<: *docker
     support: community
+  $plugins/doc_fragments/fortios.py:
+    migrated_to: fortinet.fortios
   $plugins/doc_fragments/gcp.py:
     support: community
     supershipit: $team_google
@@ -2076,6 +2082,8 @@ files:
     maintainers: $team_networking
     labels: networking
   $plugins/httpapi/ftd.py: *ftd
+  $plugins/httpapi/fortios.py:
+    migrated_to: fortinet.fortios
   $plugins/httpapi/exos.py:
     maintainers: $team_extreme
   $plugins/httpapi/splunk.py:
