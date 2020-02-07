@@ -22,4 +22,3 @@
                 direction: in
     state: merged
   become: yes
-

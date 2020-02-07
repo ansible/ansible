@@ -6,4 +6,3 @@
       - name: "{{ Interfaces['int2'] }}"
     state: deleted
   become: yes
-

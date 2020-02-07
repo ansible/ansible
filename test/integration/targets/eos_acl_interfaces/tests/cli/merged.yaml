@@ -49,4 +49,3 @@
 
   always:
     - include_tasks: _remove_config.yaml
-

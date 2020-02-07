@@ -9,6 +9,11 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 import re
 from copy import deepcopy
 
@@ -94,7 +99,7 @@ class Acl_interfacesFacts(object):
                 continue
             access_group = utils.parse_conf_arg(line, 'ip access-group')
             # This module was verified on an ios device since vEOS doesnot support
-            # acl_interfaces cnfiguration. In ios, ipv6 acl is configured as 
+            # acl_interfaces cnfiguration. In ios, ipv6 acl is configured as
             # traffic-filter and in eos it is access-group
 
             # access_group_v6 = utils.parse_conf_arg(line, 'ipv6 traffic-filter')
@@ -106,7 +111,7 @@ class Acl_interfacesFacts(object):
         if access_group_list:
             for acl in access_group_list:
                 a_name = acl.split()[0]
-                a_dir = acl.split()[1] 
+                a_dir = acl.split()[1]
                 acls_dict = {"name": a_name, "direction": a_dir}
                 acls_list.append(acls_dict)
             group_dict = {"afi": "ipv4", "acls": acls_list}
@@ -117,7 +122,7 @@ class Acl_interfacesFacts(object):
         if access_group_v6_list:
             for acl in access_group_v6_list:
                 a_name = acl.split()[0]
-                a_dir = acl.split()[1] 
+                a_dir = acl.split()[1]
                 acls_dict = {"name": a_name, "direction": a_dir}
                 acls_list.append(acls_dict)
             group_dict = {"acls": acls_list, "afi": "ipv6"}

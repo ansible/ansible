@@ -14,7 +14,8 @@ created
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re,itertools
+import re
+import itertools
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, dict_diff, search_obj_in_list
@@ -159,9 +160,9 @@ class Acl_interfaces(ConfigBase):
                         commands.append(remove_commands(to_delete, w['name']))
                     diff = self.get_acl_diff(w, obj_in_have)
                     if diff[0]:
-                        diff_access_group.append({'afi': 'ipv4' , 'acls': diff[0]})
+                        diff_access_group.append({'afi': 'ipv4', 'acls': diff[0]})
                     if diff[1]:
-                        diff_access_group.append({'afi': 'ipv6' , 'acls': diff[1]})
+                        diff_access_group.append({'afi': 'ipv6', 'acls': diff[1]})
                     if diff_access_group:
                         commands.append(add_commands(diff_access_group, w['name']))
             if commands:
@@ -201,9 +202,9 @@ class Acl_interfaces(ConfigBase):
                         commands.append(remove_commands(to_delete, w['name']))
                     diff = self.get_acl_diff(w, obj_in_have)
                     if diff[0]:
-                        diff_access_group.append({'afi': 'ipv4' , 'acls': diff[0]})
+                        diff_access_group.append({'afi': 'ipv4', 'acls': diff[0]})
                     if diff[1]:
-                        diff_access_group.append({'afi': 'ipv6' , 'acls': diff[1]})
+                        diff_access_group.append({'afi': 'ipv6', 'acls': diff[1]})
                     if diff_access_group:
                         commands.append(add_commands(diff_access_group, w['name']))
             if commands:
@@ -223,7 +224,7 @@ class Acl_interfaces(ConfigBase):
                 commands = list(itertools.chain(*commands))
                 commandset.append(intf_command)
                 commandset.append(commands)
-                
+
         if commandset:
             commandset = list(itertools.chain(*commandset))
 
@@ -247,9 +248,9 @@ class Acl_interfaces(ConfigBase):
                 if 'access_groups' in obj_in_have.keys():
                     diff = self.get_acl_diff(w, obj_in_have)
                     if diff[0]:
-                        diff_access_group.append({'afi': 'ipv4' , 'acls': diff[0]})
+                        diff_access_group.append({'afi': 'ipv4', 'acls': diff[0]})
                     if diff[1]:
-                        diff_access_group.append({'afi': 'ipv6' , 'acls': diff[1]})
+                        diff_access_group.append({'afi': 'ipv6', 'acls': diff[1]})
                     if diff_access_group:
                         commands = add_commands(diff_access_group, w['name'])
                 else:
@@ -261,8 +262,6 @@ class Acl_interfaces(ConfigBase):
         if commandset:
             commandset = list(itertools.chain(*commandset))
         return commandset
-
-
 
     def _state_deleted(self, want, have):
         """ The command generator when state is deleted
@@ -277,7 +276,7 @@ class Acl_interfaces(ConfigBase):
             intf_command = ["interface " + w['name']]
             obj_in_have = search_obj_in_list(w['name'], have, 'name')
             if 'access_groups' not in w.keys() or not w['access_groups']:
-                commands = remove_commands(obj_in_have , w['name'])
+                commands = remove_commands(obj_in_have, w['name'])
             if w['access_groups']:
                 for w_grp in w['access_groups']:
                     if 'acls' not in w_grp.keys() or not w_grp['acls']:
@@ -298,15 +297,14 @@ class Acl_interfaces(ConfigBase):
                         if commands:
                             commands = list(itertools.chain(*commands))
             if commands:
-                #commands = list(itertools.chain(*commands))
                 commandset.append(intf_command)
                 commandset.append(commands)
-                    
+
         if commandset:
             commandset = list(itertools.chain(*commandset))
         return commandset
 
-    def get_acl_diff(self, w, h, intersection = False):
+    def get_acl_diff(self, w, h, intersection=False):
         diff_v4 = []
         diff_v6 = []
         w_acls_v4 = []
@@ -315,7 +313,7 @@ class Acl_interfaces(ConfigBase):
         h_acls_v6 = []
         for w_group in w['access_groups']:
             if w_group['afi'] == 'ipv4':
-                w_acls_v4 =  w_group['acls']
+                w_acls_v4 = w_group['acls']
             if w_group['afi'] == 'ipv6':
                 w_acls_v6 = w_group['acls']
         for h_group in h['access_groups']:
@@ -347,7 +345,7 @@ class Acl_interfaces(ConfigBase):
             else:
                 if not intersection:
                     diff_v6.append(item)
-        return diff_v4,diff_v6
+        return diff_v4, diff_v6
 
     def get_acls_from_afi(self, interface, afi, have):
         config = []
@@ -360,13 +358,14 @@ class Acl_interfaces(ConfigBase):
                         if h_grp['afi'] == afi:
                             config = h_grp['acls']
         return config
-            
+
+
 def add_commands(want, interface):
     commands = []
 
     for w in want:
         # This module was verified on an ios device since vEOS doesnot support
-        # acl_interfaces cnfiguration. In ios, ipv6 acl is configured as 
+        # acl_interfaces cnfiguration. In ios, ipv6 acl is configured as
         # traffic-filter and in eos it is access-group
 
         # a_cmd = "traffic-filter" if w['afi'] == 'ipv6' else "access-group"
@@ -377,13 +376,14 @@ def add_commands(want, interface):
                 commands.append(afi  + " " + a_cmd + " " + acl['name'] + " " + acl['direction'])
     return commands
 
+
 def remove_commands(want, interface):
     commands = []
     if 'access_groups' not in want.keys() or not want['access_groups']:
         return commands
     for w in want['access_groups']:
         # This module was verified on an ios device since vEOS doesnot support
-        # acl_interfaces cnfiguration. In ios, ipv6 acl is configured as 
+        # acl_interfaces cnfiguration. In ios, ipv6 acl is configured as
         # traffic-filter and in eos it is access-group
 
         # a_cmd = "traffic-filter" if w['afi'] == 'ipv6' else "access-group"
@@ -395,4 +395,3 @@ def remove_commands(want, interface):
             for acl in w['acls']:
                 commands.append("no " + afi  + " " + a_cmd + " " + acl['name'] + " " + acl['direction'])
     return commands
-
