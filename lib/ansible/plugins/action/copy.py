@@ -37,12 +37,9 @@ from ansible.utils.hashing import checksum
 
 
 # Supplement the FILE_COMMON_ARGUMENTS with arguments that are specific to file
-# FILE_COMMON_ARGUMENTS contains things that are not arguments of file so remove those as well
 REAL_FILE_ARGS = frozenset(FILE_COMMON_ARGUMENTS.keys()).union(
                           ('state', 'path', '_original_basename', 'recurse', 'force',
-                           '_diff_peek', 'src')).difference(
-                          ('content', 'decrypt', 'backup', 'remote_src', 'regexp', 'delimiter',
-                           'directory_mode', 'unsafe_writes'))
+                           '_diff_peek', 'src'))
 
 
 def _create_remote_file_args(module_args):
