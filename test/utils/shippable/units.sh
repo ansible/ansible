@@ -53,8 +53,8 @@ for network in "${networks[@]}"; do
 done
 
 case "${group}" in
-    1) options=("${group1[@]}") ;;
-    2) options=("${group2[@]}") ;;
+    1) options=("${group1[@]:+${group1[@]}}") ;;
+    2) options=("${group2[@]:+${group2[@]}}") ;;
 esac
 
 if [ ${#options[@]} -eq 0 ] && [ "${group}" -eq 2 ]; then
@@ -67,4 +67,4 @@ ansible-test env --timeout "${timeout}" --color -v
 
 # shellcheck disable=SC2086
 ansible-test units --color -v --docker default --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
-    "${options[@]}" \
+    "${options[@]:+${options[@]}}" \
