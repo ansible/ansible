@@ -191,6 +191,7 @@ EXAMPLES = '''
       - filename: "[datastore1] path/to/existing/disk.vmdk"
   delegate_to: localhost
   register: disk_facts
+  
 - name: Add disks with specified shares to the virtual machine
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -211,6 +212,7 @@ EXAMPLES = '''
           level_value: 1300
   delegate_to: localhost
   register: test_custom_shares
+  
 - name: create new disk with custom IO limits and shares in IO Limits
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -233,6 +235,7 @@ EXAMPLES = '''
               level_value: 1305
   delegate_to: localhost
   register: test_custom_IoLimit_shares
+  
 - name: Remove disks from virtual machine using name
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -247,6 +250,7 @@ EXAMPLES = '''
         unit_number: 1
   delegate_to: localhost
   register: disk_facts
+  
 - name: Remove disk from virtual machine using moid
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -261,6 +265,7 @@ EXAMPLES = '''
         unit_number: 1
   delegate_to: localhost
   register: disk_facts
+  
 - name: Remove disk from virtual machine but keep the VMDK file on the datastore
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -331,7 +336,9 @@ class PyVmomiHelper(PyVmomi):
         Args:
             scsi_type: Type of SCSI
             scsi_bus_number: SCSI Bus number to be assigned
+
         Returns: Virtual device spec for SCSI Controller
+
         """
         scsi_ctl = vim.vm.device.VirtualDeviceSpec()
         scsi_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
@@ -353,7 +360,9 @@ class PyVmomiHelper(PyVmomi):
             disk_index: Disk unit number at which disk needs to be attached
             disk_mode: Disk mode
             disk_filename: Path to the disk file on the datastore
+
         Returns: Virtual Device Spec for virtual disk
+
         """
         disk_spec = vim.vm.device.VirtualDeviceSpec()
         disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
@@ -376,7 +385,9 @@ class PyVmomiHelper(PyVmomi):
         Args:
             config_spec: Config Spec
             device_type: Type of device being modified
+
         Returns: Boolean status 'changed' and actual task result
+
         """
         changed, results = (False, '')
         try:
@@ -418,6 +429,7 @@ class PyVmomiHelper(PyVmomi):
         Manage internal state of virtual machine disks
         Args:
             vm_obj: Managed object of virtual machine
+
         """
         # Set vm object
         self.vm = vm_obj
@@ -537,6 +549,7 @@ class PyVmomiHelper(PyVmomi):
         """
         Check correctness of disk input provided by user
         Returns: A list of dictionary containing disk information
+
         """
         disks_data = list()
         if not self.desired_disks:
@@ -738,8 +751,10 @@ class PyVmomiHelper(PyVmomi):
         Return Storage DRS recommended datastore from datastore cluster
         Args:
             datastore_cluster_obj: datastore cluster managed object
+
         Returns: Name of recommended datastore from the given datastore cluster,
                  Returns None if no datastore recommendation found.
+
         """
         # Check if Datastore Cluster provided by user is SDRS ready
         sdrs_status = datastore_cluster_obj.podStorageDrsEntry.storageDrsConfig.podConfig.enabled
@@ -783,7 +798,9 @@ class PyVmomiHelper(PyVmomi):
         Gather facts about VM's disks
         Args:
             vm_obj: Managed object of virtual machine
+
         Returns: A list of dict containing disks information
+
         """
         disks_facts = dict()
         if vm_obj is None:
