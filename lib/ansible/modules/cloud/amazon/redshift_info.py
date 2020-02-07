@@ -332,12 +332,9 @@ def find_clusters(conn, module, identifier=None, tags=None):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            cluster_identifier=dict(type='str', aliases=['identifier', 'name']),
-            tags=dict(type='dict')
-        )
+    argument_spec = dict(
+        cluster_identifier=dict(type='str', aliases=['identifier', 'name']),
+        tags=dict(type='dict')
     )
     module = AnsibleAWSModule(
         argument_spec=argument_spec,

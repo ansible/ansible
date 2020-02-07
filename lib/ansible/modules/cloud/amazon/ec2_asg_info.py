@@ -390,12 +390,9 @@ def find_asgs(conn, module, name=None, tags=None):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(type='str'),
-            tags=dict(type='dict'),
-        )
+    argument_spec = dict(
+        name=dict(type='str'),
+        tags=dict(type='dict'),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec)
     if module._name == 'ec2_asg_facts':

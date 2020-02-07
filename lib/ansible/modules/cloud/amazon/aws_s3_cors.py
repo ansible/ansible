@@ -168,20 +168,15 @@ def destroy_bucket_cors(connection, module):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True, type='str'),
-            rules=dict(type='list'),
-            state=dict(type='str', choices=['present', 'absent'], required=True)
-        )
+    argument_spec = dict(
+        name=dict(required=True, type='str'),
+        rules=dict(type='list'),
+        state=dict(type='str', choices=['present', 'absent'], required=True)
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='s3',
-                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client('s3')
 
     state = module.params.get("state")
 

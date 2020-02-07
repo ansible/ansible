@@ -507,8 +507,7 @@ def run(ecr, params):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         registry_id=dict(required=False),
         state=dict(required=False, choices=['present', 'absent'],

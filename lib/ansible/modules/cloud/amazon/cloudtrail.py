@@ -447,8 +447,7 @@ def update_trail(module, client, ct_params):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
         name=dict(default='default'),
         enable_logging=dict(default=True, type='bool'),
@@ -462,7 +461,7 @@ def main():
         cloudwatch_logs_log_group_arn=dict(),
         kms_key_id=dict(),
         tags=dict(default={}, type='dict'),
-    ))
+    )
 
     required_if = [('state', 'present', ['s3_bucket_name']), ('state', 'enabled', ['s3_bucket_name'])]
     required_together = [('cloudwatch_logs_role_arn', 'cloudwatch_logs_log_group_arn')]

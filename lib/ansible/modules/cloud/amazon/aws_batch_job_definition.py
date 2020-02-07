@@ -428,29 +428,25 @@ def main():
     :return dict: ansible facts
     """
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            state=dict(required=False, default='present', choices=['present', 'absent']),
-            job_definition_name=dict(required=True),
-            job_definition_arn=dict(),
-            type=dict(required=True),
-            parameters=dict(type='dict'),
-            image=dict(required=True),
-            vcpus=dict(type='int', required=True),
-            memory=dict(type='int', required=True),
-            command=dict(type='list', default=[]),
-            job_role_arn=dict(),
-            volumes=dict(type='list', default=[]),
-            environment=dict(type='list', default=[]),
-            mount_points=dict(type='list', default=[]),
-            readonly_root_filesystem=dict(),
-            privileged=dict(),
-            ulimits=dict(type='list', default=[]),
-            user=dict(),
-            attempts=dict(type='int'),
-            region=dict(aliases=['aws_region', 'ec2_region'])
-        )
+    argument_spec = dict(
+        state=dict(required=False, default='present', choices=['present', 'absent']),
+        job_definition_name=dict(required=True),
+        job_definition_arn=dict(),
+        type=dict(required=True),
+        parameters=dict(type='dict'),
+        image=dict(required=True),
+        vcpus=dict(type='int', required=True),
+        memory=dict(type='int', required=True),
+        command=dict(type='list', default=[]),
+        job_role_arn=dict(),
+        volumes=dict(type='list', default=[]),
+        environment=dict(type='list', default=[]),
+        mount_points=dict(type='list', default=[]),
+        readonly_root_filesystem=dict(),
+        privileged=dict(),
+        ulimits=dict(type='list', default=[]),
+        user=dict(),
+        attempts=dict(type='int')
     )
 
     module = AnsibleAWSModule(

@@ -710,8 +710,7 @@ def main():
     """
      Module action handler
     """
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         encrypt=dict(required=False, type="bool", default=False),
         state=dict(required=False, type='str', choices=["present", "absent"], default="present"),
         kms_key_id=dict(required=False, type='str', default=None),
@@ -725,7 +724,7 @@ def main():
         provisioned_throughput_in_mibps=dict(required=False, type='float'),
         wait=dict(required=False, type="bool", default=False),
         wait_timeout=dict(required=False, type="int", default=0)
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
 

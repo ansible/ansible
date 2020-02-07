@@ -461,29 +461,25 @@ def main():
     :return dict: changed, batch_compute_environment_action, response
     """
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            state=dict(default='present', choices=['present', 'absent']),
-            compute_environment_name=dict(required=True),
-            type=dict(required=True, choices=['MANAGED', 'UNMANAGED']),
-            compute_environment_state=dict(required=False, default='ENABLED', choices=['ENABLED', 'DISABLED']),
-            service_role=dict(required=True),
-            compute_resource_type=dict(required=True, choices=['EC2', 'SPOT']),
-            minv_cpus=dict(type='int', required=True),
-            maxv_cpus=dict(type='int', required=True),
-            desiredv_cpus=dict(type='int'),
-            instance_types=dict(type='list', required=True),
-            image_id=dict(),
-            subnets=dict(type='list', required=True),
-            security_group_ids=dict(type='list', required=True),
-            ec2_key_pair=dict(),
-            instance_role=dict(required=True),
-            tags=dict(type='dict'),
-            bid_percentage=dict(type='int'),
-            spot_iam_fleet_role=dict(),
-            region=dict(aliases=['aws_region', 'ec2_region'])
-        )
+    argument_spec = dict(
+        state=dict(default='present', choices=['present', 'absent']),
+        compute_environment_name=dict(required=True),
+        type=dict(required=True, choices=['MANAGED', 'UNMANAGED']),
+        compute_environment_state=dict(required=False, default='ENABLED', choices=['ENABLED', 'DISABLED']),
+        service_role=dict(required=True),
+        compute_resource_type=dict(required=True, choices=['EC2', 'SPOT']),
+        minv_cpus=dict(type='int', required=True),
+        maxv_cpus=dict(type='int', required=True),
+        desiredv_cpus=dict(type='int'),
+        instance_types=dict(type='list', required=True),
+        image_id=dict(),
+        subnets=dict(type='list', required=True),
+        security_group_ids=dict(type='list', required=True),
+        ec2_key_pair=dict(),
+        instance_role=dict(required=True),
+        tags=dict(type='dict'),
+        bid_percentage=dict(type='int'),
+        spot_iam_fleet_role=dict(),
     )
 
     module = AnsibleAWSModule(

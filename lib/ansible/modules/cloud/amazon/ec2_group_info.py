@@ -109,11 +109,8 @@ from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, HAS_BOTO3, 
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            filters=dict(default={}, type='dict')
-        )
+    argument_spec = dict(
+        filters=dict(default={}, type='dict')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)

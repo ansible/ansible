@@ -302,16 +302,12 @@ def main():
     :return dict: changed, batch_job_queue_action, response
     """
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            state=dict(required=False, default='present', choices=['present', 'absent']),
-            job_queue_name=dict(required=True),
-            job_queue_state=dict(required=False, default='ENABLED', choices=['ENABLED', 'DISABLED']),
-            priority=dict(type='int', required=True),
-            compute_environment_order=dict(type='list', required=True),
-            region=dict(aliases=['aws_region', 'ec2_region'])
-        )
+    argument_spec = dict(
+        state=dict(required=False, default='present', choices=['present', 'absent']),
+        job_queue_name=dict(required=True),
+        job_queue_state=dict(required=False, default='ENABLED', choices=['ENABLED', 'DISABLED']),
+        priority=dict(type='int', required=True),
+        compute_environment_order=dict(type='list', required=True),
     )
 
     module = AnsibleAWSModule(
