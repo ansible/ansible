@@ -287,7 +287,7 @@ try:
 except ImportError:
     pass  # will be picked up from imported HAS_BOTO3
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
 
@@ -339,7 +339,7 @@ def main():
             tags=dict(type='dict')
         )
     )
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )

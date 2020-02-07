@@ -183,7 +183,7 @@ try:
 except ImportError:
     pass  # Taken care of by ec2.HAS_BOTO3
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, boto_exception, ec2_argument_spec,
                                       get_aws_connection_info, compare_policies,
                                       sort_json_policy_dict)
@@ -520,12 +520,11 @@ def main():
         purge_policy=dict(required=False, type='bool', aliases=['delete_policy']),
         lifecycle_policy=dict(required=False, type='json'),
         purge_lifecycle_policy=dict(required=False, type='bool')))
+    mutually_exclusive = [
+        ['policy', 'purge_policy'],
+        ['lifecycle_policy', 'purge_lifecycle_policy']]
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True,
-                           mutually_exclusive=[
-                               ['policy', 'purge_policy'],
-                               ['lifecycle_policy', 'purge_lifecycle_policy']])
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True, mutually_exclusive=mutually_exclusive)
     if module.params.get('delete_policy'):
         module.deprecate(
             'The alias "delete_policy" has been deprecated and will be removed, '

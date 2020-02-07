@@ -270,7 +270,7 @@ except ImportError:
     # Handled in main() by imported HAS_BOTO3
     pass
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info,
                                       HAS_BOTO3, ansible_dict_to_boto3_tag_list,
                                       boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict)
@@ -468,7 +468,7 @@ def main():
     required_if = [('state', 'present', ['s3_bucket_name']), ('state', 'enabled', ['s3_bucket_name'])]
     required_together = [('cloudwatch_logs_role_arn', 'cloudwatch_logs_log_group_arn')]
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together, required_if=required_if)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together, required_if=required_if)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required for this module')

@@ -102,7 +102,7 @@ try:
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, HAS_BOTO3, get_aws_connection_info,
                                       boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_filter_list,
                                       camel_dict_to_snake_dict)
@@ -116,8 +116,7 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._name == 'ec2_group_facts':
         module.deprecate("The 'ec2_group_facts' module has been renamed to 'ec2_group_info'", version='2.13')
 

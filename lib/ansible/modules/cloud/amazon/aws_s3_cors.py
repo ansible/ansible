@@ -102,10 +102,10 @@ except Exception:
     # handled by HAS_BOTO3 check in main
     pass
 
+from ansible.module_utils.aws.core import AnsibleAWSModule
 import traceback
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info,
                                       camel_dict_to_snake_dict, snake_dict_to_camel_dict, compare_policies)
 
@@ -178,7 +178,7 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')

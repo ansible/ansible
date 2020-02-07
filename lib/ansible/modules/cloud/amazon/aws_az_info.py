@@ -70,10 +70,10 @@ availability_zones:
     ]"
 '''
 
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 import traceback
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict, HAS_BOTO3
 
@@ -91,7 +91,7 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec)
     if module._name == 'aws_az_facts':
         module.deprecate("The 'aws_az_facts' module has been renamed to 'aws_az_info'", version='2.14')
 
