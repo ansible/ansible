@@ -191,7 +191,6 @@ EXAMPLES = '''
       - filename: "[datastore1] path/to/existing/disk.vmdk"
   delegate_to: localhost
   register: disk_facts
-
 - name: Add disks with specified shares to the virtual machine
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -212,7 +211,6 @@ EXAMPLES = '''
           level_value: 1300
   delegate_to: localhost
   register: test_custom_shares
-
 - name: create new disk with custom IO limits and shares in IO Limits
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -235,7 +233,6 @@ EXAMPLES = '''
               level_value: 1305
   delegate_to: localhost
   register: test_custom_IoLimit_shares
-
 - name: Remove disks from virtual machine using name
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -250,7 +247,6 @@ EXAMPLES = '''
         unit_number: 1
   delegate_to: localhost
   register: disk_facts
-
 - name: Remove disk from virtual machine using moid
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -265,7 +261,6 @@ EXAMPLES = '''
         unit_number: 1
   delegate_to: localhost
   register: disk_facts
-
 - name: Remove disk from virtual machine but keep the VMDK file on the datastore
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
@@ -336,9 +331,7 @@ class PyVmomiHelper(PyVmomi):
         Args:
             scsi_type: Type of SCSI
             scsi_bus_number: SCSI Bus number to be assigned
-
         Returns: Virtual device spec for SCSI Controller
-
         """
         scsi_ctl = vim.vm.device.VirtualDeviceSpec()
         scsi_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
@@ -360,9 +353,7 @@ class PyVmomiHelper(PyVmomi):
             disk_index: Disk unit number at which disk needs to be attached
             disk_mode: Disk mode
             disk_filename: Path to the disk file on the datastore
-
         Returns: Virtual Device Spec for virtual disk
-
         """
         disk_spec = vim.vm.device.VirtualDeviceSpec()
         disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
@@ -385,9 +376,7 @@ class PyVmomiHelper(PyVmomi):
         Args:
             config_spec: Config Spec
             device_type: Type of device being modified
-
         Returns: Boolean status 'changed' and actual task result
-
         """
         changed, results = (False, '')
         try:
@@ -429,7 +418,6 @@ class PyVmomiHelper(PyVmomi):
         Manage internal state of virtual machine disks
         Args:
             vm_obj: Managed object of virtual machine
-
         """
         # Set vm object
         self.vm = vm_obj
@@ -482,6 +470,10 @@ class PyVmomiHelper(PyVmomi):
                     disk_spec.device.backing.thinProvisioned = True
                 elif disk['disk_type'] == 'eagerzeroedthick':
                     disk_spec.device.backing.eagerlyScrub = True
+                # get Storage DRS recommended datastore from the datastore cluster
+                if disk['datastore_cluster']:
+                    datastore_name = self.get_recommended_datastore(datastore_cluster_obj=disk['datastore_cluster'], disk_spec_obj=disk_spec)
+                    disk['datastore'] = find_obj(self.content, [vim.Datastore], datastore_name)
                 if disk['filename'] is None:
                     disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (
                         disk['datastore'].name,
@@ -545,7 +537,6 @@ class PyVmomiHelper(PyVmomi):
         """
         Check correctness of disk input provided by user
         Returns: A list of dictionary containing disk information
-
         """
         disks_data = list()
         if not self.desired_disks:
@@ -584,15 +575,16 @@ class PyVmomiHelper(PyVmomi):
                     # Check if given value is datastore or datastore cluster
                     datastore_name = disk['datastore']
                     datastore_cluster = find_obj(self.content, [vim.StoragePod], datastore_name)
-                    if datastore_cluster:
-                        # If user specified datastore cluster so get recommended datastore
-                        datastore_name = self.get_recommended_datastore(datastore_cluster_obj=datastore_cluster)
-                    # Check if get_recommended_datastore or user specified datastore exists or not
                     datastore = find_obj(self.content, [vim.Datastore], datastore_name)
-                    if datastore is None:
-                        self.module.fail_json(msg="Failed to find datastore named '%s' "
+
+                    if datastore is None and datastore_cluster is None:
+                        self.module.fail_json(msg="Failed to find datastore or datastore cluster named '%s' "
                                                   "in given configuration." % disk['datastore'])
-                    current_disk['datastore'] = datastore
+                    if datastore_cluster:
+                        # If user specified datastore cluster, keep track of that for determining datastore later
+                        current_disk['datastore_cluster'] = datastore_cluster
+                    elif datastore:
+                        current_disk['datastore'] = datastore
                     current_disk['autoselect_datastore'] = False
                 elif 'autoselect_datastore' in disk:
                     # Find datastore which fits requirement
@@ -741,25 +733,31 @@ class PyVmomiHelper(PyVmomi):
             disks_data.append(current_disk)
         return disks_data
 
-    def get_recommended_datastore(self, datastore_cluster_obj):
+    def get_recommended_datastore(self, datastore_cluster_obj, disk_spec_obj):
         """
         Return Storage DRS recommended datastore from datastore cluster
         Args:
             datastore_cluster_obj: datastore cluster managed object
-
         Returns: Name of recommended datastore from the given datastore cluster,
                  Returns None if no datastore recommendation found.
-
         """
         # Check if Datastore Cluster provided by user is SDRS ready
         sdrs_status = datastore_cluster_obj.podStorageDrsEntry.storageDrsConfig.podConfig.enabled
         if sdrs_status:
             # We can get storage recommendation only if SDRS is enabled on given datastorage cluster
+            disk_loc = vim.storageDrs.PodSelectionSpec.DiskLocator()
+            pod_config = vim.storageDrs.PodSelectionSpec.VmPodConfig()
+            pod_config.storagePod = datastore_cluster_obj
+            pod_config.disk = [disk_loc]
             pod_sel_spec = vim.storageDrs.PodSelectionSpec()
-            pod_sel_spec.storagePod = datastore_cluster_obj
+            pod_sel_spec.initialVmConfig = [pod_config]
             storage_spec = vim.storageDrs.StoragePlacementSpec()
+            storage_spec.configSpec = vim.vm.ConfigSpec()
+            storage_spec.configSpec.deviceChange.append(disk_spec_obj)
+            storage_spec.resourcePool = self.vm.resourcePool
             storage_spec.podSelectionSpec = pod_sel_spec
-            storage_spec.type = 'create'
+            storage_spec.vm = self.vm
+            storage_spec.type = 'reconfigure'
 
             try:
                 rec = self.content.storageResourceManager.RecommendDatastores(storageSpec=storage_spec)
@@ -785,9 +783,7 @@ class PyVmomiHelper(PyVmomi):
         Gather facts about VM's disks
         Args:
             vm_obj: Managed object of virtual machine
-
         Returns: A list of dict containing disks information
-
         """
         disks_facts = dict()
         if vm_obj is None:
