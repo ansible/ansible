@@ -304,7 +304,8 @@ class VMwareDvsPortgroup(PyVmomi):
             if self.module.params['vlan_private']:
                 pvlan_exists = self.check_dvs_pvlan()
                 if not pvlan_exists:
-                    self.module.fail_json(msg="A private VLAN with id %s does not exist in distributed virtual switch with name %s" % (self.module.params['vlan_id'], self.module.params['switch_name']))
+                    self.module.fail_json(msg="No private vlan with id %s in distributed vSwitch %s"
+                                           % (self.module.params['vlan_id'], self.module.params['switch_name']))
 
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.PvlanSpec()
             config.defaultPortConfig.vlan.pvlanId = int(self.module.params['vlan_id'])
@@ -411,7 +412,7 @@ class VMwareDvsPortgroup(PyVmomi):
             if pvlan.primaryVlanId == int(self.module.params['vlan_id']):
                 return True
             if pvlan.secondaryVlanId == int(self.module.params['vlan_id']):
-                 return True
+                return True
         return False
 
     def check_dvspg_state(self):
