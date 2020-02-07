@@ -96,12 +96,10 @@ DOCUMENTATION = """
       description:
         - Controls how multiple key/value pairs in a path are treated on return.
         - C(dict) returns a single dict containing the key/value pairs (same behavior as before 2.10).
-        - C(pairs) returns a list of dicts that each contain a single key/value pair, which may be more convenient in loops.
         - C(values) returns a list of all the values only. Use when you don't care about the keys.
         - C(raw) returns the actual API result, which includes metadata and may have the data nested in other keys.
       choices:
         - dict
-        - pairs
         - values
         - raw
       default: dict
@@ -182,11 +180,6 @@ EXAMPLES = """
   debug:
     msg: "A secret value: {{ item }}"
   loop: "{{ query('hashi_vault', 'secret/data/manysecrets', token=my_token_var, url='http://myvault_url:8200', return_format='values') }}"
-
-- name: return secrets as a list of single-item dicts
-  debug:
-    var: item
-  loop: "{{ query('hashi_vault', 'secret/data/manysecrets as=pairs', token=my_token_var, url='http://myvault_url:8200') }}"
 
 - name: return raw secret from API, including metadata
   set_fact:
@@ -321,9 +314,6 @@ class HashiVault:
             data = data['data']
         except KeyError:
             pass
-
-        if return_as == 'pairs':
-            return [dict([pair]) for pair in data['data'].items()]
 
         if return_as == 'values':
             return list(data['data'].values())

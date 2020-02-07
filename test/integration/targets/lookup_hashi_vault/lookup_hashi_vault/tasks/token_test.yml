@@ -12,7 +12,6 @@
         kv2_secret2_as_raw: "{{ lookup('hashi_vault', vault_kv2_path ~ '/secret2 ' ~  conn_params, auth_method='token', token=user_token, return_format='raw') }}"
         kv2_secrets_as_dict: "{{ lookup('hashi_vault', vault_kv2_multi_path ~ '/secrets ' ~  conn_params, auth_method='token', token=user_token) }}"
         kv2_secrets_as_values: "{{ query('hashi_vault', vault_kv2_multi_path ~ '/secrets ' ~  conn_params, auth_method='token', token=user_token, return_format='values') }}"
-        kv2_secrets_as_pairs: "{{ query('hashi_vault', vault_kv2_multi_path ~ '/secrets ' ~ conn_params, auth_method='token', token=user_token, return_format='pairs') }}"
 
     - name: 'Check secret generic values'
       fail:
@@ -48,12 +47,6 @@
         msg: 'Return value was not list or items do not match.'
       when: (kv2_secrets_as_values | type_debug != 'list') or ('foo{{ item }}' not in kv2_secrets_as_values)
       loop: [1, 2, 3]
-
-    - name: "Check multiple secrets as pairs"
-      fail:
-        msg: 'Return value was not list of dicts or dict did not contain 1 item'
-      when: (item | type_debug != 'dict') or (item | length != 1)
-      loop: "{{ kv2_secrets_as_pairs }}"
 
     - name: "Check multiple secrets as dict"
       fail:
