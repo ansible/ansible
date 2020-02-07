@@ -35,7 +35,6 @@ options:
          a larger subset.
     required: false
     type: list
-    elements: str
     default: 'all'
 notes:
   - Tested against ACOS 4.1.1-P9
@@ -63,7 +62,6 @@ ansible_net_gather_subset:
   description: The list of fact subsets collected from the device
   returned: always
   type: list
-  elements: str
 ansible_net_model:
   description: The model name returned from the device
   returned: always
@@ -114,12 +112,10 @@ ansible_net_all_ipv4_addresses:
   description: All IPv4 addresses configured on the device
   returned: when interfaces is configured
   type: list
-  elements: str
 ansible_net_all_ipv6_addresses:
   description: All IPv6 addresses configured on the device
   returned: when interfaces is configured
   type: list
-  elements: str
 ansible_net_interfaces:
   description: A hash of all interfaces running on the system
   returned: when interfaces is configured
