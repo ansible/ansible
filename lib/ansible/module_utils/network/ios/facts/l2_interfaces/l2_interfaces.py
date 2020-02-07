@@ -91,6 +91,10 @@ class L2_InterfacesFacts(object):
             if has_access:
                 config["access"] = {"vlan": int(has_access)}
 
+            has_voice = utils.parse_conf_arg(conf, 'switchport voice vlan')
+            if has_voice:
+                config["voice"] = {"vlan": int(has_voice)}
+
             trunk = dict()
             trunk["encapsulation"] = utils.parse_conf_arg(conf, 'encapsulation')
             native_vlan = utils.parse_conf_arg(conf, 'native vlan')

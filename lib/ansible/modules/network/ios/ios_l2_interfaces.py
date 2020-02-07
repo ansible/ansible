@@ -66,6 +66,15 @@ options:
             description:
             - Configure given VLAN in access port. It's used as the access VLAN ID.
             type: int
+      voice:
+        description:
+        - Switchport mode voice command to configure the interface with a voice vlan.
+        type: dict
+        suboptions:
+          vlan:
+            description:
+            - Configure given voice VLAN on access port. It's used as the voice VLAN ID.
+            type: int
       trunk:
         description:
         - Switchport mode trunk command to configure the interface as a Layer 2 trunk.
