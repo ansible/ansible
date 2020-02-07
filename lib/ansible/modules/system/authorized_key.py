@@ -464,7 +464,7 @@ def readfile(filename):
 
 def parsekeys(module, lines):
     keys = {}
-    for rank_index, line in enumerate(lines.splitlines(True)):
+    for rank_index, line in enumerate(lines.splitlines()):
         key_data = parsekey(module, line, rank=rank_index)
         if key_data:
             # use key as identifier
@@ -517,11 +517,13 @@ def serialize(keys):
             if key_type == 'skipped':
                 key_line = key[0]
             else:
-                key_line = "%s%s %s %s\n" % (option_str, key_type, keyhash, comment)
+                key_line = (
+                    "%s%s %s %s" % (option_str, key_type, keyhash, comment)
+                ).rstrip()
         except Exception:
             key_line = key
         lines.append(key_line)
-    return ''.join(lines)
+    return "%s\n" % '\n'.join(lines)
 
 
 def enforce_state(module, params):
