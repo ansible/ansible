@@ -336,22 +336,17 @@ from distutils.version import LooseVersion
 from ansible.errors import (
     AnsibleAuthenticationFailure, AnsibleConnectionFailure, AnsibleError
 )
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.compat.paramiko import PARAMIKO_IMPORT_ERR, paramiko
 from ansible.module_utils.six import PY3, iteritems, itervalues
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.network.common.utils import to_list
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import NetworkConnectionBase
 from ansible.plugins.loader import cliconf_loader, terminal_loader
 from ansible.utils.path import makedirs_safe
 
-
-AUTHENTICITY_MSG = """
-paramiko: The authenticity of host '%s' can't be established.
-The %s key fingerprint is %s.
-Are you sure you want to continue connecting (yes/no)?
-"""
 
 # SSH Options Regex
 SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
@@ -391,7 +386,8 @@ class MyAddPolicy(object):
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
 
-            raise AnsibleError(AUTHENTICITY_MSG[1:92] % (hostname, ktype, fingerprint))
+            authenticity_msg = "paramiko: The authenticity of host '%s' can't be established.\nThe %s key fingerprint is %s."
+            raise AnsibleError(authenticity_msg % (hostname, ktype, fingerprint))
 
         key._added_by_ansible_this_time = True
 
@@ -478,7 +474,7 @@ class ParamikoConnection(object):
         ''' activates the connection object '''
 
         if paramiko is None:
-            raise AnsibleError("paramiko is not installed: %s" % to_native(PARAMIKO_IMPORT_ERR))
+            raise AnsibleError(missing_required_lib("paramiko"))
 
         port = self._play_context.port or 22
         self._connection.queue_message(
