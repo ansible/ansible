@@ -15,6 +15,7 @@ __metaclass__ = type
 from copy import deepcopy
 
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.junos.argspec.acls.acls import AclsArgs
 from ansible.module_utils.six import string_types
@@ -57,7 +58,7 @@ class AclsFacts(object):
         :returns: facts
         """
         if not HAS_LXML:
-            self._module.fail_json(msg='lxml is not installed.')
+            self._module.fail_json(msg=missing_required_lib("lxml"))
 
         if not data:
             config_filter = """
@@ -92,6 +93,9 @@ class AclsFacts(object):
         return ansible_facts
 
     def _get_xml_dict(self, xml_root):
+        if not HAS_XMLTODICT:
+            self._module.fail_json(msg=missing_required_lib("xmltodict"))
+
         xml_dict = xmltodict.parse(etree.tostring(xml_root), dict_constructor=dict)
         return xml_dict
 
