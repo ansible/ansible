@@ -613,6 +613,8 @@ files:
     labels: [ asa, cisco, networking ]
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
+  $modules/network/check_point:
+    migrated_to: check_point.mgmt
   $modules/network/cloudengine/: &cloudengine
     maintainers: $team_huawei
     labels: [ huawei, cloudengine, networking ]
@@ -1592,6 +1594,8 @@ files:
     maintainers: $team_avi
   $module_utils/network/bigswitch:
     maintainers: jayakody tedelhourani vuile
+  $module_utils/network/checkpoint/checkpoint.py:
+    migrated_to: check_point.mgmt
   $module_utils/network/cloudengine:
     <<: *cloudengine
   $module_utils/network/cnos:
@@ -2010,6 +2014,12 @@ files:
     labels: aci
     migrated_to: cisco.aci
   $plugins/doc_fragments/acme.py: *crypto
+  $plugins/doc_fragments/checkpoint_commands.py:
+    migrated_to: check_point.mgmt
+  $plugins/doc_fragments/checkpoint_facts.py:
+    migrated_to: check_point.mgmt
+  $plugins/doc_fragments/checkpoint_objects.py:
+    migrated_to: check_point.mgmt
   $plugins/doc_fragments/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
@@ -2075,6 +2085,8 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
+  $plugins/httpapi/checkpoint.py:
+    migrated_to: check_point.mgmt
   $plugins/httpapi/ftd.py: *ftd
   $plugins/httpapi/exos.py:
     maintainers: $team_extreme
