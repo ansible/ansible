@@ -88,8 +88,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
-    if module._name == 'aws_acm_facts':
-        module.deprecate("The 'aws_az_facts' module has been renamed to 'aws_az_info'", version='2.13')
+    if module._name == 'aws_az_facts':
+        module.deprecate("The 'aws_az_facts' module has been renamed to 'aws_az_info'", version='2.14')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
