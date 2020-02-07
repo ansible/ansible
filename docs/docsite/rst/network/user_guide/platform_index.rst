@@ -10,6 +10,7 @@ Some Ansible Network platforms support multiple connection types, privilege esca
    :maxdepth: 2
    :caption: Platform Options
 
+   platform_acos
    platform_ce
    platform_cnos
    platform_dellos6
@@ -58,6 +59,7 @@ Settings by Platform
     --------------------------------------------------------  ------------------------------------------
     Network OS                       ``ansible_network_os:``  network_cli  netconf  httpapi  local
     ===============================  =======================  ===========  =======  =======  ===========
+    A10 ACOS                         ``acos``                 ✓                              ✓
     Arista EOS `[†]`_                ``eos``                  ✓                     ✓        ✓
     Cisco ASA                        ``asa``                  ✓                              ✓
     Cisco IOS `[†]`_                 ``ios``                  ✓                              ✓

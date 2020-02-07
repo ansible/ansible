@@ -34,6 +34,7 @@ options:
       - Specify a list of comma seperated values (without spaces) to include
          a larger subset.
     required: false
+    type: list
     default: 'all'
 notes:
   - Tested against ACOS 4.1.1-P9
