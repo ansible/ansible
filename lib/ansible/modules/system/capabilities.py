@@ -155,6 +155,7 @@ class CapabilitiesModule(object):
                 return (cap, None, None)
         op = cap[opind]
         cap, flags = cap.split(op)
+        flags = ''.join(sorted(flags))
         return (cap, op, flags)
 
 
