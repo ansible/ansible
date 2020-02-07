@@ -40,8 +40,8 @@ class L2_InterfacesArgs(object):
                                                        'options': {'vlan': {'type': 'int'}}
                                                        },
                                             'voice': {'type': 'dict',
-                                                       'options': {'vlan': {'type': 'int'}}
-                                                       },
+                                                      'options': {'vlan': {'type': 'int'}}
+                                                      },
                                             'trunk': {'type': 'dict',
                                                       'options': {'allowed_vlans': {'type': 'list'},
                                                                   'encapsulation': {'type': 'str',
