@@ -25,7 +25,9 @@ DOCUMENTATION = """
     - Retrieve secrets from HashiCorp's vault.
   notes:
     - Due to a current limitation in the HVAC library there won't necessarily be an error if a bad endpoint is specified.
-    - As of Ansible 2.10, only the latest secret is returned when specifying a KV v2 path.
+    - As of Ansible 2.10, only the latest version of a secret is returned when specifying a KV v2 path.
+    - As of Ansible 2.10, all options can be supplied via term string (space delimited key=value pairs) or by parameters (see examples).
+    - As of Ansible 2.10, when C(secret) is the first option in the term string, C(secret=) is not required (see examples).
   options:
     secret:
       description: query you are making.
@@ -156,7 +158,48 @@ EXAMPLES = """
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/data/hello token=my_vault_token url=http://myvault_url:8200') }}"
 
+# The following examples work in Ansible 2.10+
 
+- name: secret= is not required if secret is first
+  debug:
+    msg: "{{ lookup('hashi_vault', 'secret/data/hello token=<token> url=http://myvault_url:8200') }}"
+
+- name: options can be specified as parameters rather than put in term string
+  debug:
+    msg: "{{ lookup('hashi_vault', 'secret/data/hello', token=my_token_var, url='http://myvault_url:8200') }}"
+
+# return_format (or its alias 'as') can control how secrets are returned to you
+- name: return secrets as a dict (default)
+  set_fact:
+    my_secrets: "{{ lookup('hashi_vault', 'secret/data/manysecrets', token=my_token_var, url='http://myvault_url:8200') }}"
+- debug:
+    msg: "{{ my_secrets['secret_key'] }}"
+- debug:
+    msg: "Secret '{{ item.key }}' has value '{{ item.value }}'"
+  loop: "{{ my_secrets | dict2items }}"
+
+- name: return secrets as values only
+  debug:
+    msg: "A secret value: {{ item }}"
+  loop: "{{ query('hashi_vault', 'secret/data/manysecrets', token=my_token_var, url='http://myvault_url:8200', return_format='values') }}"
+
+- name: return secrets as a list of single-item dicts
+  debug:
+    var: item
+  loop: "{{ query('hashi_vault', 'secret/data/manysecrets as=pairs', token=my_token_var, url='http://myvault_url:8200') }}"
+
+- name: return raw secret from API, including metadata
+  set_fact:
+    my_secret: "{{ lookup('hashi_vault', 'secret/data/hello:value', token=my_token_var, url='http://myvault_url:8200', as='raw') }}"
+- debug:
+    msg: "This is version {{ my_secret['metadata']['version'] }} of hello:value. The secret data is {{ my_secret['data']['data']['value'] }}"
+
+# AWS IAM authentication method
+# uses Ansible standard AWS options
+
+- name: authenticate with aws_iam_login
+  debug:
+    msg: "{{ lookup('hashi_vault', 'secret/hello:value', auth_method='aws_iam_login' role_id='myroleid', profile=my_boto_profile, url='http://myvault:8200') }}"
 """
 
 RETURN = """
