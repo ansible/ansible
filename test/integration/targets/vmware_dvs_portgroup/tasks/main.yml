@@ -385,3 +385,124 @@
   assert:
     that:
         - dvs_pg_result_0017.changed
+
+- name: Check fail for missing PVLAN in dvs
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: private-vlan-portgroup
+    switch_name: "{{ dvswitch1 }}"
+    vlan_id: 10
+    vlan_private: True
+    num_ports: 12
+    portgroup_type: earlyBinding
+    state: present
+    validate_certs: false
+  register: dvs_pg_result_0018
+  ignore_errors: True
+
+- name: Ensure module fails for missing private VLAN in dvs
+  assert:
+    that:
+        - not dvs_pg_result_0018.changed
+        - "'No private vlan with id 10 in distributed vSwitch {{ dvswitch1 }}' == '{{ dvs_pg_result_0018.msg }}'"
+
+- name: Configure PVLANs to test PVLAN dpg
+  vmware_dvswitch_pvlans:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    switch: "{{ dvswitch1 }}"
+    primary_pvlans:
+      - primary_pvlan_id: 1
+    secondary_pvlans:
+      - primary_pvlan_id: 1
+        secondary_pvlan_id: 2
+        pvlan_type: isolated
+    validate_certs: false
+  register: pvlans_result
+
+- name: ensure pvlans were configured
+  assert:
+    that:
+      - pvlans_result is not failed
+
+- name: Create private vlan portgroup
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: private-vlan-portgroup
+    switch_name: "{{ dvswitch1 }}"
+    vlan_id: 1
+    vlan_private: True
+    num_ports: 12
+    portgroup_type: earlyBinding
+    state: present
+    validate_certs: false
+  register: dvs_pg_result_0019
+
+- name: ensure dvs portgroup with pvlan is present
+  assert:
+    that:
+        - dvs_pg_result_0019.changed
+
+- name: Change private vlan id
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: private-vlan-portgroup
+    switch_name: "{{ dvswitch1 }}"
+    vlan_id: 2
+    vlan_private: True
+    num_ports: 12
+    portgroup_type: earlyBinding
+    state: present
+    validate_certs: false
+  register: dvs_pg_result_0020
+
+- name: ensure dvs portgroup pvlan id is changed
+  assert:
+    that:
+        - dvs_pg_result_0020.changed
+
+- name: Change basic VLAN portgroup to PVLAN
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    switch_name: "{{ dvswitch1 }}"
+    portgroup_name: "basic-vlan10"
+    vlan_private: True
+    vlan_id: 2
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+  register: dvs_pg_result_0021
+
+- name: ensure basic VLAN portgroup is changed
+  assert:
+    that:
+        - dvs_pg_result_0021.changed
+
+- name: Return from private vlan to basic vlan portgroup
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: "basic-vlan10"
+    switch_name: "{{ dvswitch1 }}"
+    vlan_id: 20
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+    validate_certs: false
+  register: dvs_pg_result_0022
+
+- name: ensure dvs portgroup type changed
+  assert:
+    that:
+        - dvs_pg_result_0022.changed
