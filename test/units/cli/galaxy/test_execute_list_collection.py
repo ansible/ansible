@@ -259,6 +259,7 @@ def test_execute_list_collection_one_invalid_path(mocker, capsys, mock_collectio
     mocker.patch('os.path.exists', return_value=True)
     mocker.patch('os.path.isdir', isdir)
     mocker.patch('ansible.cli.galaxy.GalaxyCLI._resolve_path', side_effect=['/root/.ansible/collections', 'nope'])
+    mocker.patch('ansible.utils.color.ANSIBLE_COLOR', False)
 
     gc = GalaxyCLI(['ansible-galaxy', 'collection', 'list', '-p', 'nope'])
     gc.execute_list_collection()
