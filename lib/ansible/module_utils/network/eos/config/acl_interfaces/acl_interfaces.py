@@ -373,7 +373,7 @@ def add_commands(want, interface):
         afi = 'ip' if w['afi'] == 'ipv4' else w['afi']
         if 'acls' in w.keys():
             for acl in w['acls']:
-                commands.append(afi  + " " + a_cmd + " " + acl['name'] + " " + acl['direction'])
+                commands.append(afi + " " + a_cmd + " " + acl['name'] + " " + acl['direction'])
     return commands
 
 
@@ -393,5 +393,5 @@ def remove_commands(want, interface):
         afi = 'ip' if w['afi'] == 'ipv4' else w['afi']
         if 'acls' in w.keys():
             for acl in w['acls']:
-                commands.append("no " + afi  + " " + a_cmd + " " + acl['name'] + " " + acl['direction'])
+                commands.append("no " + afi + " " + a_cmd + " " + acl['name'] + " " + acl['direction'])
     return commands

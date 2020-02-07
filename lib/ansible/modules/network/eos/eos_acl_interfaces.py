@@ -40,7 +40,7 @@ DOCUMENTATION = """
 module: eos_acl_interfaces
 version_added: "2.10"
 short_description: Manage adding and removing Access Control Lists (ACLs) from interfaces on devices running EOS software.
-description: 
+description:
   - This module manages adding and removing Access Control Lists (ACLs) from interfaces on devices running EOS software.
 author: GomathiSelvi S (@GomathiselviS)
 options:
