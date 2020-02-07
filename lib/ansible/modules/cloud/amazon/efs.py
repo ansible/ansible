@@ -264,10 +264,9 @@ class EFSConnection(object):
     STATE_DELETING = 'deleting'
     STATE_DELETED = 'deleted'
 
-    def __init__(self, module, region, **aws_connect_params):
-        self.connection = boto3_conn(module, conn_type='client',
-                                     resource='efs', region=region,
-                                     **aws_connect_params)
+    def __init__(self, module):
+        self.connection = module.client('efs')
+        region = get_aws_connection_info(module, boto3=True)[0]
 
         self.module = module
         self.region = region
@@ -712,8 +711,7 @@ def main():
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = EFSConnection(module, region, **aws_connect_params)
+    connection = EFSConnection(module)
 
     name = module.params.get('name')
     fs_id = module.params.get('id')
