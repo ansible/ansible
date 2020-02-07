@@ -500,11 +500,8 @@ def main():
     if module.params['kms_key_id']:
         ct_params['KmsKeyId'] = module.params['kms_key_id']
 
-    try:
-        region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-        client = boto3_conn(module, conn_type='client', resource='cloudtrail', region=region, endpoint=ec2_url, **aws_connect_params)
-    except ClientError as err:
-        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    client = module.client('cloudtrail')
+    region = get_aws_connection_info(module, boto3=True)[0]
 
     results = dict(
         changed=False,
@@ -598,7 +595,7 @@ def main():
         if module.check_mode:
             acct_id = '123456789012'
             try:
-                sts_client = boto3_conn(module, conn_type='client', resource='sts', region=region, endpoint=ec2_url, **aws_connect_params)
+                sts_client = module.client('sts')
                 acct_id = sts_client.get_caller_identity()['Account']
             except (BotoCoreError, ClientError):
                 pass

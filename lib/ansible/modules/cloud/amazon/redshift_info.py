@@ -346,11 +346,7 @@ def main():
     cluster_identifier = module.params.get('cluster_identifier')
     cluster_tags = module.params.get('tags')
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        redshift = boto3_conn(module, conn_type='client', resource='redshift', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    redshift = module.client('redshift')
 
     results = find_clusters(redshift, module, identifier=cluster_identifier, tags=cluster_tags)
     module.exit_json(results=results)

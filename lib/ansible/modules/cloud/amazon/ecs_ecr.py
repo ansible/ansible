@@ -205,15 +205,8 @@ def build_kwargs(registry_id):
 
 class EcsEcr:
     def __init__(self, module):
-        region, ec2_url, aws_connect_kwargs = \
-            get_aws_connection_info(module, boto3=True)
-
-        self.ecr = boto3_conn(module, conn_type='client',
-                              resource='ecr', region=region,
-                              endpoint=ec2_url, **aws_connect_kwargs)
-        self.sts = boto3_conn(module, conn_type='client',
-                              resource='sts', region=region,
-                              endpoint=ec2_url, **aws_connect_kwargs)
+        self.ecr = module.client('ecr')
+        self.sts = module.client('sts')
         self.check_mode = module.check_mode
         self.changed = False
         self.skipped = False

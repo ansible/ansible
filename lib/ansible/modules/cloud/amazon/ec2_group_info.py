@@ -117,19 +117,7 @@ def main():
     if module._name == 'ec2_group_facts':
         module.deprecate("The 'ec2_group_facts' module has been renamed to 'ec2_group_info'", version='2.13')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        connection = boto3_conn(
-            module,
-            conn_type='client',
-            resource='ec2',
-            region=region,
-            endpoint=ec2_url,
-            **aws_connect_params
-        )
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = module.client('ec2')
 
     # Replace filter key underscores with dashes, for compatibility, except if we're dealing with tags
     sanitized_filters = module.params.get("filters")

@@ -340,9 +340,9 @@ def find_asgs(conn, module, name=None, tags=None):
 
     if not asgs:
         return asgs
+
     try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        elbv2 = boto3_conn(module, conn_type='client', resource='elbv2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        elbv2 = module.client('elbv2')
     except ClientError as e:
         # This is nice to have, not essential
         elbv2 = None
@@ -405,11 +405,7 @@ def main():
     asg_name = module.params.get('name')
     asg_tags = module.params.get('tags')
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        autoscaling = boto3_conn(module, conn_type='client', resource='autoscaling', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+    autoscaling = module.client('autoscaling')
 
     results = find_asgs(autoscaling, module, name=asg_name, tags=asg_tags)
     module.exit_json(results=results)
