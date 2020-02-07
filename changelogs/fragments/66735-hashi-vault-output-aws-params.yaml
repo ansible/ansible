@@ -1,0 +1,13 @@
+bugfixes:
+  - hashi_vault - when a non-token authentication method like ldap or userpass failed, but a valid token was loaded anyway (via env or token file), the token was used to attempt authentication, hiding the failure of the requested auth method.
+  - hashi_vault - if used via `with_hashi_vault` and a list of (say) 4 secrets to retrieve, only the first one would be retrieved and returned 4 times.
+minor_changes:
+  - hashi_vault - `secret` can now be an unnamed argument if it's specified first in the term string (see examples).
+  - hashi_vault - previously all options had to be supplied via key=value pairs in the term string; now a mix of string and parameters can be specified (see examples).
+  - hashi_vault - new option `return_format` added to control how secrets are returned, including options for multiple secrets and returning raw values with metadata.
+  - hashi_vault - `token` is now an explicit option (and the default) in the choices for `auth_method`
+  - hashi_vault - previous (undocumented) behavior was to attempt to read token from `~/.vault-token` if not specified. This is now controlled through `token_path` and `token_file` options (defaults will mimic previous behavior).
+  - hashi_vault - INI and additional ENV sources made available for some new and old options.
+  - hashi_vault - uses newer authentication calls in the HVAC library and falls back to older ones with deprecation warnings.
+  - hashi_vault - AWS IAM auth method added. Accepts standard ansible AWS params and only loads AWS libraries when needed.
+  
