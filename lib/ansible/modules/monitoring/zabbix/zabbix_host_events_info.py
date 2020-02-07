@@ -20,48 +20,124 @@ triggers_ok:
     returned: On success
     type: complex
     contains:
-            - comments: Additional description of the trigger (https://www.zabbix.com/documentation/3.0/manual/api/reference/trigger/object)
-              description: Name of the trigger
-              error: Error text if there have been any problems when updating the state of the trigger
-              expression: Reduced trigger expression
-              flags: Origin of the trigger
-              lastchange: Time when the trigger last changed its state (timestamp)
-              priority: Severity of the trigger
-              state: State of the trigger
-              status: Whether the trigger is enabled or disabled
-              templateid: ID of the parent template trigger
-              triggerid: ID of the trigger
-              type: Whether the trigger can generate multiple problem events
-              url: URL associated with the trigger
-              value: Whether the trigger is in OK or problem state
+          comments:
+            description: Additional description of the trigger
+            type: str
+          description:
+            description: Name of the trigger
+            type: str
+          error:
+            description: Error text if there have been any problems when updating the state of the trigger
+            type: str
+          expression:
+            description: Reduced trigger expression
+            type: str
+          flags:
+            description: Origin of the trigger
+            type: int
+          lastchange:
+            description: Time when the trigger last changed its state (timestamp)
+            type: int
+          priority:
+            description: Severity of the trigger
+            type: int
+          state:
+            description: State of the trigger
+            type: int
+          status:
+            description: Whether the trigger is enabled or disabled
+            type: int
+          templateid:
+            description: ID of the parent template trigger
+            type: int
+          triggerid:
+            description: ID of the trigger
+            type: int
+          type:
+            description: Whether the trigger can generate multiple problem events
+            type: int
+          url:
+            description: URL associated with the trigger
+            type: str
+          value:
+            description: Whether the trigger is in OK or problem state
+            type: int
 triggers_problem:
     description: Host Zabbix Triggers in problem state. See trigger and event objects in API documentation of your zabbix version for more
     returned: On success
     type: complex
     contains:
-            - comments: Additional description of the trigger
-              description: Name of the trigger
-              error: Error text if there have been any problems when updating the state of the trigger
-              expression: Reduced trigger expression
-              flags: Origin of the trigger
-              last_event:
-                acknowledged: If set to true return only acknowledged events
+          comments:
+            description: Additional description of the trigger
+            type: str
+          description:
+            description: Name of the trigger
+            type: str
+          error:
+            description: Error text if there have been any problems when updating the state of the trigger
+            type: str
+          expression:
+            description: Reduced trigger expression
+            type: str
+          flags:
+            description: Origin of the trigger
+            type: int
+          last_event:
+            description: last event informations
+            type: complex
+            contains:
+                acknowledged:
+                    description: If set to true return only acknowledged events
+                    type: int
                 acknowledges:
-                - alias: Account who acknowledge
-                  clock: Time when the event was created (timestamp)
-                  message: Text of the acknowledgement message
-                clock: Time when the event was created (timestamp)
-                eventid: ID of the event
-                value: State of the related object
-              lastchange: Time when the trigger last changed its state (timestamp)
-              priority: Severity of the trigger
-              state: State of the trigger
-              status: Whether the trigger is enabled or disabled
-              templateid: ID of the parent template trigger
-              triggerid: ID of the trigger
-              type: Whether the trigger can generate multiple problem events
-              url: URL associated with the trigger
-              value: Whether the trigger is in OK or problem state
+                    description: acknowledges informations
+                    type: complex
+                    contains:
+                        alias:
+                            description: Account who acknowledge
+                            type: str
+                        clock:
+                            description: Time when the event was created (timestamp)
+                            type: int
+                        message:
+                            description: Text of the acknowledgement message
+                            type: str
+                clock:
+                    description: Time when the event was created (timestamp)
+                    type: int
+                eventid:
+                    description: ID of the event
+                    type: int
+                value:
+                    description: State of the related object
+                    type: int
+          lastchange:
+            description: Time when the trigger last changed its state (timestamp)
+            type: int
+          priority:
+            description: Severity of the trigger
+            type: int
+          state:
+            description: State of the trigger
+            type: int
+          status:
+            description: Whether the trigger is enabled or disabled
+            type: int
+          templateid:
+            description: ID of the parent template trigger
+            type: int
+          triggerid:
+            description: ID of the trigger
+            type: int
+          type:
+            description: Whether the trigger can generate multiple problem events
+            type: int
+          url:
+            description: URL associated with the trigger
+            type: str
+          value:
+            description: Whether the trigger is in OK or problem state
+            type: int
 '''
 
 DOCUMENTATION = '''
@@ -82,7 +158,6 @@ options:
     host_identifier:
         description:
             - Identifier of Zabbix Host
-        default: hostname
         required: true
         type: str
     host_id_type:
@@ -134,6 +209,7 @@ import traceback
 
 try:
     from zabbix_api import ZabbixAPI
+
     HAS_ZABBIX_API = True
 except ImportError:
     ZBX_IMP_ERR = traceback.format_exc()
@@ -182,7 +258,7 @@ def main():
             login_password=dict(type='str', required=True, no_log=True),
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
-            host_identifier=dict(type='str', default='hostname', required=False),
+            host_identifier=dict(type='str', required=True),
             host_id_type=dict(
                 default='hostname',
                 type='str',
