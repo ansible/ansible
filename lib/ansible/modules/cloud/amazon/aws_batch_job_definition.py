@@ -251,12 +251,12 @@ except ImportError:
 # logger.setLevel(logging.DEBUG)
 
 
-def validate_params(module, aws):
+def validate_params(module, batch_client):
     """
     Performs basic parameter validation.
 
     :param module:
-    :param aws:
+    :param batch_client:
     :return:
     """
     return
@@ -268,9 +268,9 @@ def validate_params(module, aws):
 #
 # ---------------------------------------------------------------------------------------------------
 
-def get_current_job_definition(module, connection):
+def get_current_job_definition(module, batch_client):
     try:
-        environments = connection.client().describe_job_definitions(
+        environments = batch_client.describe_job_definitions(
             jobDefinitionName=module.params['job_definition_name']
         )
         if len(environments['jobDefinitions']) > 0:
@@ -283,16 +283,15 @@ def get_current_job_definition(module, connection):
         return None
 
 
-def create_job_definition(module, aws):
+def create_job_definition(module, batch_client):
     """
         Adds a Batch job definition
 
         :param module:
-        :param aws:
+        :param batch_client:
         :return:
         """
 
-    client = aws.client('batch')
     changed = False
 
     # set API parameters
@@ -305,7 +304,7 @@ def create_job_definition(module, aws):
 
     try:
         if not module.check_mode:
-            client.register_job_definition(**api_params)
+            batch_client.register_job_definition(**api_params)
         changed = True
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Error registering job definition')
@@ -333,21 +332,20 @@ def get_compute_environment_order_list(module):
     return compute_environment_order_list
 
 
-def remove_job_definition(module, aws):
+def remove_job_definition(module, batch_client):
     """
     Remove a Batch job definition
 
     :param module:
-    :param aws:
+    :param batch_client:
     :return:
     """
 
-    client = aws.client('batch')
     changed = False
 
     try:
         if not module.check_mode:
-            client.deregister_job_definition(jobDefinition=module.params['job_definition_arn'])
+            batch_client.deregister_job_definition(jobDefinition=module.params['job_definition_arn'])
         changed = True
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Error removing job definition')
@@ -375,7 +373,7 @@ def job_definition_equal(module, current_definition):
     return equal
 
 
-def manage_state(module, aws):
+def manage_state(module, batch_client):
     changed = False
     current_state = 'absent'
     state = module.params['state']
@@ -386,7 +384,7 @@ def manage_state(module, aws):
     check_mode = module.check_mode
 
     # check if the job definition exists
-    current_job_definition = get_current_job_definition(module, aws)
+    current_job_definition = get_current_job_definition(module, batch_client)
     if current_job_definition:
         current_state = 'present'
 
@@ -394,21 +392,21 @@ def manage_state(module, aws):
         if current_state == 'present':
             # check if definition has changed and register a new version if necessary
             if not job_definition_equal(module, current_job_definition):
-                create_job_definition(module, aws)
+                create_job_definition(module, batch_client)
                 action_taken = 'updated with new version'
                 changed = True
         else:
             # Create Job definition
-            changed = create_job_definition(module, aws)
+            changed = create_job_definition(module, batch_client)
             action_taken = 'added'
 
-        response = get_current_job_definition(module, aws)
+        response = get_current_job_definition(module, batch_client)
         if not response:
             module.fail_json(msg='Unable to get job definition information after creating/updating')
     else:
         if current_state == 'present':
             # remove the Job definition
-            changed = remove_job_definition(module, aws)
+            changed = remove_job_definition(module, batch_client)
             action_taken = 'deregistered'
     return dict(changed=changed, batch_job_definition_action=action_taken, response=response)
 
@@ -452,11 +450,11 @@ def main():
         supports_check_mode=True
     )
 
-    aws = AWSConnection(module, ['batch'])
+    batch_client = module.client('batch')
 
-    validate_params(module, aws)
+    validate_params(module, batch_client)
 
-    results = manage_state(module, aws)
+    results = manage_state(module, batch_client)
 
     module.exit_json(**camel_dict_to_snake_dict(results))
 

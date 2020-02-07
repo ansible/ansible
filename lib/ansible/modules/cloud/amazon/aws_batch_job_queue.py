@@ -135,13 +135,11 @@ except ImportError:
 # ---------------------------------------------------------------------------------------------------
 
 
-def validate_params(module, aws):
+def validate_params(module):
     """
     Performs basic parameter validation.
 
     :param module:
-    :param aws:
-    :return:
     """
     return
 
@@ -152,9 +150,9 @@ def validate_params(module, aws):
 #
 # ---------------------------------------------------------------------------------------------------
 
-def get_current_job_queue(module, connection):
+def get_current_job_queue(module, client):
     try:
-        environments = connection.client().describe_job_queues(
+        environments = client.describe_job_queues(
             jobQueues=[module.params['job_queue_name']]
         )
         return environments['jobQueues'][0] if len(environments['jobQueues']) > 0 else None
@@ -162,16 +160,15 @@ def get_current_job_queue(module, connection):
         return None
 
 
-def create_job_queue(module, aws):
+def create_job_queue(module, client):
     """
         Adds a Batch job queue
 
         :param module:
-        :param aws:
+        :param client:
         :return:
         """
 
-    client = aws.client('batch')
     changed = False
 
     # set API parameters
@@ -200,16 +197,15 @@ def get_compute_environment_order_list(module):
     return compute_environment_order_list
 
 
-def remove_job_queue(module, aws):
+def remove_job_queue(module, client):
     """
     Remove a Batch job queue
 
     :param module:
-    :param aws:
+    :param client:
     :return:
     """
 
-    client = aws.client('batch')
     changed = False
 
     # set API parameters
@@ -224,7 +220,7 @@ def remove_job_queue(module, aws):
     return changed
 
 
-def manage_state(module, aws):
+def manage_state(module, client):
     changed = False
     current_state = 'absent'
     state = module.params['state']
@@ -237,7 +233,7 @@ def manage_state(module, aws):
     check_mode = module.check_mode
 
     # check if the job queue exists
-    current_job_queue = get_current_job_queue(module, aws)
+    current_job_queue = get_current_job_queue(module, client)
     if current_job_queue:
         current_state = 'present'
 
@@ -263,7 +259,7 @@ def manage_state(module, aws):
             if updates:
                 try:
                     if not check_mode:
-                        aws.client().update_job_queue(**job_kwargs)
+                        client.update_job_queue(**job_kwargs)
                     changed = True
                     action_taken = "updated"
                 except (BotoCoreError, ClientError) as e:
@@ -271,17 +267,17 @@ def manage_state(module, aws):
 
         else:
             # Create Job Queue
-            changed = create_job_queue(module, aws)
+            changed = create_job_queue(module, client)
             action_taken = 'added'
 
         # Describe job queue
-        response = get_current_job_queue(module, aws)
+        response = get_current_job_queue(module, client)
         if not response:
             module.fail_json(msg='Unable to get job queue information after creating/updating')
     else:
         if current_state == 'present':
             # remove the Job Queue
-            changed = remove_job_queue(module, aws)
+            changed = remove_job_queue(module, client)
             action_taken = 'deleted'
     return dict(changed=changed, batch_job_queue_action=action_taken, response=response)
 
@@ -312,11 +308,11 @@ def main():
         supports_check_mode=True
     )
 
-    aws = AWSConnection(module, ['batch'])
+    client = module.client('batch')
 
-    validate_params(module, aws)
+    validate_params(module)
 
-    results = manage_state(module, aws)
+    results = manage_state(module, client)
 
     module.exit_json(**camel_dict_to_snake_dict(results))
 

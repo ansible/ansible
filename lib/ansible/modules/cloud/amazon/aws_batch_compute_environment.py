@@ -263,12 +263,11 @@ def set_api_params(module, module_params):
     return snake_dict_to_camel_dict(api_params)
 
 
-def validate_params(module, aws):
+def validate_params(module):
     """
     Performs basic parameter validation.
 
     :param module:
-    :param aws:
     :return:
     """
 
@@ -294,9 +293,9 @@ def validate_params(module, aws):
 #
 # ---------------------------------------------------------------------------------------------------
 
-def get_current_compute_environment(module, connection):
+def get_current_compute_environment(module, client):
     try:
-        environments = connection.client().describe_compute_environments(
+        environments = client.describe_compute_environments(
             computeEnvironments=[module.params['compute_environment_name']]
         )
         if len(environments['computeEnvironments']) > 0:
@@ -307,16 +306,15 @@ def get_current_compute_environment(module, connection):
         return None
 
 
-def create_compute_environment(module, aws):
+def create_compute_environment(module, client):
     """
         Adds a Batch compute environment
 
         :param module:
-        :param aws:
+        :param client:
         :return:
         """
 
-    client = aws.client('batch')
     changed = False
 
     # set API parameters
@@ -350,16 +348,15 @@ def create_compute_environment(module, aws):
     return changed
 
 
-def remove_compute_environment(module, aws):
+def remove_compute_environment(module, client):
     """
     Remove a Batch compute environment
 
     :param module:
-    :param aws:
+    :param client:
     :return:
     """
 
-    client = aws.client('batch')
     changed = False
 
     # set API parameters
@@ -374,7 +371,7 @@ def remove_compute_environment(module, aws):
     return changed
 
 
-def manage_state(module, aws):
+def manage_state(module, client):
     changed = False
     current_state = 'absent'
     state = module.params['state']
@@ -390,7 +387,7 @@ def manage_state(module, aws):
     check_mode = module.check_mode
 
     # check if the compute environment exists
-    current_compute_environment = get_current_compute_environment(module, aws)
+    current_compute_environment = get_current_compute_environment(module, client)
     response = current_compute_environment
     if current_compute_environment:
         current_state = 'present'
@@ -421,7 +418,7 @@ def manage_state(module, aws):
             if updates:
                 try:
                     if not check_mode:
-                        update_env_response = aws.client().update_compute_environment(**compute_kwargs)
+                        update_env_response = client.update_compute_environment(**compute_kwargs)
                     if not update_env_response:
                         module.fail_json(msg='Unable to get compute environment information after creating')
                     changed = True
@@ -431,16 +428,16 @@ def manage_state(module, aws):
 
         else:
             # Create Batch Compute Environment
-            changed = create_compute_environment(module, aws)
+            changed = create_compute_environment(module, client)
             # Describe compute environment
             action_taken = 'added'
-        response = get_current_compute_environment(module, aws)
+        response = get_current_compute_environment(module, client)
         if not response:
             module.fail_json(msg='Unable to get compute environment information after creating')
     else:
         if current_state == 'present':
             # remove the compute environment
-            changed = remove_compute_environment(module, aws)
+            changed = remove_compute_environment(module, client)
             action_taken = 'deleted'
     return dict(changed=changed, batch_compute_environment_action=action_taken, response=response)
 
@@ -484,12 +481,11 @@ def main():
         supports_check_mode=True
     )
 
+    client = module.client('batch')
 
-    aws = AWSConnection(module, ['batch'])
+    validate_params(module)
 
-    validate_params(module, aws)
-
-    results = manage_state(module, aws)
+    results = manage_state(module, client)
 
     module.exit_json(**camel_dict_to_snake_dict(results, ignore_list=['Tags']))
 
