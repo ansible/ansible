@@ -137,6 +137,8 @@ class Acls(ConfigBase):
                   to the desired configuration
         """
         acls_xml = []
+        acls_xml.extend(self._state_deleted(want, have))
+        acls_xml.extend(self._state_merged(want, have))
         return acls_xml
 
     def _state_overridden(self, want, have):
@@ -147,6 +149,8 @@ class Acls(ConfigBase):
                   to the desired configuration
         """
         acls_xml = []
+        acls_xml.extend(self._state_deleted(have, have))
+        acls_xml.extend(self._state_merged(want, have))
         return acls_xml
 
     def _state_deleted(self, want, have):
@@ -156,10 +160,11 @@ class Acls(ConfigBase):
         :returns: the xml necessary to migrate the current configuration
                   to the desired configuration
         """
-        acls_xml = []
-        return acls_xml
+        if not want:
+            want = have
+        return self._state_merged(want, have, delete={"delete": "delete"})
 
-    def _state_merged(self, want, have):
+    def _state_merged(self, want, have, delete=None):
         """ The command generator when state is merged
 
         :rtype: A list
@@ -173,7 +178,9 @@ class Acls(ConfigBase):
             for acl in config['acls']:
                 filter_node = build_child_xml_node(inet_node, 'filter')
                 build_child_xml_node(filter_node, 'name', acl['name'])
-                if acl.get('aces'):
+                if delete:
+                    filter_node.attrib.update(delete)
+                elif acl.get('aces'):
                     for ace in acl['aces']:
                         term_node = build_child_xml_node(filter_node, 'term')
                         build_child_xml_node(term_node, 'name', ace['name'])
