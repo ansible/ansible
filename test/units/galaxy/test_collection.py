@@ -862,7 +862,7 @@ def test_verify_file_hash_deleted_file(manifest_info):
             assert mock_isfile.called_once
 
     assert len(error_queue) == 1
-    assert error_queue[0].installed == None
+    assert error_queue[0].installed is None
     assert error_queue[0].expected == digest
 
 
