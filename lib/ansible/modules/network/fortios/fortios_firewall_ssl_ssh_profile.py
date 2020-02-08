@@ -513,7 +513,7 @@ options:
                             - address6
                             - wildcard-fqdn
                             - regex
-                    wildcard_fqdn:
+                    wildcard-fqdn:
                         description:
                             - Exempt servers by wildcard FQDN. Source firewall.wildcard-fqdn.custom.name firewall.wildcard-fqdn.group.name.
                         type: str
@@ -689,7 +689,7 @@ EXAMPLES = '''
             id:  "64"
             regex: "<your_own_value>"
             type: "fortiguard-category"
-            wildcard_fqdn: "<your_own_value> (source firewall.wildcard-fqdn.custom.name firewall.wildcard-fqdn.group.name)"
+            wildcard-fqdn: "<your_own_value> (source firewall.wildcard-fqdn.custom.name firewall.wildcard-fqdn.group.name)"
         ssl_exemptions_log: "disable"
         ssl_server:
          -
