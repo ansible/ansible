@@ -2,10 +2,10 @@
   - debug:
       msg: Start nxos_acls overridden integration tests connection={{ansible_connection}}" 
 
-  - include_tasks: populate_config.yml
+  - include_tasks: populate_config.yaml
 
   - block:
-      - name: Overridden 1
+      - name: Overridden (first test)
         nxos_acls:
           config:
             - afi: ipv4
@@ -22,7 +22,9 @@
                     - remark: Example for overridden state  
           state: overridden
         register: result
-        
+
+      - debug:
+          var: result
     
       - assert:
           that: 
@@ -32,11 +34,11 @@
             - "'no ipv6 access-list ACL1v6' in result.commands"
             - "'no ipv6 access-list ACL2v6' in result.commands"
             - "'ip access-list NewACL' in result.commands"
-            - "'10 deny eigrp 192.0.2.0 0.0.255.255 any' in result.commands"
-            - "'20 remark Example for overridden state' in result.commands"
+            - "'deny eigrp 192.0.2.0 0.0.255.255 any' in result.commands"
+            - "'remark Example for overridden state' in result.commands"
             - "result.commands|length==7"
 
-      - name: Gather static_routes post facts
+      - name: Gather acls post facts
         nxos_facts: &facts
             gather_subset:
                 - '!all'
@@ -47,9 +49,10 @@
           that:
               - "ansible_facts.network_resources.acls == result.after"
 
-      - include_tasks: populate_config.yml
 
-      - name: Overridden 2
+      - include_tasks: populate_config.yaml
+
+      - name: Overridden (second test)
         nxos_acls: &overridden
           config: 
             - afi: ipv6
@@ -61,11 +64,14 @@
                       destination:
                         any: true
                       source:
-                        host: 2001:db8:3431::/36
+                        host: 2001:db8:3431::12
                         port_protocol:
                           lt: 35
           state: overridden
         register: result
+
+      - debug:
+          var: result
 
       - assert: 
           that:
@@ -77,10 +83,10 @@
             - "'ipv6 access-list ACL1v6' in result.commands"
             - "'no 10 permit sctp any any' in result.commands"
             - "'no 20 remark IPv6 ACL' in result.commands"
-            - "'deny udp 2001:db8:3431::/36 lt 35 any' in result.commands"
+            - "'deny udp host 2001:db8:3431::12 lt 35 any' in result.commands"
             - "result.commands|length==8"          
                       
-      - name: Gather static_routes post facts
+      - name: Gather acls post facts
         nxos_facts: *facts
 
       - assert:

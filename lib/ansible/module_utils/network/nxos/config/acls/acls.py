@@ -123,7 +123,7 @@ class Acls(ConfigBase):
         elif state == 'deleted':
             commands = (self._state_deleted(want, have))
         elif state == 'rendered':
-            commands = self._state_rendered(want, have=[])
+            commands = self._state_rendered(want)
         elif state == 'parsed':
             want = self._module.params['running_config']
             commands = self._state_parsed(want)
@@ -134,10 +134,12 @@ class Acls(ConfigBase):
                 elif state == 'replaced':
                     commands.extend(self._state_replaced(w, have))
         q(commands)
-        commands = [c.strip() for c in commands]
+        if state != 'parsed':
+            commands = [c.strip() for c in commands]
         return commands
 
     def _state_parsed(self, want):
+        q(want)
         return self.get_acls_facts(want)
 
     def _state_rendered(self, want):
@@ -173,7 +175,7 @@ class Acls(ConfigBase):
                                 h['name'], want['acls'], 'name')
                             q(want_aces)
                             del_acl = {}
-                            aces = []
+                            aces = []  # that will be deleted
                             if h.get('aces'):
                                 for h_ace in h['aces']:
                                     q(h_ace)
@@ -200,12 +202,12 @@ class Acls(ConfigBase):
             if del_dict['acls']:
                 commands.extend(self._state_deleted([del_dict], have))
             q(commands)
-            # commands.extend(self._state_merged(want, have))
+            commands.extend(self._state_merged(want, have))
             q('after merged')
             q(commands)
-            for i in range(1, len(commands)):
-                if commands[i] == commands[0]:
-                    commands[i] = ''
+            # for i in range(1, len(commands)):
+            #     if commands[i] == commands[0]:
+            #         commands[i] = ''
             commands = list(filter(None, commands))
             q(commands)
         return commands
@@ -235,8 +237,8 @@ class Acls(ConfigBase):
                         commands.extend(self._state_deleted([del_dict], have))
             else:
                 q(h)
-                # if afi does not exist in want
-                commands.extend(self._state_deleted([{'afi': 'ipv6'}], have))
+                # if afi is not in want
+                commands.extend(self._state_deleted([{'afi': h['afi']}], have))
         q(commands)
         for w in want:
             q(w)

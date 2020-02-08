@@ -2,7 +2,7 @@
   - debug: 
       msg: Start nxos_acls gathered integration tests connection={{ansible_connection}}"  
     
-  - include_tasks: populate_config.yml
+  - include_tasks: populate_config.yaml
 
   - block:
       - name: Gather acls facts
@@ -31,6 +31,6 @@
           that:
             - "result.changed == false"
               
-        always:
-            - include_tasks: remove_config.yaml
+    always:
+      - include_tasks: remove_config.yaml
           

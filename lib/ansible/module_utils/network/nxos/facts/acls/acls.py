@@ -81,11 +81,12 @@ class AclsFacts(object):
     def get_endpoint(self, ace, pro):
         ret_dict = {}
         option = ace.split()[0]
+        q(ace, option)
         if option == 'any':
             ret_dict.update({'any': True})
         else:
             # it could be a.b.c.d or a.b.c.d/x or a.b.c.d/32
-            if '/' in option:
+            if '/' in option:  # or 'host' in option:
                 ip = re.search('(.*)/(\d+)', option)
                 if int(ip.group(2)) < 32:
                     ret_dict.update({'prefix': option})
