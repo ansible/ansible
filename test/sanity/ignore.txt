@@ -1505,7 +1505,6 @@ lib/ansible/modules/cloud/misc/proxmox_kvm.py validate-modules:parameter-type-no
 lib/ansible/modules/cloud/misc/proxmox_kvm.py validate-modules:undocumented-parameter
 lib/ansible/modules/cloud/misc/proxmox_template.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/misc/proxmox_template.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/misc/proxmox_template.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/cloud/misc/proxmox_template.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/misc/rhevm.py validate-modules:doc-required-mismatch
 lib/ansible/modules/cloud/misc/rhevm.py validate-modules:parameter-list-no-elements
