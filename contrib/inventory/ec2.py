@@ -470,7 +470,10 @@ class Ec2Inventory(object):
         cache_id = self.boto_profile or os.environ.get('AWS_ACCESS_KEY_ID', self.credentials.get('aws_access_key_id'))
         if cache_id:
             cache_name = '%s-%s' % (cache_name, cache_id)
-        cache_name += '-' + hashlib.md5(__file__.encode('utf-8')).hexdigest()[:6]
+        if sys.version_info.major == 2:
+            cache_name += '-' + hashlib.md5(__file__).hexdigest()[:6]
+        else:
+            cache_name += '-' + hashlib.md5(__file__.encode('utf-8')).hexdigest()[:6]
         self.cache_path_cache = os.path.join(cache_dir, "%s.cache" % cache_name)
         self.cache_path_index = os.path.join(cache_dir, "%s.index" % cache_name)
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
