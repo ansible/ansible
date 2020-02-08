@@ -44,7 +44,7 @@ description: Manage named IP Access Control Lists on NX-OS platform
 author: Bradley Thornton (@cidrblock) & Adharsh Srivats Rangarajan (@adharshsrivatsr)
 notes:
   - Tested against NX-OS 7.3.(0)D1(1) on VIRL
-  - <documentation for sequence number>
+  - As NX-OS allows configuring a rule again with different sequence numbers, the user is expected to provide sequence numbers for the access control entries to preserve idempotency. If no sequence number is given, the rule will be added as a new rule by the device.
   - To parse configuration text, provide the output of show running-config | section access-list or a mocked up config
 options:
   running_config:
@@ -91,36 +91,36 @@ options:
                     description: Any destination address
                     type: bool
                   host:
-                    description: Host IP address
-                    type: str                      
+                    description: Host IP address. 
+                    type: str                    
                   port_protocol:
                     description: Specify the destination port or protocol (only for TCP and UDP)
                     type: dict
                     suboptions:
                       eq:
                         description: Match only packets on a given port number
-                        type: str
+                        type: int
                       gt:
                         description: Match only packets with a greater port number
-                        type: str
+                        type: int
                       lt:
                         description: Match only packets with a lower port number
-                        type: str
+                        type: int
                       neq:
                         description: Match only packets not on a given port number
-                        type: str
+                        type: int
                       range:
                         description: Match only packets in the range of port numbers
                         type: dict
                         suboptions:
                           start:
                             description: Specify the start of the port range
-                            type: str
+                            type: int
                           end:
                             description: Specify the end of the port range
-                            type: str  
+                            type: int  
                   prefix:
-                    description: Source network prefix
+                    description: Destination network prefix. Only for prefixes of value less than 31 for ipv4 and 127 for ipv6. Prefixes of 32 (ipv4) and 128 (ipv6) should be given in the 'host' key. 
                     type: str
                   wildcard_bits:
                     description: Destination wildcard bits
@@ -161,28 +161,28 @@ options:
                     suboptions:
                       eq:
                         description: Match only packets on a given port number
-                        type: str
+                        type: int
                       gt:
                         description: Match only packets with a greater port number
-                        type: str
+                        type: int
                       lt:
                         description: Match only packets with a lower port number
-                        type: str
+                        type: int
                       neq:
                         description: Match only packets not on a given port number
-                        type: str
+                        type: int
                       range:
                         description: Match only packets in the range of port numbers
                         type: dict
                         suboptions:
                           start:
                             description: Specify the start of the port range
-                            type: str
+                            type: int
                           end:
                             description: Specify the end of the port range
-                            type: str
+                            type: int
                   prefix:
-                    description: Source network prefix
+                    description: Source network prefix. Only for prefixes of mask value less than 31 for ipv4 and 127 for ipv6. Prefixes of mask 32 (ipv4) and 128 (ipv6) should be given in the 'host' key.
                     type: str
                   wildcard_bits:
                     description: Source wildcard bits
@@ -401,25 +401,354 @@ options:
     default: merged
 """
 EXAMPLES = """
+# Using merged
+
+# Before state:
+# -------------
+#
+
+- name: Merge new ACLs configuration
+  nxos_acls:
+    config:
+      - afi: ipv4
+        acls:
+          - name: ACL1v4
+            aces:
+              - grant: deny
+                destination:
+                  address: 192.0.2.64
+                  wildcard_bits: 0.0.0.255
+                source:
+                  any: true
+                  port_protocol:
+                    lt: 55
+                protocol: tcp
+                protocol_options:
+                  tcp:
+                    ack: true
+                    fin: true
+                sequence: 50
+    
+      - afi: ipv6
+        acls:
+          - name: ACL1v6
+            aces:
+              - grant: permit
+                sequence: 10
+                source:
+                  any: true
+                destination:
+                  prefix: 2001:db8:12::/32
+                protocol: sctp
+    state: merged
+  
+# After state:
+# ------------
+#
+# ip access-list ACL1v4
+#  50 deny tcp any lt 55 192.0.2.64 0.0.0.255 ack fin 
+# ipv6 access-list ACL1v6
+#  10 permit sctp any any 
+
+ 
 
 
+# Using replaced
+
+# Before state:
+# ----------------
+#
+# ip access-list ACL1v4
+#   10 permit ip any any
+#   20 deny udp any any
+# ip access-list ACL2v4
+#   10 permit ahp 192.0.2.0 0.0.0.255 any
+# ip access-list ACL1v6
+#   10 permit sctp any any
+#   20 remark IPv6 ACL
+# ip access-list ACL2v6
+#  10 deny ipv6 any 2001:db8:3000::/36
+#  20 permit tcp 2001:db8:2000:2::2/128 2001:db8:2000:ab::2/128
+
+- name: Replace existing ACL configuration with provided configuration
+  nxos_acls:
+    config:
+      - afi: ipv4
+      - afi: ipv6
+        acls:
+          - name: ACL1v6
+            aces:
+              - sequence: 20
+                grant: permit
+                source: 
+                  any: true
+                destination:
+                  any: true
+                protocol: pip
+
+              - remark: Replaced ACE
+
+          - name: ACL2v6
 
 
+# After state:
+# ---------------
+#
+# ipv6 access-list ACL1v6
+#   20 permit pip any any
+#   30 remark Replaced ACE
+# ipv6 access-list ACL2v6
 
 
+# Using overridden
+
+# Before state:
+# ----------------
+#
+# ip access-list ACL1v4
+#   10 permit ip any any
+#   20 deny udp any any
+# ip access-list ACL2v4
+#   10 permit ahp 192.0.2.0 0.0.0.255 any
+# ip access-list ACL1v6
+#   10 permit sctp any any
+#   20 remark IPv6 ACL
+# ip access-list ACL2v6
+#  10 deny ipv6 any 2001:db8:3000::/36
+#  20 permit tcp 2001:db8:2000:2::2/128 2001:db8:2000:ab::2/128
+
+- name: Override existing configuration with provided configuration
+  nxos_acls:
+    config:
+      - afi: ipv4
+        acls:
+          - name: NewACL
+            aces:
+              - grant: deny
+                source: 
+                  address: 192.0.2.0
+                  wildcard_bits: 0.0.255.255
+                destination:
+                  any: true
+                protocol: eigrp
+              - remark: Example for overridden state  
+    state: overridden
+
+# After state:
+# ------------
+#
+# ip access-list NewACL
+#   10 deny eigrp 192.0.2.0 0.0.255.255 any 
+#   20 remark Example for overridden state  
 
 
+# Using deleted:
+#
+# Before state:
+# -------------
+#
+# ip access-list ACL1v4
+#   10 permit ip any any
+#   20 deny udp any any
+# ip access-list ACL2v4
+#   10 permit ahp 192.0.2.0 0.0.0.255 any
+# ip access-list ACL1v6
+#   10 permit sctp any any
+#   20 remark IPv6 ACL
+# ip access-list ACL2v6
+#  10 deny ipv6 any 2001:db8:3000::/36
+#  20 permit tcp 2001:db8:2000:2::2/128 2001:db8:2000:ab::2/128
 
 
+- name: Delete existing ACL configuration
+  nxos_acls:
+    config:
+      - afi: ipv4
+      
+      - afi: ipv6
+          acls:
+            - name: ACL1v6
+              aces:
+                - grant: permit
+                  sequence: 10
+                  source:
+                    any: true
+                  destination:
+                    any: true
+                  protocol: sctp
+                  
+                - sequence: 20
+      state: deleted
+
+# After state:
+# ------------
+#
+# ip access-list ACl1v6
+# ip access-list ACL2v6
+#  10 deny ipv6 any 2001:db8:3000::/36
+#  20 permit tcp 2001:db8:2000:2::2/128 2001:db8:2000:ab::2/128
 
 
+# Using parsed
+#
+# Before state:
+# ------------
+#
+
+- name: Parse given config to structured data
+  nxos_acls:
+    running_config: |
+      ip access-list ACL1v4
+        50 deny tcp any lt 55 192.0.2.64 0.0.0.255 ack fin 
+      ipv6 access-list ACL1v6
+        10 permit sctp any any 
+    state: parsed
+
+# After state:
+# -----------
+# 
+
+# returns:
+# parsed:
+# - afi: ipv4
+#   acls:
+#     - name: ACL1v4
+#       aces:
+#         - grant: deny
+#           destination:
+#             address: 192.0.2.64
+#             wildcard_bits: 0.0.0.255
+#           source:
+#             any: true
+#             port_protocol:
+#               lt: 55
+#           protocol: tcp
+#           protocol_options:
+#             tcp:
+#               ack: true
+#               fin: true
+#           sequence: 50
+#
+# - afi: ipv6
+#   acls:
+#     - name: ACL1v6
+#       aces:
+#         - grant: permit
+#           sequence: 10
+#           source:
+#             any: true
+#           destination:
+#             prefix: 2001:db8:12::/32
+#           protocol: sctp
 
 
+# Using gathered:
+
+# Before state:
+# ------------
+#
+# ip access-list ACL1v4
+#  50 deny tcp any lt 55 192.0.2.64 0.0.0.255 ack fin 
+# ipv6 access-list ACL1v6
+#  10 permit sctp any any 
+
+  - name: Gather existing configuration
+    nxos_acls:
+      state: gathered
+    
+# After state:
+# ------------
+#
+# ip access-list ACL1v4
+#  50 deny tcp any lt 55 192.0.2.64 0.0.0.255 ack fin 
+# ipv6 access-list ACL1v6
+#  10 permit sctp any any 
+
+# returns:
+# nxos_acls:
+#   config:
+#     - afi: ipv4
+#       acls:
+#         - name: ACL1v4
+#           aces:
+#             - grant: deny
+#               destination:
+#                 address: 192.0.2.64
+#                 wildcard_bits: 0.0.0.255
+#               source:
+#                 any: true
+#                 port_protocol:
+#                   lt: 55
+#               protocol: tcp
+#               protocol_options:
+#                 tcp:
+#                   ack: true
+#                   fin: true
+#               sequence: 50
+  
+#     - afi: ipv6
+#       acls:
+#         - name: ACL1v6
+#           aces:
+#             - grant: permit
+#               sequence: 10
+#               source:
+#                 any: true
+#               destination:
+#                 prefix: 2001:db8:12::/32
+#               protocol: sctp
 
 
+# Using rendered
+
+# Before state:
+# ------------
+#
+ - name: Render required configuration to be pushed to the device
+   nxos_acls:
+    config:
+      - afi: ipv4
+        acls:
+          - name: ACL1v4
+            aces:
+              - grant: deny
+                destination:
+                  address: 192.0.2.64
+                  wildcard_bits: 0.0.0.255
+                source:
+                  any: true
+                  port_protocol:
+                    lt: 55
+                protocol: tcp
+                protocol_options:
+                  tcp:
+                    ack: true
+                    fin: true
+                sequence: 50
+
+      - afi: ipv6
+        acls:
+          - name: ACL1v6
+            aces:
+              - grant: permit
+                sequence: 10
+                source:
+                  any: true
+                destination:
+                  prefix: 2001:db8:12::/32
+                protocol: sctp
 
 
+# After state:
+# -----------
+#
 
+# returns:
+# rendered:
+#  ip access-list ACL1v4
+#   50 deny tcp any lt 55 192.0.2.64 0.0.0.255 ack fin 
+#  ipv6 access-list ACL1v6
+#   10 permit sctp any any 
 
 
 """
@@ -440,7 +769,7 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['ip access-list ACLv4', 'permit ip any any', 'deny tcp host 192.0.2.64 192.0.2.0/16 ack']
 """
 
 
