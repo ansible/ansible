@@ -53,3 +53,16 @@ tr .ansibleOptionLink {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+@media screen and (min-width:767px){
+  /* Move anchors a bit up so that they aren't hidden by the header bar */
+  section [id] {
+    padding-top: 45px;
+    margin-top: -45px;
+  }
+  /* Without this, for example most links in the page's TOC aren't usable anymore */
+  section a[id] {
+    padding-top: 0;
+    margin-top: 0;
+  }
+}
