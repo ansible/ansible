@@ -572,8 +572,9 @@ class PyVmomiHelper(PyVmomi):
                 else:
                     current_disk['state'] = disk['state']
 
+            # By default destroy file from datastore if 'destroy' parameter is not provided
             if current_disk['state'] == 'absent':
-                current_disk['destroy'] = disk['destroy']
+                current_disk['destroy'] = disk.get('destroy', True)
             elif current_disk['state'] == 'present':
                 # Select datastore or datastore cluster
                 if 'datastore' in disk:
