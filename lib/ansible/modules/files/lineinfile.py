@@ -188,7 +188,7 @@ EXAMPLES = r'''
 - name: Ensure the JBoss memory settings are exactly as needed
   lineinfile:
     path: /opt/jboss-as/bin/standalone.conf
-    regexp: '^(.*)Xms(\\d+)m(.*)$'
+    regexp: '^(.*)Xms(\d+)m(.*)$'
     line: '\1Xms${xms}m\3'
     backrefs: yes
 
