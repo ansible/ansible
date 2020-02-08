@@ -25,6 +25,10 @@
 #
 # { "groups": ["utility", "databases"], "a": false, "b": true }
 
+# Updated 2020 by Matthew R Chase <matt@chasefox.net>
+#
+# Don't crash when a node is offline; just skip that node.
+
 import json
 import os
 import sys
@@ -158,44 +162,46 @@ def main_list(options):
     proxmox_api = ProxmoxAPI(options)
     proxmox_api.auth()
 
-    for node in proxmox_api.nodes().get_names():
-        qemu_list = proxmox_api.node_qemu(node)
-        results['all']['hosts'] += qemu_list.get_names()
-        results['_meta']['hostvars'].update(qemu_list.get_variables())
-        lxc_list = proxmox_api.node_lxc(node)
-        results['all']['hosts'] += lxc_list.get_names()
-        results['_meta']['hostvars'].update(lxc_list.get_variables())
+    for node in proxmox_api.nodes():
+        if node['status'] == "online":
+            node = node['node']
+            qemu_list = proxmox_api.node_qemu(node)
+            results['all']['hosts'] += qemu_list.get_names()
+            results['_meta']['hostvars'].update(qemu_list.get_variables())
+            lxc_list = proxmox_api.node_lxc(node)
+            results['all']['hosts'] += lxc_list.get_names()
+            results['_meta']['hostvars'].update(lxc_list.get_variables())
 
-        for vm in results['_meta']['hostvars']:
-            vmid = results['_meta']['hostvars'][vm]['proxmox_vmid']
-            try:
-                type = results['_meta']['hostvars'][vm]['proxmox_type']
-            except KeyError:
-                type = 'qemu'
-            try:
-                description = proxmox_api.vm_description_by_type(node, vmid, type)['description']
-            except KeyError:
-                description = None
+            for vm in results['_meta']['hostvars']:
+                vmid = results['_meta']['hostvars'][vm]['proxmox_vmid']
+                try:
+                    type = results['_meta']['hostvars'][vm]['proxmox_type']
+                except KeyError:
+                    type = 'qemu'
+                try:
+                    description = proxmox_api.vm_description_by_type(node, vmid, type)['description']
+                except KeyError:
+                    description = None
 
-            try:
-                metadata = json.loads(description)
-            except TypeError:
-                metadata = {}
-            except ValueError:
-                metadata = {
-                    'notes': description
-                }
+                try:
+                    metadata = json.loads(description)
+                except TypeError:
+                    metadata = {}
+                except ValueError:
+                    metadata = {
+                        'notes': description
+                    }
 
-            if 'groups' in metadata:
-                # print metadata
-                for group in metadata['groups']:
-                    if group not in results:
-                        results[group] = {
-                            'hosts': []
-                        }
-                    results[group]['hosts'] += [vm]
+                if 'groups' in metadata:
+                    # print metadata
+                    for group in metadata['groups']:
+                        if group not in results:
+                            results[group] = {
+                                'hosts': []
+                            }
+                        results[group]['hosts'] += [vm]
 
-            results['_meta']['hostvars'][vm].update(metadata)
+                results['_meta']['hostvars'][vm].update(metadata)
 
     # pools
     for pool in proxmox_api.pools().get_names():
