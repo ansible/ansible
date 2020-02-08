@@ -307,7 +307,7 @@ def main():
                     params['inventory_source_id'] = inventory_source.get(name=params['name'])['id']
                 except (exc.NotFound) as excinfo:
                     module.fail_json(
-                         msg='Failed to update inventory source, '
+                         msg='Failed to update inventory source,'
                         'inventory not found: {0}'.format(excinfo),
                         changed=False
                     )
