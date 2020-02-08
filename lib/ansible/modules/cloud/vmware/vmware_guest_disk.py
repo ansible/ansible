@@ -483,7 +483,7 @@ class PyVmomiHelper(PyVmomi):
                 elif disk['disk_type'] == 'eagerzeroedthick':
                     disk_spec.device.backing.eagerlyScrub = True
                 # get Storage DRS recommended datastore from the datastore cluster
-                if disk['datastore_cluster']:
+                if disk['datastore_cluster'] is not None:
                     datastore_name = self.get_recommended_datastore(datastore_cluster_obj=disk['datastore_cluster'], disk_spec_obj=disk_spec)
                     disk['datastore'] = find_obj(self.content, [vim.Datastore], datastore_name)
                 if disk['filename'] is None:
@@ -562,6 +562,7 @@ class PyVmomiHelper(PyVmomi):
                                 state='present',
                                 destroy=True,
                                 filename=None,
+                                datastore_cluster=None,
                                 datastore=None,
                                 autoselect_datastore=True,
                                 disk_unit_number=0,
