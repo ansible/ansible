@@ -32,7 +32,7 @@ options:
   api_password:
     description:
       - the password to authenticate with
-      - you can use PROXMOX_PASSWORD environment variable
+      - if omitted, PROXMOX_PASSWORD environment variable is used instead
   validate_certs:
     description:
       - enable / disable https certificate verification
@@ -40,17 +40,16 @@ options:
     type: bool
   node:
     description:
-      - Proxmox VE node, when you will operate with template
+      - Proxmox VE node to operate on with template
     required: true
   src:
     description:
-      - path to uploaded file
+      - path to file to be uploaded
       - required only for C(state=present)
-    aliases: ['path']
   template:
     description:
       - the template name
-      - required only for states C(absent), C(info)
+      - required only for state C(absent)
   content_type:
     description:
       - content type
@@ -67,7 +66,7 @@ options:
     default: 30
   force:
     description:
-      - can be used only with C(state=present), exists template will be overwritten
+      - can be used only with C(state=present), existing template will be overwritten
     type: bool
     default: 'no'
   state:
