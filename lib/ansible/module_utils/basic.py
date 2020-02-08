@@ -237,14 +237,14 @@ FILE_COMMON_ARGUMENTS = dict(
     # created files (these are used by set_fs_attributes_if_different and included in
     # load_file_common_arguments)
     mode=dict(type='raw'),
-    owner=dict(),
-    group=dict(),
-    seuser=dict(),
-    serole=dict(),
-    selevel=dict(),
-    setype=dict(),
-    attributes=dict(aliases=['attr']),
-    unsafe_writes=dict(type='bool'),  # should be available to any module using atomic_move
+    owner=dict(type='str'),
+    group=dict(type='str'),
+    seuser=dict(type='str'),
+    serole=dict(type='str'),
+    selevel=dict(type='str'),
+    setype=dict(type='str'),
+    attributes=dict(type='str', aliases=['attr']),
+    unsafe_writes=dict(type='bool', default=False),  # should be available to any module using atomic_move
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
