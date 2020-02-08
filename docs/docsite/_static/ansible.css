@@ -36,15 +36,6 @@ tr .ansibleOptionLink::after {
   content: "";
   font-family: FontAwesome;
 }
-tr .ansibleOptionLink::before {
-  font-family: "FontAwesome";
-  display: inline-block;
-  font-style: normal;
-  font-weight: normal;
-  line-height: 1;
-  text-decoration: inherit;
-  -webkit-font-smoothing: antialiased;
-}
 tr .ansibleOptionLink {
   visibility: hidden;
   display: inline-block;
