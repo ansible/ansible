@@ -470,7 +470,7 @@ class Ec2Inventory(object):
         cache_id = self.boto_profile or os.environ.get('AWS_ACCESS_KEY_ID', self.credentials.get('aws_access_key_id'))
         if cache_id:
             cache_name = '%s-%s' % (cache_name, cache_id)
-        if sys.version_info.major == 2:
+        if sys.version_info[0] == 2:
             cache_name += '-' + hashlib.md5(__file__).hexdigest()[:6]
         else:
             cache_name += '-' + hashlib.md5(__file__.encode('utf-8')).hexdigest()[:6]
