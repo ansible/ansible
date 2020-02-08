@@ -29,6 +29,7 @@
 #
 # Don't crash when a node is offline; just skip that node.
 # Added an option to only return running vms.
+# Hack-fix resiliency -- don't crash when it tries to lookup info from wrong node (didn't investigate why this sometimes happens)
 
 import json
 import os
@@ -118,7 +119,10 @@ class ProxmoxAPI(object):
         request_path = '{0}{1}'.format(self.options.url, url)
 
         headers = {'Cookie': 'PVEAuthCookie={0}'.format(self.credentials['ticket'])}
-        request = open_url(request_path, data=data, headers=headers)
+        try:
+            request = open_url(request_path, data=data, headers=headers)
+        except:
+            return None
 
         response = json.load(request)
         return response['data']
@@ -187,6 +191,8 @@ def main_list(options):
                     try:
                         description = proxmox_api.vm_description_by_type(node, vmid, type)['description']
                     except KeyError:
+                        description = None
+                    except TypeError:
                         description = None
                 else: description = None
 
