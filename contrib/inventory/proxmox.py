@@ -28,6 +28,7 @@
 # Updated 2020 by Matthew R Chase <matt@chasefox.net>
 #
 # Don't crash when a node is offline; just skip that node.
+# Added an option to only return running vms.
 
 import json
 import os
@@ -49,7 +50,8 @@ class ProxmoxVM(dict):
     def get_variables(self):
         variables = {}
         for key, value in iteritems(self):
-            variables['proxmox_' + key] = value
+            if key != "template" and (self['status'] == 'running' or not online):
+                variables['proxmox_' + key] = value
         return variables
 
 
@@ -61,7 +63,7 @@ class ProxmoxVMList(list):
             self.append(ProxmoxVM(item))
 
     def get_names(self):
-        return [vm['name'] for vm in self if vm['template'] != 1]
+        return [vm['name'] for vm in self if vm['template'] != 1 and (vm['status']=="running" or not online)]
 
     def get_by_name(self, name):
         results = [vm for vm in self if vm['name'] == name]
@@ -82,7 +84,7 @@ class ProxmoxPoolList(list):
 
 class ProxmoxPool(dict):
     def get_members_name(self):
-        return [member['name'] for member in self['members'] if member['template'] != 1]
+        return [member['name'] for member in self['members'] if member['template'] != 1 and (member['status']=="running" or not online)]
 
 
 class ProxmoxAPI(object):
@@ -173,15 +175,20 @@ def main_list(options):
             results['_meta']['hostvars'].update(lxc_list.get_variables())
 
             for vm in results['_meta']['hostvars']:
-                vmid = results['_meta']['hostvars'][vm]['proxmox_vmid']
+                try:
+                    vmid = results['_meta']['hostvars'][vm]['proxmox_vmid']
+                except KeyError:
+                    vmid = None
                 try:
                     type = results['_meta']['hostvars'][vm]['proxmox_type']
                 except KeyError:
                     type = 'qemu'
-                try:
-                    description = proxmox_api.vm_description_by_type(node, vmid, type)['description']
-                except KeyError:
-                    description = None
+                if vmid:
+                    try:
+                        description = proxmox_api.vm_description_by_type(node, vmid, type)['description']
+                    except KeyError:
+                        description = None
+                else: description = None
 
                 try:
                     metadata = json.loads(description)
@@ -233,7 +240,10 @@ def main():
     parser.add_option('--username', default=os.environ.get('PROXMOX_USERNAME'), dest='username')
     parser.add_option('--password', default=os.environ.get('PROXMOX_PASSWORD'), dest='password')
     parser.add_option('--pretty', action="store_true", default=False, dest='pretty')
+    parser.add_option('--online', action="store_true", default=os.environ.get('PROXMOX_ONLINE'), dest='online')
     (options, args) = parser.parse_args()
+    global online
+    online = options.online
 
     if options.list:
         data = main_list(options)
