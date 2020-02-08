@@ -204,30 +204,63 @@ EXAMPLES = r'''
 
 RETURN = r'''
 changed:
-  description: true if the file was changed during execution
+  description: True if the file was changed during a task execution.
   returned: always
   type: bool
-  sample: false
+  sample: False
 msg:
   description: Descriptive status of a task result.
   returned: always
+  type: str
   sample: line added
 backup:
   description: The full name of the backup file created.
-  returned: Always, but when backup is not created returned is an empty string.
+  returned: When backup parameter is set to True, otherwise it returns an empty string.
   type: str
   sample: '/etc/services.2243.2020-02-07@20:46:55~'
 diff:
-  description:
-  returned: On success when the parameter `--diff` is used.
+  description: The differences made by the task execution.
+  returned: on success
   type: complex
   contains:
-    before:
-      description: The content of the changed file before a change. The content is converted to string.
-      type: str
-    after:
-      description: The content of the changed file after a change. The content is converted to string.
-      type: str
+    - after:
+        description: The content of the changed file after a change. The content is converted to string.
+        returned: When the parameter `--diff` is used otherwise empty string is returned.
+        type: str
+      after_header:
+        description: Designation of purpose of the diff section.
+        returned: always
+        type: str
+        sample: /etc/services (content)
+      before:
+        description: The content of the changed file before a change. The content is converted to string.
+        returned: When the parameter `--diff` is used otherwise empty string is returned.
+        type: str
+      before_header:
+       description: Designation of purpose of the diff section.
+       returned: always
+       type: str
+       sample: /etc/services (content)
+    - after:
+        description: A dictionary of changed file attribute(s) - a state after.
+        returned: Only when parameters of the M(file) module were used.
+        type: dict
+        sample: { group: 1000 }
+      after_header:
+        description: Designation of purpose of the diff section.
+        returned: always
+        type: str
+        sample: /etc/services (file attributes)
+      before:
+        description: A dictionary of changed file attribute(s) - a state before.
+        returned: Only when parameters of the M(file) module were used.
+        type: dict
+        sample: { group: 0 }
+      before_header:
+        description: Designation of purpose of the diff section.
+        returned: always
+        type: str
+        sample: /etc/services (file attributes)
 '''
 
 import os
