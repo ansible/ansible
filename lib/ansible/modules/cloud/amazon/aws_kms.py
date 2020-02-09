@@ -607,10 +607,27 @@ def compare_grants(existing_grants, desired_grants, purge_grants=False):
     return to_add, to_remove
 
 
+def start_key_deletion(connection, module, key_metadata):
+    if key_metadata['KeyState'] == 'PendingDeletion':
+        return False
+
+    if module.check_mode:
+        return True
+
+    try:
+        connection.schedule_key_deletion(KeyId=key_metadata['Arn'])
+        return True
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to schedule key for deletion")
+
+
 def cancel_key_deletion(connection, module, key):
     key_id = key['key_arn']
     if key['key_state'] != 'PendingDeletion':
         return False
+
+    if module.check_mode:
+        return True
 
     try:
         connection.cancel_key_deletion(KeyId=key_id)
@@ -624,7 +641,10 @@ def cancel_key_deletion(connection, module, key):
 
 
 def ensure_enabled_disabled(connection, module, key, enabled):
-    desired_state = ('Disabled', 'Enabled')[enabled]
+    desired_state = 'Enabled'
+    if not enabled:
+        desired_state = 'Disabled'
+
     if key['key_state'] == desired_state:
         return False
 
@@ -794,7 +814,7 @@ def create_key(connection, module):
 
     update_alias(connection, module, key, module.params['alias'])
 
-    ensure_enabled_disabled(connection, module, key, True)
+    ensure_enabled_disabled(connection, module, key, module.params.get('enabled'))
     update_grants(connection, module, key, module.params.get('grants'), False)
 
     # make results consistent with kms_facts
@@ -805,16 +825,10 @@ def create_key(connection, module):
 
 def delete_key(connection, module, key_metadata):
     changed = False
-    key_id = key_metadata['Arn']
 
-    if key_metadata['KeyState'] != 'PendingDeletion':
-        try:
-            connection.schedule_key_deletion(KeyId=key_id)
-            changed = True
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Failed to schedule key for deletion")
+    changed |= start_key_deletion(connection, module, key_metadata)
 
-    result = get_key_details(connection, module, key_id)
+    result = get_key_details(connection, module, key_metadata['Arn'])
     result['changed'] = changed
     return result
 
@@ -936,17 +950,17 @@ def fetch_key_metadata(connection, module, key_id, alias):
 
     alias = canonicalize_alias_name(module.params.get('alias'))
 
-    # Fetch by key_id where possible
-    if key_id:
-        try:
-            return get_kms_metadata_with_backoff(connection, key_id)['KeyMetadata']
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
-            return None
-    # Or try alias as a backup
     try:
+        # Fetch by key_id where possible
+        if key_id:
+            return get_kms_metadata_with_backoff(connection, key_id)['KeyMetadata']
+        # Or try alias as a backup
         return get_kms_metadata_with_backoff(connection, alias)['KeyMetadata']
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
+
+    except connection.exceptions.NotFoundException:
         return None
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, 'Failed to fetch key metadata.')
 
 
 def update_policy_grants(connection, module, key_metadata, mode):
