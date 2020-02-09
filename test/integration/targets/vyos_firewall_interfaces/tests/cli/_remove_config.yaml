@@ -1,0 +1,8 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      delete interfaces ethernet eth1 firewall
+      delete interfaces ethernet eth2 firewall
