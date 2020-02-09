@@ -237,12 +237,17 @@ def compare_attached_role_policies(current_attached_policies, new_attached_polic
         return False
 
 
+@AWSRetry.jittered_backoff()
+def _list_policies(connection):
+    paginator = connection.get_paginator('list_policies')
+    policies = paginator.paginate().build_full_result()['Policies']
+
+
 def convert_friendly_names_to_arns(connection, module, policy_names):
     if not any([not policy.startswith('arn:') for policy in policy_names]):
         return policy_names
     allpolicies = {}
-    paginator = connection.get_paginator('list_policies')
-    policies = paginator.paginate().build_full_result()['Policies']
+    policies = _list_policies(connection)
 
     for policy in policies:
         allpolicies[policy['PolicyName']] = policy['Arn']
@@ -258,7 +263,7 @@ def attach_policies(connection, module, policies_to_attach, params):
     for policy_arn in policies_to_attach:
         try:
             if not module.check_mode:
-                connection.attach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
+                connection.attach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn, aws_retry=True)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Unable to attach policy {0} to role {1}".format(policy_arn, params['RoleName']))
         changed = True
@@ -270,7 +275,7 @@ def remove_policies(connection, module, policies_to_remove, params):
     for policy in policies_to_remove:
         try:
             if not module.check_mode:
-                connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy)
+                connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy, aws_retry=True)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Unable to detach policy {0} from {1}".format(policy, params['RoleName']))
         changed = True
@@ -302,7 +307,7 @@ def create_basic_role(connection, module, params):
 
     try:
         if not module.check_mode:
-            role = connection.create_role(**params)
+            role = connection.create_role(aws_retry=True, **params)
             # 'Description' is documented as key of the role returned by create_role
             # but appears to be an AWS bug (the value is not returned using the AWS CLI either).
             # Get the role after creating it.
@@ -325,7 +330,10 @@ def update_role_assumed_policy(connection, module, params, role):
         return True
 
     try:
-        connection.update_assume_role_policy(RoleName=params['RoleName'], PolicyDocument=json.dumps(json.loads(params['AssumeRolePolicyDocument'])))
+        connection.update_assume_role_policy(
+            RoleName=params['RoleName'],
+            PolicyDocument=json.dumps(json.loads(params['AssumeRolePolicyDocument'])),
+            aws_retry=True)
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Unable to update assume role policy for role {0}".format(params['RoleName']))
     return True
@@ -342,7 +350,7 @@ def update_role_description(connection, module, params, role):
         return True
 
     try:
-        connection.update_role_description(RoleName=params['RoleName'], Description=params['Description'])
+        connection.update_role_description(RoleName=params['RoleName'], Description=params['Description'], aws_retry=True)
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Unable to update description for role {0}".format(params['RoleName']))
     return True
@@ -359,7 +367,7 @@ def update_role_max_session_duration(connection, module, params, role):
         return True
 
     try:
-        connection.update_role(RoleName=params['RoleName'], MaxSessionDuration=params['MaxSessionDuration'])
+        connection.update_role(RoleName=params['RoleName'], MaxSessionDuration=params['MaxSessionDuration'], aws_retry=True)
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Unable to update maximum session duration for role {0}".format(params['RoleName']))
     return True
@@ -377,12 +385,12 @@ def update_role_permissions_boundary(connection, module, params, role):
 
     if params.get('PermissionsBoundary') == '':
         try:
-            connection.delete_role_permissions_boundary(RoleName=params['RoleName'])
+            connection.delete_role_permissions_boundary(RoleName=params['RoleName'], aws_retry=True)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Unable to remove permission boundary for role {0}".format(params['RoleName']))
     else:
         try:
-            connection.put_role_permissions_boundary(RoleName=params['RoleName'], PermissionsBoundary=params['PermissionsBoundary'])
+            connection.put_role_permissions_boundary(RoleName=params['RoleName'], PermissionsBoundary=params['PermissionsBoundary'], aws_retry=True)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Unable to update permission boundary for role {0}".format(params['RoleName']))
     return True
@@ -470,7 +478,7 @@ def create_instance_profiles(connection, module, params, role):
 
     # Fetch existing Profiles
     try:
-        instance_profiles = connection.list_instance_profiles_for_role(RoleName=params['RoleName'])['InstanceProfiles']
+        instance_profiles = connection.list_instance_profiles_for_role(RoleName=params['RoleName'], aws_retry=True)['InstanceProfiles']
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Unable to list instance profiles for role {0}".format(params['RoleName']))
 
@@ -483,7 +491,7 @@ def create_instance_profiles(connection, module, params, role):
 
     # Make sure an instance profile is created
     try:
-        connection.create_instance_profile(InstanceProfileName=params['RoleName'], Path=params['Path'])
+        connection.create_instance_profile(InstanceProfileName=params['RoleName'], Path=params['Path'], aws_retry=True)
     except ClientError as e:
         # If the profile already exists, no problem, move on.
         # Implies someone's changing things at the same time...
@@ -496,7 +504,7 @@ def create_instance_profiles(connection, module, params, role):
 
     # And attach the role to the profile
     try:
-        connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
+        connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'], aws_retry=True)
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Unable to attach role {0} to instance profile {0}".format(params['RoleName']))
 
@@ -508,7 +516,7 @@ def remove_instance_profiles(connection, module, role_params, role):
     delete_profiles = module.params.get("delete_instance_profile")
 
     try:
-        instance_profiles = connection.list_instance_profiles_for_role(**role_params)['InstanceProfiles']
+        instance_profiles = connection.list_instance_profiles_for_role(aws_retry=True, **role_params)['InstanceProfiles']
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Unable to list instance profiles for role {0}".format(role_name))
 
@@ -517,11 +525,11 @@ def remove_instance_profiles(connection, module, role_params, role):
         profile_name = profile['InstanceProfileName']
         try:
             if not module.check_mode:
-                connection.remove_role_from_instance_profile(InstanceProfileName=profile_name, **role_params)
+                connection.remove_role_from_instance_profile(aws_retry=True, InstanceProfileName=profile_name, **role_params)
                 if profile_name == role_name:
                     if delete_profiles:
                         try:
-                            connection.delete_instance_profile(InstanceProfileName=profile_name)
+                            connection.delete_instance_profile(InstanceProfileName=profile_name, aws_retry=True)
                         except (BotoCoreError, ClientError) as e:
                             module.fail_json_aws(e, msg="Unable to remove instance profile {0}".format(profile_name))
         except (BotoCoreError, ClientError) as e:
@@ -550,7 +558,7 @@ def destroy_role(connection, module):
 
     try:
         if not module.check_mode:
-            connection.delete_role(**role_params)
+            connection.delete_role(aws_retry=True, **role_params)
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Unable to delete role")
 
@@ -566,7 +574,7 @@ def get_role_with_backoff(connection, module, name):
 
 def get_role(connection, module, name):
     try:
-        return connection.get_role(RoleName=name)['Role']
+        return connection.get_role(RoleName=name, aws_retry=True)['Role']
     except ClientError as e:
         if e.response['Error']['Code'] == 'NoSuchEntity':
             return None
@@ -578,7 +586,7 @@ def get_role(connection, module, name):
 
 def get_attached_policy_list(connection, module, name):
     try:
-        return connection.list_attached_role_policies(RoleName=name)['AttachedPolicies']
+        return connection.list_attached_role_policies(RoleName=name, aws_retry=True)['AttachedPolicies']
     except (ClientError, BotoCoreError) as e:
         module.fail_json_aws(e, msg="Unable to list attached policies for role {0}".format(name))
 
@@ -588,7 +596,7 @@ def get_role_tags(connection, module):
     if not hasattr(connection, 'list_role_tags'):
         return {}
     try:
-        return boto3_tag_list_to_ansible_dict(connection.list_role_tags(RoleName=role_name)['Tags'])
+        return boto3_tag_list_to_ansible_dict(connection.list_role_tags(RoleName=role_name, aws_retry=True)['Tags'])
     except (ClientError, BotoCoreError) as e:
         module.fail_json_aws(e, msg="Unable to list tags for role {0}".format(role_name))
 
@@ -603,7 +611,7 @@ def update_role_tags(connection, module, params, role):
     purge_tags = module.params.get('purge_tags')
 
     try:
-        existing_tags = boto3_tag_list_to_ansible_dict(connection.list_role_tags(RoleName=role_name)['Tags'])
+        existing_tags = boto3_tag_list_to_ansible_dict(connection.list_role_tags(RoleName=role_name, aws_retry=True)['Tags'])
     except (ClientError, KeyError):
         existing_tags = {}
 
@@ -612,9 +620,9 @@ def update_role_tags(connection, module, params, role):
     if not module.check_mode:
         try:
             if tags_to_remove:
-                connection.untag_role(RoleName=role_name, TagKeys=tags_to_remove)
+                connection.untag_role(RoleName=role_name, TagKeys=tags_to_remove, aws_retry=True)
             if tags_to_add:
-                connection.tag_role(RoleName=role_name, Tags=ansible_dict_to_boto3_tag_list(tags_to_add))
+                connection.tag_role(RoleName=role_name, Tags=ansible_dict_to_boto3_tag_list(tags_to_add), aws_retry=True)
         except (ClientError, BotoCoreError) as e:
             module.fail_json_aws(e, msg='Unable to set tags for role %s' % role_name)
 
@@ -667,7 +675,7 @@ def main():
         if not path.endswith('/') or not path.startswith('/'):
             module.fail_json(msg="path must begin and end with /")
 
-    connection = module.client('iam')
+    connection = module.client('iam', retry_decorator=AWSRetry.jittered_backoff())
 
     state = module.params.get("state")
 
