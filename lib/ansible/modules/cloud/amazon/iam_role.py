@@ -221,22 +221,6 @@ def compare_assume_role_policy_doc(current_policy_doc, new_policy_doc):
         return False
 
 
-def compare_attached_role_policies(current_attached_policies, new_attached_policies):
-
-    # If new_attached_policies is None it means we want to remove all policies
-    if len(current_attached_policies) > 0 and new_attached_policies is None:
-        return False
-
-    current_attached_policies_arn_list = []
-    for policy in current_attached_policies:
-        current_attached_policies_arn_list.append(policy['PolicyArn'])
-
-    if set(current_attached_policies_arn_list) == set(new_attached_policies):
-        return True
-    else:
-        return False
-
-
 @AWSRetry.jittered_backoff()
 def _list_policies(connection):
     paginator = connection.get_paginator('list_policies')
