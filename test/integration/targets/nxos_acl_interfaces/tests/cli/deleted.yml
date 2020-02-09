@@ -1,0 +1,69 @@
+---
+  - debug:
+      msg: "Start nxos_acl_interfaces deleted integration tests connection = {{ansible_connection}}"
+  
+  - include_tasks: populate_config.yaml
+
+  - block:
+
+    - name: Deleted (from all interfaces)
+      nxos_acl_interfaces:
+        config:
+        state: deleted
+
+    - name: Gather acl interfaces facts
+      nxos_facts: &facts
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: acl_interfaces
+    
+    - assert: 
+        that:
+          - "ansible_facts.network_resources == {}"
+    
+    - include_tasks: populate_config.yaml
+   
+    - name: Delete ACL configuration from interfaces
+      nxos_acl_interfaces: &deleted
+        config:
+          - name: Ethernet1/5
+            access_groups:
+              - afi: ipv6
+
+              - afi: ipv4
+                acls:
+                  - name: ACL1v4
+                    direction: out
+      
+          - name: Ethernet1/2
+        state: deleted
+      register: result
+  
+    - assert:
+        that:
+          - "result.changed == True"
+          - "'interface Ethernet1/5' in result.commands" 
+          - "'no ipv6 traffic-filter ACL1v6 in' in result.commands"
+          - "'no ip access-group ACL1v4 out' in result.commands" 
+          - "'interface Ethernet1/2' in result.commands"
+          - "'no ipv6 traffic-filter ACL1v6 in' in result.commands"
+          - "result.commands | length == 5"
+
+    - name: Gather acls facts
+      nxos_facts: *facts
+
+    - name: Idempotence - deleted
+      nxos_acl_interfaces: *deleted
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+
+    always:
+    - include_tasks: remove_config.yaml    
+    
+
+
+  
