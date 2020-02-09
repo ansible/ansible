@@ -1,2 +1,0 @@
-bugfixes:
-  - pmrun plugin - The success_command string was no longer quoted. This caused unusual use-cases like ``become_flags=su - root -c`` to fail.
