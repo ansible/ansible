@@ -123,10 +123,6 @@ from ansible.module_utils.ec2 import (AWSRetry, ansible_dict_to_boto3_filter_lis
 PROTOCOL_NAMES = {'-1': 'all', '1': 'icmp', '6': 'tcp', '17': 'udp'}
 
 
-def _describe_network_acls(client, **kwargs):
-    return client.describe_network_acls(**kwargs)
-
-
 def list_ec2_vpc_nacls(connection, module):
 
     nacl_ids = module.params.get("nacl_ids")
@@ -136,7 +132,7 @@ def list_ec2_vpc_nacls(connection, module):
         nacl_ids = []
 
     try:
-        nacls = _describe_network_acls(connection, NetworkAclIds=nacl_ids, Filters=filters)
+        nacls = connection.describe_network_acls(aws_retry=True, NetworkAclIds=nacl_ids, Filters=filters)
     except ClientError as e:
         module.fail_json_aws(e, msg="Unable to describe network ACLs {0}: {1}".format(nacl_ids, to_native(e)))
     except BotoCoreError as e:
