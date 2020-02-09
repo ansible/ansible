@@ -246,7 +246,7 @@ EXAMPLES = '''
     name: httpd
     state: latest
 
-- name: install a list of packages (suitable replacement for 2.11 loop deprecation warning) 
+- name: install a list of packages (suitable replacement for 2.11 loop deprecation warning)
   yum:
     name:
       - nginx
