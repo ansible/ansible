@@ -133,10 +133,18 @@ class Connection(ConnectionBase):
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._container_id)
         if not self._mount_point:
             rc, stdout, stderr = self._podman(
-                "cp", [in_path, self._container_id + ":" + out_path], use_container_id=False)
+                "cp", [in_path, self._container_id + ":" + out_path], use_container_id=False
+            )
             if rc != 0:
-                raise AnsibleError("Failed to copy file from %s to %s in container %s\n%s" % (
-                    in_path, out_path, self._container_id, stderr))
+                if 'cannot copy into running rootless container with pause set' in to_native(stderr):
+                    rc, stdout, stderr = self._podman(
+                        "cp", ["--pause=false", in_path, self._container_id + ":" + out_path], use_container_id=False
+                    )
+                    if rc != 0:
+                        raise AnsibleError(
+                            "Failed to copy file from %s to %s in container %s\n%s" % (
+                                in_path, out_path, self._container_id, stderr)
+                        )
         else:
             real_out_path = self._mount_point + to_bytes(out_path, errors='surrogate_or_strict')
             shutil.copyfile(
