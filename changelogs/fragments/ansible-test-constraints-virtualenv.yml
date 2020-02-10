@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - add additional constraint for virtualenv on Python 2.7
