@@ -371,6 +371,8 @@ files:
       migrated_to: community.grafana
   $modules/monitoring/logentries.py:
     ignored: ivanvanderbyl
+  $modules/monitoring/logicmonitor:
+    ignored: ethanculler woz5999
   $modules/monitoring/monit.py: brian-brazil
   $modules/monitoring/pagerduty.py:
     ignored: bpennypacker
