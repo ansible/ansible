@@ -346,6 +346,7 @@ For example, all AWS modules should include:
     - aws
     - ec2
 
+:ref:`docfragments_collections` describes how to incorporate documentation fragments in a collection.
 
 .. _examples_block:
 

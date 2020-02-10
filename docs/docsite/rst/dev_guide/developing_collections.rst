@@ -212,6 +212,29 @@ Then you can populate the directories with the content you want inside the colle
 https://github.com/bcoca/collection to get a better idea of what you can place inside a collection.
 
 
+.. _docfragments_collections:
+
+Using documentation fragments in collections
+--------------------------------------------
+
+To include documentation fragments in your collection:
+
+#. Create the documentation fragment: ``plugins/doc_fragments/fragment_name``.
+
+#. Refer to the documentation fragment with its FQCN.
+
+.. code-block:: yaml
+
+   extends_documentation_fragment:
+     - community.kubernetes.k8s_name_options
+     - community.kubernetes.k8s_auth_options
+     - community.kubernetes.k8s_resource_options
+     - community.kubernetes.k8s_scale_options
+
+:ref:`module_docs_fragments` covers the basics for documentation fragments. The `kubernetes <https://github.com/ansible-collections/kubernetes>`_ collection includes a complete example.
+
+You can also share documentation fragments across collections with the FQCN.
+
 .. _building_collections:
 
 Building collections
