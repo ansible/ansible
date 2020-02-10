@@ -19,7 +19,7 @@ Inventory basics: formats, hosts, and groups
 ============================================
 
 The inventory file can be in one of many formats, depending on the inventory plugins you have.
-The most common formats are INI and YAML. A basic INI ``etc/ansible/hosts`` might look like this:
+The most common formats are INI and YAML. A basic INI ``/etc/ansible/hosts`` might look like this:
 
 .. code-block:: text
 
