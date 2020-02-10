@@ -1,0 +1,4 @@
+removed_features:
+  - vmware_guest_find - Removed deprecated ``datacenter`` option
+  - vmware_vmkernel - Removed deprecated ``ip_address`` option; use sub-option ip_address in the network option instead
+  - vmware_vmkernel - Removed deprecated ``subnet_mask`` option; use sub-option subnet_mask in the network option instead

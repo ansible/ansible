@@ -15,7 +15,6 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     name: "{{ item.name }}"
-    datacenter: "{{ dc1 }}"
   with_items: "{{ virtual_machines }}"
   register: folders
 
