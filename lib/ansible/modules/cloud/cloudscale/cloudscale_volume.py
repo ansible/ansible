@@ -152,6 +152,7 @@ zone:
   returned: state == present
   type: dict
   sample: {'slug': 'lpg1'}
+  version_added: '2.10'
 server_uuids:
   description: The UUIDs of the servers this volume is attached to.
   returned: state == present

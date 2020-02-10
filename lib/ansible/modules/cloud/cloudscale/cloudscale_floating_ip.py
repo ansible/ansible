@@ -159,6 +159,7 @@ region:
   returned: success when state == present
   type: dict
   sample: {'slug': 'lpg'}
+  version_added: '2.10'
 state:
   description: The current status of the floating IP.
   returned: success

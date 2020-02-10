@@ -107,6 +107,7 @@ zone:
   returned: success
   type: dict
   sample: { 'slug': 'rma1' }
+  version_added: '2.10'
 servers:
   description: A list of servers that are part of the server group.
   returned: if available
