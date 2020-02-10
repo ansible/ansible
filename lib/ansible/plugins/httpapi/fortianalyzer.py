@@ -99,7 +99,7 @@ class HttpApi(HttpApiBase):
             self.inspect_faz()
             return
         else:
-            raise FAZBaseException(msg="Unknown error while logging in...connection was lost during login operation...."
+            raise FAZBaseException(msg="Unknown error while logging in...connection was lost during login operation..."
                                        " Exiting")
 
     def inspect_faz(self):
