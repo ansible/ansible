@@ -1,0 +1,2 @@
+minor_changes:
+  - ecs_task_definition - Add network_mode=default to support Windows ECS tasks.
