@@ -1,0 +1,3 @@
+# https://github.com/ansible/ansible/issues/6550
+- name: confirm pipe lookup works with a single positional arg
+  debug: msg="{{ lookup('pipe', 'ls') }}"
