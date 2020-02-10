@@ -95,7 +95,7 @@ class HttpApi(HttpApiBase):
                                                                       passwd=password, user=username,))
 
         if "FortiAnalyzer object connected to FortiAnalyzer" in self.__str__():
-            # If Login worked, then inspect the FortiAnalyzer for Workspace Mode, and it's system information.
+            # If Login worked then inspect the FortiAnalyzer for Workspace Mode, and it's system information.
             self.inspect_faz()
             return
         else:
