@@ -154,7 +154,7 @@ class HttpApi(HttpApiBase):
                 except Exception as err:
                     raise FMGBaseException(
                         msg="An problem happened with the httpapi plugin self-init connection process. "
-                            "Error: " + str(err))
+                            "Error: " + to_text(err))
         except IndexError:
             raise FMGBaseException("An attempt was made at communicating with a FMG with "
                                    "no valid session and an incorrectly formatted request.")
