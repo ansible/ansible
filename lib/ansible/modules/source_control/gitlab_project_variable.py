@@ -206,7 +206,7 @@ def main():
         api_token=dict(type='str', required=True, no_log=True),
         project=dict(type='str', required=True),
         purge=dict(type='bool', required=False, default=False),
-        vars=dict(type='dict', required=False, default=dict()),
+        vars=dict(type='dict', required=False, default=dict(), no_log=True),
         state=dict(type='str', default="present", choices=["absent", "present"])
     )
 
