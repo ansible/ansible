@@ -25,8 +25,7 @@ requests-ntlm >= 1.1.0 # message encryption support
 requests-credssp >= 0.1.0 # message encryption support
 voluptuous >= 0.11.0 # Schema recursion via Self
 openshift >= 0.6.2, < 0.9.0 # merge_type support
-virtualenv < 16.0.0 ; python_version < '2.7'   # virtualenv 16.0.0 and later require python 2.7 or later
-virtualenv < 20.0.0 ; python_version == '2.7'  # virtualenv 20.0.0 breaks on macOS due to the older pip we have there not installing the zipp dependency
+virtualenv < 16.0.0 ; python_version < '2.7' # virtualenv 16.0.0 and later require python 2.7 or later
 pathspec < 0.6.0 ; python_version < '2.7' # pathspec 0.6.0 and later require python 2.7 or later
 pyopenssl < 18.0.0 ; python_version < '2.7' # pyOpenSSL 18.0.0 and later require python 2.7 or later
 pyfmg == 0.6.1 # newer versions do not pass current unit tests
