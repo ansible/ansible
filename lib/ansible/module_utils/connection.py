@@ -136,8 +136,8 @@ class Connection(object):
 
         if not os.path.exists(self.socket_path):
             raise ConnectionError(
-                'Socket path %s does not exist or cannot be found. See the socket path issue '
-                'category in Network Debug and Troubleshooting Guide' % self.socket_path
+                'socket path %s does not exist or cannot be found. See Troubleshooting socket '
+                'path issues in the Network Debug and Troubleshooting Guide' % self.socket_path
             )
 
         try:
@@ -152,8 +152,8 @@ class Connection(object):
             out = self.send(data)
         except socket.error as e:
             raise ConnectionError(
-                'Unable to connect to socket %s. See the socket path issue category in '
-                'Network Debug and Troubleshooting Guide' % self.socket_path,
+                'unable to connect to socket %s. See Troubleshooting socket path issues '
+                'in the Network Debug and Troubleshooting Guide' % self.socket_path,
                 err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc()
             )
 
@@ -204,7 +204,7 @@ class Connection(object):
         except socket.error as e:
             sf.close()
             raise ConnectionError(
-                'Unable to connect to socket %s. See the socket path issue category in '
+                'unable to connect to socket %s. See the socket path issue category in '
                 'Network Debug and Troubleshooting Guide' % self.socket_path,
                 err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc()
             )

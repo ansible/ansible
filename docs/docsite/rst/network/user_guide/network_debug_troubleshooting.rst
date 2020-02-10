@@ -197,8 +197,8 @@ Then review the log file and find the relevant error message in the rest of this
 
 .. _socket_path_issue:
 
-Category "socket path issue"
-============================
+Troubleshooting socket path issues
+==================================
 
 **Platforms:** Any
 
@@ -211,7 +211,7 @@ For example:
    fatal: [spine02]: FAILED! => {
        "changed": false,
        "failed": true,
-       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 115, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: Socket path XX does not exist or cannot be found. See the socket path issue category in Network Debug and Troubleshooting Guide\n",
+       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 115, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: Socket path XX does not exist or cannot be found. See Troubleshooting socket path issues in the Network Debug and Troubleshooting Guide\n",
        "module_stdout": "",
        "msg": "MODULE FAILURE",
        "rc": 1
@@ -224,7 +224,7 @@ or
    fatal: [spine02]: FAILED! => {
        "changed": false,
        "failed": true,
-       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 123, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: Unable to connect to socket XX. See the socket path issue category in Network Debug and Troubleshooting Guide\n",
+       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 123, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: Unable to connect to socket XX. See Troubleshooting socket path issues in Network Debug and Troubleshooting Guide\n",
        "module_stdout": "",
        "msg": "MODULE FAILURE",
        "rc": 1
