@@ -369,7 +369,7 @@ class Firewall_rules(ConfigBase):
                         if 'ipv6-name' in cmd:
                             commands.append(cmd + (' ' + 'icmpv6' + ' ' + 'type' + ' ' + val))
                         else:
-                            commands.append(cmd + (' ' + attr + ' ' + item.replace("_","-") + ' ' + val))
+                            commands.append(cmd + (' ' + attr + ' ' + item.replace("_", "-") + ' ' + val))
                     else:
                         commands.append(cmd + (' ' + attr + ' ' + item + ' ' + str(val)))
                 elif not opr and item in l_set and not (h_icmp and self._in_target(h_icmp, item)):
@@ -458,7 +458,7 @@ class Firewall_rules(ConfigBase):
                     if opr and not (h_limit and self._is_w_same(rate, h_limit, 'unit') and self.is_w_same(rate, h_limit, 'number')):
                         commands.append(cmd + (' ' + attr + ' ' + key + ' ' + str(rate['number']) + '/' + rate['unit']))
                     if not opr and not (h_limit and self._is_w_same(rate, h_limit, 'unit') and self._is_w_same(rate, h_limit, 'number')):
-                            commands.append(cmd + (' ' + attr + ' ' + key))
+                        commands.append(cmd + (' ' + attr + ' ' + key))
         return commands
 
     def _add_src_or_dest(self, attr, w, h, cmd, opr=True):
@@ -479,7 +479,7 @@ class Firewall_rules(ConfigBase):
             keys = ('address', 'mac_address', 'port')
             for key in keys:
                 if opr and key in w[attr].keys() and not (h and attr in h.keys() and self._is_w_same(w[attr], h[attr], key)):
-                    commands.append(cmd + (' ' + attr + ' ' + key.replace("_","-") + ' ' + w[attr].get(key)))
+                    commands.append(cmd + (' ' + attr + ' ' + key.replace("_", "-") + ' ' + w[attr].get(key)))
                 elif not opr and key in w[attr].keys() and not (h and attr in h.keys() and self._in_target(h[attr], key)):
                     commands.append(cmd + (' ' + attr + ' ' + key))
 

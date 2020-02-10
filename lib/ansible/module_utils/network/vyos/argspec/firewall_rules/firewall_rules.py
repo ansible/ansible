@@ -114,7 +114,46 @@ class Firewall_rulesArgs(object):  # pylint: disable=R0903
                                             'type': 'int'
                                         },
                                         'type_name': {
-                                            'type': 'str'
+                                            'choices': [
+                                                'any', 'echo-reply',
+                                                'destination-unreachable',
+                                                'network-unreachable',
+                                                'host-unreachable',
+                                                'protocol-unreachable',
+                                                'port-unreachable',
+                                                'fragmentation-needed',
+                                                'source-route-failed',
+                                                'network-unknown',
+                                                'host-unknown',
+                                                'network-prohibited',
+                                                'host-prohibited',
+                                                'TOS-network-unreachable',
+                                                'TOS-host-unreachable',
+                                                'communication-prohibited',
+                                                'host-precedence-violation',
+                                                'precedence-cutoff',
+                                                'source-quench', 'redirect',
+                                                'network-redirect',
+                                                'host-redirect',
+                                                'TOS-network-redirect',
+                                                'TOS-host-redirect',
+                                                'echo-request',
+                                                'router-advertisement',
+                                                'router-solicitation',
+                                                'time-exceeded',
+                                                'ttl-zero-during-transit',
+                                                'ttl-zero-during-reassembly',
+                                                'parameter-problem',
+                                                'ip-header-bad',
+                                                'required-option-missing',
+                                                'timestamp-request',
+                                                'timestamp-reply',
+                                                'address-mask-request',
+                                                'address-mask-reply', 'ping',
+                                                'pong', 'ttl-exceeded'
+                                            ],
+                                            'type':
+                                            'str'
                                         }
                                     },
                                     'type': 'dict'
