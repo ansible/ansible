@@ -1,0 +1,3 @@
+bugfixes:
+  - bump the minimum openstacksdk version when os_network
+    uses the dns_domain argument
