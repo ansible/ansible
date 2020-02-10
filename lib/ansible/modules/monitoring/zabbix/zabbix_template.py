@@ -425,6 +425,9 @@ class Template(object):
                     changed = True
                     break
 
+        if 'macros' not in existing_template['zabbix_export']['templates'][0]:
+            existing_template['zabbix_export']['templates'][0]['macros'] = []
+
         if template_macros is not None:
             existing_macros = existing_template['zabbix_export']['templates'][0]['macros']
             if template_macros != existing_macros:
