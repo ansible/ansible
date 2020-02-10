@@ -36,6 +36,9 @@ class Firewall_globalFacts(object):
 
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
+    def get_device_data(self, connection):
+        return connection.get_config()
+
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for firewall_global
         :param connection: the device connection
@@ -44,14 +47,11 @@ class Firewall_globalFacts(object):
         :rtype: dictionary
         :returns: facts
         """
-        if connection:  # just for linting purposes, remove
-            pass
-
         if not data:
             # typically data is populated from the current device configuration
             # data = connection.get('show running-config | section ^interface')
             # using mock data instead
-            data = connection.get_config()
+            data = self.get_device_data(connection)
         objs = {}
         firewalls = findall(r'^set firewall .*$', data, M)
         if firewalls:

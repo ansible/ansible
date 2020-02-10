@@ -146,17 +146,6 @@ class Firewall_global(ConfigBase):
         commands.extend(self._state_merged(want, have))
         return commands
 
-    @staticmethod
-    def _state_overridden(**kwargs):
-        """ The command generator when state is overridden
-
-        :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
-                  to the desired configuration
-        """
-        commands = []
-        return commands
-
     def _state_merged(self, want, have):
         """ The command generator when state is merged
 
@@ -189,12 +178,14 @@ class Firewall_global(ConfigBase):
                     commands.append(self._form_attr_cmd(attr=key, opr=False))
                 else:
                     commands.extend(self._render_attr_config(want, have, key))
+        elif not want and have:
+            commands.append(self._compute_command(opr=False))
         elif have:
             for key, val in iteritems(have):
                 if val and key in b_set:
                     commands.append(self._form_attr_cmd(attr=key, opr=False))
                 else:
-                    commands.extend(self._render_attr_config(have, want, key))
+                    commands.extend(self._render_attr_config(want, have, key))
         return commands
 
     def _render_attr_config(self, w, h, key, opr=False):
@@ -273,7 +264,7 @@ class Firewall_global(ConfigBase):
                 if opr and item in l_set and not (h_ping and self._is_w_same(w[attr], h_ping, item)):
                     commands.append(self._form_attr_cmd(attr=item, val=self._bool_to_str(value), opr=opr))
                 elif not opr and item in l_set and not (h_ping and self._is_w_same(w[attr], h_ping, item)):
-                        commands.append(self._form_attr_cmd(attr=item, opr=opr))
+                    commands.append(self._form_attr_cmd(attr=item, opr=opr))
         return commands
 
     def _render_group(self, attr, w, h, opr):
@@ -288,7 +279,7 @@ class Firewall_global(ConfigBase):
         commands = []
         h_grp = {}
         if not opr and self._is_root_del(h, w, attr):
-                commands.append(self._form_attr_cmd(attr=attr, opr=opr))
+            commands.append(self._form_attr_cmd(attr=attr, opr=opr))
         else:
             if h:
                 h_grp = h.get('group') or {}
@@ -355,15 +346,16 @@ class Firewall_global(ConfigBase):
             want = w.get(attr) or []
         if h:
             have = h.get(attr) or []
+
         if want:
             if opr:
                 addrs = list_diff_want_only(want, have)
                 for addr in addrs:
                     commands.append(cmd + ' ' + name + ' ' + self._grp_type(type) + ' ' + addr)
             elif not opr and have:
-                for addr in have:
-                    if addr not in want:
-                        commands.append(cmd + ' ' + name + ' ' + self._grp_type(type) + ' ' + addr)
+                addrs = list_diff_want_only(want, have)
+                for addr in addrs:
+                    commands.append(cmd + ' ' + name + ' ' + self._grp_type(type) + ' ' + addr)
         return commands
 
     def _render_state_policy(self, attr, w, h, opr):
@@ -380,7 +372,7 @@ class Firewall_global(ConfigBase):
         have = []
         l_set = ('log', 'action', 'connection_type')
         if not opr and self._is_root_del(h, w, attr):
-                commands.append(self._form_attr_cmd(attr=attr, opr=opr))
+            commands.append(self._form_attr_cmd(attr=attr, opr=opr))
         else:
             w_sp = deepcopy(remove_empties(w))
             want = w_sp.get(attr) or []

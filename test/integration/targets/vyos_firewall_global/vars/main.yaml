@@ -177,18 +177,7 @@ rendered:
     - set firewall source-validation 'strict'
 deleted:
   commands:
-    - "delete firewall source-validation"
-    - "delete firewall group"
-    - "delete firewall log-martians"
-    - "delete firewall ip-src-route"
-    - "delete firewall receive-redirects"
-    - "delete firewall send-redirects"
-    - "delete firewall config-trap"
-    - "delete firewall state-policy"
-    - "delete firewall syn-cookies"
-    - "delete firewall broadcast-ping"
-    - "delete firewall all-ping"
-    - "delete firewall twa-hazards-protection"
+    - "delete firewall "
 
   after: []
 

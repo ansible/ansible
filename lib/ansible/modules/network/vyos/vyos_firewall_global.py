@@ -527,7 +527,6 @@ EXAMPLES = """
       syn_cookies:
       twa_hazards_protection:
       route_redirects:
-      state_policy:
       ping:
       group:
     state: deleted
@@ -1004,7 +1003,7 @@ EXAMPLES = """
           send: True
           receive: False
       group:
-        address_group: 
+        address_group:
           - name: 'SALES-HOSTS'
             description: 'Sales office hosts address list'
             address:
