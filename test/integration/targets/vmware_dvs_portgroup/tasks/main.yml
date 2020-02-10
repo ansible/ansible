@@ -408,113 +408,103 @@
         - not dvs_pg_result_0018.changed
         - "'No private vlan with id 10 in distributed vSwitch {{ dvswitch1 }}' == '{{ dvs_pg_result_0018.msg }}'"
 
-- name: add distributed vSwitch
-  vmware_dvswitch:
-    validate_certs: False
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter_name: "{{ dc1 }}"
-    state: present
-    switch_name: dvswitch_0001
-    mtu: 9000
-    uplink_quantity: 2
-    discovery_proto: lldp
-    discovery_operation: both
-  register: dvs_result_0001
+- when: vcsim is not defined
+  block:
+    - name: add distributed vSwitch
+      vmware_dvswitch:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter_name: "{{ dc1 }}"
+        state: present
+        switch_name: dvswitch_0001
+        mtu: 9000
+        uplink_quantity: 2
+        discovery_proto: lldp
+        discovery_operation: both
+      register: dvs_result_0001
 
-- name: ensure distributed vswitch is present
-  assert:
-    that:
-        - dvs_result_0001 is changed
+    - name: ensure distributed vswitch is present
+      assert:
+        that:
+            - dvs_result_0001 is changed
 
-- name: Configure PVLANs to test PVLAN dpg
-  vmware_dvswitch_pvlans:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    switch: dvswitch_0001
-    primary_pvlans:
-      - primary_pvlan_id: 1
-    secondary_pvlans:
-      - primary_pvlan_id: 1
-        secondary_pvlan_id: 2
-        pvlan_type: isolated
-    validate_certs: false
-  register: pvlans_result
+    - name: Configure PVLANs to test PVLAN dpg
+      vmware_dvswitch_pvlans:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        switch: dvswitch_0001
+        primary_pvlans:
+          - primary_pvlan_id: 1
+        secondary_pvlans:
+          - primary_pvlan_id: 1
+            secondary_pvlan_id: 2
+            pvlan_type: isolated
+        validate_certs: false
+      register: pvlans_result
 
-- name: ensure pvlans were configured
-  assert:
-    that:
-      - pvlans_result is not failed
+    - name: ensure pvlans were configured
+      assert:
+        that:
+          - pvlans_result is not failed
 
-- name: Get facts about DVPG
-  vmware_dvs_portgroup_facts:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    dvswitch: dvswitch_0001
-    show_vlan_info: yes
-    validate_certs: no
-    datacenter: "{{ dc1 }}"
-  register: dvpg_facts
+    - name: Create private vlan portgroup
+      vmware_dvs_portgroup:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        portgroup_name: private-vlan-portgroup
+        switch_name: dvswitch_0001
+        vlan_id: 1
+        vlan_private: True
+        num_ports: 12
+        portgroup_type: earlyBinding
+        state: present
+        validate_certs: false
+      register: dvs_pg_result_0019
 
+    - name: ensure dvs portgroup with pvlan is present
+      assert:
+        that:
+            - dvs_pg_result_0019.changed
 
-- name: Create private vlan portgroup
-  vmware_dvs_portgroup:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
-    portgroup_name: private-vlan-portgroup
-    switch_name: dvswitch_0001
-    vlan_id: 1
-    vlan_private: True
-    num_ports: 12
-    portgroup_type: earlyBinding
-    state: present
-    validate_certs: false
-  register: dvs_pg_result_0019
+    - name: Change private vlan id
+      vmware_dvs_portgroup:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        portgroup_name: private-vlan-portgroup
+        switch_name: dvswitch_0001
+        vlan_id: 2
+        vlan_private: True
+        num_ports: 12
+        portgroup_type: earlyBinding
+        state: present
+        validate_certs: false
+      register: dvs_pg_result_0020
 
-- name: ensure dvs portgroup with pvlan is present
-  assert:
-    that:
-        - dvs_pg_result_0019.changed
+    - name: ensure dvs portgroup pvlan id is changed
+      assert:
+        that:
+            - dvs_pg_result_0020.changed
 
-- name: Change private vlan id
-  vmware_dvs_portgroup:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
-    portgroup_name: private-vlan-portgroup
-    switch_name: dvswitch_0001
-    vlan_id: 2
-    vlan_private: True
-    num_ports: 12
-    portgroup_type: earlyBinding
-    state: present
-    validate_certs: false
-  register: dvs_pg_result_0020
+    - name: Change private vlan to basic vlan portgroup
+      vmware_dvs_portgroup:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        portgroup_name: private-vlan-portgroup
+        switch_name: dvswitch_0001
+        vlan_id: 5
+        num_ports: 12
+        portgroup_type: earlyBinding
+        state: present
+        validate_certs: false
+      register: dvs_pg_result_0021
 
-- name: ensure dvs portgroup pvlan id is changed
-  assert:
-    that:
-        - dvs_pg_result_0020.changed
-
-- name: Change private vlan to basic vlan portgroup
-  vmware_dvs_portgroup:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
-    portgroup_name: private-vlan-portgroup
-    switch_name: dvswitch_0001
-    vlan_id: 5
-    num_ports: 12
-    portgroup_type: earlyBinding
-    state: present
-    validate_certs: false
-  register: dvs_pg_result_0021
-
-- name: ensure dvs portgroup type changed
-  assert:
-    that:
-        - dvs_pg_result_0021.changed
+    - name: ensure dvs portgroup type changed
+      assert:
+        that:
+            - dvs_pg_result_0021.changed
