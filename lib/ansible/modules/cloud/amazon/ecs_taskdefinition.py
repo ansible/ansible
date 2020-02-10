@@ -58,9 +58,11 @@ options:
         description:
             - The Docker networking mode to use for the containers in the task.
             - C(awsvpc) mode was added in Ansible 2.5
+            - Windows containers must use I(network_mode=default), which will utilize docker NAT networking.
+            - Setting I(network_mode=default) for a Linux container will use bridge mode.
         required: false
         default: bridge
-        choices: [ 'bridge', 'host', 'none', 'awsvpc' ]
+        choices: [ 'default', 'bridge', 'host', 'none', 'awsvpc' ]
         version_added: 2.3
         type: str
     task_role_arn:
@@ -265,10 +267,11 @@ class EcsTaskManager:
         params = dict(
             family=family,
             taskRoleArn=task_role_arn,
-            networkMode=network_mode,
             containerDefinitions=container_definitions,
             volumes=volumes
         )
+        if network_mode != 'default':
+            params['networkMode'] = network_mode
         if cpu:
             params['cpu'] = cpu
         if memory:
@@ -330,7 +333,7 @@ def main():
         revision=dict(required=False, type='int'),
         force_create=dict(required=False, default=False, type='bool'),
         containers=dict(required=False, type='list'),
-        network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none', 'awsvpc'], type='str'),
+        network_mode=dict(required=False, default='bridge', choices=['default', 'bridge', 'host', 'none', 'awsvpc'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
         execution_role_arn=dict(required=False, default='', type='str'),
         volumes=dict(required=False, type='list'),
