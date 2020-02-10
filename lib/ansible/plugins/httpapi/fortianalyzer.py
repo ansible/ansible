@@ -152,7 +152,7 @@ class HttpApi(HttpApiBase):
             if self.sid is None and params[0]["url"] != "sys/login/user":
                 try:
                     self.connection._connect()
-                except BaseException as err:
+                except Exception as err:
                     raise FAZBaseException(
                         msg="An problem happened with the httpapi plugin self-init connection process. "
                             "Error: " + str(err))
