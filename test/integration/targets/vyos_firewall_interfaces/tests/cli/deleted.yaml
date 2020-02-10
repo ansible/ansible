@@ -48,4 +48,3 @@
   - include_tasks: _remove_config.yaml
 
   - include_tasks: _remove_firewall_config.yaml
-

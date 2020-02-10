@@ -199,8 +199,6 @@ class Firewall_interfaces(ConfigBase):
             for h in have:
                 if 'access_rules' in h:
                     commands.append(self._compute_command(name=h['name'], opr=False))
-
-
         return commands
 
     def _render_access_rules(self, want, have, opr=True):

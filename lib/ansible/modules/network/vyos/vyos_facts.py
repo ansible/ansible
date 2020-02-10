@@ -54,7 +54,7 @@ options:
         Valid subsets are 'all', 'interfaces', 'l3_interfaces', 'lag_interfaces',
         'lldp_global', 'lldp_interfaces', 'static_routes', 'firewall_rules', 'firewall_global', 'firewall_interfaces'.
     required: false
-    version_added: "2.10"
+    version_added: "2.9"
 """
 
 EXAMPLES = """

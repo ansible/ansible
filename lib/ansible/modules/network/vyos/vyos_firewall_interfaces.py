@@ -71,12 +71,11 @@ options:
               - Specifies the firewall rules for the provided AFI.
             type: list
             elements: dict
-            suboptions: 
+            suboptions:
               name:
                 description:
                   - Specifies the name of the IPv4/IPv6 Firewall rule for the interface.
                 type: str
-                required: True  
               direction:
                 description:
                   - Specifies the direction of packets that the firewall rule will be applied on.
@@ -94,7 +93,7 @@ options:
         config for comparison. This value of this option should be the
         output received from device by executing command
         C(show configuration commands | grep 'firewall'
-    type: str  
+    type: str
   state:
     description:
       - The state the configuration should be left in.
@@ -108,7 +107,6 @@ options:
     - rendered
     - gathered
     default: merged
-    
 """
 EXAMPLES = """
 # Using merged
@@ -123,37 +121,37 @@ EXAMPLES = """
 # set firewall name 'OUTBOUND'
 #
 - name: Merge the provided configuration with the existing running configuration
-      vyos_firewall_interfaces:
-        config:
-          - access_rules:
-              - afi: 'ipv4'
-                rules:
-                  - name: 'INBOUND'
-                    direction: 'in'
-                  - name: 'OUTBOUND'
-                    direction: 'out'
-                  - name: 'LOCAL'
-                    direction: 'local'
-              - afi: 'ipv6'
-                rules:
-                  - name: 'V6-LOCAL'
-                    direction: 'local'
-            name: 'eth1'
-          - access_rules:
-              - afi: 'ipv4'
-                rules:
-                  - name: 'INBOUND'
-                    direction: 'in'
-                  - name: 'OUTBOUND'
-                    direction: 'out'
-                  - name: 'LOCAL'
-                    direction: 'local'
-              - afi: 'ipv6'
-                rules:
-                  - name: 'V6-LOCAL'
-                    direction: 'local'
-            name: 'eth3'
-        state: merged
+  vyos_firewall_interfaces:
+    config:
+      - access_rules:
+          - afi: 'ipv4'
+            rules:
+              - name: 'INBOUND'
+                direction: 'in'
+              - name: 'OUTBOUND'
+                direction: 'out'
+              - name: 'LOCAL'
+                direction: 'local'
+          - afi: 'ipv6'
+            rules:
+              - name: 'V6-LOCAL'
+                direction: 'local'
+        name: 'eth1'
+      - access_rules:
+          - afi: 'ipv4'
+            rules:
+              - name: 'INBOUND'
+                direction: 'in'
+              - name: 'OUTBOUND'
+                direction: 'out'
+              - name: 'LOCAL'
+                direction: 'local'
+          - afi: 'ipv6'
+            rules:
+              - name: 'V6-LOCAL'
+                direction: 'local'
+        name: 'eth3'
+    state: merged
 #
 #
 # -------------------------
@@ -295,25 +293,26 @@ EXAMPLES = """
 # set interfaces ethernet eth3 firewall out name 'OUTBOUND'
 #
 - name: Replace device configurations of listed firewall interfaces with provided configurations
-      vyos_firewall_interfaces:
-        config:
-          - name: 'eth1'
-            access_rules:
-              - afi: 'ipv4'
-                rules:
-                  - name: 'OUTBOUND'
-                    direction: 'out'
-              - afi: 'ipv6'
-                rules:
-                  - name: 'V6-LOCAL'
-                    direction: 'local'
-          - name: 'eth3'
-            access_rules:
-              - afi: 'ipv4'
-                rules:
-                  - name: 'INBOUND'
-                    direction: 'in'
-        state: replaced
+  vyos_firewall_interfaces:
+    config:
+      - name: 'eth1'
+        access_rules:
+          - afi: 'ipv4'
+            rules:
+              - name: 'OUTBOUND'
+                direction: 'out'
+          - afi: 'ipv6'
+            rules:
+              - name: 'V6-LOCAL'
+                direction: 'local'
+      - name: 'eth3'
+        access_rules:
+          - afi: 'ipv4'
+            rules:
+              - name: 'INBOUND'
+                direction: 'in'
+    state: replaced    
+      
 #
 #
 # -------------------------
@@ -396,7 +395,7 @@ EXAMPLES = """
 #        "delete interfaces ethernet eth1 firewall local name",
 #        "delete interfaces ethernet eth3 firewall local name",
 #        "delete interfaces ethernet eth3 firewall out name",
-#        "delete interfaces ethernet eth3 firewall local ipv6-name" 
+#        "delete interfaces ethernet eth3 firewall local ipv6-name"
 #    ]
 #
 #    "after": [
@@ -444,7 +443,7 @@ EXAMPLES = """
 #            "name": "eth3"
 #        }
 #    ]
-# 
+#
 # After state:
 # -------------
 #
@@ -479,15 +478,15 @@ EXAMPLES = """
 # set interfaces ethernet eth3 firewall 'out'
 #
 - name: Overrides all device configuration with provided configuration
-      vyos_firewall_interfaces:
-        config:
-          - name: 'eth3'
-            access_rules:
-              - afi: 'ipv4'
-                rules:
-                  - name: 'INBOUND'
-                    direction: 'out'
-        state: overridden
+  vyos_firewall_interfaces:
+    config:
+      - name: 'eth3'
+        access_rules:
+          - afi: 'ipv4'
+            rules:
+              - name: 'INBOUND'
+                direction: 'out'
+    state: overridden
 #
 #
 # -------------------------
@@ -543,7 +542,7 @@ EXAMPLES = """
 #    "commands": [
 #        "delete interfaces ethernet eth1 firewall",
 #        "delete interfaces ethernet eth3 firewall in name",
-#        "set interfaces ethernet eth3 firewall out name 'INBOUND'" 
+#        "set interfaces ethernet eth3 firewall out name 'INBOUND'"
 #
 #
 #    "after": [
@@ -606,11 +605,11 @@ EXAMPLES = """
 # set interfaces ethernet eth3 firewall out name 'OUTBOUND'
 #
 - name: Delete firewall interfaces.
-      vyos_firewall_interfaces:
-        config:
-          - name: 'eth1'
-          - name: 'eth3'
-        state: deleted
+  vyos_firewall_interfaces:
+    config:
+      - name: 'eth1'
+      - name: 'eth3'
+    state: deleted
 #
 #
 # ------------------------
@@ -719,9 +718,9 @@ EXAMPLES = """
 #
 #
 - name: Parse the provided  configuration
-      vyos_firewall_interfaces:
-        running_config: 
-         "set interfaces ethernet eth1 firewall in name 'INBOUND'
+  vyos_firewall_interfaces:
+    running_config:
+      "set interfaces ethernet eth1 firewall in name 'INBOUND'
  set interfaces ethernet eth1 firewall out name 'OUTBOUND'
  set interfaces ethernet eth1 firewall local name 'LOCAL'
  set interfaces ethernet eth1 firewall local ipv6-name 'V6-LOCAL'
@@ -729,7 +728,7 @@ EXAMPLES = """
  set interfaces ethernet eth2 firewall out name 'OUTBOUND'
  set interfaces ethernet eth2 firewall local name 'LOCAL'
  set interfaces ethernet eth2 firewall local ipv6-name 'V6-LOCAL'"
-        state: parsed
+    state: parsed
 #
 #
 # -------------------------
@@ -827,9 +826,9 @@ EXAMPLES = """
 # set interfaces ethernet eth3 firewall 'out'
 #
 - name: Gather listed firewall interfaces.
-      vyos_firewall_interfaces:
-          config:
-          state: gathered
+  vyos_firewall_interfaces:
+    config:
+    state: gathered
 #
 #
 # -------------------------
@@ -903,19 +902,19 @@ EXAMPLES = """
 #
 #
 - name: Render the commands for provided  configuration
-      vyos_firewall_interfaces:
-        config:
-          - name: 'eth2'
-            access_rules:
-            - afi: 'ipv4'
-              rules:
-                - name: 'INGRESS'
-                  direction: 'in'
-                - name: 'OUTGRESS'
-                  direction: 'out'
-                - name: 'DROP'
-                  direction: 'local'
-        state: rendered
+  vyos_firewall_interfaces:
+    config:
+      - name: 'eth2'
+        access_rules:
+          - afi: 'ipv4'
+            rules:
+              - name: 'INGRESS'
+                direction: 'in'
+              - name: 'OUTGRESS'
+                direction: 'out'
+              - name: 'DROP'
+                direction: 'local'
+    state: rendered
 #
 #
 # -------------------------

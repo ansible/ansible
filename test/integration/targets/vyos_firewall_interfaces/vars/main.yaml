@@ -4,7 +4,6 @@ merged:
     - name: eth0
     - name: eth1
     - name: eth2
-    - name: eth3
 
 
   commands:
@@ -47,7 +46,6 @@ merged:
           - direction: local
             name: V6-LOCAL
       name: eth2
-    - name: eth3
 
 populate:
   - name: eth0
@@ -79,7 +77,6 @@ populate:
       - direction: local
         name: V6-LOCAL
     name: eth2
-  - name: eth3
 
 replaced:
   commands:
@@ -107,7 +104,6 @@ replaced:
             - direction: in
               name: INBOUND
       name: eth2
-    - name: eth3
 
 overridden:
   before:
@@ -139,7 +135,6 @@ overridden:
           - name: V6-LOCAL
             direction: local
       name: eth2
-    - name: eth3
   commands:
     - "delete interfaces ethernet eth2 firewall out name"
     - "delete interfaces ethernet eth2 firewall local name"
@@ -157,7 +152,6 @@ overridden:
           - name: INBOUND
             direction: out
       name: eth2
-    - name: eth3
 
 deleted:
   commands:
@@ -168,7 +162,6 @@ deleted:
     - name: eth0
     - name: eth1
     - name: eth2
-    - name: eth3
  
 rendered:
   commands:
@@ -212,4 +205,3 @@ round_trip:
         rules:
           - direction: local
             name: V6-LOCAL
-    - name: eth3
