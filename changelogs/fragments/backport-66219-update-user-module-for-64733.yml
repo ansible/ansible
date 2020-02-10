@@ -1,2 +1,0 @@
-bugfixes:
-  - "Backport PR #66219 to support the backport of PR #64733 (see: https://github.com/ansible/ansible/pull/66219)"
