@@ -500,6 +500,44 @@ EXAMPLES = """
 # ipv6 access-list test2
 #     10 deny icmpv6 any any reject-route hop-limit eq 20
 
+# Using merged
+
+# Before state:
+# -------------
+# show running-config | section access-list
+# ip access-list test1
+#    10 permit ip 10.10.10.0/24 any ttl eq 200
+#    20 permit ip 10.30.10.0/24 host 10.20.10.1
+#    30 deny tcp host 10.10.20.1 eq finger www any syn log
+#    40 permit ip any any
+# ipv6 access-list test2
+#     10 deny icmpv6 any any reject-route hop-limit eq 20
+
+- name: Merge to update the given configuration with an existing ace
+  eos_acls:
+    config:
+     - afi: "ipv4"
+       acls:
+        - name: test1
+          aces:
+           - sequence: 35
+             log : true
+             ttl:
+               eq: 33
+    state: merged
+
+# After state:
+# ------------
+#
+# show running-config | section access-list
+# ip access-list test1
+#    10 permit ip 10.10.10.0/24 any ttl eq 200
+#    20 permit ip 10.30.10.0/24 host 10.20.10.1
+#    30 deny tcp host 10.10.20.1 eq finger www any syn log
+#    35 deny ospf 20.0.0.0/8 any ttl eq 33 log
+#    40 permit ip any any
+# ipv6 access-list test2
+#     10 deny icmpv6 any any reject-route hop-limit eq 20
 
 # Using replaced
 

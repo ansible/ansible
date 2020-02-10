@@ -1,7 +1,7 @@
 ---
 - name: collect all eapi test cases
   find:
-    paths: "{{ role_path }}/tests/eapi"
+    paths: "{{ role_path }}/tests/common"
     patterns: "{{ testcase }}.yaml"
   delegate_to: localhost
   register: test_cases

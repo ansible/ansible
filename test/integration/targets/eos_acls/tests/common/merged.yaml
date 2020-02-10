@@ -122,6 +122,29 @@
         - "result.changed == false"
         - "result.commands|length == 0"
         - "ansible_facts.network_resources.acls|symmetric_difference(result.before) == []"
+
+  - name: merge attributes with an existing ace
+    eos_acls:
+      config:
+        - afi: "ipv4"
+          acls:
+           - name: test1
+             aces:
+               - sequence: 35
+                 log: true
+                 ttl:
+                   eq: 33
+      state: merged
+    become: yes
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "result.commands|length == 3"
+        - "'no 35' in result.commands"
+        - "'35 deny tcp 20.0.0.0/8 any ttl eq 33 log'  in result.commands"
+
   
   always:
-    - include_tasks: _remove_config.yaml
+   - include_tasks: _remove_config.yaml
