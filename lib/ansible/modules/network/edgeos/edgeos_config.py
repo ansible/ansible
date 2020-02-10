@@ -186,15 +186,34 @@ def get_candidate(module):
     return config_to_commands(contents)
 
 
-def diff_config(commands, config):
-    config = [to_native(c).replace("'", '') for c in config.splitlines()]
+def check_command(module, command):
+    """Tests against a command line to be valid otherwise raise errors
+
+    Error on uneven single quote which breaks ansible waiting for further input. Ansible
+    will handle even single quote failures correctly.
+
+    :param command: the command line from current or new config
+    :type command: string
+    :raises ValueError:
+      * if contains odd number of single quotes
+    :return: command string unchanged
+    :rtype: string
+    """
+    if command.count("'") % 2 != 0:
+        module.fail_json(msg="Unmatched single (') quote found in command: " + command)
+
+    return command
+
+
+def diff_config(module, commands, config):
+    config = [to_native(check_command(module, c)) for c in config.splitlines()]
 
     updates = list()
     visited = set()
     delete_commands = [line for line in commands if line.startswith('delete')]
 
     for line in commands:
-        item = to_native(line).replace("'", '')
+        item = to_native(check_command(module, line))
 
         if not item.startswith('set') and not item.startswith('delete'):
             raise ValueError('line must start with either `set` or `delete`')
@@ -234,7 +253,7 @@ def run(module, result):
     candidate = get_candidate(module)
 
     # create loadable config that includes only the configuration updates
-    commands = diff_config(candidate, config)
+    commands = diff_config(module, candidate, config)
 
     result['commands'] = commands
 
