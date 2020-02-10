@@ -454,7 +454,7 @@ After the shebang, the UTF-8 coding, the copyright line, the license, and the se
 
 The use of "wildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
 
-.. _testing_module_documentation:
+.. _dev_testing_module_documentation:
 
 Testing module documentation
 ============================
