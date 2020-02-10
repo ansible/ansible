@@ -45,4 +45,4 @@
   assert:
     that:
     - incorrect_broadcast_address is failed
-    - incorrect_broadcast_address.msg is search('not known')
+    - incorrect_broadcast_address.msg is search('not known|Name does not resolve')
