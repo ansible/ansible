@@ -161,7 +161,7 @@ class Acl_interfaces(ConfigBase):
         obj_in_have = search_obj_in_list(want['name'], have, 'name')
         q(obj_in_have, want)
         if obj_in_have != want:
-            if obj_in_have:
+            if obj_in_have and 'access_groups' in obj_in_have.keys():
                 for ag in obj_in_have['access_groups']:
                     want_afi = []
                     if want.get('access_groups'):
@@ -229,7 +229,8 @@ class Acl_interfaces(ConfigBase):
         commands = []
         q(want, have)
         have_name = search_obj_in_list(want['name'], have, 'name')
-        if have_name:
+        q(have_name)
+        if have_name and have_name.get('access_groups'):
             if want.get('access_groups'):
                 for w_afi in want['access_groups']:
                     q(have_name)
@@ -264,10 +265,10 @@ class Acl_interfaces(ConfigBase):
                                     self.process_acl(w_afi['acls'], ip))
             else:
                 # only name is given to delete
-                if deleted:
+                if deleted and 'access_groups' in have_name.keys():
                     commands.extend(self.process_access_group(have_name, True))
         else:
-            if not deleted:
+            if not deleted and 'access_groups' in have_name.keys():
                 commands.extend(self.process_access_group(want))
 
         if len(commands) > 0:

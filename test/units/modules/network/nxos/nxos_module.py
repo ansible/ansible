@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import q
 import os
 import json
 
@@ -73,13 +74,15 @@ class TestNxosModule(ModuleTestCase):
 
         retvals = {}
         for model in models:
-            retvals[model] = self.execute_module(failed, changed, commands, sort, device=model)
+            retvals[model] = self.execute_module(
+                failed, changed, commands, sort, device=model)
 
         return retvals
 
     def execute_module(self, failed=False, changed=False, commands=None, sort=True, device=''):
 
         self.load_fixtures(commands, device=device)
+        q(commands)
 
         if failed:
             result = self.failed()
@@ -87,12 +90,14 @@ class TestNxosModule(ModuleTestCase):
         else:
             result = self.changed(changed)
             self.assertEqual(result['changed'], changed, result)
-
-        if commands is not None:
+        q(commands)
+        if commands is not None and len(commands) > 0:
             if sort:
-                self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
+                self.assertEqual(sorted(commands), sorted(
+                    result['commands']), result['commands'])
             else:
-                self.assertEqual(commands, result['commands'], result['commands'])
+                self.assertEqual(
+                    commands, result['commands'], result['commands'])
 
         return result
 

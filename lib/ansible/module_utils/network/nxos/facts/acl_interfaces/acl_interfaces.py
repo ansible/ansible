@@ -36,6 +36,9 @@ class Acl_interfacesFacts(object):
 
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
+    def get_device_data(self, connection):
+        return connection.get('show running-config | section interface')
+
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for acl_interfaces
         :param connection: the device connection
@@ -45,13 +48,17 @@ class Acl_interfacesFacts(object):
         :returns: facts
         """
         if not data:
-            data = connection.get('show running-config | section interface')
+            data = self.get_device_data(connection)
         data = data.split('interface')
-        # display all interfaces
+
+        resources = []
         for i in range(len(data)):
-            if not re.search('ip(v6)?( port)? (access-group|traffic-filter)', data[i]):
-                data[i] = ''
-        resources = list(filter(None, data))
+            intf = data[i].split('\n')
+            for l in range(1, len(intf)):
+                if not re.search('ip(v6)?( port)? (access-group|traffic-filter)', intf[l]):
+                    intf[l] = ''
+            intf = list(filter(None, intf))
+            resources.append(intf)
 
         objs = []
         for resource in resources:
@@ -82,12 +89,12 @@ class Acl_interfacesFacts(object):
         :returns: The generated config
         """
         config = deepcopy(spec)
-        name = conf.split('\n')[0].strip()
+        name = conf[0].strip()
         config['name'] = normalize_interface(name)
         config['access_groups'] = []
         v4 = {'afi': 'ipv4', 'acls': []}
         v6 = {'afi': 'ipv6', 'acls': []}
-        for c in conf.split('\n')[1:]:
+        for c in conf[1:]:
             if c:
                 acl4 = re.search('ip( port)? access-group (\w*) (\w*)', c)
                 acl6 = re.search('ipv6( port)? traffic-filter (\w*) (\w*)', c)
