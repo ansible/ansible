@@ -557,8 +557,7 @@ Entitlement Type:    Physical
                     [
                         '/testbin/subscription-manager',
                         'attach',
-                        '--pool', 'ff8080816b8e967f016b8e99632804a6',
-                        '--quantity', '1'
+                        '--pool', 'ff8080816b8e967f016b8e99632804a6'
                     ],
                     {'check_rc': True},
                     (0, '', '')
@@ -567,8 +566,7 @@ Entitlement Type:    Physical
                     [
                         '/testbin/subscription-manager',
                         'attach',
-                        '--pool', 'ff8080816b8e967f016b8e99747107e9',
-                        '--quantity', '1'
+                        '--pool', 'ff8080816b8e967f016b8e99747107e9'
                     ],
                     {'check_rc': True},
                     (0, '', '')
@@ -658,7 +656,6 @@ Entitlement Type:    Physical
                         '/testbin/subscription-manager',
                         'attach',
                         '--pool', 'ff8080816b8e967f016b8e99632804a6',
-                        '--quantity', '1'
                     ],
                     {'check_rc': True},
                     (0, '', '')
