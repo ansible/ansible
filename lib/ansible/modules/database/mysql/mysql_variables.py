@@ -139,7 +139,7 @@ def main():
     value = module.params["value"]
     if mysqlvar is None:
         module.fail_json(msg="Cannot run without variable to operate with")
-    if match('^[0-9a-z_]+$', mysqlvar) is None:
+    if match('^[0-9a-z_.]+$', mysqlvar) is None:
         module.fail_json(msg="invalid variable name \"%s\"" % mysqlvar)
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)
