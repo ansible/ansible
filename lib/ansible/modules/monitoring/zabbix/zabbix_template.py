@@ -105,6 +105,13 @@ options:
         default: "json"
         version_added: '2.9'
         type: str
+    omit_date:
+        description:
+            - Removes the date field for the exported/dumped template
+            - Requires C(state=dump)
+        required: false
+        type: bool
+        default: false
     state:
         description:
             - Required state of the template.
@@ -221,6 +228,7 @@ EXAMPLES = r'''
     login_user: username
     login_password: password
     template_name: Template
+    omit_date: yes
     state: dump
   register: template_dump
 
@@ -232,6 +240,7 @@ EXAMPLES = r'''
     login_password: password
     template_name: Template
     dump_format: xml
+    omit_date: false
     state: dump
   register: template_dump
 '''
@@ -240,11 +249,11 @@ RETURN = r'''
 ---
 template_json:
   description: The JSON dump of the template
-  returned: when state is dump
+  returned: when state is dump and omit_date is no
   type: str
   sample: {
         "zabbix_export":{
-            "date":"2017-11-29T16:37:24Z",
+            "date":"2017-11-29T16:37:24Z", 
             "templates":[{
                 "templates":[],
                 "description":"",
@@ -267,13 +276,12 @@ template_json:
 
 template_xml:
   description: dump of the template in XML representation
-  returned: when state is dump and dump_format is xml
+  returned: when state is dump, dump_format is xml and omit_date is yes
   type: str
   sample: |-
     <?xml version="1.0" ?>
     <zabbix_export>
         <version>4.2</version>
-        <date>2019-07-12T13:37:26Z</date>
         <groups>
             <group>
                 <name>Templates</name>
@@ -470,16 +478,22 @@ class Template(object):
         else:
             return obj
 
-    def dump_template(self, template_ids, template_type='json'):
+    def dump_template(self, template_ids, omit_date=False, template_type='json'):
         if self._module.check_mode:
             self._module.exit_json(changed=True)
 
         try:
             dump = self._zapi.configuration.export({'format': template_type, 'options': {'templates': template_ids}})
             if template_type == 'xml':
-                return str(ET.tostring(ET.fromstring(dump.encode('utf-8')), encoding='utf-8').decode('utf-8'))
+                xmlroot = ET.fromstring(dump.encode('utf-8'))
+                # remove date field if requested
+                if omit_date:
+                    date = xmlroot.find(".date")
+                    if date is not None:
+                        xmlroot.remove(date)
+                return str(ET.tostring(xmlroot, encoding='utf-8').decode('utf-8'))
             else:
-                return self.load_json_template(dump)
+                return self.load_json_template(dump, omit_date)
 
         except ZabbixAPIException as e:
             self._module.fail_json(msg='Unable to export template: %s' % e)
@@ -536,9 +550,13 @@ class Template(object):
         xml_root_text = list(line.strip() for line in ET.tostring(parsed_xml_root, encoding='utf8', method='xml').decode().split('\n'))
         return ''.join(xml_root_text)
 
-    def load_json_template(self, template_json):
+    def load_json_template(self, template_json, omit_date=False):
         try:
-            return json.loads(template_json)
+            jsondoc = json.loads(template_json)
+            if omit_date and 'date' in jsondoc['zabbix_export']:
+                del jsondoc['zabbix_export']['date']
+
+            return jsondoc
         except ValueError as e:
             self._module.fail_json(msg='Invalid JSON provided', details=to_native(e), exception=traceback.format_exc())
 
@@ -639,6 +657,7 @@ def main():
             link_templates=dict(type='list', required=False),
             clear_templates=dict(type='list', required=False),
             macros=dict(type='list', required=False),
+            omit_date=dict(type='bool', required=False, default=False),
             dump_format=dict(type='str', required=False, default='json', choices=['json', 'xml']),
             state=dict(type='str', default="present", choices=['present', 'absent', 'dump']),
             timeout=dict(type='int', default=10)
@@ -672,6 +691,7 @@ def main():
     link_templates = module.params['link_templates']
     clear_templates = module.params['clear_templates']
     template_macros = module.params['macros']
+    omit_date = module.params['omit_date']
     dump_format = module.params['dump_format']
     state = module.params['state']
     timeout = module.params['timeout']
@@ -720,9 +740,9 @@ def main():
             module.fail_json(msg='Template not found: %s' % template_name)
 
         if dump_format == 'json':
-            module.exit_json(changed=False, template_json=template.dump_template(template_ids, template_type='json'))
+            module.exit_json(changed=False, template_json=template.dump_template(template_ids, omit_date, template_type='json'))
         elif dump_format == 'xml':
-            module.exit_json(changed=False, template_xml=template.dump_template(template_ids, template_type='xml'))
+            module.exit_json(changed=False, template_xml=template.dump_template(template_ids, omit_date, template_type='xml'))
 
     elif state == "present":
         # Load all subelements for template that were provided by user
