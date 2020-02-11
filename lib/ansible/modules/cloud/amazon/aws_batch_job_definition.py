@@ -188,7 +188,7 @@ EXAMPLES = '''
     state: present
   tasks:
 - name: My Batch Job Definition
-  batch_job_definition:
+  aws_batch_job_definition:
     job_definition_name: My Batch Job Definition
     state: present
     type: container
@@ -216,7 +216,7 @@ output:
   description: "returns what action was taken, whether something was changed, invocation and response"
   returned: always
   sample:
-    batch_job_definition_action: none
+    aws_batch_job_definition_action: none
     changed: false
     response:
       job_definition_arn: "arn:aws:batch:...."
