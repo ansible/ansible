@@ -119,6 +119,10 @@ def check_config(variable, value, cursor):
 
     cursor.execute(query_string, query_data)
     check_count = cursor.fetchone()
+
+    if isinstance(check_count, tuple):
+        return int(check_count[0]) > 0
+
     return (int(check_count['variable_count']) > 0)
 
 
