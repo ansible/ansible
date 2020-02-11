@@ -29,6 +29,30 @@ TESTSETS = [
             'name': 'CentOS Linux',
             'version': '7',
             'version_best': '7.2.1511',
+            "lsb_release_info": {
+                "release": "7.2.1511",
+                "codename": "Core",
+                "distributor_id": "CentOS",
+                "lsb_version": ":core-4.1-amd64:core-4.1-noarch",
+                "description": "CentOS Linux release 7.2.1511 (Core)"
+            },
+            "os_release_info": {
+                "name": "CentOS Linux",
+                "ansi_color": "0;31",
+                "id_like": "rhel fedora",
+                "version_id": "7",
+                "bug_report_url": "https://bugs.centos.org/",
+                "centos_mantisbt_project": "CentOS-7",
+                "pretty_name": "CentOS Linux 7 (Core)",
+                "version": "7 (Core)",
+                "redhat_support_product_version": "7",
+                "centos_mantisbt_project_version": "7",
+                "redhat_support_product": "centos",
+                "home_url": "https://www.centos.org/",
+                "cpe_name": "cpe:/o:centos:centos:7",
+                "id": "centos",
+                "codename": "Core"
+            },
         },
         "input": {
             "/etc/redhat-release": "CentOS Linux release 7.2.1511 (Core) \n",
@@ -62,6 +86,14 @@ TESTSETS = [
             'name': 'CentOS Linux',
             'version': '6.7',
             'version_best': '6.7',
+            'os_release_info': {},
+            'lsb_release_info': {
+                'release': '6.7',
+                'codename': 'Final',
+                'distributor_id': 'CentOS',
+                'lsb_version': ':base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch',
+                'description': 'CentOS release 6.7 (Final)'
+            },
         },
         "input": {
             "/etc/redhat-release": "CentOS release 6.7 (Final)\n",
@@ -92,6 +124,8 @@ TESTSETS = [
             'name': 'RedHat Enterprise Linux',
             'version': '7.2',
             'version_best': '7.2',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/redhat-release": "Red Hat Enterprise Linux Server release 7.2 (Maipo)\n",
@@ -126,6 +160,8 @@ TESTSETS = [
             'name': 'RedHat Enterprise Linux',
             'version': '6.7',
             'version_best': '6.7',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/redhat-release": "Red Hat Enterprise Linux Server release 6.7 (Santiago)\n",
@@ -156,6 +192,8 @@ TESTSETS = [
             'name': 'Virtuozzo Linux',
             'version': '7.3',
             'version_best': '7.3',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/redhat-release": "Virtuozzo Linux release 7.3\n",
@@ -199,6 +237,8 @@ TESTSETS = [
             'name': 'openSUSE Leap',
             'version': '42.1',
             'version_best': '42.1',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "result": {
             "distribution": "openSUSE Leap",
@@ -226,6 +266,8 @@ TESTSETS = [
             'name': 'openSUSE Harlequin',
             'version': '13.2',
             'version_best': '13.2',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         'result': {
             'distribution': u'openSUSE',
@@ -247,6 +289,8 @@ TESTSETS = [
             'name': 'openSUSE Tumbleweed',
             'version': '20160917',
             'version_best': '20160917',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/os-release": (
@@ -276,6 +320,8 @@ TESTSETS = [
             'name': 'openSUSE Leap',
             'version': '15.0',
             'version_best': '15.0',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/os-release": (
@@ -305,6 +351,8 @@ TESTSETS = [
             'name': 'SUSE Linux Enterprise Server',
             'version': '11',
             'version_best': '11',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "result": {
             "distribution": "SLES",
@@ -329,6 +377,8 @@ TESTSETS = [
             'name': 'SUSE Linux Enterprise Server',
             'version': '11.4',
             'version_best': '11.4',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "result": {
             "distribution": "SLES",
@@ -356,6 +406,8 @@ TESTSETS = [
             'name': 'SUSE Linux Enterprise Server',
             'version': '12',
             'version_best': '12',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "result": {
             "distribution": "SLES",
@@ -383,6 +435,8 @@ TESTSETS = [
             'name': 'SUSE Linux Enterprise Server',
             'version': '12.1',
             'version_best': '12.1',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "result": {
             "distribution": "SLES",
@@ -410,6 +464,8 @@ TESTSETS = [
             'name': 'SUSE Linux Enterprise Server',
             'version': '12.2',
             'version_best': '12.2',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "result": {
             "distribution": "SLES_SAP",
@@ -437,6 +493,8 @@ TESTSETS = [
             'name': 'SUSE Linux Enterprise Server',
             'version': '12.3',
             'version_best': '12.3',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "result": {
             "distribution": "SLES_SAP",
@@ -461,6 +519,20 @@ TESTSETS = [
             'name': 'Debian GNU/Linux',
             'version': '9',
             'version_best': '9.8',
+            "lsb_release_info": {
+                "release": "unstable",
+                "codename": "sid",
+                "distributor_id": "Debian",
+                "description": "Debian GNU/Linux stretch/sid"
+            },
+            "os_release_info": {
+                "name": "Debian GNU/Linux",
+                "support_url": "https://www.debian.org/support",
+                "bug_report_url": "https://bugs.debian.org/",
+                "pretty_name": "Debian GNU/Linux stretch/sid",
+                "home_url": "https://www.debian.org/",
+                "id": "debian"
+            },
         },
         "result": {
             "distribution": "Debian",
@@ -484,6 +556,24 @@ TESTSETS = [
             'name': 'Debian GNU/Linux',
             'version': '7',
             'version_best': '7.9',
+            'os_release_info': {
+                'name': 'Debian GNU/Linux',
+                'ansi_color': '1;31',
+                'support_url': 'http://www.debian.org/support/',
+                'version_id': '7',
+                'bug_report_url': 'http://bugs.debian.org/',
+                'pretty_name': 'Debian GNU/Linux 7 (wheezy)',
+                'version': '7 (wheezy)',
+                'codename': 'wheezy',
+                'home_url': 'http://www.debian.org/',
+                'id': 'debian'
+            },
+            'lsb_release_info': {
+                'release': '7.9',
+                'codename': 'wheezy',
+                'distributor_id': 'Debian',
+                'description': 'Debian GNU/Linux 7.9 (wheezy)'
+            },
         },
         'result': {
             'distribution': u'Debian',
@@ -509,6 +599,24 @@ TESTSETS = [
             'name': 'SteamOS GNU/Linux',
             'version': '2.0',
             'version_best': '2.0',
+            'os_release_info': {
+                'bug_report_url': 'http://support.steampowered.com/',
+                'id_like': 'debian',
+                'version_id': '2',
+                'pretty_name': 'SteamOS GNU/Linux 2.0 (brewmaster)',
+                'version': '2 (brewmaster)',
+                'home_url': 'http://www.steampowered.com/',
+                'name': 'SteamOS GNU/Linux',
+                'support_url': 'http://support.steampowered.com/',
+                'codename': 'brewmaster',
+                'id': 'steamos'
+            },
+            'lsb_release_info': {
+                'codename': 'brewmaster',
+                'description': 'SteamOS 2.0',
+                'distributor_id': 'SteamOS',
+                'release': '2.0'
+            },
         },
         'result': {
             'distribution': u'SteamOS',
@@ -531,6 +639,8 @@ TESTSETS = [
             'name': 'Devuan GNU/Linux',
             'version': '1',
             'version_best': '1',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         'result': {
             'distribution': u'Devuan',
@@ -554,6 +664,8 @@ TESTSETS = [
             'name': 'Devuan GNU/Linux',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         'result': {
             'distribution': u'Devuan',
@@ -575,6 +687,8 @@ TESTSETS = [
             'name': 'Ubuntu',
             'version': '16.04',
             'version_best': '16.04.6',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/os-release": (
@@ -606,6 +720,8 @@ TESTSETS = [
             'name': 'Ubuntu',
             'version': '10.04',
             'version_best': '10.04.1',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         'result':
             {
@@ -631,6 +747,8 @@ TESTSETS = [
             'name': 'Ubuntu',
             'version': '14.04',
             'version_best': '14.04.4',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         'result': {
             'distribution': u'Ubuntu',
@@ -655,6 +773,8 @@ TESTSETS = [
             'name': 'Ubuntu',
             'version': '12.04',
             'version_best': '12.04.5',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         'result': {'distribution': u'Ubuntu',
                    'distribution_major_version': u'12',
@@ -685,6 +805,8 @@ TESTSETS = [
             'name': 'Kali GNU/Linux Rolling',
             'version': '2019.1',
             'version_best': '2019.1',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         'result': {
             'distribution': 'Kali',
@@ -706,6 +828,26 @@ TESTSETS = [
             'name': 'KDE neon',
             'version': '16.04',
             'version_best': '16.04',
+            'os_release_info': {
+                'support_url': 'http://help.ubuntu.com/',
+                'version_codename': 'xenial',
+                'pretty_name': 'Ubuntu 16.04.6 LTS',
+                'home_url': 'http://www.ubuntu.com/',
+                'bug_report_url': 'http://bugs.launchpad.net/ubuntu/',
+                'version': '16.04.6 LTS (Xenial Xerus)',
+                'version_id': '16.04',
+                'id': 'ubuntu',
+                'ubuntu_codename': 'xenial',
+                'codename': 'xenial',
+                'name': 'Ubuntu',
+                'id_like': 'debian'
+            },
+            'lsb_release_info': {
+                'description': 'Ubuntu 16.04.6 LTS',
+                'release': '16.04',
+                'distributor_id': 'Ubuntu',
+                'codename': 'xenial'
+            },
         },
         "input": {
             "/etc/os-release": ("NAME=\"KDE neon\"\nVERSION=\"5.8\"\nID=neon\nID_LIKE=\"ubuntu debian\"\nPRETTY_NAME=\"KDE neon User Edition 5.8\"\n"
@@ -738,6 +880,8 @@ TESTSETS = [
             'name': 'CoreOS',
             'version': '976.0.0',
             'version_best': '976.0.0',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         'platform.release': '',
         'result': {
@@ -767,6 +911,8 @@ TESTSETS = [
             'name': '',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/release": ("                       SmartOS 20160330T234717Z x86_64\n"
@@ -810,6 +956,8 @@ TESTSETS = [
             'name': '',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/release": ("                                SmartOS x86_64\n              Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.\n"
@@ -839,6 +987,8 @@ TESTSETS = [
             'name': '',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/release": ("             OpenIndiana Development oi_151.1.9 X86 (powered by illumos)\n        Copyright 2011 Oracle and/or its affiliates. "
@@ -867,6 +1017,8 @@ TESTSETS = [
             'name': '',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         #        "platform.release": 'OmniOS',
         "input": {
@@ -896,6 +1048,8 @@ TESTSETS = [
             'name': '',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "platform.release:": "",
         "input": {
@@ -925,6 +1079,8 @@ TESTSETS = [
             'name': '',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/release": ("                        Open Storage Appliance 4.0.3-FP2\n           Copyright (c) 2014 Nexenta Systems, Inc.  "
@@ -955,6 +1111,8 @@ TESTSETS = [
             'name': '',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/release": ("                       Solaris 10 10/09 s10x_u8wos_08a X86\n           Copyright 2009 Sun Microsystems, Inc.  "
@@ -985,6 +1143,8 @@ TESTSETS = [
             'name': '',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/release": ("                           Oracle Solaris 11 11/11 X86\n  Copyright (c) 1983, 2011, Oracle and/or its affiliates.  "
@@ -1006,6 +1166,8 @@ TESTSETS = [
             'name': '',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/release": (
@@ -1036,6 +1198,18 @@ TESTSETS = [
             'name': '',
             'version': '',
             'version_best': '',
+            'os_release_info': {
+                'support_url': 'https://support.oracle.com/',
+                'name': 'Oracle Solaris',
+                'pretty_name': 'Oracle Solaris 11.4',
+                'version': '11.4',
+                'id': 'solaris',
+                'version_id': '11.4',
+                'build_id': '11.4.0.0.1.15.0',
+                'home_url': 'https://www.oracle.com/solaris/',
+                'cpe_name': 'cpe:/o:oracle:solaris:11:4'
+            },
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/release": (
@@ -1066,6 +1240,8 @@ TESTSETS = [
             'name': '',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/release": ("                    Oracle Solaris 10 1/13 s10x_u11wos_24a X86\n  Copyright (c) 1983, 2013, Oracle and/or its affiliates. "
@@ -1093,6 +1269,8 @@ TESTSETS = [
             'name': 'Fedora',
             'version': '22',
             'version_best': '22',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/redhat-release": "Fedora release 22 (Twenty Two)\n",
@@ -1125,6 +1303,8 @@ TESTSETS = [
             'name': 'Fedora',
             'version': '25',
             'version_best': '25',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/redhat-release": "Fedora release 25 (Rawhide)\n",
@@ -1159,6 +1339,8 @@ TESTSETS = [
             'name': 'Source Mage GNU/Linux',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/sourcemage-release": ("Source Mage GNU/Linux x86_64-pc-linux-gnu\nInstalled from tarball using chroot image (Grimoire 0.61-rc) "
@@ -1187,6 +1369,8 @@ TESTSETS = [
             'name': 'Arch Linux',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/os-release": "NAME=\"Arch Linux\"\nPRETTY_NAME=\"Arch Linux\"\nID=arch\nID_LIKE=archlinux\nANSI_COLOR=\"0;36\"\nHOME_URL=\"https://www.archlinux.org/\"\nSUPPORT_URL=\"https://bbs.archlinux.org/\"\nBUG_REPORT_URL=\"https://bugs.archlinux.org/\"\n\n",  # noqa
@@ -1215,6 +1399,8 @@ TESTSETS = [
             'name': 'Clear Linux OS',
             'version': '26580',
             'version_best': '26580',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/os-release": (
@@ -1249,6 +1435,8 @@ TESTSETS = [
             'name': 'Arch Linux',
             'version': '',
             'version_best': '',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         "input": {
             "/etc/os-release": "NAME=\"Arch Linux\"\nPRETTY_NAME=\"Arch Linux\"\nID=arch\nID_LIKE=archlinux\nANSI_COLOR=\"0;36\"\nHOME_URL=\"https://www.archlinux.org/\"\nSUPPORT_URL=\"https://bbs.archlinux.org/\"\nBUG_REPORT_URL=\"https://bugs.archlinux.org/\"\n\n",  # noqa
@@ -1277,6 +1465,8 @@ TESTSETS = [
             'name': 'Cumulus Linux',
             'version': '3.7.3',
             'version_best': '3.7.3',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         'result': {
             'distribution': 'Cumulus Linux',
@@ -1301,6 +1491,8 @@ TESTSETS = [
             'name': 'Cumulus Linux',
             'version': '2.5.4',
             'version_best': '2.5.4',
+            'os_release_info': {},
+            'lsb_release_info': {},
         },
         'result': {
             'distribution': 'Cumulus Linux',
@@ -1340,7 +1532,9 @@ TESTSETS = [
             "version": "18.2",
             "id": "linuxmint",
             "version_best": "18.2",
-            "name": "Linux Mint"
+            "name": "Linux Mint",
+            "os_release_info": {},
+            "lsb_release_info": {},
         },
     },
 ]
@@ -1411,6 +1605,12 @@ def test_distribution_version(am, mocker, testcase):
     def mock_distro_codename():
         return testcase['distro']['codename']
 
+    def mock_distro_os_release_info():
+        return testcase['distro']['os_release_info']
+
+    def mock_distro_lsb_release_info():
+        return testcase['distro']['lsb_release_info']
+
     def mock_open(filename, mode='r'):
         if filename in testcase['input']:
             file_object = mocker.mock_open(read_data=testcase['input'][filename]).return_value
@@ -1431,6 +1631,12 @@ def test_distribution_version(am, mocker, testcase):
     mocker.patch('ansible.module_utils.distro.id', mock_distro_id)
     mocker.patch('ansible.module_utils.distro.version', mock_distro_version)
     mocker.patch('ansible.module_utils.distro.codename', mock_distro_codename)
+    mocker.patch(
+        'ansible.module_utils.common.sys_info.distro.os_release_info',
+        mock_distro_os_release_info)
+    mocker.patch(
+        'ansible.module_utils.common.sys_info.distro.lsb_release_info',
+        mock_distro_lsb_release_info)
     mocker.patch('os.path.isfile', mock_os_path_is_file)
     mocker.patch('platform.system', mock_platform_system)
     mocker.patch('platform.release', mock_platform_release)
