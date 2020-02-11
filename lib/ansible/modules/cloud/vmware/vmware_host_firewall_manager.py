@@ -173,7 +173,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.compat import ipaddress
 
 
@@ -229,7 +229,7 @@ class VmwareFirewallManager(PyVmomi):
             ip_networks = allowed_hosts.get('ip_network', [])
             for ip_address in ip_addresses:
                 try:
-                    ipaddress.ip_address(ip_address)
+                    ipaddress.ip_address(to_text(ip_address))
                 except ValueError:
                     self.module.fail_json(msg="The provided IP address %s is not a valid IP"
                                               " for the rule %s" % (ip_address, rule_name))
