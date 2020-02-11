@@ -73,7 +73,7 @@ elif [ "${platform}" = "rhel" ]; then
 elif [ "${platform}" = "osx" ]; then
     while true; do
         pip install --disable-pip-version-check --quiet \
-            virtualenv \
+            'virtualenv<20' \
         && break
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10
