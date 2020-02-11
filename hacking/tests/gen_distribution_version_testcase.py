@@ -80,6 +80,8 @@ output = {
         'name': distro.name(),
         'version': distro.version(),
         'version_best': distro.version(best=True),
+        'lsb_release_info': distro.lsb_release_info(),
+        'os_release_info': distro.os_release_info(),
     },
     'input': fcont,
     'platform.dist': dist,
