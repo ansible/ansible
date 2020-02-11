@@ -112,6 +112,7 @@ options:
         required: false
         type: bool
         default: false
+        version_added: '2.10'
     state:
         description:
             - Required state of the template.
@@ -253,7 +254,7 @@ template_json:
   type: str
   sample: {
         "zabbix_export":{
-            "date":"2017-11-29T16:37:24Z", 
+            "date":"2017-11-29T16:37:24Z",
             "templates":[{
                 "templates":[],
                 "description":"",
@@ -478,7 +479,7 @@ class Template(object):
         else:
             return obj
 
-    def dump_template(self, template_ids, omit_date=False, template_type='json'):
+    def dump_template(self, template_ids, template_type='json', omit_date=False):
         if self._module.check_mode:
             self._module.exit_json(changed=True)
 
@@ -493,7 +494,7 @@ class Template(object):
                         xmlroot.remove(date)
                 return str(ET.tostring(xmlroot, encoding='utf-8').decode('utf-8'))
             else:
-                return self.load_json_template(dump, omit_date)
+                return self.load_json_template(dump, omit_date=omit_date)
 
         except ZabbixAPIException as e:
             self._module.fail_json(msg='Unable to export template: %s' % e)
@@ -555,7 +556,6 @@ class Template(object):
             jsondoc = json.loads(template_json)
             if omit_date and 'date' in jsondoc['zabbix_export']:
                 del jsondoc['zabbix_export']['date']
-
             return jsondoc
         except ValueError as e:
             self._module.fail_json(msg='Invalid JSON provided', details=to_native(e), exception=traceback.format_exc())
@@ -740,9 +740,9 @@ def main():
             module.fail_json(msg='Template not found: %s' % template_name)
 
         if dump_format == 'json':
-            module.exit_json(changed=False, template_json=template.dump_template(template_ids, omit_date, template_type='json'))
+            module.exit_json(changed=False, template_json=template.dump_template(template_ids, template_type='json', omit_date=omit_date))
         elif dump_format == 'xml':
-            module.exit_json(changed=False, template_xml=template.dump_template(template_ids, omit_date, template_type='xml'))
+            module.exit_json(changed=False, template_xml=template.dump_template(template_ids, template_type='xml', omit_date=omit_date))
 
     elif state == "present":
         # Load all subelements for template that were provided by user
