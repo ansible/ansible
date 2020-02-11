@@ -72,6 +72,13 @@ EXAMPLES = '''
   group:
     name: somegroup
     state: present
+
+- name: Ensure group "docker" exists with correct gid
+  group:
+    name: docker
+    state: present
+    gid: 1750
+
 '''
 
 RETURN = r'''
