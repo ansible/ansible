@@ -328,7 +328,7 @@ In order to use the ``paramiko`` connection plugin or modules that require ``par
 
     $ pip install --user paramiko
 
-For **macOS**::
+For macOS::
 
     $ python -m pip install --user paramiko
 
