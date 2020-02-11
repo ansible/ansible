@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - "ovirt_disk: remove default value because the parameter is required when disk is attached to vm"
+
