@@ -308,7 +308,7 @@ Then install Ansible [1]_::
 
     $ pip install --user ansible
     
-For **macOS**, there is no need to use ``sudo`` or install additional fixes, simply access the Python module namespace for pip::
+For macOS, there is no need to use ``sudo`` or install additional fixes, simply access the Python module namespace for ``pip``::
 
     $ python -m pip install --user ansible
 
