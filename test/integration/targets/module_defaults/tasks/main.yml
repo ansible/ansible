@@ -89,26 +89,28 @@
             foo.msg == "Hello world!"
 - name: Module group defaults block
   module_defaults:
-    group/aws:
-      region: us-east-1
-      aws_secret_key: foobar
+    group/test:
+      arg1: "test1"
+      arg2: "test2"
   block:
-    - aws_s3_bucket_info:
-      ignore_errors: true
-      register: s3
+    - test_module_defaults:
+      register: result
     - assert:
         that:
-          - "'Partial credentials' in s3.msg or 'boto3 required' in s3.msg"
+          - "result.test_module_defaults.arg1 == 'test1'"
+          - "result.test_module_defaults.arg2 == 'test2'"
+          - "result.test_module_defaults.arg3 == 'default3'"
 - name: Module group defaults block
   module_defaults:
-    group/aws:
-      region: us-east-1
-      aws_secret_key: foobar
-      aws_access_key: foobar
+    group/test:
+      arg1: "test1"
+      arg2: "test2"
+      arg3: "test3"
   block:
-    - aws_s3_bucket_info:
-      ignore_errors: true
-      register: s3
+    - test_module_defaults:
+      register: result
     - assert:
         that:
-          - "'InvalidAccessKeyId' in s3.msg or 'boto3 required' in s3.msg"
+          - "result.test_module_defaults.arg1 == 'test1'"
+          - "result.test_module_defaults.arg2 == 'test2'"
+          - "result.test_module_defaults.arg3 == 'test3'"
