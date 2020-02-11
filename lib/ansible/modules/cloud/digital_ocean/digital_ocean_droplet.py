@@ -53,7 +53,7 @@ options:
     aliases: ['region_id']
   ssh_keys:
     description:
-     - array of SSH key (numeric) ID that you would like to be added to the server.
+     - array of SSH key Fingerprint that you would like to be added to the server.
     required: False
   private_networking:
     description:
@@ -120,6 +120,7 @@ EXAMPLES = '''
     region: sfo1
     image: ubuntu-16-04-x64
     wait_timeout: 500
+    ssh_keys: [ .... ]
   register: my_droplet
 
 - debug:
