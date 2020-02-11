@@ -319,21 +319,24 @@ def set_commands(want, have):
                             for wace in wacl['aces']:
                                 for hace in hacl['aces']:
                                     if 'sequence' in wace.keys() and\
-                                      'sequence' in hace.keys():
+                                        'sequence' in hace.keys():
                                         if wace['sequence'] == hace['sequence']:
-                                            wace_updated = get_updated_ace(wace,hace)
+                                            wace_updated = get_updated_ace(wace, hace)
                                             if wace_updated:
-                                                want_aces.pop(want_aces.index(wace))    
+                                                want_aces.pop(want_aces.index(wace))
                                                 want_aces.append(wace_updated)
         return_command = add_commands(w)
         commands.append(return_command)
     return commands
+
 
 def get_updated_ace(w, h):
     w_updated = w.copy()
     for hkey in h.keys():
         if hkey not in w.keys():
             w_updated.update({hkey: h[hkey]})
+        else:
+            w_updated.update({hkey: w[hkey]})
     return w_updated
 
 

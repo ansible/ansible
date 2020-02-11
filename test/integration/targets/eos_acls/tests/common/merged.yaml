@@ -134,6 +134,8 @@
                  log: true
                  ttl:
                    eq: 33
+                 source:
+                   any: true
       state: merged
     become: yes
     register: result
@@ -143,7 +145,7 @@
         - "result.changed == true"
         - "result.commands|length == 3"
         - "'no 35' in result.commands"
-        - "'35 deny tcp 20.0.0.0/8 any ttl eq 33 log'  in result.commands"
+        - "'35 deny tcp any any ttl eq 33 log'  in result.commands"
 
   
   always:
