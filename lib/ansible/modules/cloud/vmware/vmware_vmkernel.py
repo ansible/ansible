@@ -79,18 +79,6 @@ options:
           tcpip_stack: 'default',
       }
       version_added: 2.5
-    ip_address:
-      description:
-      - The IP Address for the VMKernel interface.
-      - Use C(network) parameter with C(ip_address) instead.
-      - Deprecated option, will be removed in version 2.9.
-      type: str
-    subnet_mask:
-      description:
-      - The Subnet Mask for the VMKernel interface.
-      - Use C(network) parameter with C(subnet_mask) instead.
-      - Deprecated option, will be removed in version 2.9.
-      type: str
     mtu:
       description:
       - The MTU for the VMKernel interface.
@@ -1057,8 +1045,6 @@ def main():
     argument_spec.update(dict(
         esxi_hostname=dict(required=True, type='str'),
         portgroup_name=dict(required=True, type='str', aliases=['portgroup']),
-        ip_address=dict(removed_in_version=2.9, type='str'),
-        subnet_mask=dict(removed_in_version=2.9, type='str'),
         mtu=dict(required=False, type='int', default=1500),
         device=dict(type='str'),
         enable_vsan=dict(required=False, type='bool', default=False),
