@@ -210,7 +210,7 @@ changed:
   sample: False
 msg:
   description: Descriptive status of a task result.
-  returned: always
+  returned: When changed a status message otherwise an empty string.
   type: str
   sample: line added
 backup:
