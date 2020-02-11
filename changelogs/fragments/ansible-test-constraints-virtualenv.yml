@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Use ``virtualenv`` versions before 20 on provisioned macOS instances to remain compatible with an older pip install.
