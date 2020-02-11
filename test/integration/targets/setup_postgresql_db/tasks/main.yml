@@ -59,7 +59,9 @@
     loop_var: loop_item
 
 - name: install dependencies for postgresql test
-  package: name={{ postgresql_package_item }} state=present
+  package:
+    name: "{{ postgresql_package_item }}"
+    state: present
   with_items: "{{ postgresql_packages }}"
   loop_control:
     loop_var: postgresql_package_item
