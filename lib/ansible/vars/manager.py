@@ -453,6 +453,7 @@ class VariableManager:
         variables = {}
         variables['playbook_dir'] = os.path.abspath(self._loader.get_basedir())
         variables['ansible_playbook_python'] = sys.executable
+        variables['ansible_config_file'] = C.CONFIG_FILE
 
         if play:
             # This is a list of all role names of all dependencies for all roles for this play

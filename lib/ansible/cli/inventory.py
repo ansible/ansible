@@ -23,6 +23,7 @@ from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_
 display = Display()
 
 INTERNAL_VARS = frozenset(['ansible_diff_mode',
+                           'ansible_config_file',
                            'ansible_facts',
                            'ansible_forks',
                            'ansible_inventory_sources',
