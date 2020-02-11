@@ -24,6 +24,7 @@ An Ansible role has a defined directory structure with seven main standard direc
         common/
             tasks/
             handlers/
+            library/
             files/
             templates/
             vars/
@@ -38,6 +39,7 @@ Each directory within a role must contain a ``main.yml`` file with relevant cont
 
 - ``tasks/main.yml`` - the main list of tasks that the role executes.
 - ``handlers/main.yml`` - handlers, which may be used within or outside this role.
+- ``library/my_module.py`` - modules, which may be used within this role (see :ref:`embedding_modules_and_plugins_in_roles` for more information).
 - ``defaults/main.yml`` - default variables for the role (see :ref:`playbooks_variables` for more information). These variables have the lowest priority of any variables available, and can be easily overridden by any other variable, including inventory variables.
 - ``vars/main.yml`` - other variables for the role (see :ref:`playbooks_variables` for more information).
 - ``files/main.yml`` - files that the role deploys.
