@@ -143,7 +143,7 @@ TESTSETS = [
         "input": {
             "/etc/redhat-release": "Red Hat Enterprise Linux Server release 7.7 (Maipo)\n",
             "/etc/system-release": "Red Hat Enterprise Linux Server release 7.7 (Maipo)\n",
-            "/etc/os-release": "NAME=\"Red Hat Enterprise Linux Server\"\nVERSION=\"7.7 (Maipo)\"\nID=\"rhel\"\nID_LIKE=\"fedora\"\nVARIANT=\"Server\"\nVARIANT_ID=\"server\"\nVERSION_ID=\"7.7\"\nPRETTY_NAME=\"Red Hat Enterprise Linux Server 7.7 (Maipo)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:redhat:enterprise_linux:7.7:GA:server\"\nHOME_URL=\"https://www.redhat.com/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\n\nREDHAT_BUGZILLA_PRODUCT=\"Red Hat Enterprise Linux 7\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=7.7\nREDHAT_SUPPORT_PRODUCT=\"Red Hat Enterprise Linux\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7.7\"\n"
+            "/etc/os-release": "NAME=\"Red Hat Enterprise Linux Server\"\nVERSION=\"7.7 (Maipo)\"\nID=\"rhel\"\nID_LIKE=\"fedora\"\nVARIANT=\"Server\"\nVARIANT_ID=\"server\"\nVERSION_ID=\"7.7\"\nPRETTY_NAME=\"Red Hat Enterprise Linux Server 7.7 (Maipo)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:redhat:enterprise_linux:7.7:GA:server\"\nHOME_URL=\"https://www.redhat.com/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\n\nREDHAT_BUGZILLA_PRODUCT=\"Red Hat Enterprise Linux 7\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=7.7\nREDHAT_SUPPORT_PRODUCT=\"Red Hat Enterprise Linux\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7.7\"\n"  # noqa
         },
         "platform.dist": [
             "rhel",
@@ -319,8 +319,8 @@ TESTSETS = [
             }
         },
         "input": {
-            "/etc/os-release": "NAME=\"openSUSE Leap\"\nVERSION=\"15.1\"\nID=\"opensuse-leap\"\nID_LIKE=\"suse opensuse\"\nVERSION_ID=\"15.1\"\nPRETTY_NAME=\"openSUSE Leap 15.1\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:leap:15.1\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n",
-            "/usr/lib/os-release": "NAME=\"openSUSE Leap\"\nVERSION=\"15.1\"\nID=\"opensuse-leap\"\nID_LIKE=\"suse opensuse\"\nVERSION_ID=\"15.1\"\nPRETTY_NAME=\"openSUSE Leap 15.1\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:leap:15.1\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n"
+            "/etc/os-release": "NAME=\"openSUSE Leap\"\nVERSION=\"15.1\"\nID=\"opensuse-leap\"\nID_LIKE=\"suse opensuse\"\nVERSION_ID=\"15.1\"\nPRETTY_NAME=\"openSUSE Leap 15.1\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:leap:15.1\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n",  # noqa
+            "/usr/lib/os-release": "NAME=\"openSUSE Leap\"\nVERSION=\"15.1\"\nID=\"opensuse-leap\"\nID_LIKE=\"suse opensuse\"\nVERSION_ID=\"15.1\"\nPRETTY_NAME=\"openSUSE Leap 15.1\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:leap:15.1\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n"  # noqa
         },
         "platform.dist": [
             "opensuse-leap",
@@ -619,8 +619,8 @@ TESTSETS = [
             }
         },
         "input": {
-            "/etc/os-release": "PRETTY_NAME=\"Debian GNU/Linux 10 (buster)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"10\"\nVERSION=\"10 (buster)\"\nVERSION_CODENAME=buster\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n",
-            "/usr/lib/os-release": "PRETTY_NAME=\"Debian GNU/Linux 10 (buster)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"10\"\nVERSION=\"10 (buster)\"\nVERSION_CODENAME=buster\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n"
+            "/etc/os-release": "PRETTY_NAME=\"Debian GNU/Linux 10 (buster)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"10\"\nVERSION=\"10 (buster)\"\nVERSION_CODENAME=buster\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n",  # noqa
+            "/usr/lib/os-release": "PRETTY_NAME=\"Debian GNU/Linux 10 (buster)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"10\"\nVERSION=\"10 (buster)\"\nVERSION_CODENAME=buster\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n"  # noqa
         },
         "platform.dist": [
             "debian",
@@ -832,9 +832,9 @@ TESTSETS = [
             }
         },
         "input": {
-            "/etc/os-release": "NAME=\"Ubuntu\"\nVERSION=\"18.04.3 LTS (Bionic Beaver)\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu 18.04.3 LTS\"\nVERSION_ID=\"18.04\"\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nVERSION_CODENAME=bionic\nUBUNTU_CODENAME=bionic\n",
+            "/etc/os-release": "NAME=\"Ubuntu\"\nVERSION=\"18.04.3 LTS (Bionic Beaver)\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu 18.04.3 LTS\"\nVERSION_ID=\"18.04\"\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nVERSION_CODENAME=bionic\nUBUNTU_CODENAME=bionic\n",  # noqa
             "/etc/lsb-release": "DISTRIB_ID=Ubuntu\nDISTRIB_RELEASE=18.04\nDISTRIB_CODENAME=bionic\nDISTRIB_DESCRIPTION=\"Ubuntu 18.04.3 LTS\"\n",
-            "/usr/lib/os-release": "NAME=\"Ubuntu\"\nVERSION=\"18.04.3 LTS (Bionic Beaver)\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu 18.04.3 LTS\"\nVERSION_ID=\"18.04\"\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nVERSION_CODENAME=bionic\nUBUNTU_CODENAME=bionic\n"
+            "/usr/lib/os-release": "NAME=\"Ubuntu\"\nVERSION=\"18.04.3 LTS (Bionic Beaver)\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu 18.04.3 LTS\"\nVERSION_ID=\"18.04\"\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nVERSION_CODENAME=bionic\nUBUNTU_CODENAME=bionic\n"  # noqa
         },
         "platform.dist": [
             "ubuntu",
@@ -1473,8 +1473,8 @@ TESTSETS = [
         "input": {
             "/etc/redhat-release": "Fedora release 31 (Thirty One)\n",
             "/etc/system-release": "Fedora release 31 (Thirty One)\n",
-            "/etc/os-release": "NAME=Fedora\nVERSION=\"31 (Workstation Edition)\"\nID=fedora\nVERSION_ID=31\nVERSION_CODENAME=\"\"\nPLATFORM_ID=\"platform:f31\"\nPRETTY_NAME=\"Fedora 31 (Workstation Edition)\"\nANSI_COLOR=\"0;34\"\nLOGO=fedora-logo-icon\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:31\"\nHOME_URL=\"https://fedoraproject.org/\"\nDOCUMENTATION_URL=\"https://docs.fedoraproject.org/en-US/fedora/f31/system-administrators-guide/\"\nSUPPORT_URL=\"https://fedoraproject.org/wiki/Communicating_and_getting_help\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=31\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=31\nPRIVACY_POLICY_URL=\"https://fedoraproject.org/wiki/Legal:PrivacyPolicy\"\nVARIANT=\"Workstation Edition\"\nVARIANT_ID=workstation\n",
-            "/usr/lib/os-release": "NAME=Fedora\nVERSION=\"31 (Workstation Edition)\"\nID=fedora\nVERSION_ID=31\nVERSION_CODENAME=\"\"\nPLATFORM_ID=\"platform:f31\"\nPRETTY_NAME=\"Fedora 31 (Workstation Edition)\"\nANSI_COLOR=\"0;34\"\nLOGO=fedora-logo-icon\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:31\"\nHOME_URL=\"https://fedoraproject.org/\"\nDOCUMENTATION_URL=\"https://docs.fedoraproject.org/en-US/fedora/f31/system-administrators-guide/\"\nSUPPORT_URL=\"https://fedoraproject.org/wiki/Communicating_and_getting_help\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=31\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=31\nPRIVACY_POLICY_URL=\"https://fedoraproject.org/wiki/Legal:PrivacyPolicy\"\nVARIANT=\"Workstation Edition\"\nVARIANT_ID=workstation\n"
+            "/etc/os-release": "NAME=Fedora\nVERSION=\"31 (Workstation Edition)\"\nID=fedora\nVERSION_ID=31\nVERSION_CODENAME=\"\"\nPLATFORM_ID=\"platform:f31\"\nPRETTY_NAME=\"Fedora 31 (Workstation Edition)\"\nANSI_COLOR=\"0;34\"\nLOGO=fedora-logo-icon\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:31\"\nHOME_URL=\"https://fedoraproject.org/\"\nDOCUMENTATION_URL=\"https://docs.fedoraproject.org/en-US/fedora/f31/system-administrators-guide/\"\nSUPPORT_URL=\"https://fedoraproject.org/wiki/Communicating_and_getting_help\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=31\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=31\nPRIVACY_POLICY_URL=\"https://fedoraproject.org/wiki/Legal:PrivacyPolicy\"\nVARIANT=\"Workstation Edition\"\nVARIANT_ID=workstation\n",  # noqa
+            "/usr/lib/os-release": "NAME=Fedora\nVERSION=\"31 (Workstation Edition)\"\nID=fedora\nVERSION_ID=31\nVERSION_CODENAME=\"\"\nPLATFORM_ID=\"platform:f31\"\nPRETTY_NAME=\"Fedora 31 (Workstation Edition)\"\nANSI_COLOR=\"0;34\"\nLOGO=fedora-logo-icon\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:31\"\nHOME_URL=\"https://fedoraproject.org/\"\nDOCUMENTATION_URL=\"https://docs.fedoraproject.org/en-US/fedora/f31/system-administrators-guide/\"\nSUPPORT_URL=\"https://fedoraproject.org/wiki/Communicating_and_getting_help\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=31\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=31\nPRIVACY_POLICY_URL=\"https://fedoraproject.org/wiki/Legal:PrivacyPolicy\"\nVARIANT=\"Workstation Edition\"\nVARIANT_ID=workstation\n"  # noqa
         },
         "platform.dist": [
             "fedora",
