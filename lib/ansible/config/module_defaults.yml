@@ -1281,6 +1281,8 @@ groupings:
   - ovirt
   ovirt_vnic_profile:
   - ovirt
+  test_module_defaults:
+  - test
   vcenter_extension:
   - vmware
   vcenter_extension_info:
