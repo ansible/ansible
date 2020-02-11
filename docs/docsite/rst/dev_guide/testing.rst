@@ -110,8 +110,7 @@ Setup: Checking out a Pull Request
 You can do this by:
 
 * checking out Ansible
-* making a test branch off the main branch
-* merging a GitHub issue
+* fetching the proposed changes into a test branch
 * testing
 * commenting on that particular issue on GitHub
 
@@ -131,21 +130,20 @@ Create a fresh area to work::
    git clone https://github.com/ansible/ansible.git ansible-pr-testing
    cd ansible-pr-testing
 
-Next, find the pull request you'd like to test and make note of the line at the top which describes the source
-and destination repositories. It will look something like this::
+Next, find the pull request you'd like to test and make note of its number. It will look something like this::
 
-   Someuser wants to merge 1 commit into ansible:devel from someuser:feature_branch_name
+   Use os.path.sep instead of hardcoding / #65381
 
 .. note:: Only test ``ansible:devel``
 
    It is important that the PR request target be ``ansible:devel``, as we do not accept pull requests into any other branch. Dot releases are cherry-picked manually by Ansible staff.
 
-The username and branch at the end are the important parts, which will be turned into git commands as follows::
+Use the pull request number when you fetch the proposed changes and create your branch for testing::
 
-   git checkout -b testing_PRXXXX devel
-   git pull https://github.com/someuser/ansible.git feature_branch_name
+   git fetch origin refs/pull/XXXX/head:testing_PRXXXX
+   git checkout testing_PRXXXX
 
-The first command creates and switches to a new branch named ``testing_PRXXXX``, where the XXXX is the actual issue number associated with the pull request (for example, 1234). This branch is based on the ``devel`` branch. The second command pulls the new code from the users feature branch into the newly created branch.
+The first command fetches the proposed changes from the pull request and creates a new branch named ``testing_PRXXXX``, where the XXXX is the actual number associated with the pull request (for example, 65381). The second command checks out the newly created branch.
 
 .. note::
    If the GitHub user interface shows that the pull request will not merge cleanly, we do not recommend proceeding if you are not somewhat familiar with git and coding, as you will have to resolve a merge conflict. This is the responsibility of the original pull request contributor.
