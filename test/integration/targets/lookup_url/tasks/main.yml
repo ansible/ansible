@@ -1,0 +1,28 @@
+- name: Test that retrieving a url works
+  set_fact:
+    web_data: "{{ lookup('url', 'https://gist.githubusercontent.com/abadger/9858c22712f62a8effff/raw/43dd47ea691c90a5fa7827892c70241913351963/test') }}"
+
+- name: Assert that the url was retrieved
+  assert:
+    that:
+      - "'one' in web_data"
+
+- name: Test that retrieving a url with invalid cert fails
+  set_fact:
+    web_data: "{{ lookup('url', 'https://{{ badssl_host }}/') }}"
+  ignore_errors: True
+  register: url_invalid_cert
+
+- assert:
+    that:
+      - "url_invalid_cert.failed"
+      - "'Error validating the server' in url_invalid_cert.msg or 'Hostname mismatch' in url_invalid_cert.msg or ( url_invalid_cert.msg is search('hostname .* doesn.t match .*'))"
+
+- name: Test that retrieving a url with invalid cert with validate_certs=False works
+  set_fact:
+    web_data: "{{ lookup('url', 'https://{{ badssl_host }}/', validate_certs=False) }}"
+  register: url_no_validate_cert
+
+- assert:
+    that:
+      - "'{{ badssl_host_substring }}' in web_data"

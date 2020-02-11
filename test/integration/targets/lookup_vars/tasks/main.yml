@@ -1,0 +1,16 @@
+- name: Test that we can give it a single value and receive a single value
+  set_fact:
+    var_host: '{{ lookup("vars", "ansible_host") }}'
+
+- assert:
+    that:
+      - 'var_host == ansible_host'
+
+- name: Test that we can give a list of values to var and receive a list of values back
+  set_fact:
+    var_host_info: '{{ query("vars", "ansible_host", "ansible_connection") }}'
+
+- assert:
+    that:
+      - 'var_host_info[0] == ansible_host'
+      - 'var_host_info[1] == ansible_connection'

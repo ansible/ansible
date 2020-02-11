@@ -7874,7 +7874,7 @@ test/integration/targets/jinja2_native_types/filter_plugins/native_plugins.py fu
 test/integration/targets/jinja2_native_types/filter_plugins/native_plugins.py metaclass-boilerplate
 test/integration/targets/lambda_policy/files/mini_http_lambda.py future-import-boilerplate
 test/integration/targets/lambda_policy/files/mini_http_lambda.py metaclass-boilerplate
-test/integration/targets/lookup_properties/lookup-8859-15.ini no-smart-quotes
+test/integration/targets/lookup_ini/lookup-8859-15.ini no-smart-quotes
 test/integration/targets/module_precedence/lib_with_extension/ping.py future-import-boilerplate
 test/integration/targets/module_precedence/lib_with_extension/ping.py metaclass-boilerplate
 test/integration/targets/module_precedence/multiple_roles/bar/library/ping.py future-import-boilerplate
