@@ -88,7 +88,7 @@ class HttpApi(HttpApiBase):
         :param username: Username of FortiManager Admin
         :param password: Password of FortiManager Admin
 
-        :return: Dictionary of status, if it logged in or not.
+        :return: Dictionary of status if it logged in or not.
         """
         self._logged_in_user = username
         self.send_request(FMGRMethods.EXEC, self._tools.format_request(FMGRMethods.EXEC, "sys/login/user",
