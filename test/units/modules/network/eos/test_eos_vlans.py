@@ -107,7 +107,7 @@ class TestEosVlansModule(TestEosModule):
                 state="suspend"
             )], state="replaced"
         ))
-        commands = ['vlan 10', 'no name', 'name tenreplaced', 'state suspend']
+        commands = ['vlan 10', 'name tenreplaced', 'state suspend']
         self.execute_module(changed=True, commands=commands)
 
     def test_eos_vlan_replaced_idempotent(self):

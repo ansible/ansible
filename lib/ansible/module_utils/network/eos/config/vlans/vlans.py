@@ -120,6 +120,8 @@ class Vlans(ConfigBase):
                 extant = have[vlan_id]
             else:
                 extant = dict()
+            import q
+            q(vlan_id , desired, extant)
 
             add_config = dict_diff(extant, desired)
             del_config = dict_diff(desired, extant)
@@ -209,6 +211,8 @@ def generate_commands(vlan_id, to_set, to_remove):
         return ["no vlan {0}".format(vlan_id)]
 
     for key in to_remove:
+        if key in to_set.keys():
+            continue
         commands.append("no {0}".format(key))
 
     for key, value in to_set.items():
@@ -219,5 +223,6 @@ def generate_commands(vlan_id, to_set, to_remove):
 
     if commands:
         commands.insert(0, "vlan {0}".format(vlan_id))
-
+    import q
+    q(commands)
     return commands
