@@ -87,7 +87,7 @@ class HttpApi(HttpApiBase):
         :param username: Username of FortiAnalyzer Admin
         :param password: Password of FortiAnalyzer Admin
 
-        :return: Dictionary of status, if it logged in or not.
+        :return: Dictionary of status if it logged in or not.
         """
 
         self._logged_in_user = username
