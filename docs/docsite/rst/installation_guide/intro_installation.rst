@@ -299,7 +299,7 @@ Update of the software will be managed by the swupd tool::
 Installing Ansible with ``pip``
 --------------------------------
 
-Ansible can be installed with ``pip``, the Python package manager. It should be noted that macOS requires a slightly different use of ``pip`` than *nix due to ``openssl`` requirements, therefore pip must be run as a module.  If ``pip`` isn't already available on your system of Python, run the following commands to install it::
+Ansible can be installed with ``pip``, the Python package manager. It should be noted that macOS requires a slightly different use of ``pip`` than ``*nix`` due to ``openssl`` requirements, therefore pip must be run as a module.  If ``pip`` isn't already available on your system of Python, run the following commands to install it::
 
     $ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
     $ python get-pip.py --user
