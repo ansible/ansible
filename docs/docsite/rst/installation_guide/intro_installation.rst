@@ -316,7 +316,7 @@ Or if you are looking for the development version::
 
     $ pip install --user git+https://github.com/ansible/ansible.git@devel
 
-For **macOS**::
+For macOS::
 
     $ python -m pip install --user git+https://github.com/ansible/ansible.git@devel
 
