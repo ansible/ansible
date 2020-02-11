@@ -122,14 +122,6 @@ options:
         description:
             - Configure a routemap for static outgoing interface (OIF) or
               keyword 'default'.
-    oif_prefix:
-        description:
-            - This argument is deprecated, please use oif_ps instead.
-              Configure a prefix for static outgoing interface (OIF).
-    oif_source:
-        description:
-            - This argument is deprecated, please use oif_ps instead.
-              Configure a source for static outgoing interface (OIF).
     oif_ps:
         description:
             - Configure prefixes and sources for static outgoing interface (OIF). This
@@ -495,8 +487,6 @@ def main():
         report_llg=dict(type='bool'),
         immediate_leave=dict(type='bool'),
         oif_routemap=dict(required=False, type='str'),
-        oif_prefix=dict(required=False, type='str', removed_in_version='2.10'),
-        oif_source=dict(required=False, type='str', removed_in_version='2.10'),
         oif_ps=dict(required=False, type='raw'),
         restart=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent', 'default'],
@@ -504,10 +494,7 @@ def main():
     )
 
     argument_spec.update(nxos_argument_spec)
-    mutually_exclusive = [('oif_ps', 'oif_prefix'),
-                          ('oif_ps', 'oif_source'),
-                          ('oif_ps', 'oif_routemap'),
-                          ('oif_prefix', 'oif_routemap')]
+    mutually_exclusive = [('oif_ps', 'oif_routemap')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
@@ -517,17 +504,8 @@ def main():
 
     state = module.params['state']
     interface = module.params['interface']
-    oif_prefix = module.params['oif_prefix']
-    oif_source = module.params['oif_source']
     oif_routemap = module.params['oif_routemap']
     oif_ps = module.params['oif_ps']
-
-    if oif_source and not oif_prefix:
-        module.fail_json(msg='oif_prefix required when setting oif_source')
-    elif oif_source and oif_prefix:
-        oif_ps = [{'source': oif_source, 'prefix': oif_prefix}]
-    elif not oif_source and oif_prefix:
-        oif_ps = [{'prefix': oif_prefix}]
 
     intf_type = get_interface_type(interface)
     if get_interface_mode(interface, intf_type, module) == 'layer2':
@@ -583,7 +561,7 @@ def main():
     if state == 'absent':
         for each in CANNOT_ABSENT:
             if each in proposed:
-                module.fail_json(msg='only params: oif_prefix, oif_source, '
+                module.fail_json(msg='only params: '
                                      'oif_ps, oif_routemap can be used when '
                                      'state=absent')
 
