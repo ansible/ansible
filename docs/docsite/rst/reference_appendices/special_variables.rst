@@ -10,6 +10,9 @@ These variables cannot be set directly by the user; Ansible will always override
 ansible_check_mode
     Boolean that indicates if we are in check mode or not
 
+ansible_config_file
+    The full path of used Ansible configuration file
+
 ansible_dependent_role_names
     The names of the roles currently imported into the current play as dependencies of other plays
 
