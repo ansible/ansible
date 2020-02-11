@@ -446,6 +446,7 @@
       openssl_privatekey:
         path: '{{ output_dir }}/privatekey_{{ item }}.pem'
         type: '{{ item }}'
+      ignore_errors: yes
       loop:
         - Ed25519
         - Ed448
@@ -498,6 +499,7 @@
         type: '{{ item }}'
         cipher: auto
         passphrase: Test123
+      ignore_errors: yes
       loop:
         - Ed25519
         - Ed448
