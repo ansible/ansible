@@ -2,7 +2,7 @@
   setup:
 
 - name: Install lxml (FreeBSD)
-  pkgng:
+  package:
     name: '{{ "py27-lxml" if ansible_python.version.major == 2 else "py36-lxml" }}'
     state: present
   when: ansible_os_family == "FreeBSD"

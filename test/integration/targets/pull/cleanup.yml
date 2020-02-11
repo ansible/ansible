@@ -9,7 +9,7 @@
       when: git_install.changed
 
     - name: remove auto-installed packages from FreeBSD
-      pkgng:
+      package:
         name: git
         state: absent
         autoremove: yes

@@ -24,7 +24,7 @@
       dest: /etc/zypp/repos.d/security:privacy.repo
 
   - name: SUSE | Install package
-    zypper:
+    package:
       name: password-store
       state: present
       update_cache: yes
