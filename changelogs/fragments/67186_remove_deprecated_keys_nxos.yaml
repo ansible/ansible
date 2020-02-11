@@ -1,0 +1,3 @@
+---
+removed_features:
+  - Removed previously deprecated keys ``oif_prefix`` and ``oif_source`` from nxos_igmp_interface (https://github.com/ansible/ansible/pull/67186).
