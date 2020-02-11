@@ -32,7 +32,7 @@
   when: ansible_pkg_mgr == 'yum'
 
 - name: install mercurial (pkgng)
-  pkgng:
+  package:
     name: mercurial
   when: ansible_pkg_mgr == 'pkgng'
 

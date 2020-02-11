@@ -29,7 +29,7 @@
   when: ansible_pkg_mgr == 'yum'
 
 - name: uninstall packages which were not originally installed (pkgng)
-  pkgng:
+  package:
     name: mercurial
     state: absent
     autoremove: yes

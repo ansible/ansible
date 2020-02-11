@@ -23,7 +23,7 @@
     - libapache2-mod-evasive
 
 - name: install apache via zypper
-  zypper:
+  package:
     name: apache2
     state: present
   when: "ansible_os_family == 'Suse'"

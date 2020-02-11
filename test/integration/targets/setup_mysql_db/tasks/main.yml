@@ -64,7 +64,7 @@
   notify: cleanup mysql
 
 - name: install mysqldb_test FreeBSD dependencies
-  pkgng:
+  package:
     name: "{{ mysql_packages }}"
     state: present
   when: ansible_os_family == "FreeBSD"
