@@ -29,6 +29,7 @@ options:
     description:
       - The name of a node.js library to install
       - If omitted all packages in package.json are installed.
+      - To globally install from local node.js library. Prepend "file:" to the path of the node.js library.
     required: false
   path:
     description:
