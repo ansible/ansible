@@ -318,8 +318,7 @@ def set_commands(want, have):
                             want_aces = wacl['aces']
                             for wace in wacl['aces']:
                                 for hace in hacl['aces']:
-                                    if 'sequence' in wace.keys() and\
-                                        'sequence' in hace.keys():
+                                    if 'sequence' in wace.keys() and 'sequence' in hace.keys():
                                         if wace['sequence'] == hace['sequence']:
                                             wace_updated = get_updated_ace(wace, hace)
                                             if wace_updated:
