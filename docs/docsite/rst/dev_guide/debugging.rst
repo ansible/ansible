@@ -118,7 +118,7 @@ When you look into the debug_dir you'll see a directory structure like this::
   files for any :mod:`ansible.module_utils` imports in the module but not
   any files from any other module.  So if your module uses
   :mod:`ansible.module_utils.url` Ansible will include it for you, but if
-  your module includes `requests <http://docs.python-requests.org/en/master/api/>`_ then you'll have to make sure that
+  your module includes `requests <https://requests.readthedocs.io/en/master/api/>`_ then you'll have to make sure that
   the python `requests library <https://pypi.org/project/requests/>`_ is installed on the system before running the
   module.  You can modify files in this directory if you suspect that the
   module is having a problem in some of this boilerplate code rather than in
