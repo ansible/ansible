@@ -25,7 +25,7 @@ options:
       C(u=rw,g=r,o=r)).
     - As of Ansible 2.6, the mode may also be the special string C(preserve).
     - When set to C(preserve) the file will be given the same permissions as the source file.
-    type: str
+    type: raw
   owner:
     description:
     - Name of the user that should own the file/directory, as would be fed to I(chown).
@@ -56,7 +56,6 @@ options:
     - This is the MLS/MCS attribute, sometimes known as the C(range).
     - When set to C(_default), it will use the C(level) portion of the policy if available.
     type: str
-    default: s0
   unsafe_writes:
     description:
     - Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.

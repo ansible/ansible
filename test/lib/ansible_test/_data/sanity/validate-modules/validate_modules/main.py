@@ -51,7 +51,6 @@ from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass
-from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 
 if PY3:
     # Because there is no ast.TryExcept in Python 3 ast module
@@ -1529,26 +1528,14 @@ class ModuleValidator(Validator):
                 )
 
         if docs:
-            file_common_arguments = set()
-            for arg, data in FILE_COMMON_ARGUMENTS.items():
-                file_common_arguments.add(arg)
-                file_common_arguments.update(data.get('aliases', []))
-
             args_from_docs = set()
             for arg, data in doc_options.items():
                 args_from_docs.add(arg)
                 args_from_docs.update(data.get('aliases', []))
 
-            # add_file_common_args is only of interest on top-level
-            add_file_common_args = kwargs.get('add_file_common_args', False) and not context
-
             args_missing_from_docs = args_from_argspec.difference(args_from_docs)
             docs_missing_from_args = args_from_docs.difference(args_from_argspec | deprecated_args_from_argspec)
             for arg in args_missing_from_docs:
-                # args_from_argspec contains undocumented argument
-                if add_file_common_args and arg in file_common_arguments:
-                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
-                    continue
                 if arg in provider_args:
                     # Provider args are being removed from network module top level
                     # So they are likely not documented on purpose
@@ -1563,10 +1550,6 @@ class ModuleValidator(Validator):
                     msg=msg
                 )
             for arg in docs_missing_from_args:
-                # args_from_docs contains argument not in the argument_spec
-                if add_file_common_args and arg in file_common_arguments:
-                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
-                    continue
                 msg = "Argument '%s'" % arg
                 if context:
                     msg += " found in %s" % " -> ".join(context)

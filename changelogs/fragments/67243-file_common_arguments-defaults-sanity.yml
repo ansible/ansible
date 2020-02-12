@@ -1,0 +1,2 @@
+minor_changes:
+ - "ansible-test - module validation will now consider arguments added by ``add_file_common_arguments=True`` correctly."
