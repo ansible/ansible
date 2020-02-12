@@ -104,8 +104,52 @@ class Acls(ConfigBase):
             for w in config:
                 want.append(remove_empties(w))
         have = existing_acls_facts
+        if want:
+            want = self.convert_protocol(want)
         resp = self.set_state(want, have)
         return to_list(resp)
+
+    def convert_protocol(self, want):
+        protocol_options = {515: 'lpd', 517: 'talk', 7: 'echo', 9: 'discard', 12: 'exec', 13: 'login', 14: 'cmd', 109: 'pop2', 19: 'chargen',
+                            20: 'ftp-data', 21: 'ftp', 23: 'telnet', 25: 'smtp', 540: 'uucp', 543: 'klogin', 544: 'kshell', 37: 'time', 43: 'whois', 49: 'tacacs', 179: 'bgp', 53: 'domain', 194: 'irc', 70: 'gopher', 79: 'finger', 80: 'www', 101: 'hostname', 3949: 'drip', 110: 'pop3', 111: 'sunrpc', 496: 'pim-auto-rp', 113: 'ident', 119: 'nntp'}
+        port_protocol = {1: 'icmp', 2: 'igmp', 4: 'ip', 6: 'tcp', 103: 'pim', 108: 'pcp', 47: 'gre', 17: 'udp', 50: 'esp', 51: 'ahp', 88:
+                         'eigrp', 89: 'ospf', 94: 'nos'}
+        port_pro_num = port_protocol.keys()
+        for afi in want:
+            q(afi)
+            for acl in afi['acls']:
+                q(acl)
+                for ace in acl['aces']:
+                    q(ace)
+                    if 'protocol' in ace.keys() and ace['protocol'].isdigit() and int(ace['protocol']) in port_protocol.keys():
+                        ace['protocol'] = port_protocol[int(ace['protocol'])]
+                        # convert number to name
+                        if ace['protocol'] in ['tcp', 'udp']:
+                            q(ace)
+                            if 'port_protocol' in ace['destination'].keys():
+                                key = ace['destination']['port_protocol'].keys()[
+                                    0]
+                                q(key)
+                                # key could be eq,gt,lt,neq or range
+                                if key != 'range':
+                                    val = ace['destination']['port_protocol'][key]
+                                    q(val)
+                                    if val.isdigit() and int(val) in protocol_options.keys():
+                                        ace['destination']['port_protocol'][key] = protocol_options[val]
+                                else:
+                                    st = int(
+                                        ace['destination']['port_protocol']['range']['start'])
+
+                                    end = int(
+                                        ace['destination']['port_protocol']['range']['end'])
+
+                                    q(st, end)
+                                    if st in protocol_options.keys():
+                                        ace['destination']['port_protocol']['range']['start'] = protocol_options[st]
+                                    if end in protocol_options.keys():
+                                        ace['destination']['port_protocol']['range']['end'] = protocol_options[end]
+
+        return want
 
     def set_state(self, want, have):
         """ Select the appropriate function based on the state provided
@@ -172,7 +216,7 @@ class Acls(ConfigBase):
                     for w in want_acls:
                         acl_commands = []
                         if w['name'] not in have_names:
-                            # creates new ACL in replaced state
+                                # creates new ACL in replaced state
                             merge_dict = {'afi': want['afi'], 'acls': [w]}
                             q('new dict')
                             q(merge_dict)
