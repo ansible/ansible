@@ -67,7 +67,7 @@ options:
               Please see the examples on how to emulate it with M(openssl_certificate_info), M(openssl_csr_info),
               M(openssl_privatekey_info) and M(assert).
             - "The C(entrust) provider was added for Ansible 2.9 and requires credentials for the
-               L(https://www.entrustdatacard.com/products/categories/ssl-certificates,Entrust Certificate Services) (ECS) API."
+               L(Entrust Certificate Services,https://www.entrustdatacard.com/products/categories/ssl-certificates) (ECS) API."
             - Required if I(state) is C(present).
         type: str
         choices: [ acme, assertonly, entrust, ownca, selfsigned ]
