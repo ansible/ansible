@@ -180,7 +180,7 @@ class Acl(ConfigBase):
                                                          {},
                                                          acls_want,
                                                          config_want['afi']))
-        commands = self.split_set_cmd(commands)
+
         commands = [each for each in commands if 'no' in each] + [each for each in commands if 'no' not in each]
 
         return commands
@@ -244,8 +244,7 @@ class Acl(ConfigBase):
                                                      {},
                                                      acls_want,
                                                      config_want['afi']))
-        # Split and arrange the config commands
-        commands = self.split_set_cmd(commands)
+
         # Arranging the cmds suct that all delete cmds are fired before all set cmds
         commands = [each for each in commands if 'no' in each] + [each for each in commands if 'no' not in each]
 
@@ -268,14 +267,26 @@ class Acl(ConfigBase):
                     for config_have in have:
                         for acls_have in config_have.get('acls'):
                             for ace_have in acls_have.get('aces'):
-                                if acls_want.get('name') == acls_have.get('name'):
+                                if acls_want.get('name') == acls_have.get('name') and \
+                                        ace_want.get('line') == ace_have.get('line'):
                                     ace_want = remove_empties(ace_want)
-                                    cmd, check = self.common_condition_check(ace_want,
-                                                                             ace_have,
-                                                                             acls_want,
-                                                                             config_want,
-                                                                             check)
-                                    commands.extend(cmd)
+                                    cmd = self._set_config(ace_want,
+                                                           ace_have,
+                                                           acls_want)
+                                    commands = self.add_config_cmd(cmd, commands)
+                                    check = True
+                                if not ace_want.get('line'):
+                                    if acls_want.get('name') == acls_have.get('name'):
+                                        ace_want = remove_empties(ace_want)
+                                        cmd, check = self.common_condition_check(ace_want,
+                                                                                 ace_have,
+                                                                                 acls_want,
+                                                                                 config_want,
+                                                                                 check,
+                                                                                 acls_have)
+                                        if acls_have.get('acl_type') == 'standard':
+                                            check = True
+                                        commands = self.add_config_cmd(cmd, commands)
                             if check:
                                 break
                         if check:
@@ -283,11 +294,10 @@ class Acl(ConfigBase):
                     if not check:
                         # For configuring any non-existing want config
                         ace_want = remove_empties(ace_want)
-                        commands.extend(self._set_config(ace_want,
-                                                         {},
-                                                         acls_want,
-                                                         config_want['afi']))
-        commands = self.split_set_cmd(commands)
+                        cmd = self._set_config(ace_want,
+                                               {},
+                                               acls_want)
+                        commands = self.add_config_cmd(cmd, commands)
 
         return commands
 
@@ -303,15 +313,24 @@ class Acl(ConfigBase):
         if want:
             for config_want in want:
                 for acls_want in config_want.get('acls'):
-                    for config_have in have:
-                        for acls_have in config_have.get('acls'):
-                            if acls_want.get('name') == acls_have.get('name'):
-                                commands.extend(self._clear_config(acls_want, config_want))
+                    for ace_want in ace_want.get('aces'):
+                        for config_have in have:
+                            for acls_have in config_have.get('acls'):
+                                for ace_have in acls_have.get('aces'):
+                                    if acls_want.get('name') == acls_have.get('name') and \
+                                            ace_want.get('line') == ace_have.get('line'):
+                                        commands.extend(self._clear_config(acls_want, config_want))
         else:
             for config_have in have:
                 for acls_have in config_have.get('acls'):
-                    commands.extend(self._clear_config(acls_have, config_have))
+                    for ace_have in acls_have.get('aces'):
+                        commands.extend(self._clear_config(ace_have, acls_have))
 
+        return commands
+
+    def add_config_cmd(self, cmd, commands):
+        if cmd and cmd[0] not in commands:
+            commands.extend(cmd)
         return commands
 
     def common_condition_check(self, want, have, acls_want, config_want, check, state=''):
@@ -331,12 +350,14 @@ class Acl(ConfigBase):
             if want.get('destination').get('address') == \
                     have.get('destination').get('address') and \
                     want.get('source').get('address') == \
-                    have.get('source').get('address'):
+                    have.get('source').get('address') and \
+                    want.get('protocol_options') == \
+                    have.get('protocol_options'):
+                cmd = self._set_config(want,
+                                               have,
+                                               acls_want)
+                commands.extend(cmd)
                 check = True
-                commands.extend(self._set_config(want,
-                                                 have,
-                                                 acls_want,
-                                                 config_want['afi']))
                 if commands:
                     if state == 'replaced' or state == 'overridden':
                         commands.extend(self._clear_config(acls_want, config_want))
@@ -344,69 +365,47 @@ class Acl(ConfigBase):
                     have.get('destination').get('any') and \
                     want.get('source').get('address') == \
                     have.get('source').get('address') and \
-                    want.get('destination').get('any'):
+                    want.get('destination').get('any') and \
+                    want.get('protocol_options') == \
+                    have.get('protocol_options'):
+                cmd = self._set_config(want,
+                                               have,
+                                               acls_want)
+                commands.extend(cmd)
                 check = True
-                commands.extend(self._set_config(want,
-                                                 have,
-                                                 acls_want,
-                                                 config_want['afi']))
                 if commands:
                     if state == 'replaced' or state == 'overridden':
                         commands.extend(self._clear_config(acls_want, config_want))
             elif want.get('destination').get('address') == \
                     have.get('destination').get('address') and \
                     want.get('source').get('any') == have.get('source').get('any') and \
-                    want.get('source').get('any'):
+                    want.get('source').get('any') and \
+                    want.get('protocol_options') == \
+                    have.get('protocol_options'):
+                cmd = self._set_config(want,
+                                               have,
+                                               acls_want)
+                commands.extend(cmd)
                 check = True
-                commands.extend(self._set_config(want,
-                                                 have,
-                                                 acls_want,
-                                                 config_want['afi']))
                 if commands:
                     if state == 'replaced' or state == 'overridden':
                         commands.extend(self._clear_config(acls_want, config_want))
             elif want.get('destination').get('any') == \
                     have.get('destination').get('any') and \
                     want.get('source').get('any') == have.get('source').get('any') and \
-                    want.get('destination').get('any'):
+                    want.get('destination').get('any') and \
+                    want.get('protocol_options') == \
+                    have.get('protocol_options'):
+                cmd = self._set_config(want,
+                                               have,
+                                               acls_want)
+                commands.extend(cmd)
                 check = True
-                commands.extend(self._set_config(want,
-                                                 have,
-                                                 acls_want,
-                                                 config_want['afi']))
                 if commands:
                     if state == 'replaced' or state == 'overridden':
                         commands.extend(self._clear_config(acls_want, config_want))
 
         return commands, check
-
-    def split_set_cmd(self, cmds):
-        """ The command formatter from the generated command
-        :param cmds: generated command
-        :rtype: A list
-        :returns: the formatted commands which is compliant and
-        actually fired on the device
-        """
-        command = []
-
-        def common_code(access_grant, cmd, command):
-            cmd = cmd.split(access_grant)
-            access_list = cmd[0].strip(' ')
-            if access_list not in command:
-                command.append(access_list)
-            index = command.index(access_list) + 1
-            cmd = access_grant + cmd[1]
-            command.insert(index + 1, cmd)
-
-        for each in cmds:
-            if 'no' in each:
-                command.append(each)
-            if 'deny' in each:
-                common_code('deny', each, command)
-            if 'permit' in each:
-                common_code('permit', each, command)
-
-        return command
 
     def source_dest_config(self, config, cmd, protocol_option):
         """ Function to populate source/destination address and port protocol options
@@ -416,27 +415,75 @@ class Acl(ConfigBase):
         :rtype: A list
         :returns: the commands generated based on input source/destination params
         """
-        if 'ipv6' in cmd:
-            address = config.get('address')
-            if address and '::' not in address:
-                self._module.fail_json(msg='Incorrect IPV6 address!')
-        else:
-            address = config.get('address')
-            wildcard = config.get('wildcard_bits')
+        address = config.get('address')
+        netmask = config.get('netmask')
         any = config.get('any')
-        if address and wildcard:
-            cmd = cmd + ' {0} {1}'.format(address, wildcard)
+        if address and netmask:
+            cmd = cmd + ' {0} {1}'.format(address, netmask)
+        elif address:
+            cmd = cmd + ' {0}'.format(address.lower())
         if any:
             cmd = cmd + ' {0}'.format('any')
         port_protocol = config.get('port_protocol')
         if port_protocol and (protocol_option.get('tcp') or protocol_option.get('udp')):
             cmd = cmd + ' {0} {1}'.format(list(port_protocol)[0], list(port_protocol.values())[0])
         elif port_protocol and not (protocol_option.get('tcp') or protocol_option.get('udp')):
-            self._module.fail_json(msg='Port Protocol option is valid only with TCP/UDP Protocol option!')
+            print('Port Protocol option is valid only with TCP/UDP Protocol option!')
 
         return cmd
 
-    def _set_config(self, want, have, acl_want, afi):
+    def common_config_cmd(self, want, acl_want, cmd, type=''):
+        """ Common Function that prepares the acls config cmd based on the want config
+        :param want: want ace config
+        :param acl_want: want acl config
+        :param cmd: cmd passed
+        :rtype: string
+        :returns: the commands generated based on input ace want/acl want params
+        """
+        line = want.get('line')
+        if line:
+            cmd = cmd + ' line {0}'.format(line)
+        else:
+            if type == 'clear':
+                self._module.fail_json(msg="For Delete operation LINE param is required!")
+        acl_type = acl_want.get('acl_type')
+        cmd = cmd + ' {0}'.format(acl_type)
+        # Get all of aces option values from diff dict
+        grant = want.get('grant')
+        source = want.get('source')
+        destination = want.get('destination')
+        po = want.get('protocol_options')
+        log = want.get('log')
+        time_range = want.get('time_range')
+        inactive = want.get('inactive')
+
+        if grant:
+            cmd = cmd + ' {0}'.format(grant)
+        po_val = None
+        if po and isinstance(po, dict):
+            po_key = list(po)[0]
+            cmd = cmd + ' {0}'.format(po_key)
+            if po.get('icmp'):
+                po_val = po.get('icmp')
+            elif po.get('icmp6'):
+                po_val = po.get('igmp')
+        if source:
+            cmd = self.source_dest_config(source, cmd, po)
+        if destination:
+            cmd = self.source_dest_config(destination, cmd, po)
+
+        if po_val:
+            cmd = cmd + ' {0}'.format(list(po_val)[0])
+        if log:
+            cmd = cmd + ' log {0}'.format(log)
+        if time_range:
+            cmd = cmd + ' time-range {0}'.format(time_range)
+        if inactive:
+            cmd = cmd + ' inactive'
+
+        return cmd
+
+    def _set_config(self, want, have, acl_want):
         """ Function that sets the acls config based on the want and have config
         :param want: want config
         :param have: have config
@@ -446,64 +493,29 @@ class Acl(ConfigBase):
         :returns: the commands generated based on input want/have params
         """
         commands = []
+        # To change the want IPV6 address to lower case, as Cisco ASA configures the IPV6
+        # access-list always in Lowercase even if the input is given in Uppercase
+        if want.get('destination') and want.get('destination').get('address') and \
+                ':' in want.get('destination').get('address'):
+            want['destination']['address'] = want.get('destination').get('address').lower()
+        # Convert the want and have dict to its respective set for taking the set diff
         want_set = set()
         have_set = set()
-        # Convert the want and have dict to its respective set for taking the set diff
         new_dict_to_set(want, [], want_set)
         new_dict_to_set(have, [], have_set)
         diff = want_set - have_set
+
         # Populate the config only when there's a diff b/w want and have config
         if diff:
             name = acl_want.get('name')
-            if afi == 'ipv4':
-                # If name is named acl
-                acl_type = acl_want.get('acl_type')
-                if acl_type:
-                    cmd = 'ip access-list {0} {1}'.format(acl_type, name)
-                else:
-                    self._module.fail_json(msg='ACL type value is required for Named ACL!')
-
-            elif afi == 'ipv6':
-                cmd = 'access-list {0}'.format(name)
-
-            # Get all of aces option values from diff dict
-            grant = want.get('grant')
-            source = want.get('source')
-            destination = want.get('destination')
-            po = want.get('protocol_options')
-            log = want.get('log')
-            time_range = want.get('time_range')
-            inactive = want.get('inactive')
-
-            if grant:
-                cmd = cmd + ' {0}'.format(grant)
-            if po and isinstance(po, dict):
-                po_key = list(po)[0]
-                cmd = cmd + ' {0}'.format(po_key)
-                if po.get('icmp'):
-                    po_val = po.get('icmp')
-                elif po.get('igmp'):
-                    po_val = po.get('igmp')
-                elif po.get('tcp'):
-                    po_val = po.get('tcp')
-            if source:
-                cmd = self.source_dest_config(source, cmd, po)
-            if destination:
-                cmd = self.source_dest_config(destination, cmd, po)
-            if po_val:
-                cmd = cmd + ' {0}'.format(list(po_val)[0])
-            if log:
-                cmd = cmd + ' log {0}'.format(log)
-            if time_range:
-                cmd = cmd + ' time-range {0}'.format(time_range)
-            if inactive:
-                cmd = cmd + ' inactive'
+            cmd = 'access-list {0}'.format(name)
+            cmd = self.common_config_cmd(want, acl_want, cmd)
 
             commands.append(cmd)
 
         return commands
 
-    def _clear_config(self, acl, config):
+    def _clear_config(self, ace, acl):
         """ Function that deletes the acl config based on the want and have config
         :param acl: acl config
         :param config: config
@@ -511,25 +523,10 @@ class Acl(ConfigBase):
         :returns: the commands generated based on input acl/config params
         """
         commands = []
-        afi = config.get('afi')
         name = acl.get('name')
-        if afi == 'ipv4':
-            try:
-                name = int(name)
-                if name <= 99:
-                    cmd = 'no ip access-list standard {0}'.format(name)
-                elif name >= 100:
-                    cmd = 'no ip access-list extended {0}'.format(name)
-            except ValueError:
-                acl_type = acl.get('acl_type')
-                if acl_type == 'extended':
-                    cmd = 'no ip access-list extended {0}'.format(name)
-                elif acl_type == 'standard':
-                    cmd = 'no ip access-list standard {0}'.format(name)
-                else:
-                    self._module.fail_json(msg="ACL type value is required for Named ACL!")
-        elif afi == 'ipv6':
-            cmd = 'no ipv6 access-list {0}'.format(name)
+        cmd = 'no access-list {0}'.format(name)
+        cmd = self.common_config_cmd(ace, acl, cmd, 'clear')
+
         commands.append(cmd)
 
         return commands

@@ -86,6 +86,7 @@ options:
             suboptions:
               grant:
                 description: Specify the action.
+                required: true
                 type: str
                 choices:
                   - permit
@@ -93,7 +94,10 @@ options:
               line:
                 description:
                   - Use this to specify line number at which ACE should be entered.
-                  - Existing ACE can be updated based on the input line number
+                  - Existing ACE can be updated based on the input line number.
+                  - It's not a required param in case of configuring the acl, but in
+                    case of Delete operation it's required, else Delete operation won't
+                    work as expected.
                   - Refer to vendor documentation for valid values.
                 type: int
               remark:

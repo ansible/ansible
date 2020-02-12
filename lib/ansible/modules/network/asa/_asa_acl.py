@@ -20,6 +20,10 @@ author: "Patrick Ogenstad (@ogenstad)"
 short_description: Manage access-lists on a Cisco ASA
 description:
   - This module allows you to work with access-lists on a Cisco ASA device.
+deprecated:
+  removed_in: '2.13'
+  alternative: asa_acl
+  why: Newer and updated modules released with more functionality in Ansible 2.10
 extends_documentation_fragment: asa
 options:
   lines:

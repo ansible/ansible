@@ -204,32 +204,37 @@ class AclFacts(object):
             if 'line' not in each:
                 continue
             if temp_name in each:
+                ace_options = {}
+                line = utils.parse_conf_arg(each, 'line')
+                if line:
+                    ace_options['line'] = line.split(' ')[0]
                 if 'extended' in each:
                     acls['acl_type'] = 'extended'
                 elif 'standard' in each:
                     acls['acl_type'] = 'standard'
-                ace_options = {}
                 if utils.parse_conf_arg(each, 'permit'):
                     ace_options['grant'] = 'permit'
                 elif utils.parse_conf_arg(each, 'deny'):
                     ace_options['grant'] = 'deny'
+                if 'inactive' in each:
+                    ace_options['inactive'] = True
+                time_range = utils.parse_conf_arg(each, 'time-range')
+                if time_range:
+                    ace_options['time_range'] = time_range.split(' ')[0]
 
-                protocol_option = ['ahp', 'eigrp', 'esp', 'gre', 'icmp', 'igmp', 'ip', 'ipinip', 'nos', 'ospf', 'pcp',
-                                   'pim', 'sctp', 'tcp', 'udp']
-                icmp_options = ['administratively_prohibited', 'alternate_address', 'conversion_error',
-                                'dod_host_prohibited', 'dod_net_prohibited', 'echo', 'echo_reply',
-                                'general_parameter_problem', 'host_isolated', 'host_precedence_unreachable',
-                                'host_redirect', 'host_tos_redirect', 'host_tos_unreachable', 'host_unknown',
-                                'host_unreachable', 'information_reply', 'information_request', 'mask_reply',
-                                'mask_request', 'mobile_redirect', 'net_redirect', 'net_tos_redirect',
-                                'net_tos_unreachable', 'net_unreachable', 'network_unknown', 'no_room_for_option',
-                                'option_missing', 'packet_too_big', 'parameter_problem', 'port_unreachable',
-                                'precedence_unreachable', 'protocol_unreachable', 'reassembly_timeout', 'redirect',
-                                'router_advertisement', 'router_solicitation', 'source_quench', 'source_route_failed',
-                                'time_exceeded', 'timestamp_reply', 'timestamp_request', 'traceroute', 'ttl_exceeded',
+                protocol_option = ['ah', 'eigrp', 'esp', 'gre', 'icmp', 'icmp6', 'igmp', 'igrp', 'ip', 'ipinip',
+                                   'ipsec' 'nos', 'ospf', 'pcp', 'pim', 'pptp', 'sctp', 'snp', 'tcp', 'udp']
+
+                icmp_options = ['alternate_address', 'conversion_error', 'echo', 'echo_reply',
+                                'information_reply', 'information_request', 'mask_reply',
+                                'mask_request', 'mobile_redirect', 'parameter_problem', 'redirect',
+                                'router_advertisement', 'router_solicitation', 'source_quench',
+                                'time_exceeded', 'timestamp_reply', 'timestamp_request', 'traceroute',
                                 'unreachable']
-                igmp_options = ['dvmrp', 'host_query', 'mtrace_resp', 'mtrace_route', 'pim', 'trace', 'v1host_report',
-                                'v2host_report', 'v2leave_group', 'v3host_report']
+                icmp6_options = ['echo', 'echo_reply', 'membership-query', 'membership-reduction',
+                                 'membership-report', 'neighbor-advertisement', 'neighbor-redirect',
+                                 'neighbor-solicitation', 'packet-too-big', 'parameter_problem', 'router_advertisement',
+                                 'router-renumbering', 'router_solicitation', 'time_exceeded', 'unreachable']
 
                 temp_option = ''
                 for option in protocol_option:
@@ -242,8 +247,8 @@ class AclFacts(object):
                                 if flag in each_list:
                                     pass  # each_list.remove(flag)
                                 temp_flag = flag
-                        if temp_option == 'igmp':
-                            temp_flag = [each_option for each_option in igmp_options if each_option in each]
+                        if temp_option == 'icmp6':
+                            temp_flag = [each_option for each_option in icmp6_options if each_option in each]
                             if temp_flag:
                                 flag = temp_flag[0]
                                 if flag in each_list:
