@@ -400,6 +400,206 @@ files:
     keywords: [ aci, cisco msc, cisco mso, multisite, multi-site ]
     labels: [ aci, cisco, networking ]
     maintainers: $team_aci
+  $modules/network/aci/aci_aaa_user_certificate.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_aaa_user.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_access_port_block_to_access_port.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_access_port_to_interface_policy_leaf_profile.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_access_sub_port_block_to_access_port.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_aep.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_aep_to_domain.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_ap.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_bd.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_bd_subnet.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_bd_to_l3out.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_config_rollback.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_config_snapshot.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_contract.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_contract_subject.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_contract_subject_to_filter.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_domain.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_domain_to_encap_pool.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_domain_to_vlan_pool.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_encap_pool.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_encap_pool_range.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_epg_monitoring_policy.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_epg.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_epg_to_contract.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_epg_to_domain.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_fabric_node.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_fabric_scheduler.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_filter_entry.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_filter.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_firmware_group_node.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_firmware_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_firmware_policy.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_firmware_source.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_cdp.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_fc.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_l2.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_leaf_policy_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_leaf_profile.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_lldp.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_mcp.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_ospf.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_port_channel.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_port_security.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_selector_to_switch_policy_leaf_profile.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_l3out_extepg.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_l3out_extsubnet.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_l3out.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_l3out_route_tag_policy.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_maintenance_group_node.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_maintenance_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_maintenance_policy.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_rest.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_static_binding_to_epg.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_switch_leaf_selector.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_switch_policy_leaf_profile.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_switch_policy_vpc_protection_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_taboo_contract.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_tenant_action_rule_profile.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_tenant_ep_retention_policy.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_tenant.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_tenant_span_dst_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_tenant_span_src_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_tenant_span_src_group_to_dst_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_vlan_pool_encap_block.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_vlan_pool.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_vmm_credential.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_vrf.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/mso_label.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_role.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_anp_epg_domain.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_anp_epg.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_anp_epg_staticleaf.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_anp_epg_staticport.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_anp_epg_subnet.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_anp.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_bd_l3out.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_bd.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_bd_subnet.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_vrf.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_vrf_region_cidr.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_vrf_region_cidr_subnet.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_vrf_region.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_anp_epg_contract.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_anp_epg.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_anp_epg_subnet.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_anp.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_bd.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_bd_subnet.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_contract_filter.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_deploy.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_externalepg.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_filter_entry.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_l3out.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_vrf.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_site.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_tenant.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_user.py:
+    migrated_to: cisco.mso
   $modules/network/aireos/: &aireos
     maintainers: $team_ansible
     ignored: jmighion
@@ -1330,6 +1530,10 @@ files:
   $module_utils/network/a10:
     maintainers: ericchou1 mischapeters
   $module_utils/network/aci: *aci
+  $module_utils/network/aci/aci.py:
+    migrated_to: cisco.aci
+  module_utils/network/aci/mso.py:
+    migrated_to: cisco.mso 
   $module_utils/network/aireos: *aireos
   $module_utils/network/aos:
     maintainers: dgarros jeremyschulman
@@ -1755,7 +1959,9 @@ files:
     support: community
   $plugins/doc_fragments/__init__.py:
     support: core
-  $plugins/doc_fragments/aci.py: *aci
+  $plugins/doc_fragments/aci.py:
+    labels: aci
+    migrated_to: cisco.aci
   $plugins/doc_fragments/acme.py: *crypto
   $plugins/doc_fragments/cloudstack.py:
     maintainers: $team_cloudstack
@@ -1774,7 +1980,9 @@ files:
   $plugins/doc_fragments/hwc.py:
     maintainers: $team_huawei
   $plugins/doc_fragments/intersight.py: *intersight
-  $plugins/doc_fragments/mso.py: *aci
+  $plugins/doc_fragments/mso.py:
+    labels: aci
+    migrated_to: cisco.mso
   $plugins/doc_fragments/mysql.py: *mysql
   $plugins/doc_fragments/netapp.py:
     migrated_to: netapp.ontap
