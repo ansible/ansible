@@ -209,8 +209,13 @@ options:
                 description:
                   - P2P application packets.
                 type: list
-                elements: str
-                choices: ['all', 'applejuice', 'bittorrent', 'directconnect', 'edonkey', 'gnutella', 'kazaa']
+                elements: dict
+                suboptions:
+                  application:
+                    description:
+                      - Name of the application.
+                    type: str
+                    choices: ['all', 'applejuice', 'bittorrent', 'directconnect', 'edonkey', 'gnutella', 'kazaa']
               protocol:
                 description:
                   - Protocol to match (protocol name in /etc/protocols or protocol number or all).

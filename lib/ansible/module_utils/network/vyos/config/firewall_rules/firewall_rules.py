@@ -12,11 +12,13 @@ created
 """
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+
 from copy import deepcopy
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, dict_diff, remove_empties
 from ansible.module_utils.network.vyos.facts.facts import Facts
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.network.vyos.utils.utils import list_diff_want_only
 
 
 class Firewall_rules(ConfigBase):
@@ -257,8 +259,7 @@ class Firewall_rules(ConfigBase):
         :return: generated commands list.
         """
         commands = []
-        l_set = ('p2p',
-                 'ipsec',
+        l_set = ('ipsec',
                  'action',
                  'number',
                  'protocol',
@@ -285,6 +286,8 @@ class Firewall_rules(ConfigBase):
                                 commands.append(self._add_r_base_attrib(afi, name, key, w, opr=opr))
                             elif key in l_set and not (h and self._in_target(h, key)) and not self._is_del(l_set, h):
                                 commands.append(self._add_r_base_attrib(afi, name, key, w, opr=opr))
+                        elif key == 'p2p':
+                            commands.extend(self._add_p2p(key, w, h, cmd, opr))
                         elif key == 'tcp':
                             commands.extend(self._add_tcp(key, w, h, cmd, opr))
                         elif key == 'time':
@@ -299,6 +302,31 @@ class Firewall_rules(ConfigBase):
                             commands.extend(self._add_recent(key, w, h, cmd, opr))
                         elif key == 'destination' or key == 'source':
                             commands.extend(self._add_src_or_dest(key, w, h, cmd, opr))
+        return commands
+
+    def _add_p2p(self, attr, w, h, cmd, opr):
+        """
+        This function forms the set/delete commands based on the 'opr' type
+        for p2p applications attributes.
+        :param want: desired config.
+        :param have: target config.
+        :return: generated commands list.
+        """
+        commands = []
+        have = []
+        if w:
+            want = w.get(attr) or []
+        if h:
+            have = h.get(attr) or []
+        if want:
+            if opr:
+                applications = list_diff_want_only(want, have)
+                for app in applications:
+                    commands.append(cmd + (' ' + attr + ' ' + app['application']))
+            elif not opr and have:
+                applications = list_diff_want_only(want, have)
+                for app in applications:
+                    commands.append(cmd + (' ' + attr + ' ' + app['application']))
         return commands
 
     def _add_state(self, attr, w, h, cmd, opr):

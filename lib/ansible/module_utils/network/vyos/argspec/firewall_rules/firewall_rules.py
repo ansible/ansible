@@ -186,11 +186,18 @@ class Firewall_rulesArgs(object):  # pylint: disable=R0903
                                     'type': 'int'
                                 },
                                 'p2p': {
-                                    'choices': [
-                                        'all', 'applejuice', 'bittorrent',
-                                        'directconnect', 'edonkey', 'gnutella',
-                                        'kazaa'
-                                    ],
+                                    'elements': 'dict',
+                                    'options': {
+                                        'application': {
+                                            'choices': [
+                                                'all', 'applejuice',
+                                                'bittorrent', 'directconnect',
+                                                'edonkey', 'gnutella', 'kazaa'
+                                            ],
+                                            'type':
+                                            'str'
+                                        }
+                                    },
                                     'type': 'list'
                                 },
                                 'protocol': {
