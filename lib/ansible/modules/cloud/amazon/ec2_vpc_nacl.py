@@ -345,12 +345,9 @@ def setup_network_acl(client, module):
     else:
         changed = False
         nacl_id = nacl['NetworkAcls'][0]['NetworkAclId']
-        subnet_result = subnets_changed(nacl, client, module)
-        nacl_result = nacls_changed(nacl, client, module)
-        tag_result = tags_changed(nacl_id, client, module)
-        if subnet_result is True or nacl_result is True or tag_result is True:
-            changed = True
-            return(changed, nacl_id)
+        changed |= subnets_changed(nacl, client, module)
+        changed |= nacls_changed(nacl, client, module)
+        changed |= tags_changed(nacl_id, client, module)
         return (changed, nacl_id)
 
 
