@@ -1,0 +1,63 @@
+- name: test with_sequence
+  set_fact: "{{ 'x' + item }}={{ item }}"
+  with_sequence: start=0 end=3
+
+- name: test with_sequence backwards
+  set_fact: "{{ 'y' + item }}={{ item }}"
+  with_sequence: start=3 end=0 stride=-1
+
+- name: verify with_sequence
+  assert:
+    that:
+        - "x0 == '0'"
+        - "x1 == '1'"
+        - "x2 == '2'"
+        - "x3 == '3'"
+        - "y3 == '3'"
+        - "y2 == '2'"
+        - "y1 == '1'"
+        - "y0 == '0'"
+
+- name: test with_sequence not failing on count == 0
+  debug: msg='previously failed with backward counting error'
+  with_sequence: count=0
+  register: count_of_zero
+
+- name: test with_sequence does 1 when start == end
+  debug: msg='should run once'
+  with_sequence: start=1 end=1
+  register: start_equal_end
+
+- name: test with_sequence count 1
+  set_fact: "{{ 'x' + item }}={{ item }}"
+  with_sequence: count=1
+  register: count_of_one
+
+- assert:
+    that:
+        - start_equal_end is not skipped
+        - count_of_zero is skipped
+        - count_of_one is not skipped
+
+- name: test with_sequence shortcut syntax (end)
+  set_fact: "{{ 'ws_z_' + item }}={{ item }}"
+  with_sequence: '4'
+
+- name: test with_sequence shortcut syntax (start-end/stride)
+  set_fact: "{{ 'ws_z_' + item }}=stride_{{ item }}"
+  with_sequence: '2-6/2'
+
+- name: test with_sequence shortcut syntax (start-end:format)
+  set_fact: "{{ 'ws_z_' + item }}={{ item }}"
+  with_sequence: '7-8:host%02d'
+
+- name: verify with_sequence shortcut syntax
+  assert:
+    that:
+        - "ws_z_1 == '1'"
+        - "ws_z_2 == 'stride_2'"
+        - "ws_z_3 == '3'"
+        - "ws_z_4 == 'stride_4'"
+        - "ws_z_6 == 'stride_6'"
+        - "ws_z_host07 == 'host07'"
+        - "ws_z_host08 == 'host08'"
