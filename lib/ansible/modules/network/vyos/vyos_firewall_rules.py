@@ -209,6 +209,7 @@ options:
                 description:
                   - P2P application packets.
                 type: list
+                elements: str
                 choices: ['all', 'applejuice', 'bittorrent', 'directconnect', 'edonkey', 'gnutella', 'kazaa']
               protocol:
                 description:
@@ -661,8 +662,8 @@ EXAMPLES = """
       - afi: 'ipv6'
         rule_sets:
           - name: 'UPLINK'
-              description: 'This is ipv6 specific rule-set'
-              default_action: 'accept'
+            description: 'This is ipv6 specific rule-set'
+            default_action: 'accept'
       - afi: 'ipv4'
         rule_sets:
           - name: 'INBOUND'
@@ -1000,72 +1001,72 @@ EXAMPLES = """
 #
 #    "gathered": [
 #        {
-            "afi": "ipv6",
-            "rule_sets": [
-                {
-                    "default_action": "accept",
-                    "description": "This is ipv6 specific rule-set",
-                    "name": "UPLINK",
-                    "rules": [
-                        {
-                            "action": "accept",
-                            "description": "Fwipv6-Rule 1 is configured by Ansible",
-                            "ipsec": "match-ipsec",
-                            "number": 1
-                        },
-                        {
-                            "action": "accept",
-                            "description": "Fwipv6-Rule 2 is configured by Ansible",
-                            "ipsec": "match-ipsec",
-                            "number": 2
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "afi": "ipv4",
-            "rule_sets": [
-                {
-                    "default_action": "accept",
-                    "description": "IPv4 INBOUND rule set",
-                    "name": "INBOUND",
-                    "rules": [
-                        {
-                            "action": "accept",
-                            "description": "Rule 101 is configured by Ansible",
-                            "ipsec": "match-ipsec",
-                            "number": 101
-                        },
-                        {
-                            "action": "reject",
-                            "description": "Rule 102 is configured by Ansible",
-                            "ipsec": "match-ipsec",
-                            "number": 102
-                        },
-                        {
-                            "action": "accept",
-                            "description": "Rule 103 is configured by Ansible",
-                            "destination": {
-                                "group": {
-                                    "address_group": "inbound"
-                                }
-                            },
-                            "number": 103,
-                            "source": {
-                                "address": "192.0.2.0"
-                            },
-                            "state": {
-                                "established": true,
-                                "invalid": false,
-                                "new": false,
-                                "related": true
-                            }
-                        }
-                    ]
-                }
-            ]
-        }
+#            "afi": "ipv6",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "This is ipv6 specific rule-set",
+#                    "name": "UPLINK",
+#                    "rules": [
+#                        {
+#                            "action": "accept",
+#                            "description": "Fwipv6-Rule 1 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 1
+#                        },
+#                        {
+#                            "action": "accept",
+#                            "description": "Fwipv6-Rule 2 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 2
+#                        }
+#                    ]
+#                }
+#            ]
+#        },
+#        {
+#            "afi": "ipv4",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "IPv4 INBOUND rule set",
+#                    "name": "INBOUND",
+#                    "rules": [
+#                        {
+#                            "action": "accept",
+#                            "description": "Rule 101 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 101
+#                        },
+#                        {
+#                            "action": "reject",
+#                            "description": "Rule 102 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 102
+#                        },
+#                        {
+#                            "action": "accept",
+#                            "description": "Rule 103 is configured by Ansible",
+#                            "destination": {
+#                                "group": {
+#                                    "address_group": "inbound"
+#                                }
+#                            },
+#                            "number": 103,
+#                            "source": {
+#                                "address": "192.0.2.0"
+#                            },
+#                            "state": {
+#                                "established": true,
+#                                "invalid": false,
+#                                "new": false,
+#                                "related": true
+#                            }
+#                        }
+#                    ]
+#                }
+#            ]
+#        }
 #    ]
 #
 #

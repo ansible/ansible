@@ -103,7 +103,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               rules=[])
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             "set firewall ipv6-name V6-INBOUND default-action 'reject'",
             "set firewall ipv6-name V6-INBOUND description 'This is IPv6 INBOUND rule set'",
@@ -148,7 +148,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               rules=[])
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             "set firewall ipv6-name V6-INBOUND default-action 'reject'",
             "set firewall ipv6-name V6-INBOUND description 'This is IPv6 INBOUND rule set'",
@@ -175,8 +175,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               rules=[
                                   dict(number='101',
                                        action='accept',
-                                       description=
-                                       'Rule 101 is configured by Ansible',
+                                       description='Rule 101 is configured by Ansible',
                                        ipsec='match-ipsec',
                                        protocol='icmp',
                                        fragment='match-frag',
@@ -184,7 +183,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               ]),
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             "set firewall name INBOUND default-action 'accept'",
             "set firewall name INBOUND description 'This is IPv4 INBOUND rule set'",
@@ -225,7 +224,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               ]),
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             "set firewall name INBOUND rule 101 protocol 'tcp'",
             'set firewall name INBOUND rule 101 destination address 192.0.1.0',
@@ -264,7 +263,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               ]),
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             'set firewall name INBOUND rule 101 source group address-group IN-ADDR-GROUP',
             'set firewall name INBOUND rule 101 source group network-group IN-NET-GROUP',
@@ -295,7 +294,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               ]),
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             'set firewall name INBOUND rule 101',
             'set firewall name INBOUND rule 101 tcp flags ALL',
@@ -321,15 +320,14 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               rules=[
                                   dict(number='101',
                                        action='accept',
-                                       description=
-                                       'Rule 101 is configured by Ansible',
+                                       description='Rule 101 is configured by Ansible',
                                        ipsec='match-ipsec',
                                        protocol='icmp',
                                        disabled=True)
                               ]),
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             "set firewall ipv6-name INBOUND default-action 'accept'",
             "set firewall ipv6-name INBOUND description 'This is IPv6 INBOUND rule set'",
@@ -369,7 +367,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               ]),
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             "set firewall ipv6-name INBOUND rule 101 protocol 'tcp'",
             'set firewall ipv6-name INBOUND rule 101 destination address 2001:db8::11',
@@ -408,7 +406,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               ]),
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             'set firewall ipv6-name INBOUND rule 101 source group address-group IN-ADDR-GROUP',
             'set firewall ipv6-name INBOUND rule 101 source group network-group IN-NET-GROUP',
@@ -439,7 +437,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               ]),
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             'set firewall ipv6-name INBOUND rule 101',
             'set firewall ipv6-name INBOUND rule 101 tcp flags ALL',
@@ -466,7 +464,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               ]),
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             'set firewall ipv6-name INBOUND rule 101 icmpv6 type port-unreachable',
             "set firewall ipv6-name INBOUND rule 101 protocol 'icmp'",
@@ -487,7 +485,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               ]),
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             'set firewall name INBOUND rule 101 icmp type 1',
             'set firewall name INBOUND rule 101 icmp code 1',
@@ -509,7 +507,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               ]),
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         commands = [
             'set firewall name INBOUND rule 101 icmp type-name echo-request',
             "set firewall name INBOUND rule 101 protocol 'icmp'",
@@ -524,7 +522,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                     dict(name='V4-INGRESS'),
                 ])
             ],
-                 state="deleted"))
+                state="deleted"))
         commands = ['delete firewall name V4-INGRESS']
         self.execute_module(changed=True, commands=commands)
 
@@ -538,7 +536,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                     dict(name='V6-INGRESS'),
                 ])
             ],
-                 state="deleted"))
+                state="deleted"))
         commands = [
             'delete firewall name V4-INGRESS',
             'delete firewall ipv6-name V6-INGRESS'
@@ -560,7 +558,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                     dict(name='V6-ING'),
                 ])
             ],
-                 state="deleted"))
+                state="deleted"))
         self.execute_module(changed=False, commands=[])
 
     def test_vyos_firewall_v4v6_rule_sets_rule_rep_01(self):
@@ -575,16 +573,14 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               rules=[
                                   dict(number='101',
                                        action='reject',
-                                       description=
-                                       'Rule 101 is configured by Ansible RM',
+                                       description='Rule 101 is configured by Ansible RM',
                                        ipsec='match-ipsec',
                                        protocol='tcp',
                                        fragment='match-frag',
                                        disabled=False),
                                   dict(number='102',
                                        action='accept',
-                                       description=
-                                       'Rule 102 is configured by Ansible RM',
+                                       description='Rule 102 is configured by Ansible RM',
                                        protocol='icmp',
                                        disabled=True)
                               ]),
@@ -593,15 +589,13 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                      rule_sets=[
                          dict(name='V6-INGRESS',
                               default_action='accept',
-                              description=
-                              'This rule-set is configured by Ansible RM'),
+                              description='This rule-set is configured by Ansible RM'),
                          dict(name='V6-EGRESS',
                               default_action='reject',
-                              description=
-                              'This rule-set is configured by Ansible RM')
+                              description='This rule-set is configured by Ansible RM')
                      ])
             ],
-                 state="replaced"))
+                state="replaced"))
         commands = [
             'delete firewall name V4-INGRESS rule 101 disabled',
             'delete firewall name V4-EGRESS default-action',
@@ -631,8 +625,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               rules=[
                                   dict(number='101',
                                        action='accept',
-                                       description=
-                                       'Rule 101 is configured by Ansible',
+                                       description='Rule 101 is configured by Ansible',
                                        ipsec='match-ipsec',
                                        protocol='icmp',
                                        fragment='match-frag',
@@ -651,7 +644,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                          )
                      ])
             ],
-                 state="replaced"))
+                state="replaced"))
         commands = [
             'delete firewall name V4-INGRESS enable-default-log',
             'delete firewall name V4-EGRESS default-action'
@@ -670,8 +663,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               rules=[
                                   dict(number='101',
                                        action='accept',
-                                       description=
-                                       'Rule 101 is configured by Ansible',
+                                       description='Rule 101 is configured by Ansible',
                                        ipsec='match-ipsec',
                                        protocol='icmp',
                                        fragment='match-frag',
@@ -694,7 +686,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                          )
                      ])
             ],
-                 state="replaced"))
+                state="replaced"))
         self.execute_module(changed=False, commands=[])
 
     def test_vyos_firewall_v4v6_rule_sets_rule_mer_idem_01(self):
@@ -709,8 +701,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               rules=[
                                   dict(number='101',
                                        action='accept',
-                                       description=
-                                       'Rule 101 is configured by Ansible',
+                                       description='Rule 101 is configured by Ansible',
                                        ipsec='match-ipsec',
                                        protocol='icmp',
                                        fragment='match-frag',
@@ -733,7 +724,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                          )
                      ])
             ],
-                 state="merged"))
+                state="merged"))
         self.execute_module(changed=False, commands=[])
 
     def test_vyos_firewall_v4v6_rule_sets_rule_ovr_01(self):
@@ -748,16 +739,14 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               rules=[
                                   dict(number='1',
                                        action='reject',
-                                       description=
-                                       'Rule 1 is configured by Ansible RM',
+                                       description='Rule 1 is configured by Ansible RM',
                                        ipsec='match-ipsec',
                                        protocol='tcp',
                                        fragment='match-frag',
                                        disabled=False),
                                   dict(number='2',
                                        action='accept',
-                                       description=
-                                       'Rule 102 is configured by Ansible RM',
+                                       description='Rule 102 is configured by Ansible RM',
                                        protocol='icmp',
                                        disabled=True)
                               ]),
@@ -766,15 +755,13 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                      rule_sets=[
                          dict(name='V6-IN',
                               default_action='accept',
-                              description=
-                              'This rule-set is configured by Ansible RM'),
+                              description='This rule-set is configured by Ansible RM'),
                          dict(name='V6-EG',
                               default_action='reject',
-                              description=
-                              'This rule-set is configured by Ansible RM')
+                              description='This rule-set is configured by Ansible RM')
                      ])
             ],
-                 state="overridden"))
+                state="overridden"))
         commands = [
             'delete firewall ipv6-name V6-INGRESS',
             'delete firewall ipv6-name V6-EGRESS',
@@ -813,8 +800,7 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                               rules=[
                                   dict(number='101',
                                        action='accept',
-                                       description=
-                                       'Rule 101 is configured by Ansible',
+                                       description='Rule 101 is configured by Ansible',
                                        ipsec='match-ipsec',
                                        protocol='icmp',
                                        fragment='match-frag',
@@ -837,5 +823,5 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                          )
                      ])
             ],
-                 state="overridden"))
+                state="overridden"))
         self.execute_module(changed=False, commands=[])

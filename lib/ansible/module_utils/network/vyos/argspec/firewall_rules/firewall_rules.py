@@ -191,8 +191,7 @@ class Firewall_rulesArgs(object):  # pylint: disable=R0903
                                         'directconnect', 'edonkey', 'gnutella',
                                         'kazaa'
                                     ],
-                                    'type':
-                                    'list'
+                                    'type': 'list'
                                 },
                                 'protocol': {
                                     'type': 'str'
