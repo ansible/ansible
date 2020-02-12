@@ -1,0 +1,45 @@
+- name: test with_subelements
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - "{{element_data}}"
+    - the_list
+
+- name: verify with_subelements results
+  assert:
+    that:
+        - "_xf == 'f'"
+        - "_xd == 'd'"
+        - "_ye == 'e'"
+        - "_yf == 'f'"
+
+- name: test with_subelements in subkeys
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - "{{element_data}}"
+    - the.sub.key.list
+
+- name: verify with_subelements in subkeys results
+  assert:
+    that:
+        - "_xq == 'q'"
+        - "_xr == 'r'"
+        - "_yi == 'i'"
+        - "_yo == 'o'"
+
+- name: test with_subelements with missing key or subkey
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - "{{element_data_missing}}"
+    - the.sub.key.list
+    - skip_missing: yes
+  register: _subelements_missing_subkeys
+
+- debug: var=_subelements_missing_subkeys
+- debug: var=_subelements_missing_subkeys.results|length
+- name: verify with_subelements in subkeys results
+  assert:
+    that:
+        - _subelements_missing_subkeys.skipped is not defined
+        - _subelements_missing_subkeys.results|length == 2
+        - "_xk == 'k'"
+        - "_xl == 'l'"

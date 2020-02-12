@@ -1,0 +1,18 @@
+- name: test with_nested
+  set_fact: "{{ item.0 + item.1 }}=x"
+  with_nested:
+    - [ 'a', 'b' ]
+    - [ 'c', 'd' ]
+
+- debug: var=ac
+- debug: var=ad
+- debug: var=bc
+- debug: var=bd
+
+- name: verify with_nested results
+  assert:
+    that:
+        - "ac == 'x'"
+        - "ad == 'x'"
+        - "bc == 'x'"
+        - "bd == 'x'"

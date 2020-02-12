@@ -1,0 +1,13 @@
+- name: test with_flattened
+  set_fact: "{{ item }}=flattened"
+  with_flattened:
+    - [ 'a__' ]
+    - [ 'b__', ['c__', 'd__'] ]
+
+- name: verify with_flattened results
+  assert:
+    that:
+        - "a__ == 'flattened'"
+        - "b__ == 'flattened'"
+        - "c__ == 'flattened'"
+        - "d__ == 'flattened'"

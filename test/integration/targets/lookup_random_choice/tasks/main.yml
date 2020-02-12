@@ -1,0 +1,10 @@
+- name: test with_random_choice
+  set_fact: "random={{ item }}"
+  with_random_choice:
+    - "foo"
+    - "bar"
+
+- name: verify with_random_choice
+  assert:
+    that:
+        - "random in ['foo', 'bar']"
