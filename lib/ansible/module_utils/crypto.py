@@ -378,12 +378,9 @@ def write_file(module, content, default_mode=None, path=None):
     Uses file arguments from module.
     '''
     # Find out parameters for file
-    file_args = module.load_file_common_arguments(module.params)
+    file_args = module.load_file_common_arguments(module.params, path=path)
     if file_args['mode'] is None:
         file_args['mode'] = default_mode
-    # If the path was set to override module path
-    if path is not None:
-        file_args['path'] = path
     # Create tempfile name
     tmp_fd, tmp_name = tempfile.mkstemp(prefix=b'.ansible_tmp')
     try:

@@ -558,8 +558,7 @@ def main():
                     msg='Unable to remove source file: %s' % to_native(e), exception=format_exc()
                 )
 
-    params['path'] = b_dest
-    file_args = module.load_file_common_arguments(params)
+    file_args = module.load_file_common_arguments(params, path=b_dest)
 
     if not check_mode:
         changed = module.set_fs_attributes_if_different(file_args, changed)

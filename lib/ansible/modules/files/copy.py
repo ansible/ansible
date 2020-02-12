@@ -779,9 +779,8 @@ def main():
     if backup_file:
         res_args['backup_file'] = backup_file
 
-    module.params['dest'] = dest
     if not module.check_mode:
-        file_args = module.load_file_common_arguments(module.params)
+        file_args = module.load_file_common_arguments(module.params, path=dest)
         res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
 
     module.exit_json(**res_args)
