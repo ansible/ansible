@@ -26,7 +26,9 @@ notes:
   - This module requires the ipaddress python library. This library is included in Python since version 3.3. It is available as a
     module on PyPI for earlier versions.
 version_added: "2.5"
-author: "Gaudenz Steinlin (@gaudenz)"
+author:
+  - Gaudenz Steinlin (@gaudenz)
+  - Denis Krienbühl (@href)
 options:
   state:
     description:
@@ -50,6 +52,20 @@ options:
       - UUID of the server assigned to this floating IP.
       - Required unless I(state) is absent.
     type: str
+  type:
+    description:
+      - The type of the floating IP.
+    choices: [ regional, global ]
+    type: str
+    default: regional
+    version_added: '2.10'
+  region:
+    description:
+      - Region in which the floating IP resides (e.g. C(lgp) or C(rma)).
+        If omitted, the region of the project default zone is used.
+        This parameter must be omitted if I(type) is set to C(global).
+    type: str
+    version_added: '2.10'
   prefix_length:
     description:
       - Only valid if I(ip_version) is 6.
@@ -89,6 +105,7 @@ EXAMPLES = '''
     prefix_length: 56
     server: 47cec963-fcd2-482f-bdb6-24461b2d47b1
     api_token: xxxxxx
+    region: lpg1
   register: floating_ip
 
 # Assign an existing floating network to a different server
@@ -137,6 +154,12 @@ ip:
   returned: success
   type: str
   sample: 185.98.122.176
+region:
+  description: The region of the floating IP.
+  returned: success when state == present
+  type: dict
+  sample: {'slug': 'lpg'}
+  version_added: '2.10'
 state:
   description: The current status of the floating IP.
   returned: success
@@ -210,10 +233,9 @@ class AnsibleCloudscaleFloatingIP(AnsibleCloudscaleBase):
         data = {'ip_version': params['ip_version'],
                 'server': params['server']}
 
-        if params['prefix_length']:
-            data['prefix_length'] = params['prefix_length']
-        if params['reverse_ptr']:
-            data['reverse_ptr'] = params['reverse_ptr']
+        for p in ('prefix_length', 'reverse_ptr', 'type', 'region'):
+            if params[p]:
+                data[p] = params[p]
 
         self.info = self._resp2info(self._post('floating-ips', data))
 
@@ -235,6 +257,8 @@ def main():
         ip=dict(aliases=('network', ), type='str'),
         ip_version=dict(choices=(4, 6), type='int'),
         server=dict(type='str'),
+        type=dict(type='str', choices=('regional', 'global'), default='regional'),
+        region=dict(type='str'),
         prefix_length=dict(choices=(56,), type='int'),
         reverse_ptr=dict(type='str'),
     ))

@@ -6,6 +6,7 @@
         flavor: '{{ cloudscale_test_flavor }}'
         image: '{{ cloudscale_test_image }}'
         ssh_keys: '{{ cloudscale_test_ssh_key }}'
+        zone: '{{ cloudscale_test_zone }}'
       register: test01
 
     - name: Create a second server
@@ -14,6 +15,7 @@
         flavor: '{{ cloudscale_test_flavor }}'
         image: '{{ cloudscale_test_image }}'
         ssh_keys: '{{ cloudscale_test_ssh_key }}'
+        zone: '{{ cloudscale_test_zone }}'
       register: test02
 
     - include_tasks: floating_ip.yml

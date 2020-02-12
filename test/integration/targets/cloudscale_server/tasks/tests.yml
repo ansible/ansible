@@ -3,6 +3,7 @@
   cloudscale_server_group:
     name: '{{ cloudscale_resource_prefix }}-group-{{ item }}'
     type: anti-affinity
+    zone: '{{ cloudscale_test_zone }}'
   with_sequence: count=2
 
 - name: Test create a running server in check mode
@@ -12,6 +13,7 @@
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
     server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    zone: '{{ cloudscale_test_zone }}'
     tags:
       project: ansible-test
       stage: production
@@ -31,6 +33,7 @@
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
     server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    zone: '{{ cloudscale_test_zone }}'
     tags:
       project: ansible-test
       stage: production
@@ -42,6 +45,7 @@
       - server is changed
       - server.state == 'running'
       - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.zone.slug == '{{ cloudscale_test_zone }}'
       - server.tags.project == 'ansible-test'
       - server.tags.stage == 'production'
       - server.tags.sla == '24-7'
@@ -53,6 +57,7 @@
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
     server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    zone: '{{ cloudscale_test_zone }}'
     tags:
       project: ansible-test
       stage: production
@@ -64,6 +69,7 @@
       - server is not changed
       - server.state == 'running'
       - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - server.zone.slug == '{{ cloudscale_test_zone }}'
       - server.tags.project == 'ansible-test'
       - server.tags.stage == 'production'
       - server.tags.sla == '24-7'
@@ -348,6 +354,7 @@
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
     server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    zone: '{{ cloudscale_test_zone }}'
     use_public_network: no
     use_private_network: yes
     state: stopped
@@ -366,6 +373,7 @@
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
     server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    zone: '{{ cloudscale_test_zone }}'
     use_public_network: no
     use_private_network: yes
     state: stopped
@@ -375,6 +383,7 @@
     that:
       - server_stopped is changed
       - server_stopped.state == 'stopped'
+      - server_stopped.zone.slug == '{{ cloudscale_test_zone }}'
       - server_stopped.anti_affinity_with.0.uuid == running_server_uuid
       - server_stopped.interfaces.0.type == 'private'
       - server_stopped.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
@@ -386,6 +395,7 @@
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
     server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    zone: '{{ cloudscale_test_zone }}'
     use_public_network: no
     use_private_network: yes
     state: stopped
@@ -395,6 +405,7 @@
     that:
       - server_stopped is not changed
       - server_stopped.state == 'stopped'
+      - server_stopped.zone.slug == '{{ cloudscale_test_zone }}'
       - server_stopped.anti_affinity_with.0.uuid == running_server_uuid
       - server_stopped.interfaces.0.type == 'private'
       - server_stopped.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
@@ -415,6 +426,7 @@
     that:
       - server_stopped is not changed
       - server_stopped.state == 'stopped'
+      - server_stopped.zone.slug == '{{ cloudscale_test_zone }}'
       - server_stopped.anti_affinity_with.0.uuid == running_server_uuid
       - server_stopped.interfaces.0.type == 'private'
       - server_stopped.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'

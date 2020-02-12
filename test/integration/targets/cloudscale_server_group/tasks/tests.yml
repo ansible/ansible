@@ -18,6 +18,7 @@
 - name: Create server group
   cloudscale_server_group:
     name: '{{ cloudscale_resource_prefix }}-grp'
+    zone: '{{ cloudscale_test_zone }}'
     tags:
       project: ansible-test
       stage: production
@@ -29,6 +30,7 @@
       - grp is changed
       - grp.type == 'anti-affinity'
       - grp.name == '{{ cloudscale_resource_prefix }}-grp'
+      - grp.zone.slug == '{{ cloudscale_test_zone }}'
       - grp.uuid
       - grp.tags.project == 'ansible-test'
       - grp.tags.stage == 'production'
@@ -41,6 +43,7 @@
 - name: Create server group idempotence
   cloudscale_server_group:
     name: '{{ cloudscale_resource_prefix }}-grp'
+    zone: '{{ cloudscale_test_zone }}'
     tags:
       project: ansible-test
       stage: production
@@ -51,6 +54,7 @@
     that:
       - grp is not changed
       - grp.name == '{{ cloudscale_resource_prefix }}-grp'
+      - grp.zone.slug == '{{ cloudscale_test_zone }}'
       - grp.uuid == server_group_uuid
       - grp.tags.project == 'ansible-test'
       - grp.tags.stage == 'production'
@@ -72,6 +76,7 @@
       - grp is changed
       - grp.name == '{{ cloudscale_resource_prefix }}-grp'
       - grp.uuid == server_group_uuid
+      - grp.zone.slug == '{{ cloudscale_test_zone }}'
       - grp.tags.project == 'ansible-test'
       - grp.tags.stage == 'production'
       - grp.tags.sla == '24-7'
@@ -91,6 +96,7 @@
       - grp is changed
       - grp.name == '{{ cloudscale_resource_prefix }}-grp2'
       - grp.uuid == server_group_uuid
+      - grp.zone.slug == '{{ cloudscale_test_zone }}'
       - grp.tags.project == 'ansible-test'
       - grp.tags.stage == 'staging'
       - grp.tags.sla == '8-5'
@@ -110,6 +116,7 @@
       - grp is not changed
       - grp.name == '{{ cloudscale_resource_prefix }}-grp2'
       - grp.uuid == server_group_uuid
+      - grp.zone.slug == '{{ cloudscale_test_zone }}'
       - grp.tags.project == 'ansible-test'
       - grp.tags.stage == 'staging'
       - grp.tags.sla == '8-5'
