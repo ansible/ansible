@@ -159,7 +159,6 @@ class Acls(ConfigBase):
         have_afi = search_obj_in_list(want['afi'], have, 'afi')
         del_dict = {'acls': []}
         q(want)
-        flag = 0
         want_names = []
         if have_afi != want:
             if have_afi:
@@ -167,49 +166,61 @@ class Acls(ConfigBase):
                 del_dict.update({'afi': have_afi['afi'], 'acls': []})
                 if want.get('acls'):
                     want_names = [w['name'] for w in want['acls']]
-                    q(want_names)
-                    for h in have_afi['acls']:
-                        q(h)
-                        if h['name'] in want_names:
-                            want_aces = search_obj_in_list(
-                                h['name'], want['acls'], 'name')
-                            q(want_aces)
-                            del_acl = {}
-                            aces = []  # that will be deleted
-                            if h.get('aces'):
-                                for h_ace in h['aces']:
-                                    q(h_ace)
-                                    if want_aces.get('aces'):
-                                        if h_ace not in want_aces['aces']:
-                                            aces.append(h_ace)
-                                    else:
-                                        aces.append(h_ace)
-                            if aces:
-                                del_acl['name'] = h['name']
-                                del_acl['aces'] = aces
-                            q(aces, del_acl)
+                    have_names = [h['name'] for h in have_afi['acls']]
+                    q(have_names, want_names)
+                    want_acls = want.get('acls')
+                    for w in want_acls:
+                        acl_commands = []
+                        if w['name'] not in have_names:
+                            # creates new ACL in replaced state
+                            merge_dict = {'afi': want['afi'], 'acls': [w]}
+                            q('new dict')
+                            q(merge_dict)
+                            commands.extend(
+                                self._state_merged(merge_dict, have))
+                        else:
+                            # acl in want exists in have
+                            have_name = search_obj_in_list(
+                                w['name'], have_afi['acls'], 'name')
+                            q(have_name)
+                            have_aces = have_name.get(
+                                'aces') if have_name.get('aces') else []
+                            merge_aces = []
+                            del_aces = []
+                            q(have_name.get('aces'))
+                            w_aces = w.get('aces') if w.get('aces') else []
 
-                            if del_acl:
-                                del_dict['acls'].append(del_acl)
-                                del_dict.update(
-                                    {'afi': have_afi['afi']})
+                            for ace in have_aces:
+                                if ace not in w_aces:
+                                    del_aces.append(ace)
+                            for ace in w_aces:
+                                if ace not in have_aces:
+                                    merge_aces.append(ace)
+                            q(del_aces, merge_aces)
+                            merge_dict = {'afi': want['afi'], 'acls': [
+                                {'name': w['name'], 'aces':merge_aces}]}
+                            del_dict = {'afi': want['afi'], 'acls': [
+                                {'name': w['name'], 'aces': del_aces}]}
+                            q(del_dict, merge_dict)
+                            if del_dict['acls']:
+                                acl_commands.extend(
+                                    self._state_deleted([del_dict], have))
+                            q(acl_commands)
+                            acl_commands.extend(
+                                self._state_merged(merge_dict, have))
+
+                            q(acl_commands)
+                            for i in range(1, len(acl_commands)):
+                                if acl_commands[i] == acl_commands[0]:
+                                    acl_commands[i] = ''
+                            commands.extend(acl_commands)
                 else:
                     acls = []
+                    # no acls given in want, so delete all have acls
                     for acl in have_afi['acls']:
                         acls.append({'name': acl['name']})
                     del_dict['acls'] = acls
-            q(del_dict)
-            if del_dict['acls']:
-                commands.extend(self._state_deleted([del_dict], have))
-            q(commands)
-            commands.extend(self._state_merged(want, have))
-            q('after merged')
-            q(commands)
-            # for i in range(1, len(commands)):
-            #     if commands[i] == commands[0]:
-            #         commands[i] = ''
             commands = list(filter(None, commands))
-            q(commands)
         return commands
 
     def _state_overridden(self, want, have):
@@ -267,46 +278,46 @@ class Acls(ConfigBase):
         q('inside deleted')
         q(want, have)
         if want:  # and have != want:
-            q('delete want')
+            # q('delete want')
             for w in want:
-                q(w)
+                # q(w)
                 ip = 'ipv6' if w['afi'] == 'ipv6' else 'ip'
                 acl_names = []
                 have_afi = search_obj_in_list(w['afi'], have, 'afi')
                 # if want['afi] not in have, ignore
-                q(have_afi)
+                # q(have_afi)
                 if have_afi:
                     if w.get('acls'):
                         for acl in w['acls']:
-                            q(acl)
+                            # q(acl)
                             if 'aces' in acl.keys():
                                 have_name = search_obj_in_list(
                                     acl['name'], have_afi['acls'], 'name')
                                 if have_name:
-                                    q(have_name)
+                                    # q(have_name)
                                     ace_commands = []
                                     flag = 0
                                     for ace in acl['aces']:
-                                        q(ace)
+                                        # q(ace)
                                         if ace.keys() == ['sequence']:
-                                            q('sequence')
+                                            # q('sequence')
                                             # only sequence number is specified to be deleted
                                             if 'aces' in have_name.keys():
                                                 for h_ace in have_name['aces']:
-                                                    q(h_ace)
+                                                    # q(h_ace)
                                                     if h_ace['sequence'] == ace['sequence']:
                                                         ace_commands.append(
                                                             'no ' + str(ace['sequence']))
                                                         flag = 1
                                         else:
-                                            q(have_name)
+                                            # q(have_name)
                                             if 'aces' in have_name.keys():
                                                 for h_ace in have_name['aces']:
-                                                    q(h_ace)
+                                                    # q(h_ace)
                                                     # when want['ace'] does not have seq number
                                                     if 'sequence' not in ace.keys():
                                                         del h_ace['sequence']
-                                                    q(h_ace, ace)
+                                                    # q(h_ace, ace)
                                                     if ace == h_ace:
                                                         ace_commands.append(
                                                             'no ' + self.process_ace(ace))
@@ -314,25 +325,25 @@ class Acls(ConfigBase):
                                     if flag:
                                         ace_commands.insert(
                                             0, ip + ' access-list ' + acl['name'])
-                                    q(ace_commands)
+                                    # q(ace_commands)
                                     commands.extend(ace_commands)
                             else:
                                 # only name given
                                 for h in have_afi['acls']:
                                     if h['name'] == acl['name']:
                                         acl_names.append(acl['name'])
-                        q(acl_names)
+                        # q(acl_names)
                         for name in acl_names:
                             commands.append(
                                 'no ' + ip + ' access-list ' + name)
 
                     else:
-                        q('only afi is given')
+                        # q('only afi is given')
                         if have_afi.get('acls'):
                             for h in have_afi['acls']:
-                                q(h)
+                                # q(h)
                                 acl_names.append(h['name'])
-                            q(acl_names)
+                            # q(acl_names)
                             for name in acl_names:
                                 commands.append(
                                     'no ' + ip + ' access-list ' + name)
@@ -341,7 +352,7 @@ class Acls(ConfigBase):
             v4 = []
             v6_local = v4_local = None
             for h in have:
-                q(h)
+                # q(h)
                 if h['afi'] == 'ipv6':
                     v6 = (acl['name'] for acl in h['acls'])
                     if 'match_local_traffic' in h.keys():

@@ -81,7 +81,7 @@ class AclsFacts(object):
     def get_endpoint(self, ace, pro):
         ret_dict = {}
         option = ace.split()[0]
-        q(ace, option)
+        # q(ace, option)
         if option == 'any':
             ret_dict.update({'any': True})
         else:
@@ -151,7 +151,7 @@ class AclsFacts(object):
                 acls['name'] = re.match(
                     '(ip)?(v6)? access-list (.*)', acl[0]).group(3)
                 acls['aces'] = []
-                q(acl)
+                # q(acl)
                 for ace in list(filter(None, acl[1:])):
                     entry = {}
                     ace = ace.strip()
