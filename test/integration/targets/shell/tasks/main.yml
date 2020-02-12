@@ -14,8 +14,6 @@
     ansible_connection: test_connection_default
     ansible_shell_type: '{{ item }}'
   with_items:
-  - csh
-  - fish
   - powershell
   - sh
 
@@ -34,7 +32,5 @@
     ansible_connection: test_connection_default
     ansible_shell_type: '{{ item }}'
   with_items:
-  - csh
-  - fish
   - powershell
   - sh
