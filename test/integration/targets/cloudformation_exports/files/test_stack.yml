@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create some item in Exports
+Parameters:
+  TestParamValue:
+    Type: String
+    Description: A param Value to be placed in Exports
+  TestParamName:
+    Type: String
+    Description: A param Name for SSM Parameter Store
+Resources:
+  TestParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Ref TestParamName
+      Type: String
+      Value: !Ref TestParamValue
+Outputs:
+  TestParamValue:
+    Value: !Ref TestParamValue
+    Export:
+      Name: !Sub "cf-export-${TestParamName}"
