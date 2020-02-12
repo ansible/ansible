@@ -47,7 +47,7 @@ files:
   $modules:
     ignored: ryansb
   $modules/cloud/amazon/:
-    ignored: erydo seiffert simplesteph nadirollo tedder joshsouza
+    ignored: erydo seiffert simplesteph nadirollo tedder joshsouza defionscode
     maintainers: $team_aws
   $modules/cloud/amazon/aws_kms.py:
     ignored: tedder
