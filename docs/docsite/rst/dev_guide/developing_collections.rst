@@ -424,6 +424,31 @@ See the `content_collector README <https://github.com/ansible/content_collector>
 BOTMETA.yml
 -----------
 
+The `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ is the source of truth for:
+* ansibullbot
+* FIXME docs stuff
+
+Ansibulbot will know how to redirect existing issues and PRs to the new repo
+The build process for docs.ansible.com will know where to find the module docs.
+
+.. code-block:: yaml
+      $modules/monitoring/grafana/grafana_plugin.py:
+          migrated_to: community.grafana
+      $modules/monitoring/grafana/grafana_dashboard.py:
+          migrated_to: community.grafana
+      $modules/monitoring/grafana/grafana_datasource.py:
+          migrated_to: community.grafana
+      $plugins/callback/grafana_annotations.py:
+        maintainers: $team_grafana
+        labels: monitoring grafana
+        migrated_to: community.grafana
+      $plugins/doc_fragments/grafana.py:
+        maintainers: $team_grafana
+        labels: monitoring grafana
+        migrated_to: community.grafana
+
+Example PR https://github.com/ansible/ansible/pull/66981/files
+
 Why
 
 How
