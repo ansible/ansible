@@ -7866,10 +7866,10 @@ test/integration/targets/ignore_unreachable/fake_connectors/bad_exec.py future-i
 test/integration/targets/ignore_unreachable/fake_connectors/bad_exec.py metaclass-boilerplate
 test/integration/targets/ignore_unreachable/fake_connectors/bad_put_file.py future-import-boilerplate
 test/integration/targets/ignore_unreachable/fake_connectors/bad_put_file.py metaclass-boilerplate
-test/integration/targets/inventory_kubevirt_conformance/inventory_diff.py future-import-boilerplate
-test/integration/targets/inventory_kubevirt_conformance/inventory_diff.py metaclass-boilerplate
-test/integration/targets/inventory_kubevirt_conformance/server.py future-import-boilerplate
-test/integration/targets/inventory_kubevirt_conformance/server.py metaclass-boilerplate
+test/integration/targets/inventory_kubevirt/inventory_diff.py future-import-boilerplate
+test/integration/targets/inventory_kubevirt/inventory_diff.py metaclass-boilerplate
+test/integration/targets/inventory_kubevirt/server.py future-import-boilerplate
+test/integration/targets/inventory_kubevirt/server.py metaclass-boilerplate
 test/integration/targets/jinja2_native_types/filter_plugins/native_plugins.py future-import-boilerplate
 test/integration/targets/jinja2_native_types/filter_plugins/native_plugins.py metaclass-boilerplate
 test/integration/targets/lambda_policy/files/mini_http_lambda.py future-import-boilerplate
