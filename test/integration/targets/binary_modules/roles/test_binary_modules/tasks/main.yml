@@ -5,7 +5,7 @@
   when: ansible_system != 'Win32NT'
 
 - name: win_ping
-  win_ping:
+  action: win_ping
   when: ansible_system == 'Win32NT'
 
 - name: Hello, World!
