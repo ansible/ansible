@@ -268,7 +268,7 @@ class Acl_interfaces(ConfigBase):
                 if deleted and 'access_groups' in have_name.keys():
                     commands.extend(self.process_access_group(have_name, True))
         else:
-            if not deleted and 'access_groups' in have_name.keys():
+            if not deleted:  # and 'access_groups' in have_name.keys():
                 commands.extend(self.process_access_group(want))
 
         if len(commands) > 0:
