@@ -466,7 +466,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         def _deployment_ready(deployment):
             # FIXME: frustratingly bool(deployment.status) is True even if status is empty
             # Furthermore deployment.status.availableReplicas == deployment.status.replicas == None if status is empty
-            return (deployment.status and deployment.status.replicas is not None and
+            # deployment.status.replicas is None is perfectly ok if desired replicas == 0
+            return (deployment.status and
                     deployment.status.availableReplicas == deployment.status.replicas and
                     deployment.status.observedGeneration == deployment.metadata.generation and
                     not deployment.status.unAvailableReplicas)
