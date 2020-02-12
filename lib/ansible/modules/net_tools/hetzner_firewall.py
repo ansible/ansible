@@ -103,7 +103,7 @@ options:
               - TCP flags or logical combination of flags.
               - Flags supported by Hetzner are C(syn), C(fin), C(rst), C(psh) and C(urg).
               - They can be combined with C(|) (logical or) and C(&) (logical and).
-              - See U(the documentation,https://wiki.hetzner.de/index.php/Robot_Firewall/en#Parameter)
+              - See L(the documentation,https://wiki.hetzner.de/index.php/Robot_Firewall/en#Parameter)
                 for more information.
             type: str
           action:
