@@ -27,7 +27,7 @@ options:
       - A list of members to ensure are present/absent from the group.
       - The given names must be a SamAccountName of a user, group, service account, or computer.
       - For computers, you must add "$" after the name; for example, to add "Mycomputer" to a group, use "Mycomputer$" as the member.
-      - If the Object is part of another domain in a multi-domain forest, you must add the domain and "\" in front of the name.
+      - If the memberobject is part of another domain in a multi-domain forest, you must add the domain and "\" in front of the name.
     type: list
     required: yes
   state:
