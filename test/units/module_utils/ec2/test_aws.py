@@ -43,7 +43,7 @@ class RetryTestCase(unittest.TestCase):
         def extend_failures():
             self.counter += 1
             if self.counter < 2:
-                raise botocore.exceptions.ClientError(err_msg, 'Could not find you')
+                raise botocore.exceptions.ClientError(err_msg, 'You did something wrong.')
             else:
                 return 'success'
 
@@ -53,13 +53,13 @@ class RetryTestCase(unittest.TestCase):
 
     def test_retry_once(self):
         self.counter = 0
-        err_msg = {'Error': {'Code': 'InstanceId.NotFound'}}
+        err_msg = {'Error': {'Code': 'InternalFailure'}}
 
         @AWSRetry.backoff(tries=2, delay=0.1)
         def retry_once():
             self.counter += 1
             if self.counter < 2:
-                raise botocore.exceptions.ClientError(err_msg, 'Could not find you')
+                raise botocore.exceptions.ClientError(err_msg, 'Something went wrong!')
             else:
                 return 'success'
 
