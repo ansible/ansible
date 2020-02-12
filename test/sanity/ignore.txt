@@ -2530,6 +2530,7 @@ lib/ansible/modules/files/blockinfile.py validate-modules:doc-choices-do-not-mat
 lib/ansible/modules/files/blockinfile.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/files/copy.py pylint:blacklisted-name
 lib/ansible/modules/files/copy.py validate-modules:doc-default-does-not-match-spec
+lib/ansible/modules/files/copy.py validate-modules:doc-type-does-not-match-spec
 lib/ansible/modules/files/copy.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/files/copy.py validate-modules:undocumented-parameter
 lib/ansible/modules/files/file.py pylint:ansible-bad-function
@@ -4444,6 +4445,8 @@ lib/ansible/modules/network/f5/bigip_ike_peer.py validate-modules:doc-required-m
 lib/ansible/modules/network/f5/bigip_ike_peer.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/network/f5/bigip_imish_config.py validate-modules:doc-required-mismatch
 lib/ansible/modules/network/f5/bigip_imish_config.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/network/f5/bigip_imish_config.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/network/f5/bigip_imish_config.py validate-modules:undocumented-parameter
 lib/ansible/modules/network/f5/bigip_ipsec_policy.py validate-modules:doc-required-mismatch
 lib/ansible/modules/network/f5/bigip_irule.py validate-modules:doc-required-mismatch
 lib/ansible/modules/network/f5/bigip_log_destination.py validate-modules:doc-required-mismatch
@@ -4552,6 +4555,8 @@ lib/ansible/modules/network/f5/bigip_tunnel.py validate-modules:doc-required-mis
 lib/ansible/modules/network/f5/bigip_tunnel.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/network/f5/bigip_ucs.py validate-modules:doc-required-mismatch
 lib/ansible/modules/network/f5/bigip_ucs_fetch.py validate-modules:doc-required-mismatch
+lib/ansible/modules/network/f5/bigip_ucs_fetch.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/network/f5/bigip_ucs_fetch.py validate-modules:undocumented-parameter
 lib/ansible/modules/network/f5/bigip_user.py validate-modules:doc-required-mismatch
 lib/ansible/modules/network/f5/bigip_user.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/network/f5/bigip_vcmp_guest.py validate-modules:doc-required-mismatch
@@ -7330,6 +7335,8 @@ lib/ansible/modules/system/iptables.py pylint:blacklisted-name
 lib/ansible/modules/system/iptables.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/system/java_cert.py pylint:blacklisted-name
 lib/ansible/modules/system/java_keystore.py validate-modules:doc-missing-type
+lib/ansible/modules/system/java_keystore.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/system/java_keystore.py validate-modules:undocumented-parameter
 lib/ansible/modules/system/kernel_blacklist.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/system/known_hosts.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/system/known_hosts.py validate-modules:doc-missing-type
@@ -7457,6 +7464,7 @@ lib/ansible/modules/web_infrastructure/apache2_module.py validate-modules:doc-mi
 lib/ansible/modules/web_infrastructure/apache2_module.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/web_infrastructure/deploy_helper.py validate-modules:doc-missing-type
 lib/ansible/modules/web_infrastructure/deploy_helper.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/web_infrastructure/deploy_helper.py validate-modules:undocumented-parameter
 lib/ansible/modules/web_infrastructure/django_manage.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/web_infrastructure/django_manage.py validate-modules:doc-missing-type
 lib/ansible/modules/web_infrastructure/django_manage.py validate-modules:no-default-for-required-parameter
