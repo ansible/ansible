@@ -65,8 +65,6 @@
   register: login_4
   check_mode: yes
 
-- debug: var=login_2_stat.stat
-
 - name: Make sure that login worked
   assert:
     that:
