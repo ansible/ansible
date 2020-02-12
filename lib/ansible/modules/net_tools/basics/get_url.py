@@ -536,9 +536,7 @@ def main():
         if not force and checksum and not checksum_mismatch:
             # Not forcing redownload, unless checksum does not match
             # allow file attribute changes
-            module.params['path'] = dest
-            file_args = module.load_file_common_arguments(module.params)
-            file_args['path'] = dest
+            file_args = module.load_file_common_arguments(module.params, path=dest)
             result['changed'] = module.set_fs_attributes_if_different(file_args, False)
             if result['changed']:
                 module.exit_json(msg="file already exists but file attributes changed", **result)
@@ -633,9 +631,7 @@ def main():
             module.fail_json(msg="The checksum for %s did not match %s; it was %s." % (dest, checksum, destination_checksum), **result)
 
     # allow file attribute changes
-    module.params['path'] = dest
-    file_args = module.load_file_common_arguments(module.params)
-    file_args['path'] = dest
+    file_args = module.load_file_common_arguments(module.params, path=dest)
     result['changed'] = module.set_fs_attributes_if_different(file_args, result['changed'])
 
     # Backwards compat only.  We'll return None on FIPS enabled systems
