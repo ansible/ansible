@@ -1,0 +1,16 @@
+- name: create unindexed list
+  shell: for i in $(seq 1 5); do echo "x" ; done;
+  register: list_data
+
+- name: create indexed list
+  set_fact: "{{ item[1] + item[0]|string }}=set"
+  with_indexed_items: "{{list_data.stdout_lines}}"
+
+- name: verify with_indexed_items result
+  assert:
+    that:
+        - "x0 == 'set'"
+        - "x1 == 'set'"
+        - "x2 == 'set'"
+        - "x3 == 'set'"
+        - "x4 == 'set'"
