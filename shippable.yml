@@ -65,6 +65,7 @@ matrix:
 
     - env: T=network
 
+    - env: T=aix/7.2/1
     - env: T=osx/10.11/1
     - env: T=rhel/7.6/1
     - env: T=rhel/8.1/1
@@ -80,6 +81,7 @@ matrix:
     - env: T=linux/ubuntu1604/1
     - env: T=linux/ubuntu1804/1
 
+    - env: T=aix/7.2/2
     - env: T=osx/10.11/2
     - env: T=rhel/7.6/2
     - env: T=rhel/8.1/2
@@ -95,6 +97,7 @@ matrix:
     - env: T=linux/ubuntu1604/2
     - env: T=linux/ubuntu1804/2
 
+    - env: T=aix/7.2/3
     - env: T=osx/10.11/3
     - env: T=rhel/7.6/3
     - env: T=rhel/8.1/3
@@ -110,6 +113,7 @@ matrix:
     - env: T=linux/ubuntu1604/3
     - env: T=linux/ubuntu1804/3
 
+    - env: T=aix/7.2/4
     - env: T=osx/10.11/4
     - env: T=rhel/7.6/4
     - env: T=rhel/8.1/4
@@ -125,6 +129,7 @@ matrix:
     - env: T=linux/ubuntu1604/4
     - env: T=linux/ubuntu1804/4
 
+    - env: T=aix/7.2/5
     - env: T=osx/10.11/5
     - env: T=rhel/7.6/5
     - env: T=rhel/8.1/5
