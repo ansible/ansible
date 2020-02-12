@@ -358,7 +358,8 @@ class WapiModule(WapiBase):
                     # popping 'view' key as update of 'view' is not supported with respect to a:record/aaaa:record/srv:record/ptr:record
                     proposed_object = self.on_update(proposed_object, ib_spec)
                     del proposed_object['view']
-                    res = self.update_object(ref, proposed_object)
+                    if not self.module.check_mode:
+                        res = self.update_object(ref, proposed_object)
                     result['changed'] = True
                 elif 'network_view' in proposed_object:
                     proposed_object.pop('network_view')
