@@ -1,0 +1,8 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+    - name: Configure OSPF IPv6 router process id
+      awplus_ospf_ipv6:
+        router:
+          process_id: 100

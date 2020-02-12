@@ -1,0 +1,40 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+    - name: Configure OSPF router process id
+      awplus_ospf:
+        router:
+          process_id: 100
+        area:
+          area_id: "1"
+          default_cost:
+            cost_value: 5
+          authentication:
+            message_digest: true
+          # filter_list:
+          #   prefix_list: list1
+          #   in: true
+          #   out: true
+          nssa:
+            default_information_originate: true
+            default_information_originate_metric_type: 1
+            default_information_originate_metric: 12
+        network_area:
+          area_id: 125.125.125.125
+          network_address: 123.123.123.0/24
+          state: present
+        ospf_router_id:
+          ip_addr: 234.234.234.234
+        # passive_interface:
+        #   name: passive_interface_name
+        #   ip_addr: 101.101.101.101
+        redistribute:
+          static: true
+          metric: 123
+          metric_type: "1"
+          tag: 123
+        summary_address:
+          ip_addr: 121.121.121.121/24
+          advertise: true
+          tag: 456

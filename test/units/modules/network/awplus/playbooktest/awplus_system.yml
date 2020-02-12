@@ -1,0 +1,12 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+   - name: testing out system module
+     awplus_system:
+        hostname: manager
+        domain_name: example.com
+        domain_list: ansible.com
+        lookup_enabled: On
+        name_servers: vrf management 8.8.8.8
+        state: absent

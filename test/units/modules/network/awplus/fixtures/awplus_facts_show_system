@@ -1,0 +1,25 @@
+System Status                                           Mon Dec 09 15:36:02 2019
+                                                                                
+Board      ID   Bay     Board Name                        Rev   Serial number   
+--------------------------------------------------------------------------------
+Base       453  Base    AR2050V                           B-0   A05236G154300006
+--------------------------------------------------------------------------------
+RAM: Total: 431688 kB Free: 171912 kB                                           
+Flash: 3.6GB Used: 7.6MB Available: 3.6GB                                       
+--------------------------------------------------------------------------------
+Environment Status : Normal                                                     
+Uptime             : 0 days 08:54:41                                            
+Bootloader version : 5.1.7-devel                                                
+                                                                                
+Current software   : arc-main-latest.rel                                        
+Software version   : main-20191128-1                                            
+Build date         : Wed Nov 27 17:05:29 UTC 2019                               
+                                                                                
+Current boot config: flash:/default.cfg (file exists)                           
+                                                                                
+System Name                                                                     
+ aw1                                                                            
+System Contact                                                                  
+                                                                                
+System Location                                                                 
+                

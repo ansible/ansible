@@ -1,0 +1,21 @@
+---
+  - hosts: all
+    connection: network_cli
+    tasks:
+      - name: configure motd banner
+        awplus_banner:
+          banner: motd
+          text: Configured by Ansible
+          state: present
+
+      - name: remove motd banner
+        awplus_banner:
+          banner: motd
+          state: absent
+      
+      - name: Configure banner from file
+        awplus_banner:
+          banner: exec
+          text: "{{ lookup('file', './raw_banner.cfg') }}"
+          state: present
+

@@ -1,0 +1,23 @@
+---
+  - name: Test awplus_interface module
+    connection: network_cli
+    hosts: all
+    tasks:
+      - name: Replace device configuration with provided configuration
+        awplus_interfaces:
+          config:
+            - name: port1.0.3
+              description: Replaced by Ansible Network
+              duplex: full
+              # Available options for speed:
+              # 10, 100, 1000, 10000, 100000, (mbps)
+              # 2500, 40000, 5000, auto (mbps)
+              speed: 1000
+              enabled: False
+
+              # vlan1 does not have duplex configuration option 
+            - name: vlan1
+              description: Replaced by Ansible Network
+              mtu: 900 # in the range <68-1582>
+              enabled: True
+          state: replaced

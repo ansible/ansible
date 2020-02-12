@@ -1,0 +1,70 @@
+                                                                                
+Facility: kern (kernel messages)                                                
+                                                                                
+PKI trustpoints: (None)                                                         
+Date format: default                                                            
+                                                                                
+Buffered log:                                                                   
+  Status ......... enabled                                                      
+  Maximum size ... 50kb                                                         
+  Filters:                                                                      
+ *1   Level ...... notices                                                      
+      Program .... any                                                          
+      Facility ... any                                                          
+      Msg text ... any                                                          
+      Type ....... include                                                      
+  Statistics ..... 4798 messages received, 2566 accepted, 0 excluded            
+Console log:                                                                    
+  Status ......... enabled                                                      
+  Filters:                                                                      
+ *1   Level ...... critical                                                     
+      Program .... any                                                          
+      Facility ... any                                                          
+      Msg text ... any                                                          
+      Type ....... include                                                      
+  3   Level ...... any                                                          
+      Program .... any                                                          
+      Facility ... news                                                         
+      Msg text ... any                                                          
+      Type ....... include                                                      
+  Statistics ..... 4798 messages received, 8 accepted, 0 excluded               
+Permanent log:                                                                  
+  Status ......... enabled                                                      
+  Maximum size ... 50kb                                                         
+  Filters:                                                                      
+ *1   Level ...... warnings                                                     
+      Program .... any                                                          
+      Facility ... any                                                          
+      Msg text ... any                                                          
+      Type ....... include                                                      
+  Statistics ..... 4798 messages received, 388 accepted, 0 excluded             
+Host 2.3.4.5 log:                                                               
+  Time offset .... +0:00                                                        
+  Offset type .... UTC                                                          
+  Source ......... -                                                            
+  Secured ........ disabled                                                     
+  Delay parameters:                                                             
+    Startup-Delay: 120                                                          
+    Buffered-Messages: 2000                                                     
+  Filters:                                                                      
+  Statistics ..... 4798 messages received, 0 accepted, 0 excluded               
+Monitor log:                                                                    
+  Filters:                                                                      
+ *1   Level ...... debugging                                                    
+      Program .... any                                                          
+      Facility ... any                                                          
+      Msg text ... any                                                          
+      Type ....... include                                                      
+  Statistics ..... 4798 messages received, 0 accepted, 0 excluded               
+External log:                                                                   
+  Status ......... disabled                                                     
+  Log file ....... Not set                                                      
+  Rotation ....... 1                                                            
+  Maximum size ... 50kb                                                         
+  Filters:                                                                      
+ *1   Level ...... notices                                                      
+      Program .... any                                                          
+      Facility ... any                                                          
+      Msg text ... any                                                          
+      Type ....... include                                                      
+  Statistics ..... 4798 messages received, 0 accepted, 0 excluded  

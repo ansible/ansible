@@ -1,0 +1,115 @@
+Interface port1.0.1                                                             
+  Link is UP, administrative state is UP                                        
+  Hardware is Ethernet, address is 001a.eb94.27bb                               
+  index 5001 metric 1 mru 1500                                                  
+  current duplex full, current speed 1000, current polarity mdi                 
+  configured duplex auto, configured speed auto, configured polarity auto       
+  <UP,BROADCAST,RUNNING,MULTICAST>                                              
+  SNMP link-status traps: Disabled                                              
+    input packets 235, bytes 26869, dropped 0, multicast packets 51             
+    output packets 591, bytes 76992, multicast packets 424, broadcast packets 3 
+    input average rate : 30 seconds 0 bps, 5 minutes 60 bps                     
+    output average rate: 30 seconds 330 bps, 5 minutes 457 bps                  
+    input peak rate 11.89 Kbps at 2019/12/10 07:27:26                           
+    output peak rate 35.50 Kbps at 2019/12/10 07:27:41                          
+  Time since last state change: 0 days 00:13:39                                 
+Interface port1.0.2                                                             
+  Link is DOWN, administrative state is UP                                      
+  Hardware is Ethernet, address is 001a.eb94.27bb                               
+  index 5002 metric 1 mru 1500                                                  
+  configured duplex auto, configured speed auto, configured polarity auto       
+  <UP,BROADCAST,MULTICAST>                                                      
+  SNMP link-status traps: Disabled                                              
+    input packets 0, bytes 0, dropped 0, multicast packets 0                    
+    output packets 0, bytes 0, multicast packets 0, broadcast packets 0         
+    input average rate : 30 seconds 0 bps, 5 minutes 0 bps                      
+    output average rate: 30 seconds 0 bps, 5 minutes 0 bps                      
+  Time since last state change: 0 days 00:14:37                                 
+Interface port1.0.3                                                             
+  Link is DOWN, administrative state is UP                                      
+  Hardware is Ethernet, address is 001a.eb94.27bb                               
+  index 5003 metric 1 mru 1500                                                  
+  configured duplex auto, configured speed auto, configured polarity auto       
+  <UP,BROADCAST,MULTICAST>                                                      
+  SNMP link-status traps: Disabled                                              
+    input packets 0, bytes 0, dropped 0, multicast packets 0                    
+    output packets 0, bytes 0, multicast packets 0, broadcast packets 0         
+    input average rate : 30 seconds 0 bps, 5 minutes 0 bps                      
+    output average rate: 30 seconds 0 bps, 5 minutes 0 bps                      
+  Time since last state change: 0 days 00:14:37                                 
+Interface port1.0.4                                                             
+  Link is DOWN, administrative state is UP                                      
+  Hardware is Ethernet, address is 001a.eb94.27bb                               
+  index 5004 metric 1 mru 1500                                                  
+  configured duplex auto, configured speed auto, configured polarity auto       
+  <UP,BROADCAST,MULTICAST>                                                      
+  SNMP link-status traps: Disabled                                              
+    input packets 0, bytes 0, dropped 0, multicast packets 0                    
+    output packets 0, bytes 0, multicast packets 0, broadcast packets 0         
+    input average rate : 30 seconds 0 bps, 5 minutes 0 bps                      
+    output average rate: 30 seconds 0 bps, 5 minutes 0 bps                      
+  Time since last state change: 0 days 00:14:37                                 
+Interface eth1                                                                  
+  Link is DOWN, administrative state is UP                                      
+  Hardware is Ethernet, address is 001a.eb94.27ba                               
+  index 11 metric 1 mtu 1500                                                    
+  configured duplex auto, configured speed auto, configured polarity auto       
+  <UP,BROADCAST,MULTICAST>                                                      
+  VRF Binding: Not bound                                                        
+  SNMP link-status traps: Disabled                                              
+  Bandwidth 1g                                                                  
+  Router Advertisement is disabled                                              
+  Router Advertisement default routes are accepted                              
+  Router Advertisement prefix info is accepted                                  
+    input packets 0, bytes 0, dropped 0, multicast packets 0                    
+    output packets 0, bytes 0                                                   
+    input average rate : 30 seconds 0 bps, 5 minutes 0 bps                      
+    output average rate: 30 seconds 0 bps, 5 minutes 0 bps                      
+  Time since last state change: 0 days 00:14:37                                 
+Interface lo                                                                    
+  Link is UP, administrative state is UP                                        
+  Hardware is Loopback                                                          
+  index 1 metric 1                                                              
+  <UP,LOOPBACK,RUNNING>                                                         
+  VRF Binding: Not bound                                                        
+  SNMP link-status traps: Disabled                                              
+  Router Advertisement is disabled                                              
+  Router Advertisement default routes are accepted                              
+  Router Advertisement prefix info is accepted                                  
+  Time since last state change: 0 days 00:14:37                                 
+Interface vlan1                                                                 
+  Link is UP, administrative state is UP                                        
+  Hardware is VLAN, address is 001a.eb94.27bb                                   
+  IPv4 address 192.168.5.2/24 broadcast 192.168.5.255                           
+  IPv6 address fe80::21a:ebff:fe94:27bb/64                                      
+  index 301 metric 1 mtu 1500                                                   
+  arp ageing timeout 300                                                        
+  <UP,BROADCAST,RUNNING,MULTICAST>                                              
+  VRF Binding: Not bound                                                        
+  SNMP link-status traps: Disabled                                              
+  Router Advertisement is disabled                                              
+  Router Advertisement default routes are accepted                              
+  Router Advertisement prefix info is accepted                                  
+    input packets 187, bytes 18781, dropped 0, multicast packets 5              
+    output packets 184, bytes 51728, multicast packets 0, broadcast packets 0   
+    input average rate : 30 seconds 0 bps, 5 minutes 46 bps                     
+    output average rate: 30 seconds 1 bps, 5 minutes 147 bps                    
+    input peak rate 13.89 Kbps at 2019/12/10 07:27:26                           
+    output peak rate 37.09 Kbps at 2019/12/10 07:27:26                          
+  Time since last state change: 0 days 00:13:39                                 
+Interface br0                                                                   
+  Link is DOWN, administrative state is UP                                      
+  Hardware is Bridge, address is 001a.eb94.27bb                                 
+  index 13 metric 1 mtu 1500                                                    
+  MAC ageing time 300                                                           
+  <BROADCAST,MULTICAST>                                                         
+  VRF Binding: Not bound                                                        
+  SNMP link-status traps: Disabled                                              
+  Router Advertisement is disabled                                              
+  Router Advertisement default routes are accepted                              
+  Router Advertisement prefix info is accepted                                  
+    input packets 0, bytes 0, dropped 0, multicast packets 0                    
+    output packets 0, bytes 0, multicast packets 0, broadcast packets 0         
+    input average rate : 30 seconds 0 bps, 5 minutes 0 bps                      
+    output average rate: 30 seconds 0 bps, 5 minutes 0 bps                      
+  Time since last state change: 0 days 00:14:37   

@@ -1,0 +1,9 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+   - name: testing out rip module
+     awplus_rip:
+        network: 1.3.3.4
+        passive_int: yellow vlan10
+        state: absent

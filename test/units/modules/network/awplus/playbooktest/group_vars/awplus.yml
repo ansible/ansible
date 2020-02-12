@@ -1,0 +1,9 @@
+--- 
+snmp:
+  contact: Jason_E
+  location: NTC_HQ_NYC
+  ro:
+    - public123
+    - networktocode
+  rw:
+    - private123

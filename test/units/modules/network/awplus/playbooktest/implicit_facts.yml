@@ -1,0 +1,41 @@
+---
+# GATHER_SUBSET:
+# Default: system/device information
+# Hardware: Filesystems, memory structure
+# Config: running-config
+# Interfaces: information about ip, ipv6 interface, lldp
+# !min - exclude default facts
+# !all - only default facts
+
+
+- name: test my new module
+  connection: network_cli
+  gather_facts: False
+  hosts: all
+  tasks:
+  - name: Gather all legacy facts 
+    awplus_facts:
+      gather_subset: 
+        - all
+      
+  - name: Gather only config and default facts
+    awplus_facts:
+      gather_subset:
+        - config
+  
+  - name: Do not gather hardware facts
+    awplus_facts:
+      gather_subset:
+        - "!hardware"
+
+  - name: Gather only the interfaces resource facts and no legacy facts
+    awplus_facts:
+      gather_subset: # need to explicitly restrict subset, default will collect all subsets facts
+        - '!all'
+        - '!min'
+      gather_network_resources:
+        - interfaces
+
+
+
+

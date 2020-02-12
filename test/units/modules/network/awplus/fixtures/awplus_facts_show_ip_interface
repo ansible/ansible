@@ -1,0 +1,5 @@
+Interface             IP-Address         Status          Protocol               
+eth1                  unassigned         admin up        down                   
+lo                    unassigned         admin up        running                
+vlan1                 192.168.5.2/24     admin up        running                
+br0                   unassigned         admin up        down  

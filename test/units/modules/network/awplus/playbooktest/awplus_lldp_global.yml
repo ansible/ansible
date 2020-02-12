@@ -1,0 +1,24 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+    - name: Merge provided congfiguration with device configuration
+      awplus_lldp_global:
+        config:
+          holdtime: 10
+          enabled: True
+          reinit: 3
+          timer: 10
+        state: merged
+    
+    - name: Replaces LLDP device configuration with provided configuration
+      awplus_lldp_global:
+        config:
+          holdtime: 4
+          reinit: 5
+        state: replaced
+
+    - name: Delete LLDP attributes
+      awplus_lldp_global:
+        state: deleted
+        

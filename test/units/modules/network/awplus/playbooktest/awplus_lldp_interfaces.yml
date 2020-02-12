@@ -1,0 +1,45 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks: 
+    - name: Delete LLDP attributes for all configured interfaces 
+      awplus_lldp_interfaces:
+        state: deleted
+
+    - name: Override device configuration of all lldp_interfaces with provided configuration
+      awplus_lldp_interfaces:
+        config:
+          - name: port1.0.1
+            receive: True
+            transmit: True
+        state: overridden
+    
+    - name: Merge provided configuration with device configuration
+      awplus_lldp_interfaces:
+        config:
+          - name: port1.0.2
+            receive: True
+            transmit: True
+            med_tlv_select:
+              location: True
+            tlv_select:
+              port_and_protocol_vlans: True
+        state: merged
+    
+    - name: Replace provided configuration with device configuration
+      awplus_lldp_interfaces:
+        config:
+          - name: port1.0.2
+            receive: False
+            transmit: True
+          - name: port1.0.3
+            receive: True
+            transmit: False
+        state: replaced
+
+    - name: Delete LLDP attributes of given interfaces 
+      awplus_lldp_interfaces:
+        config:
+          - name: port1.0.2
+        state: deleted
+      

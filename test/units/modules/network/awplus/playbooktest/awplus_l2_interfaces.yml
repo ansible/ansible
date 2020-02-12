@@ -1,0 +1,47 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+    - name: Override device configuration of all l2 interfaces with provided configuration
+      awplus_l2_interfaces:
+        config:
+          - name: port1.0.2
+            access:
+              vlan: 2
+        state: overridden
+    
+    - name: Replace provided configuration with device 
+      awplus_l2_interfaces:
+        config:
+          - name: port1.0.3
+            trunk:
+              allowed_vlans: 20-25
+              native_vlan: 21
+        state: replaced 
+    
+    - name: Merge provided configuration with device configuration
+      awplus_l2_interfaces:
+        config:
+          - name: port1.0.4
+            access:
+              vlan: 25
+          - name: port1.0.3
+            trunk:
+              allowed_vlans: 20-25
+              native_vlan: 40
+        state: merged
+
+    # - name: Delete AlliedWare Plus L2 interfaces as in given arguments
+    #   awplus_l2_interfaces:
+    #     config:
+    #       - name: port1.0.3
+    #     state: deleted
+
+    # - name: Delete all L2 interfaces as in given arguments
+    #   awplus_l2_interfaces:
+    #     state: deleted
+
+
+
+
+    

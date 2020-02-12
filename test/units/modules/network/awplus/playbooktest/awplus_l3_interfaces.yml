@@ -1,0 +1,45 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+    - name: Override device configuration of all l3 interfaces with provided configuration
+      awplus_l3_interfaces:
+        config:
+          - name: vlan1
+            ipv4: 
+              - address: 192.168.0.2/24
+                secondary: True
+        state: merged
+
+    # - name: Replaces device config of listed interfaces with provided config
+    #   awplus_l3_interfaces:
+    #     config:
+    #       - name: vlan2
+    #         ipv4:
+    #           - address: dhcp
+    #             dhcp_client: 2
+    #             dhcp_hostname: test.com
+    #     state: replaced
+
+    - name: Override device configuration of all interfaces with provided configuration
+      awplus_l3_interfaces:
+        config:
+          - name: vlan2
+            ipv6: 
+              - address: dhcp
+          - name: vlan1
+            ipv4:
+              - address: 192.168.5.2/24
+        state: overridden
+
+
+    - name: Delete attributes of given interface
+      awplus_l3_interfaces:
+        config:
+          - name: vlan2
+        state: deleted
+    
+
+
+
+    

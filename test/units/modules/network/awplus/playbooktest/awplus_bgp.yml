@@ -1,0 +1,10 @@
+---
+  - hosts: all
+    connection: network_cli
+    tasks:
+      - name: Configure a simple ASN
+        awplus_bgp:
+          asn: 100
+          vrf: default
+          router_id: 192.0.2.4
+          state: present

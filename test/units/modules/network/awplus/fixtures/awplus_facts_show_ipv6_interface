@@ -1,0 +1,6 @@
+  * = Autoconfigured Address                                                    
+Interface     IPv6-Address                    State        Status      Protocol 
+eth1          unassigned                      N/A          admin up    down     
+lo            unassigned                      N/A          admin up    running  
+vlan1         fe80::21a:ebff:fe94:27bb/64     preferred    admin up    running  
+br0           unassigned                      N/A          admin up    down   

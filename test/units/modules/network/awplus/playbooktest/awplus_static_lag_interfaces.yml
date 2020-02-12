@@ -1,0 +1,13 @@
+---
+  - hosts: all
+    connection: network_cli
+    tasks: 
+    - name: Merge provided configuration with device configuration
+      awplus_static_lag_interfaces:
+        config:
+          - name: 2
+            members:
+              - member: port1.0.4
+                member_filters: True
+              - member: port1.0.3
+        state: merged

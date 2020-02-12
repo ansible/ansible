@@ -1,0 +1,44 @@
+---
+- name: test my new module
+  connection: network_cli
+  hosts: all
+  tasks:
+  - name: run show version on remote devices
+    awplus_command:
+      commands: show running-config
+    register: config
+
+
+  - name: run show version and check to see if output contains AlliedWare Plus
+    awplus_command:
+      commands: show version
+      wait_for: result[0] contains AlliedWare
+
+  - name: run multiple commands on remote nodes
+    awplus_command:
+      commands:
+        - show version
+        - show interface
+
+  - name: run multiple commands and evaluate the output
+    awplus_command:
+      commands:
+        - show version
+        - show interface
+      wait_for:
+        - result[0] contains AlliedWare
+        - result[1] contains lalala
+      match: any
+
+  # ONLY APPLICABLE FOR COMMANDS THAT DISPLAYS A PROMPT
+  # - name: run commands that require answering a prompt
+  #   awplus_command:
+  #     commands:
+  #       - command: copy test.txt tftp
+  #         prompt: 'Do you want to continue \[confirm\]'
+
+  - name: save output to backups
+    copy: 
+      content: "{{ config.stdout[0] }}"
+      dest: "backups/show_runningconfig1_{{ inventory_hostname }}.txt"
+

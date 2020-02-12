@@ -1,0 +1,34 @@
+---
+  - hosts: all
+    connection: network_cli
+    tasks:
+      # - name: Test reachability to 10.30.30.30 using default vrf
+      #   awplus_ping:
+      #     dest: 10.30.30.30
+      #     state: absent
+
+      # - name: Test reachability to 192.168.5.1
+      #   awplus_ping:
+      #     dest: 192.168.5.1
+      #     state: absent
+
+      # - name: Test reachability to 192.168.5.1 from vrf red
+      #   awplus_ping:
+      #     dest: 192.168.5.1
+      #     vrf: red
+
+
+      # - name: Test reachability to 192.168.5.89
+      #   awplus_ping:
+      #     dest: 192.168.5.89
+      #     state: present
+
+
+      - name: Test reachability to 192.168.5.1 setting count and source
+        awplus_ping:
+          dest: 192.168.5.1
+          source: vlan2
+          count: 20
+
+
+      

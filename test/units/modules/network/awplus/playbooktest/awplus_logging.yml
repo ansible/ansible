@@ -1,0 +1,47 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+    - name: Configure host logging
+      awplus_logging:
+        dest: host
+        name: 172.16.0.1
+        state: present
+    
+    - name: Remove host logging configuration
+      awplus_logging:
+        dest: host
+        name: 172.16.0.1
+        state: absent
+
+    # - name: Configure console logging level and facility
+    #   awplus_logging:
+    #     dest: console 
+    #     facility: daemon
+    #     level: notices
+    #     state: present
+
+    - name: Configure buffer size
+      awplus_logging:
+        dest: buffered
+        size: 80
+
+    - name: Configure logging using aggregate
+      awplus_logging:
+        aggregate:
+          - { dest: console, facility: kern}
+          - { dest: buffered, size: 100}
+  
+
+    - name: Remove logging using aggregate
+      awplus_logging:
+        aggregate:
+          - { dest: console, facility: kern}
+          - { dest: buffered, size: 100}
+        state: absent
+
+    - name: Configure global facility
+      awplus_logging:
+        dest: facility
+        facility: kern
+

@@ -1,0 +1,36 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks: 
+    - name: Merge
+      awplus_vlans:
+        config:
+          - name: testing2
+            state: disable
+            vlan_id: 100
+        state: merged
+
+    # - name: Override device configuration of all VLANs with provided configuration
+    #   awplus_vlans:
+    #     config:
+    #       - name: vlan2
+    #         vlan_id: 2
+    #         state: enable
+    #     state: overridden
+
+    - name: Replaces device configuration of listed VLANS with provided configuration
+      awplus_vlans:
+        config:
+          - vlan_id: 100
+            name: Test_VLAN100
+            state: enable
+        state: replaced
+    
+    - name: Delete attributes of given VLANs
+      awplus_vlans:
+        config:
+          - vlan_id: 100
+        state: deleted
+      
+
+

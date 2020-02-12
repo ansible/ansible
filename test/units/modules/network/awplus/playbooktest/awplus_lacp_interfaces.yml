@@ -1,0 +1,38 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+    - name: Merge provided configuration with device configuration
+      awplus_lacp_interfaces:
+        config:
+          - name: port1.0.2
+            port_priority: 2
+            timeout: short
+        state: merged
+
+    - name: Replace provided configuration with device configuration
+      awplus_lacp_interfaces:
+        config:
+          - name: port1.0.2
+            port_priority: 3
+        state: replaced
+
+    - name: Delete LACP attributes of given interfaces
+      awplus_lacp_interfaces:
+        config:
+          - name: port1.0.2
+        state: deleted
+
+    - name: Override provided configuration with device configuration
+      awplus_lacp_interfaces:
+        config:
+          - name: port1.0.2
+            port_priority: 4
+        state: overridden
+
+    - name: Delete LACP attributes of all interfaces
+      awplus_lacp_interfaces:
+        state: deleted
+    
+
+    

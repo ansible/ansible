@@ -1,0 +1,10 @@
+PING 192.168.5.1 (192.168.5.1) 56(84) bytes of data.                            
+64 bytes from 192.168.5.1: icmp_seq=1 ttl=64 time=0.351 ms                      
+64 bytes from 192.168.5.1: icmp_seq=2 ttl=64 time=0.197 ms                      
+64 bytes from 192.168.5.1: icmp_seq=3 ttl=64 time=0.194 ms                      
+64 bytes from 192.168.5.1: icmp_seq=4 ttl=64 time=0.164 ms                      
+64 bytes from 192.168.5.1: icmp_seq=5 ttl=64 time=0.171 ms                      
+                                                                                
+--- 192.168.5.1 ping statistics ---                                             
+5 packets transmitted, 5 received, 0% packet loss, time 3996ms                  
+rtt min/avg/max/mdev = 0.164/0.215/0.351/0.070 ms  

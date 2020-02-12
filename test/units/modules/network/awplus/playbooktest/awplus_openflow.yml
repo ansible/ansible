@@ -1,0 +1,8 @@
+---
+  - hosts: all
+    connection: network_cli
+    tasks: 
+      - name: Test openflow module
+        awplus_openflow:
+          address: 192.168.5.1
+          state: present

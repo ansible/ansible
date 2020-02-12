@@ -1,0 +1,15 @@
+                                                                                
+LLDP Global Configuration:                [Default Values]                      
+  LLDP Status ............... Disabled    [Disabled]                            
+  Notification Interval ..... 5 secs      [5]                                   
+  Tx Timer Interval ......... 30 secs     [30]                                  
+  Hold-time Multiplier ...... 4           [4]                                   
+  (Computed TTL value ....... 120 secs)                                         
+  Reinitialization Delay .... 2 secs      [2]                                   
+  Tx Delay .................. 2 secs      [2]                                   
+  Port Number Type .......... Port-Number [Port-Number]                         
+  Fast Start Count .......... 3           [3]                                   
+                                                                                
+LLDP Global Status:                                                             
+  Total Neighbor Count ...... 0                                                 
+  Neighbors table last updated 0 hrs 19 mins 56 secs ago    

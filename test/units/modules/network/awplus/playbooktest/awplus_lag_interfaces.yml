@@ -1,0 +1,46 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+    # - name: Delete LAG attributes of given interfaces
+    #   awplus_lag_interfaces:
+    #     config:
+    #       - name: 10
+    #     state: deleted
+
+    
+    - name: Merge provided configuration with device configuration
+      awplus_lag_interfaces:
+        config:
+          - name: 2
+            members:
+              - member: port1.0.4
+                mode: active
+              - member: port1.0.3
+                mode: active
+        state: merged
+
+
+    - name: Override device configuration of all interfaces with provided configuration
+      awplus_lag_interfaces:
+        config:
+          - name: 10
+            members:
+              - member: port1.0.4
+                mode: passive
+        state: overridden
+
+    - name: Replaces device configuration of listed interfaces with provided configuration
+      awplus_lag_interfaces:
+        config:
+          - name: 40
+            members:
+            - member: port1.0.3
+              mode: active
+        state: replaced
+
+    - name: Delete all configured LAG attributes for interfaces
+      awplus_lag_interfaces:
+        state: deleted
+      
+

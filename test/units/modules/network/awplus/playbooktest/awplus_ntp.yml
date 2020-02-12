@@ -1,0 +1,12 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+   - name: testing out ntp module
+     awplus_ntp:
+        server: 192.168.5.2
+        source_int: 192.66.44.33
+        restrict: 192.155.56.4 allow
+        state: present
+        auth_key: ajsdlksa
+        key_id: 8900

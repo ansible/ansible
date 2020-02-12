@@ -1,0 +1,10 @@
+---
+- name: UPGRADE AW+ SWITCHES & ROUTERS
+  hosts: all
+  connection: network_cli
+  gather_facts: network_cli
+
+  vars_prompt:
+    name: "compliant_awplus_version"
+    prompt: "what is the compliant aw+ version?"
+    private: no 

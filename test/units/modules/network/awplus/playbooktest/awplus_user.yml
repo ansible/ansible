@@ -1,0 +1,59 @@
+---
+  - hosts: all
+    connection: network_cli
+    tasks:
+      - name: create a new user with configured password
+        awplus_user:
+          name: ansible
+          configured_password: hello
+          state: present
+
+      # - name: purge all users except manager and chengk
+      #   awplus_user:
+      #     aggregate:
+      #       - name: manager
+      #       - name: chengk
+      #     purge: yes
+
+      # - name: purge all users except manager
+      #   awplus_user:
+      #     name: manager
+      #     purge: yes
+
+      # - name: create a user chengk with configured password
+      #   awplus_user:
+      #     name: chengk
+      #     configured_password: chengyikok
+      #     state: present
+      
+      - name: create a new user with hash password
+        awplus_user:
+          name: ansible1
+          hashed_password: 
+            value: $1$Xbe4cg43$k7jjFxx8aJBm0oG8fzIc.0
+
+      - name: Delete user ansible1
+        awplus_user:
+          name: ansible1
+          state: absent
+
+      # - name: Delete user ansible with aggregate
+      #   awplus_user:
+      #     aggregate:
+      #       - name: ansible1
+      #       - name: ansible
+      #     state: absent
+      
+      - name: Change password for user ansible
+        awplus_user:
+          name: ansible
+          configured_password: bye
+          state: present
+      
+      - name: set multiple users to privilege level 15
+        awplus_user:
+          aggregate:
+            - name: chengk  
+            - name: ansible
+          privilege: 15
+          state: present

@@ -1,0 +1,22 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+  - name: Merge provided configuration with device configuration
+    awplus_lacp:
+      config:
+        system:
+          priority: 123
+      state: merged
+
+  - name: Delete global lacp attribute
+    awplus_lacp:
+      state: deleted
+  
+  - name: Replaces global LACP configuration
+    awplus_lacp:
+      config:
+        system:
+          priority: 50
+      state: replaced
+

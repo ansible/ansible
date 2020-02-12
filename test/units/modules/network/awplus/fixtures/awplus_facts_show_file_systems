@@ -1,0 +1,15 @@
+                                                                                
+ Size(b)  Free(b)  Type   Flags  Prefixes   S/D/V   Lcl/Ntwk  Avail             
+-------------------------------------------------------------------             
+   3.6G     3.6G   flash     rw  flash:     static  local      Y                
+      -        -   system    rw  system:    virtual local      -                
+    10M     9.7M   debug     rw  debug:     static  local      Y                
+   436K     341K   nvs       rw  nvs:       static  local      Y                
+      -        -   usbstick  rw  usb:       dynamic local      N                
+      -        -   sdcard    rw  card:      dynamic local      N                
+      -        -   fserver   rw  fserver:   dynamic network    N                
+      -        -   tftp      rw  tftp:      -       network    -                
+      -        -   scp       rw  scp:       -       network    -                
+      -        -   sftp      ro  sftp:      -       network    -                
+      -        -   http      ro  http:      -       network    -                
+      -        -   rsync     rw  rsync:     -       network    -  

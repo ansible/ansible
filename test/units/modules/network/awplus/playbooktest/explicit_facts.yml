@@ -1,0 +1,37 @@
+---
+- name: test my new module
+  connection: network_cli
+  gather_facts: True
+  hosts: all
+  tasks:
+  - name: Gather facts 
+    awplus_facts:
+      gather_subset: all
+      gather_network_resources: all
+  
+  - name: Display all ipv4 and ipv6 addresses connected to Ansible
+    debug:
+      msg: "All ipv4 addresses: {{ ansible_net_all_ipv4_addresses }} ||
+            All ipv6 addresses: {{ ansible_net_all_ipv6_addresses }}"
+
+  - name: Display filesystems in AW+ device
+    debug:
+      msg: "All filesystems: {{ ansible_net_filesystems }}"
+
+  - name: Display hostname of AW+ device
+    debug:
+      msg: "AW+ device hostname: {{ ansible_net_hostname }}"
+  
+  - name: Display AW+ device image
+    debug:
+      msg: "AW+ device image: {{ ansible_net_image }}"
+  
+  - name: Display remaining memory on AW+ device
+    debug:
+      msg: "Remaining memory: {{ ansible_net_memfree }}"
+
+  - name: Display misc. information about the AW+ device
+    debug:
+      msg: "Serial number: {{ ansible_net_serialnum }} ||
+            Software version: {{ ansible_net_version }}"
+

@@ -1,0 +1,8 @@
+!                                                                               
+service password-encryption                                                     
+!                                                                               
+hostname aw1                                                                    
+!                                                                               
+banner exec hello peeps                                                         
+no banner motd                                                                  
+!               

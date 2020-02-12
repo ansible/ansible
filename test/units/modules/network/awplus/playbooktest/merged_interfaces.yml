@@ -1,0 +1,17 @@
+---
+  - name: Test awplus_interface module
+    connection: network_cli
+    hosts: all
+    tasks:
+      - name: Merge provided configuration with device configuration
+        awplus_interfaces:
+          config:
+            - name: port1.0.2
+              description: Merged by Ansible Network
+              duplex: full
+
+              # vlan1 does not have duplex configuration option 
+            - name: vlan1
+              description: Merged by Ansible Network
+              mtu: 1500 # in the range <68-1582> ; Changed mtu config doesn't show in CLI
+          state: merged

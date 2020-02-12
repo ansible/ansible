@@ -1,0 +1,10 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+   - name: testing out vrf module
+     awplus_vrf:
+       name: test_1
+       interfaces:
+          - vlan32
+       state: present

@@ -1,0 +1,39 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+    - name: delete link aggregation group
+      awplus_linkagg:
+        group: 100
+        state: absent
+      
+    - name: delete link aggregation group
+      awplus_linkagg:
+        group: 3
+        state: absent
+
+    - name: set link aggregation group to members
+      awplus_linkagg:
+        group: 200
+        mode: active
+        members: 
+          - port1.0.4
+          - port1.0.3
+    
+    - name: remove link aggregation group from port1.0.3
+      awplus_linkagg:
+        group: 200
+        mode: active
+        members:
+          - port1.0.4
+
+    - name: delete link aggregation group
+      awplus_linkagg:
+        group: 200
+        state: absent
+
+    - name: Create aggregate of linkagg definitions
+      awplus_linkagg:
+        aggregate:
+          - { group: 3, mode: active, members: [port1.0.4] }
+          - { group: 100, mode: passive, members: [port1.0.3] }

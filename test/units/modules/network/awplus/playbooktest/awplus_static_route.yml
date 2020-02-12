@@ -1,0 +1,36 @@
+---
+- hosts: all
+  connection: network_cli
+  tasks:
+    - name: configure static route
+      awplus_static_route:
+        prefix: 192.168.6.0
+        mask: 25
+        next_hop: 10.0.0.1
+
+    - name: remove configuration
+      awplus_static_route:
+        prefix: 192.168.6.0
+        mask: 25
+        next_hop: 10.0.0.1
+        state: absent
+
+    - name: Add static route aggregates
+      awplus_static_route:
+        aggregate:
+          - { prefix: 172.16.32.0, mask: 25, next_hop: 10.0.0.8 }
+          - { prefix: 172.16.33.0, mask: 25, next_hop: 10.0.0.8 }
+
+    - name: Remove static route aggregates
+      awplus_static_route:
+        aggregate:
+          - { prefix: 172.16.32.0, mask: 25, next_hop: 10.0.0.8 }
+          - { prefix: 172.16.33.0, mask: 25, next_hop: 10.0.0.8 }
+        state: absent
+
+    - name: configure static route in vrf orange 
+      awplus_static_route:
+        prefix: 192.168.2.0
+        mask: 25
+        vrf: orange
+        interface: vlan2

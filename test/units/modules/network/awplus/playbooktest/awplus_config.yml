@@ -1,0 +1,47 @@
+---
+- hosts: all
+  gather_facts: false
+  connection: local
+
+
+  tasks:
+    - name: Change hostname
+      awplus_config:
+        lines:
+          - hostname aw1
+
+    - name: configure interface settings
+      awplus_config:
+        lines:
+          - description test interface
+        parents: interface port1.0.2
+
+    - name: configure ip helpers on multiple interfaces
+      awplus_config:
+        lines:
+          - ip helper-address 172.26.1.10
+          - ip helper-address 172.26.3.8
+        parents: "{{ item }}"
+      with_items:
+        - interface eth1
+        - interface vlan1 
+
+    - name: check startup-config against master config
+      awplus_config:
+        diff_against: intended
+        intended_config: "{{ lookup('file', 'master.cfg') }}"
+
+    - name: check the startup-config against the running-config
+      awplus_config:
+        diff_against: startup
+
+    - name: for idempotency, use full-form commands
+      awplus_config:
+        lines:
+          - shutdown
+        parents: interface port1.0.2
+
+
+    - name: save running to startup when modified
+      awplus_config:
+        save_when: modified 
