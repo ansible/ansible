@@ -311,8 +311,7 @@ EXAMPLES = """
             rules:
               - name: 'INBOUND'
                 direction: 'in'
-    state: replaced    
-      
+    state: replaced
 #
 #
 # -------------------------
@@ -692,19 +691,19 @@ EXAMPLES = """
 #    ]
 #
 # "after": [
-        {
-            "name": "eth0"
-        },
-        {
-            "name": "eth1"
-        },
-        {
-            "name": "eth2"
-        },
-        {
-            "name": "eth3"
-        }
-    ]
+#        {
+#            "name": "eth0"
+#        },
+#        {
+#            "name": "eth1"
+#        },
+#        {
+#            "name": "eth2"
+#        },
+#        {
+#            "name": "eth3"
+#        }
+#    ]
 # After state
 # ------------
 # vyos@vyos# run show configuration commands | grep firewall
@@ -908,12 +907,12 @@ EXAMPLES = """
         access_rules:
           - afi: 'ipv4'
             rules:
-              - name: 'INGRESS'
-                direction: 'in'
-              - name: 'OUTGRESS'
-                direction: 'out'
-              - name: 'DROP'
-                direction: 'local'
+              - direction: 'in'
+                name: 'INGRESS'
+              - direction: 'out'
+                name: 'OUTGRESS'
+              - direction: 'local'
+                name: 'DROP'
     state: rendered
 #
 #
