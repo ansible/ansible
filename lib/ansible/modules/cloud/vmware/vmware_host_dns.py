@@ -222,7 +222,7 @@ class VmwareHostDNS(PyVmomi):
                         else:
                             dns_config.hostName = instance.dnsConfig.hostName
 
-                        if self.search_domains:
+                        if self.search_domains is not None:
                             if instance.dnsConfig.searchDomain != self.search_domains:
                                 host_result['search_domains_previous'] = instance.dnsConfig.searchDomain
                                 host_result['search_domains_changed'] = (
@@ -251,7 +251,7 @@ class VmwareHostDNS(PyVmomi):
 
                             # Check domain
                             host_result['domain'] = self.domain
-                            if self.domain:
+                            if self.domain is not None:
                                 if instance.dnsConfig.domainName != self.domain:
                                     host_result['domain_previous'] = instance.dnsConfig.domainName
                                     changed = True
@@ -262,7 +262,7 @@ class VmwareHostDNS(PyVmomi):
 
                             # Check DNS server(s)
                             host_result['dns_servers'] = self.dns_servers
-                            if self.dns_servers:
+                            if self.dns_servers is not None:
                                 if instance.dnsConfig.address != self.dns_servers:
                                     host_result['dns_servers_previous'] = instance.dnsConfig.address
                                     host_result['dns_servers_changed'] = (
@@ -439,8 +439,8 @@ def main():
         device=dict(type='str'),
         host_name=dict(required=False, type='str'),
         domain=dict(required=False, type='str'),
-        dns_servers=dict(required=False, type='list'),
-        search_domains=dict(required=False, type='list'),
+        dns_servers=dict(required=False, type='list', default=None),
+        search_domains=dict(required=False, type='list', default=None),
         esxi_hostname=dict(required=False, type='str'),
         cluster_name=dict(required=False, type='str'),
         verbose=dict(type='bool', default=False, required=False)

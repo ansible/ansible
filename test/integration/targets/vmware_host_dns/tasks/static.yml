@@ -9,11 +9,7 @@
         validate_certs: False
         type: 'static'
         host_name: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['host_name'] }}"
-        domain: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['domain_name'] }}"
-        dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
-        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
       register: vmware_host_dns_result_0001
-
     - name: Ensure DNS config wasn't changed
       assert:
         that:
@@ -31,9 +27,6 @@
         validate_certs: False
         type: 'static'
         host_name: newname
-        domain: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['domain_name'] }}"
-        dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
-        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
       register: vmware_host_dns_result_0002
 
     - name: Ensure DNS config was changed
@@ -52,10 +45,7 @@
         password: '{{ esxi_password }}'
         validate_certs: False
         type: 'static'
-        host_name: newname
         domain: new.domain
-        dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
-        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
       register: vmware_host_dns_result_0003
 
     - name: Ensure DNS config was changed
@@ -74,12 +64,9 @@
         password: '{{ esxi_password }}'
         validate_certs: False
         type: 'static'
-        host_name: newname
-        domain: new.domain
         dns_servers:
           - 1.2.3.4
           - 5.6.7.8
-        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
       register: vmware_host_dns_result_0004
 
     - name: Ensure DNS config was changed
@@ -98,11 +85,6 @@
         password: '{{ esxi_password }}'
         validate_certs: False
         type: 'static'
-        host_name: newname
-        domain: new.domain
-        dns_servers:
-          - 1.2.3.4
-          - 5.6.7.8
         search_domains:
           - subdomain.example.local
           - example.local
@@ -146,8 +128,6 @@
         validate_certs: False
         type: 'static'
         domain: new.domain
-        dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
-        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
       register: vmware_host_dns_result_0007
 
     - name: Ensure DNS config was changed
@@ -167,11 +147,9 @@
         cluster_name: "{{ ccr1 }}"
         validate_certs: False
         type: 'static'
-        domain: new.domain
         dns_servers:
           - 1.2.3.4
           - 5.6.7.8
-        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
       register: vmware_host_dns_result_0008
 
     - name: Ensure DNS config was changed
@@ -191,10 +169,6 @@
         cluster_name: "{{ ccr1 }}"
         validate_certs: False
         type: 'static'
-        domain: new.domain
-        dns_servers:
-          - 1.2.3.4
-          - 5.6.7.8
         search_domains:
           - subdomain.example.local
           - example.local
@@ -204,6 +178,45 @@
       assert:
         that:
           - vmware_host_dns_result_0009 is changed
+
+    - name: Revert to original DNS configuration
+      include_tasks: teardown.yaml
+
+    - name: Remove all the DNS servers
+      vmware_host_dns:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        cluster_name: "{{ ccr1 }}"
+        validate_certs: False
+        type: 'static'
+        dns_servers: []
+      register: vmware_host_dns_result_0010
+
+    - name: Ensure DNS config was changed
+      assert:
+        that:
+          - vmware_host_dns_result_0010 is changed
+
+    - name: Remove the domain
+      vmware_host_dns:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        cluster_name: "{{ ccr1 }}"
+        validate_certs: False
+        type: 'static'
+        domain: ''
+      register: vmware_host_dns_result_0011
+
+    - name: Ensure the server has no domain
+      assert:
+        that:
+          - vmware_host_dns_result_0011 is changed
+
+
+    - name: Revert to original DNS configuration
+      include_tasks: teardown.yaml
 
   always:
     - name: Revert to original DNS configuration

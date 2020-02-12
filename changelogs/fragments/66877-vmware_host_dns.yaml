@@ -1,0 +1,2 @@
+minor_changes:
+  - vmware_host_dns can now set the following empty values, ``domain``, ``search_domains`` and ``dns_servers``. 
