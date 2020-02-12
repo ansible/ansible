@@ -45,7 +45,7 @@ from ansible.module_utils.six import iteritems, string_types, integer_types, rer
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
@@ -299,25 +299,36 @@ def mandatory(a, msg=None):
 
 
 def combine(*terms, **kwargs):
-    recursive = kwargs.get('recursive', False)
-    if len(kwargs) > 1 or (len(kwargs) == 1 and 'recursive' not in kwargs):
-        raise AnsibleFilterError("'recursive' is the only valid keyword argument")
+    recursive = kwargs.pop('recursive', False)
+    list_merge = kwargs.pop('list_merge', 'replace')
+    if kwargs:
+        raise AnsibleFilterError("'recursive' and 'list_merge' are the only valid keyword arguments")
 
-    dicts = []
-    for t in terms:
-        if isinstance(t, MutableMapping):
-            recursive_check_defined(t)
-            dicts.append(t)
-        elif isinstance(t, list):
-            recursive_check_defined(t)
-            dicts.append(combine(*t, **kwargs))
-        else:
-            raise AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
+    # allow the user to do `[dict1, dict2, ...] | combine`
+    dictionaries = flatten(terms, levels=1)
 
-    if recursive:
-        return reduce(merge_hash, dicts)
-    else:
-        return dict(itertools.chain(*map(iteritems, dicts)))
+    # recursively check that every elements are defined (for jinja2)
+    recursive_check_defined(dictionaries)
+
+    if not dictionaries:
+        return {}
+
+    if len(dictionaries) == 1:
+        return dictionaries[0]
+
+    # merge all the dicts so that the dict at the end of the array have precedence
+    # over the dict at the beginning.
+    # we merge the dicts from the highest to the lowest priority because there is
+    # a huge probability that the lowest priority dict will be the biggest in size
+    # (as the low prio dict will hold the "default" values and the others will be "patches")
+    # and merge_hash create a copy of it's first argument.
+    # so high/right -> low/left is more efficient than low/left -> high/right
+    high_to_low_prio_dict_iterator = reversed(dictionaries)
+    result = next(high_to_low_prio_dict_iterator)
+    for dictionary in high_to_low_prio_dict_iterator:
+        result = merge_hash(dictionary, result, recursive, list_merge)
+
+    return result
 
 
 def comment(text, style='plain', **kw):
