@@ -238,7 +238,7 @@ Installing Ansible on macOS
 
 The preferred way to install Ansible on a Mac is with ``pip``.
 
-The instructions can be found in :ref:`from_pip`. If you are running macOS version 10.12 or older, then you should upgrade to the latest ``pip`` to connect to the Python Package Index securely.
+The instructions can be found in :ref:`from_pip`. If you are running macOS version 10.12 or older, then you should upgrade to the latest ``pip`` to connect to the Python Package Index securely. It should be noted that pip must be run as a module on macOS, and the linked ``pip`` instructions will show you how to do that.
 
 .. _from_pkgutil:
 
@@ -299,7 +299,7 @@ Update of the software will be managed by the swupd tool::
 Installing Ansible with ``pip``
 --------------------------------
 
-Ansible can be installed with ``pip``, the Python package manager.  If ``pip`` isn't already available on your system of Python, run the following commands to install it::
+Ansible can be installed with ``pip``, the Python package manager. It should be noted that macOS requires a slightly different use of ``pip`` than ``*nix`` due to ``openssl`` requirements, therefore pip must be run as a module.  If ``pip`` isn't already available on your system of Python, run the following commands to install it::
 
     $ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
     $ python get-pip.py --user
@@ -307,10 +307,18 @@ Ansible can be installed with ``pip``, the Python package manager.  If ``pip`` i
 Then install Ansible [1]_::
 
     $ pip install --user ansible
+    
+For macOS, there is no need to use ``sudo`` or install additional fixes, simply access the Python module namespace for ``pip``::
+
+    $ python -m pip install --user ansible
 
 Or if you are looking for the development version::
 
     $ pip install --user git+https://github.com/ansible/ansible.git@devel
+
+For macOS::
+
+    $ python -m pip install --user git+https://github.com/ansible/ansible.git@devel
 
 If you are installing on macOS Mavericks (10.9), you may encounter some noise from your compiler. A workaround is to do the following::
 
@@ -319,6 +327,10 @@ If you are installing on macOS Mavericks (10.9), you may encounter some noise fr
 In order to use the ``paramiko`` connection plugin or modules that require ``paramiko``, install the required module [2]_::
 
     $ pip install --user paramiko
+
+For macOS::
+
+    $ python -m pip install --user paramiko
 
 Ansible can also be installed inside a new or existing ``virtualenv``::
 
