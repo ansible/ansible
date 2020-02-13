@@ -820,7 +820,7 @@ def main():
         state=dict(required=True, choices=['present', 'absent']),
         successful_response_codes=dict(),
         tags=dict(default={}, type='dict'),
-        target_type=dict(default='instance', choices=['instance', 'ip', 'lambda']),
+        target_type=dict(choices=['instance', 'ip', 'lambda']),
         targets=dict(type='list'),
         unhealthy_threshold_count=dict(type='int'),
         vpc_id=dict(),
