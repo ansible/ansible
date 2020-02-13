@@ -62,15 +62,15 @@ class AclsArgs(object):  # pylint: disable=R0903
                                 'source': {
                                     'type': 'dict',
                                     'options': {
-                                        'source_address': {'type': 'str'},
-                                        'source_prefix_list': {'type': 'str'},
+                                        'address': {'type': 'str'},
+                                        'prefix_list': {'type': 'str'},
                                     },
                                 },
                                 'destination': {
                                     'type': 'dict',
                                     'options': {
-                                        'destination_address': {'type': 'str'},
-                                        'destionation_predix_list': {'type', 'str'},
+                                        'address': {'type': 'str'},
+                                        'prefix_list': {'type': 'str'},
                                     },
                                 },
                                 'icmp-code': {
