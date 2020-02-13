@@ -272,7 +272,7 @@ def get_vm_info(one, vm):
 
 def main():
     fields = {
-        "ids": {"required": False, "aliases": ['id'], "type": "list"},
+        "ids": {"required": False, "aliases": ['id'], "type": "list", "elements": "int"},
         "name": {"required": False, "type": "str"}
     }
 
@@ -283,8 +283,9 @@ def main():
     # ensure that all ids are int.
     str_ids = one.module.params.get('ids')
     ids = []
-    for str_id in str_ids:
-        ids.append(int(str_id))
+    if str_ids:
+        for str_id in str_ids:
+            ids.append(int(str_id))
 
     name = one.module.params.get('name')
 
