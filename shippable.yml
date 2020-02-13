@@ -202,9 +202,6 @@ matrix:
     - env: T=cs/2.7/2
     - env: T=cs/3.6/2
 
-    - env: T=tower/2.7/1
-    - env: T=tower/3.6/1
-
     - env: T=cloud/2.7/1
     - env: T=cloud/3.6/1
 
