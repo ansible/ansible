@@ -1094,6 +1094,7 @@ class StrategyBase:
         elif meta_action == 'end_host':
             if _evaluate_conditional(target_host):
                 iterator._host_states[target_host.name].run_state = iterator.ITERATING_COMPLETE
+                iterator._play._removed_hosts.append(target_host.name)
                 msg = "ending play for %s" % target_host.name
             else:
                 skipped = True
