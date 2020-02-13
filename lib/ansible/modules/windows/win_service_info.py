@@ -210,7 +210,7 @@ services:
       sample: win32_own_process
     sid_info:
       description:
-      - The behviour of how the service's access token is generated and how to add the service SID to the token.
+      - The behavior of how the service's access token is generated and how to add the service SID to the token.
       - Common values are C(none), C(restricted), or C(unrestricted).
       type: str
       sample: none
