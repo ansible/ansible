@@ -87,7 +87,6 @@ class AnsibleCoreCI:
                 'vyos',
                 'junos',
                 'ios',
-                'tower',
                 'rhel',
                 'hetzner',
             ),
