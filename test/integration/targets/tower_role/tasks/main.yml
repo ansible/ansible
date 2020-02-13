@@ -27,14 +27,6 @@
     that:
       - "result is changed"
 
-- name: Test tower_verify_ssl alias
-  tower_role:
-    user: joe
-    role: update
-    project: Demo Project
-    tower_verify_ssl: true
-    state: absent
-
 - name: Delete a User
   tower_user:
     username: joe
