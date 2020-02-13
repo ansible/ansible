@@ -134,9 +134,11 @@ def list_ec2_vpc_nacls(connection, module):
     try:
         nacls = connection.describe_network_acls(aws_retry=True, NetworkAclIds=nacl_ids, Filters=filters)
     except ClientError as e:
-        module.fail_json_aws(e, msg="Unable to describe network ACLs {0}: {1}".format(nacl_ids, to_native(e)))
+        if e.response['Error']['Code'] == 'InvalidNetworkAclID.NotFound':
+            module.fail_json(msg='Unable to describe ACL.  NetworkAcl does not exist')
+        module.fail_json_aws(e, msg="Unable to describe network ACLs {0}".format(nacl_ids))
     except BotoCoreError as e:
-        module.fail_json_aws(e, msg="Unable to describe network ACLs {0}: {1}".format(nacl_ids, to_native(e)))
+        module.fail_json_aws(e, msg="Unable to describe network ACLs {0}".format(nacl_ids))
 
     # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_nacls = []
