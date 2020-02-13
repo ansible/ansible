@@ -17,7 +17,7 @@ module: ucs_disk_group_policy
 short_description: Configures disk group policies on Cisco UCS Manager
 description:
 - Configures disk group policies on Cisco UCS Manager.
-- Examples can be used with the L(UCS Platform Emulator,https://communities.cisco.com/ucspe).
+- Examples can be used with the L(UCS Platform Emulator,https://community.cisco.com/t5/unified-computing-system/ucs-platform-emulator-downloads-ucspe-4-0-4epe1-ucspe-3-2-3epe1/ta-p/3648177).
 extends_documentation_fragment: ucs
 options:
   state:
