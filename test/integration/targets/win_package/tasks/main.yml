@@ -1,63 +1,71 @@
 ---
-- name: ensure testing folders exists
+- name: ensure testing folder exists
   win_file:
-    path: '{{item}}'
+    path: '{{ test_path }}'
     state: directory
-  with_items:
-  - '{{test_win_package_path}}'
-  - '{{test_win_package_path_safe}}'
 
-- name: download msi files from S3 bucket
-  win_get_url:
-    url: '{{item.url}}'
-    dest: '{{test_win_package_path}}\{{item.name}}'
-  with_items:
-  - { url: '{{test_win_package_good_url}}', name: 'good.msi' }
-  - { url: '{{test_win_package_reboot_url}}', name: 'reboot.msi' }
-  - { url: '{{test_win_package_bad_url}}', name: 'bad.msi' }
-  # - { url: '{{test_win_package_exe_url}}', name: '7z.exe' }
-
-- name: make sure all test msi's are uninstalled before test
-  win_package:
-    product_id: '{{item.id}}'
-    arguments: '{{item.args|default(omit)}}'
+# Some of the registry_tests.yml create a badly formed unisntall string so remove the reg entry in case the test
+# didn't get to cleaning itself up
+- name: remove registry package path
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }}
     state: absent
+
+- name: download packages from S3 bucket
+  win_get_url:
+    url: '{{ item.url }}'
+    dest: '{{ test_path }}\{{ item.name }}'
   with_items:
-  - { id: '{{test_win_package_good_id}}' }
-  - { id: '{{test_win_package_reboot_id}}' }
-  # - { id: '{{test_win_package_exe_id}}', args: '/S' }
+  - url: '{{ good_url }}'
+    name: good.msi
+  - url: '{{ reboot_url }}'
+    name: reboot.msi
+  - url: '{{ bad_url }}'
+    name: bad.msi
+  - url: '{{ patch_msi_url }}'
+    name: patch.msi
+  - url: '{{ patch_msp_url }}'
+    name: patch.msp
+
+- name: make sure all test packages are uninstalled before test
+  win_package:
+    product_id: '{{ item }}'
+    state: absent
+  with_items: '{{ all_ids }}'
 
 - block:
   - name: run tests for expected failures
     include_tasks: failure_tests.yml
 
-  - name: run tests for local and URL msi files
+  - name: run tests for msi files and URL paths
     include_tasks: msi_tests.yml
 
-  # doesn't work 100% on AWS hosts, disabling for now until we get a better exe example
-  # - name: run tests for local and URL exe files
-  #   include_tasks: exe_tests.yml
+  #  The msix test setup will only work on Server 2019 or newer so conditionally run this
+  - name: check if we can run the msix tests
+    win_shell: |
+      $osVersion = [Version](Get-Item -LiteralPath "$env:SystemRoot\System32\kernel32.dll").VersionInfo.ProductVersion
+      $osVersion -ge [Version]"10.0.17763"
+    register: can_run_msix
+    changed_when: False
 
-  # these tests can be run manually by defining test_win_package_network_path
-  - name: run tests for network msi files (manual)
-    include_tasks: network_tests.yml
-    when: test_win_package_network_path is defined
+  - name: run tests for msix packages
+    include_tasks: msix_tests.yml
+    when: can_run_msix.stdout | trim | bool
+
+  - name: run tests for msp packages
+    include_tasks: msp_tests.yml
+
+  - name: run tests for registry packages
+    include_tasks: registry_tests.yml
 
   always:
-  - name: make sure all test msi's are uninstalled after test
+  - name: remove registry package path
+    win_regedit:
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }}
+      state: absent
+
+  - name: make sure all test packages are uninstalled after test
     win_package:
-      product_id: '{{item.id}}'
-      arguments: '{{item.args|default(omit)}}'
+      product_id: '{{ item }}'
       state: absent
-    with_items:
-    - { id: '{{test_win_package_good_id}}' }
-    - { id: '{{test_win_package_reboot_id}}' }
-    # - { id: '{{test_win_package_exe_id}}', args: '/S' }
-  
-  - name: cleanup test artifacts
-    win_file:
-      path: '{{item}}'
-      state: absent
-    with_items:
-    - '{{test_win_package_path}}'
-    - '{{test_win_package_path_safe}}'
+    with_items: '{{ all_ids }}'

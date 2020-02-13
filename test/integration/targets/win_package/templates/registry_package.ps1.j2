@@ -1,0 +1,26 @@
+$ErrorActionPreference = 'Stop'
+
+$productId = '{{ registry_id }}'
+
+$regPath = switch ($args[0]) {
+    HKLMx64 { 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' }
+    HKLMx86 { 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall' }
+    HKCUx64 { 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' }
+    HKCUx86 { 'HKCU:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall' }
+    default { throw "Invalid registry path specified $($args[0])" }
+}
+$regProperty = $args[1]
+$regUninstallString = $args[2]
+#$regUninstallString = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($args[2]))
+
+$null = New-Item -Path $regPath -Name $productId -Force
+
+$propParams = @{
+    Path = "$regPath\$productId"
+    Force = $true
+    PropertyType = 'String'
+}
+New-ItemProperty -Name $regProperty -Value $regUninstallString @propParams
+if ($regProperty -eq 'QuietUninstallString') {
+    New-ItemProperty -Name 'UninstallString' -Value 'Fail if used' @propParams
+}

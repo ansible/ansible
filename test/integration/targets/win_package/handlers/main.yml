@@ -1,0 +1,15 @@
+---
+- name: remove trusted root cert
+  win_certificate_store:
+    thumbprint: '{{ test_win_package_msix_packages.thumbprint }}'
+    store_location: LocalMachine
+    store_name: Root
+    state: absent
+
+- name: remove sideloading mode for msix
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock
+    name: AllowAllTrustedApps
+    data: 0
+    type: dword
+    state: present
