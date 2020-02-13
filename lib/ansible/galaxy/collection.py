@@ -219,12 +219,15 @@ class CollectionRequirement:
                 requirement = req
                 op = operator.eq
 
-                # In the case we are checking a new requirement on a base requirement (parent != None) we can't accept
-                # version as '*' (unknown version) unless the requirement is also '*'.
-                if parent and version == '*' and requirement != '*':
-                    break
-                elif requirement == '*' or version == '*':
-                    continue
+            # In the case we are checking a new requirement on a base requirement (parent != None) we can't accept
+            # version as '*' (unknown version) unless the requirement is also '*'.
+            if parent and version == '*' and requirement != '*':
+                display.warning("Failed to validate the collection requirement '%s:%s' for %s when the existing "
+                                "install does not have a version set, the collection may not work."
+                                % (to_text(self), req, parent))
+                continue
+            elif requirement == '*' or version == '*':
+                continue
 
             if not op(LooseVersion(version), LooseVersion(requirement)):
                 break
@@ -286,7 +289,13 @@ class CollectionRequirement:
             manifest = info['manifest_file']['collection_info']
             namespace = manifest['namespace']
             name = manifest['name']
-            version = manifest['version']
+            version = to_text(manifest['version'], errors='surrogate_or_strict')
+
+            if not hasattr(LooseVersion(version), 'version'):
+                display.warning("Collection at '%s' does not have a valid version set, falling back to '*'. Found "
+                                "version: '%s'" % (to_text(b_path), version))
+                version = '*'
+
             dependencies = manifest['dependencies']
         else:
             display.warning("Collection at '%s' does not have a MANIFEST.json file, cannot detect version."
@@ -877,7 +886,7 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
     existing = [c for c in existing_collections if to_text(c) == to_text(collection_info)]
     if existing and not collection_info.force:
         # Test that the installed collection fits the requirement
-        existing[0].add_requirement(to_text(collection_info), requirement)
+        existing[0].add_requirement(parent, requirement)
         collection_info = existing[0]
 
     dep_map[to_text(collection_info)] = collection_info
