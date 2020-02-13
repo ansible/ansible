@@ -458,7 +458,7 @@ $tests = [Ordered]@{
             $actualSid = $service.Account.Translate([System.Security.Principal.SecurityIdentifier])
         }
         $actualSid.Value | Assert-Equals -Expected $currentSid.Value
-        $actual.SERVICE_START_NAME | Assert-Equals -Expected $currentName.Value
+        $actual.SERVICE_START_NAME | Assert-Equals -Expected $service.Account.Value
 
         # Go back to SYSTEM from account
         $systemSid = [System.Security.Principal.SecurityIdentifier]'S-1-5-18'
