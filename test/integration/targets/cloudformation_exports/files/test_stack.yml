@@ -7,14 +7,14 @@ Parameters:
   TestParamName:
     Type: String
     Description: A param Name for SSM Parameter Store
-  ResourcePrefix:
+  BucketSuffix:
     Type: String
 Resources:
   TestBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName:
-        Fn::Sub: "cf-export-${ResourcePrefix}"
+        Fn::Sub: "cf-export-${BucketSuffix}"
 Outputs:
   TestParamValue:
     Value:
