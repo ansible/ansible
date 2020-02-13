@@ -2494,15 +2494,15 @@ macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
-  team_aci: brunocalogero dagwieers devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
-  team_aix: bcoca dagwieers d-little flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
+  team_aci: aciguru brunocalogero devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
+  team_aix: bcoca d-little flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
   team_aruba: karthikeyan-dhandapani
   team_asa: NilashishC ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_aws: jillr s-hertel tremble
   team_azure: haroldwongms yuwzho yungezz zikalino haiyuazhang gavinfish
-  team_bsd: bcoca dagwieers dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
+  team_bsd: bcoca dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: dpassante rhtyd
   team_crypto: felixfontein MarkusTeufelberger puiterwijk resmo Spredzy Shaps Xyon
@@ -2519,9 +2519,9 @@ macros:
   team_google: rambleraptor erjohnso
   team_grafana: rrey seuf
   team_hcloud: cschmitt-hcloud LKaemmerling
-  team_hpux: bcoca dagwieers davx8342
+  team_hpux: bcoca davx8342
   team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang QijunPan xuxiaowei0512 hwDCN yanzhangi
-  team_imc: dagwieers
+  team_imc: []
   team_intersight: dsoper2 movinalot
   team_ios: justjais
   team_iosxr: justjais NilashishC
@@ -2529,7 +2529,7 @@ macros:
   team_jboss: jairojunior wbrefvem Wolfant
   team_kubevirt: machacekondra mmazur pkliczewski
   team_linode: InTheCloudDan decentral1se displague rmcintosh
-  team_macos: akasurde dagwieers kyleabenson martinm82
+  team_macos: akasurde kyleabenson martinm82
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: kbreit
   team_mysql: Alexander198961 bmalynovytch bmildren michaelcoburn oneiroi tolland Xyon Andersson007 kurtdavis
@@ -2551,7 +2551,7 @@ macros:
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
   team_scaleway: remyleone abarbare DenBeke jerome-quere kindermoumoute QuentinBrosse
-  team_solaris: bcoca dagwieers danowar2k fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
+  team_solaris: bcoca danowar2k fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
   team_suse: evrardjp toabctl dcermak lrupp commel
   team_tower: ghjm matburt ryanpetrello rooftopcellist AlanCoding jladdjr kdelee chrismeyersfsu beeankha squidboylan john-westcott-iv
   team_ucs: dsoper2 movinalot SDBrett vallard vvb
