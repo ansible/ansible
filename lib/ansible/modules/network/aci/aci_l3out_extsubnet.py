@@ -70,7 +70,7 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -252,7 +252,7 @@ def main():
         subnet_name=dict(type='str', aliases=['name']),
         scope=dict(type='list', choices=['export-rtctrl', 'import-security', 'shared-rtctrl', 'shared-security']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -274,7 +274,7 @@ def main():
     subnet_name = module.params.get('subnet_name')
     scope = ','.join(sorted(module.params.get('scope')))
     state = module.params.get('state')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(

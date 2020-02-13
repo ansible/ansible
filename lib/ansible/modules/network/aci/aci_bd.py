@@ -123,7 +123,7 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -360,7 +360,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         vrf=dict(type='str', aliases=['vrf_name']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -401,7 +401,7 @@ def main():
     state = module.params.get('state')
     tenant = module.params.get('tenant')
     vrf = module.params.get('vrf')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(

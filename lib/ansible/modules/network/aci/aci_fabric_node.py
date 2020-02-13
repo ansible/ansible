@@ -55,7 +55,7 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -224,7 +224,7 @@ def main():
         serial=dict(type='str', aliases=['serial_number']),  # Not required for querying all objects
         switch=dict(type='str', aliases=['name', 'switch_name']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -243,7 +243,7 @@ def main():
     description = module.params.get('description')
     role = module.params.get('role')
     state = module.params.get('state')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(

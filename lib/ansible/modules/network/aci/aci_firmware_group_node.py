@@ -41,7 +41,7 @@ options:
         type: str
         default: present
         choices: [ absent, present, query ]
-    nameAlias:
+    name_alias:
         version_added: '2.10'
         description:
             - nameAlias field to alias the current object.
@@ -191,7 +191,7 @@ def main():
         group=dict(type='str', aliases=['group']),  # Not required for querying all objects
         node=dict(type='str', aliases=['node']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -206,7 +206,7 @@ def main():
     state = module.params.get('state')
     group = module.params.get('group')
     node = module.params.get('node')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(

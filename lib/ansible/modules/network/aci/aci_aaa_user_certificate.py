@@ -47,7 +47,7 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -238,7 +238,7 @@ def main():
         certificate=dict(type='str', aliases=['cert_data', 'certificate_data']),
         certificate_name=dict(type='str', aliases=['cert_name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -255,7 +255,7 @@ def main():
     certificate = module.params.get('certificate')
     certificate_name = module.params.get('certificate_name')
     state = module.params.get('state')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(

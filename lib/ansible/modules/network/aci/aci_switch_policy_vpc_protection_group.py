@@ -53,7 +53,7 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -229,7 +229,7 @@ def main():
         switch_1_id=dict(type='int'),
         switch_2_id=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -247,7 +247,7 @@ def main():
     switch_1_id = module.params.get('switch_1_id')
     switch_2_id = module.params.get('switch_2_id')
     state = module.params.get('state')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(

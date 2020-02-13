@@ -87,7 +87,7 @@ options:
     type: str
     default: present
     choices: [ absent, present, query ]
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -272,7 +272,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         stateful=dict(type='bool'),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -312,7 +312,7 @@ def main():
     state = module.params.get('state')
     stateful = aci.boolean(module.params.get('stateful'))
     tenant = module.params.get('tenant')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     # validate that dst_port is not passed with dst_start or dst_end
     if dst_port is not None and (dst_end is not None or dst_start is not None):

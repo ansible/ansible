@@ -55,7 +55,7 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -231,7 +231,7 @@ def main():
         url_password=dict(type='str', no_log=True),
         url_protocol=dict(type='str', default='scp', choices=['http', 'local', 'scp', 'usbkey'], aliases=['url_proto']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -250,7 +250,7 @@ def main():
     url = module.params.get('url')
     url_password = module.params.get('url_password')
     url_username = module.params.get('url_username')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(

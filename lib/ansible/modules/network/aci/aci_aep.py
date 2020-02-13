@@ -45,7 +45,7 @@ options:
     type: str
     default: present
     choices: [ absent, present, query ]
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -217,7 +217,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         infra_vlan=dict(type='bool', aliases=['infrastructure_vlan']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -233,7 +233,7 @@ def main():
     description = module.params.get('description')
     infra_vlan = module.params.get('infra_vlan')
     state = module.params.get('state')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
     if infra_vlan:
         child_configs = [dict(infraProvAcc=dict(attributes=dict(name='provacc')))]
     elif infra_vlan is False:

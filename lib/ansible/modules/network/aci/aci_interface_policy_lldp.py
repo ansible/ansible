@@ -46,7 +46,7 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -191,7 +191,7 @@ def main():
         receive_state=dict(type='bool'),
         transmit_state=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -210,7 +210,7 @@ def main():
     receive_state = aci.boolean(module.params.get('receive_state'), 'enabled', 'disabled')
     transmit_state = aci.boolean(module.params.get('transmit_state'), 'enabled', 'disabled')
     state = module.params.get('state')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(

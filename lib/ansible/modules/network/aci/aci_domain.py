@@ -57,7 +57,7 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -292,7 +292,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
         vswitch=dict(type='str', choices=['avs', 'default', 'dvs', 'unknown']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -315,7 +315,7 @@ def main():
     if vswitch is not None:
         vswitch = VSWITCH_MAPPING.get(vswitch)
     state = module.params.get('state')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     if domain_type != 'vmm':
         if vm_provider is not None:

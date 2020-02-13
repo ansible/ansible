@@ -79,7 +79,7 @@ options:
     type: str
     default: present
     choices: [ absent, present, query ]
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -262,7 +262,7 @@ def main():
         minute=dict(type='int'),
         day=dict(type='str', default='every-day', choices=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
                                                            'Saturday', 'Sunday', 'every-day', 'even-day', 'odd-day']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -285,7 +285,7 @@ def main():
     concurCap = module.params.get('concurCap')
     day = module.params.get('day')
     description = module.params.get('description')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     if recurring:
         child_configs = [dict(trigRecurrWindowP=dict(attributes=dict(name=windowname, hour=hour, minute=minute,

@@ -64,7 +64,7 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -256,7 +256,7 @@ def main():
         'to': dict(type='int', aliases=['node_blk_range_to', 'to_range', 'range_to']),
         'policy_group': dict(type='str', aliases=['policy_group_name']),
         'state': dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        'nameAlias': dict(type='str', aliases=['nameAlias_name', 'alias']),
+        'name_alias': dict(type='str', aliases=['nameAlias_name', 'alias']),
     })
 
     module = AnsibleModule(
@@ -277,7 +277,7 @@ def main():
     to_ = module.params.get('to')
     policy_group = module.params.get('policy_group')
     state = module.params.get('state')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     # Build child_configs dynamically
     child_configs = [

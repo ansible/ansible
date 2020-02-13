@@ -50,7 +50,7 @@ options:
         type: str
         choices: [absent, present, query]
         default: present
-    nameAlias:
+    name_alias:
         version_added: '2.10'
         description:
             - nameAlias field to alias the current object.
@@ -195,7 +195,7 @@ def main():
         version=dict(type='str', aliases=['version']),
         ignoreCompat=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -210,7 +210,7 @@ def main():
     state = module.params.get('state')
     name = module.params.get('name')
     version = module.params.get('version')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     if module.params.get('ignoreCompat'):
         ignore = 'yes'

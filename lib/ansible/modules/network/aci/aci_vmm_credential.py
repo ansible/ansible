@@ -50,7 +50,7 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -250,7 +250,7 @@ def main():
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         vm_provider=dict(type='str', choices=VM_PROVIDER_MAPPING.keys()),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -269,7 +269,7 @@ def main():
     domain = module.params.get('domain')
     state = module.params.get('state')
     vm_provider = module.params.get('vm_provider')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     credential_class = 'vmmUsrAccP'
     usracc_mo = 'uni/vmmp-{0}/dom-{1}/usracc-{2}'.format(VM_PROVIDER_MAPPING.get(vm_provider), domain, name)

@@ -128,7 +128,7 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -311,7 +311,7 @@ def main():
         retransmit_interval=dict(type='int'),
         transmit_delay=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -328,7 +328,7 @@ def main():
     tenant = module.params.get('tenant')
     ospf = module.params.get('ospf')
     description = module.params.get('description')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     if module.params.get('controls') is None:
         controls = None

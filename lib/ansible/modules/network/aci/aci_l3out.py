@@ -79,7 +79,7 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-  nameAlias:
+  name_alias:
     version_added: '2.10'
     description:
     - nameAlias field to alias the current object.
@@ -262,7 +262,7 @@ def main():
         l3protocol=dict(type='list', choices=['bgp', 'eigrp', 'ospf', 'pim', 'static']),
         asn=dict(type='int', aliases=['as_number']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        nameAlias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
     )
 
     module = AnsibleModule(
@@ -286,7 +286,7 @@ def main():
     asn = module.params.get('asn')
     state = module.params.get('state')
     tenant = module.params.get('tenant')
-    nameAlias = module.params.get('nameAlias')
+    nameAlias = module.params.get('name_alias')
 
     if l3protocol:
         if 'eigrp' in l3protocol and asn is None:
