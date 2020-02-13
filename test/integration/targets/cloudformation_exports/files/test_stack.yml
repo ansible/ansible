@@ -11,11 +11,14 @@ Resources:
   TestParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Ref TestParamName
+      Name:
+        Ref: TestParamName
       Type: String
-      Value: !Ref TestParamValue
+      Value:
+        Ref: TestParamValue
 Outputs:
   TestParamValue:
-    Value: !Ref TestParamValue
+    Value:
+      Ref: TestParamValue
     Export:
       Name: !Sub "cf-export-${TestParamName}"

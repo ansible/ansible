@@ -32,6 +32,11 @@ EXAMPLES = '''
 - debug: var=cf_exports
 '''
 
+RETURN = '''
+export_items:
+    A dictiony of Exports items names and values. 
+'''
+
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import AWSRetry
 
