@@ -517,6 +517,32 @@
       that: "'distribute' in remove_distribute.cmd"
   when: ansible_python.version.major == 2
 
+### test virtualenv_command begin ###
+
+- name: Test virtualenv command with arguments
+  when: "ansible_system == 'Linux'"
+  block:
+    - name: make sure the virtualenv does not exist
+      file:
+        state: absent
+        name: "{{ output_dir }}/pipenv"
+
+    # ref: https://github.com/ansible/ansible/issues/52275
+    - name: install using virtualenv_command with arguments
+      pip:
+        name: "{{ pip_test_package }}"
+        virtualenv: "{{ output_dir }}/pipenv"
+        virtualenv_command: "virtualenv --verbose"
+        state: present
+      register: version13
+
+    - name: ensure install using virtualenv_command with arguments was successful
+      assert:
+        that:
+          - "version13 is success"
+
+### test virtualenv_command end ###
+
 # https://github.com/ansible/ansible/issues/68592
 # Handle pre-release version numbers in check_mode for already-installed
 # packages.
