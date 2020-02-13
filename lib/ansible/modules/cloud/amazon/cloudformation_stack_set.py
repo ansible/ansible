@@ -370,8 +370,7 @@ def stack_set_facts(cfn, stack_set_name):
         ss['Tags'] = boto3_tag_list_to_ansible_dict(ss['Tags'])
         return ss
     except cfn.exceptions.from_code('StackSetNotFound'):
-        # catch NotFound error before the retry kicks in to avoid waiting
-        # if the stack does not exist
+        # Return None if the stack doesn't exist
         return
 
 
@@ -429,14 +428,15 @@ def await_stack_instance_completion(module, cfn, stack_set_name, max_wait):
 
 
 def await_stack_set_exists(cfn, stack_set_name):
-    # AWSRetry will retry on `NotFound` errors for us
+    # AWSRetry will retry on `StackSetNotFound` errors for us
     ss = cfn.describe_stack_set(StackSetName=stack_set_name, aws_retry=True)['StackSet']
     ss['Tags'] = boto3_tag_list_to_ansible_dict(ss['Tags'])
     return camel_dict_to_snake_dict(ss, ignore_list=('Tags',))
 
 
 def describe_stack_tree(module, stack_set_name, operation_ids=None):
-    cfn = module.client('cloudformation', retry_decorator=AWSRetry.jittered_backoff(retries=5, delay=3, max_delay=5))
+    jittered_backoff_decorator = AWSRetry.jittered_backoff(retries=5, delay=3, max_delay=5, catch_extra_error_codes=['StackSetNotFound'])
+    cfn = module.client('cloudformation', retry_decorator=jittered_backoff_decorator)
     result = dict()
     result['stack_set'] = camel_dict_to_snake_dict(
         cfn.describe_stack_set(
@@ -536,7 +536,8 @@ def main():
 
     # Wrap the cloudformation client methods that this module uses with
     # automatic backoff / retry for throttling error codes
-    cfn = module.client('cloudformation', retry_decorator=AWSRetry.jittered_backoff(retries=10, delay=3, max_delay=30))
+    jittered_backoff_decorator = AWSRetry.jittered_backoff(retries=10, delay=3, max_delay=30, catch_extra_error_codes=['StackSetNotFound'])
+    cfn = module.client('cloudformation', retry_decorator=jittered_backoff_decorator)
     existing_stack_set = stack_set_facts(cfn, module.params['name'])
 
     operation_uuid = to_native(uuid.uuid4())

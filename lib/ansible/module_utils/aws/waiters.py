@@ -13,6 +13,24 @@ except ImportError:
 ec2_data = {
     "version": 2,
     "waiters": {
+        "InternetGatewayExists": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeInternetGateways",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "length(InternetGateways) > `0`",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "InvalidInternetGatewayID.NotFound",
+                    "state": "retry"
+                },
+            ]
+        },
         "RouteTableExists": {
             "delay": 5,
             "maxAttempts": 40,
@@ -280,6 +298,12 @@ def rds_model(name):
 
 
 waiters_by_name = {
+    ('EC2', 'internet_gateway_exists'): lambda ec2: core_waiter.Waiter(
+        'internet_gateway_exists',
+        ec2_model('InternetGatewayExists'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_internet_gateways
+        )),
     ('EC2', 'route_table_exists'): lambda ec2: core_waiter.Waiter(
         'route_table_exists',
         ec2_model('RouteTableExists'),

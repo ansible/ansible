@@ -545,7 +545,7 @@ def rule_from_group_permission(perm):
             )
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0, catch_extra_error_codes=['InvalidGroup.NotFound'])
 def get_security_groups_with_backoff(connection, **kwargs):
     return connection.describe_security_groups(**kwargs)
 
