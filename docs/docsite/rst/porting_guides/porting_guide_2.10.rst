@@ -75,6 +75,9 @@ The following functionality will be removed in Ansible 2.14. Please update updat
 * :ref:`clc_aa_policy <clc_aa_policy_module>`: the ``wait`` parameter will be removed. It has always been ignored by the module.
 * :ref:`redfish_config <redfish_config_module>`, :ref:`redfish_command <redfish_command_module>`: the behavior to select the first System, Manager, or Chassis resource to modify when multiple are present will be removed. Use the new ``resource_id`` option to specify target resource to modify.
 * :ref:`win_domain_controller <win_domain_controller_module>`: the ``log_path`` option will be removed. This was undocumented and only related to debugging information for module development.
+* :ref:`win_package <win_package_module>`: the ``username`` and ``password`` options will be removed. The same functionality can be done by using ``become: yes`` and ``become_flags: logon_type=new_credentials logon_flags=netcredentials_only`` on the task.
+* :ref:`win_package <win_package_module>`: the ``ensure`` alias for the ``state`` option will be removed. Please use ``state`` instead of ``ensure``.
+* :ref:`win_package <win_package_module>`: the ``productid`` alias for the ``product_id`` option will be removed. Please use ``product_id`` instead of ``productid``.
 
 
 
