@@ -1,0 +1,11 @@
+---
+test_path: '{{ remote_tmp_dir }}\win_service_info .ÅÑŚÌβŁÈ [$!@^&test(;)]'
+service_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_service/SleepService.exe
+
+service_name1: ansible_service_info_test
+service_name2: ansible_service_info_test2
+service_name3: ansible_service_info_other
+service_names:
+- '{{ service_name1 }}'
+- '{{ service_name2 }}'
+- '{{ service_name3 }}'

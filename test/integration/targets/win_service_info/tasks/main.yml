@@ -1,0 +1,206 @@
+---
+- name: ensure test directory exists
+  win_file:
+    path: '{{ test_path }}'
+    state: directory
+
+- name: download test binary for services
+  win_get_url:
+    url: '{{ service_url }}'
+    dest: '{{ test_path }}\SleepService.exe'
+
+- name: create test service
+  win_service:
+    name: '{{ item }}'
+    path: '"{{ test_path }}\SleepService.exe"'
+    state: stopped
+  loop: '{{ service_names }}'
+  notify: remove test service
+
+- name: test we can get info for all services
+  win_service_info:
+  register: all_actual
+  check_mode: yes  # tests that this will run in check mode
+
+- name: assert test we can get info for all services
+  assert:
+    that:
+    - not all_actual is changed
+    - all_actual.exists
+    - all_actual.services | length > 0
+
+- name: test info on a missing service
+  win_service_info:
+    name: ansible_service_info_missing
+  register: missing_service
+
+- name: assert test info on a missing service
+  assert:
+    that:
+    - not missing_service is changed
+    - not missing_service.exists
+
+- name: test info on a single service
+  win_service_info:
+    name: '{{ service_name1 }}'
+  register: specific_service
+
+- name: assert test info on single service
+  assert:
+    that:
+    - not specific_service is changed
+    - specific_service.exists
+    - specific_service.services | length == 1
+    - specific_service.services[0].checkpoint == 0
+    - specific_service.services[0].controls_accepted == []
+    - specific_service.services[0].dependencies == []
+    - specific_service.services[0].dependency_of == []
+    - specific_service.services[0].description == None
+    - specific_service.services[0].desktop_interact == False
+    - specific_service.services[0].display_name == service_name1
+    - specific_service.services[0].error_control == 'normal'
+    - specific_service.services[0].failure_actions == []
+    - specific_service.services[0].failure_actions_on_non_crash_failure == False
+    - specific_service.services[0].failure_command == None
+    - specific_service.services[0].failure_reboot_msg == None
+    - specific_service.services[0].failure_reset_period_sec == 0
+    - specific_service.services[0].launch_protection == 'none'
+    - specific_service.services[0].load_order_group == ""
+    - specific_service.services[0].name == service_name1
+    - specific_service.services[0].path == '"' ~ test_path + '\\SleepService.exe"'
+    - specific_service.services[0].pre_shutdown_timeout_ms is defined  # Looks like the default for New-Service differs per OS version
+    - specific_service.services[0].preferred_node == None
+    - specific_service.services[0].process_id == 0
+    - specific_service.services[0].required_privileges == []
+    - specific_service.services[0].service_exit_code == 0
+    - specific_service.services[0].service_flags == []
+    - specific_service.services[0].service_type == 'win32_own_process'
+    - specific_service.services[0].sid_info == 'none'
+    - specific_service.services[0].start_mode == 'auto'
+    - specific_service.services[0].state == 'stopped'
+    - specific_service.services[0].triggers == []
+    - specific_service.services[0].username == 'NT AUTHORITY\SYSTEM'
+    - specific_service.services[0].wait_hint_ms == 0
+    - specific_service.services[0].win32_exit_code == 1077
+
+- name: test info on services matching wildcard
+  win_service_info:
+    name: ansible_service_info_t*  # should match service_name 1 and 2, but not 3
+  register: wildcard_service
+
+- name: assert test info on services matching wildcard
+  assert:
+    that:
+    - not wildcard_service is changed
+    - wildcard_service.exists
+    - wildcard_service.services | length == 2
+    - wildcard_service.services[0].name == service_name1
+    - wildcard_service.services[1].name == service_name2
+
+- name: modify service1 to depend on service 2
+  win_service:
+    name: '{{ service_name1 }}'
+    state: stopped
+    dependencies:
+    - '{{ service_name2 }}'
+
+- name: edit basic settings for service 2
+  win_service:
+    dependencies:
+    - '{{ service_name3 }}'
+    description: Service description
+    display_name: Ansible Service Display Name
+    name: '{{ service_name2 }}'
+    state: stopped
+
+# TODO: move this back into the above once win_service supports them
+- name: edit complex settings for service 2
+  win_command: sc.exe {{ item.action }} {{ service_name2 }} {{ item.args }}
+  with_items:
+  - action: config
+    args: type= share type= interact error= ignore group= "My group" start= delayed-auto
+  - action: failure
+    args: reset= 86400 reboot= "Reboot msg" command= "Command line" actions= run/500/run/600/restart/700/reboot/800
+  - action: failureflag
+    args: 1
+  - action: sidtype
+    args: unrestricted
+  - action: privs
+    args: SeBackupPrivilege/SeRestorePrivilege
+  - action: triggerinfo
+    args: start/namedpipe/abc start/namedpipe/def start/custom/0e0682e2-9951-4e6d-a36a-a0047e616f28/11223344/aabbccdd start/strcustom/c2961e88-c1f4-4d97-b581-219c852e1c7d/11223344/aabbccdd start/portopen/1234;tcp;imagepath;servicename
+
+- name: get info of advanced service using display name
+  win_service_info:
+    name: Ansible Service Display Name
+  register: adv_service
+
+- name: assert get info of advanced service using display_name
+  assert:
+    that:
+    - not adv_service is changed
+    - adv_service.exists
+    - adv_service.services | length == 1
+    - adv_service.services[0].dependencies == [service_name3]
+    - adv_service.services[0].dependency_of == [service_name1]
+    - adv_service.services[0].description == 'Service description'
+    - adv_service.services[0].desktop_interact == True
+    - adv_service.services[0].error_control == 'ignore'
+    - adv_service.services[0].failure_actions | length == 4
+    - adv_service.services[0].failure_actions[0].delay_ms == 500
+    - adv_service.services[0].failure_actions[0].type == 'run_command'
+    - adv_service.services[0].failure_actions[1].delay_ms == 600
+    - adv_service.services[0].failure_actions[1].type == 'run_command'
+    - adv_service.services[0].failure_actions[2].delay_ms == 700
+    - adv_service.services[0].failure_actions[2].type == 'restart'
+    - adv_service.services[0].failure_actions[3].delay_ms == 800
+    - adv_service.services[0].failure_actions[3].type == 'reboot'
+    - adv_service.services[0].failure_actions_on_non_crash_failure == True
+    - adv_service.services[0].failure_command == 'Command line'
+    - adv_service.services[0].failure_reboot_msg == 'Reboot msg'
+    - adv_service.services[0].failure_reset_period_sec == 86400
+    - adv_service.services[0].load_order_group == 'My group'
+    - adv_service.services[0].required_privileges == ['SeBackupPrivilege', 'SeRestorePrivilege']
+    - adv_service.services[0].service_type == 'win32_share_process'
+    - adv_service.services[0].sid_info == 'unrestricted'
+    - adv_service.services[0].start_mode == 'delayed'
+    - adv_service.services[0].triggers | length == 5
+    - adv_service.services[0].triggers[0].action == 'start_service'
+    - adv_service.services[0].triggers[0].data_items | length == 1
+    - adv_service.services[0].triggers[0].data_items[0].data == 'abc'
+    - adv_service.services[0].triggers[0].data_items[0].type == 'string'
+    - adv_service.services[0].triggers[0].sub_type == 'named_pipe_event'
+    - adv_service.services[0].triggers[0].sub_type_guid == '1f81d131-3fac-4537-9e0c-7e7b0c2f4b55'
+    - adv_service.services[0].triggers[0].type == 'network_endpoint'
+    - adv_service.services[0].triggers[1].action == 'start_service'
+    - adv_service.services[0].triggers[1].data_items | length == 1
+    - adv_service.services[0].triggers[1].data_items[0].data == 'def'
+    - adv_service.services[0].triggers[1].data_items[0].type == 'string'
+    - adv_service.services[0].triggers[1].sub_type == 'named_pipe_event'
+    - adv_service.services[0].triggers[1].sub_type_guid == '1f81d131-3fac-4537-9e0c-7e7b0c2f4b55'
+    - adv_service.services[0].triggers[1].type == 'network_endpoint'
+    - adv_service.services[0].triggers[2].action == 'start_service'
+    - adv_service.services[0].triggers[2].data_items | length == 2
+    - adv_service.services[0].triggers[2].data_items[0].data == 'ESIzRA=='
+    - adv_service.services[0].triggers[2].data_items[0].type == 'binary'
+    - adv_service.services[0].triggers[2].data_items[1].data == 'qrvM3Q=='
+    - adv_service.services[0].triggers[2].data_items[1].type == 'binary'
+    - adv_service.services[0].triggers[2].sub_type == 'custom'
+    - adv_service.services[0].triggers[2].sub_type_guid == '0e0682e2-9951-4e6d-a36a-a0047e616f28'
+    - adv_service.services[0].triggers[2].type == 'custom'
+    - adv_service.services[0].triggers[3].action == 'start_service'
+    - adv_service.services[0].triggers[3].data_items | length == 2
+    - adv_service.services[0].triggers[3].data_items[0].data == '11223344'
+    - adv_service.services[0].triggers[3].data_items[0].type == 'string'
+    - adv_service.services[0].triggers[3].data_items[1].data == 'aabbccdd'
+    - adv_service.services[0].triggers[3].data_items[1].type == 'string'
+    - adv_service.services[0].triggers[3].sub_type == 'custom'
+    - adv_service.services[0].triggers[3].sub_type_guid == 'c2961e88-c1f4-4d97-b581-219c852e1c7d'
+    - adv_service.services[0].triggers[3].type == 'custom'
+    - adv_service.services[0].triggers[4].action == 'start_service'
+    - adv_service.services[0].triggers[4].data_items | length == 1
+    - adv_service.services[0].triggers[4].data_items[0].data == ['1234', 'tcp', 'imagepath', 'servicename']
+    - adv_service.services[0].triggers[4].data_items[0].type == 'string'
+    - adv_service.services[0].triggers[4].sub_type == 'firewall_port_open'
+    - adv_service.services[0].triggers[4].sub_type_guid == 'b7569e07-8421-4ee0-ad10-86915afdad09'
+    - adv_service.services[0].triggers[4].type == 'firewall_port_event'
