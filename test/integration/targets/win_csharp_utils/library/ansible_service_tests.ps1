@@ -439,15 +439,16 @@ $tests = [Ordered]@{
     }
 
     "Modify Account - user" = {
-        $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
-        $currentName = $currentUser.Translate([System.Security.Principal.NTAccount])
+        $currentSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+        $currentName = $currentSid.Translate([System.Security.Principal.NTAccount])
 
         $service = New-Object -TypeName Ansible.Service.Service -ArgumentList $serviceName
-        $service.Account = $currentUser
+        $service.Account = $currentSid
         $service.Password = 'password'
 
         $actual = Invoke-Sc -Action qc -Name $serviceName
-        $service.Account | Assert-Equals -Expected $currentName
+        $actualSid = $service.Account.Translate([System.Security.Principal.SecurityIdentifier])
+        $actualSid.Value | Assert-Equals -Expected $currentSid.Value
         $actual.SERVICE_START_NAME | Assert-Equals -Expected $currentName.Value
 
         # Go back to SYSTEM from account
