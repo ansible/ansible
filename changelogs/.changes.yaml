@@ -1545,3 +1545,50 @@ releases:
     - 66549-enablerepo-not-honored-when-used-with-disablerepo-all.yml
     - v2.9.4_summary.yaml
     release_date: '2020-01-20'
+  2.9.5:
+    codename: Immigrant Song
+    fragments:
+    - 54958-jenkins-job-python3-support.yml
+    - 55220-Fix-to-enable-edit-Cisco-IOS-macros.yaml
+    - 56629-synchronize-password-auth.yaml
+    - 59184-ovirt_add_search_with_space.yml
+    - 59772-fix_ansible_issue_58619.yaml
+    - 63960_fix_nxos_interfaces.yaml
+    - 64495-os_network-openstacksdk-min.yml
+    - 64963-dnf_idempotence.yml
+    - 65422-fix-throttle-with-linear-strategy.yml
+    - 65750-pacman.yml
+    - 65969-iosxr-command-requirements-update.yaml
+    - 66219-update-user-module-for-64733.yml
+    - 66263-podman-connection-no-pause-rootless.yml
+    - 66274-ios_banner_nongreedy.yml
+    - 66398-pamd_fix-attributeerror-when-removing-first-line.yml
+    - 66439_fix_nxos_telemetry_facts.yaml
+    - 66599-docker-healthcheck.yml
+    - 66604-powershell-unc-paths.yml
+    - 66652-ovirt_vm-add-docs-ova.yml
+    - 66654-fix-ipv6-duplication-for-replace-state-ios-l3-interfaces.yaml
+    - 66726-galaxy-fix-attribute-error.yml
+    - 66806-mysql_variables_not_support_variables_with_dot.yml
+    - 66807-redhat_subscription-no-default-quantity.yaml
+    - 66810-ovirt_job-add-when-job-is-detected-but-in-state-finished.yml
+    - 66859-ovirt_netwrok-correct-external-provider-check.yml
+    - 66866_nxos_fan_facts.yaml
+    - 66914-purefa_user_string.yaml
+    - 66918-removed_in_version-fix.yml
+    - 66974-mysql_user_doesnt_support_privs_with_underscore.yml
+    - 67036-openssl_publickey-backend.yml
+    - 67188-fix-aws_az_info-deprecation.yaml
+    - 67241-pmrun-quote-entire-success-command-string.yml
+    - 67272-ovirt_disk-update-interface-docs.yml
+    - ansible-test-constraints-virtualenv.yml
+    - ansible-test-jinja2-python-2.6.yml
+    - file-fix-diff-peek-arg-spec.yaml
+    - gitlab_project_variable.yml
+    - include_vars-ad-hoc-stack-trace-fix.yaml
+    - systemd-offline.yml
+    - v2.9.5_summary.yaml
+    - wait_for_connection-interpreter-discovery-retry.yaml
+    - warnings-remove-extra-newline.yaml
+    - win-coverage-out-encoding.yaml
+    release_date: '2020-02-13'

@@ -5,6 +5,74 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.5
+======
+
+Release Summary
+---------------
+
+| Release Date: 2020-02-13
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- add one note to help ansible user to understand the requirements to (https://github.com/ansible/ansible/pull/65969)
+- ovirt_disk: remove default value because the parameter is required when disk is attached to vm
+- ovirt_vm add comunentaion about how to import ova
+- powershell (shell plugin) - Fix `join_path` to support UNC paths (https://github.com/ansible/ansible/issues/66341)
+
+Deprecated Features
+-------------------
+
+- aws_az_info (aws_az_facts) - Fixed deprecation warning so that it triggers when run as aws_az_facts.  Bumped removal version to 2.14
+
+Bugfixes
+--------
+
+- AnsibleModule.run_command() - set ``close_fds`` to ``False`` on Python 2 if ``pass_fds`` are passed to ``run_command()``. Since ``subprocess.Popen()`` on Python 2 does not have the ``pass_fds`` option, there is no way to exclude a specific list of file descriptors from being closed.
+
+- Fix multiple issues with nxos_interfaces states (https://github.com/ansible/ansible/pull/63960/).
+- Module arguments in suboptions which were marked as deprecated with ``removed_in_version`` did not result in a warning.
+- Redact GitLab Project variables which might include sensetive information such as password, api_keys and other project related details.
+- Working implementation for editing Cisco IOS macros(https://github.com/ansible/ansible/pull/55220)
+- ansible-test - Use ``virtualenv`` versions before 20 on provisioned macOS instances to remain compatible with an older pip install.
+- ansible-test now limits Jinja2 installs to version 2.10 and earlier on Python 2.6
+- ansible-test windows coverage - Ensure coverage reports are UTF-8 encoded without a BOM
+- bump the minimum openstacksdk version when os_network uses the dns_domain argument
+- display - remove extra new line after warnings (https://github.com/ansible/ansible/pull/65199)
+- dnf - Fix idempotence of `state: installed` (https://github.com/ansible/ansible/issues/64963)
+- docker_container - passing ``test: [NONE]`` now actually disables the image's healthcheck, as documented.
+- docker_swarm_service - passing ``test: [NONE]`` now actually disables the image's healthcheck, as documented.
+- file - change ``_diff_peek`` in argument spec to be the correct type, which is ``bool`` (https://github.com/ansible/ansible/issues/59433)
+- galaxy - Fix an AttributeError on ansible-galaxy install with an empty requirements.yml (https://github.com/ansible/ansible/issues/66725).
+- group - The group module was not correctly detecting whether a local group is existing or not with local set to yes if the same group exists in a non local group repository e.g. LDAP. (https://github.com/ansible/ansible/issues/58619)
+
+- include_vars - fix stack trace when passing ``dirs`` in an ad-hoc command (https://github.com/ansible/ansible/issues/62633)
+- ios_* - Fix bug where IPV6 was duplicated for replace state (https://github.com/ansible/ansible/pull/66654)
+- ios_banner - Modified the regular expression check to be non greedy when multiple banners are present.
+- jenkins_job module: xml config encoding bugfix on python3
+- mysql_user - fix support privileges with underscore (https://github.com/ansible/ansible/issues/66974).
+- mysql_variable - fix the module doesn't support variables name with dot (https://github.com/ansible/ansible/issues/54239).
+- nxos_facts: Don't throw an error if faninfo is not reported.
+- nxos_telemetry - Fix fact gathering for sensor-groups (https://github.com/ansible/ansible/pull/66439)
+- openssl_publickey - fix a module crash caused when pyOpenSSL is not installed (https://github.com/ansible/ansible/issues/67035).
+- ovirt - add suport for search with space
+- ovirt_job: add job when job is already existing and is in state finished
+- ovirt_network: add check to control when creating network
+- pacman - fix module crash with ``IndexError: list index out of range`` (https://github.com/ansible/ansible/issues/63077)
+- pamd - Bugfix for attribute error when removing the first or last line
+- pmrun plugin - The success command string was no longer quoted. This caused unusual use-cases like ``become_flags=su - root -c`` to fail.
+- podman connection plugin - fix to handle the new default copy pause rootless containers from upstream (https://github.com/ansible/ansible/issues/66263)
+- pure - fix incorrect user_string setting in module_utils file (https://github.com/ansible/ansible/pull/66914)
+- redhat_subscription - do not set the default quantity to ``1`` when no quantity is provided (https://github.com/ansible/ansible/issues/66478)
+- synchronize - fix password authentication on Python 2 (https://github.com/ansible/ansible/issues/56629)
+- systemd - don't require systemd to be running to enable/disable or mask/unmask units
+- throttle: the linear strategy didn't always stuck with the throttle limit
+- user - update module to support silencing ``no_log`` warnings in the future (see: https://github.com/ansible/ansible/pull/64733)
+- wait_for_connection - with pipelining enabled, interpreter discovery would fail if the first connection attempt was not successful
+
 v2.9.4
 ======
 
