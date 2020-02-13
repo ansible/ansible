@@ -40,15 +40,16 @@ requirements:
 options:
   ids:
     type: list
+    elements: int
     description:
-      - A list of VM ids whose facts you want to gather.
+      - A list of VM ids whose infos you want to gather.
     aliases: ['id']
   name:
     type: str
     description:
-      - A C(name) of the VM whose facts will be gathered.
+      - A C(name) of the VM whose infos will be gathered.
       - If the C(name) begins with '~' the C(name) will be used as regex pattern
-      - which restricts the list of VMs (whose facts will be returned) whose names match specified regex.
+      - which restricts the list of VMs (whose infos will be returned) whose names match specified regex.
       - Also, if the C(name) begins with '~*' case-insensitive matching will be performed.
       - See examples for more details.
 
@@ -59,30 +60,30 @@ author:
 '''
 
 EXAMPLES = '''
-# Gather facts about all VMs
+# Gather infos about all VMs
 - one_vm_info:
   register: result
 
-# Print all images facts
+# Print all images infos
 - debug:
     var: result
 
-# Gather facts about an VM using ID
+# Gather infos about an VM using ID
 - one_vm_info:
     ids:
       - 123
 
-# Gather facts about an VM using the name
+# Gather infos about an VM using the name
 - one_vm_info:
     name: 'foo-VM'
   register: foo_VM
 
-# Gather facts about all VMs whose name matches regex 'app-vm-.*'
+# Gather infos about all VMs whose name matches regex 'app-vm-.*'
 - one_vm_info:
     name: '~app-vm-.*'
   register: app_vm
 
-# Gather facts about all VMs whose name matches regex 'foo-vm-.*' ignoring cases
+# Gather infos about all VMs whose name matches regex 'foo-vm-.*' ignoring cases
 - one_vm_info:
     name: '~*foo-vm-.*'
   register: foo_vm

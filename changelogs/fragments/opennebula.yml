@@ -1,3 +1,2 @@
 minor_changes:
-- added one_AUTH file as credential Source
-- added VM info Modules
+- Opennebula modul_utils - added one_AUTH file as credential Source
