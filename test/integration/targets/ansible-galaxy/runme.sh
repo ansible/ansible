@@ -120,6 +120,31 @@ f_ansible_galaxy_status \
 
     [[ $(grep -c '^- test-role' out.txt ) -eq 2 ]]
 
+# Galaxy role test case
+#
+# Test listing a specific role that is not in the first path in ANSIBLE_ROLES_PATH.
+# https://github.com/ansible/ansible/issues/60167#issuecomment-585460706
+
+f_ansible_galaxy_status \
+    "list specific role not in the first path in ANSIBLE_ROLES_PATHS"
+
+role_testdir=$(mktemp -d)
+pushd "${role_testdir}"
+
+    mkdir testroles
+    ansible-galaxy role init --init-path ./local-roles quark
+    ANSIBLE_ROLES_PATH=./local-roles:${HOME}/.ansible/roles ansible-galaxy role list quark | tee out.txt
+
+    [[ $(grep -c 'not found' out.txt) -eq 0 ]]
+
+    ANSIBLE_ROLES_PATH=${HOME}/.ansible/roles:./local-roles ansible-galaxy role list quark | tee out.txt
+
+    [[ $(grep -c 'not found' out.txt) -eq 0 ]]
+
+popd # ${galaxy_testdir}
+rm -fr "${galaxy_testdir}"
+
+
 
 # Properly list roles when the role name is a subset of the path, or the role
 # name is the same name as the parent directory of the role. Issue #67365
