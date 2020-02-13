@@ -34,7 +34,9 @@ EXAMPLES = '''
 
 RETURN = '''
 export_items:
-    A dictiony of Exports items names and values. 
+    description: A dictionary of Exports items names and values.
+    returned: Always
+    type: dict
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule

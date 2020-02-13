@@ -21,4 +21,5 @@ Outputs:
     Value:
       Ref: TestParamValue
     Export:
-      Name: !Sub "cf-export-${TestParamName}"
+      Name:
+        Fn:Sub: "cf-export-${TestParamName}"
