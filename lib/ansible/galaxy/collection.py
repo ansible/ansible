@@ -289,7 +289,7 @@ class CollectionRequirement:
             manifest = info['manifest_file']['collection_info']
             namespace = manifest['namespace']
             name = manifest['name']
-            version = manifest['version']
+            version = to_text(manifest['version'], errors='surrogate_or_strict')
 
             if not hasattr(LooseVersion(version), 'version'):
                 display.warning("Collection at '%s' does not have a valid version set, falling back to '*'. Found "

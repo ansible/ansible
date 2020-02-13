@@ -165,13 +165,14 @@ def test_build_requirement_from_path(collection_artifact):
     assert actual.dependencies == {}
 
 
-def test_build_requirement_from_path_with_manifest(collection_artifact):
+@pytest.mark.parametrize('version', ['1.1.1', 1.1, 1])
+def test_build_requirement_from_path_with_manifest(version, collection_artifact):
     manifest_path = os.path.join(collection_artifact[0], b'MANIFEST.json')
     manifest_value = json.dumps({
         'collection_info': {
             'namespace': 'namespace',
             'name': 'name',
-            'version': '1.1.1',
+            'version': version,
             'dependencies': {
                 'ansible_namespace.collection': '*'
             }
@@ -188,8 +189,8 @@ def test_build_requirement_from_path_with_manifest(collection_artifact):
     assert actual.b_path == collection_artifact[0]
     assert actual.api is None
     assert actual.skip is True
-    assert actual.versions == set([u'1.1.1'])
-    assert actual.latest_version == u'1.1.1'
+    assert actual.versions == set([to_text(version)])
+    assert actual.latest_version == to_text(version)
     assert actual.dependencies == {'ansible_namespace.collection': '*'}
 
 
