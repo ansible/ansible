@@ -7,13 +7,9 @@
       region: "{{ aws_region }}"
 
   block:
-    - name: Remove stack
-      cloudformation:
-        stack_name: "cf-exports-test"
-        state: "absent"
     - name: Create a minimal stack with an export set by parameter
       cloudformation:
-        stack_name: "cf-exports-test"
+        stack_name: "cf-exports-test-a"
         template_body: "{{ lookup('file','test_stack.yml') }}"
         template_parameters:
           TestParamName: "cf-exports-param"
