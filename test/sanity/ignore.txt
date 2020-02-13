@@ -7562,9 +7562,6 @@ lib/ansible/modules/windows/win_lineinfile.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_mapped_drive.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_netbios.ps1 validate-modules:parameter-list-no-elements
 lib/ansible/modules/windows/win_optional_feature.ps1 validate-modules:parameter-list-no-elements
-lib/ansible/modules/windows/win_package.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_package.ps1 pslint:PSUseApprovedVerbs
-lib/ansible/modules/windows/win_package.ps1 validate-modules:doc-elements-mismatch
 lib/ansible/modules/windows/win_pagefile.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_pagefile.ps1 pslint:PSUseDeclaredVarsMoreThanAssignments # New PR - bug test_path should be testPath
 lib/ansible/modules/windows/win_pagefile.ps1 pslint:PSUseSupportsShouldProcess

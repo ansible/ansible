@@ -1,21 +1,35 @@
 ---
-# spaces are tricky, let's have one by default
-test_win_package_path_safe: C:\ansible\win_package
-test_win_package_path: C:\ansible\win package
-test_win_package_log_path_install: C:\ansible\win package\test-install.log
-test_win_package_log_path_uninstall: C:\ansible\win package\test-uninstall.log
-test_win_package_good_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_package/good.msi
-test_win_package_reboot_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_package/reboot.msi
-test_win_package_bad_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_package/bad.msi
-test_win_package_exe_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_package/7z.exe # TODO: change to it's own executable
+test_path: '{{ remote_tmp_dir }}\win_package .ÅÑŚÌβŁÈ [$!@^&test(;)]'
 
-test_win_package_good_id: '{223D9A13-653B-4231-A365-EDDC30B4F226}'
-test_win_package_reboot_id: '{223D9A13-653B-4231-A365-EDDC30B4F227}'
-test_win_package_exe_id: 7-Zip
+# MSI packages
+good_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_package/good.msi
+reboot_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_package/reboot.msi
+bad_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_package/bad.msi
 
-# define the below to run the network tests, all 3 msi's should exist in this path
-# test_win_package_network_path: \\ANSIBLE\network
+# MSIX tools
+makeappx_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_package/makeappx.zip
 
-# set the below to test a network path without credential delegation like Basic or NTLM
-# test_win_package_network_username: ANSIBLE\User
-# test_win_package_network_password: Password
+# MSP packages - https://wixtoolset.org/documentation/manual/v3/patching/patch_building.html
+patch_msi_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_package/patch.msi
+patch_msp_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_package/patch.msp
+patch_install_file: C:\Program Files (x86)\Patch Sample Directory\Sample.txt
+
+good_id: '{223D9A13-653B-4231-A365-EDDC30B4F226}'
+reboot_id: '{223D9A13-653B-4231-A365-EDDC30B4F227}'
+patch_product_id: '{48C49ACE-90CF-4161-9C6E-9162115A54DD}'
+patch_patch_id: '{224C316C-5894-4771-BABF-21A3AC1F75FF}'
+msix_id: WinPackageMsix
+msixbundle_id: WinPackageBundleMsix
+appx_id: WinPackageAppx
+appxbundle_id: WinPackageBundleAppx
+registry_id: WinPackageRegistry
+
+all_ids:
+- '{{ good_id }}'
+- '{{ reboot_id }}'
+- '{{ patch_product_id }}'
+- '{{ msix_id }}'
+- '{{ msixbundle_id }}'
+- '{{ appx_id }}'
+- '{{ appxbundle_id }}'
+- '{{ registry_id }}'

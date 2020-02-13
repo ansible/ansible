@@ -1,0 +1,393 @@
+---
+# This symlink allows us to test paths with a space in the executable path
+- name: create symbolic link in test folder to powershell
+  win_command: cmd.exe /c mklink "{{ test_path }}\powershell symlink.exe" C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+
+- name: copy across test script that creates a registry install entry
+  win_template:
+    src: registry_package.ps1.j2
+    dest: '{{ test_path }}\registry_package.ps1'
+
+- name: install registry package not quoted and no spaces in path
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+    - -File
+    - '{{ test_path }}\registry_package.ps1'
+    - HKLMx64
+    - UninstallString
+    - C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Command Remove-Item -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }} -Force -Recurse
+    state: present
+
+- name: uninstall registry package not quoted and no spaces in path (check mode)
+  win_package:
+    product_id: '{{ registry_id }}'
+    state: absent
+  register: registry_uninstall_normal_check
+  check_mode: yes
+
+- name: get result of uninstall registry package not quoted and no spaces in path (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }}
+  register: registry_uninstall_normal_actual_check
+
+- name: assert uninstall registry package not quoted and no spaces in path (check mode)
+  assert:
+    that:
+    - registry_uninstall_normal_check is changed
+    - registry_uninstall_normal_check.rc == 0
+    - not registry_uninstall_normal_check.reboot_required
+    - registry_uninstall_normal_actual_check.exists
+
+- name: uninstall registry package not quoted and no spaces in path
+  win_package:
+    product_id: '{{ registry_id }}'
+    state: absent
+  register: registry_uninstall_normal
+
+- name: get result of uninstall registry package not quoted and no spaces in path
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }}
+  register: registry_uninstall_normal_actual
+
+- name: assert uninstall registry package not quoted and no spaces in path
+  assert:
+    that:
+    - registry_uninstall_normal is changed
+    - registry_uninstall_normal.rc == 0
+    - not registry_uninstall_normal.reboot_required
+    - not registry_uninstall_normal_actual.exists
+
+- name: uninstall registry package not quoted and no spaces in path (idempotence)
+  win_package:
+    product_id: '{{ registry_id }}'
+    state: absent
+  register: registry_uninstall_normal_again
+
+- name: assert uninstall registry package not quoted and no spaces in path (idempotence)
+  assert:
+    that:
+    - not registry_uninstall_normal_again is changed
+
+- name: install registry package not quoted and spaces in path
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+    - -File
+    - '{{ test_path }}\registry_package.ps1'
+    - HKLMx86
+    - QuietUninstallString
+    - '{{ test_path }}\powershell symlink.exe -Command Remove-Item -Path HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }} -Force -Recurse'
+    state: present
+
+- name: uninstall registry package not quoted and spaces in path
+  win_package:
+    product_id: '{{ registry_id }}'
+    state: absent
+  register: registry_uninstall_not_quoted
+
+- name: get result of uninstall registry package not quoted and spaces in path
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }}
+  register: registry_uninstall_not_quoted_actual
+
+- name: assert uninstall registry package not quoted and spaces in path
+  assert:
+    that:
+    - registry_uninstall_not_quoted is changed
+    - registry_uninstall_not_quoted.rc == 0
+    - not registry_uninstall_not_quoted.reboot_required
+    - not registry_uninstall_not_quoted_actual.exists
+
+- name: install registry package quoted and no spaces in path
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+    - -File
+    - '{{ test_path }}\registry_package.ps1'
+    - HKCUx64
+    - UninstallString
+    - '"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -Command Remove-Item -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }} -Force -Recurse'
+    state: present
+
+- name: uninstall registry package quoted and no spaces in path
+  win_package:
+    product_id: '{{ registry_id }}'
+    state: absent
+  register: registry_uninstall_quoted_normal
+
+- name: get result of uninstall registry package quoted and no spaces in path
+  win_reg_stat:
+    path: HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Unisntall\{{ registry_id }}
+  register: registry_uninstall_quoted_normal_actual
+
+- name: assert uninstall registry package quoted and no spaces in path
+  assert:
+    that:
+    - registry_uninstall_quoted_normal is changed
+    - registry_uninstall_quoted_normal.rc == 0
+    - not registry_uninstall_quoted_normal.reboot_required
+    - not registry_uninstall_quoted_normal_actual.exists
+
+- name: install registry package quoted and spaces in path
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+    - -File
+    - '{{ test_path }}\registry_package.ps1'
+    - HKCUx86
+    - QuietUninstallString
+    - '"{{ test_path }}\powershell symlink.exe" -Command Remove-Item -Path HKCU:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }} -Force -Recurse'
+    state: present
+
+- name: uninstall registry package quoted and spaces in path
+  win_package:
+    product_id: '{{ registry_id }}'
+    state: absent
+  register: registry_uninstall_quoted_spaces
+
+- name: get result of uninstall registry package quoted and spaces in path
+  win_reg_stat:
+    path: HKCU:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }}
+  register: registry_uninstall_quoted_spaces_actual
+
+- name: assert uninstall registry package quoted and spaces in path
+  assert:
+    that:
+    - registry_uninstall_quoted_spaces is changed
+    - registry_uninstall_quoted_spaces.rc == 0
+    - not registry_uninstall_quoted_spaces.reboot_required
+    - not registry_uninstall_quoted_spaces_actual.exists
+
+- name: install registry package with unquoted env vars
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+    - -File
+    - '{{ test_path }}\registry_package.ps1'
+    - HKLMx64
+    - UninstallString
+    - '%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -Command Remove-Item -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }} -Force -Recurse'
+    state: present
+
+- name: uninstall registry package with unquoted env vars
+  win_package:
+    product_id: '{{ registry_id }}'
+    state: absent
+  register: registry_uninstall_env
+
+- name: get result of ininstall registry package with unquoted env vars
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }}
+  register: registry_uninstall_env_actual
+
+- name: assert uninstall registry package with unquoted env vars
+  assert:
+    that:
+    - registry_uninstall_env is changed
+    - registry_uninstall_env.rc == 0
+    - not registry_uninstall_env.reboot_required
+    - not registry_uninstall_env_actual.exists
+
+- name: install registry package quoted env vars
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+    - -File
+    - '{{ test_path }}\registry_package.ps1'
+    - HKLMx64
+    - UninstallString
+    - '"%TestVar%\powershell symlink.exe" -Command Remove-Item -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }} -Force -Recurse'
+    state: present
+
+- name: uninstall registry package quoted env vars
+  win_package:
+    product_id: '{{ registry_id }}'
+    state: absent
+  register: registry_uninstall_env_quoted
+  environment:
+    TestVar: '{{ test_path }}'
+
+- name: get result of uninstall registry package quoted env vars
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }}
+  register: registry_uninstall_env_quoted_actual
+
+- name: assert uninstall registry package quoted env vars
+  assert:
+    that:
+    - registry_uninstall_env_quoted is changed
+    - registry_uninstall_env_quoted.rc == 0
+    - not registry_uninstall_env_quoted.reboot_required
+    - not registry_uninstall_env_quoted_actual.exists
+
+- name: install registry package for overriding path test
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+    - -File
+    - '{{ test_path }}\registry_package.ps1'
+    - HKLMx64
+    - UninstallString
+    - Fail path
+    state: present
+
+- name: uninstall registry package with overridden path and explicit error code
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    product_id: '{{ registry_id }}'
+    arguments: '-Command Remove-Item -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }}; exit 1'
+    expected_return_code: 1
+    state: absent
+  register: registry_uninstall_explicit_path
+
+- name: get result of uninstall registry package with overridden path and explicit error code
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }}
+  register: registry_uninstall_explicit_path_actual
+
+- name: assert unisntall registry package with overridden path and explicit error code
+  assert:
+    that:
+    - registry_uninstall_explicit_path is changed
+    - registry_uninstall_explicit_path.rc == 1
+    - not registry_uninstall_explicit_path.reboot_required
+    - not registry_uninstall_explicit_path_actual.exists
+
+- name: create registry package for uninstal with explicit arguments test
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+    - -File
+    - '{{ test_path }}\registry_package.ps1'
+    - HKLMx64
+    - QuietUninstallString
+    - C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    state: present
+
+- name: uninstall registry package with explicit arguments and chdir
+  win_package:
+    product_id: '{{ registry_id }}'
+    arguments: -Command Remove-Item -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }} -Force -Recurse; [System.IO.File]::WriteAllText('{{ test_path }}\reg_out.txt', $pwd.Path, [System.Text.Encoding]::Unicode); exit 3010
+    state: absent
+    chdir: C:\Users
+  register: registry_uninstall_arguments
+
+- name: get package result of uninstall registry package with explicit arguments and chdir
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }}
+  register: registry_uninstall_arguments_reg_actual
+
+- name: get package output of uninstall registry package with explicit arguments and chdir
+  slurp:
+    path: '{{ test_path }}\reg_out.txt'
+  register: registry_uninstall_arguments_chdir_actual
+
+- name: assert uninstall registry package with explicit arguments and chdir
+  assert:
+    that:
+    - registry_uninstall_arguments is changed
+    - registry_uninstall_arguments.rc == 3010
+    - registry_uninstall_arguments.reboot_required
+    - not registry_uninstall_arguments_reg_actual.exists
+    # backslash escaping makes it hard to compare the value, just compare the raw base64 string expected which is 'C:\Users' as UTF-16-LE
+    - registry_uninstall_arguments_chdir_actual.content == '//5DADoAXABVAHMAZQByAHMA'
+
+- name: install package for creates_* tests
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments:
+    - -File
+    - '{{ test_path }}\registry_package.ps1'
+    - HKLMx64
+    - UninstallString
+    - powershell.exe -Command Remove-Item -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{{ registry_id }} -Force -Recurse
+    state: present
+
+- name: get actual PowerShell file version for tests
+  win_shell: |
+    $path = '{{ test_path }}\powershell symlink.exe'
+    $version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($path)
+    (New-Object -TypeName System.Version -ArgumentList @(
+        $version.FileMajorPart, $version.FileMinorPart, $version.FileBuildPart, $version.FilePrivatePart
+    )).ToString()
+  changed_when: False
+  register: powershell_version
+
+- name: test creates_path overrides product_id
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments: echo hi
+    product_id: '{{ registry_id }}'
+    creates_path: C:\missing
+    state: present
+  register: creates_path
+
+- name: test creates_version overrides product_id
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments: echo hi
+    product_id: '{{ registry_id }}'
+    creates_path: '{{ test_path }}\powershell symlink.exe'
+    creates_version: 1.0.0
+    state: present
+  register: creates_version
+
+- name: assert test creates_path and creates_version override product_id is changed
+  assert:
+    that:
+    - creates_path is changed
+    - creates_version is changed
+
+- name: test creates_path to existing but no product_id
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments: echo hi
+    product_id: Fake
+    creates_path: C:\Windows
+    state: present
+  register: creates_path_present
+
+- name: test creates_version to existing but no product_id
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments: echo hi
+    product_id: Fake
+    creates_path: '{{ test_path }}\powershell symlink.exe'
+    creates_version: '{{ powershell_version.stdout | trim }}'
+    state: present
+  register: creates_version_present
+
+- name: assert test creates_path to existing but no product_Id
+  assert:
+    that:
+    - not creates_path_present is changed
+    - not creates_version_present is changed
+
+- name: test creates_service overrides product_id
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments: echo hi
+    product_id: '{{ registry_id }}'
+    creates_service: missing service
+    state: present
+  register: creates_service
+
+- name: assert test creates_service overrides product_id
+  assert:
+    that:
+    - creates_service is changed
+
+- name: test creates_service to existing but no product_id
+  win_package:
+    path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments: echo hi
+    product_id: Fake
+    creates_service: winrm
+    state: present
+  register: creates_service_present
+
+- name: assert test creates_service to existing but no product_Id
+  assert:
+    that:
+    - not creates_service_present is changed
