@@ -9,7 +9,7 @@
   block:
     - name: Create a minimal stack with an export set by parameter
       cloudformation:
-        stack_name: "cf-exports-test-a"
+        stack_name: "{{ stack_name }}"
         template_body: "{{ lookup('file','test_stack.yml') }}"
         template_parameters:
           TestParamName: "cf-exports-param"
@@ -23,3 +23,15 @@
         export_value: "{{ exports_result['export_items']['cf-exports-param'] }}"
     - debug:
         var: export_value
+    - assert:
+        that:
+          - export_value is defined
+    # ==== Cleanup ============================================================
+
+  always:
+
+    - name: delete stack
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        state: absent
+      ignore_errors: yes
