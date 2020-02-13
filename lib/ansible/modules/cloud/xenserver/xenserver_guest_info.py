@@ -26,7 +26,7 @@ notes:
 - 'To acquire XenAPI Python library, just run C(pip install XenAPI) on your Ansible Control Node. The library can also be found inside
    Citrix Hypervisor/XenServer SDK (downloadable from Citrix website). Copy the XenAPI.py file from the SDK to your Python site-packages on your
    Ansible Control Node to use it. Latest version of the library can also be acquired from GitHub:
-   https://raw.githubusercontent.com/xapi-project/xen-api/master/scripts/examples/python/XenAPI.py'
+   U(https://raw.githubusercontent.com/xapi-project/xen-api/master/scripts/examples/python/XenAPI/XenAPI.py)'
 - 'If no scheme is specified in C(hostname), module defaults to C(http://) because C(https://) is problematic in most setups. Make sure you are
    accessing XenServer host in trusted environment or use C(https://) scheme explicitly.'
 - 'To use C(https://) scheme for C(hostname) you have to either import host certificate to your OS certificate store or use C(validate_certs: no)
