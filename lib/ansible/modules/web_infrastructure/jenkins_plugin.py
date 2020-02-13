@@ -640,7 +640,7 @@ class JenkinsPlugin(object):
         # Perform the action
         if self.is_installed:
             if not self.module.check_mode:
-                self._pm_query('doUninstall', 'Uninstallation')
+                self._pm_query('doUninstall', 'Uninstallation', 'POST')
 
             changed = True
 
@@ -692,7 +692,7 @@ class JenkinsPlugin(object):
 
         return changed
 
-    def _pm_query(self, action, msg):
+    def _pm_query(self, action, msg, http_method='GET'):
         url = "%s/pluginManager/plugin/%s/%s" % (
             self.params['url'], self.params['name'], action)
 
@@ -700,7 +700,8 @@ class JenkinsPlugin(object):
         self._get_url_data(
             url,
             msg_status="Plugin not found. %s" % url,
-            msg_exception="%s has failed." % msg)
+            msg_exception="%s has failed." % msg,
+            method=http_method)
 
 
 def main():
