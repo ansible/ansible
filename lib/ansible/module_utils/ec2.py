@@ -111,8 +111,7 @@ class AWSRetry(CloudRetry):
         if catch_extra_error_codes:
             retry_on.extend(catch_extra_error_codes)
 
-        not_found = re.compile(r'^\w+.NotFound')
-        return response_code in retry_on or not_found.search(response_code)
+        return response_code in retry_on
 
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
