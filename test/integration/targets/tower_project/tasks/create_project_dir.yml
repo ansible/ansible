@@ -5,6 +5,7 @@
     password: "{{ tower_password }}"
     validate_certs: false
     return_content: true
+    force_basic_auth: true
   register: awx_config
 
 - tower_inventory:
