@@ -1301,6 +1301,52 @@ files:
     labels: [ tower ]
     maintainers: $team_tower
     ignored: wwitzel3
+  $modules/web_infrastructure/ansible_tower/tower_credential.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_credential_type.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_group.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_host.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_inventory.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_inventory_source.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_job_cancel.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_job_launch.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_job_list.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_job_template.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_job_wait.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_label.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_notification.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_organization.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_project.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_receive.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_role.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_send.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_settings.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_team.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_user.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_workflow_launch.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_workflow_template.py:
+    migrated_to: awx.awx
   $modules/web_infrastructure/sophos_utm/:
     maintainers: $team_e_spirit
     keywords:
@@ -1402,7 +1448,8 @@ files:
   $module_utils:
     support: community
   $module_utils/acme.py: *crypto
-  $module_utils/ansible_tower.py: *tower
+  $module_utils/ansible_tower.py:
+    migrated_to: awx.awx
   $module_utils/azure_rm_common.py:
     maintainers: $team_azure
     labels:
@@ -2004,6 +2051,8 @@ files:
   $plugins/doc_fragments/f5.py:
     maintainers: caphrim007 wojtek0806
     migrated_to: f5networks.f5_modules
+  $plugins/doc_fragments/tower.py:
+    migrated_to: awx.awx
 ###############################
 # plugins/filter
   $plugins/filter/:
@@ -2095,6 +2144,8 @@ files:
     support: core
   $plugins/inventory/now.py:
     migrated_to: servicenow.servicenow
+  $plugins/inventory/tower.py:
+    migrated_to: awx.awx
 
 ###############################
 # plugins/lookup
