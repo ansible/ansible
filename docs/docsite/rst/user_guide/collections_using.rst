@@ -85,11 +85,11 @@ The ``collections`` keyword lets you define a list of collections that your role
 Using ``collections`` in roles
 ------------------------------
 
-Within a role, you can control which collections Ansible searches for the tasks inside the role using the ``collections`` keyword in the role's ``metadata/main.yml``. Ansible will use the collections list defined inside the role even if the playbook that calls the role defines different collections in a separate ``collections`` keyword entry. Roles defined inside a collection always implicitly search their own collection first, so you don't need to use the ``collections`` keyword to access modules, actions, or other roles contained in the same collection.
+Within a role, you can control which collections Ansible searches for the tasks inside the role using the ``collections`` keyword in the role's ``meta/main.yml``. Ansible will use the collections list defined inside the role even if the playbook that calls the role defines different collections in a separate ``collections`` keyword entry. Roles defined inside a collection always implicitly search their own collection first, so you don't need to use the ``collections`` keyword to access modules, actions, or other roles contained in the same collection.
 
 .. code-block:: yaml
 
-   # myrole/metadata/main.yml
+   # myrole/meta/main.yml
    collections:
      - my_namespace.first_collection
      - my_namespace.second_collection
