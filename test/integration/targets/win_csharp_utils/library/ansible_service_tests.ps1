@@ -174,10 +174,15 @@ $tests = [Ordered]@{
         $actual.FailureActionsOnNonCrashFailures | Assert-Equals -Expected $false
         $actual.ServiceSidInfo | Assert-Equals -Expected ([Ansible.Service.ServiceSidInfo]::None)
         $actual.RequiredPrivileges.Count | Assert-Equals -Expected 0
-        $actual.PreShutdownTimeout | Assert-Equals -Expected 10000
+        # Cannot test default values as it differs per OS version
+        $null -ne $actual.PreShutdownTimeout | Assert-Equals -Expected $true
         $actual.Triggers.Count | Assert-Equals -Expected 0
         $actual.PreferredNode | Assert-Equals -Expected $null
-        $actual.LaunchProtection | Assert-Equals -Expected ([Ansible.Service.LaunchProtection]::None)
+        if ([Environment]::OSVersion.Version -ge [Version]'6.3') {
+            $actual.LaunchProtection | Assert-Equals -Expected ([Ansible.Service.LaunchProtection]::None)
+        } else {
+            $actual.LaunchProtection | Assert-Equals -Expected $null
+        }
         $actual.State | Assert-Equals -Expected ([Ansible.Service.ServiceStatus]::Stopped)
         $actual.Win32ExitCode | Assert-Equals -Expected 1077  # ERROR_SERVICE_NEVER_STARTED
         $actual.ServiceExitCode | Assert-Equals -Expected 0
@@ -215,10 +220,14 @@ $tests = [Ordered]@{
             $actual.FailureActionsOnNonCrashFailures | Assert-Equals -Expected $false
             $actual.ServiceSidInfo | Assert-Equals -Expected ([Ansible.Service.ServiceSidInfo]::None)
             $actual.RequiredPrivileges.Count | Assert-Equals -Expected 0
-            $actual.PreShutdownTimeout | Assert-Equals -Expected 10000
+            $null -ne $actual.PreShutdownTimeout | Assert-Equals -Expected $true
             $actual.Triggers.Count | Assert-Equals -Expected 0
             $actual.PreferredNode | Assert-Equals -Expected $null
-            $actual.LaunchProtection | Assert-Equals -Expected ([Ansible.Service.LaunchProtection]::None)
+            if ([Environment]::OSVersion.Version -ge [Version]'6.3') {
+                $actual.LaunchProtection | Assert-Equals -Expected ([Ansible.Service.LaunchProtection]::None)
+            } else {
+                $actual.LaunchProtection | Assert-Equals -Expected $null
+            }
             $actual.State | Assert-Equals -Expected ([Ansible.Service.ServiceStatus]::Stopped)
             $actual.Win32ExitCode | Assert-Equals -Expected 1077  # ERROR_SERVICE_NEVER_STARTED
             $actual.ServiceExitCode | Assert-Equals -Expected 0
@@ -230,9 +239,6 @@ $tests = [Ordered]@{
         } finally {
             $actual.Delete()
         }
-
-        $cmdletService = Get-Service -Name $testName -ErrorAction SilentlyContinue
-        $null -eq $cmdletService | Assert-Equals -Expected $true
     }
 
     "Fail to open non-existing service" = {
@@ -440,7 +446,6 @@ $tests = [Ordered]@{
 
     "Modify Account - user" = {
         $currentSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
-        $currentName = $currentSid.Translate([System.Security.Principal.NTAccount])
 
         $service = New-Object -TypeName Ansible.Service.Service -ArgumentList $serviceName
         $service.Account = $currentSid
