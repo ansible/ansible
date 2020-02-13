@@ -447,7 +447,16 @@ $tests = [Ordered]@{
         $service.Password = 'password'
 
         $actual = Invoke-Sc -Action qc -Name $serviceName
-        $actualSid = $service.Account.Translate([System.Security.Principal.SecurityIdentifier])
+
+        # When running tests in CI this seems to become .\Administrator
+        if ($service.Account.Value.StartsWith('.\')) {
+            $username = $service.Account.Value.Substring(2, $service.Account.Value.Length - 2)
+            $actualSid = ([System.Security.Principal.NTAccount]"$env:COMPUTERNAME\$username").Translate(
+                [System.Security.Principal.SecurityIdentifier]
+            )
+        } else {
+            $actualSid = $service.Account.Translate([System.Security.Principal.SecurityIdentifier])
+        }
         $actualSid.Value | Assert-Equals -Expected $currentSid.Value
         $actual.SERVICE_START_NAME | Assert-Equals -Expected $currentName.Value
 
