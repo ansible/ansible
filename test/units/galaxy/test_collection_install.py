@@ -203,6 +203,42 @@ def test_build_requirement_from_path_invalid_manifest(collection_artifact):
         collection.CollectionRequirement.from_path(collection_artifact[0], True)
 
 
+def test_build_requirement_from_path_no_version(collection_artifact, monkeypatch):
+    manifest_path = os.path.join(collection_artifact[0], b'MANIFEST.json')
+    manifest_value = json.dumps({
+        'collection_info': {
+            'namespace': 'namespace',
+            'name': 'name',
+            'version': '',
+            'dependencies': {}
+        }
+    })
+    with open(manifest_path, 'wb') as manifest_obj:
+        manifest_obj.write(to_bytes(manifest_value))
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    actual = collection.CollectionRequirement.from_path(collection_artifact[0], True)
+
+    # While the folder name suggests a different collection, we treat MANIFEST.json as the source of truth.
+    assert actual.namespace == u'namespace'
+    assert actual.name == u'name'
+    assert actual.b_path == collection_artifact[0]
+    assert actual.api is None
+    assert actual.skip is True
+    assert actual.versions == set(['*'])
+    assert actual.latest_version == u'*'
+    assert actual.dependencies == {}
+
+    assert mock_display.call_count == 1
+
+    actual_warn = ' '.join(mock_display.mock_calls[0][1][0].split('\n'))
+    expected_warn = "Collection at '%s' does not have a valid version set, falling back to '*'. Found version: ''" \
+        % to_text(collection_artifact[0])
+    assert expected_warn in actual_warn
+
+
 def test_build_requirement_from_tar(collection_artifact):
     actual = collection.CollectionRequirement.from_tar(collection_artifact[1], True, True)
 
@@ -497,13 +533,20 @@ def test_add_collection_requirements(versions, requirement, expected_filter, exp
     assert req.latest_version == expected_latest
 
 
-def test_add_collection_requirement_to_unknown_installed_version():
+def test_add_collection_requirement_to_unknown_installed_version(monkeypatch):
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
     req = collection.CollectionRequirement('namespace', 'name', None, 'https://galaxy.com', ['*'], '*', False,
                                            skip=True)
 
-    expected = "Cannot meet requirement namespace.name:1.0.0 as it is already installed at version 'unknown'."
-    with pytest.raises(AnsibleError, match=expected):
-        req.add_requirement(str(req), '1.0.0')
+    req.add_requirement('parent.collection', '1.0.0')
+    assert req.latest_version == '*'
+
+    assert mock_display.call_count == 1
+
+    actual_warn = ' '.join(mock_display.mock_calls[0][1][0].split('\n'))
+    assert "Failed to validate the collection requirement 'namespace.name:1.0.0' for parent.collection" in actual_warn
 
 
 def test_add_collection_wildcard_requirement_to_unknown_installed_version():
