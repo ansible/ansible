@@ -273,9 +273,9 @@ $tests = [Ordered]@{
     "Modfiy ServiceType" = {
         $service = New-Object -TypeName Ansible.Service.Service -ArgumentList $serviceName
         $service.ServiceType = [Ansible.Service.ServiceType]::Win32ShareProcess
-        
+
         $actual = Invoke-Sc -Action qc -Name $serviceName
-        $service.ServiceType | Assert-Equals -Expected ([Ansible.Service.ServiceType]::Win32ShareProcess)        
+        $service.ServiceType | Assert-Equals -Expected ([Ansible.Service.ServiceType]::Win32ShareProcess)
         $actual.TYPE | Assert-Equals -Expected "20  WIN32_SHARE_PROCESS"
 
         $null = Invoke-Sc -Action config -Name $serviceName -Arguments @{type="own"}
@@ -308,7 +308,7 @@ $tests = [Ordered]@{
             $_.Exception.NativeErrorCode | Assert-Equals -Expected 87  # ERROR_INVALID_PARAMETER
         }
         $failed | Assert-Equals -Expected $true
-        
+
         $actual = Invoke-Sc -Action qc -Name $serviceName
         $actual.TYPE | Assert-Equals -Expected "10  WIN32_OWN_PROCESS"
     }
@@ -316,9 +316,9 @@ $tests = [Ordered]@{
     "Modify StartType" = {
         $service = New-Object -TypeName Ansible.Service.Service -ArgumentList $serviceName
         $service.StartType = [Ansible.Service.ServiceStartType]::Disabled
-        
+
         $actual = Invoke-Sc -Action qc -Name $serviceName
-        $service.StartType | Assert-Equals -Expected ([Ansible.Service.ServiceStartType]::Disabled)        
+        $service.StartType | Assert-Equals -Expected ([Ansible.Service.ServiceStartType]::Disabled)
         $actual.START_TYPE | Assert-Equals -Expected "4   DISABLED"
 
         $null = Invoke-Sc -Action config -Name $serviceName -Arguments @{start="demand"}
@@ -364,9 +364,9 @@ $tests = [Ordered]@{
     "Modify ErrorControl" = {
         $service = New-Object -TypeName Ansible.Service.Service -ArgumentList $serviceName
         $service.ErrorControl = [Ansible.Service.ErrorControl]::Severe
-        
+
         $actual = Invoke-Sc -Action qc -Name $serviceName
-        $service.ErrorControl | Assert-Equals -Expected ([Ansible.Service.ErrorControl]::Severe)        
+        $service.ErrorControl | Assert-Equals -Expected ([Ansible.Service.ErrorControl]::Severe)
         $actual.ERROR_CONTROL | Assert-Equals -Expected "2   SEVERE"
 
         $null = Invoke-Sc -Action config -Name $serviceName -Arguments @{error="ignore"}
@@ -377,7 +377,7 @@ $tests = [Ordered]@{
     "Modify Path" = {
         $service = New-Object -TypeName Ansible.Service.Service -ArgumentList $serviceName
         $service.Path = "Fake path"
-        
+
         $actual = Invoke-Sc -Action qc -Name $serviceName
         $service.Path | Assert-Equals -Expected "Fake path"
         $actual.BINARY_PATH_NAME | Assert-Equals -Expected "Fake path"
@@ -390,7 +390,7 @@ $tests = [Ordered]@{
     "Modify LoadOrderGroup" = {
         $service = New-Object -TypeName Ansible.Service.Service -ArgumentList $serviceName
         $service.LoadOrderGroup = "my group"
-        
+
         $actual = Invoke-Sc -Action qc -Name $serviceName
         $service.LoadOrderGroup | Assert-Equals -Expected "my group"
         $actual.LOAD_ORDER_GROUP | Assert-Equals -Expected "my group"
@@ -403,7 +403,7 @@ $tests = [Ordered]@{
     "Modify DependentOn" = {
         $service = New-Object -TypeName Ansible.Service.Service -ArgumentList $serviceName
         $service.DependentOn = @("HTTP", "WinRM")
-        
+
         $actual = Invoke-Sc -Action qc -Name $serviceName
         @(,$service.DependentOn) | Assert-Equals -Expected @("HTTP", "WinRM")
         @(,$actual.DEPENDENCIES) | Assert-Equals -Expected @("HTTP", "WinRM")
@@ -420,7 +420,7 @@ $tests = [Ordered]@{
         $localName = $localSid.Translate([System.Security.Principal.NTAccount])
         $networkSid = [System.Security.Principal.SecurityIdentifier]'S-1-5-20'
         $networkName = $networkSid.Translate([System.Security.Principal.NTAccount])
-        
+
         $service = New-Object -TypeName Ansible.Service.Service -ArgumentList $serviceName
         $service.Account = $networkSid
 
@@ -502,7 +502,7 @@ $tests = [Ordered]@{
     "Modify DisplayName" = {
         $service = New-Object -TypeName Ansible.Service.Service -ArgumentList $serviceName
         $service.DisplayName = "Custom Service Name"
-        
+
         $actual = Invoke-Sc -Action qc -Name $serviceName
         $service.DisplayName | Assert-Equals -Expected "Custom Service Name"
         $actual.DISPLAY_NAME | Assert-Equals -Expected "Custom Service Name"
@@ -646,7 +646,7 @@ $tests = [Ordered]@{
     "Modify FailureActionsOnNonCrashFailures" = {
         $service = New-Object -TypeName Ansible.Service.Service -ArgumentList $serviceName
         $service.FailureActionsOnNonCrashFailures = $true
-        
+
         $actual = Invoke-Sc -Action qfailureflag -Name $serviceName
         $service.FailureActionsOnNonCrashFailures | Assert-Equals -Expected $true
         $actual.FAILURE_ACTIONS_ON_NONCRASH_FAILURES | Assert-Equals -Expected "TRUE"
@@ -665,7 +665,7 @@ $tests = [Ordered]@{
 
         $null = Invoke-Sc -Action sidtype -Name $serviceName -Arguments @(,'unrestricted')
         $service.ServiceSidInfo | Assert-Equals -Expected ([Ansible.Service.ServiceSidInfo]::Unrestricted)
-        
+
         $service.ServiceSidInfo = [Ansible.Service.ServiceSidInfo]::Restricted
 
         $actual = Invoke-Sc -Action qsidtype -Name $serviceName
@@ -683,7 +683,7 @@ $tests = [Ordered]@{
 
         # Ensure setting to $null is the same as an empty array
         $service.RequiredPrivileges = $null
-        
+
         $actual = Invoke-Sc -Action qprivs -Name $serviceName
         ,$service.RequiredPrivileges | Assert-Equals -Expected @()
         ,$actual.PRIVILEGES | Assert-Equals -Expected @()
