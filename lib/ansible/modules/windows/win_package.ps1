@@ -4,6 +4,9 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+# AccessToken should be removed once the username/password options are gone
+#AnsibleRequires -CSharpUtil Ansible.AccessToken
+
 #AnsibleRequires -CSharpUtil Ansible.Basic
 #Requires -Module Ansible.ModuleUtils.AddType
 #Requires -Module Ansible.ModuleUtils.ArgvParser
@@ -404,6 +407,11 @@ Function Add-SystemReadAce {
         $Path
     )
 
+    # Don't set the System ACE if the path is a UNC path as the SID won't be valid.
+    if (([Uri]$Path).IsUnc) {
+        return
+    }
+
     $acl = Get-Acl -LiteralPath $Path
     $ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
         (New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList ('S-1-5-18')),
@@ -427,12 +435,36 @@ Function Copy-ItemWithCredential {
         $Credential
     )
 
-    $sourceDirectory = Split-Path -LiteralPath $Path
     $filename = Split-Path -Path $Path -Leaf
-
-    New-PSDrive -Name win_package -PSProvider FileSystem -Root $sourceDirectory -Credential $Credential -Scope Local
     $targetPath = Join-Path -Path $Destination -ChildPath $filename
-    Copy-Item -LiteralPath "win_package:\$filename" -Destination $targetPath
+
+    # New-PSDrive with -Credentials seems to have lots of issues, just impersonate a NewCredentials token and copy the
+    # file locally. NewCredentials will ensure the outbound auth to the UNC path is with the new credentials specified.
+
+    $domain = [NullString]::Value
+    $username = $Credential.UserName
+    if ($username.Contains('\')) {
+        $userSplit = $username.Split('\', 2)
+        $domain = $userSplit[0]
+        $username = $userSplit[1]
+    }
+
+    $impersonated = $false
+    $token = [Ansible.AccessToken.TokenUtil]::LogonUser(
+        $username, $domain, $Credential.GetNetworkCredential().Password,
+        [Ansible.AccessToken.LogonType]::NewCredentials, [Ansible.AccessToken.LogonProvider]::WinNT50
+    )
+    try {
+        [Ansible.AccessToken.TokenUtil]::ImpersonateToken($token)
+        $impersonated = $true
+
+        Copy-Item -LiteralPath $Path -Destination $targetPath
+    } finally {
+        if ($impersonated) {
+            [Ansible.AccessToken.TokenUtil]::RevertToSelf()
+        }
+        $token.Dispose()
+    }
 
     $targetPath
 }
