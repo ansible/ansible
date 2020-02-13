@@ -102,6 +102,20 @@ def ansible_environment(args, color=True, ansible_config=None):
             ANSIBLE_COLLECTIONS_PATHS=data_context().content.collection.root,
         ))
 
+    if data_context().content.is_ansible:
+        # provide private copies of plugins for integration tests
+        # this provides a temporary means of running integration tests until the modules can be sourced from collections
+        plugin_root = os.path.join(ANSIBLE_SOURCE_ROOT, 'test', 'support', 'plugins')
+
+        plugin_map = dict(
+            library='modules',
+        )
+
+        plugin_env = dict(('ANSIBLE_%s' % key.upper(), os.path.join(plugin_root, value)) for key, value in plugin_map.items())
+        plugin_env = dict((key, value) for key, value in plugin_env.items() if os.path.exists(value))
+
+        env.update(plugin_env)
+
     return env
 
 
