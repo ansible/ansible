@@ -10,6 +10,10 @@ Often the result of a play may depend on the value of a variable, fact (somethin
 In some cases, the values of variables may depend on other variables.
 Additional groups can be created to manage hosts based on whether the hosts match other criteria. This topic covers how conditionals are used in playbooks.
 
+.. note::
+
+  There are many options to control execution flow in Ansible. More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons.
+
 
 .. _the_when_statement:
 
@@ -20,9 +24,9 @@ Sometimes you will want to skip a particular step on a particular host.
 This could be something as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
-This is easy to do in Ansible with the ``when`` clause, which contains a raw `Jinja2 expression <https://jinja.palletsprojects.com/en/master/templates/#expressions>`_ without double curly braces (see :ref:`group_by_module`).
+This is easy to do in Ansible with the ``when`` clause, which contains a raw :func:`Jinja2 expression <jinja2:expressions>` without double curly braces (see :ref:`group_by_module`).
 
-.. note:: Jinja2 expressions are built up from comparisons, filters, tests, and logical combinations thereof. The below examples will give you an impression how to use them. However, for a more complete overview over all operators to use, please refer to the official `Jinja2 documentation <https://jinja.palletsprojects.com/en/master/templates/#expressions>`_.
+.. note:: Jinja2 expressions are built up from comparisons, filters, tests, and logical combinations thereof. The below examples will give you an impression how to use them. However, for a more complete overview over all operators to use, please refer to the official :func:`Jinja2 documentation <jinja2:expressions>`.
 
 It's actually pretty simple::
 
@@ -32,7 +36,7 @@ It's actually pretty simple::
         when: ansible_facts['os_family'] == "Debian"
         # note that all variables can be used directly in conditionals without double curly braces
 
-You can also use `parentheses to group and logical operators <https://jinja.palletsprojects.com/en/master/templates/#logic>`_ to combine conditions::
+You can also use :func:`parentheses to group and logical operators <jinja2:logic>` to combine conditions::
 
     tasks:
       - name: "shut down CentOS 6 and Debian 7 systems"
@@ -40,7 +44,7 @@ You can also use `parentheses to group and logical operators <https://jinja.pall
         when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "6") or
               (ansible_facts['distribution'] == "Debian" and ansible_facts['distribution_major_version'] == "7")
 
-Multiple conditions that all need to be true (i.e., a logical ``and``) can also be specified as a list::
+Multiple conditions that all need to be true (that is, a logical ``and``) can also be specified as a list::
 
     tasks:
       - name: "shut down CentOS 6 systems"
@@ -49,8 +53,8 @@ Multiple conditions that all need to be true (i.e., a logical ``and``) can also 
           - ansible_facts['distribution'] == "CentOS"
           - ansible_facts['distribution_major_version'] == "6"
 
-A number of Jinja2 `"tests" and "filters" <https://jinja.palletsprojects.com/en/master/templates/#other-operators>`_ can also be used in when statements, some of which are unique and provided by Ansible.
-For instance, suppose we want to ignore the error of one statement and then decide to do something conditionally based on success or failure::
+A number of Jinja2 :func:`"tests" and "filters" <jinja2:other-operators>` can also be used in when statements, some of which are unique and provided by Ansible.
+Suppose we want to ignore the error of one statement and then decide to do something conditionally based on success or failure::
 
     tasks:
       - command: /bin/false
