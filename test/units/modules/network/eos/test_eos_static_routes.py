@@ -142,11 +142,10 @@ class TestEosStaticRoutesModule(TestEosModule):
     def test_eos_static_routes_replaced(self):
         set_module_args(
             dict(config=[
-                dict(vrf="testvrf",
-                     address_families=[
+                dict(address_families=[
                          dict(afi="ipv6",
                               routes=[
-                                  dict(dest="1200:10::/64",
+                                  dict(dest="1000:10::/64",
                                        next_hops=[
                                            dict(interface="Ethernet1",
                                                 admin_distance=55)
@@ -155,8 +154,8 @@ class TestEosStaticRoutesModule(TestEosModule):
                      ])
             ], state="replaced"))
         commands = [
-            'ipv6 route vrf testvrf 1200:10::/64 Ethernet1 55',
-            'no ip route vrf testvrf 120.1.1.0/24 Ethernet1 23'
+            'ipv6 route 1000:10::/64 Ethernet1 55',
+            'no ipv6 route 1000:10::/64 Ethernet1 67 tag 98'
         ]
         self.execute_module(changed=True, commands=commands)
 

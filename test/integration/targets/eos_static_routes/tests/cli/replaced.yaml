@@ -38,9 +38,15 @@
             - interface: 33.1.1.1
         vrf: vrftest1
       - address_families:
+        - afi: ipv4
+          routes:
+          - dest: 120.1.1.0/24
+            next_hops:
+            - admin_distance: 23
+              interface: Ethernet1
         - afi: ipv6
           routes:
-          - dest: 1120:10::/64
+          - dest: 1000:10::/64
             next_hops:
             - admin_distance: 55
               interface: Ethernet1
@@ -53,7 +59,7 @@
         address_families:
         - afi: 'ipv6'
           routes:
-          - dest: '1120:10::/64'      
+          - dest: '1000:10::/64'
             next_hops:
             - interface:  Ethernet1
               admin_distance: 55

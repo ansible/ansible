@@ -154,15 +154,18 @@ class Static_routes(ConfigBase):
         commands = []
         haveconfigs = []
         vrf = get_vrf(want)
+        dest = get_dest(want)
         for h in have:
             return_command = add_commands(h)
             for command in return_command:
-                if vrf is None:
-                    if "vrf" not in command:
-                        haveconfigs.append(command)
-                else:
-                    if vrf in command:
-                        haveconfigs.append(command)
+                for d in dest:
+                    if d in command:
+                        if vrf is None:
+                            if "vrf" not in command:
+                                haveconfigs.append(command)
+                        else:
+                            if vrf in command:
+                                haveconfigs.append(command)
         wantconfigs = set_commands(want, have)
 
         removeconfigs = list(set(haveconfigs) - set(wantconfigs))
@@ -376,3 +379,12 @@ def get_vrf(config):
     for c in config:
         vrf = c["vrf"] if "vrf" in c.keys() and c["vrf"] else None
     return vrf
+
+def get_dest(config):
+    dest = []
+    for c in config:
+        for address_family in c["address_families"]:
+            for route in address_family["routes"]:
+                dest.append(route['dest'])
+    return dest
+
