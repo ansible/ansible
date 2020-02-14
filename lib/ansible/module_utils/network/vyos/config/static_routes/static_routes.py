@@ -18,8 +18,8 @@ from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, dict_diff, remove_empties
 from ansible.module_utils.network.vyos.facts.facts import Facts
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.network. vyos.utils.utils import search_obj_in_list, get_route_type, \
-    diff_list_of_dicts, get_lst_diff_for_dicts, dict_delete
+from ansible.module_utils.network. vyos.utils.utils import get_route_type, \
+    diff_list_of_dicts, get_lst_diff_for_dicts, get_lst_same_for_dicts, dict_delete
 
 
 class Static_routes(ConfigBase):
@@ -131,10 +131,16 @@ class Static_routes(ConfigBase):
         elif self.state == 'deleted':
             if want:
                 routes = self._get_routes(want)
+                if not routes:
+                    for w in want:
+                        af = w['address_families']
+                        for item in af:
+                            if self.afi_in_have(have, item):
+                                commands.append(self._compute_command(afi=item['afi'], remove=True))
                 for r in routes:
                     h_route = self.search_route_in_have(have, r['dest'])
                     if h_route:
-                        commands.extend(self._state_deleted(want=None, have=h_route))
+                        commands.extend(self._state_deleted(want=r, have=h_route))
             else:
                 routes = self._get_routes(have)
                 for r in routes:
@@ -172,7 +178,12 @@ class Static_routes(ConfigBase):
         """
         commands = []
         if have:
-            commands.extend(self._state_deleted(want, have))
+            for key, value in iteritems(want):
+                if value:
+                    if key == 'next_hops':
+                        commands.extend(self._update_next_hop(want, have))
+                    elif key == 'blackhole_config':
+                        commands.extend(self._update_blackhole(key, want, have))
         commands.extend(self._state_merged(want, have))
         return commands
 
@@ -195,7 +206,7 @@ class Static_routes(ConfigBase):
             commands.extend(self._state_replaced(r, route_in_have))
         return commands
 
-    def _state_merged(self, want, have):
+    def _state_merged(self, want, have, opr=True):
         """ The command generator when state is merged
 
         :rtype: A list
@@ -218,13 +229,8 @@ class Static_routes(ConfigBase):
         """
         commands = []
         if want:
-            for key, value in iteritems(want):
-                if value:
-                    if key == 'next_hops':
-                        commands.extend(self._update_next_hop(want, have))
-                    elif key == 'blackhole_config':
-                        commands.extend(self._update_blackhole(key, want, have))
-        elif have:
+            commands.extend(self._render_updates(want, have, opr=False))
+        else:
             commands.append(
                 self._compute_command(dest=have['dest'], remove=True)
             )
@@ -284,7 +290,7 @@ class Static_routes(ConfigBase):
                         )
         return commands
 
-    def _add_next_hop(self, want, have):
+    def _add_next_hop(self, want, have, opr=True):
         """
         This function gets the diff for next hop specific attributes
         and form the commands to add attributes which are present in want but not in have.
@@ -295,29 +301,43 @@ class Static_routes(ConfigBase):
         commands = []
         want_copy = deepcopy(remove_empties(want))
         have_copy = deepcopy(remove_empties(have))
-        diff_next_hops = get_lst_diff_for_dicts(want_copy, have_copy, 'next_hops')
+        if not opr:
+            diff_next_hops = get_lst_same_for_dicts(want_copy, have_copy, 'next_hops')
+        else:
+            diff_next_hops = get_lst_diff_for_dicts(want_copy, have_copy, 'next_hops')
         if diff_next_hops:
             for hop in diff_next_hops:
                 for element in hop:
                     if element == 'forward_router_address':
                         commands.append(
                             self._compute_command(dest=want['dest'],
-                                                  key='next-hop', value=hop[element])
+                                                  key='next-hop',
+                                                  value=hop[element],
+                                                  opr=opr)
                         )
                     elif element == 'enabled' and not hop[element]:
                         commands.append(
                             self._compute_command(dest=want['dest'],
-                                                  key='next-hop', attrib=hop['forward_router_address'], value='disable')
+                                                  key='next-hop',
+                                                  attrib=hop['forward_router_address'],
+                                                  value='disable',
+                                                  opr=opr)
                         )
                     elif element == 'admin_distance':
                         commands.append(
-                            self._compute_command(dest=want['dest'], key='next-hop',
-                                                  attrib=hop['forward_router_address'] + " " + element, value=str(hop[element]))
+                            self._compute_command(dest=want['dest'],
+                                                  key='next-hop',
+                                                  attrib=hop['forward_router_address'] + " " + element,
+                                                  value=str(hop[element]),
+                                                  opr=opr)
                         )
                     elif element == 'interface':
                         commands.append(
-                            self._compute_command(dest=want['dest'], key='next-hop',
-                                                  attrib=hop['forward_router_address'] + " " + element, value=hop[element])
+                            self._compute_command(dest=want['dest'],
+                                                  key='next-hop',
+                                                  attrib=hop['forward_router_address'] + " " + element,
+                                                  value=hop[element],
+                                                  opr=opr)
                         )
         return commands
 
@@ -354,7 +374,7 @@ class Static_routes(ConfigBase):
                         )
         return commands
 
-    def _update_next_hop(self, want, have):
+    def _update_next_hop(self, want, have, opr=True):
         """
         This function gets the difference for next_hops list and
         form the commands to delete the attributes which are present in have but not in want.
@@ -392,7 +412,7 @@ class Static_routes(ConfigBase):
                         )
         return commands
 
-    def _render_updates(self, want, have):
+    def _render_updates(self, want, have, opr=True):
         """
         This function takes the diff between want and have and
         invokes the appropriate functions to create the commands
@@ -402,28 +422,29 @@ class Static_routes(ConfigBase):
         :return: list of commands
         """
         commands = []
-        temp_have_next_hops = have.pop('next_hops', None)
-        temp_want_next_hops = want.pop('next_hops', None)
+        want_nh = want.get('next_hops') or []
+        # delete static route operation per destination
+        if not opr and not want_nh:
+            commands.append(self._compute_command(dest=want['dest'], remove=True))
 
-        updates = dict_diff(have, want)
+        else:
+            temp_have_next_hops = have.pop('next_hops', None)
+            temp_want_next_hops = want.pop('next_hops', None)
+            updates = dict_diff(have, want)
+            if temp_have_next_hops:
+                have['next_hops'] = temp_have_next_hops
+            if temp_want_next_hops:
+                want['next_hops'] = temp_want_next_hops
+            commands.extend(self._add_next_hop(want, have, opr=opr))
 
-        if temp_have_next_hops:
-            have['next_hops'] = temp_have_next_hops
-        if temp_want_next_hops:
-            want['next_hops'] = temp_want_next_hops
-
-        commands.extend(self._add_next_hop(want, have))
-
-        if updates:
-            for key, value in iteritems(updates):
-                if value:
-                    if key == 'blackhole_config':
-                        commands.extend(
-                            self._add_blackhole(key, want, have)
-                        )
+            if opr and updates:
+                for key, value in iteritems(updates):
+                    if value:
+                        if key == 'blackhole_config':
+                            commands.extend(self._add_blackhole(key, want, have))
         return commands
 
-    def _compute_command(self, dest, key=None, attrib=None, value=None, remove=False):
+    def _compute_command(self, dest=None, key=None, attrib=None, value=None, remove=False, afi=None, opr=True):
         """
         This functions construct the required command based on the passed arguments.
         :param dest:
@@ -433,11 +454,12 @@ class Static_routes(ConfigBase):
         :param remove:
         :return:  constructed command
         """
-        if remove:
-            cmd = 'delete protocols static ' + get_route_type(dest)
+        if remove or not opr:
+            cmd = 'delete protocols static ' + self.get_route_type(dest, afi)
         else:
-            cmd = 'set protocols static ' + get_route_type(dest)
-        cmd += (' ' + dest)
+            cmd = 'set protocols static ' + self.get_route_type(dest, afi)
+        if dest:
+            cmd += (' ' + dest)
         if key:
             cmd += (' ' + key)
         if attrib:
@@ -445,6 +467,36 @@ class Static_routes(ConfigBase):
         if value:
             cmd += (" '" + value + "'")
         return cmd
+
+    def afi_in_have(self, have, w_item):
+        """
+        This functions checks for the afi
+        list in have
+        :param have:
+        :param w_item:
+        :return:
+        """
+        if have:
+            for h in have:
+                af = h.get('address_families') or []
+            for item in af:
+                if w_item['afi'] == item['afi']:
+                    return True
+        return False
+
+    def get_route_type(self, dest=None, afi=None):
+        """
+        This function returns the route type based on
+        destination ip address or afi
+        :param address:
+        :return:
+        """
+        if dest:
+            return get_route_type(dest)
+        elif afi == 'ipv4':
+            return 'route'
+        elif afi == 'ipv6':
+            return 'route6'
 
     def _get_routes(self, lst):
         """
@@ -456,7 +508,7 @@ class Static_routes(ConfigBase):
         for item in lst:
             af = item['address_families']
             for element in af:
-                routes = element['routes']
+                routes = element.get('routes') or []
                 for r in routes:
                     r_list.append(r)
         return r_list
