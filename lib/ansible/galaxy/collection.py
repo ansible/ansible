@@ -16,6 +16,7 @@ import threading
 import time
 import yaml
 
+from collections import namedtuple
 from contextlib import contextmanager
 from distutils.version import LooseVersion, StrictVersion
 from hashlib import sha256
@@ -46,6 +47,8 @@ urllib_error = six.moves.urllib.error
 display = Display()
 
 MANIFEST_FORMAT = 1
+
+ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
 
 
 class CollectionRequirement:
@@ -190,6 +193,68 @@ class CollectionRequirement:
     def set_latest_version(self):
         self.versions = set([self.latest_version])
         self._get_metadata()
+
+    def verify(self, remote_collection, path, b_temp_tar_path):
+        if not self.skip:
+            display.display("'%s' has not been installed, nothing to verify" % (to_text(self)))
+            return
+
+        collection_path = os.path.join(path, self.namespace, self.name)
+        b_collection_path = to_bytes(collection_path, errors='surrogate_or_strict')
+
+        display.vvv("Verifying '%s:%s'." % (to_text(self), self.latest_version))
+        display.vvv("Installed collection found at '%s'" % collection_path)
+        display.vvv("Remote collection found at '%s'" % remote_collection.metadata.download_url)
+
+        # Compare installed version versus requirement version
+        if self.latest_version != remote_collection.latest_version:
+            err = "%s has the version '%s' but is being compared to '%s'" % (to_text(self), self.latest_version, remote_collection.latest_version)
+            display.display(err)
+            return
+
+        modified_content = []
+
+        # Verify the manifest hash matches before verifying the file manifest
+        expected_hash = _get_tar_file_hash(b_temp_tar_path, 'MANIFEST.json')
+        self._verify_file_hash(b_collection_path, 'MANIFEST.json', expected_hash, modified_content)
+        manifest = _get_json_from_tar_file(b_temp_tar_path, 'MANIFEST.json')
+
+        # Use the manifest to verify the file manifest checksum
+        file_manifest_data = manifest['file_manifest_file']
+        file_manifest_filename = file_manifest_data['name']
+        expected_hash = file_manifest_data['chksum_%s' % file_manifest_data['chksum_type']]
+
+        # Verify the file manifest before using it to verify individual files
+        self._verify_file_hash(b_collection_path, file_manifest_filename, expected_hash, modified_content)
+        file_manifest = _get_json_from_tar_file(b_temp_tar_path, file_manifest_filename)
+
+        # Use the file manifest to verify individual file checksums
+        for manifest_data in file_manifest['files']:
+            if manifest_data['ftype'] == 'file':
+                expected_hash = manifest_data['chksum_%s' % manifest_data['chksum_type']]
+                self._verify_file_hash(b_collection_path, manifest_data['name'], expected_hash, modified_content)
+
+        if modified_content:
+            display.display("Collection %s contains modified content in the following files:" % to_text(self))
+            display.display(to_text(self))
+            display.vvv(to_text(self.b_path))
+            for content_change in modified_content:
+                display.display('    %s' % content_change.filename)
+                display.vvv("    Expected: %s\n    Found: %s" % (content_change.expected, content_change.installed))
+        else:
+            display.vvv("Successfully verified that checksums for '%s:%s' match the remote collection" % (to_text(self), self.latest_version))
+
+    def _verify_file_hash(self, b_path, filename, expected_hash, error_queue):
+        b_file_path = to_bytes(os.path.join(to_text(b_path), filename), errors='surrogate_or_strict')
+
+        if not os.path.isfile(b_file_path):
+            actual_hash = None
+        else:
+            with open(b_file_path, mode='rb') as file_object:
+                actual_hash = _consume_file(file_object)
+
+        if expected_hash != actual_hash:
+            error_queue.append(ModifiedContent(filename=filename, expected=expected_hash, installed=actual_hash))
 
     def _get_metadata(self):
         if self._metadata:
@@ -486,6 +551,55 @@ def validate_collection_path(collection_path):
         return os.path.join(collection_path, 'ansible_collections')
 
     return collection_path
+
+
+def verify_collections(collections, search_paths, apis, validate_certs, ignore_errors):
+
+    with _display_progress():
+        with _tempdir() as b_temp_path:
+            for collection in collections:
+                try:
+
+                    local_collection = None
+                    b_collection = to_bytes(collection[0], errors='surrogate_or_strict')
+
+                    if os.path.isfile(b_collection) or urlparse(collection[0]).scheme.lower() in ['http', 'https'] or len(collection[0].split('.')) != 2:
+                        raise AnsibleError(message="'%s' is not a valid collection name. The format namespace.name is expected." % collection[0])
+
+                    collection_name = collection[0]
+                    namespace, name = collection_name.split('.')
+                    collection_version = collection[1]
+
+                    # Verify local collection exists before downloading it from a galaxy server
+                    for search_path in search_paths:
+                        b_search_path = to_bytes(os.path.join(search_path, namespace, name), errors='surrogate_or_strict')
+                        if os.path.isdir(b_search_path):
+                            local_collection = CollectionRequirement.from_path(b_search_path, False)
+                            break
+                    if local_collection is None:
+                        raise AnsibleError(message='Collection %s is not installed in any of the collection paths.' % collection_name)
+
+                    # Download collection on a galaxy server for comparison
+                    try:
+                        remote_collection = CollectionRequirement.from_name(collection_name, apis, collection_version, False, parent=None)
+                    except AnsibleError as e:
+                        if e.message == 'Failed to find collection %s:%s' % (collection[0], collection[1]):
+                            raise AnsibleError('Failed to find remote collection %s:%s on any of the galaxy servers' % (collection[0], collection[1]))
+                        raise
+
+                    download_url = remote_collection.metadata.download_url
+                    headers = {}
+                    remote_collection.api._add_auth_token(headers, download_url, required=False)
+                    b_temp_tar_path = _download_file(download_url, b_temp_path, None, validate_certs, headers=headers)
+
+                    local_collection.verify(remote_collection, search_path, b_temp_tar_path)
+
+                except AnsibleError as err:
+                    if ignore_errors:
+                        display.warning("Failed to verify collection %s but skipping due to --ignore-errors being set. "
+                                        "Error: %s" % (collection[0], to_text(err)))
+                    else:
+                        raise
 
 
 @contextmanager
@@ -907,14 +1021,9 @@ def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
                     unredirected_headers=['Authorization'], http_agent=user_agent())
 
     with open(b_file_path, 'wb') as download_file:
-        data = resp.read(bufsize)
-        while data:
-            digest.update(data)
-            download_file.write(data)
-            data = resp.read(bufsize)
+        actual_hash = _consume_file(resp, download_file)
 
     if expected_hash:
-        actual_hash = digest.hexdigest()
         display.vvvv("Validating downloaded file hash %s with expected hash %s" % (actual_hash, expected_hash))
         if expected_hash != actual_hash:
             raise AnsibleError("Mismatch artifact hash with downloaded file")
@@ -923,29 +1032,13 @@ def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
 
 
 def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
-    n_filename = to_native(filename, errors='surrogate_or_strict')
-    try:
-        member = tar.getmember(n_filename)
-    except KeyError:
-        raise AnsibleError("Collection tar at '%s' does not contain the expected file '%s'." % (to_native(tar.name),
-                                                                                                n_filename))
-
-    with tempfile.NamedTemporaryFile(dir=b_temp_path, delete=False) as tmpfile_obj:
-        bufsize = 65536
-        sha256_digest = sha256()
-        with _tarfile_extract(tar, member) as tar_obj:
-            data = tar_obj.read(bufsize)
-            while data:
-                tmpfile_obj.write(data)
-                tmpfile_obj.flush()
-                sha256_digest.update(data)
-                data = tar_obj.read(bufsize)
-
-        actual_hash = sha256_digest.hexdigest()
+    with _get_tar_file_member(tar, filename) as tar_obj:
+        with tempfile.NamedTemporaryFile(dir=b_temp_path, delete=False) as tmpfile_obj:
+            actual_hash = _consume_file(tar_obj, tmpfile_obj)
 
         if expected_hash and actual_hash != expected_hash:
             raise AnsibleError("Checksum mismatch for '%s' inside collection at '%s'"
-                               % (n_filename, to_native(tar.name)))
+                               % (to_native(filename, errors='surrogate_or_strict'), to_native(tar.name)))
 
         b_dest_filepath = os.path.join(b_dest, to_bytes(filename, errors='surrogate_or_strict'))
         b_parent_dir = os.path.split(b_dest_filepath)[0]
@@ -955,3 +1048,49 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
             os.makedirs(b_parent_dir)
 
         shutil.move(to_bytes(tmpfile_obj.name, errors='surrogate_or_strict'), b_dest_filepath)
+
+
+def _get_tar_file_member(tar, filename):
+    n_filename = to_native(filename, errors='surrogate_or_strict')
+    try:
+        member = tar.getmember(n_filename)
+    except KeyError:
+        raise AnsibleError("Collection tar at '%s' does not contain the expected file '%s'." % (
+            to_native(tar.name),
+            n_filename))
+
+    return _tarfile_extract(tar, member)
+
+
+def _get_json_from_tar_file(b_path, filename):
+    file_contents = ''
+
+    with tarfile.open(b_path, mode='r') as collection_tar:
+        with _get_tar_file_member(collection_tar, filename) as tar_obj:
+            bufsize = 65536
+            data = tar_obj.read(bufsize)
+            while data:
+                file_contents += to_text(data)
+                data = tar_obj.read(bufsize)
+
+    return json.loads(file_contents)
+
+
+def _get_tar_file_hash(b_path, filename):
+    with tarfile.open(b_path, mode='r') as collection_tar:
+        with _get_tar_file_member(collection_tar, filename) as tar_obj:
+            return _consume_file(tar_obj)
+
+
+def _consume_file(read_from, write_to=None):
+    bufsize = 65536
+    sha256_digest = sha256()
+    data = read_from.read(bufsize)
+    while data:
+        if write_to is not None:
+            write_to.write(data)
+            write_to.flush()
+        sha256_digest.update(data)
+        data = read_from.read(bufsize)
+
+    return sha256_digest.hexdigest()
