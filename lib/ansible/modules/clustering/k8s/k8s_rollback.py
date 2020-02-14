@@ -79,7 +79,7 @@ EXAMPLES = '''
 RETURN = '''
 resources:
   description:
-  - A status object of the rollback
+  - The rollbacked object.
   returned: success
   type: complex
   contains:
@@ -100,9 +100,9 @@ resources:
       returned: success
       type: dict
     status:
-      description: Current status details of the rollback.
+      description: Current status details for the object.
       returned: success
-      type: str
+      type: complex
 '''
 
 class KubernetesRollbackModule(KubernetesAnsibleModule):
