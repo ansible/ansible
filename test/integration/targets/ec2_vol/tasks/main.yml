@@ -10,6 +10,13 @@
   block:
 
     # ==== Env setup ==========================================================
+    - name: list available AZs
+      aws_az_info:
+      register: region_azs
+
+    - name: pick an AZ for testing
+      set_fact:
+        availability_zone: "{{ region_azs.availability_zones[0].zone_name }}"
 
     - name: Create a test VPC
       ec2_vpc_net:
@@ -27,6 +34,7 @@
         tags:
           Name: ec2_vol testing
           ResourcePrefix: "{{ resource_prefix }}"
+        az: '{{ availability_zone }}'
       register: testing_subnet
 
     - name: Find AMI to use
@@ -47,7 +55,7 @@
     - name: create a volume (validate module defaults)
       ec2_vol:
         volume_size: 1
-        zone: "{{ testing_subnet.subnet.availability_zone }}"
+        zone: "{{ availability_zone }}"
         tags:
           ResourcePrefix: "{{ resource_prefix }}"
       register: volume1
@@ -76,7 +84,7 @@
         name: "{{ resource_prefix }}"
         tags:
           ResourcePrefix: "{{ resource_prefix }}"
-        zone: "{{ testing_subnet.subnet.availability_zone }}"
+        zone: "{{ availability_zone }}"
       register: volume2
 
     - name: check task return attributes
@@ -102,7 +110,7 @@
         name: "{{ resource_prefix }}"
         tags:
           ResourcePrefix: "{{ resource_prefix }}"
-        zone: "{{ testing_subnet.subnet.availability_zone }}"
+        zone: "{{ availability_zone }}"
       register: volume2_idem
 
     - name: check task return attributes
@@ -129,7 +137,7 @@
         encrypted: yes
         volume_type: gp2
         volume_size: 1
-        zone: "{{ testing_subnet.subnet.availability_zone }}"
+        zone: "{{ availability_zone }}"
         tags:
           ResourcePrefix: "{{ resource_prefix }}"
       register: volume3
