@@ -728,6 +728,9 @@ class PathMapper:
         if path.startswith('test/ansible_test/'):
             return minimal  # these tests are not invoked from ansible-test
 
+        if path.startswith('test/support/plugins/'):
+            return minimal
+
         if path.startswith('test/legacy/'):
             return minimal
 
