@@ -26,6 +26,18 @@ if ($msg.Length -gt 255) {
     Fail-Json -obj $result -message "msg length must be less than 256 characters, current length: $($msg.Length)"
 }
 
+if ($to -eq "*") {
+    $tempfile = "$env:TEMP\sessionids.txt"
+    (((quser) -replace '^>', '') -replace '\s{2,}', ',').Trim() | ForEach-Object {
+        if ($_.Split(',').Count -eq 5) {
+            Write-Output ($_ -replace '(^[^,]+)', '$1,')
+        } else {
+            Write-Output $_
+        }
+    } | ConvertFrom-Csv | Select-Object -ExpandProperty ID | Out-File -FilePath $tempfile -Encoding ascii -Force
+    $to = "@$tempfile"
+}
+
 $msg_args = @($to, "/TIME:$display_seconds")
 
 if ($wait) {
