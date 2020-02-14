@@ -17,7 +17,7 @@ short_description: Create and delete AWS VPC Endpoints.
 description:
   - Creates AWS VPC endpoints.
   - Deletes AWS VPC endpoints.
-  - This module support check mode.
+  - This module supports check mode.
 version_added: "2.4"
 requirements: [ boto3 ]
 options:
@@ -115,7 +115,7 @@ EXAMPLES = '''
       - rtb-87654321
   register: new_vpc_endpoint
 
-- name: Create new vpc endpoint the default policy
+- name: Create new vpc endpoint with the default policy
   ec2_vpc_endpoint:
     state: present
     region: ap-southeast-2
@@ -141,7 +141,7 @@ EXAMPLES = '''
 - name: Delete newly created vpc endpoint
   ec2_vpc_endpoint:
     state: absent
-    nat_gateway_id: "{{ new_vpc_endpoint.result['VpcEndpointId'] }}"
+    vpc_endpoint_id: "{{ new_vpc_endpoint.result['VpcEndpointId'] }}"
     region: ap-southeast-2
 '''
 
