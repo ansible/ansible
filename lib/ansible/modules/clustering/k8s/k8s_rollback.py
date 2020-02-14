@@ -37,23 +37,29 @@ options:
     aliases:
     - api
     - version
+    type: str
   kind:
     description:
     - Use to specify an object model. Deployment and DaemonSets are the only objects supported at the moment.
       Use in conjunction with I(api_version), I(name), and I(namespace) to identify a specific object.
     required: yes
+    type: str
   name:
     description:
     - Use to specify an object name.  Use in conjunction with I(api_version), I(kind) and I(namespace) to identify a
       specific object.
+    type: str
   namespace:
     description:
     - Use to specify an object namespace. Use in conjunction with I(api_version), I(kind), and I(name)
       to identify a specific object.
+    type: str
   label_selectors:
     description: List of label selectors to use to filter results
+    type: list
   field_selectors:
     description: List of field selectors to use to filter results
+    type: list
 
 extends_documentation_fragment:
   - k8s_auth_options
