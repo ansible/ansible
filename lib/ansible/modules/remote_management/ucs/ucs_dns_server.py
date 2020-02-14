@@ -21,7 +21,7 @@ extends_documentation_fragment:
 
 description:
 - Configure DNS servers on Cisco UCS Manager.
-- Examples can be used with the L(UCS Platform Emulator,https://communities.cisco.com/ucspe).
+- Examples can be used with the L(UCS Platform Emulator,https://bit.ly/38w8JCk).
 
 options:
   state:
