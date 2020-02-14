@@ -953,8 +953,854 @@ files:
   $modules/network/f5/bigiq_utility_license.py:
     migrated_to: f5networks.f5_modules
   $modules/network/files/: $team_networking
-  $modules/network/fortios/:
-    maintainers: bjolivot
+  $modules/network/fortios/: bjolivot
+  $modules/network/fortios/fortios_address.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_alertemail_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_antivirus_heuristic.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_antivirus_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_antivirus_quarantine.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_antivirus_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_application_custom.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_application_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_application_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_application_name.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_application_rule_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_authentication_rule.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_authentication_scheme.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_authentication_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dlp_filepattern.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dlp_fp_doc_source.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dlp_fp_sensitivity.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dlp_sensor.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dlp_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dnsfilter_domain_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dnsfilter_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_endpoint_control_client.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_endpoint_control_forticlient_ems.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_endpoint_control_forticlient_registration_sync.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_endpoint_control_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_endpoint_control_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_extender_controller_extender.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_facts.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_address6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_address6_template.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_address.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_addrgrp6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_addrgrp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_auth_portal.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_central_snat_map.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_dnstranslation.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_DoS_policy6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_DoS_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_identity_based_route.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_interface_policy6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_interface_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_internet_service_custom.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_internet_service_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_internet_service.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ipmacbinding_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ipmacbinding_table.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ippool6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ippool.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ip_translation.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ipv6_eh_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ldb_monitor.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_local_in_policy6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_local_in_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_multicast_address6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_multicast_address.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_multicast_policy6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_multicast_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_policy46.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_policy64.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_policy6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_profile_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_profile_protocol_options.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_proxy_address.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_proxy_addrgrp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_proxy_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_schedule_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_schedule_onetime.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_schedule_recurring.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_service_category.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_service_custom.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_service_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_shaper_per_ip_shaper.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_shaper_traffic_shaper.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_shaping_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_shaping_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_sniffer.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssh_host_key.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssh_local_ca.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssh_local_key.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssh_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssl_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssl_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssl_ssh_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ttl_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vip46.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vip64.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vip6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vipgrp46.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vipgrp64.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vipgrp6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vipgrp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vip.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_wildcard_fqdn_custom.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_wildcard_fqdn_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ftp_proxy_explicit.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_icap_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_icap_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_custom.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_decoder.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_global.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_rule.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_rule_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_sensor.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_custom_field.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_disk_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_disk_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_eventfilter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer2_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer2_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer3_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer3_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer_override_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer_override_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortiguard_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortiguard_override_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortiguard_override_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortiguard_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_gui_display.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_memory_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_memory_global_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_memory_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_null_device_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_null_device_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd2_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd2_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd3_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd3_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd4_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd4_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd_override_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd_override_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_threat_weight.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_webtrends_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_webtrends_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_report_chart.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_report_dataset.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_report_layout.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_report_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_report_style.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_report_theme.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_access_list6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_access_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_aspath_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_auth_path.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_bfd6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_bfd.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_bgp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_community_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_isis.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_key_chain.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_multicast6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_multicast_flow.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_multicast.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_ospf6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_ospf.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_policy6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_prefix_list6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_prefix_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_ripng.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_rip.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_route_map.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_static6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_static.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_bwl.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_bword.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_dnsbl.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_fortishield.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_iptrust.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_mheader.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_options.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ssh_filter_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_802_1X_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_custom_command.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_global.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_igmp_snooping.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_lldp_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_lldp_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_mac_sync_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_managed_switch.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_network_monitor_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_qos_dot1p_map.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_qos_ip_dscp_map.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_qos_qos_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_qos_queue_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_quarantine.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_security_policy_802_1X.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_security_policy_captive_portal.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_sflow.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_storm_control.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_stp_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_switch_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_switch_interface_tag.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_switch_log.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_switch_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_system.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_virtual_port_pool.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_vlan.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_accprofile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_admin.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_affinity_interrupt.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_affinity_packet_redistribution.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_alarm.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_alias.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_api_user.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_arp_table.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_auto_install.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_automation_action.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_automation_destination.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_automation_stitch.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_automation_trigger.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_auto_script.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_autoupdate_push_update.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_autoupdate_schedule.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_autoupdate_tunneling.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_central_management.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_cluster_sync.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_console.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_csf.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_custom_language.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ddns.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dedicated_mgmt.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dhcp6_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dhcp_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dns_database.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dns.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dns_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dscp_based_priority.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_email_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_external_resource.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_fips_cc.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_firmware_upgrade.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_fm.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_fortiguard.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_fortimanager.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_fortisandbox.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_fsso_polling.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ftm_push.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_geoip_override.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_global.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_gre_tunnel.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ha_monitor.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ha.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_interface.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ipip_tunnel.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ips_urlfilter_dns6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ips_urlfilter_dns.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ipv6_neighbor_cache.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ipv6_tunnel.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_link_monitor.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_mac_address_table.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_management_tunnel.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_mobile_tunnel.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_nat64.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_nd_proxy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_netflow.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_network_visibility.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ntp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_object_tagging.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_password_policy_guest_admin.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_password_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_pppoe_interface.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_probe_response.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_proxy_arp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_admin.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_alertmail.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_auth.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_device_detection_portal.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_ec.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_fortiguard_wf.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_ftp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_http.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_icap.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_image.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_mail.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_nac_quar.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_nntp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_spam.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_sslvpn.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_traffic_quota.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_utm.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_webproxy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_resource_limits.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_sdn_connector.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_session_helper.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_session_ttl.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_sflow.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_sit_tunnel.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_sms_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_snmp_community.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_snmp_sysinfo.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_snmp_user.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_storage.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_switch_interface.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_tos_based_priority.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_dns.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_exception.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_link.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_netflow.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_property.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_radius_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_sflow.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_virtual_wan_link.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_virtual_wire_pair.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vxlan.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_wccp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_zone.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_adgrp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_device_access_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_device_category.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_device_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_device.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_domain_controller.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_fortitoken.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_fsso_polling.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_fsso.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_krb_keytab.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_ldap.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_local.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_password_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_peergrp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_peer.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_pop3.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_quarantine.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_radius.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_security_exempt_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_tacacsplus.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_voip_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_certificate_ca.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_certificate_crl.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_certificate_local.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_certificate_ocsp_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_certificate_remote.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_certificate_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_concentrator.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_forticlient.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_manualkey_interface.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_manualkey.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_phase1_interface.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_phase1.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_phase2_interface.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_phase2.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_l2tp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_pptp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ssl_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ssl_web_host_check_software.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ssl_web_portal.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ssl_web_realm.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ssl_web_user_bookmark.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ssl_web_user_group_bookmark.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_waf_main_class.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_waf_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_waf_signature.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_waf_sub_class.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_auth_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_cache_service.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_content_delivery_network_rule.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_peer.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_remote_storage.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_webcache.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_content_header.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_content.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_fortiguard.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_ftgd_local_cat.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_ftgd_local_rating.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_ips_urlfilter_cache_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_ips_urlfilter_setting6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_ips_urlfilter_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_override.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_search_engine.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_urlfilter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_debug_url.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_explicit.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_forward_server_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_forward_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_global.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_url_match.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_wisp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_ap_status.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_ble_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_bonjour_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_global.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_anqp_3gpp_cellular.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_anqp_ip_address_type.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_anqp_nai_realm.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_anqp_network_auth_type.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_anqp_roaming_consortium.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_anqp_venue_name.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_h2qp_conn_capability.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_h2qp_operator_name.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_h2qp_osu_provider.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_h2qp_wan_metric.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_hs_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_icon.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_qos_map.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_inter_controller.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_qos_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_timers.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_utm_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_vap_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_vap.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_wids_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_wtp_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_wtp_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_wtp.py:
     migrated_to: fortinet.fortios
   $modules/network/fortimanager/: $team_fortimanager
   $modules/network/ftd/: &ftd
@@ -1628,12 +2474,38 @@ files:
       - f5
   $module_utils/network/fortios:
     maintainers: bjolivot
+  $module_utils/network/fortios/argspec/facts/facts.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/argspec/facts/__init__.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/argspec/__init__.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/argspec/system/__init__.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/argspec/system/system.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/facts/facts.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/facts/__init__.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/facts/system/__init__.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/facts/system/system.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/fortios.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/__init__.py:
     migrated_to: fortinet.fortios
   $module_utils/network/fortimanager:
     maintainers: $team_fortimanager
     labels:
       - fortimanager
       - networking
+  $module_utils/network/fortimanager/common.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortimanager/fortimanager.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortimanager/__init__.py:
     migrated_to: fortinet.fortios
   $module_utils/network/ftd: *ftd
   $module_utils/network/ios:
