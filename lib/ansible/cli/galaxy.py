@@ -813,7 +813,8 @@ class GalaxyCLI(CLI):
 
                 if any(r.match(os.path.join(rel_root, f)) for r in skeleton_ignore_re):
                     continue
-                elif galaxy_type == 'collection' and own_skeleton and rel_root == '.' and f == 'galaxy.yml.j2':
+
+                if galaxy_type == 'collection' and own_skeleton and rel_root == '.' and f == 'galaxy.yml.j2':
                     # Special use case for galaxy.yml.j2 in our own default collection skeleton. We build the options
                     # dynamically which requires special options to be set.
 
@@ -1100,15 +1101,16 @@ class GalaxyCLI(CLI):
                     display.display('# %s' % os.path.dirname(gr.path))
                     _display_role(gr)
                     break
-                else:
-                    warnings.append("- the role %s was not found" % role_name)
+                warnings.append("- the role %s was not found" % role_name)
             else:
                 if not os.path.exists(role_path):
                     warnings.append("- the configured path %s does not exist." % role_path)
                     continue
-                elif not os.path.isdir(role_path):
+
+                if not os.path.isdir(role_path):
                     warnings.append("- the configured path %s, exists, but it is not a directory." % role_path)
                     continue
+
                 display.display('# %s' % role_path)
                 path_files = os.listdir(role_path)
                 for path_file in path_files:
@@ -1148,7 +1150,8 @@ class GalaxyCLI(CLI):
                     continue
                 warnings.append("- the configured path {0} does not exist.".format(collection_path))
                 continue
-            elif not os.path.isdir(collection_path):
+
+            if not os.path.isdir(collection_path):
                 warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
                 continue
 
@@ -1166,7 +1169,8 @@ class GalaxyCLI(CLI):
                 if not os.path.exists(b_collection_path):
                     warnings.append("- unable to find {0} in collection paths".format(collection_name))
                     continue
-                elif not os.path.isdir(collection_path):
+
+                if not os.path.isdir(collection_path):
                     warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
                     continue
 
