@@ -33,11 +33,11 @@ from subprocess import Popen, PIPE
 DOCUMENTATION = """
     lookup: sops
     author: Edoardo Tenani <e.tenani@arduino.cc>
-    version_added: "2.8"
+    version_added: "2.10"
     short_description: Read sops encrypted file contents
     description:
         - This lookup returns the contents from a file on the Ansible controller's file system.
-        - This lookup requires the sops executable to be available in the controller PATH.
+        - This lookup requires the C(sops) executable to be available in the controller PATH.
     options:
         _terms:
             description: path(s) of files to read
@@ -48,7 +48,7 @@ DOCUMENTATION = """
             required: False
             default: False
     notes:
-        - this lookup does not understand 'globing' - use the fileglob lookup instead.
+        - This lookup does not understand 'globbing' - use the fileglob lookup instead.
 """
 
 EXAMPLES = """
