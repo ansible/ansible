@@ -46,9 +46,8 @@ options:
   name_alias:
     version_added: '2.10'
     description:
-    - nameAlias field to alias the current object.
+    - The alias for the current object. This relates to the nameAlias field in ACI.
     type: str
-    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 seealso:
 - name: APIC Management Information Model reference
@@ -202,7 +201,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         admin_state=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -220,7 +219,7 @@ def main():
     description = module.params.get('description')
     admin_state = aci.boolean(module.params.get('admin_state'), 'enabled', 'disabled')
     state = module.params.get('state')
-    nameAlias = module.params.get('name_alias')
+    name_alias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(
@@ -240,7 +239,7 @@ def main():
                 name=cdp_policy,
                 descr=description,
                 adminSt=admin_state,
-                nameAlias=nameAlias,
+                nameAlias=name_alias,
             ),
         )
 

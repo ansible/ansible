@@ -47,9 +47,8 @@ options:
   name_alias:
     version_added: '2.10'
     description:
-    - nameAlias field to alias the current object.
+    - The alias for the current object. This relates to the nameAlias field in ACI.
     type: str
-    aliases: [ nameAlias_name, alias ]
   tenant:
     description:
     - The name of the Tenant.
@@ -199,7 +198,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         dst_group=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -219,7 +218,7 @@ def main():
     src_group = module.params.get('src_group')
     state = module.params.get('state')
     tenant = module.params.get('tenant')
-    nameAlias = module.params.get('name_alias')
+    name_alias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(
@@ -246,7 +245,7 @@ def main():
                 adminSt=admin_state,
                 descr=description,
                 name=src_group,
-                nameAlias=nameAlias,
+                nameAlias=name_alias,
             ),
             child_configs=[{'spanSpanLbl': {'attributes': {'name': dst_group}}}],
         )

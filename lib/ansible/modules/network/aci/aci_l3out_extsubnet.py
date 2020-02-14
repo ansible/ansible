@@ -73,9 +73,8 @@ options:
   name_alias:
     version_added: '2.10'
     description:
-    - nameAlias field to alias the current object.
+    - The alias for the current object. This relates to the nameAlias field in ACI.
     type: str
-    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - The C(tenant) and C(domain) and C(vrf) used must exist before using this module in your playbook.
@@ -252,7 +251,7 @@ def main():
         subnet_name=dict(type='str', aliases=['name']),
         scope=dict(type='list', choices=['export-rtctrl', 'import-security', 'shared-rtctrl', 'shared-security']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -274,7 +273,7 @@ def main():
     subnet_name = module.params.get('subnet_name')
     scope = ','.join(sorted(module.params.get('scope')))
     state = module.params.get('state')
-    nameAlias = module.params.get('name_alias')
+    name_alias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(
@@ -313,7 +312,7 @@ def main():
                 descr=description,
                 name=subnet_name,
                 scope=scope,
-                nameAlias=nameAlias,
+                nameAlias=name_alias,
             ),
         )
 

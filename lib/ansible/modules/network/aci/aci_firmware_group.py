@@ -42,10 +42,8 @@ options:
     name_alias:
         version_added: '2.10'
         description:
-            - nameAlias field to alias the current object.
+            - The alias for the current object. This relates to the nameAlias field in ACI.
         type: str
-        aliases: [ nameAlias_name, alias ]
-
 extends_documentation_fragment:
     - aci
 author:
@@ -179,7 +177,7 @@ def main():
         group=dict(type='str', aliases=['group']),  # Not required for querying all objects
         firmwarepol=dict(type='str'),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -194,7 +192,7 @@ def main():
     state = module.params.get('state')
     group = module.params.get('group')
     firmwarepol = module.params.get('firmwarepol')
-    nameAlias = module.params.get('name_alias')
+    name_alias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -214,7 +212,7 @@ def main():
             aci_class='firmwareFwGrp',
             class_config=dict(
                 name=group,
-                nameAlias=nameAlias,
+                nameAlias=name_alias,
             ),
             child_configs=[
                 dict(

@@ -80,9 +80,8 @@ options:
   name_alias:
     version_added: '2.10'
     description:
-    - nameAlias field to alias the current object.
+    - The alias for the current object. This relates to the nameAlias field in ACI.
     type: str
-    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - The C(tenant) and C(contract) used must exist before using this module in your playbook.
@@ -277,7 +276,7 @@ def main():
         consumer_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -305,7 +304,7 @@ def main():
         provider_match = MATCH_MAPPING.get(provider_match)
     state = module.params.get('state')
     tenant = module.params.get('tenant')
-    nameAlias = module.params.get('name_alias')
+    name_alias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(
@@ -341,7 +340,7 @@ def main():
                 consMatchT=consumer_match,
                 provMatchT=provider_match,
                 descr=description,
-                nameAlias=nameAlias,
+                nameAlias=name_alias,
             ),
         )
 

@@ -64,9 +64,8 @@ options:
   name_alias:
     version_added: '2.10'
     description:
-    - nameAlias field to alias the current object.
+    - The alias for the current object. This relates to the nameAlias field in ACI.
     type: str
-    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - The C(tenant) and C(domain) and C(vrf) used must exist before using this module in your playbook.
@@ -241,7 +240,7 @@ def main():
                            'AF43', 'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -262,7 +261,7 @@ def main():
     preferred_group = aci.boolean(module.params.get('preferred_group'), 'include', 'exclude')
     dscp = module.params.get('dscp')
     state = module.params.get('state')
-    nameAlias = module.params.get('name_alias')
+    name_alias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(
@@ -295,7 +294,7 @@ def main():
                 descr=description,
                 prefGrMemb=preferred_group,
                 targetDscp=dscp,
-                nameAlias=nameAlias,
+                nameAlias=name_alias,
             ),
         )
 

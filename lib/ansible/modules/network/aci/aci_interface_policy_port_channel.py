@@ -93,9 +93,8 @@ options:
   name_alias:
     version_added: '2.10'
     description:
-    - nameAlias field to alias the current object.
+    - The alias for the current object. This relates to the nameAlias field in ACI.
     type: str
-    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 seealso:
 - name: APIC Management Information Model reference
@@ -241,7 +240,7 @@ def main():
         suspend_individual=dict(type='bool'),
         symmetric_hash=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -263,7 +262,7 @@ def main():
         module.fail_json(msg='The "max_links" must be a value between 1 and 16')
     mode = module.params.get('mode')
     state = module.params.get('state')
-    nameAlias = module.params.get('name_alias')
+    name_alias = module.params.get('name_alias')
 
     # Build ctrl value for request
     ctrl = []
@@ -304,7 +303,7 @@ def main():
                 minLinks=min_links,
                 maxLinks=max_links,
                 mode=mode,
-                nameAlias=nameAlias,
+                nameAlias=name_alias,
             ),
         )
 

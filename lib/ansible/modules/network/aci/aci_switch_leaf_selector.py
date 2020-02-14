@@ -67,9 +67,8 @@ options:
   name_alias:
     version_added: '2.10'
     description:
-    - nameAlias field to alias the current object.
+    - The alias for the current object. This relates to the nameAlias field in ACI.
     type: str
-    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - This module is to be used with M(aci_switch_policy_leaf_profile).
@@ -256,7 +255,7 @@ def main():
         'to': dict(type='int', aliases=['node_blk_range_to', 'to_range', 'range_to']),
         'policy_group': dict(type='str', aliases=['policy_group_name']),
         'state': dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        'name_alias': dict(type='str', aliases=['nameAlias_name', 'alias']),
+        'name_alias': dict(type='str'),
     })
 
     module = AnsibleModule(
@@ -277,7 +276,7 @@ def main():
     to_ = module.params.get('to')
     policy_group = module.params.get('policy_group')
     state = module.params.get('state')
-    nameAlias = module.params.get('name_alias')
+    name_alias = module.params.get('name_alias')
 
     # Build child_configs dynamically
     child_configs = [
@@ -331,7 +330,7 @@ def main():
             class_config=dict(
                 descr=description,
                 name=leaf,
-                nameAlias=nameAlias,
+                nameAlias=name_alias,
             ),
             child_configs=child_configs,
         )

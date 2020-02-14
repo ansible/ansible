@@ -50,9 +50,8 @@ options:
   name_alias:
     version_added: '2.10'
     description:
-    - nameAlias field to alias the current object.
+    - The alias for the current object. This relates to the nameAlias field in ACI.
     type: str
-    aliases: [ nameAlias_name, alias ]
 extends_documentation_fragment: aci
 notes:
 - The C(aaa_user) must exist before using this module in your playbook.
@@ -238,7 +237,7 @@ def main():
         certificate=dict(type='str', aliases=['cert_data', 'certificate_data']),
         certificate_name=dict(type='str', aliases=['cert_name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        name_alias=dict(type='str', aliases=['nameAlias_name', 'alias']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -255,7 +254,7 @@ def main():
     certificate = module.params.get('certificate')
     certificate_name = module.params.get('certificate_name')
     state = module.params.get('state')
-    nameAlias = module.params.get('name_alias')
+    name_alias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -280,7 +279,7 @@ def main():
             class_config=dict(
                 data=certificate,
                 name=certificate_name,
-                nameAlias=nameAlias,
+                nameAlias=name_alias,
 
             ),
         )
