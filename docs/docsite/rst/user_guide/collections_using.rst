@@ -46,7 +46,7 @@ Configuring the ``ansible-galaxy`` client
 
 .. _collections_listing:
 
-Listing Collections
+Listing collections
 ===================
 
 To list installed collections, run ``ansible-galaxy collection list``. This shows all of the installed collections found in the configured collections search paths. The path where the collections are located are displayed as well as version information. If no version information is available, a ``*`` is displayed for the version number.
@@ -70,7 +70,7 @@ To list installed collections, run ``ansible-galaxy collection list``. This show
 
 Run with ``-vvv`` to display more detailed information.
 
-To list a specific collection, pass a valid fully qualitifed collection name (FQCN) to the command ``ansible-galaxy collection list``. All instances of the collection will be listed.
+To list a specific collection, pass a valid fully qualified collection name (FQCN) to the command ``ansible-galaxy collection list``. All instances of the collection will be listed.
 
 .. code-block:: shell
 
@@ -86,7 +86,7 @@ To list a specific collection, pass a valid fully qualitifed collection name (FQ
       ---------------- -------
       fortinet.fortios 1.0.6
 
-To search other paths for collections, use the ``-p`` option. Specify multiple search paths by separating them with a ``:``. The list of paths specified on the command line will be added to the begining of the configured collections search paths.
+To search other paths for collections, use the ``-p`` option. Specify multiple search paths by separating them with a ``:``. The list of paths specified on the command line will be added to the beginning of the configured collections search paths.
 
 .. code-block:: shell
 
