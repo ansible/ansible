@@ -128,7 +128,11 @@ class AclsFacts(object):
                         ace['source']['source_address'] = acl['term']['from']['source-address']['name']
                     if acl['term']['from'].get('port'):
                         ace['port'] = {}
-                        ace['port']['range'] = acl['term']['from']['port']
+                        specified_port = acl['term']['from']['port']
+                        if isinstance(specified_port, string_types):
+                            ace["port"][specified_port] = True
+                        else:
+                            ace['port']['range'] = specified_port
                     if acl['term']['from'].get('protocol'):
                         ace['protocol'] = {}
                         protocol = acl['term']['from']['protocol']
