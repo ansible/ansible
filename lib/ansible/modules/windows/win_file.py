@@ -30,7 +30,7 @@ options:
       - If C(directory), all immediate subdirectories will be created if they
         do not exist.
       - If C(file), the file will NOT be created if it does not exist, see the M(copy)
-        or M(template) module if you want that behavior.  
+        or M(template) module if you want that behavior.
       - If C(absent), directories will be recursively deleted, and files will be removed.
       - If C(touch), an empty file will be created if the C(path) does not
         exist, while an existing file or directory will receive updated file access and
