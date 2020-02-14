@@ -10,6 +10,7 @@
       nxos_acl_interfaces:
         config:
         state: deleted
+      register: result
 
     - name: Gather acl interfaces facts
       nxos_facts: &facts
@@ -17,10 +18,11 @@
           - "!all"
           - "!min"
         gather_network_resources: acl_interfaces
-    
+
     - assert: 
         that:
-          - "ansible_facts.network_resources == {}"
+          - "result.changed == True"
+          - "ansible_facts.network_resources.acl_interfaces == result.after"
     
     - include_tasks: populate_config.yaml
    

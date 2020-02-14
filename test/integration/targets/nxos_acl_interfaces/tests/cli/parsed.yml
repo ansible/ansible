@@ -24,10 +24,16 @@
           state: parsed
         register: result
 
+      - debug: 
+          var: result
+      
+      - debug:
+          var: result.parsed | symmetric_difference(ansible_facts.network_resources.acl_interfaces)
+
       - assert:
           that:
           - "result.changed == false"
-          - "ansible_facts.network_resources.acl_interfaces == result.parsed"
+          - "result.parsed == parsed"
 
       - name: Idempotence - Parsed
         nxos_acl_interfaces: *parsed
