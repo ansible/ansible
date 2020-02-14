@@ -18,7 +18,6 @@ extends_documentation_fragment:
 - ucs
 description:
 - Configures NTP server on Cisco UCS Manager.
-- Examples can be used with the L(UCS Platform Emulator,https://bit.ly/38w8JCk).
 options:
   state:
     description:

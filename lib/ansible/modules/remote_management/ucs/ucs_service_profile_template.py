@@ -16,7 +16,6 @@ module: ucs_service_profile_template
 short_description: Configures Service Profile Templates on Cisco UCS Manager
 description:
 - Configures Service Profile Templates on Cisco UCS Manager.
-- Examples can be used with the L(UCS Platform Emulator,https://bit.ly/38w8JCk).
 extends_documentation_fragment: ucs
 options:
   state:
