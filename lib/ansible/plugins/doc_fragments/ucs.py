@@ -7,7 +7,7 @@
 # to the complete work.
 #
 # (c) 2016 Red Hat Inc.
-# (c) 2017 Cisco Systems Inc.
+# (c) 2020 Cisco Systems Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -33,6 +33,8 @@
 class ModuleDocFragment(object):
     # Cisco UCS doc fragment
     DOCUMENTATION = '''
+notes:
+  - Examples can be used with the L(UCS Platform Emulator, https://cs.co/ucspe).
 options:
   hostname:
     description:

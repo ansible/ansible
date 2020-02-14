@@ -18,7 +18,6 @@ short_description: Queries UCS Manager objects by class or distinguished name
 
 description:
   -Queries UCS Manager objects by class or distinguished name.
-  - Examples can be used with the L(UCS Platform Emulator,https://bit.ly/38w8JCk).
 
 extends_documentation_fragment: ucs
 

@@ -16,7 +16,6 @@ module: ucs_wwn_pool
 short_description: Configures WWNN or WWPN pools on Cisco UCS Manager
 description:
 - Configures WWNNs or WWPN pools on Cisco UCS Manager.
-- Examples can be used with the L(UCS Platform Emulator,https://bit.ly/38w8JCk).
 extends_documentation_fragment: ucs
 options:
   state:
