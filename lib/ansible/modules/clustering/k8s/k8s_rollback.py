@@ -6,9 +6,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-import copy
-from ansible.module_utils.k8s.common import KubernetesAnsibleModule, AUTH_ARG_SPEC
-
 __metaclass__ = type
 
 
@@ -105,6 +102,10 @@ resources:
       type: complex
 '''
 
+from ansible.module_utils.k8s.common import KubernetesAnsibleModule, AUTH_ARG_SPEC
+import copy
+
+
 class KubernetesRollbackModule(KubernetesAnsibleModule):
 
     def __init__(self, *args, **kwargs):
@@ -174,16 +175,14 @@ class KubernetesRollbackModule(KubernetesAnsibleModule):
             del prev_managed_resource['spec']['template']['metadata']['labels']['pod-template-hash']
 
             resource_patch = [{
-                "op":"replace",
-                "path":"/spec/template",
+                "op": "replace",
+                "path": "/spec/template",
                 "value": prev_managed_resource['spec']['template']
             }, {
-                "op":"replace",
-                "path":"/metadata/annotations",
-                "value":{
-                    "deployment.kubernetes.io/revision": prev_managed_resource['metadata']
-                                                         ['annotations']
-                                                         ['deployment.kubernetes.io/revision']
+                "op": "replace",
+                "path": "/metadata/annotations",
+                "value": {
+                    "deployment.kubernetes.io/revision": prev_managed_resource['metadata']['annotations']['deployment.kubernetes.io/revision']
                 }
             }]
 
@@ -225,6 +224,7 @@ class KubernetesRollbackModule(KubernetesAnsibleModule):
         )
         return args
 
+
 def get_previous_revision(all_resources, current_revision):
     for resource in all_resources:
         if resource['kind'] == 'ReplicaSet':
@@ -238,6 +238,7 @@ def get_previous_revision(all_resources, current_revision):
                    ['deprecated.daemonset.template.generation']) == int(current_revision) - 1:
                 return resource
     return None
+
 
 def main():
     KubernetesRollbackModule().execute_module()
