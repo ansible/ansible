@@ -226,8 +226,8 @@ class KubernetesRollbackModule(KubernetesAnsibleModule):
                 api_version=dict(default='apps/v1', aliases=['api', 'version']),
                 name=dict(),
                 namespace=dict(),
-                label_selectors=dict(type='list', default=[]),
-                field_selectors=dict(type='list', default=[]),
+                label_selectors=dict(type='list', elements='str', default=[]),
+                field_selectors=dict(type='list', ielements='str', default=[]),
             )
         )
         return args
