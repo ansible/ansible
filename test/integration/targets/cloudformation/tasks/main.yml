@@ -10,6 +10,13 @@
   block:
 
     # ==== Env setup ==========================================================
+    - name: list available AZs
+      aws_az_info:
+      register: region_azs
+
+    - name: pick an AZ for testing
+      set_fact:
+        availability_zone: "{{ region_azs.availability_zones[0].zone_name }}"
 
     - name: Create a test VPC
       ec2_vpc_net:
@@ -23,6 +30,7 @@
       ec2_vpc_subnet:
         vpc_id: "{{ testing_vpc.vpc.id }}"
         cidr: "{{ subnet_cidr }}"
+        az: "{{ availability_zone }}"
       register: testing_subnet
 
     - name: Find AMI to use
