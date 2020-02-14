@@ -227,7 +227,7 @@ class KubernetesRollbackModule(KubernetesAnsibleModule):
                 name=dict(),
                 namespace=dict(),
                 label_selectors=dict(type='list', elements='str', default=[]),
-                field_selectors=dict(type='list', ielements='str', default=[]),
+                field_selectors=dict(type='list', elements='str', default=[]),
             )
         )
         return args
