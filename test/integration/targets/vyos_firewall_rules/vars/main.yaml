@@ -226,12 +226,64 @@ rendered:
     - "set firewall name INBOUND rule 103 state invalid disable"
     - "set firewall name INBOUND rule 103 state new disable"
     - "set firewall name INBOUND rule 103 action 'accept'"
-deleted:
+
+deleted_rs:
   commands:
     - "delete firewall ipv6-name UPLINK"
     - "delete firewall name INBOUND"
 
   after: []
+
+deleted_afi_all:
+  commands:
+    - "delete firewall ipv6-name"
+    - "delete firewall name"
+
+  after: []
+
+deleted_r:
+  commands:
+    - "delete firewall ipv6-name UPLINK rule 1"
+
+  after:
+    - afi: 'ipv6'
+      rule_sets:
+        - name: 'UPLINK'
+          description: 'This is ipv6 specific rule-set'
+          default_action: 'accept'
+          rules:
+            - number: 2
+              action: 'accept'
+              description: 'Fwipv6-Rule 2 is configured by Ansible'
+              ipsec: 'match-ipsec'
+
+    - afi: 'ipv4'
+      rule_sets:
+        - name: 'INBOUND'
+          description: 'IPv4 INBOUND rule set'
+          default_action: 'accept'
+          rules:
+            - number: 101
+              action: 'accept'
+              description: 'Rule 101 is configured by Ansible'
+              ipsec: 'match-ipsec'
+            - number: 102
+              action: 'reject'
+              description: 'Rule 102 is configured by Ansible'
+              ipsec: 'match-ipsec'
+            - number: 103
+              action: 'accept'
+              description: 'Rule 103 is configured by Ansible'
+              destination:
+                group:
+                  address_group: 'inbound'
+              source:
+                address: '192.0.2.0'
+              state:
+                established: true
+                new: false
+                invalid: false
+                related: true
 
 round_trip:
   after:
@@ -266,9 +318,6 @@ round_trip:
             - number: 103
               action: 'accept'
               description: 'Rule 103 is configured by Ansible'
-              destination:
-                group:
-                  address_group: 'inbound'
               source:
                 address: '192.0.2.0'
               state:

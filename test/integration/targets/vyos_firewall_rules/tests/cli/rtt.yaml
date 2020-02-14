@@ -59,9 +59,6 @@
                 - number: 103
                   action: 'accept'
                   description: 'Rule 103 is configured by Ansible'
-                  destination:
-                    group:
-                      address_group: 'inbound'
                   source:
                     address: '192.0.2.0'
                   state:

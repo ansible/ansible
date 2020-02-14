@@ -198,10 +198,22 @@ class Firewall_rules(ConfigBase):
         if want:
             for w in want:
                 r_sets = self._get_r_sets(w)
-                for rs in r_sets:
-                    h = self.search_r_sets_in_have(have, rs['name'], 'r_list')
-                    if h:
-                        commands.append(self._compute_command(w['afi'], h['name'], remove=True))
+                if r_sets:
+                    for rs in r_sets:
+                        h = self.search_r_sets_in_have(have, rs['name'], 'r_list')
+                        if h:
+                            w_rules = rs.get('rules') or []
+                            h_rules = h.get('rules') or []
+                            if w_rules and h_rules:
+                                for rule in w_rules:
+                                    if self.search_r_sets_in_have(h_rules, rule['number'], 'rules'):
+                                        commands.append(self._add_r_base_attrib(w['afi'], rs['name'], 'number', rule, opr=False))
+                            else:
+                                commands.append(self._compute_command(w['afi'], h['name'], remove=True))
+                elif have:
+                    for h in have:
+                        if h['afi'] == w['afi']:
+                            commands.append(self._compute_command(w['afi'], remove=True))
         elif have:
             for h in have:
                 r_sets = self._get_r_sets(h)
@@ -560,8 +572,9 @@ class Firewall_rules(ConfigBase):
         """
         rs_list = []
         r_sets = item[type]
-        for rs in r_sets:
-            rs_list.append(rs)
+        if r_sets:
+            for rs in r_sets:
+                rs_list.append(rs)
         return rs_list
 
     def _compute_command(self, afi, name=None, number=None, attrib=None, value=None, remove=False, opr=True):
