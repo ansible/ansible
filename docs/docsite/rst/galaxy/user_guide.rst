@@ -78,6 +78,11 @@ Install multiple collections with a requirements file
 
 .. include:: ../shared_snippets/installing_multiple_collections.txt
 
+Listing installed collections
+-----------------------------
+
+To list installed collections, run ``ansible-galaxy collection list``. See :ref:`collections_listing` for more details.
+
 
 Configuring the ``ansible-galaxy`` client
 ------------------------------------------

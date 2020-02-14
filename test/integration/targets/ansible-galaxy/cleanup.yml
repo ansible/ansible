@@ -9,3 +9,11 @@
         - "cleanup-default.yml"
       loop_control:
         loop_var: cleanup_filename
+
+    - name: Remove default collection directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "~/.ansible/collections/ansible_collections"
+        - /usr/share/ansible/collections/ansible_collections

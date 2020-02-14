@@ -4,7 +4,7 @@ set -eux -o pipefail
 
 ansible-playbook setup.yml "$@"
 
-trap 'ansible-playbook cleanup.yml' EXIT
+trap 'ansible-playbook ${ANSIBLE_PLAYBOOK_DIR}/cleanup.yml' EXIT
 
 # Very simple version test
 ansible-galaxy --version
@@ -39,7 +39,6 @@ popd # "${galaxy_local_test_role_dir}"
 # Status message function (f_ to designate that it's a function)
 f_ansible_galaxy_status()
 {
-
     printf "\n\n\n### Testing ansible-galaxy: %s\n" "${@}"
 }
 
@@ -207,6 +206,88 @@ f_ansible_galaxy_status \
 
     [[ -f "${galaxy_testdir}/install/ansible_collections/ansible_test/my_collection/MANIFEST.json" ]]
     grep "Installing 'ansible_test.my_collection:1.0.0' to .*" out.txt
+
+
+## ansible-galaxy collection list tests
+
+# Create more collections and put them in various places
+f_ansible_galaxy_status \
+    "setting up for collection list tests"
+
+rm -rf ansible_test/* install/*
+
+NAMES=(zoo museum airport)
+for n in "${NAMES[@]}"; do
+    ansible-galaxy collection init "ansible_test.$n"
+    ansible-galaxy collection build "ansible_test/$n"
+done
+
+ansible-galaxy collection install ansible_test-zoo-1.0.0.tar.gz
+ansible-galaxy collection install ansible_test-museum-1.0.0.tar.gz -p ./install
+ansible-galaxy collection install ansible_test-airport-1.0.0.tar.gz -p ./local
+
+# Change the collection version and install to another location
+sed -i -e 's#^version:.*#version: 2.5.0#' ansible_test/zoo/galaxy.yml
+ansible-galaxy collection build ansible_test/zoo
+ansible-galaxy collection install ansible_test-zoo-2.5.0.tar.gz -p ./local
+
+export ANSIBLE_COLLECTIONS_PATHS=~/.ansible/collections:${galaxy_testdir}/local
+
+f_ansible_galaxy_status \
+    "collection list all collections"
+
+    ansible-galaxy collection list -p ./install | tee out.txt
+
+    [[ $(grep -c ansible_test out.txt) -eq 4 ]]
+
+f_ansible_galaxy_status \
+    "collection list specific collection"
+
+    ansible-galaxy collection list -p ./install ansible_test.airport | tee out.txt
+
+    [[ $(grep -c 'ansible_test\.airport' out.txt) -eq 1 ]]
+
+f_ansible_galaxy_status \
+    "collection list specific collection found in multiple places"
+
+    ansible-galaxy collection list -p ./install ansible_test.zoo | tee out.txt
+
+    [[ $(grep -c 'ansible_test\.zoo' out.txt) -eq 2 ]]
+
+f_ansible_galaxy_status \
+    "collection list all with duplicate paths"
+
+    ansible-galaxy collection list -p ~/.ansible/collections | tee out.txt
+
+    [[ $(grep -c '# /root/.ansible/collections/ansible_collections' out.txt) -eq 1 ]]
+
+f_ansible_galaxy_status \
+    "collection list invalid collection name"
+
+    ansible-galaxy collection list -p ./install dirty.wraughten.name "$@" 2>&1 | tee out.txt || echo "expected failure"
+
+    grep 'ERROR! Invalid collection name' out.txt
+
+f_ansible_galaxy_status \
+    "collection list path not found"
+
+    ansible-galaxy collection list -p ./nope "$@" 2>&1 | tee out.txt || echo "expected failure"
+
+    grep '\[WARNING\]: - the configured path' out.txt
+
+f_ansible_galaxy_status \
+    "collection list missing ansible_collections dir inside path"
+
+    mkdir emptydir
+
+    ansible-galaxy collection list -p ./emptydir "$@"
+
+    rmdir emptydir
+
+unset ANSIBLE_COLLECTIONS_PATHS
+
+## end ansible-galaxy collection list
+
 
 popd # ${galaxy_testdir}
 
