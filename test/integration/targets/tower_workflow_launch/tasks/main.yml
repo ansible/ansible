@@ -5,6 +5,7 @@
     password: "{{ tower_password }}"
     user: "{{ tower_username }}"
     validate_certs: False
+    force_basic_auth: true
   register: unified_job
 
 - name: Build workflow
@@ -20,6 +21,7 @@
     status_code: 201
     user: "{{ tower_username }}"
     validate_certs: False
+    force_basic_auth: true
   register: workflow
 
 - name: Add a node
@@ -42,6 +44,7 @@
     status_code: 201
     user: "{{ tower_username }}"
     validate_certs: False
+    force_basic_auth: true
   register: node1
 
 - name: Add a node
@@ -64,6 +67,7 @@
     status_code: 201
     user: "{{ tower_username }}"
     validate_certs: False
+    force_basic_auth: true
   register: node2
 
 - name: "Link nodes {{ node2.json.id }} to {{ node1.json.id }}"
@@ -76,3 +80,4 @@
     status_code: 204
     user: "{{ tower_username }}"
     validate_certs: False
+    force_basic_auth: true
