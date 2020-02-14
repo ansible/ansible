@@ -176,7 +176,7 @@ class GalaxyCLI(CLI):
         self.add_init_options(role_parser, parents=[common, force, offline])
         self.add_remove_options(role_parser, parents=[common, roles_path])
         self.add_delete_options(role_parser, parents=[common, github])
-        self.add_list_options(role_parser, parents=[common])
+        self.add_list_options(role_parser, parents=[common, roles_path])
         self.add_search_options(role_parser, parents=[common])
         self.add_import_options(role_parser, parents=[common, github])
         self.add_setup_options(role_parser, parents=[common, roles_path])
