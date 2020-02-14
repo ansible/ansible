@@ -199,7 +199,6 @@ def test_execute_list_collection_specific_duplicate(mocker, capsys, mock_collect
     mocker.patch('os.path.exists', path_exists)
     mocker.patch('os.path.isdir', return_value=True)
     mocker.patch('ansible.galaxy.collection.validate_collection_name', collection_name)
-    # mocker.patch('ansible.cli.galaxy._get_collection_widths', return_value=(14, 5))
 
     gc = GalaxyCLI(['ansible-galaxy', 'collection', 'list', collection_name])
     gc.execute_list_collection()
@@ -207,7 +206,7 @@ def test_execute_list_collection_specific_duplicate(mocker, capsys, mock_collect
     out, err = capsys.readouterr()
     out_lines = out.splitlines()
 
-    # assert len(out_lines) == 10
+    assert len(out_lines) == 10
     assert out_lines[0] == ''
     assert out_lines[1] == '# /root/.ansible/collections/ansible_collections'
     assert out_lines[2] == 'Collection     Version'
