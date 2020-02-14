@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix incorrect "Could not match supplied host pattern" warning (https://github.com/ansible/ansible/issues/66764)

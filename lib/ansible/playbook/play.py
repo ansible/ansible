@@ -53,7 +53,7 @@ class Play(Base, Taggable, CollectionSearch):
     """
 
     # =================================================================================
-    _hosts = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
+    _hosts = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True, priority=-1)
 
     # Facts
     _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
