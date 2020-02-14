@@ -42,11 +42,6 @@ DOCUMENTATION = """
         _terms:
             description: path(s) of files to read
             required: True
-        print:
-            description: print the decrypted content
-            type: bool
-            required: False
-            default: False
     notes:
         - This lookup does not understand 'globbing' - use the fileglob lookup instead.
 """
@@ -129,10 +124,6 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         ret = []
 
-        print_decrypted = False
-        if 'print' in kwargs:
-            print_decrypted = kwargs['print']
-
         for term in terms:
             display.debug("Sops lookup term: %s" % term)
             lookupfile = self.find_file_in_search_path(variables, 'files', term)
@@ -144,12 +135,7 @@ class LookupModule(LookupBase):
 
                     # output is binary, we want UTF-8 string
                     output = to_text(output, errors='surrogate_or_strict')
-
-                    # the process output is the decrypted secret; displaying it
-                    # here would easily end in logs, be cautious
-                    if print_decrypted and output:
-                        display.display(u"Sops decrypted output:")
-                        display.display(str(output).rstrip())
+                    # the process output is the decrypted secret; be cautious
 
                     # sops logs always to stderr, as stdout is used for
                     # file content
