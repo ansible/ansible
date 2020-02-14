@@ -57,9 +57,11 @@ options:
   label_selectors:
     description: List of label selectors to use to filter results
     type: list
+    elements: str
   field_selectors:
     description: List of field selectors to use to filter results
     type: list
+    elements: str
 
 extends_documentation_fragment:
   - k8s_auth_options
@@ -105,7 +107,7 @@ resources:
     status:
       description: Current status details for the object.
       returned: success
-      type: complex
+      type: dict
 '''
 
 from ansible.module_utils.k8s.common import KubernetesAnsibleModule, AUTH_ARG_SPEC
