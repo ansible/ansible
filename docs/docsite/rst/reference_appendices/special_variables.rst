@@ -74,7 +74,7 @@ ansible_search_path
     Current search path for action plugins and lookups, i.e where we search for relative paths when you do ``template: src=myfile``
 
 ansible_skip_tags
-    Contents of the ``--skip_tags`` CLI option, which specifies which tags will be skipped for the current run.
+    Contents of the ``--skip-tags`` CLI option, which specifies which tags will be skipped for the current run.
 
 ansible_verbosity
     Current verbosity setting for Ansible
