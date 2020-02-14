@@ -299,7 +299,7 @@ def main():
     # Allow to pass values like 1mb instead of 1MB, etc:
     if value:
         for unit in POSSIBLE_SIZE_UNITS:
-            if unit in value:
+            if value[:-2].isdigit() and unit in value[-2:]:
                 value = value.upper()
 
     if value and reset:
