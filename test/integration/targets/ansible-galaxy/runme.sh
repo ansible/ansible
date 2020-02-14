@@ -255,6 +255,13 @@ f_ansible_galaxy_status \
     [[ $(grep -c 'ansible_test\.zoo' out.txt) -eq 2 ]]
 
 f_ansible_galaxy_status \
+    "collection list all with duplicate paths"
+
+    ansible-galaxy collection list -p ~/.ansible/collections | tee out.txt
+
+    [[ $(grep -c '# /root/.ansible/collections/ansible_collections' out.txt) -eq 1 ]]
+
+f_ansible_galaxy_status \
     "collection list invalid collection name"
 
     ansible-galaxy collection list -p ./install dirty.wraughten.name "$@" 2>&1 | tee out.txt || echo "expected failure"

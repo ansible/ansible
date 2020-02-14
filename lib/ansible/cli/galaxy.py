@@ -1135,7 +1135,7 @@ class GalaxyCLI(CLI):
         List all collections installed on the local system
         """
 
-        collections_search_paths = context.CLIARGS['collections_path']
+        collections_search_paths = set(context.CLIARGS['collections_path'])
         collection_name = context.CLIARGS['collection']
         default_collections_path = C.config.get_configuration_definition('COLLECTIONS_PATHS').get('default')
 
