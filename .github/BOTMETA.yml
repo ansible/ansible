@@ -613,7 +613,203 @@ files:
     labels: [ asa, cisco, networking ]
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
-  $modules/network/check_point:
+  $modules/network/check_point/checkpoint_access_layer_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_access_rule_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_access_rule.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_host_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_host.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_object_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_run_script.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_session.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_task_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_access_layer_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_access_layer.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_access_role_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_access_role.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_access_rule_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_access_rule.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_address_range_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_address_range.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_administrator_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_administrator.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_application_site_category_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_application_site_category.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_application_site_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_application_site_group_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_application_site_group.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_application_site.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_assign_global_assignment.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_discard.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_dns_domain_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_dns_domain.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_dynamic_object_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_dynamic_object.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_exception_group_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_exception_group.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_global_assignment_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_global_assignment.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_group_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_group.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_group_with_exclusion_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_group_with_exclusion.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_host_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_host.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_install_policy.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_mds_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_multicast_address_range_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_multicast_address_range.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_network_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_network.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_package_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_package.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_publish.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_put_file.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_run_ips_update.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_run_script.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_security_zone_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_security_zone.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_dce_rpc_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_dce_rpc.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_group_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_group.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_icmp6_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_icmp6.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_icmp_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_icmp.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_other_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_other.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_rpc_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_rpc.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_sctp_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_sctp.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_t  $modules/network/check_point/cp_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_t  $modules/network/check_point/cp.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_udp_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_udp.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_session_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_simple_gateway_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_simple_gateway.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_tag_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_tag.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_exception_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_exception.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_indicator_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_indicator.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_layer_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_layer.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_profile_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_profile.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_protection_override.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_rule_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_rule.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_time_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_time.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_verify_policy.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_vpn_community_meshed_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_vpn_community_meshed.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_vpn_community_star_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_vpn_community_star.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_wildcard_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_wildcard.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_publish.py:
     migrated_to: check_point.mgmt
   $modules/network/cloudengine/: &cloudengine
     maintainers: $team_huawei
