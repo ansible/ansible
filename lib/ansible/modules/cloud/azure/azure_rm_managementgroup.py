@@ -227,17 +227,16 @@ class Actions:
 class AzureRMManagementGroups(AzureRMModuleBaseExt):
     def __init__(self):
         self.module_arg_spec = dict(
-            group_id=dict(type='str', updatable=False, required=True),
-            name=dict(type='str', updatable=False),
+            group_id=dict(type='str', required=True),
+            name=dict(type='str'),
             id=dict(type='str'),
             type=dict(type='str'),
             properties=dict(
                 type='dict',
-                disposition="/",
                 options=dict(
-                    tenant_id=dict(type='str', disposition="tenantId"),
-                    display_name=dict(type='str', disposition="displayName"),
-                    parent_id=dict(type='str', disposition="details/parent/id")
+                    tenant_id=dict(type='str'),
+                    display_name=dict(type='str'),
+                    parent_id=dict(type='str')
                 )
             ),
             state=dict(type='str', default='present', choices=['present', 'absent']),
