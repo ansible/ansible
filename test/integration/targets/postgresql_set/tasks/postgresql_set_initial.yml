@@ -69,7 +69,7 @@
     postgresql_set:
       <<: *pg_parameters
       name: work_mem
-      value: 12MB
+      value: 12mb
     register: set_wm
 
   - assert:
