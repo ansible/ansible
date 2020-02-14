@@ -64,6 +64,8 @@ def main():
 
             if path.startswith('lib/ansible/modules/'):
                 is_module = True
+            elif path.startswith('test/support/plugins/modules/'):
+                is_module = True
             elif path.startswith('test/lib/ansible_test/_data/'):
                 pass
             elif path.startswith('lib/') or path.startswith('test/lib/'):
