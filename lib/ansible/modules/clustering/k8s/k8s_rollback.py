@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '0.1',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -18,7 +18,7 @@ module: k8s_rollback
 
 short_description: Rollback Kubernetes (K8S) Deployments and DaemonSets
 
-version_added: "2.9"
+version_added: "2.10"
 
 author:
     - "Julien Huon (@julienhuon)"
