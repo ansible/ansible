@@ -71,6 +71,7 @@ options:
     description:
     - The URL of an HTTP proxy to use for the connection. Can also be specified via K8S_AUTH_PROXY environment variable.
     - Please note that this module does not pick up typical proxy settings from the environment (e.g. HTTP_PROXY).
+    type: str
     version_added: "2.9"
   persist_config:
     description:
