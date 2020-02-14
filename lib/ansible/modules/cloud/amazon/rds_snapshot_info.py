@@ -338,7 +338,7 @@ def cluster_snapshot_info(module, conn):
     if snapshot_type:
         params['SnapshotType'] = snapshot_type
         if snapshot_type == 'public':
-            params['IsPublic'] = True
+            params['IncludePublic'] = True
         elif snapshot_type == 'shared':
             params['IncludeShared'] = True
 
@@ -358,7 +358,7 @@ def standalone_snapshot_info(module, conn):
     if snapshot_type:
         params['SnapshotType'] = snapshot_type
         if snapshot_type == 'public':
-            params['IsPublic'] = True
+            params['IncludePublic'] = True
         elif snapshot_type == 'shared':
             params['IncludeShared'] = True
 
