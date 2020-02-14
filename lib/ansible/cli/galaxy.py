@@ -28,6 +28,7 @@ from ansible.galaxy.collection import (
     publish_collection,
     validate_collection_name,
     validate_collection_path,
+    verify_collections
 )
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
@@ -117,6 +118,7 @@ class GalaxyCLI(CLI):
         self.add_build_options(collection_parser, parents=[common, force])
         self.add_publish_options(collection_parser, parents=[common])
         self.add_install_options(collection_parser, parents=[common, force])
+        self.add_verify_options(collection_parser, parents=[common, collections_path])
 
         # Add sub parser for the Galaxy role actions
         role = type_parser.add_parser('role', help='Manage an Ansible Galaxy role.')
@@ -234,6 +236,19 @@ class GalaxyCLI(CLI):
         info_parser.set_defaults(func=self.execute_info)
 
         info_parser.add_argument('args', nargs='+', help='role', metavar='role_name[,version]')
+
+    def add_verify_options(self, parser, parents=None):
+        galaxy_type = 'collection'
+        verify_parser = parser.add_parser('verify', parents=parents, help='Compare checksums with the collection(s) '
+                                          'found on the server and the installed copy. This does not verify dependencies.')
+        verify_parser.set_defaults(func=self.execute_verify)
+
+        verify_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', help='The collection(s) name or '
+                                   'path/url to a tar.gz collection artifact. This is mutually exclusive with --requirements-file.')
+        verify_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
+                                   help='Ignore errors during verification and continue with the next specified collection.')
+        verify_parser.add_argument('-r', '--requirements-file', dest='requirements',
+                                   help='A file containing a list of collections to be verified.')
 
     def add_install_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -583,6 +598,27 @@ class GalaxyCLI(CLI):
 
         return meta_value
 
+    def _require_one_of_collections_requirements(self, collections, requirements_file):
+        if collections and requirements_file:
+            raise AnsibleError("The positional collection_name arg and --requirements-file are mutually exclusive.")
+        elif not collections and not requirements_file:
+            raise AnsibleError("You must specify a collection name or a requirements file.")
+        elif requirements_file:
+            requirements_file = GalaxyCLI._resolve_path(requirements_file)
+            requirements = self._parse_requirements_file(requirements_file, allow_old_format=False)['collections']
+        else:
+            requirements = []
+            for collection_input in collections:
+                requirement = None
+                if os.path.isfile(to_bytes(collection_input, errors='surrogate_or_strict')) or \
+                        urlparse(collection_input).scheme.lower() in ['http', 'https']:
+                    # Arg is a file path or URL to a collection
+                    name = collection_input
+                else:
+                    name, dummy, requirement = collection_input.partition(':')
+                requirements.append((name, requirement or '*', None))
+        return requirements
+
 ############################
 # execute actions
 ############################
@@ -794,6 +830,22 @@ class GalaxyCLI(CLI):
 
         self.pager(data)
 
+    def execute_verify(self):
+
+        collections = context.CLIARGS['args']
+        search_paths = context.CLIARGS['collections_path']
+        ignore_certs = context.CLIARGS['ignore_certs']
+        ignore_errors = context.CLIARGS['ignore_errors']
+        requirements_file = context.CLIARGS['requirements']
+
+        requirements = self._require_one_of_collections_requirements(collections, requirements_file)
+
+        resolved_paths = [validate_collection_path(GalaxyCLI._resolve_path(path)) for path in search_paths]
+
+        verify_collections(requirements, resolved_paths, self.api_servers, (not ignore_certs), ignore_errors)
+
+        return 0
+
     def execute_install(self):
         """
         Install one or more roles(``ansible-galaxy role install``), or one or more collections(``ansible-galaxy collection install``).
@@ -811,25 +863,7 @@ class GalaxyCLI(CLI):
             no_deps = context.CLIARGS['no_deps']
             force_deps = context.CLIARGS['force_with_deps']
 
-            if collections and requirements_file:
-                raise AnsibleError("The positional collection_name arg and --requirements-file are mutually exclusive.")
-            elif not collections and not requirements_file:
-                raise AnsibleError("You must specify a collection name or a requirements file.")
-
-            if requirements_file:
-                requirements_file = GalaxyCLI._resolve_path(requirements_file)
-                requirements = self._parse_requirements_file(requirements_file, allow_old_format=False)['collections']
-            else:
-                requirements = []
-                for collection_input in collections:
-                    requirement = None
-                    if os.path.isfile(to_bytes(collection_input, errors='surrogate_or_strict')) or \
-                            urlparse(collection_input).scheme.lower() in ['http', 'https']:
-                        # Arg is a file path or URL to a collection
-                        name = collection_input
-                    else:
-                        name, dummy, requirement = collection_input.partition(':')
-                    requirements.append((name, requirement or '*', None))
+            requirements = self._require_one_of_collections_requirements(collections, requirements_file)
 
             output_path = GalaxyCLI._resolve_path(output_path)
             collections_path = C.COLLECTIONS_PATHS
