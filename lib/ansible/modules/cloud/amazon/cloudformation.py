@@ -399,15 +399,11 @@ def create_stack(module, stack_params, cfn, events_limit):
 
     # 'DisableRollback', 'TimeoutInMinutes', 'EnableTerminationProtection' and
     # 'OnFailure' only apply on creation, not update.
-    #
-    # 'OnFailure' and 'DisableRollback' are incompatible with each other, so
-    # throw error if both are defined
-    if module.params.get('on_create_failure') is None:
-        stack_params['DisableRollback'] = module.params['disable_rollback']
-    else:
-        if module.params['disable_rollback']:
-            module.fail_json(msg="You can specify either 'on_create_failure' or 'disable_rollback', but not both.")
+    if module.params.get('on_create_failure') is not None:
         stack_params['OnFailure'] = module.params['on_create_failure']
+    else:
+        stack_params['DisableRollback'] = module.params['disable_rollback']
+
     if module.params.get('create_timeout') is not None:
         stack_params['TimeoutInMinutes'] = module.params['create_timeout']
     if module.params.get('termination_protection') is not None:
@@ -675,7 +671,8 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive=[['template_url', 'template', 'template_body']],
+        mutually_exclusive=[['template_url', 'template', 'template_body'],
+                            ['disable_rollback', 'on_create_failure']],
         supports_check_mode=True
     )
     if not HAS_BOTO3:
