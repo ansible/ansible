@@ -1821,9 +1821,50 @@ files:
   $modules/network/icx/: sushma-alethea
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
+  $modules/network/meraki/meraki_admin.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_config_template.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_content_filtering.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_device.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_device2.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_firewalled_services.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_malware.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_mr_l3_firewall.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_mx_l3_firewall.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_mx_l7_firewall.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_nat.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_network.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_organization.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_snmp.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_ssid.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_static_route.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_switchport.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_syslog.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_vlan.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_webhook.py:
+      migrated_to: cisco.meraki
   $modules/network/meraki/: &meraki
     labels: [ cisco, meraki, networking ]
     maintainers: $team_meraki
+    migrated_to: cisco.meraki
   $modules/network/netconf/netconf_config.py: userlerueda $team_networking
   $modules/network/netconf/netconf_get.py: $team_networking
   $modules/network/netconf/netconf_rpc.py: $team_networking
@@ -2520,7 +2561,8 @@ files:
     maintainers: paulquack
   $module_utils/network/junos:
     support: network
-  $module_utils/network/meraki: *meraki
+  $module_utils/network/meraki:
+      migrated_to: cisco.meraki
   $module_utils/network/netconf:
     support: network
     maintainers: $team_networking
@@ -3291,7 +3333,8 @@ files:
   test/integration/targets/exos_: $team_extreme
   test/integration/targets/ios_: *ios
   test/integration/targets/iosxr_: *ios
-  test/integration/targets/meraki_: *meraki
+  test/integration/targets/meraki_:
+      migrated_to: cisco.meraki
   test/integration/targets/mso_: *aci
   test/integration/targets/mysql: *mysql
   test/integration/targets/nxos_: *nxos
