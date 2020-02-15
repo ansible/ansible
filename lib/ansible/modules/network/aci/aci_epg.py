@@ -77,6 +77,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 notes:
 - The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
@@ -303,6 +308,7 @@ def main():
         fwd_control=dict(type='str', choices=['none', 'proxy-arp']),
         preferred_group=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -326,6 +332,7 @@ def main():
     state = module.params.get('state')
     tenant = module.params.get('tenant')
     ap = module.params.get('ap')
+    name_alias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(
@@ -361,6 +368,7 @@ def main():
                 pcEnfPref=intra_epg_isolation,
                 fwdCtrl=fwd_control,
                 prefGrMemb=preferred_group,
+                nameAlias=name_alias,
             ),
             child_configs=[dict(
                 fvRsBd=dict(

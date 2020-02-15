@@ -87,6 +87,11 @@ options:
     type: str
     default: present
     choices: [ absent, present, query ]
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
   stateful:
     description:
     - Determines the statefulness of the filter entry.
@@ -266,6 +271,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         stateful=dict(type='bool'),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -305,6 +311,7 @@ def main():
     state = module.params.get('state')
     stateful = aci.boolean(module.params.get('stateful'))
     tenant = module.params.get('tenant')
+    name_alias = module.params.get('name_alias')
 
     # validate that dst_port is not passed with dst_start or dst_end
     if dst_port is not None and (dst_end is not None or dst_start is not None):
@@ -350,6 +357,7 @@ def main():
                 name=entry,
                 prot=ip_protocol,
                 stateful=stateful,
+                nameAlias=name_alias,
             ),
         )
 
