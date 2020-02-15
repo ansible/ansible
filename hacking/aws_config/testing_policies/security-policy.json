@@ -20,6 +20,7 @@
                 "iam:ListPolicies",
                 "iam:ListRoles",
                 "iam:ListRolePolicies",
+                "iam:ListRoleTags",
                 "iam:ListUsers",
                 "iam:ListAccountAliases"
             ],
@@ -50,6 +51,8 @@
                 "iam:PassRole",
                 "iam:PutRolePolicy",
                 "iam:PutRolePermissionsBoundary",
+                "iam:TagRole",
+                "iam:UntagRole",
                 "iam:UpdateAssumeRolePolicy",
                 "iam:UpdateRole",
                 "iam:UpdateRoleDescription",
