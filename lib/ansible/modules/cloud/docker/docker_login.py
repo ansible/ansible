@@ -244,9 +244,13 @@ class DockerFileStore(object):
         dir = os.path.dirname(self._config_path)
         if not os.path.exists(dir):
             os.makedirs(dir)
-        # Write config
-        with open(self._config_path, "w") as f:
-            json.dump(self._config, f, indent=4, sort_keys=True)
+        # Write config; make sure it has permissions 0x600
+        content = json.dumps(self._config, indent=4, sort_keys=True).encode('utf-8')
+        f = os.open(self._config_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        try:
+            os.write(f, content)
+        finally:
+            os.close(f)
 
     def store(self, server, username, password):
         '''

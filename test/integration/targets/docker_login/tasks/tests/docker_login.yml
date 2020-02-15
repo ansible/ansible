@@ -43,6 +43,11 @@
     state: present
   register: login_2
 
+- name: Get permissions of ~/.docker/config.json
+  stat:
+    path: ~/.docker/config.json
+  register: login_2_stat
+
 - name: Log in (idempotent)
   docker_login:
     registry_url: "{{ registry_frontend_address }}"
@@ -67,6 +72,7 @@
       - login_2 is changed
       - login_3 is not changed
       - login_4 is not changed
+      - login_2_stat.stat.mode == '0600'
 
 - name: Log in again with wrong password (check mode)
   docker_login:
