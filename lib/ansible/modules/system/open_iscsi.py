@@ -252,7 +252,7 @@ def main():
 
             # target
             portal=dict(type='str', aliases=['ip']),
-            port=dict(type='str', default=3260),
+            port=dict(type='str', default='3260'),
             target=dict(type='str', aliases=['name', 'targetname']),
             node_auth=dict(type='str', default='CHAP'),
             node_user=dict(type='str'),
