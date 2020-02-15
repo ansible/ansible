@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_set - fix converting value to uppercase (https://github.com/ansible/ansible/issues/67377).
