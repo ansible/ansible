@@ -2691,7 +2691,6 @@ lib/ansible/modules/monitoring/statusio_maintenance.py validate-modules:paramete
 lib/ansible/modules/monitoring/uptimerobot.py validate-modules:doc-missing-type
 lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:doc-default-incompatible-type
 lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:doc-elements-mismatch
 lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:doc-required-mismatch
 lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:missing-suboption-docs
