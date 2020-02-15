@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt - don't ignore ``instance_cpus`` parameter

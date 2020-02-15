@@ -240,7 +240,7 @@ def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork,
         # define VM params
         vmparams = params.VM(name=vmname, cluster=conn.clusters.get(name=zone), os=params.OperatingSystem(type_=vmos),
                              template=conn.templates.get(name="Blank"), memory=1024 * 1024 * int(vmmem),
-                             cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores))), type_=vmtype)
+                             cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores), sockets=vmcpus)), type_=vmtype)
         # define disk params
         vmdisk = params.Disk(size=1024 * 1024 * 1024 * int(vmdisk_size), wipe_after_delete=True, sparse=True, interface=vmdisk_int, type_="System",
                              format='cow',
@@ -252,7 +252,7 @@ def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork,
         # define VM params
         vmparams = params.VM(name=vmname, cluster=conn.clusters.get(name=zone), os=params.OperatingSystem(type_=vmos),
                              template=conn.templates.get(name="Blank"), memory=1024 * 1024 * int(vmmem),
-                             cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores))), type_=vmtype)
+                             cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores), sockets=vmcpus)), type_=vmtype)
         # define disk params
         vmdisk = params.Disk(size=1024 * 1024 * 1024 * int(vmdisk_size), wipe_after_delete=True, sparse=False, interface=vmdisk_int, type_="System",
                              format='raw', storage_domains=params.StorageDomains(storage_domain=[conn.storagedomains.get(name=sdomain)]))
