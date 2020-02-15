@@ -247,7 +247,7 @@ class HashiVault:
         if mount_point is None:
             mount_point = 'ldap'
 
-        self.client.auth_ldap(username, password, mount_point=mount_point)
+        self.client.auth.ldap.login(username, password, mount_point=mount_point)
 
     def boolean_or_cacert(self, validate_certs, cacert):
         validate_certs = boolean(validate_certs, strict=False)
