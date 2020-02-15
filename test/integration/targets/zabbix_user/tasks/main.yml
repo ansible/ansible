@@ -1,0 +1,912 @@
+---
+- when:
+    - ansible_distribution == 'Ubuntu'
+  block:
+  # New user create test from here
+  - name: test - Create a new Zabbix user with check_mode and diff
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+      passwd: password
+    check_mode: yes
+    diff: yes
+    register: create_zabbix_user_result
+
+  - assert:
+      that:
+        - create_zabbix_user_result.changed is sameas true
+
+  - name: test - Create a new Zabbix user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+      passwd: password
+    register: create_zabbix_user_result
+
+  - assert:
+      that:
+        - create_zabbix_user_result.changed is sameas true
+
+  - name: test - Create a new Zabbix user(again)
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+      passwd: password
+    register: create_zabbix_user_result
+
+  - assert:
+      that:
+        - not create_zabbix_user_result.changed is sameas true
+
+  # Parameter add test from here to existing user
+  - name: test - Add user group to existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: password
+    register: add_usergroup_to_existing_user_result
+
+  - assert:
+      that:
+        - add_usergroup_to_existing_user_result.changed is sameas true
+
+  - name: test - Add user medias(Email) to existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: password
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+    register: add_user_medias_to_existing_user_result
+
+  - assert:
+      that:
+        - add_user_medias_to_existing_user_result.changed is sameas true
+
+  - name: test - Add multiple user medias(Email and SMS) to existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: password
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    register: add_user_medias_to_existing_user_result
+
+  - assert:
+      that:
+        - add_user_medias_to_existing_user_result.changed is sameas true
+
+  # Existing parameter updates test from here
+  - name: test - Update password parameter for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      override_passwd: yes
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    register: update_password_parameter_existing_user_result
+
+  - assert:
+      that:
+        - update_password_parameter_existing_user_result.changed is sameas true
+
+  - name: test - Update autologin parameter for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologin: yes
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    register: update_autologin_parameter_existing_user_result
+
+  - assert:
+      that:
+        - update_autologin_parameter_existing_user_result.changed is sameas true
+
+  - name: test - Update autologout parameter for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    register: update_autologout_parameter_existing_user_result
+
+  - assert:
+      that:
+        - update_autologout_parameter_existing_user_result.changed is sameas true
+
+  - name: test - Update refresh parameter for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    register: update_refresh_parameter_existing_user_result
+
+  - assert:
+      that:
+        - update_refresh_parameter_existing_user_result.changed is sameas true
+
+  - name: test - Update rows_per_page parameter for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      rows_per_page: 300
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    register: update_rows_per_page_parameter_existing_user_result
+
+  - assert:
+      that:
+        - update_rows_per_page_parameter_existing_user_result.changed is sameas true
+
+  - name: test - Update after_login_url parameter for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      rows_per_page: 300
+      after_login_url: http://example.com
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    register: update_after_login_url_parameter_existing_user_result
+
+  - assert:
+      that:
+        - update_after_login_url_parameter_existing_user_result.changed is sameas true
+
+  - name: test - Update theme parameter for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      rows_per_page: 300
+      after_login_url: http://example.com
+      theme: "{{ item }}"
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    loop:
+      - blue-theme
+      - dark-theme
+    register: update_theme_parameter_existing_user_result
+
+  - assert:
+      that:
+        - item.changed is sameas true
+    loop: "{{ update_theme_parameter_existing_user_result.results }}"
+
+  - name: test - Update type parameter for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      rows_per_page: 300
+      after_login_url: http://example.com
+      theme: dark-theme
+      type: "{{ item }}"
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    loop:
+      - Zabbix admin
+      - Zabbix super admin
+    register: update_type_parameter_existing_user_result
+
+  - assert:
+      that:
+        - item.changed is sameas true
+    loop: "{{ update_type_parameter_existing_user_result.results }}"
+
+  - name: test - Update lang parameter for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example
+      surname: test
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      rows_per_page: 300
+      after_login_url: http://example.com
+      theme: dark-theme
+      type: Zabbix super admin
+      lang: en_US
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    register: update_lang_parameter_existing_user_result
+
+  - assert:
+      that:
+        - update_lang_parameter_existing_user_result.changed is sameas true
+
+  - name: test - Update name and surname parameter for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example2
+      surname: test2
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      rows_per_page: 300
+      after_login_url: http://example.com
+      theme: dark-theme
+      type: Zabbix super admin
+      lang: en_US
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    register: update_name_and_surname_parameter_existing_user_result
+
+  - assert:
+      that:
+        - update_name_and_surname_parameter_existing_user_result.changed is sameas true
+
+  - name: test - Update lang parameter for existing user with check_mode and diff
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example2
+      surname: test2
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      rows_per_page: 300
+      after_login_url: http://example.com
+      theme: dark-theme
+      type: Zabbix super admin
+      lang: en_GB
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    check_mode: yes
+    diff: yes
+    register: update_lang_parameter_existing_user_with_check_mode_diff_result
+
+  - assert:
+      that:
+        - update_lang_parameter_existing_user_with_check_mode_diff_result.changed is sameas true
+
+  - name: test - Update lang parameter for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example2
+      surname: test2
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      rows_per_page: 300
+      after_login_url: http://example.com
+      theme: dark-theme
+      type: Zabbix super admin
+      lang: en_GB
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    register: update_lang_parameter_existing_user_result
+
+  - assert:
+      that:
+        - update_lang_parameter_existing_user_result.changed is sameas true
+
+  - name: test - Update lang parameter for existing user(again)
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example2
+      surname: test2
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      rows_per_page: 300
+      after_login_url: http://example.com
+      theme: dark-theme
+      type: Zabbix super admin
+      lang: en_GB
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+        - mediatype: SMS
+          sendto: example@example.com
+          period: 1-5,01:00-23:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: no
+            high: yes
+            disaster: yes
+          active: yes
+    register: update_lang_parameter_existing_user_result
+
+  - assert:
+      that:
+        - not update_lang_parameter_existing_user_result.changed is sameas true
+
+  # Parameter delete test from here from existing user
+  - name: test - Delete user medias(SNS) for existing user with check_mode and diff
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example2
+      surname: test2
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      rows_per_page: 300
+      after_login_url: http://example.com
+      theme: dark-theme
+      type: Zabbix super admin
+      lang: en_GB
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+    check_mode: yes
+    diff: yes
+    register: delete_user_medias_existing_user_result
+
+  - assert:
+      that:
+        - delete_user_medias_existing_user_result.changed is sameas true
+
+  - name: test - Delete user medias(SNS) for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example2
+      surname: test2
+      usrgrps:
+        - Guests
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      rows_per_page: 300
+      after_login_url: http://example.com
+      theme: dark-theme
+      type: Zabbix super admin
+      lang: en_GB
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+    register: delete_user_medias_existing_user_result
+
+  - assert:
+      that:
+        - delete_user_medias_existing_user_result.changed is sameas true
+
+  - name: test - Delete user group for existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      name: example2
+      surname: test2
+      usrgrps:
+        - Zabbix administrators
+      passwd: update_password
+      autologout: 500
+      refresh: 60
+      rows_per_page: 300
+      after_login_url: http://example.com
+      theme: dark-theme
+      type: Zabbix super admin
+      lang: en_GB
+      user_medias:
+        - mediatype: Email
+          sendto: example@example.com
+          period: 1-7,00:00-24:00
+          severity:
+            not_classified: no
+            information: yes
+            warning: yes
+            average: yes
+            high: yes
+            disaster: yes
+          active: yes
+    register: delete_user_group_existing_user_result
+
+  - assert:
+      that:
+      - delete_user_group_existing_user_result.changed is sameas true
+
+  - name: test - Delete existing user with check_mode and diff
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      usrgrps:
+        - Zabbix administrators
+      passwd: update_password
+      state: absent
+    check_mode: yes
+    diff: yes
+    register: delete_existing_user_result
+
+  - assert:
+      that:
+        - delete_existing_user_result.changed is sameas true
+
+  - name: test - Delete existing user
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      usrgrps:
+        - Zabbix administrators
+      passwd: update_password
+      state: absent
+    register: delete_existing_user_result
+
+  - assert:
+      that:
+        - delete_existing_user_result.changed is sameas true
+
+  - name: test - Delete existing user(again)
+    zabbix_user:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      alias: example1
+      usrgrps:
+        - Zabbix administrators
+      passwd: update_password
+      state: absent
+    register: delete_existing_user_result
+
+  - assert:
+      that:
+        - not delete_existing_user_result.changed is sameas true

@@ -1,0 +1,5 @@
+---
+
+zabbix_server_url: http://127.0.0.1/zabbix/
+zabbix_login_user: Admin
+zabbix_login_password: zabbix
