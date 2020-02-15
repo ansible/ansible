@@ -263,12 +263,14 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
 
                 # put ansible_ssh_host as hostvar
                 if self.get_option('want_ansible_ssh_host'):
-                    if host.get('ip'):
-                        try:
-                            self.inventory.set_variable(host_name, 'ansible_ssh_host', host['ip'])
-                        except ValueError as e:
-                            self.display.warning("Could not set hostvar ansible_ssh_host to '%s' for the '%s' host, skipping: %s" %
-                                                 (host['ip'], host_name, to_text(e)))
+                    for key in ('ip', 'ipv4', 'ipv6'):
+                        if host.get(key):
+                            try:
+                                self.inventory.set_variable(host_name, 'ansible_ssh_host', host[key])
+                                break
+                            except ValueError as e:
+                                self.display.warning("Could not set hostvar ansible_ssh_host to '%s' for the '%s' host, skipping: %s" %
+                                                     (host[key], host_name, to_text(e)))
 
                 strict = self.get_option('strict')
 
