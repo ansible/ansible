@@ -140,3 +140,35 @@
   assert:
     that:
       - nacl.changed
+
+- name: re-remove the network ACL by name (test idempotency)
+  ec2_vpc_nacl:
+    vpc_id: "{{ vpc_id }}"
+    name: "{{ resource_prefix }}-acl"
+    state: absent
+  register: nacl
+  until: nacl is success
+  ignore_errors: yes
+  retries: 5
+  delay: 5
+
+- name: assert nacl was removed
+  assert:
+    that:
+      - nacl is not changed
+
+- name: re-remove the network ACL by id (test idempotency)
+  ec2_vpc_nacl:
+    vpc_id: "{{ vpc_id }}"
+    nacl_id: "{{ nacl_id }}"
+    state: absent
+  register: nacl
+  until: nacl is success
+  ignore_errors: yes
+  retries: 5
+  delay: 5
+
+- name: assert nacl was removed
+  assert:
+    that:
+      - nacl is not changed

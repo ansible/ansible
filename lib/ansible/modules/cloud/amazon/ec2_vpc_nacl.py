@@ -161,6 +161,7 @@ except ImportError:
     pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import AWSRetry
 
 # VPC-supported IANA protocol numbers
 # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
@@ -344,12 +345,9 @@ def setup_network_acl(client, module):
     else:
         changed = False
         nacl_id = nacl['NetworkAcls'][0]['NetworkAclId']
-        subnet_result = subnets_changed(nacl, client, module)
-        nacl_result = nacls_changed(nacl, client, module)
-        tag_result = tags_changed(nacl_id, client, module)
-        if subnet_result is True or nacl_result is True or tag_result is True:
-            changed = True
-            return(changed, nacl_id)
+        changed |= subnets_changed(nacl, client, module)
+        changed |= nacls_changed(nacl, client, module)
+        changed |= tags_changed(nacl_id, client, module)
         return (changed, nacl_id)
 
 
@@ -380,63 +378,103 @@ def remove_network_acl(client, module):
 
 
 # Boto3 client methods
+@AWSRetry.jittered_backoff()
+def _create_network_acl(client, *args, **kwargs):
+    return client.create_network_acl(*args, **kwargs)
+
+
 def create_network_acl(vpc_id, client, module):
     try:
         if module.check_mode:
             nacl = dict(NetworkAcl=dict(NetworkAclId="nacl-00000000"))
         else:
-            nacl = client.create_network_acl(VpcId=vpc_id)
+            nacl = _create_network_acl(client, VpcId=vpc_id)
     except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e)
     return nacl
 
 
+@AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidNetworkAclID.NotFound'])
+def _create_network_acl_entry(client, *args, **kwargs):
+    return client.create_network_acl_entry(*args, **kwargs)
+
+
 def create_network_acl_entry(params, client, module):
     try:
         if not module.check_mode:
-            client.create_network_acl_entry(**params)
+            _create_network_acl_entry(client, **params)
     except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e)
+
+
+@AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidNetworkAclID.NotFound'])
+def _create_tags(client, *args, **kwargs):
+    return client.create_tags(*args, **kwargs)
 
 
 def create_tags(nacl_id, client, module):
     try:
         delete_tags(nacl_id, client, module)
         if not module.check_mode:
-            client.create_tags(Resources=[nacl_id], Tags=load_tags(module))
+            _create_tags(client, Resources=[nacl_id], Tags=load_tags(module))
     except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e)
+
+
+@AWSRetry.jittered_backoff()
+def _delete_network_acl(client, *args, **kwargs):
+    return client.delete_network_acl(*args, **kwargs)
 
 
 def delete_network_acl(nacl_id, client, module):
     try:
         if not module.check_mode:
-            client.delete_network_acl(NetworkAclId=nacl_id)
+            _delete_network_acl(client, NetworkAclId=nacl_id)
     except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e)
+
+
+@AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidNetworkAclID.NotFound'])
+def _delete_network_acl_entry(client, *args, **kwargs):
+    return client.delete_network_acl_entry(*args, **kwargs)
 
 
 def delete_network_acl_entry(params, client, module):
     try:
         if not module.check_mode:
-            client.delete_network_acl_entry(**params)
+            _delete_network_acl_entry(client, **params)
     except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e)
+
+
+@AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidNetworkAclID.NotFound'])
+def _delete_tags(client, *args, **kwargs):
+    return client.delete_tags(*args, **kwargs)
 
 
 def delete_tags(nacl_id, client, module):
     try:
         if not module.check_mode:
-            client.delete_tags(Resources=[nacl_id])
+            _delete_tags(client, Resources=[nacl_id])
     except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e)
+
+
+@AWSRetry.jittered_backoff()
+def _describe_network_acls(client, **kwargs):
+    return client.describe_network_acls(**kwargs)
+
+
+@AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidNetworkAclID.NotFound'])
+def _describe_network_acls_retry_missing(client, **kwargs):
+    return client.describe_network_acls(**kwargs)
 
 
 def describe_acl_associations(subnets, client, module):
     if not subnets:
         return []
     try:
-        results = client.describe_network_acls(Filters=[
+        results = _describe_network_acls_retry_missing(client, Filters=[
             {'Name': 'association.subnet-id', 'Values': subnets}
         ])
     except botocore.exceptions.ClientError as e:
@@ -448,11 +486,11 @@ def describe_acl_associations(subnets, client, module):
 def describe_network_acl(client, module):
     try:
         if module.params.get('nacl_id'):
-            nacl = client.describe_network_acls(Filters=[
+            nacl = _describe_network_acls(client, Filters=[
                 {'Name': 'network-acl-id', 'Values': [module.params.get('nacl_id')]}
             ])
         else:
-            nacl = client.describe_network_acls(Filters=[
+            nacl = _describe_network_acls(client, Filters=[
                 {'Name': 'tag:Name', 'Values': [module.params.get('name')]}
             ])
     except botocore.exceptions.ClientError as e:
@@ -462,14 +500,14 @@ def describe_network_acl(client, module):
 
 def find_acl_by_id(nacl_id, client, module):
     try:
-        return client.describe_network_acls(NetworkAclIds=[nacl_id])
+        return _describe_network_acls_retry_missing(client, NetworkAclIds=[nacl_id])
     except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e)
 
 
 def find_default_vpc_nacl(vpc_id, client, module):
     try:
-        response = client.describe_network_acls(Filters=[
+        response = _describe_network_acls_retry_missing(client, Filters=[
             {'Name': 'vpc-id', 'Values': [vpc_id]}])
     except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e)
@@ -479,7 +517,7 @@ def find_default_vpc_nacl(vpc_id, client, module):
 
 def find_subnet_ids_by_nacl_id(nacl_id, client, module):
     try:
-        results = client.describe_network_acls(Filters=[
+        results = _describe_network_acls_retry_missing(client, Filters=[
             {'Name': 'association.network-acl-id', 'Values': [nacl_id]}
         ])
     except botocore.exceptions.ClientError as e:
@@ -491,6 +529,11 @@ def find_subnet_ids_by_nacl_id(nacl_id, client, module):
         return []
 
 
+@AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidNetworkAclID.NotFound'])
+def _replace_network_acl_association(client, *args, **kwargs):
+    return client.replace_network_acl_association(*args, **kwargs)
+
+
 def replace_network_acl_association(nacl_id, subnets, client, module):
     params = dict()
     params['NetworkAclId'] = nacl_id
@@ -498,9 +541,14 @@ def replace_network_acl_association(nacl_id, subnets, client, module):
         params['AssociationId'] = association
         try:
             if not module.check_mode:
-                client.replace_network_acl_association(**params)
+                _replace_network_acl_association(client, **params)
         except botocore.exceptions.ClientError as e:
             module.fail_json_aws(e)
+
+
+@AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidNetworkAclID.NotFound'])
+def _replace_network_acl_entry(client, *args, **kwargs):
+    return client.replace_network_acl_entry(*args, **kwargs)
 
 
 def replace_network_acl_entry(entries, Egress, nacl_id, client, module):
@@ -509,17 +557,27 @@ def replace_network_acl_entry(entries, Egress, nacl_id, client, module):
         params['NetworkAclId'] = nacl_id
         try:
             if not module.check_mode:
-                client.replace_network_acl_entry(**params)
+                _replace_network_acl_entry(client, **params)
         except botocore.exceptions.ClientError as e:
             module.fail_json_aws(e)
+
+
+@AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidNetworkAclID.NotFound'])
+def _replace_network_acl_association(client, *args, **kwargs):
+    return client.replace_network_acl_association(*args, **kwargs)
 
 
 def restore_default_acl_association(params, client, module):
     try:
         if not module.check_mode:
-            client.replace_network_acl_association(**params)
+            _replace_network_acl_association(client, **params)
     except botocore.exceptions.ClientError as e:
         module.fail_json_aws(e)
+
+
+@AWSRetry.jittered_backoff()
+def _describe_subnets(client, *args, **kwargs):
+    return client.describe_subnets(*args, **kwargs)
 
 
 def subnets_to_associate(nacl, client, module):
@@ -529,14 +587,14 @@ def subnets_to_associate(nacl, client, module):
     all_found = []
     if any(x.startswith("subnet-") for x in params):
         try:
-            subnets = client.describe_subnets(Filters=[
+            subnets = _describe_subnets(client, Filters=[
                 {'Name': 'subnet-id', 'Values': params}])
             all_found.extend(subnets.get('Subnets', []))
         except botocore.exceptions.ClientError as e:
             module.fail_json_aws(e)
     if len(params) != len(all_found):
         try:
-            subnets = client.describe_subnets(Filters=[
+            subnets = _describe_subnets(client, Filters=[
                 {'Name': 'tag:Name', 'Values': params}])
             all_found.extend(subnets.get('Subnets', []))
         except botocore.exceptions.ClientError as e:
