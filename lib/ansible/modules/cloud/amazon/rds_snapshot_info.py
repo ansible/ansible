@@ -179,7 +179,7 @@ snapshots:
       sample: gp2
     tags:
       description: Snapshot tags
-      returned: always
+      returned: when snapshot is not shared
       type: complex
       contains: {}
     vpc_id:
@@ -286,7 +286,7 @@ cluster_snapshots:
       sample: true
     tags:
       description: Tags of the snapshot
-      returned: always
+      returned: when snapshot is not shared
       type: complex
       contains: {}
     vpc_id:
@@ -316,8 +316,9 @@ def common_snapshot_info(module, conn, method, prefix, params):
 
     for snapshot in results:
         try:
-            snapshot['Tags'] = boto3_tag_list_to_ansible_dict(conn.list_tags_for_resource(ResourceName=snapshot['%sArn' % prefix],
-                                                                                          aws_retry=True)['TagList'])
+            if snapshot['SnapshotType'] != 'shared':
+                snapshot['Tags'] = boto3_tag_list_to_ansible_dict(conn.list_tags_for_resource(ResourceName=snapshot['%sArn' % prefix],
+                                                                                              aws_retry=True)['TagList'])
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, "Couldn't get tags for snapshot %s" % snapshot['%sIdentifier' % prefix])
 
@@ -337,9 +338,9 @@ def cluster_snapshot_info(module, conn):
     if snapshot_type:
         params['SnapshotType'] = snapshot_type
         if snapshot_type == 'public':
-            params['IsPublic'] = True
+            params['IncludePublic'] = True
         elif snapshot_type == 'shared':
-            params['IsShared'] = True
+            params['IncludeShared'] = True
 
     return common_snapshot_info(module, conn, 'describe_db_cluster_snapshots', 'DBClusterSnapshot', params)
 
@@ -357,9 +358,9 @@ def standalone_snapshot_info(module, conn):
     if snapshot_type:
         params['SnapshotType'] = snapshot_type
         if snapshot_type == 'public':
-            params['IsPublic'] = True
+            params['IncludePublic'] = True
         elif snapshot_type == 'shared':
-            params['IsShared'] = True
+            params['IncludeShared'] = True
 
     return common_snapshot_info(module, conn, 'describe_db_snapshots', 'DBSnapshot', params)
 

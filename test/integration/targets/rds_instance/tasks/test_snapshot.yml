@@ -1,0 +1,85 @@
+---
+  - block:
+      - name: set up aws connection info
+        set_fact:
+          aws_connection_info: &aws_connection_info
+            aws_access_key: "{{ aws_access_key }}"
+            aws_secret_key: "{{ aws_secret_key }}"
+            security_token: "{{ security_token }}"
+            region: "{{ aws_region }}"
+        no_log: yes
+
+      - name: Getting shared snapshots
+        rds_snapshot_info:
+          snapshot_type: "shared"
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+            - result.cluster_snapshots is defined
+            - result.snapshots is defined
+
+      - name: Ensure the resource doesn't exist
+        rds_instance:
+          db_instance_identifier: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+        ignore_errors: yes
+
+      - name: Create a mariadb instance
+        rds_instance:
+          db_instance_identifier: "{{ instance_id }}"
+          state: present
+          engine: mariadb
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          tags:
+            Name: "{{ instance_id }}"
+            Created_by: Ansible rds_instance tests
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - "result.db_instance_identifier == '{{ instance_id }}'"
+            - "result.tags | length == 2"
+            - "result.tags.Name == '{{ instance_id }}'"
+            - "result.tags.Created_by == 'Ansible rds_instance tests'"
+
+      - name: Getting public snapshots
+        rds_snapshot_info:
+          db_instance_identifier: "{{ instance_id }}"
+          snapshot_type: "public"
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+            - result.cluster_snapshots is not defined
+            - result.snapshots is defined
+
+      - name: Ensure the resource doesn't exist
+        rds_instance:
+          db_instance_identifier: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+
+      # TODO ideally we test with an actual shared snapshot - but we'd need a second account - making tests fairly complicated?
