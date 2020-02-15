@@ -202,7 +202,7 @@ class CallbackModule(CallbackBase):
             metrics["time"] = {"total": int(time.time()) - self.start_time}
             now = datetime.now().strftime(self.TIME_FORMAT)
             report = {
-                "report": {
+                "config_report": {
                     "host": host,
                     "reported_at": now,
                     "metrics": metrics,
@@ -210,11 +210,8 @@ class CallbackModule(CallbackBase):
                     "logs": log,
                 }
             }
-            # To be changed to /api/v2/config_reports in 1.11.  Maybe we
-            # could make a GET request to get the Foreman version & do
-            # this automatically.
             try:
-                r = requests.post(url=self.FOREMAN_URL + '/api/v2/reports',
+                r = requests.post(url=self.FOREMAN_URL + '/api/v2/config_reports',
                                   data=json.dumps(report),
                                   headers=self.FOREMAN_HEADERS,
                                   cert=self.FOREMAN_SSL_CERT,
