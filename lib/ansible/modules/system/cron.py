@@ -642,6 +642,9 @@ def main():
 
     # --- user input validation ---
 
+    if env and not name:
+        module.fail_json(msg="You must specify 'name' while working with environment variables (env=yes)")
+
     if (special_time or reboot) and \
        (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
         module.fail_json(msg="You must specify time and date fields or special time.")
@@ -668,7 +671,7 @@ def main():
         (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
         crontab.write(backup_file)
 
-    if crontab.cron_file and not name and not do_install:
+    if crontab.cron_file and not do_install:
         if module._diff:
             diff['after'] = ''
             diff['after_header'] = '/dev/null'
