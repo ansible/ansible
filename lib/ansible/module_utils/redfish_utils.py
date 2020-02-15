@@ -1169,6 +1169,24 @@ class RedfishUtils(object):
         result["entries"] = sessions_results
         return result
 
+    def clear_sessions(self):
+        response = self.get_request(self.root_uri + self.sessions_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+
+        # if no active sessions, return as success
+        if data['Members@odata.count'] == 0:
+            return {'ret': True, 'changed': False, 'msg': "There is no active sessions"}
+
+        # loop to delete every active session
+        for session in data[u'Members']:
+            response = self.delete_request(self.root_uri + session[u'@odata.id'])
+            if response['ret'] is False:
+                return response
+
+        return {'ret': True, 'changed': True, 'msg': "Clear all sessions successfully"}
+
     def get_firmware_update_capabilities(self):
         result = {}
         response = self.get_request(self.root_uri + self.update_uri)
