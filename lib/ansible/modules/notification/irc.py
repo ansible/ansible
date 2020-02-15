@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: irc
 version_added: "1.2"
-short_description: Send a message to an IRC channel
+short_description: Send a message to an IRC channel or a nick
 description:
-   - Send a message to an IRC channel. This is a very simplistic implementation.
+   - Send a message to an IRC channel or a nick. This is a very simplistic implementation.
 options:
   server:
     description:
@@ -204,24 +204,25 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
             raise Exception('Timeout waiting for IRC server welcome response')
         time.sleep(0.5)
 
-    if key:
-        irc.send(to_bytes('JOIN %s %s\r\n' % (channel, key)))
-    else:
-        irc.send(to_bytes('JOIN %s\r\n' % channel))
+    if channel:
+        if key:
+            irc.send(to_bytes('JOIN %s %s\r\n' % (channel, key)))
+        else:
+            irc.send(to_bytes('JOIN %s\r\n' % channel))
 
-    join = ''
-    start = time.time()
-    while 1:
-        join += to_native(irc.recv(1024))
-        if re.search(r'^:\S+ 366 %s %s :' % (nick, channel), join, flags=re.M | re.I):
-            break
-        elif time.time() - start > timeout:
-            raise Exception('Timeout waiting for IRC JOIN response')
-        time.sleep(0.5)
+        join = ''
+        start = time.time()
+        while 1:
+            join += to_native(irc.recv(1024))
+            if re.search(r'^:\S+ 366 %s %s :' % (nick, channel), join, flags=re.M | re.I):
+                break
+            elif time.time() - start > timeout:
+                raise Exception('Timeout waiting for IRC JOIN response')
+            time.sleep(0.5)
 
-    if topic is not None:
-        irc.send(to_bytes('TOPIC %s :%s\r\n' % (channel, topic)))
-        time.sleep(1)
+        if topic is not None:
+            irc.send(to_bytes('TOPIC %s :%s\r\n' % (channel, topic)))
+            time.sleep(1)
 
     if nick_to:
         for nick in nick_to:
@@ -230,7 +231,8 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
         irc.send(to_bytes('PRIVMSG %s :%s\r\n' % (channel, message)))
     time.sleep(1)
     if part:
-        irc.send(to_bytes('PART %s\r\n' % channel))
+        if channel:
+            irc.send(to_bytes('PART %s\r\n' % channel))
         irc.send(to_bytes('QUIT\r\n'))
         time.sleep(1)
     irc.close()
