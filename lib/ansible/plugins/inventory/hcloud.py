@@ -168,16 +168,27 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             self.inventory.set_variable(server.name, "ansible_host", to_native(server.public_net.ipv4.dns_ptr))
 
         # Server Type
-        self.inventory.set_variable(server.name, "server_type", to_native(server.image.name))
+        if server.image is not None and server.image.name is not None:
+            self.inventory.set_variable(server.name, "server_type", to_native(server.image.name))
+        else:
+            self.inventory.set_variable(server.name, "server_type", to_native("No Image name found."))
 
         # Datacenter
         self.inventory.set_variable(server.name, "datacenter", to_native(server.datacenter.name))
         self.inventory.set_variable(server.name, "location", to_native(server.datacenter.location.name))
 
         # Image
-        self.inventory.set_variable(server.name, "image_id", to_native(server.image.id))
-        self.inventory.set_variable(server.name, "image_name", to_native(server.image.name))
-        self.inventory.set_variable(server.name, "image_os_flavor", to_native(server.image.os_flavor))
+        if server.image is not None:
+            self.inventory.set_variable(server.name, "image_id", to_native(server.image.id))
+            self.inventory.set_variable(server.name, "image_os_flavor", to_native(server.image.os_flavor))
+            if server.image.name is not None:
+                self.inventory.set_variable(server.name, "image_name", to_native(server.image.name))
+            else:
+                self.inventory.set_variable(server.name, "image_name", to_native(server.image.description))
+        else:
+            self.inventory.set_variable(server.name, "image_id", to_native("No Image ID found"))
+            self.inventory.set_variable(server.name, "image_name", to_native("No Image Name found"))
+            self.inventory.set_variable(server.name, "image_os_flavor", to_native("No Image OS Flavor found"))
 
         # Labels
         self.inventory.set_variable(server.name, "labels", dict(server.labels))
