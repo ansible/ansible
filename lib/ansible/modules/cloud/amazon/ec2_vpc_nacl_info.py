@@ -114,7 +114,7 @@ except ImportError:
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list,
+from ansible.module_utils.ec2 import (AWSRetry, ansible_dict_to_boto3_filter_list,
                                       camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict)
 
 
@@ -132,11 +132,13 @@ def list_ec2_vpc_nacls(connection, module):
         nacl_ids = []
 
     try:
-        nacls = connection.describe_network_acls(NetworkAclIds=nacl_ids, Filters=filters)
+        nacls = connection.describe_network_acls(aws_retry=True, NetworkAclIds=nacl_ids, Filters=filters)
     except ClientError as e:
-        module.fail_json_aws(e, msg="Unable to describe network ACLs {0}: {1}".format(nacl_ids, to_native(e)))
+        if e.response['Error']['Code'] == 'InvalidNetworkAclID.NotFound':
+            module.fail_json(msg='Unable to describe ACL.  NetworkAcl does not exist')
+        module.fail_json_aws(e, msg="Unable to describe network ACLs {0}".format(nacl_ids))
     except BotoCoreError as e:
-        module.fail_json_aws(e, msg="Unable to describe network ACLs {0}: {1}".format(nacl_ids, to_native(e)))
+        module.fail_json_aws(e, msg="Unable to describe network ACLs {0}".format(nacl_ids))
 
     # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_nacls = []
@@ -211,7 +213,7 @@ def main():
     if module._name == 'ec2_vpc_nacl_facts':
         module.deprecate("The 'ec2_vpc_nacl_facts' module has been renamed to 'ec2_vpc_nacl_info'", version='2.13')
 
-    connection = module.client('ec2')
+    connection = module.client('ec2', retry_decorator=AWSRetry.jittered_backoff())
 
     list_ec2_vpc_nacls(connection, module)
 
