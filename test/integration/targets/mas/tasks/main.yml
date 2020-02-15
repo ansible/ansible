@@ -34,7 +34,7 @@
 - name: Ensure that the status would have changed
   assert:
     that:
-    - install_check.changed == true
+    - install_check is changed
     - install_check.msg == "Installed 1 app(s)"
 
 - name: Determine whether the app is installed
@@ -56,7 +56,7 @@
 - name: Ensure that the status changed
   assert:
     that:
-    - install.changed == true
+    - install is changed
     - install.msg == "Installed 1 app(s)"
 
 - name: Determine whether the app is installed
@@ -82,7 +82,7 @@
 - name: Ensure that the status is unchanged (already installed)
   assert:
     that:
-    - install_again.changed == false
+    - install_again is not changed
     - "'msg' not in install_again"
 
 # Uninstallation
@@ -97,7 +97,7 @@
 - name: Ensure that the status would have changed
   assert:
     that:
-    - uninstall_check.changed == true
+    - uninstall_check is changed
     - uninstall_check.msg == "Uninstalled 1 app(s)"
 
 - name: Determine whether the app is installed
@@ -120,7 +120,7 @@
 - name: Ensure that the status changed
   assert:
     that:
-    - uninstall.changed == true
+    - uninstall is changed
     - uninstall.msg == "Uninstalled 1 app(s)"
 
 - name: Determine whether the app is installed
@@ -147,5 +147,5 @@
 - name: Ensure that the status is unchanged (already uninstalled)
   assert:
     that:
-    - uninstall_again.changed == false
+    - uninstall_again is not changed
     - "'msg' not in uninstall_again"
