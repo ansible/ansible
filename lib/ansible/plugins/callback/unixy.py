@@ -122,6 +122,9 @@ class CallbackModule(CallbackModule_default):
         self._preprocess_result(result)
         display_color = C.COLOR_ERROR
         msg = "failed"
+        item_value = self._get_item_label(result._result)
+        if item_value:
+            msg += " | item: %s" % (item_value,)
 
         task_result = self._process_result_output(result, msg)
         self._display.display("  " + task_result, display_color, stderr=self.display_failed_stderr)
@@ -132,6 +135,9 @@ class CallbackModule(CallbackModule_default):
         result_was_changed = ('changed' in result._result and result._result['changed'])
         if result_was_changed:
             msg = "done"
+            item_value = self._get_item_label(result._result)
+            if item_value:
+                msg += " | item: %s" % (item_value,)
             display_color = C.COLOR_CHANGED
             task_result = self._process_result_output(result, msg)
             self._display.display("  " + task_result, display_color)
