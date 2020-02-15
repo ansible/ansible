@@ -2425,7 +2425,7 @@ lib/ansible/modules/clustering/k8s/k8s_service.py validate-modules:doc-missing-t
 lib/ansible/modules/clustering/k8s/k8s_service.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/clustering/k8s/k8s_service.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/clustering/k8s/k8s_service.py validate-modules:return-syntax-error
-lib/ansible/modules/clustering/k8s/k8s_service.py validate-modules:doc-missing-type
+lib/ansible/modules/clustering/k8s/k8s_rollback.py validate-modules:doc-missing-type
 lib/ansible/modules/clustering/pacemaker_cluster.py validate-modules:doc-required-mismatch
 lib/ansible/modules/clustering/pacemaker_cluster.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/clustering/znode.py validate-modules:doc-choices-do-not-match-spec
