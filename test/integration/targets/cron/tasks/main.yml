@@ -99,3 +99,26 @@
 
 - assert:
     that: remove_cron_file is not changed
+
+- name: Removing a cron file when the name is specified is allowed (#57471)
+  block:
+  - name: Cron file creation
+    cron:
+      cron_file: cron_filename
+      name: "integration test cron"
+      job: 'ls'
+      user: root
+
+  - name: Cron file deletion
+    cron:
+      cron_file: cron_filename
+      name: "integration test cron"
+      state: absent
+
+  - name: Check file succesfull deletion
+    stat:
+      path: /etc/cron.d/cron_filename
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists
