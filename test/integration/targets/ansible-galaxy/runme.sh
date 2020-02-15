@@ -107,6 +107,20 @@ EOF
 popd # ${galaxy_testdir}
 rm -fr "${galaxy_testdir}"
 
+
+# Galaxy role list test case
+#
+# Basic tests to ensure listing roles works
+
+f_ansible_galaxy_status \
+    "role list"
+
+    ansible-galaxy role list | tee out.txt
+    ansible-galaxy role list test-role | tee -a out.txt
+
+    [[ $(grep -c '^- test-role' out.txt ) -eq 2 ]]
+
+
 #################################
 # ansible-galaxy collection tests
 #################################
