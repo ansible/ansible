@@ -702,22 +702,21 @@ class RedfishUtils(object):
         payloads = {'IndicatorLedOn': 'Lit', 'IndicatorLedOff': 'Off', "IndicatorLedBlink": 'Blinking'}
 
         result = {}
-        for chassis_uri in self.chassis_uris:
-            response = self.get_request(self.root_uri + chassis_uri)
+        response = self.get_request(self.root_uri + self.chassis_uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
+        if command in payloads.keys():
+            payload = {'IndicatorLED': payloads[command]}
+            response = self.patch_request(self.root_uri + self.chassis_uri, payload)
             if response['ret'] is False:
                 return response
-            result['ret'] = True
-            data = response['data']
-            if key not in data:
-                return {'ret': False, 'msg': "Key %s not found" % key}
-
-            if command in payloads.keys():
-                payload = {'IndicatorLED': payloads[command]}
-                response = self.patch_request(self.root_uri + chassis_uri, payload)
-                if response['ret'] is False:
-                    return response
-            else:
-                return {'ret': False, 'msg': 'Invalid command'}
+        else:
+            return {'ret': False, 'msg': 'Invalid command'}
 
         return result
 
