@@ -43,7 +43,7 @@
         - 'Templates'
       link_templates:
         - 'Template App Zabbix Proxy'
-        - 'Template App Zabbix Agent'
+        - 'Template Module Zabbix agent'
       state: present
     register: update_zabbix_template_result
 
@@ -64,8 +64,8 @@
       that:
         - gather_template_result.template_json.zabbix_export.groups.0.name == 'Linux servers'
         - gather_template_result.template_json.zabbix_export.groups.1.name == 'Templates'
-        - gather_template_result.template_json.zabbix_export.templates.0.templates.0.name == 'Template App Zabbix Agent'
-        - gather_template_result.template_json.zabbix_export.templates.0.templates.1.name == 'Template App Zabbix Proxy'
+        - gather_template_result.template_json.zabbix_export.templates.0.templates.0.name == 'Template App Zabbix Proxy'
+        - gather_template_result.template_json.zabbix_export.templates.0.templates.1.name == 'Template Module Zabbix agent'
 
   - name: Add macros to Zabbix template.
     zabbix_template:
@@ -78,7 +78,7 @@
         - 'Templates'
       link_templates:
         - 'Template App Zabbix Proxy'
-        - 'Template App Zabbix Agent'
+        - 'Template Module Zabbix agent'
       macros:
         - macro: '{$EXAMPLE_MACRO1}'
           value: 1000
@@ -104,8 +104,8 @@
       that:
         - gather_template_result.template_json.zabbix_export.groups.0.name == 'Linux servers'
         - gather_template_result.template_json.zabbix_export.groups.1.name == 'Templates'
-        - gather_template_result.template_json.zabbix_export.templates.0.templates.0.name == 'Template App Zabbix Agent'
-        - gather_template_result.template_json.zabbix_export.templates.0.templates.1.name == 'Template App Zabbix Proxy'
+        - gather_template_result.template_json.zabbix_export.templates.0.templates.0.name == 'Template App Zabbix Proxy'
+        - gather_template_result.template_json.zabbix_export.templates.0.templates.1.name == 'Template Module Zabbix agent'
         - gather_template_result.template_json.zabbix_export.templates.0.macros.0.macro == '{$EXAMPLE_MACRO1}'
         - gather_template_result.template_json.zabbix_export.templates.0.macros.0.value == '1000'
         - gather_template_result.template_json.zabbix_export.templates.0.macros.1.macro == '{$EXAMPLE_MACRO2}'
