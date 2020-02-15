@@ -69,7 +69,7 @@
     postgresql_set:
       <<: *pg_parameters
       name: work_mem
-      value: 12MB
+      value: 12mb
     register: set_wm
 
   - assert:
@@ -281,3 +281,24 @@
       - set_aut.changed == false
       - set_aut.restart_required == false
       - set_aut.value.value == 'off'
+
+  #################
+  # Bugfix of 67377
+  - name: archive command with mb
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: archive_command
+      value: 'test ! -f /mnt/postgres/mb/%f && cp %p /mnt/postgres/mb/%f'
+
+  # Check:
+  - name: check value
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: select reset_val from pg_settings where name = 'archive_command'
+    register: result
+
+  - assert:
+      that:
+      - result.query_result.0.reset_val == "test ! -f /mnt/postgres/mb/%f && cp %p /mnt/postgres/mb/%f"
