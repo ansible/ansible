@@ -64,9 +64,10 @@ options:
         version_added: 1.6
     value:
         description:
-            - A redis config value.
+            - A redis config value. When memory size is needed, it is possible
+              to specify it in the usal form of 1KB, 2M, 400MB where the base is 1024.
+              Units are case insensitive i.e. 1m = 1mb = 1M = 1MB.
         version_added: 1.6
-
 
 notes:
    - Requires the redis-py Python package on the remote host. You can
@@ -108,6 +109,12 @@ EXAMPLES = '''
     name: maxclients
     value: 10000
 
+- name: Configure local redis maxmemory to 4GB
+  redis:
+    command: config
+    name: maxmemory
+    value: 4GB
+
 - name: Configure local redis to have lua time limit of 100 ms
   redis:
     command: config
@@ -127,6 +134,7 @@ else:
     redis_found = True
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.common.text.formatters import human_to_bytes
 from ansible.module_utils._text import to_native
 
 
@@ -272,7 +280,11 @@ def main():
                 module.fail_json(msg="Unable to flush '%d' database" % db)
     elif command == 'config':
         name = module.params['name']
-        value = module.params['value']
+
+        try:  # try to parse the value as if it were the memory size
+            value = str(human_to_bytes(module.params['value'].upper()))
+        except ValueError:
+            value = module.params['value']
 
         r = redis.StrictRedis(host=login_host, port=login_port, password=login_password)
 
