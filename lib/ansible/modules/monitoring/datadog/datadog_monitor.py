@@ -343,7 +343,7 @@ def install_monitor(module):
 
     if module.params['type'] == "service check":
         options["thresholds"] = module.params['thresholds'] or {'ok': 1, 'critical': 1, 'warning': 1}
-    if module.params['type'] == "metric alert" and module.params['thresholds'] is not None:
+    if module.params['type'] in ["metric alert", "log alert"] and module.params['thresholds'] is not None:
         options["thresholds"] = module.params['thresholds']
 
     monitor = _get_monitor(module)
