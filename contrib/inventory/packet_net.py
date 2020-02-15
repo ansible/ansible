@@ -358,7 +358,7 @@ class PacketInventory(object):
         if self.group_by_operating_system:
             self.push(self.inventory, device.operating_system['slug'], dest)
             if self.nested_groups:
-                self.push_group(self.inventory, 'operating_systems', device.operating_system.slug)
+                self.push_group(self.inventory, 'operating_systems', device.operating_system['slug'])
 
         # Inventory: Group by plan type
         if self.group_by_plan_type:
