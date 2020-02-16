@@ -48,6 +48,25 @@ options:
         description:
             - Sets the token to authenticate against Rundeck API.
         required: True
+    client_cert:
+        version_added: '2.10'
+    client_key:
+        version_added: '2.10'
+    force:
+        version_added: '2.10'
+    force_basic_auth:
+        version_added: '2.10'
+    http_agent:
+        version_added: '2.10'
+    url_password:
+        version_added: '2.10'
+    url_username:
+        version_added: '2.10'
+    use_proxy:
+        version_added: '2.10'
+    validate_certs:
+        version_added: '2.10'
+extends_documentation_fragment: url
 '''
 
 EXAMPLES = '''
@@ -85,7 +104,7 @@ after:
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 import json
 
 
@@ -159,14 +178,18 @@ class RundeckProjectManager(object):
 
 
 def main():
+    # Also allow the user to set values for fetch_url
+    argument_spec = url_argument_spec()
+    argument_spec.update(dict(
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
+        name=dict(required=True, type='str'),
+        url=dict(required=True, type='str'),
+        api_version=dict(type='int', default=14),
+        token=dict(required=True, type='str', no_log=True),
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            state=dict(type='str', choices=['present', 'absent'], default='present'),
-            name=dict(required=True, type='str'),
-            url=dict(required=True, type='str'),
-            api_version=dict(type='int', default=14),
-            token=dict(required=True, type='str', no_log=True),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
 
