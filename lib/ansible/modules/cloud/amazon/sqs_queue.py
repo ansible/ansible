@@ -209,6 +209,20 @@ EXAMPLES = '''
     queue_type: fifo
     content_based_deduplication: yes
 
+# Tag queue
+- sqs_queue:
+    name: fifo-queue
+    region: ap-southeast-2
+    tags:
+      example: SomeValue
+
+# Configure Encryption, automatically uses a new data key every hour
+- sqs_queue:
+    name: fifo-queue
+    region: ap-southeast-2
+    kms_master_key_id: alias/MyQueueKey
+    kms_data_key_reuse_period_seconds: 3600
+
 # Delete SQS queue
 - sqs_queue:
     name: my-queue
