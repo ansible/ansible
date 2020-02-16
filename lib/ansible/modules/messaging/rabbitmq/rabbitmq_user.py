@@ -165,8 +165,7 @@ class RabbitMqUser(object):
                 cmd.extend(['-n', self.node])
             if self._version >= Version('3.8'):
                 cmd.extend(['-s'])
-            rc, out, err = self.module.run_command(
-                cmd + args, check_rc=check_rc)
+            rc, out, err = self.module.run_command(cmd + args, check_rc=check_rc)
             return out.splitlines()
         return list()
 
@@ -291,8 +290,7 @@ def main():
     update_password = module.params['update_password']
 
     if permissions:
-        vhosts = map(lambda permission: permission.get(
-            'vhost', '/'), permissions)
+        vhosts = map(lambda permission: permission.get('vhost', '/'), permissions)
         if any(map(lambda count: count > 1, count(vhosts).values())):
             module.fail_json(msg="Error parsing permissions: You can't have two permission dicts for the same vhost")
         bulk_permissions = True
