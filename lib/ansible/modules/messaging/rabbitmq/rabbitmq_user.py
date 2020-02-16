@@ -143,7 +143,7 @@ class RabbitMqUser(object):
         self._version = self._rabbit_version()
 
     def _rabbit_version(self):
-        status = self.module.run_command(
+        rc,status,err = self.module.run_command(
                 [self._rabbitmqctl, '-q', 'status'], check_rc=True)
 
         # 3.7.x erlang style output
