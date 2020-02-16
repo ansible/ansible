@@ -65,8 +65,8 @@
             - create_result.message_retention_period == 900
             - create_result.receive_message_wait_time == 10
             - create_result.policy.Version == "2012-10-17"
-            - create_result.policy.Statement.Effect == "Allow"
-            - create_result.policy.Statement.Action == "*"
+            - create_result.policy.Statement[0].Effect == "Allow"
+            - create_result.policy.Statement[0].Action == "*"
     always:
       - name: Cleaning up queue
         sqs_queue:
