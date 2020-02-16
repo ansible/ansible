@@ -183,7 +183,9 @@ class AzureRMResourceGroupInfo(AzureRMModuleBase):
                 item['resources'] = self.list_by_rg(item['name'])
 
         if is_old_facts:
-            self.results['ansible_facts']['azure_resourcegroups'] = result
+            self.results['ansible_facts'] = dict(
+                azure_resourcegroups=result
+            )
         self.results['resourcegroups'] = result
 
         return self.results
