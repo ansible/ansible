@@ -5,8 +5,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.common.collections import count
+from ansible.module_utils.basic import AnsibleModule
+from distutils.version import LooseVersion as Version
 __metaclass__ = type
-
+import re
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -118,9 +121,6 @@ EXAMPLES = '''
     state: present
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.collections import count
-
 
 class RabbitMqUser(object):
     def __init__(self, module, username, password, tags, permissions,
@@ -140,13 +140,33 @@ class RabbitMqUser(object):
         self._tags = None
         self._permissions = []
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
+        self._version = self._rabbit_version()
+
+    def _rabbit_version(self):
+        status = self.module.run_command(
+                [self._rabbitmqctl, '-q', 'status'], check_rc=True)
+
+        # 3.7.x erlang style output
+        version_match = re.search('{rabbit,".*","(?P<version>.*)"}', status)
+        if version_match:
+            return Version(version_match.group('version'))
+
+        # 3.8.x style ouput
+        version_match = re.search('RabbitMQ version: (?P<version>.*)', status)
+        if version_match:
+            return Version(version_match.group('version'))
+
+        return None
 
     def _exec(self, args, run_in_check_mode=False, check_rc=True):
         if not self.module.check_mode or run_in_check_mode:
             cmd = [self._rabbitmqctl, '-q']
             if self.node:
                 cmd.extend(['-n', self.node])
-            rc, out, err = self.module.run_command(cmd + args, check_rc=check_rc)
+            if self._version >= Version('3.8'):
+                cmd.extend(['-s'])
+            rc, out, err = self.module.run_command(
+                cmd + args, check_rc=check_rc)
             return out.splitlines()
         return list()
 
@@ -174,7 +194,8 @@ class RabbitMqUser(object):
 
     def _get_permissions(self):
         """Get permissions of the user from RabbitMQ."""
-        perms_out = [perm for perm in self._exec(['list_user_permissions', self.username], True) if perm.strip()]
+        perms_out = [perm for perm in self._exec(
+            ['list_user_permissions', self.username], True) if perm.strip()]
 
         perms_list = list()
         for perm in perms_out:
@@ -213,8 +234,10 @@ class RabbitMqUser(object):
         self._exec(['set_user_tags', self.username] + self.tags)
 
     def set_permissions(self):
-        permissions_to_clear = [permission for permission in self._permissions if permission not in self.permissions]
-        permissions_to_add = [permission for permission in self.permissions if permission not in self._permissions]
+        permissions_to_clear = [
+            permission for permission in self._permissions if permission not in self.permissions]
+        permissions_to_add = [
+            permission for permission in self.permissions if permission not in self._permissions]
         for permission in permissions_to_clear:
             cmd = 'clear_permissions -p {vhost} {username}'.format(username=self.username,
                                                                    vhost=permission['vhost'])
@@ -250,7 +273,8 @@ def main():
         force=dict(default='no', type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         node=dict(default='rabbit'),
-        update_password=dict(default='on_create', choices=['on_create', 'always'])
+        update_password=dict(default='on_create', choices=[
+                             'on_create', 'always'])
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
@@ -271,9 +295,11 @@ def main():
     update_password = module.params['update_password']
 
     if permissions:
-        vhosts = map(lambda permission: permission.get('vhost', '/'), permissions)
+        vhosts = map(lambda permission: permission.get(
+            'vhost', '/'), permissions)
         if any(map(lambda count: count > 1, count(vhosts).values())):
-            module.fail_json(msg="Error parsing permissions: You can't have two permission dicts for the same vhost")
+            module.fail_json(
+                msg="Error parsing permissions: You can't have two permission dicts for the same vhost")
         bulk_permissions = True
     else:
         perm = {
