@@ -374,7 +374,7 @@ def update_sqs_queue(module, client, queue_url):
         if attribute not in new_attributes.keys():
             continue
 
-        if new_attributes.get(attribute) == None:
+        if new_attributes.get(attribute) is None:
             continue
 
         new_value = new_attributes[attribute]
@@ -411,7 +411,7 @@ def delete_sqs_queue(client, module):
 
     result['changed'] = bool(queue_url)
     if not module.check_mode:
-         AWSRetry.jittered_backoff()(client.delete_queue)(QueueUrl=queue_url)
+        AWSRetry.jittered_backoff()(client.delete_queue)(QueueUrl=queue_url)
 
     return result
 
@@ -464,7 +464,7 @@ def main():
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     state = module.params.get('state')
-    retry_decorator=AWSRetry.jittered_backoff(catch_extra_error_codes=['AWS.SimpleQueueService.NonExistentQueue'])
+    retry_decorator = AWSRetry.jittered_backoff(catch_extra_error_codes=['AWS.SimpleQueueService.NonExistentQueue'])
     try:
         client = module.client('sqs', retry_decorator=retry_decorator)
         if state == 'present':
