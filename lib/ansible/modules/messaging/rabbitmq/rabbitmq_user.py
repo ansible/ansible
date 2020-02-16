@@ -194,8 +194,7 @@ class RabbitMqUser(object):
 
     def _get_permissions(self):
         """Get permissions of the user from RabbitMQ."""
-        perms_out = [perm for perm in self._exec(
-            ['list_user_permissions', self.username], True) if perm.strip()]
+        perms_out = [perm for perm in self._exec(['list_user_permissions', self.username], True) if perm.strip()]
 
         perms_list = list()
         for perm in perms_out:
@@ -234,10 +233,8 @@ class RabbitMqUser(object):
         self._exec(['set_user_tags', self.username] + self.tags)
 
     def set_permissions(self):
-        permissions_to_clear = [
-            permission for permission in self._permissions if permission not in self.permissions]
-        permissions_to_add = [
-            permission for permission in self.permissions if permission not in self._permissions]
+        permissions_to_clear = [permission for permission in self._permissions if permission not in self.permissions]
+        permissions_to_add = [permission for permission in self.permissions if permission not in self._permissions]
         for permission in permissions_to_clear:
             cmd = 'clear_permissions -p {vhost} {username}'.format(username=self.username,
                                                                    vhost=permission['vhost'])
@@ -273,8 +270,7 @@ def main():
         force=dict(default='no', type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         node=dict(default='rabbit'),
-        update_password=dict(default='on_create', choices=[
-                             'on_create', 'always'])
+        update_password=dict(default='on_create', choices=['on_create', 'always'])
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
@@ -298,8 +294,7 @@ def main():
         vhosts = map(lambda permission: permission.get(
             'vhost', '/'), permissions)
         if any(map(lambda count: count > 1, count(vhosts).values())):
-            module.fail_json(
-                msg="Error parsing permissions: You can't have two permission dicts for the same vhost")
+            module.fail_json(msg="Error parsing permissions: You can't have two permission dicts for the same vhost")
         bulk_permissions = True
     else:
         perm = {
