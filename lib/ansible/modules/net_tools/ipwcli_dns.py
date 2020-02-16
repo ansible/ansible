@@ -108,7 +108,7 @@ options:
             - Sets the replacement of the NAPTR record.
             - Required for C(type=NAPTR)
         type: str
-    user:
+    username:
         description:
             - Username to login on ipwcli.
         type: str
@@ -184,7 +184,7 @@ class ResourceRecord(object):
         self.flags = module.params['flags']
         self.service = module.params['service']
         self.replacement = module.params['replacement']
-        self.user = module.params['user']
+        self.user = module.params['username']
         self.password = module.params['password']
 
     def create_naptrrecord(self):
@@ -297,7 +297,7 @@ def run_module():
         flags=dict(type='str', required=False, choices=['S', 'A', 'U', 'P']),
         service=dict(type='str', required=False),
         replacement=dict(type='str', required=False),
-        user=dict(type='str', required=True),
+        username=dict(type='str', required=True),
         password=dict(type='str', required=True, no_log=True)
     )
 
