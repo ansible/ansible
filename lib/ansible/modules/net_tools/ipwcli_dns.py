@@ -27,7 +27,7 @@ requirements:
    - ipwcli (installed on Ericsson IPWorks)
 
 notes:
-    - To make the DNS record changes effective, you need to run 'update dnsserver' on the ipwcli.
+    - To make the DNS record changes effective, you need to run C(update dnsserver) on the ipwcli.
 
 options:
     dnsname:
