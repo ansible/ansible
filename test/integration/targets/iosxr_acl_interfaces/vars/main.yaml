@@ -1,0 +1,205 @@
+---
+merged:
+  before:
+    - name: MgmtEth0/0/CPU0/0
+
+    - name: GigabitEthernet0/0/0/0
+
+    - name: GigabitEthernet0/0/0/1
+  
+  commands:
+    - interface GigabitEthernet0/0/0/0
+    - ipv4 access-group acl_1 ingress
+    - ipv4 access-group acl_2 egress
+    - ipv6 access-group acl6_1 ingress
+    - ipv6 access-group acl6_2 egress
+    - interface GigabitEthernet0/0/0/1
+    - ipv4 access-group acl_1 egress
+  
+  update_commands:
+    - interface GigabitEthernet0/0/0/1
+    - ipv4 access-group acl_2 egress
+    - ipv4 access-group acl_1 ingress
+    
+  after:
+    - name: MgmtEth0/0/CPU0/0
+
+    - name: GigabitEthernet0/0/0/0
+      access_groups:
+        - acls:
+            - name: acl_1
+              direction: in
+            - name: acl_2
+              direction: out
+          afi: ipv4
+        
+        - acls:
+            - name: acl6_1
+              direction: in
+            - name: acl6_2
+              direction: out
+          afi: ipv6
+
+    - name: GigabitEthernet0/0/0/1
+      access_groups:
+        - acls:
+            - name: acl_1
+              direction: out
+          afi: ipv4
+  
+  update_before:
+    - name: MgmtEth0/0/CPU0/0
+    
+    - access_groups:
+      - acls:
+        - direction: in
+          name: acl_1
+        - direction: out
+          name: acl_2
+        afi: ipv4
+      
+      - acls:
+        - direction: in
+          name: acl6_1
+        - direction: out
+          name: acl6_2
+        afi: ipv6
+      name: GigabitEthernet0/0/0/0
+    
+    - access_groups:
+      - acls:
+        - direction: out
+          name: acl_1
+        afi: ipv4
+      name: GigabitEthernet0/0/0/1
+  
+  update_after:
+    - name: MgmtEth0/0/CPU0/0
+
+    - access_groups:
+      - acls:
+        - direction: in
+          name: acl_1
+        - direction: out
+          name: acl_2
+        afi: ipv4
+      - acls:
+        - direction: in
+          name: acl6_1
+        - direction: out
+          name: acl6_2
+        afi: ipv6
+      name: GigabitEthernet0/0/0/0
+    
+    - access_groups:
+      - acls:
+        - direction: in
+          name: acl_1
+        - direction: out
+          name: acl_2
+        afi: ipv4
+      name: GigabitEthernet0/0/0/1
+
+  
+replaced:
+  commands:
+    - interface GigabitEthernet0/0/0/0
+    - no ipv4 access-group acl_1 ingress
+    - no ipv4 access-group acl_2 egress
+    - no ipv6 access-group acl6_1 ingress
+    - no ipv6 access-group acl6_2 egress
+    - ipv6 access-group acl6_3 ingress
+  
+  after:
+    - name: MgmtEth0/0/CPU0/0
+
+    - name: GigabitEthernet0/0/0/0
+      access_groups:
+        - afi: ipv6
+          acls:
+            - name: acl6_3
+              direction: in
+
+    - name: GigabitEthernet0/0/0/1
+      access_groups:
+        - acls:
+            - name: acl_1
+              direction: out
+          afi: ipv4
+
+overridden:
+  commands:
+    - interface GigabitEthernet0/0/0/0
+    - no ipv4 access-group acl_1 ingress
+    - no ipv4 access-group acl_2 egress
+    - no ipv6 access-group acl6_1 ingress
+    - no ipv6 access-group acl6_2 egress
+    - ipv6 access-group acl6_3 ingress
+    - interface GigabitEthernet0/0/0/1
+    - no ipv4 access-group acl_1 egress
+    - ipv4 access-group acl_2 ingress
+    - ipv6 access-group acl6_3 egress
+
+  after:
+    - name: MgmtEth0/0/CPU0/0
+
+    - name: GigabitEthernet0/0/0/0
+      access_groups:
+        - afi: ipv6
+          acls:
+            - name: acl6_3
+              direction: in
+
+    - name: GigabitEthernet0/0/0/1
+      access_groups:
+        - acls:
+            - name: acl_2
+              direction: in
+          afi: ipv4
+        
+        - acls:
+            - name: acl6_3
+              direction: out
+          afi: ipv6
+
+
+deleted:
+  commands:
+    - interface GigabitEthernet0/0/0/0
+    - no ipv4 access-group acl_1 ingress
+    - no ipv4 access-group acl_2 egress
+    - no ipv6 access-group acl6_1 ingress
+    - no ipv6 access-group acl6_2 egress
+    - interface GigabitEthernet0/0/0/1
+    - no ipv4 access-group acl_1 egress
+
+  after:
+    - name: MgmtEth0/0/CPU0/0
+
+    - name: GigabitEthernet0/0/0/0
+
+    - name: GigabitEthernet0/0/0/1
+
+round_trip:
+  after:
+    - name: MgmtEth0/0/CPU0/0
+    - access_groups:
+      - acls:
+        - direction: out
+          name: acl_1
+        afi: ipv4
+      name: GigabitEthernet0/0/0/0
+    - access_groups:
+      - acls:
+        - direction: in
+          name: acl_1
+        - direction: out
+          name: acl_2
+        afi: ipv4
+      - acls:
+        - direction: in
+          name: acl6_1
+        - direction: out
+          name: acl6_2
+        afi: ipv6
+      name: GigabitEthernet0/0/0/1
