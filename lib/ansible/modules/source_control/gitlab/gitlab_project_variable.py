@@ -190,7 +190,7 @@ def native_python_main(this_gitlab, purge, var_list, state):
             protected = False
         else:
             value = var_list[key].get('value')
-            masked = var_list[key].get('masked') or False
+            masked = var_list[key].get('masked', False)
             protected = var_list[key].get('protected') or False
 
         if key in existing_variables:
