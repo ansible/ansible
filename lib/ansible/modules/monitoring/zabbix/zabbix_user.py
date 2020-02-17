@@ -285,6 +285,7 @@ class User(object):
     def __init__(self, module, zbx):
         self._module = module
         self._zapi = zbx
+        self._zbx_api_version = zbx.api_version()[:3]
 
     def get_usergroupid_by_user_group_name(self, usrgrps):
         user_group_ids = []
@@ -308,13 +309,19 @@ class User(object):
         for user_media in copy_user_medias:
             media_types = self._zapi.mediatype.get({'output': 'extend'})
             for media_type in media_types:
-                if media_type['description'] == user_media['mediatype']:
-                    user_media['mediatypeid'] = media_type['mediatypeid']
-                    del user_media['mediatype']
-                    break
+                if LooseVersion(self._zbx_api_version) < LooseVersion('4.4'):
+                    if media_type['description'] == user_media['mediatype']:
+                        user_media['mediatypeid'] = media_type['mediatypeid']
+                        break
+                else:
+                    if media_type['name'] == user_media['mediatype']:
+                        user_media['mediatypeid'] = media_type['mediatypeid']
+                        break
 
             if 'mediatypeid' not in user_media:
                 self._module.fail_json(msg="Media type not found: %s" % user_media['mediatype'])
+            else:
+                del user_media['mediatype']
 
             severity_binary_number = ''
             for severity_key in 'disaster', 'high', 'average', 'warning', 'information', 'not_classified':
@@ -333,7 +340,7 @@ class User(object):
 
     def user_parameter_difference_check(self, zbx_user, alias, name, surname, user_group_ids, passwd, lang, theme,
                                         autologin, autologout, refresh, rows_per_page, url, user_medias, user_type,
-                                        zbx_api_version, override_passwd):
+                                        override_passwd):
 
         user_medias = self.convert_user_medias_parameter_types(user_medias)
 
@@ -349,7 +356,7 @@ class User(object):
         # In zabbix 4.0 and above, Email sendto is of type list.
         # This module, one media supports only one Email sendto.
         # Therefore following processing extract one Email from list.
-        if LooseVersion(zbx_api_version) >= LooseVersion('4.0'):
+        if LooseVersion(self._zbx_api_version) >= LooseVersion('4.0'):
             for media in existing_data['medias']:
                 if isinstance(media['sendto'], list):
                     media['sendto'] = media['sendto'][0]
@@ -434,7 +441,7 @@ class User(object):
         return user_ids, diff_params
 
     def update_user(self, zbx_user, alias, name, surname, user_group_ids, passwd, lang, theme, autologin, autologout,
-                    refresh, rows_per_page, url, user_medias, user_type, zbx_api_version, override_passwd):
+                    refresh, rows_per_page, url, user_medias, user_type, override_passwd):
 
         user_medias = self.convert_user_medias_parameter_types(user_medias)
 
@@ -460,7 +467,7 @@ class User(object):
             request_data['passwd'] = passwd
 
         # In the case of zabbix 3.2 or less, it is necessary to use updatemedia method to update media.
-        if LooseVersion(zbx_api_version) <= LooseVersion('3.2'):
+        if LooseVersion(self._zbx_api_version) <= LooseVersion('3.2'):
             try:
                 user_ids = self._zapi.user.update(request_data)
             except Exception as e:
@@ -474,7 +481,7 @@ class User(object):
             except Exception as e:
                 self._module.fail_json(msg="Failed to update user medias %s: %s" % (alias, e))
 
-        if LooseVersion(zbx_api_version) >= LooseVersion('3.4'):
+        if LooseVersion(self._zbx_api_version) >= LooseVersion('3.4'):
             try:
                 request_data['user_medias'] = user_medias
                 user_ids = self._zapi.user.update(request_data)
@@ -611,7 +618,6 @@ def main():
     user = User(module, zbx)
 
     user_ids = {}
-    zbx_api_version = zbx.api_version()[:3]
     zbx_user = user.check_user_exist(alias)
     if state == 'present':
         user_group_ids = user.get_usergroupid_by_user_group_name(usrgrps)
@@ -621,12 +627,12 @@ def main():
                                                                                   autologin, autologout, refresh,
                                                                                   rows_per_page, after_login_url,
                                                                                   user_medias, user_type,
-                                                                                  zbx_api_version, override_passwd)
+                                                                                  override_passwd)
 
             if not module.check_mode and diff_check_result:
                 user_ids = user.update_user(zbx_user, alias, name, surname, user_group_ids, passwd, lang,
                                             theme, autologin, autologout, refresh, rows_per_page, after_login_url,
-                                            user_medias, user_type, zbx_api_version, override_passwd)
+                                            user_medias, user_type, override_passwd)
         else:
             diff_check_result = True
             user_ids, diff_params = user.add_user(alias, name, surname, user_group_ids, passwd, lang, theme, autologin,
