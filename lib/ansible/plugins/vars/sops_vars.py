@@ -144,7 +144,9 @@ class VarsModule(BaseVarsPlugin):
                         if os.path.exists(b_opath):
                             if os.path.isdir(b_opath):
                                 self._display.debug("\tprocessing dir %s" % opath)
-                                found_files = loader.find_vars_files(opath, entity.name, DEFAULT_VALID_EXTENSIONS)
+                                found_files = loader.find_vars_files(opath, entity.name)
+                                found_files = [file_path for file_path in found_files
+                                               if any(file_path.endswith(extension) for extension in DEFAULT_VALID_EXTENSIONS)]
                                 FOUND[key] = found_files
                             else:
                                 self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
