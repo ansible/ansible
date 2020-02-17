@@ -86,6 +86,10 @@ options:
     - one_level
     - subtree
     type: str
+notes:
+- The C(sAMAccountType_AnsibleFlags) and C(userAccountControl_AnsibleFlags) return property is something set by the
+  module itself as an easy way to view what those flags represent. These properties cannot be used as part of the
+  I(filter) or I(ldap_filter) and are automatically added if those properties were requested.
 author:
 - Jordan Borean (@jborean93)
 '''

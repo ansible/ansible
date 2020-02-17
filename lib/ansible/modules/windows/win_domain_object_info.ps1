@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
+#Requires -Module Ansible.ModuleUtils.AddType
 
 $spec = @{
     options = @{
@@ -52,6 +53,55 @@ if ($domainUsername) {
         (ConvertTo-SecureString -AsPlainText -Force -String $domainPassword)
     )
 }
+
+Add-CSharpType -References @'
+using System;
+
+namespace Ansible.WinDomainObjectInfo
+{
+    [Flags]
+    public enum UserAccountControl : int
+    {
+        ADS_UF_SCRIPT = 0x00000001,
+        ADS_UF_ACCOUNTDISABLE = 0x00000002,
+        ADS_UF_HOMEDIR_REQUIRED = 0x00000008,
+        ADS_UF_LOCKOUT = 0x00000010,
+        ADS_UF_PASSWD_NOTREQD = 0x00000020,
+        ADS_UF_PASSWD_CANT_CHANGE = 0x00000040,
+        ADS_UF_ENCRYPTED_TEXT_PASSWORD_ALLOWED = 0x00000080,
+        ADS_UF_TEMP_DUPLICATE_ACCOUNT = 0x00000100,
+        ADS_UF_NORMAL_ACCOUNT = 0x00000200,
+        ADS_UF_INTERDOMAIN_TRUST_ACCOUNT = 0x00000800,
+        ADS_UF_WORKSTATION_TRUST_ACCOUNT = 0x00001000,
+        ADS_UF_SERVER_TRUST_ACCOUNT = 0x00002000,
+        ADS_UF_DONT_EXPIRE_PASSWD = 0x00010000,
+        ADS_UF_MNS_LOGON_ACCOUNT = 0x00020000,
+        ADS_UF_SMARTCARD_REQUIRED = 0x00040000,
+        ADS_UF_TRUSTED_FOR_DELEGATION = 0x00080000,
+        ADS_UF_NOT_DELEGATED = 0x00100000,
+        ADS_UF_USE_DES_KEY_ONLY = 0x00200000,
+        ADS_UF_DONT_REQUIRE_PREAUTH = 0x00400000,
+        ADS_UF_PASSWORD_EXPIRED = 0x00800000,
+        ADS_UF_TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION = 0x01000000,
+    }
+
+    public enum sAMAccountType : int
+    {
+        SAM_DOMAIN_OBJECT = 0x00000000,
+        SAM_GROUP_OBJECT = 0x10000000,
+        SAM_NON_SECURITY_GROUP_OBJECT = 0x10000001,
+        SAM_ALIAS_OBJECT = 0x20000000,
+        SAM_NON_SECURITY_ALIAS_OBJECT = 0x20000001,
+        SAM_USER_OBJECT = 0x30000000,
+        SAM_NORMAL_USER_ACCOUNT = 0x30000000,
+        SAM_MACHINE_ACCOUNT = 0x30000001,
+        SAM_TRUST_ACCOUNT = 0x30000002,
+        SAM_APP_BASIC_GROUP = 0x40000000,
+        SAM_APP_QUERY_GROUP = 0x40000001,
+        SAM_ACCOUNT_TYPE_MAX = 0x7fffffff,
+    }
+}
+'@
 
 Function ConvertTo-OutputValue {
     [CmdletBinding()]
@@ -177,7 +227,7 @@ $module.Result.objects = @(foreach ($adId in $foundGuids) {
     try {
         $adObject = Get-ADObject @commonParams @getParams -Identity $adId.ObjectGUID
     } catch {
-        $msg = "Failed to retrieve properties for AD Object '$($adId.DistinguishedName): $($_.Exception.Message)"
+        $msg = "Failed to retrieve properties for AD Object '$($adId.DistinguishedName)': $($_.Exception.Message)"
         $module.Warn($msg)
         continue
     }
@@ -204,6 +254,15 @@ $module.Result.objects = @(foreach ($adId in $foundGuids) {
             $value = ConvertTo-OutputValue -InputObject $value
         }
         $filteredObject.$name = $value
+
+        # For these 2 properties, add an _AnsibleFlags attribute which contains the enum strings that are set.
+        if ($name -eq 'sAMAccountType') {
+            $enumValue = [Ansible.WinDomainObjectInfo.sAMAccountType]$value
+            $filteredObject.'sAMAccountType_AnsibleFlags' = $enumValue.ToString() -split ', '
+        } elseif ($name -eq 'userAccountControl') {
+            $enumValue = [Ansible.WinDomainObjectInfo.UserAccountControl]$value
+            $filteredObject.'userAccountControl_AnsibleFlags' = $enumValue.ToString() -split ', '
+        }
     }
 
     $filteredObject
