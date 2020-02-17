@@ -1186,10 +1186,12 @@ def test_verify_collections_not_installed_ignore_errors(mock_verify, mock_collec
 
 @patch.object(os.path, 'isdir', return_value=True)
 @patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_no_remote(mock_verify, mock_isdir, mock_collection):
+def test_verify_collections_no_remote(mock_verify, mock_isdir, mock_collection, monkeypatch):
     namespace = 'ansible_namespace'
     name = 'collection'
     version = '1.0.0'
+
+    monkeypatch.setattr(collection.CollectionRequirement, 'from_path', MagicMock(return_value=mock_collection()))
 
     collections = [('%s.%s' % (namespace, name), version, None)]
     search_path = './'
@@ -1205,12 +1207,12 @@ def test_verify_collections_no_remote(mock_verify, mock_isdir, mock_collection):
 
 @patch.object(os.path, 'isdir', return_value=True)
 @patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_no_remote_ignore_errors(mock_verify, mock_isdir, mock_collection):
+def test_verify_collections_no_remote_ignore_errors(mock_verify, mock_isdir, mock_collection, monkeypatch):
     namespace = 'ansible_namespace'
     name = 'collection'
     version = '1.0.0'
 
-    local_collection = mock_collection(local_installed=False)
+    monkeypatch.setattr(collection.CollectionRequirement, 'from_path', MagicMock(return_value=mock_collection()))
 
     collections = [('%s.%s' % (namespace, name), version, None)]
     search_path = './'
