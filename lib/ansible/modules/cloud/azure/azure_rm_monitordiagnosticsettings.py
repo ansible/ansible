@@ -227,10 +227,12 @@ class AzureRMMonitorDiagnosticSettings(AzureRMModuleBase):
             ),
             metrics=dict(
                 type='list',
+                elements='dict',
                 options=metrics_spec
             ),
             logs=dict(
                 type='list',
+                elements='dict',
                 options=logs_spec
             ),
             workspace=dict(
