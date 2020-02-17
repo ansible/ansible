@@ -12,7 +12,7 @@ based on the configuration.
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from re import findall, M
+from re import findall, search, M
 from copy import deepcopy
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.vyos.argspec.firewall_interfaces.firewall_interfaces import Firewall_interfacesArgs
@@ -99,7 +99,6 @@ class Firewall_interfacesFacts(object):
         """
         conf = '\n'.join(filter(lambda x: 'firewall' in x, conf))
         config = {'access_rules': self.parse_access_rules(conf)}
-        config = utils.remove_empties(config)
         return config
 
     def parse_access_rules(self, conf):
@@ -120,6 +119,10 @@ class Firewall_interfacesFacts(object):
             ar_lst.append(config)
         if ar_lst:
             ar_lst = sorted(ar_lst, key=lambda i: i['afi'])
+        else:
+            empty_rules = findall(r'^.*(in|out|local).*', conf, M)
+            if empty_rules:
+                ar_lst.append({'afi': 'ipv4', 'rules': []})
         return ar_lst
 
     def parse_int_rules(self, conf, rules, afi):
@@ -133,11 +136,18 @@ class Firewall_interfacesFacts(object):
         """
         r_lst = []
         config = {}
+        rules = ['in', 'out', 'local']
         for r in set(rules):
             r_regex = r' %s .+$' % r
             cfg = '\n'.join(findall(r_regex, conf, M))
-            fr = self.parse_rules(cfg, afi)
-            r_lst.append(fr)
+            if cfg:
+                fr = self.parse_rules(cfg, afi)
+            else:
+                out = search(r'^.*firewall ' + "'" + r + "'" + '(.*)', conf, M)
+                if out:
+                    fr = {'direction': r}
+            if fr:
+                r_lst.append(fr)
         if r_lst:
             r_lst = sorted(r_lst, key=lambda i: i['direction'])
             config = {'afi': afi, 'rules': r_lst}

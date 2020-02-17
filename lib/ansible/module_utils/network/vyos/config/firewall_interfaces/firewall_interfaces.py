@@ -159,12 +159,27 @@ class Firewall_interfaces(ConfigBase):
         """
         commands = []
         if have:
-            for h in have:
-                w = search_obj_in_list(h['name'], want)
-                if not w and 'access_rules' in h:
-                    commands.append(self._compute_command(name=h['name'], opr=False))
+            for h_ar in have:
+                w_ar = search_obj_in_list(h_ar['name'], want)
+                if not w_ar and 'access_rules' in h_ar:
+                    commands.append(self._compute_command(name=h_ar['name'], opr=False))
                 else:
-                    commands.extend(self._render_access_rules(h, w, opr=False))
+                    h_rules = h_ar.get('access_rules') or []
+                    key = 'direction'
+                    if w_ar:
+                        w_rules = w_ar.get('access_rules') or []
+                    if h_rules:
+                        for h_rule in h_rules:
+                            w_rule = search_obj_in_list(h_rule['afi'], w_rules, key='afi')
+                            have_rules = h_rule.get('rules') or []
+                            if w_rule:
+                                want_rules = w_rule.get('rules') or []
+                            for h in have_rules:
+                                w = search_obj_in_list(h[key], want_rules, key=key)
+                                if key in h:
+                                    if not w or key not in w or ('name' in h and w and 'name' not in w):
+                                        commands.append(self._compute_command(name=h_ar['name'], attrib=h[key], opr=False))
+
         commands.extend(self._state_merged(want, have))
         return commands
 
@@ -194,11 +209,72 @@ class Firewall_interfaces(ConfigBase):
             for w in want:
                 h = search_obj_in_list(w['name'], have)
                 if h and 'access_rules' in h:
-                    commands.extend(self._render_access_rules(w, h, opr=False))
+                    commands.extend(self._delete_access_rules(w, h, opr=False))
         elif have:
             for h in have:
                 if 'access_rules' in h:
                     commands.append(self._compute_command(name=h['name'], opr=False))
+        return commands
+
+    def _delete_access_rules(self, want, have, opr=False):
+        """
+        This function forms the delete commands based on the 'opr' type
+        for 'access_rules' attributes.
+        :param want: desired config.
+        :param have: target config.
+        :param opr: True/False.
+        :return: generated commands list.
+        """
+        commands = []
+        h_rules = {}
+        w_rs = deepcopy(remove_empties(want))
+        w_rules = w_rs.get('access_rules') or []
+        if have:
+            h_rs = deepcopy(remove_empties(have))
+            h_rules = h_rs.get('access_rules') or []
+
+        # if all firewall config needed to be deleted for specific interface
+        # when operation is delete.
+        if not w_rules and h_rules:
+            commands.append(self._compute_command(name=want['name'], opr=opr))
+        if w_rules:
+            for w in w_rules:
+                h = search_obj_in_list(w['afi'], h_rules, key='afi')
+                commands.extend(self._delete_rules(want['name'], w, h))
+        return commands
+
+    def _delete_rules(self, name, want, have, opr=False):
+        """
+        This function forms the delete commands based on the 'opr' type
+        for rules attributes.
+        :param name: interface id/name.
+        :param want: desired config.
+        :param have: target config.
+        :param opr: True/False.
+        :return: generated commands list.
+        """
+        commands = []
+        h_rules = []
+        key = 'direction'
+        w_rules = want.get('rules') or []
+        if have:
+            h_rules = have.get('rules') or []
+        # when rule set needed to be removed on
+        # (inbound|outbound|local interface)
+        if h_rules and not w_rules:
+            for h in h_rules:
+                if key in h:
+                    commands.append(self._compute_command(afi=want['afi'], name=name, attrib=h[key], opr=opr))
+        for w in w_rules:
+            h = search_obj_in_list(w[key], h_rules, key=key)
+            if key in w and h and key in h and 'name' in w and 'name' in h and w['name'] == h['name']:
+                commands.append(self._compute_command(
+                    afi=want['afi'],
+                    name=name,
+                    attrib=w[key],
+                    value=w['name'],
+                    opr=opr)
+                )
         return commands
 
     def _render_access_rules(self, want, have, opr=True):
@@ -217,12 +293,7 @@ class Firewall_interfaces(ConfigBase):
         if have:
             h_rs = deepcopy(remove_empties(have))
             h_rules = h_rs.get('access_rules') or []
-
-        # if all firewall config needed to be deleted for specific interface
-        # when operation is delete.
-        if not w_rules and not opr and h_rules:
-            commands.append(self._compute_command(name=want['name'], opr=opr))
-        elif w_rules:
+        if w_rules:
             for w in w_rules:
                 h = search_obj_in_list(w['afi'], h_rules, key='afi')
                 commands.extend(self._render_rules(want['name'], w, h, opr))
@@ -244,12 +315,6 @@ class Firewall_interfaces(ConfigBase):
         w_rules = want.get('rules') or []
         if have:
             h_rules = have.get('rules') or []
-        # when rule set needed to be removed on
-        # (inbound|outbound|local interface)
-        if not opr and h_rules and not w_rules:
-            for h in h_rules:
-                if key in h:
-                    commands.append(self._compute_command(afi=want['afi'], name=name, attrib=h[key], opr=opr))
         for w in w_rules:
             h = search_obj_in_list(w[key], h_rules, key=key)
             if key in w:
@@ -259,7 +324,7 @@ class Firewall_interfaces(ConfigBase):
                     elif not (h and key in h):
                         commands.append(self._compute_command(afi=want['afi'], name=name, attrib=w[key]))
                 elif not opr:
-                    if not (h and key in h) or 'name' in w and not(h and 'name' in h and w['name'] == h['name']):
+                    if not h or key not in h or ('name' in w and h and 'name' not in h):
                         commands.append(self._compute_command(afi=want['afi'], name=name, attrib=w[key], opr=opr))
         return commands
 
