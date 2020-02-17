@@ -12,7 +12,6 @@ from ansible.module_utils.network.eos.config.acl_interfaces.acl_interfaces impor
 from units.modules.utils import set_module_args
 from .eos_module import TestEosModule, load_fixture
 import itertools
-import q
 
 
 class TestEosAclInterfacesModule(TestEosModule):
@@ -95,7 +94,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                                   dict(name="aclv401",
                                        direction="in")
                               ])
-                        ])
+                         ])
             ], state="merged"))
         commands = ['interface GigabitEthernet0/0', 'ip access-group aclv401 in',
                     'ip access-group aclv402 out', 'ipv6 traffic-filter aclv601 in', 'interface GigabitEthernet0/1',
@@ -119,7 +118,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                      access_groups=[
                          dict(afi="ipv6",
                               acls=[dict(name="aclv601", direction="in")])
-                    ])
+                         ])
             ], state="merged"))
         result = self.execute_module(changed=False, commands=[])
 
@@ -135,7 +134,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                                   dict(name="aclv402",
                                        direction="out")
                               ]),
-                    ])
+                         ])
             ], state="replaced"))
         commands = ['interface GigabitEthernet0/0', 'no ip access-group aclv404 in',
                     'no ipv6 traffic-filter aclv601 out', 'ip access-group aclv402 out',
@@ -152,11 +151,8 @@ class TestEosAclInterfacesModule(TestEosModule):
                                   dict(name="aclv404",
                                        direction="in"),
                               ]),
-                          dict(afi="ipv6",
-                               acls=[
-                                     dict(name="aclv601",
-                                          direction="out")
-                                    ])
+                         dict(afi="ipv6",
+                              acls=[dict(name="aclv601", direction="out")])
                      ]),
             ], state="replaced"))
         result = self.execute_module(changed=False, commands=[])
@@ -173,7 +169,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                                   dict(name="aclv402",
                                        direction="out")
                               ]),
-                          ])
+                         ])
             ], state="overridden"))
         commands = ['interface GigabitEthernet0/0', 'no ip access-group aclv404 in',
                     'no ipv6 traffic-filter aclv601 out', 'ip access-group aclv402 out',
@@ -192,10 +188,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                                        direction="in"),
                               ]),
                          dict(afi="ipv6",
-                              acls=[
-                                    dict(name="aclv601",
-                                         direction="out")
-                              ])
+                              acls=[dict(name="aclv601", direction="out")])
                      ]),
                 dict(name="GigabitEthernet0/1",
                      access_groups=[
@@ -204,7 +197,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                                   dict(name="aclv601",
                                        direction="in")
                               ])
-                          ])
+                         ])
             ], state="overridden"))
         result = self.execute_module(changed=False, commands=[])
 
@@ -248,9 +241,10 @@ class TestEosAclInterfacesModule(TestEosModule):
         result = self.execute_module(changed=False, filename='eos_acl_interfaces_config.cfg')
         commands = []
         gathered_list = [{'access_groups': [{'acls': [{'direction': 'in', 'name': 'aclv404'}], 'afi': 'ipv4'},
-                         {'acls': [{'direction': 'out', 'name': 'aclv601'}], 'afi': 'ipv6'}],
-                      'name': 'GigabitEthernet0/0'}, {'access_groups': [{'acls': [{'direction': 'in',
-                         'name': 'aclv601'}], 'afi': 'ipv6'}], 'name': 'GigabitEthernet0/1'}]
+                                            {'acls': [{'direction': 'out', 'name': 'aclv601'}], 'afi': 'ipv6'}],
+                          'name': 'GigabitEthernet0/0'},
+                         {'access_groups': [{'acls': [{'direction': 'in', 'name': 'aclv601'}], 'afi': 'ipv6'}],
+                          'name': 'GigabitEthernet0/1'}]
         self.assertEqual(gathered_list, result['gathered'])
 
     def test_eos_acl_interfaces_parsed(self):
@@ -260,9 +254,8 @@ class TestEosAclInterfacesModule(TestEosModule):
                  state="parsed"))
         result = self.execute_module(changed=False)
         parsed_list = [{'access_groups': [{'acls': [{'direction': 'in', 'name': 'aclv404'}], 'afi': 'ipv4'},
-                       {'acls': [{'direction': 'out', 'name': 'aclv601'}], 'afi': 'ipv6'}],
-                    'name': 'GigabitEthernet0/0'}]
-        q(result['parsed'])
+                                          {'acls': [{'direction': 'out', 'name': 'aclv601'}], 'afi': 'ipv6'}],
+                        'name': 'GigabitEthernet0/0'}]
         self.assertEqual(parsed_list, result['parsed'])
 
     def test_eos_acl_interfaces_rendered(self):
@@ -278,10 +271,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                                        direction="out")
                               ]),
                          dict(afi="ipv6",
-                              acls=[
-                                    dict(name="aclv601",
-                                         direction="in")
-                                ])
+                              acls=[dict(name="aclv601", direction="in")])
                      ]),
                 dict(name="GigabitEthernet0/1",
                      access_groups=[
@@ -290,7 +280,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                                   dict(name="aclv401",
                                        direction="in")
                               ])
-                        ])
+                         ])
             ], state="rendered"))
         commands = ['interface GigabitEthernet0/0', 'ip access-group aclv401 in',
                     'ip access-group aclv402 out', 'ipv6 traffic-filter aclv601 in', 'interface GigabitEthernet0/1',
