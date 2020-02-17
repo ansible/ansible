@@ -162,8 +162,8 @@ if ($source_location) {
         Fail-Json -obj $result -Message "source_location must be a valid URL."
     }
 }
-elseif ($force -or -not $Repo) {
-    Fail-Json -obj $result -message "source_location is required when registering a new repository or using force."
+elseif ($state -eq 'present' -and ($force -or -not $Repo)) {
+    Fail-Json -obj $result -message "source_location is required when registering a new repository or using force with 'state' == 'present'."
 }
 
 if ($script_source_location) {
