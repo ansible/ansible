@@ -1,0 +1,2 @@
+bugfixes:
+  - zabbix_user - Fixed an issue where module failed with zabbix 4.4 or above (see https://github.com/ansible/ansible/pull/67475)
