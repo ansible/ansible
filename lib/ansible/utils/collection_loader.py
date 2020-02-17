@@ -30,11 +30,6 @@ _SYNTHETIC_PACKAGES = {
     'ansible_collections.ansible.builtin.plugins.modules': dict(type='flatmap', flatmap='ansible.modules', graft=True),
 }
 
-# Best guess adjacent site-packages
-_ADJ_SITE_PACKAGES = os.path.dirname(  # site-packages/
-    os.path.dirname(ansible.__file__)  # site-packages/ansible/
-)
-
 
 # FIXME: exception handling/error logging
 class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
@@ -49,9 +44,12 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         elif self._n_configured_paths is None:
             self._n_configured_paths = []
 
-        # Append adjacent ``site-packages/_ansible_community_distribution`` based path to the end
-        # Inside should be the ``ansible_collections`` directory
-        self._n_configured_paths.append(os.path.join(_ADJ_SITE_PACKAGES, '_ansible_community_distribution'))
+        # Append all ``_ansible_community_distribution`` dirs from sys.path to the end
+        # Inside each should be the ``ansible_collections`` directory
+        for path in sys.path:
+            acd_path = os.path.join(os.path.abspath(path), '_ansible_community_distribution')
+            if os.path.isdir(acd_path):
+                self._n_configured_paths.append(acd_path)
 
         # expand any placeholders in configured paths
         self._n_configured_paths = [to_native(os.path.expanduser(p), errors='surrogate_or_strict') for p in self._n_configured_paths]
