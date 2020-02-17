@@ -1132,6 +1132,25 @@ def test_verify_identical(monkeypatch, mock_collection, manifest_info, files_man
             assert mock_debug.call_args_list[-1][0][0] == success_msg
 
 
+@patch.object(os.path, 'isdir', return_value=True)
+def test_verify_collections_no_version(mock_isdir, mock_collection, monkeypatch):
+    namespace = 'ansible_namespace'
+    name = 'collection'
+    version = '*'  # Occurs if MANIFEST.json does not exist
+
+    local_collection = mock_collection(namespace=namespace, name=name, version=version)
+    monkeypatch.setattr(collection.CollectionRequirement, 'from_path', MagicMock(return_value=local_collection))
+
+    collections = [('%s.%s' % (namespace, name), version, None)]
+
+    with pytest.raises(AnsibleError) as err:
+        collection.verify_collections(collections, './', local_collection.api, False, False)
+
+    err_msg = 'Collection %s.%s does not appear to have the MANIFEST.json. ' % (namespace, name)
+    err_msg += 'A MANIFEST.json is expected if the collection has been built and installed via ansible-galaxy.'
+    assert err.value.message == err_msg
+
+
 @patch.object(collection.CollectionRequirement, 'verify')
 def test_verify_collections_not_installed(mock_verify, mock_collection, monkeypatch):
     namespace = 'ansible_namespace'
