@@ -56,7 +56,7 @@ options:
       - Parameters can be found at U(https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html#botocore.config.Config).
       - Only the 'user_agent' key is used for boto modules. See U(http://boto.cloudhackers.com/en/latest/boto_config_tut.html#boto) for more boto configuration.
     type: dict
-    version_added: "2.9"
+    version_added: "2.10"
 requirements:
   - python >= 2.6
   - boto
