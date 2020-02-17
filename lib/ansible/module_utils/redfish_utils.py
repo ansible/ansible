@@ -1255,6 +1255,93 @@ class RedfishUtils(object):
         else:
             return self._software_inventory(self.software_uri)
 
+    def _get_allowable_values(self, action, name, default_values=None):
+        if default_values is None:
+            default_values = []
+        allowable_values = None
+        # get Allowable values from ActionInfo
+        if '@Redfish.ActionInfo' in action:
+            action_info_uri = action.get('@Redfish.ActionInfo')
+            response = self.get_request(self.root_uri + action_info_uri)
+            if response['ret'] is True:
+                data = response['data']
+                if 'Parameters' in data:
+                    params = data['Parameters']
+                    for param in params:
+                        if param.get('Name') == name:
+                            allowable_values = param.get('AllowableValues')
+                            break
+        # fallback to @Redfish.AllowableValues annotation
+        if allowable_values is None:
+            prop = '%s@Redfish.AllowableValues' % name
+            if prop in action:
+                allowable_values = action[prop]
+        # fallback to default values
+        if allowable_values is None:
+            allowable_values = default_values
+        return allowable_values
+
+    def simple_update(self, update_opts):
+        image_uri = update_opts.get('update_image_uri')
+        protocol = update_opts.get('update_protocol')
+        targets = update_opts.get('update_targets')
+        creds = update_opts.get('update_creds')
+
+        if not image_uri:
+            return {'ret': False, 'msg':
+                    'Must specify update_image_uri for the SimpleUpdate command'}
+
+        response = self.get_request(self.root_uri + self.update_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'Actions' not in data:
+            return {'ret': False, 'msg': 'Service does not support SimpleUpdate'}
+        if '#UpdateService.SimpleUpdate' not in data['Actions']:
+            return {'ret': False, 'msg': 'Service does not support SimpleUpdate'}
+        action = data['Actions']['#UpdateService.SimpleUpdate']
+        if 'target' not in action:
+            return {'ret': False, 'msg': 'Service does not support SimpleUpdate'}
+        update_uri = action['target']
+        if protocol:
+            default_values = ['CIFS', 'FTP', 'SFTP', 'HTTP', 'HTTPS', 'NSF',
+                              'SCP', 'TFTP', 'OEM', 'NFS']
+            allowable_values = self._get_allowable_values(action,
+                                                          'TransferProtocol',
+                                                          default_values)
+            if protocol not in allowable_values:
+                return {'ret': False,
+                        'msg': 'Specified update_protocol (%s) not supported '
+                               'by service. Supported protocols: %s' %
+                               (protocol, allowable_values)}
+        if targets:
+            allowable_values = self._get_allowable_values(action, 'Targets')
+            if allowable_values:
+                for target in targets:
+                    if target not in allowable_values:
+                        return {'ret': False,
+                                'msg': 'Specified target (%s) not supported '
+                                       'by service. Supported targets: %s' %
+                                       (target, allowable_values)}
+
+        payload = {
+            'ImageURI': image_uri
+        }
+        if protocol:
+            payload["TransferProtocol"] = protocol
+        if targets:
+            payload["Targets"] = targets
+        if creds:
+            if creds.get('username'):
+                payload["Username"] = creds.get('username')
+            if creds.get('password'):
+                payload["Password"] = creds.get('password')
+        response = self.post_request(self.root_uri + update_uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True,
+                'msg': "SimpleUpdate requested"}
+
     def get_bios_attributes(self, systems_uri):
         result = {}
         bios_attributes = {}
