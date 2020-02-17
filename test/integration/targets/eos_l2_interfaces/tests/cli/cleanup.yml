@@ -10,6 +10,7 @@
       interface {{ item }}
         no switchport mode
         no switchport access vlan
+        no switchport trunk native vlan
   with_items:
     - Ethernet1
     - Ethernet2

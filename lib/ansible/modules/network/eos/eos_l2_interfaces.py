@@ -79,6 +79,12 @@ options:
             - List of allowed VLANs in a given trunk port. These are the only VLANs that will be
               configured on the trunk.
             type: list
+      mode:
+        description:
+        - Mode in which interface needs to be configured.
+        version_added: '2.10'
+        type: str
+        choices: ['access', 'trunk']
   state:
     choices:
     - merged

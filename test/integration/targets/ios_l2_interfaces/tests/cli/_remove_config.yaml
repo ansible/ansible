@@ -10,10 +10,12 @@
       no switchport trunk native vlan
       no switchport trunk allowed vlan
       no switchport trunk pruning vlan
+      no switchport mode
       interface GigabitEthernet 0/2
       no switchport access vlan
       no switchport trunk encapsulation
       no switchport trunk native vlan
       no switchport trunk allowed vlan
       no switchport trunk pruning vlan
+      no switchport mode
   when: ansible_net_version != "15.6(2)T"
