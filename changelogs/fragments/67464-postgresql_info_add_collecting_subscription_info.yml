@@ -1,0 +1,2 @@
+minor_changes:
+- postgresql_info - add collection info about replication subscriptions (https://github.com/ansible/ansible/pull/67464).
