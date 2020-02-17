@@ -69,7 +69,11 @@ Function Resolve-RedirectedUrl {
 
         [Parameter()]
         [System.Collections.Generic.HashSet[System.Uri]]
-        $History = (New-Object -TypeName 'System.Collections.Generic.HashSet[System.Uri]')
+        $History = (New-Object -TypeName 'System.Collections.Generic.HashSet[System.Uri]') ,
+
+        [Parameter()]
+        [Microsoft.PowerShell.Commands.WebRequestMethod]
+        $Method = [Microsoft.PowerShell.Commands.WebRequestMethod]::Head
     )
 
     End {
@@ -78,8 +82,29 @@ Function Resolve-RedirectedUrl {
         }
 
         $null = $History.Add($Uri)
-        $response = Invoke-WebRequest -Uri $Uri -Method Head -UseBasicParsing -MaximumRedirection $RedirectCount -ErrorAction SilentlyContinue
+        try {
+            # Weirdness: even with -ea SilentlyContinue, some exceptions are still thrown and can be caught
+            # In the case of 3xx codes, it won't throw, which we want because there's no response info in the exception, but return value is valid.
+            # In the case of 5xx, it will throw, but response is available in the exception.
+            $response = Invoke-WebRequest -Uri $Uri -Method $Method -UseBasicParsing -MaximumRedirection $RedirectCount -ErrorAction SilentlyContinue
+        }
+        catch [System.InvalidOperationException] {
+            $code = $_.Exception.Response.StatusCode
+            $description = $_.Exception.Response.StatusDescription
+            if ($code -eq [System.Net.HttpStatusCode]::NotImplemented -and
+                [Microsoft.PowerShell.Commands.WebRequestMethod]::Head -eq $_.Exception.Response.Method) {
+                # let's assume the target server doesn't support HEAD, like myget.org, and switch to GET
+                Resolve-RedirectedUrl @PSBoundParameters -Method ([Microsoft.PowerShell.Commands.WebRequestMethod]::Get)
+                return
+            }
+            else {
+                # not sure what the deal is, better fail
+                Fail-Json -obj $result -message "Error contacting URL '$Uri' with method '$Method'. Got HTTP status ${code}: '$description'"
+            }
+        }
+
         $code = $response.StatusCode
+        $description = $response.StatusDescription
         if (-not $response -or -not $code) {
             Fail-Json -obj $result -message "Unkown error contacting URL '$Uri'."
         }
@@ -99,10 +124,10 @@ Function Resolve-RedirectedUrl {
                 Fail-Json -obj $result -message "URL is redirecting infinitely (received identical response as a previous redirect: '$target')."
             }
 
-            Resolve-RedirectedUrl -Uri $target -RedirectCount $RedirectCount -MaximumRedirectionDepth $MaximumRedirectionDepth -History $History
+            Resolve-RedirectedUrl -Uri $target -RedirectCount $RedirectCount -MaximumRedirectionDepth $MaximumRedirectionDepth -History $History -Method $Method
         }
         elseif ((200..299) -notcontains $code) {
-            Fail-Json -obj $result -message "Error contacting URL. Got HTTP status ${code}: '$($response.StatusDescription)'"
+            Fail-Json -obj $result -message "Error contacting URL '$Uri' with method '$Method'. Got HTTP status ${code}: '$description'"
         }
         else {
             if ($RedirectCount -gt 0) {
