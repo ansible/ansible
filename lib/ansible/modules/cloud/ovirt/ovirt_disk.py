@@ -91,7 +91,7 @@ options:
             - Note that this option isn't idempotent as it's not currently possible to change sparseness of the disk via API.
     storage_domain:
         description:
-            - "Storage domain name where disk should be created. By default storage is chosen by oVirt/RHV engine."
+            - "Storage domain name where disk should be created."
     storage_domains:
         description:
             - "Storage domain names where disk should be copied."
