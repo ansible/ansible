@@ -122,6 +122,7 @@ Noteworthy module changes
 * :ref:`docker_container <docker_container_module>`'s support for port ranges was adjusted to be more compatible to the ``docker`` command line utility: a one-port container range combined with a multiple-port host range will no longer result in only the first host port be used, but the whole range being passed to Docker so that a free port in that range will be used.
 * :ref:`purefb_fs <purefb_fs_module>` no longer supports the deprecated ``nfs`` option. This has been superceeded by ``nfsv3``.
 * :ref:`nxos_igmp_interface <nxos_igmp_interface_module>` no longer supports the deprecated ``oif_prefix`` and ``oif_source`` options. These have been superceeded by ``oif_ps``.
+* :ref:`aws_s3 <aws_s3_module>` can now delete versioned buckets even when they are not empty - set mode to delete to delete a versioned bucket and everything in it.
 
 
 Plugins
