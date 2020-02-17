@@ -58,6 +58,11 @@ DOCUMENTATION = r"""
           default: ""
           type: str
           required: false
+        network:
+          description: Populate inventory with instances which are attached to this network name or ID.
+          default: ""
+          type: str
+          required: false
 """
 
 EXAMPLES = r"""
@@ -128,6 +133,22 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             self.servers = self.client.servers.get_all()
 
     def _filter_servers(self):
+        if self.get_option("network"):
+            try:
+                self.network = self.client.networks.get_by_name(self.get_option("network"))
+                if self.network is None:
+                    self.network = self.client.networks.get_by_id(self.get_option("network"))
+            except hcloud.APIException:
+                raise AnsibleError(
+                    "The given network is not found.")
+
+            tmp = []
+            for server in self.servers:
+                for server_private_network in server.private_net:
+                    if server_private_network.network.id == self.network.id:
+                        tmp.append(server)
+            self.servers = tmp
+
         if self.get_option("locations"):
             tmp = []
             for server in self.servers:
@@ -160,12 +181,25 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.inventory.set_variable(server.name, "ipv6_network", to_native(server.public_net.ipv6.network))
         self.inventory.set_variable(server.name, "ipv6_network_mask", to_native(server.public_net.ipv6.network_mask))
 
+        if self.get_option("network"):
+            for server_private_network in server.private_net:
+                if server_private_network.network.id == self.network.id:
+                    self.inventory.set_variable(server.name, "private_ipv4", to_native(server_private_network.ip))
+
         if self.get_option("connect_with") == "public_ipv4":
             self.inventory.set_variable(server.name, "ansible_host", to_native(server.public_net.ipv4.ip))
         elif self.get_option("connect_with") == "hostname":
             self.inventory.set_variable(server.name, "ansible_host", to_native(server.name))
         elif self.get_option("connect_with") == "ipv4_dns_ptr":
             self.inventory.set_variable(server.name, "ansible_host", to_native(server.public_net.ipv4.dns_ptr))
+        elif self.get_option("connect_with") == "private_ipv4":
+            if self.get_option("network"):
+                for server_private_network in server.private_net:
+                    if server_private_network.network.id == self.network.id:
+                        self.inventory.set_variable(server.name, "ansible_host", to_native(server_private_network.ip))
+            else:
+                raise AnsibleError(
+                    "You can only connect via private IPv4 if you specify a network")
 
         # Server Type
         if server.image is not None and server.image.name is not None:
