@@ -1512,12 +1512,15 @@ To concatenate a list into a string::
 To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
-    {{ decoded | b64encode }}
+    {{ decoded | string | b64encode }}
 
 As of version 2.6, you can define the type of encoding to use, the default is ``utf-8``::
 
     {{ encoded | b64decode(encoding='utf-16-le') }}
-    {{ decoded | b64encode(encoding='utf-16-le') }}
+    {{ decoded | string | b64encode(encoding='utf-16-le') }}
+
+.. note:: The ``string`` filter is only required for Python 2 and ensures that text to encode is a unicode string.
+    Without that filter before b64encode the wrong value will be encoded.
 
 .. versionadded:: 2.6
 
