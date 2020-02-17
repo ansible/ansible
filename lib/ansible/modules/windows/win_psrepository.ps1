@@ -48,7 +48,7 @@ Function Write-DebugLog {
 
     Write-Debug $msg
     if($log_path) {
-        Add-Content $log_path $msg
+        Add-Content -LiteralPath $log_path -Value $msg
     }
 }
 Function Resolve-RedirectedUrl {
@@ -79,7 +79,8 @@ Function Resolve-RedirectedUrl {
 
         $null = $History.Add($Uri)
         $response = Invoke-WebRequest -Uri $Uri -Method Head -UseBasicParsing -MaximumRedirection $RedirectCount -ErrorAction SilentlyContinue
-        if (-not $response -or -not ($code = $response.StatusCode)) {
+        $code = $response.StatusCode
+        if (-not $response -or -not $code) {
             Fail-Json -obj $result -message "Unkown error contacting URL '$Uri'."
         }
 
@@ -89,7 +90,8 @@ Function Resolve-RedirectedUrl {
             }
             Write-DebugLog -msg "Following URL redirection: attempt $RedirectCount of $MaximumRedirectionDepth."
 
-            if (-not ($target = $response.Headers.Location -as [uri])) {
+            $target = $response.Headers.Location -as [uri]
+            if (-not $target) {
                 Fail-Json -obj $result -message "URL replied with redirect but redirect target is missing or invalid."
             }
 
