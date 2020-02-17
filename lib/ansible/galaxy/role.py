@@ -138,6 +138,14 @@ class GalaxyRole(object):
                     f.close()
         return self._install_info
 
+    @property
+    def _exists(self):
+        for path in self.paths:
+            if os.path.isdir(path):
+                return True
+
+        return False
+
     def _write_galaxy_install_info(self):
         """
         Writes a YAML-formatted file to the role's meta/ directory

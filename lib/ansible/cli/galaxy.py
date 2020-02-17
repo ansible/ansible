@@ -858,6 +858,9 @@ class GalaxyCLI(CLI):
 
             role_info = {'path': roles_path}
             gr = GalaxyRole(self.galaxy, self.api, role)
+            if not gr._exists:
+                data = u"- the role %s was not found" % role
+                break
 
             install_info = gr.install_info
             if install_info:
@@ -882,10 +885,6 @@ class GalaxyCLI(CLI):
                 role_info.update(role_spec)
 
             data = self._display_role_info(role_info)
-            # FIXME: This is broken in both 1.9 and 2.0 as
-            # _display_role_info() always returns something
-            if not data:
-                data = u"\n- the role %s was not found" % role
 
         self.pager(data)
 
