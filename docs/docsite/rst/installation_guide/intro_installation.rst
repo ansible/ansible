@@ -84,11 +84,12 @@ Which Ansible version to install is based on your particular needs. You can choo
 
 * Install the latest release with your OS package manager (for Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu).
 * Install with ``pip`` (the Python package manager).
-* Install from source to access the development (``devel``) version to use and test the latest features.
+* Install from source to access the development (``devel``) version to develop or test the latest features.
 
+.. note::
 
-Because Ansible runs so easily from source and does not require any installation of software on remote
-machines, many users will actually track the development version.
+	You should only run Ansible from ``devel`` if you are actively developing content for Ansible. This is a rapidly changing source of code and can become unstable at any point.
+
 
 Ansible creates new releases two to three times a year. Due to this short release cycle,
 minor bugs will generally be fixed in the next release versus maintaining backports on the stable branch.
@@ -307,7 +308,7 @@ Ansible can be installed with ``pip``, the Python package manager. It should be 
 Then install Ansible [1]_::
 
     $ pip install --user ansible
-    
+
 For macOS, there is no need to use ``sudo`` or install additional fixes, simply access the Python module namespace for ``pip``::
 
     $ python -m pip install --user ansible
@@ -360,13 +361,13 @@ If you wish to install Ansible globally, run the following commands::
 Running Ansible from source (devel)
 -----------------------------------
 
+.. note::
+
+	You should only run Ansible from ``devel`` if you are actively developing content for Ansible. This is a rapidly changing source of code and can become unstable at any point.
+
 Ansible is easy to run from source. You do not need ``root`` permissions
 to use it and there is no software to actually install. No daemons
-or database setup are required. Because of this, many users in our community use the
-development version of Ansible all of the time so they can take advantage of new features
-when they are implemented and easily contribute to the project. Because there is
-nothing to install, following the development version is significantly easier than most
-open source projects.
+or database setup are required.
 
 .. note::
 
