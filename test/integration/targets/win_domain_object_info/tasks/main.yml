@@ -1,0 +1,125 @@
+# These tests can't run in CI, this is really just a basic smoke tests for local runs.
+---
+- name: assert better error message on auth failure
+  win_domain_object_info:
+    identity: id
+  register: fail_auth
+  failed_when: '"Failed to contact the AD server, this could be caused by the double hop problem" not in fail_auth.msg'
+  vars:
+    ansible_winrm_transport: ntlm
+    ansible_psrp_auth: ntlm
+
+- name: create test ad user
+  win_domain_user:
+    name: Ansible Test
+    firstname: Ansible
+    surname: Test
+    company: Contoso R Us
+    password: Password01
+    state: present
+    password_never_expires: yes
+    groups:
+    - Domain Users
+    enabled: false
+  register: test_user
+  notify: remove test domain user
+
+- name: set a binary attribute and return other useful info missing from above
+  win_shell: |
+    Set-ADUser -Identity '{{ test_user.sid }}' -Replace @{ audio = @([byte[]]@(1, 2, 3, 4), [byte[]]@(5, 6, 7, 8)) }
+
+    $user = Get-ADUser -Identity '{{ test_user.sid }}' -Properties modifyTimestamp, ObjectGUID
+
+    [TimeZoneInfo]::ConvertTimeToUtc($user.modifyTimestamp).ToString('o')
+    $user.ObjectGUID.ToString()
+    ([System.Security.Principal.SecurityIdentifier]'{{ test_user.sid }}').Translate([System.Security.Principal.NTAccount]).Value
+  register: test_user_extras
+
+- name: set other test info for easier access
+  set_fact:
+    test_user_mod_date: '{{ test_user_extras.stdout_lines[0] }}'
+    test_user_id: '{{ test_user_extras.stdout_lines[1] }}'
+    test_user_name: '{{ test_user_extras.stdout_lines[2] }}'
+
+- name: get properties for single user by DN
+  win_domain_object_info:
+    identity: '{{ test_user.distinguished_name }}'
+  register: by_identity
+  check_mode: yes  # Just verifies it runs in check mode
+
+- name: assert get properties for single user by DN
+  assert:
+    that:
+    - not by_identity is changed
+    - by_identity.objects | length == 1
+    - by_identity.objects[0].keys() | list | length == 4
+    - by_identity.objects[0].DistinguishedName == test_user.distinguished_name
+    - by_identity.objects[0].Name == 'Ansible Test'
+    - by_identity.objects[0].ObjectClass == 'user'
+    - by_identity.objects[0].ObjectGUID == test_user_id
+
+- name: get specific properties by GUID
+  win_domain_object_info:
+    identity: '{{ test_user_id }}'
+    properties:
+    - audio  # byte[]
+    - company  # string
+    - department  # not set
+    - logonCount  # int
+    - modifyTimestamp  # DateTime
+    - nTSecurityDescriptor  # SecurityDescriptor as SDDL
+    - objectSID  # SID
+    - ProtectedFromAccidentalDeletion  # bool
+    - sAMAccountType  # Test out the enum string attribute that we add
+    - userAccountControl  # Test ou the enum string attribute that we add
+  register: by_guid_custom_props
+
+- name: assert get specific properties by GUID
+  assert:
+    that:
+    - not by_guid_custom_props is changed
+    - by_guid_custom_props.objects | length == 1
+    - by_guid_custom_props.objects[0].DistinguishedName == test_user.distinguished_name
+    - by_guid_custom_props.objects[0].Name == 'Ansible Test'
+    - by_guid_custom_props.objects[0].ObjectClass == 'user'
+    - by_guid_custom_props.objects[0].ObjectGUID == test_user_id
+    - not by_guid_custom_props.objects[0].ProtectedFromAccidentalDeletion
+    - by_guid_custom_props.objects[0].audio == ['BQYHCA==', 'AQIDBA==']
+    - by_guid_custom_props.objects[0].company == 'Contoso R Us'
+    - by_guid_custom_props.objects[0].department == None
+    - by_guid_custom_props.objects[0].logonCount == 0
+    - by_guid_custom_props.objects[0].modifyTimestamp == test_user_mod_date
+    - by_guid_custom_props.objects[0].nTSecurityDescriptor.startswith('O:DAG:DAD:AI(')
+    - by_guid_custom_props.objects[0].objectSID.Name == test_user_name
+    - by_guid_custom_props.objects[0].objectSID.Sid == test_user.sid
+    - by_guid_custom_props.objects[0].sAMAccountType == 805306368
+    - by_guid_custom_props.objects[0].sAMAccountType_AnsibleFlags == ['SAM_USER_OBJECT']
+    - by_guid_custom_props.objects[0].userAccountControl == 66050
+    - by_guid_custom_props.objects[0].userAccountControl_AnsibleFlags == ['ADS_UF_ACCOUNTDISABLE', 'ADS_UF_NORMAL_ACCOUNT', 'ADS_UF_DONT_EXPIRE_PASSWD']
+
+- name: get invalid property
+  win_domain_object_info:
+    filter: sAMAccountName -eq 'Ansible Test'
+    properties:
+    - FakeProperty
+  register: invalid_prop_warning
+
+- name: assert get invalid property
+  assert:
+    that:
+    - not invalid_prop_warning is changed
+    - invalid_prop_warning.objects | length == 0
+    - invalid_prop_warning.warnings | length == 1
+    - '"Failed to retrieve properties for AD object" not in invalid_prop_warning.warnings[0]'
+
+- name: get by ldap filter returning multiple
+  win_domain_object_info:
+    ldap_filter: (&(objectClass=computer)(objectCategory=computer))
+    properties: '*'
+  register: multiple_ldap
+
+- name: assert get by ldap filter returning multiple
+  assert:
+    that:
+    - not multiple_ldap is changed
+    - multiple_ldap.objects | length > 1
