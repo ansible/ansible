@@ -224,7 +224,7 @@ def compare_assume_role_policy_doc(current_policy_doc, new_policy_doc):
 @AWSRetry.jittered_backoff()
 def _list_policies(connection):
     paginator = connection.get_paginator('list_policies')
-    policies = paginator.paginate().build_full_result()['Policies']
+    return paginator.paginate().build_full_result()['Policies']
 
 
 def convert_friendly_names_to_arns(connection, module, policy_names):
