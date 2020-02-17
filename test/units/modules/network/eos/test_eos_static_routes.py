@@ -143,15 +143,15 @@ class TestEosStaticRoutesModule(TestEosModule):
         set_module_args(
             dict(config=[
                 dict(address_families=[
-                         dict(afi="ipv6",
-                              routes=[
-                                  dict(dest="1000:10::/64",
-                                       next_hops=[
-                                           dict(interface="Ethernet1",
-                                                admin_distance=55)
-                                       ])
-                              ])
-                     ])
+                    dict(afi="ipv6",
+                         routes=[
+                             dict(dest="1000:10::/64",
+                                  next_hops=[
+                                      dict(interface="Ethernet1",
+                                           admin_distance=55)
+                                  ])
+                         ])
+                ])
             ], state="replaced"))
         commands = [
             'ipv6 route 1000:10::/64 Ethernet1 55',

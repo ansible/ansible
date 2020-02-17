@@ -380,6 +380,7 @@ def get_vrf(config):
         vrf = c["vrf"] if "vrf" in c.keys() and c["vrf"] else None
     return vrf
 
+
 def get_dest(config):
     dest = []
     for c in config:
@@ -387,4 +388,3 @@ def get_dest(config):
             for route in address_family["routes"]:
                 dest.append(route['dest'])
     return dest
-
