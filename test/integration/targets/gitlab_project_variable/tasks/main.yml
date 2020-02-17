@@ -39,6 +39,117 @@
     that:
       - gitlab_project_variable_state is changed
 
+- name: test new format
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is not changed
+
+- name: change protected attribute
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+        protected: True
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: revert protected attribute
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+        protected: False
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: change masked attribute
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+        masked: True
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: revert masked attribute by not mention it
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: set both (masked and protected) attribute
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+        masked: True
+        protected: True
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: revert both (masked and protected) attribute
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+        protected: False
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
 - name: change a variable value in check_mode again
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"

@@ -52,7 +52,9 @@ options:
     type: bool
   vars:
     description:
-      - A list of key value pairs.
+      - When it's a simple key value pair, masked and protected will be set to false.
+      - Wnen provided a dict with the keys "value", "masked" and "protected", you have full control about if a value should be masked, protected or both.
+      - Wehn you masked a value, the value must be base64 compliant and has at least a length of 8 characters.
     default: {}
     type: dict
 '''
@@ -68,6 +70,19 @@ EXAMPLES = '''
     vars:
       ACCESS_KEY_ID: abc123
       SECRET_ACCESS_KEY: 321cba
+
+- name: Set or update some CI/CD variables
+  gitlab_project_variable:
+    api_url: https://gitlab.com
+    api_token: secret_access_token
+    project: markuman/dotfiles
+    purge: false
+    vars:
+      ACCESS_KEY_ID: abc123
+      SECRET_ACCESS_KEY:
+        value: 321cba
+        masked: True
+        protected: True
 
 - name: Delete one variable
   gitlab_project_variable:
@@ -138,18 +153,19 @@ class GitlabProjectVariables(object):
     def list_all_project_variables(self):
         return self.project.variables.list()
 
-    def create_variable(self, key, value):
+    def create_variable(self, key, value, masked, protected):
         if self._module.check_mode:
             return
-        return self.project.variables.create({"key": key, "value": value})
+        return self.project.variables.create({"key": key, "value": value,
+                                              "masked": masked, "protected": protected})
 
-    def update_variable(self, var, value):
-        if var.value == value:
+    def update_variable(self, key, var, value, masked, protected):
+        if var.value == value and var.protected == protected and var.masked == masked:
             return False
         if self._module.check_mode:
             return True
-        var.value = value
-        var.save()
+        self.delete_variable(key)
+        self.create_variable(key, value, masked, protected)
         return True
 
     def delete_variable(self, key):
@@ -167,13 +183,25 @@ def native_python_main(this_gitlab, purge, var_list, state):
     existing_variables = [x.get_id() for x in gitlab_keys]
 
     for key in var_list:
+
+        if isinstance(var_list[key], str):
+            value = var_list[key]
+            masked = False
+            protected = False
+        else:
+            value = var_list[key].get('value')
+            masked = var_list[key].get('masked') or False
+            protected = var_list[key].get('protected') or False
+
         if key in existing_variables:
             index = existing_variables.index(key)
             existing_variables[index] = None
 
             if state == 'present':
-                single_change = this_gitlab.update_variable(
-                    gitlab_keys[index], var_list[key])
+                single_change = this_gitlab.update_variable(key,
+                                                            gitlab_keys[index],
+                                                            value, masked,
+                                                            protected)
                 change = single_change or change
                 if single_change:
                     return_value['updated'].append(key)
@@ -186,7 +214,7 @@ def native_python_main(this_gitlab, purge, var_list, state):
                 return_value['removed'].append(key)
 
         elif key not in existing_variables and state == 'present':
-            this_gitlab.create_variable(key, var_list[key])
+            this_gitlab.create_variable(key, value, masked, protected)
             change = True
             return_value['added'].append(key)
 
