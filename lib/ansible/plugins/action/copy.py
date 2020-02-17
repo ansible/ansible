@@ -449,6 +449,7 @@ class ActionModule(ActionBase):
         # look up the files and use the first one we find as src
         elif remote_src:
             result.update(self._execute_module(module_name='copy', task_vars=task_vars))
+            result['diff'] = self._get_diff_data(dest, source, task_vars)
             return self._ensure_invocation(result)
         else:
             # find_needle returns a path that may not have a trailing slash on
