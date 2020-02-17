@@ -1293,7 +1293,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     # os disk
                     if not self.storage_account_name and not self.managed_disk_type:
-                        storage_account = self.create_default_storage_account()
+                        storage_account = self.default_storage_account()
                         self.log("os disk storage account:")
                         self.log(self.serialize_obj(storage_account, 'StorageAccount'), pretty_print=True)
                         requested_storage_uri = 'https://{0}.blob.{1}/'.format(
