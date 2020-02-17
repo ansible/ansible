@@ -70,7 +70,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         self.parser = None
         self.callback = callback
 
-        if __version__.endswith('dev0'):
+        if C.DEVEL_WARNING and __version__.endswith('dev0'):
             display.warning(
                 'You are running the development version of Ansible. You should only run Ansible from "devel" if '
                 'you are actively developing content for Ansible. This is a rapidly changing source of code and can '

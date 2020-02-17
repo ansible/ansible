@@ -1227,6 +1227,14 @@ DEPRECATION_WARNINGS:
   ini:
   - {key: deprecation_warnings, section: defaults}
   type: boolean
+DEVEL_WARNING:
+  nane: Running devel warning
+  default: True
+  description: Toggle to control showing warnings related to running devel
+  env: [{name: ANSIBLE_DEVEL_WARNING}]
+  ini:
+  - {key: devel_warning, section: defaults}
+  type: boolean
 DIFF_ALWAYS:
   name: Show differences
   default: False
