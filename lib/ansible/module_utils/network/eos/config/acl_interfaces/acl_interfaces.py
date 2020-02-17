@@ -389,7 +389,6 @@ def remove_commands(want, interface):
         # a_cmd = "traffic-filter" if w['afi'] == 'ipv6' else "access-group"
         a_cmd = "access-group"
 
-        a_cmd = "traffic-filter" if w['afi'] == 'ipv6' else "access-group"
         afi = 'ip' if w['afi'] == 'ipv4' else w['afi']
         if 'acls' in w.keys():
             for acl in w['acls']:
