@@ -18,7 +18,7 @@ version_added: "2.3"
 short_description: Generate OpenSSL private keys
 description:
     - This module allows one to (re)generate OpenSSL private keys.
-    - One can generate L(RSA,https://en.wikipedia.org/wiki/RSA_(cryptosystem)),
+    - One can generate L(RSA,https://en.wikipedia.org/wiki/RSA_%28cryptosystem%29),
       L(DSA,https://en.wikipedia.org/wiki/Digital_Signature_Algorithm),
       L(ECC,https://en.wikipedia.org/wiki/Elliptic-curve_cryptography) or
       L(EdDSA,https://en.wikipedia.org/wiki/EdDSA) private keys.
