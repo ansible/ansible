@@ -4,4 +4,3 @@ skip/osx
 skip/freebsd
 skip/rhel
 skip/aix
-disabled
