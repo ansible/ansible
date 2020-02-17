@@ -149,28 +149,58 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+msg:
+  description: changed
+  returned: always
+  type: bool
+  sample: True
+start:
+  description: The command execution start time
+  returned: always
+  type: str
+  sample: '2017-09-29 22:03:48.083128'
+end:
+  description: The command execution end time
+  returned: always
+  type: str
+  sample: '2017-09-29 22:03:48.084657'
+delta:
+  description: The command execution delta time
+  returned: always
+  type: str
+  sample: '0:00:00.001529'
+stdout:
+  description: The command standard output
+  returned: always
+  type: str
+  sample: 'Clustering node rabbit@slave1 with rabbit@master …'
+stderr:
+  description: The command standard error
+  returned: always
+  type: str
+  sample: 'ls cannot access foo: No such file or directory'
 cmd:
-  description: the cmd that was run on the remote machine
+  description: The command executed by the task
   returned: always
   type: list
   sample:
   - echo
   - hello
-delta:
-  description: cmd end time - cmd start time
+rc:
+  description: The command return code (0 means success)
   returned: always
-  type: str
-  sample: 0:00:00.001529
-end:
-  description: cmd end time
+  type: int
+  sample: 0
+stdout_lines:
+  description: The command standard output split in lines
   returned: always
-  type: str
-  sample: '2017-09-29 22:03:48.084657'
-start:
-  description: cmd start time
+  type: list
+  sample: [u'Clustering node rabbit@slave1 with rabbit@master …']
+stderr_lines:
+  description: The command standard error split in lines
   returned: always
-  type: str
-  sample: '2017-09-29 22:03:48.083128'
+  type: list
+  sample: [u'ls cannot access foo: No such file or directory', u'ls …']
 '''
 
 import datetime
