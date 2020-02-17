@@ -1,0 +1,6 @@
+minor_changes:
+  - Checks for and resolves a condition where effective nameservers are obfucated, usually by malware.
+    See https://www.welivesecurity.com/2016/06/02/crouching-tiger-hidden-dns/
+bugfixes:
+  - Fix detection of DHCP setting so that resetting to DHCP doesn't cause ``CHANGED`` status on every run.
+    See https://github.com/ansible/ansible/issues/66450
