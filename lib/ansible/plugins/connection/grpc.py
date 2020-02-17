@@ -1,4 +1,4 @@
-# (c) 2019 Ansible Project
+# (c) 2020 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -239,19 +239,25 @@ class Connection(NetworkConnectionBase):
                 module._grpc_connection.register_service('gnmi')
             return module._grpc_connection
 
+        For collections full qualified names must be used:
+            [...]
+            module._grpc_connection.register_service('nokia.gnmi.gnmi')
+
         Parameters:
             grpcService (str): Name of the sub-plugin to be loaded
 
         Returns:
             None
         """
-        if grpcService not in self._grpc_services:
+        registryName = grpcService.split('.')[-1]
+
+        if registryName not in self._grpc_services:
             newService = grpc_loader.get(grpcService, self)
             if newService:
-                self._grpc_services[grpcService] = newService
-                self.queue_message('v', 'loaded gRPC API plugin for %s service' % grpcService)
+                self._grpc_services[registryName] = newService
+                self.queue_message('v', 'loaded gRPC API plugin for %s service' % registryName)
             else:
-                raise AnsibleConnectionFailure('unable to load gRPC API plugin for %s service' % grpcService)
+                raise AnsibleConnectionFailure('unable to load gRPC API plugin for %s service' % registryName)
 
     def __getattr__(self, name):
         """

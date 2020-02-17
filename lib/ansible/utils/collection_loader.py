@@ -339,7 +339,7 @@ class AnsibleFlatMapLoader(object):
 class AnsibleCollectionRef:
     # FUTURE: introspect plugin loaders to get these dynamically?
     VALID_REF_TYPES = frozenset(to_text(r) for r in ['action', 'become', 'cache', 'callback', 'cliconf', 'connection',
-                                                     'doc_fragments', 'filter', 'httpapi', 'inventory', 'lookup',
+                                                     'doc_fragments', 'filter', 'grpc', 'httpapi', 'inventory', 'lookup',
                                                      'module_utils', 'modules', 'netconf', 'role', 'shell', 'strategy',
                                                      'terminal', 'test', 'vars'])
 
