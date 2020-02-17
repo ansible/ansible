@@ -308,13 +308,6 @@ Ansible can be installed with ``pip``, the Python package manager.  If ``pip`` i
 Then install Ansible [1]_::
 
     $ pip install --user ansible
-<<<<<<< HEAD
-=======
-
-For macOS, there is no need to use ``sudo`` or install additional fixes, simply access the Python module namespace for ``pip``::
-
-    $ python -m pip install --user ansible
->>>>>>> 39fef58bea... Add note that devel branch should not be used in real environments (#67483)
 
 Or if you are looking for the development version::
 
