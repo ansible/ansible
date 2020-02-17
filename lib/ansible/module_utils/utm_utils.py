@@ -55,7 +55,7 @@ class UTMModule(AnsibleModule):
     See the other modules like utm_aaa_group for example.
     """
 
-    def __init__(self, argument_spec, bypass_checks=False, no_log=False, check_invalid_arguments=None,
+    def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  mutually_exclusive=None, required_together=None, required_one_of=None, add_file_common_args=False,
                  supports_check_mode=False, required_if=None):
         default_specs = dict(
@@ -68,7 +68,7 @@ class UTMModule(AnsibleModule):
             state=dict(default='present', choices=['present', 'absent'])
         )
         super(UTMModule, self).__init__(self._merge_specs(default_specs, argument_spec), bypass_checks, no_log,
-                                        check_invalid_arguments, mutually_exclusive, required_together, required_one_of,
+                                        mutually_exclusive, required_together, required_one_of,
                                         add_file_common_args, supports_check_mode, required_if)
 
     def _merge_specs(self, default_specs, custom_specs):

@@ -4,4 +4,5 @@ ec2_ami_image:
   us-east-2: ami-c5062ba0
 
 tg_name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-tg"
+tg_tcpudp_name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-tgtcpudp"
 lb_name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-lb"

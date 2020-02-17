@@ -1,0 +1,42 @@
+---
+- name: get user domain split for ansible_user
+  win_shell: |
+    $account = New-Object -TypeName System.Security.Principal.NTAccount -ArgumentList '{{ ansible_user }}'
+    $sid = $account.Translate([System.Security.Principal.SecurityIdentifier])
+    $sid.Translate([System.Security.Principal.NTAccount]).Value -split '{{ "\\" }}'
+  changed_when: False
+  register: test_user_split
+
+- set_fact:
+    test_domain: '{{ test_user_split.stdout_lines[0] }}'
+    test_user: '{{ test_user_split.stdout_lines[1] }}'
+
+- name: ensure auto logon is cleared before test
+  win_auto_logon:
+    state: absent
+
+- name: ensure defaults are set
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+    name: '{{ item.name }}'
+    data: '{{ item.value }}'
+    type: '{{ item.type }}'
+    state: present
+  loop:
+  # We set the DefaultPassword to ensure win_auto_logon clears this out
+  - name: DefaultPassword
+    value: abc
+    type: string
+  # Ensures the host we test on has a baseline key to check against
+  - name: AutoAdminLogon
+    value: 0
+    type: dword
+
+- block:
+  - name: run tests
+    include_tasks: tests.yml
+
+  always:
+  - name: make sure the auto logon is cleared
+    win_auto_logon:
+      state: absent

@@ -115,7 +115,7 @@ def list_no_log_values(argument_spec, params):
     return no_log_values
 
 
-def list_deprecations(argument_spec, params):
+def list_deprecations(argument_spec, params, prefix=''):
     """Return a list of deprecations
 
     :arg argument_spec: An argument spec dictionary from a module
@@ -129,11 +129,26 @@ def list_deprecations(argument_spec, params):
 
     deprecations = []
     for arg_name, arg_opts in argument_spec.items():
-        if arg_opts.get('removed_in_version') is not None and arg_name in params:
-            deprecations.append({
-                'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
-                'version': arg_opts.get('removed_in_version')
-            })
+        if arg_name in params:
+            if prefix:
+                sub_prefix = '%s["%s"]' % (prefix, arg_name)
+            else:
+                sub_prefix = arg_name
+            if arg_opts.get('removed_in_version') is not None:
+                deprecations.append({
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
+                    'version': arg_opts.get('removed_in_version')
+                })
+            # Check sub-argument spec
+            sub_argument_spec = arg_opts.get('options')
+            if sub_argument_spec is not None:
+                sub_arguments = params[arg_name]
+                if isinstance(sub_arguments, Mapping):
+                    sub_arguments = [sub_arguments]
+                if isinstance(sub_arguments, list):
+                    for sub_params in sub_arguments:
+                        if isinstance(sub_params, Mapping):
+                            deprecations.extend(list_deprecations(sub_argument_spec, sub_params, prefix=sub_prefix))
 
     return deprecations
 

@@ -114,7 +114,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: vm
+    folder: "{{ f0 }}"
     name: test_vm3
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"

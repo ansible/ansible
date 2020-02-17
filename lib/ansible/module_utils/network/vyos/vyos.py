@@ -44,7 +44,7 @@ vyos_provider_spec = {
     'timeout': dict(type='int'),
 }
 vyos_argument_spec = {
-    'provider': dict(type='dict', options=vyos_provider_spec),
+    'provider': dict(type='dict', options=vyos_provider_spec, removed_in_version=2.14),
 }
 
 

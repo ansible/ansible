@@ -48,6 +48,7 @@ class TerminalModule(TerminalBase):
         re.compile(br"unknown command"),
         re.compile(br"user not present"),
         re.compile(br"invalid (.+?)at '\^' marker", re.I),
+        re.compile(br"configuration not allowed .+ at '\^' marker"),
         re.compile(br"[B|b]aud rate of console should be.* (\d*) to increase [a-z]* level", re.I),
     ]
 

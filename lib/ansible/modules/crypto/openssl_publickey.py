@@ -58,8 +58,16 @@ options:
     privatekey_path:
         description:
             - Path to the TLS/SSL private key from which to generate the public key.
+            - Either I(privatekey_path) or I(privatekey_content) must be specified, but not both.
+              If I(state) is C(present), one of them is required.
         type: path
-        required: true
+    privatekey_content:
+        description:
+            - The content of the TLS/SSL private key from which to generate the public key.
+            - Either I(privatekey_path) or I(privatekey_content) must be specified, but not both.
+              If I(state) is C(present), one of them is required.
+        type: str
+        version_added: "2.10"
     privatekey_passphrase:
         description:
             - The passphrase for the private key.
@@ -82,6 +90,12 @@ options:
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
         version_added: "2.9"
+    return_content:
+        description:
+            - If set to C(yes), will return the (current or generated) public key's content as I(publickey).
+        type: bool
+        default: no
+        version_added: "2.10"
 extends_documentation_fragment:
 - files
 seealso:
@@ -97,6 +111,11 @@ EXAMPLES = r'''
   openssl_publickey:
     path: /etc/ssl/public/ansible.com.pem
     privatekey_path: /etc/ssl/private/ansible.com.pem
+
+- name: Generate an OpenSSL public key in PEM format from an inline key
+  openssl_publickey:
+    path: /etc/ssl/public/ansible.com.pem
+    privatekey_content: "{{ private_key_content }}"
 
 - name: Generate an OpenSSL public key in OpenSSH v2 format
   openssl_publickey:
@@ -119,13 +138,14 @@ EXAMPLES = r'''
 - name: Remove an OpenSSL public key
   openssl_publickey:
     path: /etc/ssl/public/ansible.com.pem
-    privatekey_path: /etc/ssl/private/ansible.com.pem
     state: absent
 '''
 
 RETURN = r'''
 privatekey:
-    description: Path to the TLS/SSL private key the public key was generated from.
+    description:
+    - Path to the TLS/SSL private key the public key was generated from.
+    - Will be C(none) if the private key has been provided in I(privatekey_content).
     returned: changed or success
     type: str
     sample: /etc/ssl/private/ansible.com.pem
@@ -157,6 +177,11 @@ backup_file:
     returned: changed and if I(backup) is C(yes)
     type: str
     sample: /path/to/publickey.pem.2019-03-09@11:22~
+publickey:
+    description: The (current or generated) public key's content.
+    returned: if I(state) is C(present) and I(return_content) is C(yes)
+    type: str
+    version_added: "2.10"
 '''
 
 import os
@@ -191,7 +216,7 @@ else:
     CRYPTOGRAPHY_FOUND = True
 
 from ansible.module_utils import crypto as crypto_utils
-from ansible.module_utils._text import to_native, to_bytes
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
@@ -210,8 +235,13 @@ class PublicKey(crypto_utils.OpenSSLObject):
         )
         self.format = module.params['format']
         self.privatekey_path = module.params['privatekey_path']
+        self.privatekey_content = module.params['privatekey_content']
+        if self.privatekey_content is not None:
+            self.privatekey_content = self.privatekey_content.encode('utf-8')
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.privatekey = None
+        self.publickey_bytes = None
+        self.return_content = module.params['return_content']
         self.fingerprint = {}
         self.backend = backend
 
@@ -220,8 +250,9 @@ class PublicKey(crypto_utils.OpenSSLObject):
 
     def _create_publickey(self, module):
         self.privatekey = crypto_utils.load_privatekey(
-            self.privatekey_path,
-            self.privatekey_passphrase,
+            path=self.privatekey_path,
+            content=self.privatekey_content,
+            passphrase=self.privatekey_passphrase,
             backend=self.backend
         )
         if self.backend == 'cryptography':
@@ -244,7 +275,7 @@ class PublicKey(crypto_utils.OpenSSLObject):
     def generate(self, module):
         """Generate the public key."""
 
-        if not os.path.exists(self.privatekey_path):
+        if self.privatekey_content is None and not os.path.exists(self.privatekey_path):
             raise PublicKeyError(
                 'The private key %s does not exist' % self.privatekey_path
             )
@@ -252,6 +283,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
         if not self.check(module, perms_required=False) or self.force:
             try:
                 publickey_content = self._create_publickey(module)
+                if self.return_content:
+                    self.publickey_bytes = publickey_content
 
                 if self.backup:
                     self.backup_file = module.backup_local(self.path)
@@ -264,8 +297,10 @@ class PublicKey(crypto_utils.OpenSSLObject):
                 raise PublicKeyError(exc)
 
         self.fingerprint = crypto_utils.get_fingerprint(
-            self.privatekey_path,
-            self.privatekey_passphrase
+            path=self.privatekey_path,
+            content=self.privatekey_content,
+            passphrase=self.privatekey_passphrase,
+            backend=self.backend,
         )
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
@@ -277,12 +312,14 @@ class PublicKey(crypto_utils.OpenSSLObject):
         state_and_perms = super(PublicKey, self).check(module, perms_required)
 
         def _check_privatekey():
-            if not os.path.exists(self.privatekey_path):
+            if self.privatekey_content is None and not os.path.exists(self.privatekey_path):
                 return False
 
             try:
                 with open(self.path, 'rb') as public_key_fh:
                     publickey_content = public_key_fh.read()
+                if self.return_content:
+                    self.publickey_bytes = publickey_content
                 if self.backend == 'cryptography':
                     if self.format == 'OpenSSH':
                         # Read and dump public key. Makes sure that the comment is stripped off.
@@ -334,6 +371,10 @@ class PublicKey(crypto_utils.OpenSSLObject):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
+        if self.return_content:
+            if self.publickey_bytes is None:
+                self.publickey_bytes = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
+            result['publickey'] = self.publickey_bytes.decode('utf-8') if self.publickey_bytes else None
 
         return result
 
@@ -346,14 +387,19 @@ def main():
             force=dict(type='bool', default=False),
             path=dict(type='path', required=True),
             privatekey_path=dict(type='path'),
+            privatekey_content=dict(type='str'),
             format=dict(type='str', default='PEM', choices=['OpenSSH', 'PEM']),
             privatekey_passphrase=dict(type='str', no_log=True),
             backup=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', choices=['auto', 'pyopenssl', 'cryptography'], default='auto'),
+            return_content=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
-        required_if=[('state', 'present', ['privatekey_path'])],
+        required_if=[('state', 'present', ['privatekey_path', 'privatekey_content'], True)],
+        mutually_exclusive=(
+            ['privatekey_path', 'privatekey_content'],
+        ),
     )
 
     minimal_cryptography_version = MINIMAL_CRYPTOGRAPHY_VERSION

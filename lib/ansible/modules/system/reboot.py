@@ -65,6 +65,14 @@ options:
     type: list
     default: ['/sbin', '/usr/sbin', '/usr/local/sbin']
     version_added: '2.8'
+
+  boot_time_command:
+    description:
+      - Command to run that returns a unique string indicating the last time the system was booted.
+      - Setting this to a command that has different output each time it is run will cause the task to fail.
+    type: str
+    default: 'cat /proc/sys/kernel/random/boot_id'
+    version_added: '2.10'
 seealso:
 - module: win_reboot
 author:
@@ -79,6 +87,11 @@ EXAMPLES = r'''
 - name: Reboot a slow machine that might have lots of updates to apply
   reboot:
     reboot_timeout: 3600
+
+- name: Reboot a machine with shutdown command in unusual place
+  reboot:
+    search_paths:
+     - '/lib/molly-guard'
 '''
 
 RETURN = r'''

@@ -86,16 +86,19 @@ options:
         s=source, d=databases, u=users.
         This option is deprecated since 2.9 and will be removed in 2.11.
         Sortorder is now hardcoded to sdu.
+    type: str
     default: sdu
     choices: [ sdu, sud, dsu, dus, usd, uds ]
   state:
     description:
       - The lines will be added/modified when C(state=present) and removed when C(state=absent).
+    type: str
     default: present
     choices: [ absent, present ]
   users:
     description:
       - Users this line applies to.
+    type: str
     default: all
 
 notes:
@@ -191,12 +194,8 @@ import traceback
 IPADDRESS_IMP_ERR = None
 try:
     import ipaddress
-    HAS_IPADDRESS = True
 except ImportError:
     IPADDRESS_IMP_ERR = traceback.format_exc()
-    HAS_IPADDRESS = False
-else:
-    HAS_IPADDRESS = True
 
 import tempfile
 import shutil
@@ -667,6 +666,7 @@ def main():
     argument_spec = dict()
     argument_spec.update(
         address=dict(type='str', default='samehost', aliases=['source', 'src']),
+        backup=dict(type='bool', default=False),
         backup_file=dict(type='str'),
         contype=dict(type='str', default=None, choices=PG_HBA_TYPES),
         create=dict(type='bool', default=False),
@@ -684,8 +684,8 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True
     )
-    if not HAS_IPADDRESS:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=IPADDRESS_IMP_ERR)
+    if IPADDRESS_IMP_ERR is not None:
+        module.fail_json(msg=missing_required_lib('ipaddress'), exception=IPADDRESS_IMP_ERR)
 
     contype = module.params["contype"]
     create = bool(module.params["create"] or module.check_mode)
@@ -741,7 +741,7 @@ def main():
                 if pg_hba.last_backup:
                     ret['backup_file'] = pg_hba.last_backup
 
-    ret['pg_hba'] = [rule for rule in pg_hba.get_rules()]
+    ret['pg_hba'] = list(pg_hba.get_rules())
     module.exit_json(**ret)
 
 

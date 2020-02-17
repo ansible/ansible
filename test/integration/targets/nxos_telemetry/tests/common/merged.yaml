@@ -44,8 +44,8 @@
           - { id: 10, destination: {ip: 192.168.0.1, port: 50001, protocol: Grpc, encoding: gPB}}
           - { id: 10, destination: {ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: gpb}}
         sensor_groups:
-          - { id: 8, data_source: NX-API, path: {name: sys/bgp, depth: 0, query_condition: foo, filter_condition: foo}}
-          - { id: 2, data_source: NX-API, path: {name: sys/bgp/inst, depth: unbounded, query_condition: foo, filter_condition: foo}}
+          - { id: 8, data_source: NX-API, path: {name: '"show bgp l2vpn evpn summary"', depth: 0, query_condition: foo, filter_condition: foo}}
+          - { id: 2, data_source: NX-API, path: {name: '"show ip bgp neighbors"', depth: unbounded, query_condition: foo, filter_condition: foo}}
           - { id: 55, data_source: DME, path: {name: 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]', depth: 0, query_condition: foo, filter_condition: foo}}
           - { id: 55, data_source: DME, path: {name: sys/ospf, depth: 0, query_condition: foo, filter_condition: 'or(eq(ethpmPhysIf.operSt,"down"),eq(ethpmPhysIf.operSt,"up"))'}}
         subscriptions:
@@ -72,10 +72,10 @@
         - "'ip address 192.168.0.2 port 60001 protocol grpc encoding gpb' in result.commands"
         - "'sensor-group 8' in result.commands"
         - "'data-source NX-API' in result.commands"
-        - "'path sys/bgp depth 0 query-condition foo filter-condition foo' in result.commands"
+        - result.commands is search("path .*show bgp l2vpn evpn summary.* depth 0 query-condition foo filter-condition foo")
         - "'sensor-group 2' in result.commands"
         - "'data-source NX-API' in result.commands"
-        - "'path sys/bgp/inst depth unbounded query-condition foo filter-condition foo' in result.commands"
+        - result.commands is search("path .*show ip bgp neighbors.* depth unbounded query-condition foo filter-condition foo")
         - "'sensor-group 55' in result.commands"
         - "'data-source DME' in result.commands"
         - "'path sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11] depth 0 query-condition foo filter-condition foo' in result.commands"
@@ -137,8 +137,8 @@
           - { id: 10, destination: {ip: 192.168.0.1, port: 50001, protocol: Grpc, encoding: gPB}}
           - { id: 10, destination: {ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: gpb}}
         sensor_groups:
-          - { id: 8, data_source: NX-API, path: {name: sys/bgp, depth: 0, query_condition: foo, filter_condition: foo}}
-          - { id: 2, data_source: NX-API, path: {name: sys/bgp/inst, depth: unbounded, query_condition: foo, filter_condition: foo}}
+          - { id: 8, data_source: NX-API, path: {name: '"show bgp l2vpn evpn summary"', depth: 0, query_condition: foo, filter_condition: foo}}
+          - { id: 2, data_source: NX-API, path: {name: '"show ip bgp neighbors"', depth: unbounded, query_condition: foo, filter_condition: foo}}
           - { id: 55, data_source: DME, path: {name: 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]', depth: 0, query_condition: foo, filter_condition: foo}}
           - { id: 55, data_source: DME, path: {name: sys/ospf, depth: 0, query_condition: foo, filter_condition: 'or(eq(ethpmPhysIf.operSt,"down"),eq(ethpmPhysIf.operSt,"up"))'}}
         subscriptions:

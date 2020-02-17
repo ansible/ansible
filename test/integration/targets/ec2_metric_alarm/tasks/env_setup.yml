@@ -1,0 +1,62 @@
+- name: Create VPC for use in testing
+  ec2_vpc_net:
+    name: "{{ resource_prefix }}-vpc"
+    cidr_block: 10.22.32.0/23
+    tags:
+      Name: Ansible ec2_instance Testing VPC
+    tenancy: default
+  register: testing_vpc
+
+- name: Create internet gateway for use in testing
+  ec2_vpc_igw:
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    state: present
+  register: igw
+
+- name: Create default subnet in zone A
+  ec2_vpc_subnet:
+    state: present
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    cidr: 10.22.32.0/24
+    az: "{{ aws_region }}a"
+    resource_tags:
+      Name: "{{ resource_prefix }}-subnet-a"
+  register: testing_subnet_a
+
+- name: Create secondary subnet in zone B
+  ec2_vpc_subnet:
+    state: present
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    cidr: 10.22.33.0/24
+    az: "{{ aws_region }}b"
+    resource_tags:
+      Name: "{{ resource_prefix }}-subnet-b"
+  register: testing_subnet_b
+
+- name: create routing rules
+  ec2_vpc_route_table:
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    tags:
+      created: "{{ resource_prefix }}-route"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ igw.gateway_id }}"
+    subnets:
+      - "{{ testing_subnet_a.subnet.id }}"
+      - "{{ testing_subnet_b.subnet.id }}"
+
+- name: create a security group with the vpc
+  ec2_group:
+    name: "{{ resource_prefix }}-sg"
+    description: a security group for ansible tests
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+  register: sg

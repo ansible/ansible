@@ -24,7 +24,6 @@ options:
   state:
     description:
       - Specifies the action to take.
-    required: true
     choices: [ 'present', 'absent' ]
     type: str
     default: 'present'
@@ -72,7 +71,6 @@ options:
       - The number of seconds between the time that Amazon Route 53 gets a
         response from your endpoint and the time that it sends the next
         health-check request.
-    required: true
     default: 30
     choices: [ 10, 30 ]
     type: int
@@ -81,7 +79,6 @@ options:
       - The number of consecutive health checks that an endpoint must pass or
         fail for Amazon Route 53 to change the current status of the endpoint
         from unhealthy to healthy or vice versa.
-    required: true
     default: 3
     choices: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
     type: int

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: lambda_alias
-short_description: Creates, updates or deletes AWS Lambda function aliases.
+short_description: Creates, updates or deletes AWS Lambda function aliases
 description:
     - This module allows the management of AWS Lambda functions aliases via the Ansible
       framework.  It is idempotent and supports "Check" mode.    Use module M(lambda) to manage the lambda function
@@ -32,7 +32,6 @@ options:
   state:
     description:
       - Describes the desired state.
-    required: true
     default: "present"
     choices: ["present", "absent"]
     type: str
@@ -45,13 +44,11 @@ options:
   description:
     description:
       - A short, user-defined function alias description.
-    required: false
     type: str
   function_version:
     description:
       -  Version associated with the Lambda function alias.
          A value of 0 (or omitted parameter) sets the alias to the $LATEST version.
-    required: false
     aliases: ['version']
     type: int
 requirements:

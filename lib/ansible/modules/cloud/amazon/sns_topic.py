@@ -264,12 +264,12 @@ class SnsTopicManager(object):
         paginator = self.connection.get_paginator('list_topics')
         return paginator.paginate().build_full_result()['Topics']
 
-    @AWSRetry.jittered_backoff()
+    @AWSRetry.jittered_backoff(catch_extra_error_codes=['NotFound'])
     def _list_topic_subscriptions_with_backoff(self):
         paginator = self.connection.get_paginator('list_subscriptions_by_topic')
         return paginator.paginate(TopicArn=self.topic_arn).build_full_result()['Subscriptions']
 
-    @AWSRetry.jittered_backoff()
+    @AWSRetry.jittered_backoff(catch_extra_error_codes=['NotFound'])
     def _list_subscriptions_with_backoff(self):
         paginator = self.connection.get_paginator('list_subscriptions')
         return paginator.paginate().build_full_result()['Subscriptions']

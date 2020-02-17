@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - vmware_export_ovf - timeout value is actually in seconds, not minutes
+  - vmware_export_ovf - increase default timeout to 30s

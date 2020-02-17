@@ -1241,6 +1241,18 @@ EXAMPLES = '''
     snapshot_name: myvm_snap
     name: myvm_clone
     state: present
+
+- name: Import external ova VM
+  ovirt_vm:
+    cluster: mycluster
+    name: myvm
+    host: myhost
+    timeout: 1800
+    poll_interval: 30
+    kvm:
+      name: myvm
+      url: ova:///path/myvm.ova
+      storage_domain: mystorage
 '''
 
 
@@ -1301,30 +1313,31 @@ class VmsModule(BaseModule):
         """
         template = None
         templates_service = self._connection.system_service().templates_service()
-        if self.param('template'):
-            clusters_service = self._connection.system_service().clusters_service()
-            cluster = search_by_name(clusters_service, self.param('cluster'))
-            data_center = self._connection.follow_link(cluster.data_center)
-            templates = templates_service.list(
-                search='name=%s and datacenter=%s' % (self.param('template'), data_center.name)
-            )
-            if self.param('template_version'):
-                templates = [
-                    t for t in templates
-                    if t.version.version_number == self.param('template_version')
-                ]
-            if not templates:
-                raise ValueError(
-                    "Template with name '%s' and version '%s' in data center '%s' was not found'" % (
-                        self.param('template'),
-                        self.param('template_version'),
-                        data_center.name
-                    )
+        if self._is_new:
+            if self.param('template'):
+                clusters_service = self._connection.system_service().clusters_service()
+                cluster = search_by_name(clusters_service, self.param('cluster'))
+                data_center = self._connection.follow_link(cluster.data_center)
+                templates = templates_service.list(
+                    search='name=%s and datacenter=%s' % (self.param('template'), data_center.name)
                 )
-            template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
-        elif self._is_new:
-            # If template isn't specified and VM is about to be created specify default template:
-            template = templates_service.template_service('00000000-0000-0000-0000-000000000000').get()
+                if self.param('template_version'):
+                    templates = [
+                        t for t in templates
+                        if t.version.version_number == self.param('template_version')
+                    ]
+                if not templates:
+                    raise ValueError(
+                        "Template with name '%s' and version '%s' in data center '%s' was not found'" % (
+                            self.param('template'),
+                            self.param('template_version'),
+                            data_center.name
+                        )
+                    )
+                template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
+            else:
+                # If template isn't specified and VM is about to be created specify default template:
+                template = templates_service.template_service('00000000-0000-0000-0000-000000000000').get()
 
         return template
 

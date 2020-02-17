@@ -24,23 +24,10 @@
     - stat_file.stat.isshared == False
     - stat_file.stat.lastaccesstime == 1477984205
     - stat_file.stat.lastwritetime == 1477984205
-    - stat_file.stat.md5 is not defined
     - stat_file.stat.nlink == 1
     - stat_file.stat.owner == 'BUILTIN\Administrators'
     - stat_file.stat.path == win_stat_dir + '\\nested\\file.ps1'
     - stat_file.stat.size == 3
-
-# get_md5 will be undocumented in 2.9, remove this test then
-- name: test win_stat module on file with md5
-  win_stat:
-    path: '{{win_stat_dir}}\nested\file.ps1'
-    get_md5: True
-  register: stat_file_md5
-
-- name: check actual for file without md5
-  assert:
-    that:
-    - stat_file_md5.stat.checksum == 'a9993e364706816aba3e25717850c26c9cd0d89d'
 
 - name: test win_stat module on file with sha256
   win_stat:
@@ -100,7 +87,6 @@
     - stat_file_hidden.stat.isshared == False
     - stat_file_hidden.stat.lastaccesstime == 1477984205
     - stat_file_hidden.stat.lastwritetime == 1477984205
-    - stat_file_hidden.stat.md5 is not defined
     - stat_file_hidden.stat.nlink == 1
     - stat_file_hidden.stat.owner == 'BUILTIN\Administrators'
     - stat_file_hidden.stat.path == win_stat_dir + '\\nested\\hidden.ps1'
@@ -131,7 +117,6 @@
     - stat_readonly.stat.isshared == False
     - stat_readonly.stat.lastaccesstime == 1477984205
     - stat_readonly.stat.lastwritetime == 1477984205
-    - stat_readonly.stat.md5 is not defined
     - stat_readonly.stat.nlink == 1
     - stat_readonly.stat.owner == 'BUILTIN\Administrators'
     - stat_readonly.stat.path == win_stat_dir + '\\nested\\read-only.ps1'
@@ -162,7 +147,6 @@
     - stat_hard_link.stat.isshared == False
     - stat_hard_link.stat.lastaccesstime == 1477984205
     - stat_hard_link.stat.lastwritetime == 1477984205
-    - stat_hard_link.stat.md5 is not defined
     - stat_hard_link.stat.nlink == 2
     - stat_hard_link.stat.owner == 'BUILTIN\Administrators'
     - stat_hard_link.stat.path == win_stat_dir + '\\nested\\hard-link.ps1'
@@ -193,7 +177,6 @@
     - stat_directory.stat.isshared == False
     - stat_directory.stat.lastaccesstime == 1477984205
     - stat_directory.stat.lastwritetime == 1477984205
-    - stat_directory.stat.md5 is not defined
     - stat_directory.stat.nlink == 1
     - stat_directory.stat.owner == 'BUILTIN\Administrators'
     - stat_directory.stat.path == win_stat_dir + '\\nested'
@@ -224,7 +207,6 @@
     - stat_directory_empty.stat.isshared == False
     - stat_directory_empty.stat.lastaccesstime == 1477984205
     - stat_directory_empty.stat.lastwritetime == 1477984205
-    - stat_directory_empty.stat.md5 is not defined
     - stat_directory_empty.stat.nlink == 1
     - stat_directory_empty.stat.owner == 'BUILTIN\Administrators'
     - stat_directory_empty.stat.path == win_stat_dir + '\\folder'
@@ -255,7 +237,6 @@
     - stat_directory_space.stat.isshared == False
     - stat_directory_space.stat.lastaccesstime == 1477984205
     - stat_directory_space.stat.lastwritetime == 1477984205
-    - stat_directory_space.stat.md5 is not defined
     - stat_directory_space.stat.nlink == 1
     - stat_directory_space.stat.owner == 'BUILTIN\Administrators'
     - stat_directory_space.stat.path == win_stat_dir + '\\folder space'
@@ -286,7 +267,6 @@
     - stat_hidden.stat.isshared == False
     - stat_hidden.stat.lastaccesstime == 1477984205
     - stat_hidden.stat.lastwritetime == 1477984205
-    - stat_hidden.stat.md5 is not defined
     - stat_hidden.stat.nlink == 1
     - stat_hidden.stat.owner == 'BUILTIN\Administrators'
     - stat_hidden.stat.path == win_stat_dir + '\\hidden'
@@ -317,7 +297,6 @@
     - stat_shared.stat.isshared == True
     - stat_shared.stat.lastaccesstime == 1477984205
     - stat_shared.stat.lastwritetime == 1477984205
-    - stat_shared.stat.md5 is not defined
     - stat_shared.stat.nlink == 1
     - stat_shared.stat.owner == 'BUILTIN\Administrators'
     - stat_shared.stat.path == win_stat_dir + '\\shared'
@@ -353,7 +332,6 @@
     - stat_symlink.stat.owner == 'BUILTIN\\Administrators'
     - stat_symlink.stat.path == win_stat_dir + '\\link'
     - stat_symlink.stat.checksum is not defined
-    - stat_symlink.stat.md5 is not defined
 
 - name: test win_stat on file symlink
   win_stat:
@@ -382,7 +360,6 @@
     - stat_file_symlink.stat.lastwritetime is defined
     - stat_file_symlink.stat.lnk_source == win_stat_dir + '\\nested\\file.ps1'
     - stat_file_symlink.stat.lnk_target == win_stat_dir + '\\nested\\file.ps1'
-    - stat_file_symlink.stat.md5 is not defined
     - stat_file_symlink.stat.nlink == 1
     - stat_file_symlink.stat.owner == 'BUILTIN\\Administrators'
     - stat_file_symlink.stat.path == win_stat_dir + '\\file-link.txt'
@@ -413,7 +390,6 @@
     - stat_file_symlink_follow.stat.isshared == False
     - stat_file_symlink_follow.stat.lastaccesstime is defined
     - stat_file_symlink_follow.stat.lastwritetime is defined
-    - stat_file_symlink_follow.stat.md5 is not defined
     - stat_file_symlink_follow.stat.nlink == 1
     - stat_file_symlink_follow.stat.owner == 'BUILTIN\\Administrators'
     - stat_file_symlink_follow.stat.path == win_stat_dir + '\\nested\\file.ps1'
@@ -447,7 +423,6 @@
     - stat_rel_symlink.stat.owner == 'BUILTIN\\Administrators'
     - stat_rel_symlink.stat.path == win_stat_dir + '\\nested\\nested\\link-rel'
     - stat_rel_symlink.stat.checksum is not defined
-    - stat_rel_symlink.stat.md5 is not defined
 
 - name: test win_stat on relative multiple symlink with follow
   win_stat:
@@ -477,7 +452,6 @@
     - stat_symlink_follow.stat.owner == 'BUILTIN\\Administrators'
     - stat_symlink_follow.stat.path == win_stat_dir + '\\link-dest'
     - stat_symlink_follow.stat.checksum is not defined
-    - stat_symlink_follow.stat.md5 is not defined
 
 - name: test win_stat on junction
   win_stat:
@@ -574,7 +548,6 @@
 - name: get stat of pagefile
   win_stat:
     path: '{{pagefile_path.stdout_lines[0]}}'
-    get_md5: no
     get_checksum: no
   register: pagefile_stat
   when: pagefile_path.stdout_lines|count != 0
@@ -636,7 +609,6 @@
     - user_file.stat.isshared == False
     - user_file.stat.lastaccesstime == 1477984205
     - user_file.stat.lastwritetime == 1477984205
-    - user_file.stat.md5 is not defined
     - user_file.stat.nlink == 1
     - user_file.stat.owner == 'BUILTIN\\Administrators'
     - user_file.stat.path == win_stat_dir + '\\nested\\file.ps1'
@@ -672,4 +644,3 @@
     - user_symlink.stat.owner == 'BUILTIN\\Administrators'
     - user_symlink.stat.path == win_stat_dir + '\\link'
     - user_symlink.stat.checksum is not defined
-    - user_symlink.stat.md5 is not defined

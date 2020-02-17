@@ -339,7 +339,7 @@ AZURE_MIN_RELEASE = '2.0.0'
 
 class AzureRMModuleBase(object):
     def __init__(self, derived_arg_spec, bypass_checks=False, no_log=False,
-                 check_invalid_arguments=None, mutually_exclusive=None, required_together=None,
+                 mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
                  required_if=None, supports_tags=True, facts_module=False, skip_exec=False):
 
@@ -358,7 +358,6 @@ class AzureRMModuleBase(object):
         self.module = AnsibleModule(argument_spec=merged_arg_spec,
                                     bypass_checks=bypass_checks,
                                     no_log=no_log,
-                                    check_invalid_arguments=check_invalid_arguments,
                                     mutually_exclusive=mutually_exclusive,
                                     required_together=required_together,
                                     required_one_of=required_one_of,
@@ -936,7 +935,7 @@ class AzureRMModuleBase(object):
         if not self._network_client:
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2018-08-01')
+                                                            api_version='2019-06-01')
         return self._network_client
 
     @property
@@ -964,13 +963,13 @@ class AzureRMModuleBase(object):
         if not self._compute_client:
             self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2018-06-01')
+                                                            api_version='2019-07-01')
         return self._compute_client
 
     @property
     def compute_models(self):
         self.log("Getting compute models")
-        return ComputeManagementClient.models("2018-06-01")
+        return ComputeManagementClient.models("2019-07-01")
 
     @property
     def dns_client(self):

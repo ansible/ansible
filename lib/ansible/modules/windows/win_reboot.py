@@ -61,6 +61,13 @@ options:
     - Message to display to users.
     type: str
     default: Reboot initiated by Ansible
+  boot_time_command:
+    description:
+      - Command to run that returns a unique string indicating the last time the system was booted.
+      - Setting this to a command that has different output each time it is run will cause the task to fail.
+    type: str
+    default: '(Get-WmiObject -ClassName Win32_OperatingSystem).LastBootUpTime'
+    version_added: '2.10'
 notes:
 - If a shutdown was already scheduled on the system, C(win_reboot) will abort the scheduled shutdown and enforce its own shutdown.
 - Beware that when C(win_reboot) returns, the Windows system may not have settled yet and some base services could be in limbo.

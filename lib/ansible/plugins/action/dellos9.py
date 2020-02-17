@@ -38,10 +38,12 @@ class ActionModule(ActionNetworkModule):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        self._config_module = True if self._task.action == 'dellos9_config' else False
+        module_name = self._task.action.split('.')[-1]
+        self._config_module = True if module_name == 'dellos9_config' else False
         socket_path = None
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
-        if self._play_context.connection == 'network_cli':
+        if persistent_connection == 'network_cli':
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using network_cli and will be ignored')

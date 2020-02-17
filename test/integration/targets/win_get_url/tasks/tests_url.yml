@@ -205,3 +205,33 @@
     - (headers_actual.content | b64decode | from_json).headers.Testing == '123'
     - (headers_actual.content | b64decode | from_json).headers["User-Agent"] == 'badAgent'
     - (headers_actual.content | b64decode | from_json).headers.Accept == 'text/html'
+
+- name: test download follow with redirects
+  win_get_url:
+    url: https://{{ httpbin_host }}/redirect/2
+    dest: '{{ testing_dir }}\redirects.txt'
+  register: redirection
+
+- name: assert download follow with redirects
+  assert:
+    that:
+    - redirection is changed
+    - redirection.status_code == 200
+
+- name: test download follow without redirects
+  win_get_url:
+    url: https://{{ httpbin_host }}/redirect/2
+    dest: '{{ testing_dir }}\no_redirection.txt'
+    follow_redirects: none
+  register: no_redirection
+
+- name: get result of test download follow without redirects
+  slurp:
+    path: '{{ testing_dir }}\no_redirection.txt'
+  register: no_redirection_actual
+
+- name: assert test download follow without redirects
+  assert:
+    that:
+    - no_redirection is changed
+    - no_redirection.status_code == 302

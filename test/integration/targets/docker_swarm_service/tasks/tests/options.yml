@@ -909,6 +909,7 @@
       timeout: 2s
       interval: 0h0m2s3ms4us
       retries: 2
+      start_period: 20s
   register: healthcheck_1
   ignore_errors: yes
 
@@ -926,6 +927,7 @@
       timeout: 2s
       interval: 0h0m2s3ms4us
       retries: 2
+      start_period: 20s
   register: healthcheck_2
   ignore_errors: yes
 
@@ -1029,12 +1031,12 @@
     - healthcheck_7 is not changed
     - healthcheck_8 is changed
     - healthcheck_9 is not changed
-  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.6.0', '>=')
+  when: docker_api_version is version('1.29', '>=') and docker_py_version is version('2.6.0', '>=')
 - assert:
     that:
     - healthcheck_1 is failed
     - "'Minimum version required' in healthcheck_1.msg"
-  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.6.0', '<')
+  when: docker_api_version is version('1.29', '<') or docker_py_version is version('2.6.0', '<')
 
 ###################################################################
 ## hostname #######################################################

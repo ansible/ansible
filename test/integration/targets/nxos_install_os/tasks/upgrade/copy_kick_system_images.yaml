@@ -8,7 +8,6 @@
 - name: 'Remove SSH known_hosts file before scp of image file'
   nxos_command:
     commands: 'run bash rm /var/home/admin/.ssh/known_hosts'
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Copy {{ si }} to bootflash"

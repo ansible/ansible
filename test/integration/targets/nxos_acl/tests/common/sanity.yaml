@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_acl sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: time_range="ans-range"
   when: platform is not search('N35|N5K|N6K')
@@ -10,7 +8,6 @@
   nxos_acl: &remove
     name: TEST_ACL
     seq: 10
-    provider: "{{ connection }}"
     state: delete_acl
   ignore_errors: yes
 
@@ -37,7 +34,6 @@
     rst: 'enable'
     syn: 'enable'
     time_range: "{{time_range|default(omit)}}"
-    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -76,7 +72,6 @@
     rst: 'enable'
     syn: 'enable'
     time_range: "{{time_range|default(omit)}}"
-    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -94,7 +89,6 @@
     seq: 20
     action: remark
     remark: test_remark
-    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -112,7 +106,6 @@
     seq: 20
     action: remark
     remark: changed_remark
-    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -134,7 +127,6 @@
     dest: any
     fragments: enable
     precedence: network
-    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -155,7 +147,6 @@
     src: any
     dest: any
     precedence: network
-    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -178,7 +169,6 @@
     src_port1: 1200
     dest: any
     precedence: network
-    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -199,7 +189,6 @@
     src: any
     dest: any
     precedence: network
-    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -215,7 +204,6 @@
   nxos_acl: &remace30
     name: TEST_ACL
     seq: 30
-    provider: "{{ connection }}"
     state: absent
   register: result
 

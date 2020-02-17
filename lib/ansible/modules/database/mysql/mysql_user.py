@@ -60,7 +60,8 @@ options:
         exactly as returned by a C(SHOW GRANT) statement. If not followed,
         the module will always report changes. It includes grouping columns
         by permission (C(SELECT(col1,col2)) instead of C(SELECT(col1),SELECT(col2))).
-    type: str
+      - Can be passed as a dictionary (see the examples).
+    type: raw
   append_privs:
     description:
       - Append the privileges defined by priv to the existing ones for this
@@ -95,6 +96,22 @@ options:
     choices: [ always, on_create ]
     default: always
     version_added: "2.0"
+  plugin:
+    description:
+      - User's plugin to authenticate (``CREATE USER user IDENTIFIED WITH plugin``).
+    type: str
+    version_added: '2.10'
+  plugin_hash_string:
+    description:
+      - User's plugin hash string (``CREATE USER user IDENTIFIED WITH plugin AS plugin_hash_string``).
+    type: str
+    version_added: '2.10'
+  plugin_auth_string:
+    description:
+      - User's plugin auth_string (``CREATE USER user IDENTIFIED WITH plugin BY plugin_auth_string``).
+    type: str
+    version_added: '2.10'
+
 notes:
    - "MySQL server installs with default login_user of 'root' and no password. To secure this user
      as part of an idempotent playbook, you must create at least two tasks: the first must change the root user's password,
@@ -108,10 +125,14 @@ seealso:
 - name: MySQL access control and account management reference
   description: Complete reference of the MySQL access control and account management documentation.
   link: https://dev.mysql.com/doc/refman/8.0/en/access-control.html
+- name: MySQL provided privileges reference
+  description: Complete reference of the MySQL provided privileges documentation.
+  link: https://dev.mysql.com/doc/refman/8.0/en/privileges-provided.html
 
 author:
 - Jonathan Mainguy (@Jmainguy)
 - Benjamin Malynovytch (@bmalynovytch)
+- Lukasz Tomaszkiewicz (@tomaszkiewicz)
 extends_documentation_fragment: mysql
 '''
 
@@ -149,6 +170,15 @@ EXAMPLES = r'''
     password: 12345
     priv: '*.*:ALL,GRANT'
     state: present
+
+- name: Create user with password, all database privileges and 'WITH GRANT OPTION' in db1 and db2
+  mysql_user:
+    state: present
+    name: bob
+    password: 12345dd
+    priv:
+      'db1.*': 'ALL,GRANT'
+      'db2.*': 'ALL,GRANT'
 
 # Note that REQUIRESSL is a special privilege that should only apply to *.* by itself.
 - name: Modify user to require SSL connections.
@@ -202,6 +232,14 @@ EXAMPLES = r'''
     state: present
     sql_log_bin: no
 
+- name: Create user 'bob' authenticated with plugin 'AWSAuthenticationPlugin'
+  mysql_user:
+    name: bob
+    plugin: AWSAuthenticationPlugin
+    plugin_hash_string: RDS
+    priv: '*.*:ALL'
+    state: present
+
 # Example .my.cnf file for setting the root password
 # [client]
 # user=root
@@ -227,16 +265,18 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'PROCESS', 'PROXY', 'RELOAD', 'REPLICATION CLIENT',
                          'REPLICATION SLAVE', 'SHOW DATABASES', 'SHUTDOWN',
                          'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL',
-                         'CREATE ROLE', 'DROP ROLE', 'APPLICATION PASSWORD ADMIN',
-                         'AUDIT ADMIN', 'BACKUP ADMIN', 'BINLOG ADMIN',
-                         'BINLOG ENCRYPTION ADMIN', 'CONNECTION ADMIN',
-                         'ENCRYPTION KEY ADMIN', 'FIREWALL ADMIN', 'FIREWALL USER',
-                         'GROUP REPLICATION ADMIN', 'PERSIST RO VARIABLES ADMIN',
-                         'REPLICATION SLAVE ADMIN', 'RESOURCE GROUP ADMIN',
-                         'RESOURCE GROUP USER', 'ROLE ADMIN', 'SET USER ID',
-                         'SESSION VARIABLES ADMIN', 'SYSTEM VARIABLES ADMIN',
-                         'VERSION TOKEN ADMIN', 'XA RECOVER ADMIN',
-                         'LOAD FROM S3', 'SELECT INTO S3'))
+                         'CREATE ROLE', 'DROP ROLE', 'APPLICATION_PASSWORD_ADMIN',
+                         'AUDIT_ADMIN', 'BACKUP_ADMIN', 'BINLOG_ADMIN',
+                         'BINLOG_ENCRYPTION_ADMIN', 'CLONE_ADMIN', 'CONNECTION_ADMIN',
+                         'ENCRYPTION_KEY_ADMIN', 'FIREWALL_ADMIN', 'FIREWALL_USER',
+                         'GROUP_REPLICATION_ADMIN', 'INNODB_REDO_LOG_ARCHIVE',
+                         'NDB_STORED_USER', 'PERSIST_RO_VARIABLES_ADMIN',
+                         'REPLICATION_APPLIER', 'REPLICATION_SLAVE_ADMIN',
+                         'RESOURCE_GROUP_ADMIN', 'RESOURCE_GROUP_USER',
+                         'ROLE_ADMIN', 'SESSION_VARIABLES_ADMIN', 'SET_USER_ID',
+                         'SYSTEM_USER', 'SYSTEM_VARIABLES_ADMIN', 'SYSTEM_USER',
+                         'TABLE_ENCRYPTION_ADMIN', 'VERSION_TOKEN_ADMIN',
+                         'XA_RECOVER_ADMIN', 'LOAD FROM S3', 'SELECT INTO S3'))
 
 
 class InvalidPrivsError(Exception):
@@ -289,7 +329,8 @@ def user_exists(cursor, user, host, host_all):
     return count[0] > 0
 
 
-def user_add(cursor, user, host, host_all, password, encrypted, new_priv, check_mode):
+def user_add(cursor, user, host, host_all, password, encrypted,
+             plugin, plugin_hash_string, plugin_auth_string, new_priv, check_mode):
     # we cannot create users without a proper hostname
     if host_all:
         return False
@@ -301,6 +342,12 @@ def user_add(cursor, user, host, host_all, password, encrypted, new_priv, check_
         cursor.execute("CREATE USER %s@%s IDENTIFIED BY PASSWORD %s", (user, host, password))
     elif password and not encrypted:
         cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user, host, password))
+    elif plugin and plugin_hash_string:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED WITH %s AS %s", (user, host, plugin, plugin_hash_string))
+    elif plugin and plugin_auth_string:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED WITH %s BY %s", (user, host, plugin, plugin_auth_string))
+    elif plugin:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED WITH %s", (user, host, plugin))
     else:
         cursor.execute("CREATE USER %s@%s", (user, host))
     if new_priv is not None:
@@ -317,7 +364,8 @@ def is_hash(password):
     return ishash
 
 
-def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append_privs, module):
+def user_mod(cursor, user, host, host_all, password, encrypted,
+             plugin, plugin_hash_string, plugin_auth_string, new_priv, append_privs, module):
     changed = False
     msg = "User unchanged"
     grant_option = False
@@ -357,6 +405,8 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 FROM mysql.user WHERE user = %%s AND host = %%s
                 """ % (colA[0], colA[0], colB[0], colB[0]), (user, host))
             current_pass_hash = cursor.fetchone()[0]
+            if isinstance(current_pass_hash, bytes):
+                current_pass_hash = current_pass_hash.decode('ascii')
 
             if encrypted:
                 encrypted_password = password
@@ -392,6 +442,36 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                             msg = "Password forced update"
                         else:
                             raise e
+                changed = True
+
+        # Handle plugin authentication
+        if plugin:
+            cursor.execute("SELECT plugin, authentication_string FROM mysql.user "
+                           "WHERE user = %s AND host = %s", (user, host))
+            current_plugin = cursor.fetchone()
+
+            update = False
+
+            if current_plugin[0] != plugin:
+                update = True
+
+            if plugin_hash_string and current_plugin[1] != plugin_hash_string:
+                update = True
+
+            if plugin_auth_string and current_plugin[1] != plugin_auth_string:
+                # this case can cause more updates than expected,
+                # as plugin can hash auth_string in any way it wants
+                # and there's no way to figure it out for
+                # a check, so I prefer to update more often than never
+                update = True
+
+            if update:
+                if plugin_hash_string:
+                    cursor.execute("ALTER USER %s@%s IDENTIFIED WITH %s AS %s", (user, host, plugin, plugin_hash_string))
+                elif plugin_auth_string:
+                    cursor.execute("ALTER USER %s@%s IDENTIFIED WITH %s BY %s", (user, host, plugin, plugin_auth_string))
+                else:
+                    cursor.execute("ALTER USER %s@%s IDENTIFIED WITH %s", (user, host, plugin))
                 changed = True
 
         # Handle privileges
@@ -586,6 +666,20 @@ def privileges_grant(cursor, user, host, db_table, priv):
     query = ' '.join(query)
     cursor.execute(query, (user, host))
 
+
+def convert_priv_dict_to_str(priv):
+    """Converts privs dictionary to string of certain format.
+
+    Args:
+        priv (dict): Dict of privileges that needs to be converted to string.
+
+    Returns:
+        priv (str): String representation of input argument.
+    """
+    priv_list = ['%s:%s' % (key, val) for key, val in iteritems(priv)]
+
+    return '/'.join(priv_list)
+
 # ===========================================
 # Module execution.
 #
@@ -605,7 +699,7 @@ def main():
             host=dict(type='str', default='localhost'),
             host_all=dict(type="bool", default=False),
             state=dict(type='str', default='present', choices=['absent', 'present']),
-            priv=dict(type='str'),
+            priv=dict(type='raw'),
             append_privs=dict(type='bool', default=False),
             check_implicit_admin=dict(type='bool', default=False),
             update_password=dict(type='str', default='always', choices=['always', 'on_create']),
@@ -615,6 +709,9 @@ def main():
             client_cert=dict(type='path', aliases=['ssl_cert']),
             client_key=dict(type='path', aliases=['ssl_key']),
             ca_cert=dict(type='path', aliases=['ssl_ca']),
+            plugin=dict(default=None, type='str'),
+            plugin_hash_string=dict(default=None, type='str'),
+            plugin_auth_string=dict(default=None, type='str'),
         ),
         supports_check_mode=True,
     )
@@ -637,6 +734,14 @@ def main():
     ssl_ca = module.params["ca_cert"]
     db = ''
     sql_log_bin = module.params["sql_log_bin"]
+    plugin = module.params["plugin"]
+    plugin_hash_string = module.params["plugin_hash_string"]
+    plugin_auth_string = module.params["plugin_auth_string"]
+    if priv and not (isinstance(priv, str) or isinstance(priv, dict)):
+        module.fail_json(msg="priv parameter must be str or dict but %s was passed" % type(priv))
+
+    if priv and isinstance(priv, dict):
+        priv = convert_priv_dict_to_str(priv)
 
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)
@@ -645,14 +750,14 @@ def main():
     try:
         if check_implicit_admin:
             try:
-                cursor = mysql_connect(module, 'root', '', config_file, ssl_cert, ssl_key, ssl_ca, db,
-                                       connect_timeout=connect_timeout)
+                cursor, db_conn = mysql_connect(module, 'root', '', config_file, ssl_cert, ssl_key, ssl_ca, db,
+                                                connect_timeout=connect_timeout)
             except Exception:
                 pass
 
         if not cursor:
-            cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, db,
-                                   connect_timeout=connect_timeout)
+            cursor, db_conn = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, db,
+                                            connect_timeout=connect_timeout)
     except Exception as e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
                              "Exception message: %s" % (config_file, to_native(e)))
@@ -674,9 +779,13 @@ def main():
         if user_exists(cursor, user, host, host_all):
             try:
                 if update_password == 'always':
-                    changed, msg = user_mod(cursor, user, host, host_all, password, encrypted, priv, append_privs, module)
+                    changed, msg = user_mod(cursor, user, host, host_all, password, encrypted,
+                                            plugin, plugin_hash_string, plugin_auth_string,
+                                            priv, append_privs, module)
                 else:
-                    changed, msg = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module)
+                    changed, msg = user_mod(cursor, user, host, host_all, None, encrypted,
+                                            plugin, plugin_hash_string, plugin_auth_string,
+                                            priv, append_privs, module)
 
             except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
                 module.fail_json(msg=to_native(e))
@@ -684,7 +793,9 @@ def main():
             if host_all:
                 module.fail_json(msg="host_all parameter cannot be used when adding a user")
             try:
-                changed = user_add(cursor, user, host, host_all, password, encrypted, priv, module.check_mode)
+                changed = user_add(cursor, user, host, host_all, password, encrypted,
+                                   plugin, plugin_hash_string, plugin_auth_string,
+                                   priv, module.check_mode)
                 if changed:
                     msg = "User added"
 

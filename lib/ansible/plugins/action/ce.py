@@ -31,8 +31,10 @@ class ActionModule(ActionNetworkModule):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        self._config_module = True if self._task.action == 'ce_config' else False
+        module_name = self._task.action.split('.')[-1]
+        self._config_module = True if module_name == 'ce_config' else False
         socket_path = None
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
         if self._play_context.connection == 'local':
             provider = load_provider(ce_provider_spec, self._task.args)
@@ -55,7 +57,7 @@ class ActionModule(ActionNetworkModule):
                     username=pc.remote_user,
                     password=pc.password
                 )
-                if self._task.action in ['ce_netconf'] or self._task.action not in CLI_SUPPORTED_MODULES:
+                if module_name in ['ce_netconf'] or module_name not in CLI_SUPPORTED_MODULES:
                     pc.connection = 'netconf'
                 display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
                 connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
@@ -72,14 +74,14 @@ class ActionModule(ActionNetworkModule):
                 # make sure a transport value is set in args
                 self._task.args['transport'] = transport
                 self._task.args['provider'] = provider
-        elif self._play_context.connection in ('netconf', 'network_cli'):
+        elif persistent_connection in ('netconf', 'network_cli'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
                 del self._task.args['provider']
 
-            if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
-                    (self._play_context.connection == 'netconf' and self._task.action in CLI_SUPPORTED_MODULES):
+            if (persistent_connection == 'network_cli' and module_name not in CLI_SUPPORTED_MODULES) or \
+                    (persistent_connection == 'netconf' and module_name in CLI_SUPPORTED_MODULES):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module."
                         % (self._play_context.connection, self._task.action)}
 

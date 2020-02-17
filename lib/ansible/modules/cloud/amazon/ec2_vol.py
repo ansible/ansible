@@ -267,7 +267,7 @@ def get_volume(module, ec2):
     if zone:
         filters['availability_zone'] = zone
     if name:
-        filters = {'tag:Name': name}
+        filters['tag:Name'] = name
     if id:
         volume_ids = [id]
     try:

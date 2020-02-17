@@ -733,6 +733,7 @@ class PathMapper:
 
         if path.startswith('test/lib/ansible_test/config/'):
             if name.startswith('cloud-config-'):
+                # noinspection PyTypeChecker
                 cloud_target = 'cloud/%s/' % name.split('-')[2].split('.')[0]
 
                 if cloud_target in self.integration_targets_by_alias:

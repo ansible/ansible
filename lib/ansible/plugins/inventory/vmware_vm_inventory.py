@@ -163,12 +163,15 @@ class BaseVMwareInventory:
             # Disable warning shown at stdout
             requests.packages.urllib3.disable_warnings()
 
-        client = create_vsphere_client(server=self.hostname,
+        server = self.hostname
+        if self.port:
+            server += ":" + str(self.port)
+        client = create_vsphere_client(server=server,
                                        username=self.username,
                                        password=self.password,
                                        session=session)
         if client is None:
-            raise AnsibleError("Failed to login to %s using %s" % (self.hostname, self.username))
+            raise AnsibleError("Failed to login to %s using %s" % (server, self.username))
         return client
 
     def _login(self):

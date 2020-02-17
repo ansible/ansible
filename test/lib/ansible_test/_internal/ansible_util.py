@@ -27,6 +27,7 @@ from .util_common import (
 )
 
 from .config import (
+    IntegrationConfig,
     PosixIntegrationConfig,
     EnvironmentConfig,
     CommonConfig,
@@ -74,6 +75,14 @@ def ansible_environment(args, color=True, ansible_config=None):
         PAGER='/bin/cat',
         PATH=path,
     )
+
+    if isinstance(args, IntegrationConfig) and args.coverage:
+        # standard path injection is not effective for ansible-connection, instead the location must be configured
+        # ansible-connection only requires the injector for code coverage
+        # the correct python interpreter is already selected using the sys.executable used to invoke ansible
+        ansible.update(dict(
+            ANSIBLE_CONNECTION_PATH=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'injector', 'ansible-connection'),
+        ))
 
     if isinstance(args, PosixIntegrationConfig):
         ansible.update(dict(
@@ -123,14 +132,14 @@ def check_pyyaml(args, version):
     :type args: EnvironmentConfig
     :type version: str
     """
-    if version in CHECK_YAML_VERSIONS:
-        return
+    try:
+        return CHECK_YAML_VERSIONS[version]
+    except KeyError:
+        pass
 
     python = find_python(version)
-    stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'yamlcheck.py')], capture=True)
-
-    if args.explain:
-        return
+    stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'yamlcheck.py')],
+                                 capture=True, always=True)
 
     CHECK_YAML_VERSIONS[version] = result = json.loads(stdout)
 
@@ -141,3 +150,5 @@ def check_pyyaml(args, version):
         display.warning('PyYAML is not installed for interpreter: %s' % python)
     elif not cloader:
         display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python)
+
+    return result

@@ -182,7 +182,7 @@
     force_kill: yes
   register: recreate_1
 
-- name: Recreating container (created, recreate)
+- name: Recreating container (created, recreate, check mode)
   docker_container:
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
@@ -191,6 +191,17 @@
     state: present
     force_kill: yes
   register: recreate_2
+  check_mode: yes
+
+- name: Recreating container (created, recreate)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    recreate: yes
+    state: present
+    force_kill: yes
+  register: recreate_3
 
 - name: Recreating container (started)
   docker_container:
@@ -199,7 +210,19 @@
     name: "{{ cname }}"
     state: started
     force_kill: yes
-  register: recreate_3
+  register: recreate_4
+
+- name: Recreating container (started, recreate, check mode)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    recreate: yes
+    removal_wait_timeout: 10
+    state: started
+    force_kill: yes
+  register: recreate_5
+  check_mode: yes
 
 - name: Recreating container (started, recreate)
   docker_container:
@@ -207,9 +230,10 @@
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     recreate: yes
+    removal_wait_timeout: 10
     state: started
     force_kill: yes
-  register: recreate_4
+  register: recreate_6
 
 - name: cleanup
   docker_container:
@@ -219,18 +243,22 @@
   diff: no
 
 - debug: var=recreate_1
-- debug: var=recreate_2
 - debug: var=recreate_3
 - debug: var=recreate_4
+- debug: var=recreate_6
 
 - assert:
     that:
     - recreate_2 is changed
     - recreate_3 is changed
     - recreate_4 is changed
-    - recreate_1.container.Id != recreate_2.container.Id
-    - recreate_2.container.Id == recreate_3.container.Id
-    - recreate_3.container.Id != recreate_4.container.Id
+    - recreate_5 is changed
+    - recreate_6 is changed
+    - recreate_1.container.Id == recreate_2.container.Id
+    - recreate_1.container.Id != recreate_3.container.Id
+    - recreate_3.container.Id == recreate_4.container.Id
+    - recreate_4.container.Id == recreate_5.container.Id
+    - recreate_4.container.Id != recreate_6.container.Id
 
 ####################################################################
 ## Restarting ######################################################
@@ -247,7 +275,7 @@
     - /tmp/tmp
   register: restart_1
 
-- name: Restarting (restart)
+- name: Restarting (restart, check mode)
   docker_container:
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
@@ -257,6 +285,18 @@
     stop_timeout: 1
     force_kill: yes
   register: restart_2
+  check_mode: yes
+
+- name: Restarting (restart)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    restart: yes
+    state: started
+    stop_timeout: 1
+    force_kill: yes
+  register: restart_3
 
 - name: Restarting (verify volumes)
   docker_container:
@@ -267,7 +307,7 @@
     stop_timeout: 1
     volumes:
     - /tmp/tmp
-  register: restart_3
+  register: restart_4
 
 - name: cleanup
   docker_container:
@@ -280,8 +320,9 @@
     that:
     - restart_1 is changed
     - restart_2 is changed
-    - restart_1.container.Id == restart_2.container.Id
-    - restart_3 is not changed
+    - restart_3 is changed
+    - restart_1.container.Id == restart_3.container.Id
+    - restart_4 is not changed
 
 ####################################################################
 ## Stopping ########################################################

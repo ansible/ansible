@@ -16,7 +16,7 @@
 
 - name: take configure backup
   vyos_config:
-    backup: yes
+    backup: true
   register: result
 
 - assert:
@@ -44,11 +44,11 @@
 
 - name: take configuration backup in custom filename and directory path
   vyos_config:
-    backup: yes
+    backup: true
     backup_options:
       filename: backup.cfg
       dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
-  become: yes
+  become: true
   register: result
 
 - assert:
@@ -67,10 +67,10 @@
 
 - name: take configuration backup in custom filename
   vyos_config:
-    backup: yes
+    backup: true
     backup_options:
       filename: backup.cfg
-  become: yes
+  become: true
   register: result
 
 - assert:
@@ -89,10 +89,10 @@
 
 - name: take configuration backup in custom path and default filename
   vyos_config:
-    backup: yes
+    backup: true
     backup_options:
       dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
-  become: yes
+  become: true
   register: result
 
 - assert:

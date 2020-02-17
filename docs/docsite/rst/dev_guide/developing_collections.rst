@@ -171,7 +171,22 @@ TBD.
 tests directory
 ----------------
 
-TBD. Expect tests for the collection itself to reside here.
+Ansible Collections are tested much like Ansible itself, by using the
+`ansible-test` utility which is released as part of Ansible, version 2.9.0 and
+newer. Because Ansible Collections are tested using the same tooling as Ansible
+itself, via `ansible-test`, all Ansible developer documentation for testing is
+applicable for authoring Collections Tests with one key concept to keep in mind.
+
+When reading the :ref:`developing_testing` documentation, there will be content
+that applies to running Ansible from source code via a git clone, which is
+typical of an Ansible developer. However, it's not always typical for an Ansible
+Collection author to be running Ansible from source but instead from a stable
+release, and to create Collections it is not necessary to run Ansible from
+source. Therefore, when references of dealing with `ansible-test` binary paths,
+command completion, or environment variables are presented throughout the
+:ref:`developing_testing` documentation; keep in mind that it is not needed for
+Ansible Collection Testing because the act of installing the stable release of
+Ansible containing `ansible-test` is expected to setup those things for you.
 
 
 .. _creating_collections:
@@ -211,6 +226,29 @@ To start a new collection:
 Then you can populate the directories with the content you want inside the collection. See
 https://github.com/bcoca/collection to get a better idea of what you can place inside a collection.
 
+
+.. _docfragments_collections:
+
+Using documentation fragments in collections
+--------------------------------------------
+
+To include documentation fragments in your collection:
+
+#. Create the documentation fragment: ``plugins/doc_fragments/fragment_name``.
+
+#. Refer to the documentation fragment with its FQCN.
+
+.. code-block:: yaml
+
+   extends_documentation_fragment:
+     - community.kubernetes.k8s_name_options
+     - community.kubernetes.k8s_auth_options
+     - community.kubernetes.k8s_resource_options
+     - community.kubernetes.k8s_scale_options
+
+:ref:`module_docs_fragments` covers the basics for documentation fragments. The `kubernetes <https://github.com/ansible-collections/kubernetes>`_ collection includes a complete example.
+
+You can also share documentation fragments across collections with the FQCN.
 
 .. _building_collections:
 
@@ -307,15 +345,50 @@ You can publish collections to Galaxy using the ``ansible-galaxy collection publ
 
 .. _galaxy_get_token:
 
-Getting your token or API key
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Getting your API token
+^^^^^^^^^^^^^^^^^^^^^^
 
-To upload your collection to Galaxy, you must first obtain an API token (``--api-key`` in the ``ansible-galaxy`` CLI command). The API token is a secret token used to protect your content.
+To upload your collection to Galaxy, you must first obtain an API token (``--token`` in the ``ansible-galaxy`` CLI command or ``token`` in the :file:`ansible.cfg` file under the ``galaxy_server`` section). The API token is a secret token used to protect your content.
 
 To get your API token:
 
-* For galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API token`.
-* For Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Get API token` from the version dropdown.
+* For Galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API Key`.
+* For Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Load token` from the version dropdown.
+
+Storing or using your API token
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once you have retrieved your API token, you can store or use the token for collections in two ways:
+
+* Pass the token to  the ``ansible-galaxy`` command using the ``--token``.
+* Specify the token within a Galaxy server list in your :file:`ansible.cfg` file.
+
+Using the ``token`` argument
+............................
+
+You can use the ``--token`` argument with the ``ansible-galaxy`` command (in conjunction with the ``--server`` argument or :ref:`GALAXY_SERVER` setting in your :file:`ansible.cfg` file). You cannot use ``apt-key`` with any servers defined in your :ref:`Galaxy server list <galaxy_server_config>`.
+
+.. code-block:: bash
+
+    ansible-galaxy collection publish ./geerlingguy-collection-1.2.3.tar.gz --token=<key goes here>
+
+
+Specify the token within a Galaxy server list
+.............................................
+
+With this option, you configure one or more servers for Galaxy in your :file:`ansible.cfg` file under the ``galaxy_server_list`` section. For each server, you also configure the token.
+
+
+.. code-block:: ini
+
+   [galaxy]
+   server_list = release_galaxy
+
+   [galaxy_server.release_galaxy]
+   url=https://galaxy.ansible.com/
+   token=my_token
+
+See :ref:`galaxy_server_config` for complete details.
 
 .. _upload_collection_ansible_galaxy:
 
@@ -329,14 +402,17 @@ To upload the collection artifact with the ``ansible-galaxy`` command:
 
 .. code-block:: bash
 
-     ansible-galaxy collection publish path/to/my_namespace-my_collection-1.0.0.tar.gz --api-key=SECRET
+     ansible-galaxy collection publish path/to/my_namespace-my_collection-1.0.0.tar.gz
 
-The above command triggers an import process, just as if you uploaded the collection through the Galaxy website.
+.. note::
+
+	The above command assumes you have retrieved and stored your API token as part of a Galaxy server list. See :ref:`galaxy_get_token` for details.
+
+The ``ansible-galaxy collection publish`` command triggers an import process, just as if you uploaded the collection through the Galaxy website.
 The command waits until the import process completes before reporting the status back. If you wish to continue
 without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your
 `My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
 
-The API key is a secret token used by the Galaxy server to protect your content. See :ref:`galaxy_get_token` for details.
 
 .. _upload_collection_galaxy:
 

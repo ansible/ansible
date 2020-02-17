@@ -230,7 +230,7 @@ import time
 try:
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def get_verification_attributes(connection, module, identity, retries=0, retryDelay=10):

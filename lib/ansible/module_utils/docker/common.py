@@ -517,6 +517,17 @@ class AnsibleDockerClient(Client):
                         msg = 'Cannot %s with your configuration.' % (usg, )
                     self.fail(msg)
 
+    def get_container_by_id(self, container_id):
+        try:
+            self.log("Inspecting container Id %s" % container_id)
+            result = self.inspect_container(container=container_id)
+            self.log("Completed container inspection")
+            return result
+        except NotFound as dummy:
+            return None
+        except Exception as exc:
+            self.fail("Error inspecting container: %s" % exc)
+
     def get_container(self, name=None):
         '''
         Lookup a container and return the inspection results.
@@ -546,17 +557,10 @@ class AnsibleDockerClient(Client):
         except Exception as exc:
             self.fail("Error retrieving container list: %s" % exc)
 
-        if result is not None:
-            try:
-                self.log("Inspecting container Id %s" % result['Id'])
-                result = self.inspect_container(container=result['Id'])
-                self.log("Completed container inspection")
-            except NotFound as dummy:
-                return None
-            except Exception as exc:
-                self.fail("Error inspecting container: %s" % exc)
+        if result is None:
+            return None
 
-        return result
+        return self.get_container_by_id(result['Id'])
 
     def get_network(self, name=None, network_id=None):
         '''

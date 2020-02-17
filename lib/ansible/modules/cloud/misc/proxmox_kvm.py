@@ -331,7 +331,7 @@ options:
     default: 30
   update:
     description:
-      - If C(yes), the VM will be update with new value.
+      - If C(yes), the VM will be updated with new value.
       - Cause of the operations of the API and security reasons, I have disabled the update of the following parameters
       - C(net, virtio, ide, sata, scsi). Per example updating C(net) update the MAC address and C(virtio) create always new disk...
     type: bool

@@ -185,9 +185,9 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import AWSRetry
 
 try:
-    from botocore.exceptions import BotoCoreError, ClientError, ParamValidationError
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def compare_attached_group_policies(current_attached_policies, new_attached_policies):

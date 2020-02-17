@@ -104,8 +104,8 @@ extends_documentation_fragment:
 notes:
     - If C(requestPayment), C(policy), C(tagging) or C(versioning)
       operations/API aren't implemented by the endpoint, module doesn't fail
-      if related parameters I(requester_pays), I(policy), I(tags) or
-      I(versioning) are C(None).
+      if each parameter satisfies the following condition.
+      I(requester_pays) is C(False), I(policy), I(tags), and I(versioning) are C(None).
 '''
 
 EXAMPLES = '''
@@ -247,7 +247,7 @@ def create_or_update_bucket(s3_client, module, location):
     except BotoCoreError as exp:
         module.fail_json_aws(exp, msg="Failed to get bucket request payment")
     except ClientError as exp:
-        if exp.response['Error']['Code'] != 'NotImplemented' or requester_pays is not None:
+        if exp.response['Error']['Code'] != 'NotImplemented' or requester_pays:
             module.fail_json_aws(exp, msg="Failed to get bucket request payment")
     else:
         if requester_pays:

@@ -1,8 +1,6 @@
 ---
-- name: load vars
-  include_vars:
-    file: real_lab.yml
-
+- include_tasks: teardown_with_esxi.yml
+  when: esxi_hosts|length > 0
 - include_tasks: teardown.yml
 
 - when: setup_esxi_instance is not defined

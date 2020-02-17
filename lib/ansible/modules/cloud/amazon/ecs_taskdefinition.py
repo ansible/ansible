@@ -58,9 +58,11 @@ options:
         description:
             - The Docker networking mode to use for the containers in the task.
             - C(awsvpc) mode was added in Ansible 2.5
+            - Windows containers must use I(network_mode=default), which will utilize docker NAT networking.
+            - Setting I(network_mode=default) for a Linux container will use bridge mode.
         required: false
         default: bridge
-        choices: [ 'bridge', 'host', 'none', 'awsvpc' ]
+        choices: [ 'default', 'bridge', 'host', 'none', 'awsvpc' ]
         version_added: 2.3
         type: str
     task_role_arn:
@@ -218,12 +220,11 @@ taskdefinition:
 
 try:
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils._text import to_text
 
 
@@ -233,8 +234,7 @@ class EcsTaskManager:
     def __init__(self, module):
         self.module = module
 
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        self.ecs = module.client('ecs')
 
     def describe_task(self, task_name):
         try:
@@ -267,10 +267,11 @@ class EcsTaskManager:
         params = dict(
             family=family,
             taskRoleArn=task_role_arn,
-            networkMode=network_mode,
             containerDefinitions=container_definitions,
             volumes=volumes
         )
+        if network_mode != 'default':
+            params['networkMode'] = network_mode
         if cpu:
             params['cpu'] = cpu
         if memory:
@@ -325,30 +326,26 @@ class EcsTaskManager:
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(required=True, choices=['present', 'absent']),
         arn=dict(required=False, type='str'),
         family=dict(required=False, type='str'),
         revision=dict(required=False, type='int'),
         force_create=dict(required=False, default=False, type='bool'),
         containers=dict(required=False, type='list'),
-        network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none', 'awsvpc'], type='str'),
+        network_mode=dict(required=False, default='bridge', choices=['default', 'bridge', 'host', 'none', 'awsvpc'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
         execution_role_arn=dict(required=False, default='', type='str'),
         volumes=dict(required=False, type='list'),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         cpu=dict(),
         memory=dict(required=False, type='str')
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,
                               required_if=[('launch_type', 'FARGATE', ['cpu', 'memory'])]
                               )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
 
     task_to_describe = None
     task_mgr = EcsTaskManager(module)

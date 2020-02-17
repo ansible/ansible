@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_publication - use query params arg with cursor object (https://github.com/ansible/ansible/issues/65404).

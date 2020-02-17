@@ -77,3 +77,9 @@
   assert:
     that: 5555 in ansible_facts.udp_listen | map(attribute='port') | sort | list
   when: (ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7) or ansible_os_family == "Debian"
+
+- name: kill all async commands
+  command: "kill -9 {{ item.pid }}"
+  loop: "{{ [tcp_listen, udp_listen]|flatten }}"
+  when: item.name == 'nc'
+  ignore_errors: true

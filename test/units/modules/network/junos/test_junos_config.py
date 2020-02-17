@@ -172,7 +172,6 @@ class TestJunosConfigModule(TestJunosModule):
         self.assertEqual(kwargs['format'], 'json')
 
     def test_junos_config_zeroize(self):
-        src = load_fixture('junos_config.json', content='str')
         set_module_args(dict(zeroize='yes'))
         self.execute_module(changed=True)
         self.assertEqual(self.exec_rpc.call_count, 1)

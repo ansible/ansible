@@ -1,11 +1,8 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/default_facts.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: test getting default facts
   nxos_facts:
-    provider: "{{ connection }}"
   register: result
 
 - assert:

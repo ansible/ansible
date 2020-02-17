@@ -1,13 +1,10 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vpc_interface sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - block:
   - name: enable feature vpc
     nxos_feature:
       feature: vpc
-      provider: "{{ connection }}"
       state: enabled
 
   - name: create port-channel10
@@ -16,7 +13,6 @@
         - interface port-channel10
         - switchport
       match: none
-      provider: "{{ connection }}"
 
   - name: create port-channel11
     nxos_config:
@@ -24,11 +20,9 @@
         - interface port-channel11
         - switchport
       match: none
-      provider: "{{ connection }}"
 
   - name: configure vpc
     nxos_vpc:
-      provider: "{{ connection }}"
       state: present
       domain: 100
       role_priority: 32667
@@ -42,7 +36,6 @@
     nxos_vpc_interface: &conf
       portchannel: 10
       vpc: 10
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -57,41 +50,49 @@
       that:
         - "result.changed == false"
 
+# The vpc peer-link command seems to be invalid for the NXOSv we have in Zuul CI
+# Hence, we're temporarily skipping the tests that have `peer_link` key
+
   - name: Configure vpc port channel
     nxos_vpc_interface: &conf1
       portchannel: 11
       peer_link: True
-      provider: "{{ connection }}"
     register: result
+    when: image_version != "7.0(3)I5(1)"
 
   - assert: *true
+    when: image_version != "7.0(3)I5(1)"
 
   - name: "Conf Idempotence"
     nxos_vpc_interface: *conf1
     register: result
+    when: image_version != "7.0(3)I5(1)"
 
   - assert: *false
+    when: image_version != "7.0(3)I5(1)"
 
   - name: Configure vpc port channel
     nxos_vpc_interface: &conf2
       portchannel: 11
       peer_link: False
-      provider: "{{ connection }}"
     register: result
+    when: image_version != "7.0(3)I5(1)"
 
   - assert: *true
+    when: image_version != "7.0(3)I5(1)"
 
   - name: "Conf Idempotence"
     nxos_vpc_interface: *conf2
     register: result
+    when: image_version != "7.0(3)I5(1)"
 
   - assert: *false
+    when: image_version != "7.0(3)I5(1)"
 
   - name: remove vpc port channel
     nxos_vpc_interface: &remove
       portchannel: 10
       vpc: 10
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -106,7 +107,6 @@
   always:
   - name: remove vpc
     nxos_vpc:
-      provider: "{{ connection }}"
       state: absent
       domain: 100
       role_priority: 32667
@@ -121,7 +121,6 @@
     nxos_vpc_interface:
       portchannel: 10
       vpc: 10
-      provider: "{{ connection }}"
       state: absent
     ignore_errors: yes
 
@@ -131,13 +130,11 @@
         - no interface port-channel10
         - no interface port-channel11
       match: none
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: disable feature vpc
     nxos_feature:
       feature: vpc
-      provider: "{{ connection }}"
       state: disabled
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vpc_interface sanity test"

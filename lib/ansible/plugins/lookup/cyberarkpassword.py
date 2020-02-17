@@ -121,7 +121,7 @@ class CyberarkPassword:
                 '-p', 'AppDescs.AppID=%s' % self.appid,
                 '-p', 'Query=%s' % self.query,
                 '-o', self.output,
-                '-d', self.delimiter]
+                '-d', self.b_delimiter]
             all_parms.extend(self.extra_parms)
 
             b_credential = b""

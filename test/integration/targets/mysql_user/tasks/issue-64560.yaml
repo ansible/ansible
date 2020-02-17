@@ -1,0 +1,27 @@
+---
+
+- name: Set root password
+  mysql_user:
+    name: root
+    password: '{{ root_password }}'
+    login_user: root
+    login_password: '{{ root_password }}'
+    check_implicit_admin: yes
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: assert root password is changed
+  assert: { that: "result.changed == true" }
+
+- name: Set root password again
+  mysql_user:
+    name: root
+    password: '{{ root_password }}'
+    login_user: root
+    login_password: '{{ root_password }}'
+    check_implicit_admin: yes
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: Assert root password is not changed
+  assert: { that: "result.changed == false" }

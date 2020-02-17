@@ -62,6 +62,9 @@
       - name: "Remove all ansible-test-* docker containers"
         shell: 'docker ps --no-trunc --format {% raw %}"{{.Names}}"{% endraw %} | grep "^ansible-test-" | xargs -r docker rm -f'
         register: docker_containers
+        retries: 3
+        delay: 3
+        until: docker_containers is success
 
       - name: "Remove all ansible-test-* docker volumes"
         shell: 'docker volume ls --format {% raw %}"{{.Name}}"{% endraw %} | grep "^ansible-test-" | xargs -r docker volume rm -f'

@@ -36,6 +36,7 @@ options:
     description:
         description:
             - "Description of the job."
+            - "When task with same description has already finished and you rerun taks it will create new job."
         required: true
     state:
         description:
@@ -199,7 +200,7 @@ def main():
         job = get_entity(jobs_service, module.params['description'])
         changed = False
         if state in ['present', 'started']:
-            if job is None:
+            if job is None or job.status in [otypes.JobStatus.FINISHED, otypes.JobStatus.FAILED]:
                 job = jobs_service.add(build_job(module.params['description']))
                 changed = True
             changed = attach_steps(module, job.id, jobs_service) or changed

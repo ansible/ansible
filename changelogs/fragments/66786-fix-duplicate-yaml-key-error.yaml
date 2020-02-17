@@ -1,0 +1,3 @@
+bugfixes:
+  - DUPLICATE_YAML_DICT_KEY - Fix error output when configuration option DUPLICATE_YAML_DICT_KEY is set to error
+    (https://github.com/ansible/ansible/issues/65366)

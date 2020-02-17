@@ -58,7 +58,7 @@ eos_provider_spec = {
     'transport': dict(default='cli', choices=['cli', 'eapi'])
 }
 eos_argument_spec = {
-    'provider': dict(type='dict', options=eos_provider_spec),
+    'provider': dict(type='dict', options=eos_provider_spec, removed_in_version=2.14),
 }
 
 

@@ -177,6 +177,17 @@
     - set_dhcp is changed
     - set_dhcp_actual.stdout_lines == []
 
+- name: reset IPv4 DNS back to DHCP (idempotent)
+  win_dns_client:
+    adapter_names: '{{ network_adapter_name }}'
+    ipv4_addresses: []
+  register: set_dhcp_again
+
+- name: assert reset IPv4 DNS back to DHCP (idempotent)
+  assert:
+    that:
+      - set_dhcp_again is not changed
+
 # Legacy WMI does not support setting IPv6 addresses so we can only test this on newer hosts that have the new cmdlets
 - name: check if server supports IPv6
   win_shell: if (Get-Command -Name Get-NetAdapter -ErrorAction SilentlyContinue) { $true } else { $false }

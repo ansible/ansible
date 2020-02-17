@@ -140,15 +140,13 @@ image_id:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils._text import to_native
 
 try:
     from botocore.exceptions import ClientError, NoCredentialsError, WaiterError, BotoCoreError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by AnsibleAWSModule
 
 
 def copy_image(module, ec2):
@@ -206,8 +204,7 @@ def copy_image(module, ec2):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         source_region=dict(required=True),
         source_image_id=dict(required=True),
         name=dict(default='default'),
@@ -216,7 +213,7 @@ def main():
         kms_key_id=dict(type='str', required=False),
         wait=dict(type='bool', default=False),
         wait_timeout=dict(type='int', default=600),
-        tags=dict(type='dict')),
+        tags=dict(type='dict'),
         tag_equality=dict(type='bool', default=False))
 
     module = AnsibleAWSModule(argument_spec=argument_spec)

@@ -26,16 +26,36 @@ options:
     iscsi:
         description:
             - "Dictionary with values for iSCSI storage type:"
-            - "C(address) - Address of the iSCSI storage server."
-            - "C(target) - The target IQN for the storage device."
-            - "C(username) - A CHAP user name for logging into a target."
-            - "C(password) - A CHAP password for logging into a target."
+        suboptions:
+            address:
+                description:
+                  - "Address of the iSCSI storage server."
+            target:
+                description:
+                  - "The target IQN for the storage device."
+            username:
+                description:
+                  - "A CHAP user name for logging into a target."
+            password:
+                description:
+                  - "A CHAP password for logging into a target."
+            portal:
+                description:
+                  - "The portal being used to connect with iscsi."
+                version_added: 2.10
     fcp:
         description:
             - "Dictionary with values for fibre channel storage type:"
-            - "C(address) - Address of the fibre channel storage server."
-            - "C(port) - Port of the fibre channel storage server."
-            - "C(lun_id) - LUN id."
+        suboptions:
+            address:
+                description:
+                  - "Address of the fibre channel storage server."
+            port:
+                description:
+                  - "Port of the fibre channel storage server."
+            lun_id:
+                description:
+                  - "LUN id."
 extends_documentation_fragment: ovirt_info
 '''
 
@@ -86,6 +106,7 @@ def _login(host_service, iscsi):
             password=iscsi.get('password'),
             address=iscsi.get('address'),
             target=iscsi.get('target'),
+            portal=iscsi.get('portal')
         ),
     )
 

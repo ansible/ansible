@@ -25,6 +25,7 @@ description:
     - If hostname or IP address of vCenter is provided as C(hostname) and C(esxi_hostname) is not specified, then the
       module will throw an error.
     - VSAN facts added in 2.7 version.
+    - SYSTEM fact uuid added in 2.10 version.
 version_added: 2.5
 author:
     - Wei Gao (@woshihaoren)
@@ -125,6 +126,36 @@ EXAMPLES = r'''
       - config.product.apiVersion
       - overallStatus
   register: host_facts
+
+- name: How to retrieve Product, Version, Build, Update info for ESXi from vCenter
+  block:
+    - name: Gather product version info for ESXi from vCenter
+      vmware_host_facts:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_user }}"
+        password: "{{ vcenter_pass }}"
+        validate_certs: no
+        esxi_hostname: "{{ esxi_hostname }}"
+        schema: vsphere
+        properties:
+          - config.product
+          - config.option
+      register: gather_host_facts_result
+
+    - name: Extract update level info from option properties
+      set_fact:
+        update_level_info: "{{ item.value }}"
+      loop: "{{ gather_host_facts_result.ansible_facts.config.option }}"
+      when:
+        - item.key == 'Misc.HostAgentUpdateLevel'
+
+    - name: The output of Product, Version, Build, Update info for ESXi
+      debug:
+        msg:
+          - "Product : {{ gather_host_facts_result.ansible_facts.config.product.name }}"
+          - "Version : {{ gather_host_facts_result.ansible_facts.config.product.version }}"
+          - "Build   : {{ gather_host_facts_result.ansible_facts.config.product.build }}"
+          - "Update  : {{ update_level_info }}"
 '''
 
 RETURN = r'''
@@ -165,6 +196,7 @@ ansible_facts:
         "ansible_product_serial": "NA",
         "ansible_system_vendor": "Red Hat",
         "ansible_uptime": 1791680,
+        "ansible_uuid": "4c4c4544-0052-3410-804c-b2c04f4e3632",
         "ansible_vmk0": {
             "device": "vmk0",
             "ipv4": {
@@ -322,6 +354,7 @@ class VMwareHostFactManager(PyVmomi):
             'ansible_bios_version': self.host.hardware.biosInfo.biosVersion,
             'ansible_uptime': self.host.summary.quickStats.uptime,
             'ansible_in_maintenance_mode': self.host.runtime.inMaintenanceMode,
+            'ansible_uuid': self.host.hardware.systemInfo.uuid,
         }
         return facts
 

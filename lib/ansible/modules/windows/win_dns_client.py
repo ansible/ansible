@@ -24,18 +24,21 @@ options:
     required: yes
   dns_servers:
     description:
-      - Single or ordered list of DNS servers (IPv4 and IPv6 addresses) to configure for lookup. An empty list will configure the adapter to use the
-        DHCP-assigned values on connections where DHCP is enabled, or disable DNS lookup on statically-configured connections.
+      - Single or ordered list of DNS servers (IPv4 and IPv6 addresses) to configure for lookup.
+      - An empty list will configure the adapter to use the DHCP-assigned values on connections where DHCP is enabled,
+        or disable DNS lookup on statically-configured connections.
       - IPv6 DNS servers can only be set on Windows Server 2012 or newer, older hosts can only set IPv4 addresses.
       - Before 2.10 use ipv4_addresses instead.
     type: list
     required: yes
     aliases: [ "ipv4_addresses", "ip_addresses", "addresses" ]
 notes:
-  - When setting an empty list of DNS server addresses on an adapter with DHCP enabled, a change will always be registered, since it is not possible to
-    detect the difference between a DHCP-sourced server value and one that is statically set.
+  - Before 2.10, when setting an empty list of DNS server addresses on an adapter with DHCP enabled, a change was always registered.
+  - In 2.10, DNS servers will always be reset if the format of nameservers in the registry is not comma delimited.
+    See U(https://www.welivesecurity.com/2016/06/02/crouching-tiger-hidden-dns/)
 author:
 - Matt Davis (@nitzmahone)
+- Brian Scholer (@briantist)
 '''
 
 EXAMPLES = r'''
@@ -66,5 +69,4 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-
 '''

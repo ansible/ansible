@@ -383,7 +383,7 @@ def ecs_domain_argument_spec():
     return dict(
         client_id=dict(type='int', default=1),
         domain_name=dict(type='str', required=True),
-        verification_method=dict(type='str', choices=['dns', 'email', 'manual', 'web_server']),
+        verification_method=dict(type='str', required=True, choices=['dns', 'email', 'manual', 'web_server']),
         verification_email=dict(type='str'),
     )
 

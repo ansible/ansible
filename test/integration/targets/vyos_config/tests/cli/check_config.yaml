@@ -49,11 +49,11 @@
 
 - name: check multiple line config filter is working
   vyos_config:
-      lines:
-          - set system login user esa level admin
-          - set system login user esa authentication encrypted-password '!abc!'
-          - set system login user vyos level admin
-          - set system login user vyos authentication encrypted-password 'abc'
+    lines:
+      - set system login user esa level admin
+      - set system login user esa authentication encrypted-password '!abc!'
+      - set system login user vyos level admin
+      - set system login user vyos authentication encrypted-password 'abc'
   register: result
 
 - assert:

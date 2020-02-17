@@ -88,9 +88,7 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list,
-                                      boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
-                                      ec2_argument_spec, get_aws_connection_info)
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
 
 
 def date_handler(obj):
@@ -119,12 +117,9 @@ def list_customer_gateways(connection, module):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            customer_gateway_ids=dict(default=[], type='list'),
-            filters=dict(default={}, type='dict')
-        )
+    argument_spec = dict(
+        customer_gateway_ids=dict(default=[], type='list'),
+        filters=dict(default={}, type='dict')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -133,9 +128,7 @@ def main():
     if module._module._name == 'ec2_customer_gateway_facts':
         module._module.deprecate("The 'ec2_customer_gateway_facts' module has been renamed to 'ec2_customer_gateway_info'", version='2.13')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ec2')
 
     list_customer_gateways(connection, module)
 

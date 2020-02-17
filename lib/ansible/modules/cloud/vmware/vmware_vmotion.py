@@ -338,7 +338,8 @@ class VmotionManager(PyVmomi):
             self.module.fail_json(msg="Multiple virtual machines with same name %s found."
                                       " Please specify vm_uuid instead of vm_name." % self.vm_name)
 
-        self.vm = vms[0]
+        if vms:
+            self.vm = vms[0]
 
 
 def main():

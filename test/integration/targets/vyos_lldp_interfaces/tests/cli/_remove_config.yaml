@@ -5,4 +5,4 @@
   vars:
     lines: |
       delete service lldp interface
-      delete service lldp 
+      delete service lldp

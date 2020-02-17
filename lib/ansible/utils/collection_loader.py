@@ -290,6 +290,15 @@ class AnsibleFlatMapLoader(object):
         for root, dirs, files in os.walk(root_path):
             # add all files in this dir that don't have a blacklisted extension
             flat_files.extend(((root, f) for f in files if not any((f.endswith(ext) for ext in self._extension_blacklist))))
+
+        # HACK: Put Windows modules at the end of the list. This makes collection_loader behave
+        # the same way as plugin loader, preventing '.ps1' from modules being selected before '.py'
+        # modules simply because '.ps1' files may be above '.py' files in the flat_files list.
+        #
+        # The expected sort order is paths in the order they were in 'flat_files'
+        # with paths ending in '/windows' at the end, also in the original order they were
+        # in 'flat_files'. The .sort() method is guaranteed to be stable, so original order is preserved.
+        flat_files.sort(key=lambda p: p[0].endswith('/windows'))
         self._dirtree = flat_files
 
     def find_file(self, filename):

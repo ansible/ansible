@@ -193,7 +193,7 @@ def run_module():
         connect_timeout=dict(type='int', required=False, default=1000),
         consecutive_good_checks=dict(type='int', required=False, default=3),
         sleep_between_checks=dict(type='int', required=False, default=60),
-        tries_limit=dict(type='int', requires=False, default=300),
+        tries_limit=dict(type='int', required=False, default=300),
         local_only=dict(type='bool', required=True),
         min_cluster_size=dict(type='int', required=False, default=1),
         target_cluster_size=dict(type='int', required=False, default=None),

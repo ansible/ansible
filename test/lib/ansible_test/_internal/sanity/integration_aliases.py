@@ -32,6 +32,10 @@ from ..cloud import (
     get_cloud_platforms,
 )
 
+from ..io import (
+    read_text_file,
+)
+
 from ..util import (
     display,
 )
@@ -108,8 +112,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         :rtype: list[str]
         """
         if not self._shippable_yml_lines:
-            with open(self.SHIPPABLE_YML, 'r') as shippable_yml_fd:
-                self._shippable_yml_lines = shippable_yml_fd.read().splitlines()
+            self._shippable_yml_lines = read_text_file(self.SHIPPABLE_YML).splitlines()
 
         return self._shippable_yml_lines
 

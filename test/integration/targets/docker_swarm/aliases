@@ -1,5 +1,6 @@
 shippable/posix/group2
 disabled  # See: https://github.com/ansible/ansible/issues/61815
+skip/aix
 skip/osx
 skip/freebsd
 destructive

@@ -1,17 +1,13 @@
 ---
 - debug: msg="START TRANSPORT:NXAPI nxos_lldp sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: Make sure LLDP is not running before tests
   nxos_feature:
     feature: lldp
-    provider: "{{ connection }}"
     state: disabled
 
 - name: Enable LLDP service
   nxos_lldp:
-    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -22,7 +18,6 @@
 
 - name: Enable LLDP service again (idempotent)
   nxos_lldp:
-    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -32,7 +27,6 @@
 
 - name: Disable LLDP service
   nxos_lldp:
-    provider: "{{ connection }}"
     state: absent
   register: result
 
@@ -43,7 +37,6 @@
 
 - name: Disable LLDP service (idempotent)
   nxos_lldp:
-    provider: "{{ connection }}"
     state: absent
   register: result
 

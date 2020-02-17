@@ -141,7 +141,7 @@ EXAMPLES = '''
 - s3_lifecycle:
     name: mybucket
     expiration_days: 30
-    prefix: /logs/
+    prefix: logs/
     status: enabled
     state: present
 
@@ -150,7 +150,7 @@ EXAMPLES = '''
     name: mybucket
     transition_days: 7
     expiration_days: 90
-    prefix: /logs/
+    prefix: logs/
     status: enabled
     state: present
 
@@ -161,27 +161,27 @@ EXAMPLES = '''
     name: mybucket
     transition_date: "2020-12-30T00:00:00.000Z"
     expiration_date: "2030-12-30T00:00:00.000Z"
-    prefix: /logs/
+    prefix: logs/
     status: enabled
     state: present
 
 # Disable the rule created above
 - s3_lifecycle:
     name: mybucket
-    prefix: /logs/
+    prefix: logs/
     status: disabled
     state: present
 
 # Delete the lifecycle rule created above
 - s3_lifecycle:
     name: mybucket
-    prefix: /logs/
+    prefix: logs/
     state: absent
 
 # Configure a lifecycle rule to transition all backup files older than 31 days in /backups/ to standard infrequent access class.
 - s3_lifecycle:
     name: mybucket
-    prefix: /backups/
+    prefix: backups/
     storage_class: standard_ia
     transition_days: 31
     state: present
@@ -190,7 +190,7 @@ EXAMPLES = '''
 # Configure a lifecycle rule to transition files to infrequent access after 30 days and glacier after 90
 - s3_lifecycle:
     name: mybucket
-    prefix: /logs/
+    prefix: logs/
     state: present
     status: enabled
     transitions:

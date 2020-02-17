@@ -44,7 +44,6 @@ options:
             - State of the group.
             - On C(present), the group will be created if it does not yet exist, or updated with the parameters you provide.
             - On C(absent), the group will be removed if it exists.
-        required: true
         default: 'present'
         type: str
         choices:

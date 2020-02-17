@@ -108,6 +108,13 @@ instances:
             returned: always
             type: str
             sample: 94a141a9-4530-46ac-b151-2c7ff09aa823
+        image_reference:
+            description:
+                - Image reference
+            returned: always
+            type: dict
+            sample: { "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myGroup/providers/Microsoft.Compute/galleries/
+                        myGallery/images/myImage/versions/10.1.3"}
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -222,6 +229,7 @@ class AzureRMVirtualMachineScaleSetVMInfo(AzureRMModuleBase):
             'provisioning_state': d.get('provisioning_state', None),
             'power_state': power_state,
             'vm_id': d.get('vm_id', None),
+            'image_reference': d.get('storage_profile').get('image_reference', None),
             'computer_name': d.get('os_profile').get('computer_name', None)
         }
         return d

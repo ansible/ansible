@@ -31,17 +31,32 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 10050
+        port: "10050"
+      - type: 1
+        main: 0
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "{$MACRO}"
       - type: 4
         main: 1
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 12345
+        port: "12345"
     proxy: ExampleProxy
     tls_psk_identity: test
     tls_connect: 2
     tls_psk: 123456789abcdef123456789abcdef12
+    macros:
+      - macro: MACRO1
+        value: test1
+      - macro: '{$MACRO2}'
+        value: test2
+    tags:
+      - tag: Tag1
+      - tag: Tag2
+        value: test2
   register: zabbix_host1
 
 - name: expect to succeed and that things changed
@@ -80,23 +95,150 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 10050
+        port: "10050"
+      - type: 1
+        main: 0
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "{$MACRO}"
       - type: 4
         main: 1
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 12345
+        port: "12345"
     proxy: ExampleProxy
     tls_psk_identity: test
     tls_connect: 2
     tls_psk: 123456789abcdef123456789abcdef12
+    macros:
+      - macro: MACRO1
+        value: test1
+      - macro: '{$MACRO2}'
+        value: test2
+    tags:
+      - tag: Tag1
+      - tag: Tag2
+        value: test2
   register: zabbix_host1
 
 - name: updating with same values should be idempotent
   assert:
       that:
           - "not zabbix_host1 is changed"
+
+- name: "test: try to create the same host with the same settings and force false"
+  zabbix_host:
+    force: false
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    visible_name: ExampleName
+    description: My ExampleHost Description
+    host_groups:
+      - Linux servers
+      - Zabbix servers
+    link_templates:
+      - Template App IMAP Service
+      - Template App NTP Service
+    status: enabled
+    state: present
+    inventory_mode: manual
+    inventory_zabbix:
+      tag: test-tag
+      alias: test-alias
+      notes: "Special Informations: test-info"
+      location: test-location
+      site_rack: test-rack
+      os: test-os
+      hardware: test-hw
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "10050"
+      - type: 1
+        main: 0
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "{$MACRO}"
+      - type: 4
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "12345"
+    proxy: ExampleProxy
+    tls_psk_identity: test
+    tls_connect: 2
+    tls_psk: 123456789abcdef123456789abcdef12
+  register: zabbix_host1
+
+- name: updating with same values and force false should be idempotent
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: try to create the same host changing one parameter in the inventory with force false"
+  zabbix_host:
+    force: false
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    visible_name: ExampleName
+    description: My ExampleHost Description
+    host_groups:
+      - Linux servers
+      - Zabbix servers
+    link_templates:
+      - Template App IMAP Service
+      - Template App NTP Service
+    status: enabled
+    state: present
+    inventory_mode: manual
+    inventory_zabbix:
+      tag: test-tag
+      alias: test-alias
+      notes: "Special Informations: test-info"
+      location: test-location
+      site_rack: test-rack
+      os: test-os
+      hardware: test-hw-modified
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "10050"
+      - type: 1
+        main: 0
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "{$MACRO}"
+      - type: 4
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "12345"
+    proxy: ExampleProxy
+    tls_psk_identity: test
+    tls_connect: 2
+    tls_psk: 123456789abcdef123456789abcdef12
+  register: zabbix_host1
+
+- name: changing the value of an already defined inventory should work and mark task as changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
 
 - name: "test: change visible_name"
   zabbix_host:
@@ -524,7 +666,7 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 10050
+        port: "10050"
   register: zabbix_host1
 
 - name: expect to succeed and that things have changed
@@ -544,7 +686,7 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 10050
+        port: "10050"
   register: zabbix_host1
 
 - name: expect to succeed and that things have not changed
@@ -564,7 +706,7 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 12345
+        port: "12345"
     force: no
   register: zabbix_host1
 
@@ -585,13 +727,13 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 10050
+        port: "10050"
       - type: 4
         main: 1
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 12345
+        port: "12345"
   register: zabbix_host1
 
 - name: expect to succeed and that things have not changed
@@ -673,6 +815,324 @@
     ipmi_privilege: 2
     ipmi_username: ""
     ipmi_password: ""
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
+- name: "test: change host inventory mode to disabled"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    inventory_mode: disabled
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change host inventory mode to manual"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    inventory_mode: manual
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: add new set of user macros to the host"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    macros:
+      - macro: '{$NEWMACRO1}'
+        value: test123
+      - macro: NEWMACRO2
+        value: abc
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: add new set of user macros to the host (again - lowercase)"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    macros:
+      - macro: '{$newmacro1}'
+        value: test123
+      - macro: newmacro2
+        value: abc
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
+- name: "test: update one of the user macros present on the host"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    macros:
+      - macro: '{$NEWMACRO1}'
+        value: test1234
+      - macro: NEWMACRO2
+        value: abc
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: update one of the user macros with description"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    macros:
+      - macro: '{$NEWMACRO1}'
+        value: test1234
+        description: Example Description
+      - macro: NEWMACRO2
+        value: abc
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: update one of the user macros with description (again)"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    macros:
+      - macro: '{$NEWMACRO1}'
+        value: test1234
+        description: Example Description
+      - macro: NEWMACRO2
+        value: abc
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
+- name: "test: update one of the user macros by removing description"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    macros:
+      - macro: '{$NEWMACRO1}'
+        value: test1234
+      - macro: NEWMACRO2
+        value: abc
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: add user macro while keeping previous ones with force=no"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    force: no
+    macros:
+      - macro: '{$NEWMACRO3}'
+        value: testing
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: add the same user macros (again)"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    macros:
+      - macro: '{$NEWMACRO1}'
+        value: test1234
+      - macro: NEWMACRO2
+        value: abc
+      - macro: '{$NEWMACRO3}'
+        value: testing
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
+- name: "test: wipe out all of the user macros"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    macros: []
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: wipe out all of the user macros (again)"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    macros: []
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
+- name: "test: add new set of tags to the host"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    tags:
+      - tag: NEWTAG1
+      - tag: NewTag2
+        value: abc
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: add new set of tags to the host (again)"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    tags:
+      - tag: NEWTAG1
+      - tag: NewTag2
+        value: abc
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
+- name: "test: update one of the tags present on the host"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    tags:
+      - tag: NEWTAG1
+      - tag: NewTag2
+        value: abcd
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: add tag while keeping previous ones with force=no"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    force: no
+    tags:
+      - tag: newtag3
+        value: testing
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: add the same tags (again)"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    tags:
+      - tag: NEWTAG1
+      - tag: NewTag2
+        value: abcd
+      - tag: newtag3
+        value: testing
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
+- name: "test: wipe out all of the tags"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    tags: []
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: wipe out all of the tags (again)"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    tags: []
   register: zabbix_host1
 
 - name: expect to succeed and that things have not changed

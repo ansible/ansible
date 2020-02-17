@@ -20,18 +20,13 @@
 
     - include_tasks: pip.yml
   always:
-    - name: remove unwanted packages
-      package:
-        name: git
-        state: absent
-      when: git_install.changed
-
-    - name: remove auto-installed packages from FreeBSD
-      pkgng:
-        name: git
-        state: absent
-        autoremove: yes
-      when: git_install.changed and ansible_distribution == "FreeBSD"
+    - name: platform specific cleanup
+      include_tasks: "{{ cleanup_filename }}"
+      with_first_found:
+        - "{{ ansible_distribution | lower }}_cleanup.yml"
+        - "default_cleanup.yml"
+      loop_control:
+        loop_var: cleanup_filename
   when: ansible_fips|bool != True
   module_defaults:
     pip:

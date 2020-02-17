@@ -205,11 +205,10 @@ images:
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info, ansible_dict_to_boto3_filter_list,
-                                      camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict)
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
 
 def list_ec2_images(ec2_client, module):
@@ -261,27 +260,19 @@ def list_ec2_images(ec2_client, module):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            image_ids=dict(default=[], type='list', aliases=['image_id']),
-            filters=dict(default={}, type='dict'),
-            owners=dict(default=[], type='list', aliases=['owner']),
-            executable_users=dict(default=[], type='list', aliases=['executable_user']),
-            describe_image_attributes=dict(default=False, type='bool')
-        )
+    argument_spec = dict(
+        image_ids=dict(default=[], type='list', aliases=['image_id']),
+        filters=dict(default={}, type='dict'),
+        owners=dict(default=[], type='list', aliases=['owner']),
+        executable_users=dict(default=[], type='list', aliases=['executable_user']),
+        describe_image_attributes=dict(default=False, type='bool')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._module._name == 'ec2_ami_facts':
         module._module.deprecate("The 'ec2_ami_facts' module has been renamed to 'ec2_ami_info'", version='2.13')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        ec2_client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
-    else:
-        module.fail_json(msg="region must be specified")
+    ec2_client = module.client('ec2')
 
     list_ec2_images(ec2_client, module)
 

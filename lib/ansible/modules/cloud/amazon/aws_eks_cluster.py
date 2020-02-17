@@ -72,7 +72,7 @@ EXAMPLES = '''
 - name: Create an EKS cluster
   aws_eks_cluster:
     name: my_cluster
-    version: v1.10.0
+    version: 1.14
     role_arn: my_eks_role
     subnets:
       - subnet-aaaa1111

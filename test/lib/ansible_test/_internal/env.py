@@ -3,7 +3,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
-import json
 import functools
 import os
 import platform
@@ -17,6 +16,11 @@ from .config import (
     TestConfig,
 )
 
+from .io import (
+    write_json_file,
+    read_json_file,
+)
+
 from .util import (
     display,
     find_executable,
@@ -28,7 +32,6 @@ from .util import (
 
 from .util_common import (
     write_json_test_results,
-    write_json_file,
     ResultType,
 )
 
@@ -164,9 +167,7 @@ def get_timeout():
     if not os.path.exists(TIMEOUT_PATH):
         return None
 
-    with open(TIMEOUT_PATH, 'r') as timeout_fd:
-        data = json.load(timeout_fd)
-
+    data = read_json_file(TIMEOUT_PATH)
     data['deadline'] = datetime.datetime.strptime(data['deadline'], '%Y-%m-%dT%H:%M:%SZ')
 
     return data

@@ -70,6 +70,8 @@ options:
         or if the source and target file system are different.
     type: bool
 notes:
+  - Microsoft Windows Server 2012 or Microsoft Windows 8 or newer is required to use this module. To check if your system is compatible, see
+    U(https://docs.microsoft.com/en-us/windows/desktop/sysinfo/operating-system-version).
   - One of three parameters (I(drive_letter), I(path) and I(label)) are mandatory to identify the target
     volume but more than one cannot be specified at the same time.
   - This module is idempotent if I(force) is not specified and file system labels remain preserved.

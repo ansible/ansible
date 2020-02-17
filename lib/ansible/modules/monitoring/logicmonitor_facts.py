@@ -549,7 +549,7 @@ def main():
             user=dict(required=True, default=None),
             password=dict(required=True, default=None, no_log=True),
 
-            collector=dict(require=False, default=None),
+            collector=dict(required=False, default=None),
             hostname=dict(required=False, default=None),
             displayname=dict(required=False, default=None),
             fullpath=dict(required=False, default=None)

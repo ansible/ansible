@@ -233,10 +233,10 @@ public_ip:
 try:
     import botocore.exceptions
 except ImportError:
-    pass  # Taken care of by ec2.HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
-from ansible.module_utils.ec2 import AWSRetry, ansible_dict_to_boto3_filter_list, ec2_argument_spec
+from ansible.module_utils.ec2 import AWSRetry, ansible_dict_to_boto3_filter_list
 
 
 def associate_ip_and_device(ec2, module, address, private_ip_address, device_id, allow_reassociation, check_mode, is_instance=True):
@@ -529,8 +529,7 @@ def generate_tag_dict(module, tag_name, tag_value):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         device_id=dict(required=False, aliases=['instance_id']),
         public_ip=dict(required=False, aliases=['ip']),
         state=dict(required=False, default='present',
@@ -545,7 +544,7 @@ def main():
         tag_name=dict(),
         tag_value=dict(),
         public_ipv4_pool=dict()
-    ))
+    )
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,

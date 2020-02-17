@@ -1,3 +1,4 @@
 destructive
 needs/root
 shippable/posix/group1
+skip/aix

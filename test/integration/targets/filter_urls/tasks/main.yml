@@ -1,0 +1,12 @@
+- name: Test urldecode filter
+  set_fact:
+    urldecoded_string: key="@{}é&%£ foo bar '(;\<>""°)
+
+- name: Test urlencode filter
+  set_fact:
+    urlencoded_string: '{{ urldecoded_string|urlencode }}'
+
+- name: Verify urlencode en urldecode
+  assert:
+    that:
+    - urldecoded_string == urlencoded_string|urldecode

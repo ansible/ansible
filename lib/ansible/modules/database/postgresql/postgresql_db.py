@@ -107,6 +107,12 @@ options:
         explicitly set this to pg_default.
     type: path
     version_added: '2.9'
+  dump_extra_args:
+    description:
+      - Provides additional arguments when I(state) is C(dump).
+      - Cannot be used with dump-file-format-related arguments like ``--format=d``.
+    type: str
+    version_added: '2.10'
 seealso:
 - name: CREATE DATABASE reference
   description: Complete reference of the CREATE DATABASE command documentation.
@@ -156,6 +162,13 @@ EXAMPLES = r'''
     state: dump
     target: /tmp/acme.sql
 
+- name: Dump an existing database to a file excluding the test table
+  postgresql_db:
+    name: acme
+    state: dump
+    target: /tmp/acme.sql
+    dump_extra_args: --exclude-table=test
+
 - name: Dump an existing database to a file (with compression)
   postgresql_db:
     name: acme
@@ -178,6 +191,16 @@ EXAMPLES = r'''
     tablespace: bar
 '''
 
+RETURN = r'''
+executed_commands:
+  description: List of commands which tried to run.
+  returned: always
+  type: list
+  sample: ["CREATE DATABASE acme"]
+  version_added: '2.10'
+'''
+
+
 import os
 import subprocess
 import traceback
@@ -197,6 +220,8 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_native
 
+executed_commands = []
+
 
 class NotSupportedError(Exception):
     pass
@@ -210,6 +235,7 @@ def set_owner(cursor, db, owner):
     query = 'ALTER DATABASE %s OWNER TO "%s"' % (
             pg_quote_identifier(db, 'database'),
             owner)
+    executed_commands.append(query)
     cursor.execute(query)
     return True
 
@@ -218,6 +244,7 @@ def set_conn_limit(cursor, db, conn_limit):
     query = "ALTER DATABASE %s CONNECTION LIMIT %s" % (
             pg_quote_identifier(db, 'database'),
             conn_limit)
+    executed_commands.append(query)
     cursor.execute(query)
     return True
 
@@ -252,6 +279,7 @@ def db_exists(cursor, db):
 def db_delete(cursor, db):
     if db_exists(cursor, db):
         query = "DROP DATABASE %s" % pg_quote_identifier(db, 'database')
+        executed_commands.append(query)
         cursor.execute(query)
         return True
     else:
@@ -277,6 +305,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_
         if conn_limit:
             query_fragments.append("CONNECTION LIMIT %(conn_limit)s" % {"conn_limit": conn_limit})
         query = ' '.join(query_fragments)
+        executed_commands.append(cursor.mogrify(query, params))
         cursor.execute(query, params)
         return True
     else:
@@ -334,6 +363,7 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn
 
 def db_dump(module, target, target_opts="",
             db=None,
+            dump_extra_args=None,
             user=None,
             password=None,
             host=None,
@@ -359,6 +389,10 @@ def db_dump(module, target, target_opts="",
         comp_prog_path = module.get_bin_path('xz', True)
 
     cmd += "".join(flags)
+
+    if dump_extra_args:
+        cmd += " {0} ".format(dump_extra_args)
+
     if target_opts:
         cmd += " {0} ".format(target_opts)
 
@@ -459,6 +493,7 @@ def do_with_password(module, cmd, password):
     env = {}
     if password:
         env = {"PGPASSWORD": password}
+    executed_commands.append(cmd)
     rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True, environ_update=env)
     return rc, stderr, stdout, cmd
 
@@ -467,6 +502,7 @@ def set_tablespace(cursor, db, tablespace):
     query = "ALTER DATABASE %s SET TABLESPACE %s" % (
             pg_quote_identifier(db, 'database'),
             pg_quote_identifier(tablespace, 'tablespace'))
+    executed_commands.append(query)
     cursor.execute(query)
     return True
 
@@ -491,6 +527,7 @@ def main():
         session_role=dict(type='str'),
         conn_limit=dict(type='str', default=''),
         tablespace=dict(type='path', default=''),
+        dump_extra_args=dict(type='str', default=None),
     )
 
     module = AnsibleModule(
@@ -512,6 +549,7 @@ def main():
     session_role = module.params["session_role"]
     conn_limit = module.params['conn_limit']
     tablespace = module.params['tablespace']
+    dump_extra_args = module.params['dump_extra_args']
 
     raw_connection = state in ("dump", "restore")
 
@@ -574,7 +612,7 @@ def main():
                 changed = db_exists(cursor, db)
             elif state == "present":
                 changed = not db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_limit, tablespace)
-            module.exit_json(changed=changed, db=db)
+            module.exit_json(changed=changed, db=db, executed_commands=executed_commands)
 
         if state == "absent":
             try:
@@ -591,11 +629,16 @@ def main():
         elif state in ("dump", "restore"):
             method = state == "dump" and db_dump or db_restore
             try:
-                rc, stdout, stderr, cmd = method(module, target, target_opts, db, **kw)
+                if state == 'dump':
+                    rc, stdout, stderr, cmd = method(module, target, target_opts, db, dump_extra_args, **kw)
+                else:
+                    rc, stdout, stderr, cmd = method(module, target, target_opts, db, **kw)
+
                 if rc != 0:
                     module.fail_json(msg=stderr, stdout=stdout, rc=rc, cmd=cmd)
                 else:
-                    module.exit_json(changed=True, msg=stdout, stderr=stderr, rc=rc, cmd=cmd)
+                    module.exit_json(changed=True, msg=stdout, stderr=stderr, rc=rc, cmd=cmd,
+                                     executed_commands=executed_commands)
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -607,7 +650,7 @@ def main():
     except Exception as e:
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
-    module.exit_json(changed=changed, db=db)
+    module.exit_json(changed=changed, db=db, executed_commands=executed_commands)
 
 
 if __name__ == '__main__':

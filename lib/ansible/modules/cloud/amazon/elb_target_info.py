@@ -220,8 +220,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, camel_dict_to_snake_dict,
-                                      AWSRetry)
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 
 
 class Target(object):

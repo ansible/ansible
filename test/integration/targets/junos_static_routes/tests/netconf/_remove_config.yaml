@@ -1,0 +1,14 @@
+---
+- debug:
+    msg: "Start junos_static_routes teardown ansible_connection={{ ansible_connection }}"
+
+- name: Remove static route config
+  junos_static_routes:
+    config:
+      - address_families:
+        - afi: 'ipv4'
+        - afi: 'ipv6'
+    state: deleted
+
+- debug:
+    msg: "End junos_static_routes teardown ansible_connection={{ ansible_connection }}"

@@ -1,0 +1,2 @@
+bugfixes:
+  - homebrew - fix Homebrew module's some functions ignored check_mode option (https://github.com/ansible/ansible/pull/65387).

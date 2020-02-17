@@ -29,7 +29,7 @@ requirements:
 - python >= 2.6
 - PyVmomi
 notes:
-    - Please make sure that the user used for vmware_guest has the correct level of privileges.
+    - Please make sure that the user used for M(vmware_guest) has the correct level of privileges.
     - For example, following is the list of minimum privileges required by users to create virtual machines.
     - "   DataStore > Allocate Space"
     - "   Virtual Machine > Configuration > Add New Disk"
@@ -38,9 +38,11 @@ notes:
     - "   Network > Assign Network"
     - "   Resource > Assign Virtual Machine to Resource Pool"
     - "Module may require additional privileges as well, which may be required for gathering facts - e.g. ESXi configurations."
-    - Tested on vSphere 5.5, 6.0, 6.5 and 6.7
-    - Use SCSI disks instead of IDE when you want to expand online disks by specifying a SCSI controller
-    - Uses SysPrep for Windows VM (depends on 'guest_id' parameter match 'win') with PyVmomi
+    - Tested on vSphere 5.5, 6.0, 6.5 and 6.7.
+    - Use SCSI disks instead of IDE when you want to expand online disks by specifying a SCSI controller.
+    - Uses SysPrep for Windows VM (depends on 'guest_id' parameter match 'win') with PyVmomi.
+    - In order to change the VM's parameters (e.g. number of CPUs), the VM must be powered off unless the hot-add
+      support is enabled and the C(state=present) must be used to apply the changes.
     - "For additional information please visit Ansible VMware community wiki - U(https://github.com/ansible/community/wiki/VMware)."
 options:
   state:
@@ -377,8 +379,10 @@ options:
     version_added: '2.3'
   vapp_properties:
     description:
-    - A list of vApp properties
-    - 'For full list of attributes and types refer to: U(https://github.com/vmware/pyvmomi/blob/master/docs/vim/vApp/PropertyInfo.rst)'
+    - A list of vApp properties.
+    - 'For full list of attributes and types refer to:'
+    - 'U(https://vdc-download.vmware.com/vmwb-repository/dcr-public/6b586ed2-655c-49d9-9029-bc416323cb22/
+      fa0b429a-a695-4c11-b7d2-2cbc284049dc/doc/vim.vApp.PropertyInfo.html)'
     - 'Basic attributes are:'
     - ' - C(id) (string): Property id - required.'
     - ' - C(value) (string): Property value.'
@@ -453,6 +457,8 @@ EXAMPLES = r'''
     - size_gb: 10
       type: thin
       datastore: g73_datastore
+    # Add another disk from an existing VMDK
+    - filename: "[datastore1] testvms/testvm_2_1/testvm_2_1.vmdk"
     hardware:
       memory_mb: 512
       num_cpus: 6
@@ -583,7 +589,7 @@ EXAMPLES = r'''
       - id: remoteIP
         category: Backup
         label: Backup server IP
-        type: str
+        type: string
         value: 10.10.10.1
       - id: old_property
         operation: remove
@@ -614,6 +620,24 @@ EXAMPLES = r'''
       num_cpus: 2
       scsi: paravirtual
   delegate_to: localhost
+
+- name: Create a diskless VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    cluster: "{{ ccr1 }}"
+    name: diskless_vm
+    folder: /Asia-Datacenter1/vm
+    guest_id: centos64Guest
+    datastore: "{{ ds1 }}"
+    hardware:
+        memory_mb: 1024
+        num_cpus: 2
+        num_cpu_cores_per_socket: 1
 '''
 
 RETURN = r'''
@@ -1962,34 +1986,15 @@ class PyVmomiHelper(PyVmomi):
         self.module.fail_json(
             msg="No size, size_kb, size_mb, size_gb or size_tb attribute found into disk configuration")
 
-    def find_vmdk(self, vmdk_path):
-        """
-        Takes a vsphere datastore path in the format
-
-            [datastore_name] path/to/file.vmdk
-
-        Returns vsphere file object or raises RuntimeError
-        """
-        datastore_name, vmdk_fullpath, vmdk_filename, vmdk_folder = self.vmdk_disk_path_split(vmdk_path)
-
-        datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
-
-        if datastore is None:
-            self.module.fail_json(msg="Failed to find the datastore %s" % datastore_name)
-
-        return self.find_vmdk_file(datastore, vmdk_fullpath, vmdk_filename, vmdk_folder)
-
     def add_existing_vmdk(self, vm_obj, expected_disk_spec, diskspec, scsi_ctl):
         """
         Adds vmdk file described by expected_disk_spec['filename'], retrieves the file
         information and adds the correct spec to self.configspec.deviceChange.
         """
         filename = expected_disk_spec['filename']
-        # if this is a new disk, or the disk file names are different
+        # If this is a new disk, or the disk file names are different
         if (vm_obj and diskspec.device.backing.fileName != filename) or vm_obj is None:
-            vmdk_file = self.find_vmdk(expected_disk_spec['filename'])
-            diskspec.device.backing.fileName = expected_disk_spec['filename']
-            diskspec.device.capacityInKB = VmomiSupport.vmodlTypes['long'](vmdk_file.fileSize / 1024)
+            diskspec.device.backing.fileName = filename
             diskspec.device.key = -1
             self.change_detected = True
             self.configspec.deviceChange.append(diskspec)
@@ -2158,10 +2163,24 @@ class PyVmomiHelper(PyVmomi):
         if len(self.params['disk']) != 0:
             # TODO: really use the datastore for newly created disks
             if 'autoselect_datastore' in self.params['disk'][0] and self.params['disk'][0]['autoselect_datastore']:
-                datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
-                datastores = [x for x in datastores if self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
-                if datastores is None or len(datastores) == 0:
-                    self.module.fail_json(msg="Unable to find a datastore list when autoselecting")
+                datastores = []
+
+                if self.params['cluster']:
+                    cluster = self.find_cluster_by_name(self.params['cluster'], self.content)
+
+                    for host in cluster.host:
+                        for mi in host.configManager.storageSystem.fileSystemVolumeInfo.mountInfo:
+                            if mi.volume.type == "VMFS":
+                                datastores.append(self.cache.find_obj(self.content, [vim.Datastore], mi.volume.name))
+                elif self.params['esxi_hostname']:
+                    host = self.find_hostsystem_by_name(self.params['esxi_hostname'])
+
+                    for mi in host.configManager.storageSystem.fileSystemVolumeInfo.mountInfo:
+                        if mi.volume.type == "VMFS":
+                            datastores.append(self.cache.find_obj(self.content, [vim.Datastore], mi.volume.name))
+                else:
+                    datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
+                    datastores = [x for x in datastores if self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
 
                 datastore_freespace = 0
                 for ds in datastores:
@@ -2413,7 +2432,7 @@ class PyVmomiHelper(PyVmomi):
                 if key == 'type' and nw['type'] == 'dhcp':
                     network_changes = True
                     break
-                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
+                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected', 'dvswitch_name'):
                     network_changes = True
                     break
 
@@ -2682,7 +2701,7 @@ class PyVmomiHelper(PyVmomi):
         for nw in self.params['networks']:
             for key in nw:
                 # We don't need customizations for these keys
-                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
+                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected', 'dvswitch_name'):
                     network_changes = True
                     break
         if len(self.params['customization']) > 1 or network_changes or self.params.get('customization_spec'):

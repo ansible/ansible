@@ -27,7 +27,7 @@
 #           ignored - these people should never be notified
 #           deprecated - this file is deprecated but probably not yet renamed
 #           keywords - used to identify this file based on the issue description
-#           migrated_to - Location on Galaxy,
+#           migrated_to - If this has been migrated to Galaxy, in the form collection.namespace
 #                         see https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html
 #           support - used for files without internal ANSIBLE_METADATA, see
 #                     https://github.com/ansible/ansible/labels?q=support for full list
@@ -47,7 +47,8 @@ files:
   $modules:
     ignored: ryansb
   $modules/cloud/amazon/:
-    ignored: erydo seiffert simplesteph nadirollo tedder joshsouza
+    ignored: erydo seiffert simplesteph nadirollo tedder joshsouza defionscode
+    maintainers: $team_aws
   $modules/cloud/amazon/aws_kms.py:
     ignored: tedder
   $modules/cloud/amazon/cloudformation.py:
@@ -97,7 +98,7 @@ files:
     support: community
   $modules/cloud/dimensiondata/dimensiondata_network.py: tintoy
   $modules/cloud/docker/: &docker
-    ignored: ThomasSteinbach
+    ignored: ThomasSteinbach cove
     labels: [ cloud, docker ]
     maintainers: $team_docker
     supershipit: felixfontein
@@ -114,6 +115,306 @@ files:
     supershipit: $team_google
     maintainers: $team_google
     ignored: supertom
+  $modules/cloud/google/gcp_appengine_firewall_rule_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_appengine_firewall_rule.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_bigquery_dataset_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_bigquery_dataset.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_bigquery_table_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_bigquery_table.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_cloudbuild_trigger_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_cloudbuild_trigger.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_cloudfunctions_cloud_function_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_cloudfunctions_cloud_function.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_cloudscheduler_job_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_cloudscheduler_job.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_cloudtasks_queue_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_cloudtasks_queue.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_address_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_address.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_autoscaler_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_autoscaler.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_backend_bucket_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_backend_bucket.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_backend_service_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_backend_service.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_disk_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_disk.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_firewall_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_firewall.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_forwarding_rule_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_forwarding_rule.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_global_address_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_global_address.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_global_forwarding_rule_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_global_forwarding_rule.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_health_check_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_health_check.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_http_health_check_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_http_health_check.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_https_health_check_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_https_health_check.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_image_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_image.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_instance_group_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_instance_group_manager_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_instance_group_manager.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_instance_group.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_instance_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_instance.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_instance_template_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_instance_template.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_interconnect_attachment_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_interconnect_attachment.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_network_endpoint_group_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_network_endpoint_group.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_network_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_network.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_node_group_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_node_group.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_node_template_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_node_template.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_region_backend_service_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_region_backend_service.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_region_disk_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_region_disk.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_reservation_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_reservation.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_route_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_route.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_router_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_router.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_snapshot_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_snapshot.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_ssl_certificate_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_ssl_certificate.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_ssl_policy_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_ssl_policy.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_subnetwork_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_subnetwork.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_http_proxy_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_http_proxy.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_https_proxy_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_https_proxy.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_instance_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_instance.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_pool_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_pool.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_ssl_proxy_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_ssl_proxy.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_tcp_proxy_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_tcp_proxy.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_vpn_gateway_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_target_vpn_gateway.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_url_map_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_url_map.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_vpn_tunnel_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_compute_vpn_tunnel.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_container_cluster_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_container_cluster.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_container_node_pool_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_container_node_pool.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_dns_managed_zone_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_dns_managed_zone.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_dns_resource_record_set_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_dns_resource_record_set.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_filestore_instance_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_filestore_instance.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_iam_role_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_iam_role.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_iam_service_account_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_iam_service_account_key.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_iam_service_account.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_kms_crypto_key_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_kms_crypto_key.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_kms_key_ring_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_kms_key_ring.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_logging_metric_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_logging_metric.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_mlengine_model_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_mlengine_model.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_mlengine_version_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_mlengine_version.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_pubsub_subscription_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_pubsub_subscription.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_pubsub_topic_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_pubsub_topic.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_redis_instance_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_redis_instance.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_resourcemanager_project_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_resourcemanager_project.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_runtimeconfig_config_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_runtimeconfig_config.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_runtimeconfig_variable_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_runtimeconfig_variable.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_serviceusage_service_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_serviceusage_service.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_sourcerepo_repository_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_sourcerepo_repository.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_spanner_database_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_spanner_database.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_spanner_instance_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_spanner_instance.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_sql_database_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_sql_database.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_sql_instance_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_sql_instance.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_sql_user_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_sql_user.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_storage_bucket_access_control.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_storage_bucket.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_storage_object.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_tpu_node_info.py: 
+    migrated_to: google.cloud
+  $modules/cloud/google/gcp_tpu_node.py: 
+    migrated_to: google.cloud
   $modules/cloud/google/gc_storage.py: supertom
   $modules/cloud/hcloud/: &hcloud
     keywords: [ hcloud, hetzner cloud ]
@@ -150,6 +451,114 @@ files:
     ignored: andyhky
   $modules/cloud/opennebula/: ilicmilan xorel rsmontero meerkampdvv
   $modules/cloud/openstack/: $team_openstack
+  $modules/cloud/openstack/os_auth.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_client_config.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_coe_cluster.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_coe_cluster_template.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_flavor_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_floating_ip.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_group_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_image_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_image.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_ironic_inspect.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_ironic_node.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_ironic.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keypair.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_domain_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_domain.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_endpoint.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_role.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_service.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_listener.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_loadbalancer.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_member.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_network.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_networks_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_nova_flavor.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_nova_host_aggregate.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_object.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_pool.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_port_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_port.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_project_access.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_project_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_project.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_quota.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_recordset.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_router.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_security_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_security_group_rule.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_action.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_metadata.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_volume.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_stack.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_subnet.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_subnets_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user_role.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_volume.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_volume_snapshot.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_zone.py:
+    migrated_to: openstack.cloud
   $modules/cloud/oracle/: &oracle
     labels: [ cloud, oracle ]
     maintainers: $team_oracle
@@ -190,7 +599,6 @@ files:
   $modules/clustering/k8s/:
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: k8s
-  $modules/clustering/k8s/_kubernetes.py: supertom
   $modules/clustering/openshift/: chouseknecht maxamillion fabianvf flaper87
   $modules/commands/command.py: $team_ansible
   $modules/commands/raw.py: $team_ansible
@@ -242,7 +650,7 @@ files:
   $modules/identity/cyberark/:
     notified: cyberark-bizdev
   $modules/identity/ipa/: $team_ipa
-  $modules/identity/keycloak/: eikef
+  $modules/identity/keycloak/: eikef ndclt
   $modules/inventory/add_host.py:
     ignored: skvidal
     maintainers: $team_ansible
@@ -255,12 +663,22 @@ files:
   $modules/monitoring/grafana:
     labels: grafana
     maintainers: $team_grafana
+  $modules/monitoring/grafana/grafana_plugin.py:
+      migrated_to: community.grafana
+  $modules/monitoring/grafana/grafana_dashboard.py:
+      migrated_to: community.grafana
+  $modules/monitoring/grafana/grafana_datasource.py:
+      migrated_to: community.grafana
   $modules/monitoring/logentries.py:
     ignored: ivanvanderbyl
+  $modules/monitoring/logicmonitor:
+    ignored: ethanculler woz5999
   $modules/monitoring/monit.py: brian-brazil
   $modules/monitoring/pagerduty.py:
     ignored: bpennypacker
-  $modules/monitoring/zabbix/: eikef D3DeFi rubentsirunyan
+  $modules/monitoring/zabbix/:
+    maintainers: $team_zabbix
+    ignored: cove
   $modules/net_tools/basics/get_url.py: ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py:
@@ -282,8 +700,208 @@ files:
     keywords: [ aci, cisco msc, cisco mso, multisite, multi-site ]
     labels: [ aci, cisco, networking ]
     maintainers: $team_aci
+  $modules/network/aci/aci_aaa_user_certificate.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_aaa_user.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_access_port_block_to_access_port.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_access_port_to_interface_policy_leaf_profile.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_access_sub_port_block_to_access_port.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_aep.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_aep_to_domain.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_ap.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_bd.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_bd_subnet.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_bd_to_l3out.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_config_rollback.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_config_snapshot.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_contract.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_contract_subject.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_contract_subject_to_filter.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_domain.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_domain_to_encap_pool.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_domain_to_vlan_pool.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_encap_pool.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_encap_pool_range.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_epg_monitoring_policy.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_epg.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_epg_to_contract.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_epg_to_domain.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_fabric_node.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_fabric_scheduler.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_filter_entry.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_filter.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_firmware_group_node.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_firmware_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_firmware_policy.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_firmware_source.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_cdp.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_fc.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_l2.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_leaf_policy_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_leaf_profile.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_lldp.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_mcp.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_ospf.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_port_channel.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_policy_port_security.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_interface_selector_to_switch_policy_leaf_profile.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_l3out_extepg.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_l3out_extsubnet.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_l3out.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_l3out_route_tag_policy.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_maintenance_group_node.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_maintenance_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_maintenance_policy.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_rest.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_static_binding_to_epg.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_switch_leaf_selector.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_switch_policy_leaf_profile.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_switch_policy_vpc_protection_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_taboo_contract.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_tenant_action_rule_profile.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_tenant_ep_retention_policy.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_tenant.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_tenant_span_dst_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_tenant_span_src_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_tenant_span_src_group_to_dst_group.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_vlan_pool_encap_block.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_vlan_pool.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_vmm_credential.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/aci_vrf.py:
+    migrated_to: cisco.aci
+  $modules/network/aci/mso_label.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_role.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_anp_epg_domain.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_anp_epg.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_anp_epg_staticleaf.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_anp_epg_staticport.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_anp_epg_subnet.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_anp.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_bd_l3out.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_bd.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_bd_subnet.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_vrf.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_vrf_region_cidr.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_vrf_region_cidr_subnet.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_site_vrf_region.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_anp_epg_contract.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_anp_epg.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_anp_epg_subnet.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_anp.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_bd.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_bd_subnet.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_contract_filter.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_deploy.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_externalepg.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_filter_entry.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_l3out.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_schema_template_vrf.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_site.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_tenant.py:
+    migrated_to: cisco.mso
+  $modules/network/aci/mso_user.py:
+    migrated_to: cisco.mso
   $modules/network/aireos/: &aireos
-    maintainers: $team_aireos
+    maintainers: $team_ansible
     ignored: jmighion
     labels: [ aireos, cisco, networking ]
   $modules/network/aos/: dgarros jeremyschulman
@@ -295,6 +913,204 @@ files:
     labels: [ asa, cisco, networking ]
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
+  $modules/network/check_point/checkpoint_access_layer_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_access_rule_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_access_rule.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_host_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_host.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_object_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_run_script.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_session.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/checkpoint_task_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_access_layer_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_access_layer.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_access_role_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_access_role.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_access_rule_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_access_rule.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_address_range_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_address_range.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_administrator_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_administrator.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_application_site_category_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_application_site_category.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_application_site_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_application_site_group_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_application_site_group.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_application_site.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_assign_global_assignment.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_discard.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_dns_domain_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_dns_domain.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_dynamic_object_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_dynamic_object.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_exception_group_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_exception_group.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_global_assignment_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_global_assignment.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_group_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_group.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_group_with_exclusion_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_group_with_exclusion.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_host_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_host.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_install_policy.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_mds_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_multicast_address_range_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_multicast_address_range.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_network_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_network.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_package_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_package.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_publish.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_put_file.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_run_ips_update.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_run_script.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_security_zone_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_security_zone.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_dce_rpc_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_dce_rpc.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_group_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_group.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_icmp6_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_icmp6.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_icmp_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_icmp.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_other_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_other.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_rpc_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_rpc.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_sctp_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_sctp.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_t  $modules/network/check_point/cp_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_t  $modules/network/check_point/cp.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_udp_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_service_udp.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_session_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_simple_gateway_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_simple_gateway.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_tag_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_tag.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_exception_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_exception.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_indicator_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_indicator.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_layer_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_layer.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_profile_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_profile.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_protection_override.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_rule_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_threat_rule.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_time_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_time.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_verify_policy.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_vpn_community_meshed_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_vpn_community_meshed.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_vpn_community_star_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_vpn_community_star.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_wildcard_facts.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_mgmt_wildcard.py:
+    migrated_to: check_point.mgmt
+  $modules/network/check_point/cp_publish.py:
+    migrated_to: check_point.mgmt
   $modules/network/cloudengine/: &cloudengine
     maintainers: $team_huawei
     labels: [ huawei, cloudengine, networking ]
@@ -312,8 +1128,1178 @@ files:
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg JoeReifel $team_networking
     maintainers: caphrim007 wojtek0806
+  $modules/network/f5/bigip_apm_acl.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_apm_network_access.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_apm_policy_fetch.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_apm_policy_import.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_appsvcs_extension.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_dos_application.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_fetch.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_import.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_manage.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_server_technology.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_signature_set.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_cli_alias.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_cli_script.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_command.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_config.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_configsync_action.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_data_group.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_auth_ldap.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_auth.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_certificate.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_connectivity.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_dns.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_group_member.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_group.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_ha_group.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_httpd.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_info.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_license.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_ntp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_sshd.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_syslog.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_traffic_group.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_trust.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_dns_cache_resolver.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_dns_nameserver.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_dns_resolver.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_dns_zone.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_file_copy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_address_list.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_dos_profile.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_dos_vector.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_global_rules.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_log_profile_network.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_log_profile.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_port_list.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_rule_list.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_rule.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_schedule.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_datacenter.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_global.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_bigip.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_external.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_firepass.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_http.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_https.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_tcp_half_open.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_tcp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_pool_member.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_pool.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_server.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_topology_record.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_topology_region.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_virtual_server.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_wide_ip.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_hostname.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_iapp_service.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_iapp_template.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ike_peer.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_imish_config.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ipsec_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_irule.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_log_destination.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_log_publisher.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_lx_package.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_management_route.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_peer.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_protocol.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_route.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_router.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_transport_config.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_dns.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_external.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_gateway_icmp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_http.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_https.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_ldap.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_snmp_dca.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_tcp_echo.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_tcp_half_open.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_tcp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_udp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_node.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_partition.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_password_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_policy_rule.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_pool_member.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_pool.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_analytics.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_client_ssl.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_dns.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_fastl4.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_http2.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_http_compression.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_http.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_oneconnect.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_persistence_cookie.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_persistence_src_addr.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_server_ssl.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_tcp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_udp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_provision.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_qkview.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_remote_role.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_remote_syslog.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_remote_user.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_routedomain.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_selfip.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_service_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_smtp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snat_pool.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snat_translation.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snmp_community.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snmp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snmp_trap.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_software_image.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_software_install.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_software_update.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ssl_certificate.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ssl_key.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ssl_ocsp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_static_route.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_sys_daemon_log_tmm.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_sys_db.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_sys_global.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_timer_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_traffic_selector.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_trunk.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_tunnel.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ucs_fetch.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ucs.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_user.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_vcmp_guest.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_virtual_address.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_virtual_server.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_vlan.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_wait.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_fasthttp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_fastl4_tcp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_fastl4_udp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_http.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_https_offload.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_https_waf.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_device_discovery.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_device_info.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_regkey_license_assignment.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_regkey_license.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_regkey_pool.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_utility_license_assignment.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_utility_license.py:
+    migrated_to: f5networks.f5_modules
   $modules/network/files/: $team_networking
   $modules/network/fortios/: bjolivot
+  $modules/network/fortios/fortios_address.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_alertemail_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_antivirus_heuristic.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_antivirus_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_antivirus_quarantine.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_antivirus_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_application_custom.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_application_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_application_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_application_name.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_application_rule_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_authentication_rule.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_authentication_scheme.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_authentication_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dlp_filepattern.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dlp_fp_doc_source.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dlp_fp_sensitivity.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dlp_sensor.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dlp_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dnsfilter_domain_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_dnsfilter_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_endpoint_control_client.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_endpoint_control_forticlient_ems.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_endpoint_control_forticlient_registration_sync.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_endpoint_control_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_endpoint_control_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_extender_controller_extender.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_facts.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_address6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_address6_template.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_address.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_addrgrp6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_addrgrp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_auth_portal.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_central_snat_map.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_dnstranslation.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_DoS_policy6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_DoS_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_identity_based_route.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_interface_policy6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_interface_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_internet_service_custom.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_internet_service_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_internet_service.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ipmacbinding_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ipmacbinding_table.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ippool6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ippool.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ip_translation.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ipv6_eh_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ldb_monitor.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_local_in_policy6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_local_in_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_multicast_address6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_multicast_address.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_multicast_policy6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_multicast_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_policy46.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_policy64.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_policy6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_profile_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_profile_protocol_options.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_proxy_address.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_proxy_addrgrp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_proxy_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_schedule_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_schedule_onetime.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_schedule_recurring.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_service_category.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_service_custom.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_service_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_shaper_per_ip_shaper.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_shaper_traffic_shaper.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_shaping_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_shaping_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_sniffer.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssh_host_key.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssh_local_ca.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssh_local_key.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssh_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssl_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssl_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ssl_ssh_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_ttl_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vip46.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vip64.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vip6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vipgrp46.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vipgrp64.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vipgrp6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vipgrp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_vip.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_wildcard_fqdn_custom.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_firewall_wildcard_fqdn_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ftp_proxy_explicit.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_icap_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_icap_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_custom.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_decoder.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_global.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_rule.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_rule_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_sensor.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ips_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_custom_field.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_disk_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_disk_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_eventfilter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer2_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer2_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer3_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer3_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer_override_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer_override_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortianalyzer_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortiguard_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortiguard_override_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortiguard_override_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_fortiguard_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_gui_display.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_memory_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_memory_global_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_memory_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_null_device_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_null_device_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd2_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd2_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd3_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd3_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd4_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd4_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd_override_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd_override_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_syslogd_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_threat_weight.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_webtrends_filter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_log_webtrends_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_report_chart.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_report_dataset.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_report_layout.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_report_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_report_style.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_report_theme.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_access_list6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_access_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_aspath_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_auth_path.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_bfd6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_bfd.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_bgp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_community_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_isis.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_key_chain.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_multicast6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_multicast_flow.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_multicast.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_ospf6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_ospf.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_policy6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_prefix_list6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_prefix_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_ripng.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_rip.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_route_map.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_static6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_router_static.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_bwl.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_bword.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_dnsbl.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_fortishield.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_iptrust.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_mheader.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_options.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_spamfilter_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_ssh_filter_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_802_1X_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_custom_command.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_global.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_igmp_snooping.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_lldp_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_lldp_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_mac_sync_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_managed_switch.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_network_monitor_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_qos_dot1p_map.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_qos_ip_dscp_map.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_qos_qos_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_qos_queue_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_quarantine.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_security_policy_802_1X.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_security_policy_captive_portal.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_sflow.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_storm_control.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_stp_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_switch_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_switch_interface_tag.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_switch_log.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_switch_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_system.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_virtual_port_pool.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_switch_controller_vlan.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_accprofile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_admin.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_affinity_interrupt.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_affinity_packet_redistribution.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_alarm.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_alias.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_api_user.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_arp_table.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_auto_install.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_automation_action.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_automation_destination.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_automation_stitch.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_automation_trigger.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_auto_script.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_autoupdate_push_update.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_autoupdate_schedule.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_autoupdate_tunneling.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_central_management.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_cluster_sync.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_console.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_csf.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_custom_language.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ddns.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dedicated_mgmt.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dhcp6_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dhcp_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dns_database.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dns.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dns_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_dscp_based_priority.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_email_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_external_resource.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_fips_cc.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_firmware_upgrade.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_fm.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_fortiguard.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_fortimanager.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_fortisandbox.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_fsso_polling.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ftm_push.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_geoip_override.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_global.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_gre_tunnel.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ha_monitor.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ha.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_interface.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ipip_tunnel.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ips_urlfilter_dns6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ips_urlfilter_dns.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ipv6_neighbor_cache.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ipv6_tunnel.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_link_monitor.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_mac_address_table.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_management_tunnel.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_mobile_tunnel.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_nat64.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_nd_proxy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_netflow.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_network_visibility.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_ntp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_object_tagging.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_password_policy_guest_admin.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_password_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_pppoe_interface.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_probe_response.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_proxy_arp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_admin.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_alertmail.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_auth.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_device_detection_portal.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_ec.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_fortiguard_wf.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_ftp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_http.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_icap.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_image.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_mail.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_nac_quar.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_nntp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_spam.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_sslvpn.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_traffic_quota.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_utm.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_replacemsg_webproxy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_resource_limits.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_sdn_connector.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_session_helper.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_session_ttl.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_sflow.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_sit_tunnel.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_sms_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_snmp_community.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_snmp_sysinfo.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_snmp_user.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_storage.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_switch_interface.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_tos_based_priority.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_dns.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_exception.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_link.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_netflow.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_property.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_radius_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vdom_sflow.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_virtual_wan_link.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_virtual_wire_pair.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_vxlan.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_wccp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_system_zone.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_adgrp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_device_access_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_device_category.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_device_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_device.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_domain_controller.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_fortitoken.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_fsso_polling.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_fsso.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_krb_keytab.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_ldap.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_local.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_password_policy.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_peergrp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_peer.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_pop3.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_quarantine.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_radius.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_security_exempt_list.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_user_tacacsplus.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_voip_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_certificate_ca.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_certificate_crl.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_certificate_local.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_certificate_ocsp_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_certificate_remote.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_certificate_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_concentrator.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_forticlient.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_manualkey_interface.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_manualkey.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_phase1_interface.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_phase1.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_phase2_interface.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ipsec_phase2.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_l2tp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_pptp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ssl_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ssl_web_host_check_software.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ssl_web_portal.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ssl_web_realm.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ssl_web_user_bookmark.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_vpn_ssl_web_user_group_bookmark.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_waf_main_class.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_waf_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_waf_signature.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_waf_sub_class.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_auth_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_cache_service.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_content_delivery_network_rule.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_peer.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_remote_storage.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_settings.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wanopt_webcache.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_content_header.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_content.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_fortiguard.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_ftgd_local_cat.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_ftgd_local_rating.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_ips_urlfilter_cache_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_ips_urlfilter_setting6.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_ips_urlfilter_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_override.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_search_engine.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_webfilter_urlfilter.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_debug_url.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_explicit.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_forward_server_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_forward_server.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_global.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_url_match.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_web_proxy_wisp.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_ap_status.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_ble_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_bonjour_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_global.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_anqp_3gpp_cellular.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_anqp_ip_address_type.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_anqp_nai_realm.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_anqp_network_auth_type.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_anqp_roaming_consortium.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_anqp_venue_name.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_h2qp_conn_capability.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_h2qp_operator_name.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_h2qp_osu_provider.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_h2qp_wan_metric.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_hs_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_icon.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_hotspot20_qos_map.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_inter_controller.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_qos_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_setting.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_timers.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_utm_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_vap_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_vap.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_wids_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_wtp_group.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_wtp_profile.py:
+    migrated_to: fortinet.fortios
+  $modules/network/fortios/fortios_wireless_controller_wtp.py:
+    migrated_to: fortinet.fortios
   $modules/network/fortimanager/: $team_fortimanager
   $modules/network/ftd/: &ftd
     keywords: [ firepower, ftd ]
@@ -333,9 +2319,50 @@ files:
   $modules/network/icx/: sushma-alethea
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
+  $modules/network/meraki/meraki_admin.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_config_template.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_content_filtering.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_device.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_device2.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_firewalled_services.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_malware.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_mr_l3_firewall.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_mx_l3_firewall.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_mx_l7_firewall.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_nat.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_network.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_organization.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_snmp.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_ssid.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_static_route.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_switchport.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_syslog.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_vlan.py:
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_webhook.py:
+      migrated_to: cisco.meraki
   $modules/network/meraki/: &meraki
     labels: [ cisco, meraki, networking ]
     maintainers: $team_meraki
+    migrated_to: cisco.meraki
   $modules/network/netconf/netconf_config.py: userlerueda $team_networking
   $modules/network/netconf/netconf_get.py: $team_networking
   $modules/network/netconf/netconf_rpc.py: $team_networking
@@ -367,6 +2394,10 @@ files:
   $modules/notification/rocketchat.py:
     ignored: ramondelafuente
     maintainers: Deepakkothandan
+  $modules/notification/snow_record.py:
+    migrated_to: servicenow.servicenow
+  $modules/notification/snow_record_find.py:
+      migrated_to: servicenow.servicenow
   $modules/packaging/language/gem.py: $team_ansible
   $modules/packaging/language/maven_artifact.py:
     ignored: chrisisbeef
@@ -457,6 +2488,150 @@ files:
   $modules/storage/netapp/:
     maintainers: $team_netapp
     support: community
+  $modules/storage/netapp/na_elementsw_access_group.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_account.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_admin_users.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_backup.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_check_connections.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_cluster_config.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_cluster_pair.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_cluster.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_cluster_snmp.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_drive.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_initiators.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_ldap.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_network_interfaces.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_node.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_snapshot.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_snapshot_restore.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_snapshot_schedule.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_vlan.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_volume_clone.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_volume_pair.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_elementsw_volume.py:
+    migrated_to: netapp.elementsw
+  $modules/storage/netapp/na_ontap_autosupport.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_broadcast_domain.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_cg_snapshot.py:
+    migrated_to: netapp.ontap
+  $modules/st$modules/storage/netapp/na_ontap_ldap.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_lun_copy.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_lun_map.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_motd.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_ndmp.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_net_subnet.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_net_vlan.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_nfs.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_node.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_object_store.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_ports.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_qos_adaptive_policy_group.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_qos_policy_group.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_qtree.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_quotas.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_snapmirror.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_snapshot_policy.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_snapshot.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_snmp.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_ucadapter.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_unix_group.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_user.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_volume_autosize.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_volume_clone.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_volume.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_vscan_on_access_policy.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_vscan_on_demand_task.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_vscan.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_vscan_scanner_pool.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_vserver_cifs_security.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_cifs_acl.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_cifs.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_cifs_server.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_cluster_ha.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_cluster.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_command.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_disks.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_dns.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_fcp.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_firewall_policy.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_firmware_upgrade.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_igroup_initiator.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_igroup.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_info.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_interface.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_job_schedule.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_kerberos_realm.py:
+    migrated_to: netapp.ontap
+  $modules/storage/netapp/na_ontap_ldap_client.py:
+    migrated_to: netapp.ontap
   $modules/storage/purestorage/:
     maintainers: $team_purestorage
     labels: pure_storage
@@ -513,6 +2688,52 @@ files:
     labels: [ tower ]
     maintainers: $team_tower
     ignored: wwitzel3
+  $modules/web_infrastructure/ansible_tower/tower_credential.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_credential_type.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_group.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_host.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_inventory.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_inventory_source.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_job_cancel.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_job_launch.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_job_list.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_job_template.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_job_wait.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_label.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_notification.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_organization.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_project.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_receive.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_role.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_send.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_settings.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_team.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_user.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_workflow_launch.py:
+    migrated_to: awx.awx
+  $modules/web_infrastructure/ansible_tower/tower_workflow_template.py:
+    migrated_to: awx.awx
   $modules/web_infrastructure/sophos_utm/:
     maintainers: $team_e_spirit
     keywords:
@@ -557,6 +2778,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
+    migrated_to: openstack.cloud
   contrib/inventory/ovirt4.py: *ovirt
   contrib/inventory/infoblox.py:
     keywords:
@@ -587,7 +2809,7 @@ files:
     labels:
       - cloud
       - aws
-    notified: s-hertel
+    notified: $team_aws
   contrib/inventory/vmware.py:
     keywords:
       - vmware inventory
@@ -613,7 +2835,8 @@ files:
   $module_utils:
     support: community
   $module_utils/acme.py: *crypto
-  $module_utils/ansible_tower.py: *tower
+  $module_utils/ansible_tower.py:
+    migrated_to: awx.awx
   $module_utils/azure_rm_common.py:
     maintainers: $team_azure
     labels:
@@ -635,6 +2858,8 @@ files:
     support: core
   $module_utils/splitter.py:
     support: core
+  $module_utils/service_now.py:
+    migrated_to: servicenow.servicenow
   $module_utils/yumdnf.py:
     support: core
   $module_utils/ansible_release.py:
@@ -695,6 +2920,7 @@ files:
   $module_utils/gcp_utils.py:
     maintainers: $team_google
     supershipit: $team_google
+    migrated_to: google.cloud
   $module_utils/gitlab.py: *gitlab
   $module_utils/hwc_utils.py: &huawei_hwc
     <<: *huawei
@@ -710,7 +2936,7 @@ files:
       - clustering
       - k8s
   $module_utils/identity/keycloak/:
-     maintainers: eikef
+     maintainers: eikef ndclt
      support: community
   $module_utils/kubevirt.py: *kubevirt
   $module_utils/manageiq.py:
@@ -728,11 +2954,21 @@ files:
   $module_utils/netapp:
     maintainers: $team_netapp
     support: community
+  $module_utils/netapp/netapp_elementsw_module.py:
+    migrated_to: netapp.elementsw
+  $module_utils/netapp/netapp.py:
+    migrated_to: netapp.ontap
+  $module_utils/netapp/netapp_module.py:
+    migrated_to: netapp.ontap
   $module_utils/network:
     labels: networking
   $module_utils/network/a10:
     maintainers: ericchou1 mischapeters
   $module_utils/network/aci: *aci
+  $module_utils/network/aci/aci.py:
+    migrated_to: cisco.aci
+  module_utils/network/aci/mso.py:
+    migrated_to: cisco.mso 
   $module_utils/network/aireos: *aireos
   $module_utils/network/aos:
     maintainers: dgarros jeremyschulman
@@ -744,6 +2980,8 @@ files:
     maintainers: $team_avi
   $module_utils/network/bigswitch:
     maintainers: jayakody tedelhourani vuile
+  $module_utils/network/checkpoint/checkpoint.py:
+    migrated_to: check_point.mgmt
   $module_utils/network/cloudengine:
     <<: *cloudengine
   $module_utils/network/cnos:
@@ -778,11 +3016,39 @@ files:
       - f5
   $module_utils/network/fortios:
     maintainers: bjolivot
+  $module_utils/network/fortios/argspec/facts/facts.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/argspec/facts/__init__.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/argspec/__init__.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/argspec/system/__init__.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/argspec/system/system.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/facts/facts.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/facts/__init__.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/facts/system/__init__.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/facts/system/system.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/fortios.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortios/__init__.py:
+    migrated_to: fortinet.fortios
   $module_utils/network/fortimanager:
     maintainers: $team_fortimanager
     labels:
       - fortimanager
       - networking
+  $module_utils/network/fortimanager/common.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortimanager/fortimanager.py:
+    migrated_to: fortinet.fortios
+  $module_utils/network/fortimanager/__init__.py:
+    migrated_to: fortinet.fortios
   $module_utils/network/ftd: *ftd
   $module_utils/network/ios:
     <<: *ios
@@ -796,7 +3062,8 @@ files:
     maintainers: paulquack
   $module_utils/network/junos:
     support: network
-  $module_utils/network/meraki: *meraki
+  $module_utils/network/meraki:
+      migrated_to: cisco.meraki
   $module_utils/network/netconf:
     support: network
     maintainers: $team_networking
@@ -827,6 +3094,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
+    migrated_to: openstack.cloud
   $module_utils/oracle/: *oracle
   $module_utils/ovirt.py: *ovirt
   $module_utils/postgres.py: *postgresql
@@ -958,9 +3226,11 @@ files:
   $plugins/action/bigip:
     maintainers: caphrim007 wojtek0806
     labels: networking
+    migrated_to: f5networks.f5_modules
   $plugins/action/bigiq:
     maintainers: caphrim007 wojtek0806
     labels: networking
+    migrated_to: f5networks.f5_modules
   $plugins/action/ce:
     <<: *cloudengine
     support: network
@@ -1031,6 +3301,7 @@ files:
   $plugins/callback/grafana_annotations.py:
     maintainers: $team_grafana
     labels: monitoring grafana
+    migrated_to: community.grafana
   $plugins/callback/foreman.py:
     maintainers: $team_foreman
   $plugins/callback/junit:
@@ -1154,23 +3425,45 @@ files:
     support: community
   $plugins/doc_fragments/__init__.py:
     support: core
-  $plugins/doc_fragments/aci.py: *aci
+  $plugins/doc_fragments/aci.py:
+    labels: aci
+    migrated_to: cisco.aci
   $plugins/doc_fragments/acme.py: *crypto
+  $plugins/doc_fragments/checkpoint_commands.py:
+    migrated_to: check_point.mgmt
+  $plugins/doc_fragments/checkpoint_facts.py:
+    migrated_to: check_point.mgmt
+  $plugins/doc_fragments/checkpoint_objects.py:
+    migrated_to: check_point.mgmt
   $plugins/doc_fragments/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
   $plugins/doc_fragments/docker.py:
     <<: *docker
     support: community
+  $plugins/doc_fragments/fortios.py:
+    migrated_to: fortinet.fortios
   $plugins/doc_fragments/gcp.py:
     support: community
     supershipit: $team_google
     maintainers: $team_google
+    migrated_to: google.cloud
+  $plugins/doc_fragments/grafana.py:
+    maintainers: $team_grafana
+    labels: monitoring grafana
+    migrated_to: community.grafana
   $plugins/doc_fragments/hwc.py:
     maintainers: $team_huawei
   $plugins/doc_fragments/intersight.py: *intersight
-  $plugins/doc_fragments/mso.py: *aci
+  $plugins/doc_fragments/mso.py:
+    labels: aci
+    migrated_to: cisco.mso
   $plugins/doc_fragments/mysql.py: *mysql
+  $plugins/doc_fragments/netapp.py:
+    migrated_to: netapp.ontap
+  $plugins/doc_fragments/openstack.py:
+    maintainers: $team_openstack
+    migrated_to: openstack.cloud
   $plugins/doc_fragments/postgres.py: *postgresql
   $plugins/doc_fragments/proxysql.py: *mysql
   $plugins/doc_fragments/ucs.py: *ucs
@@ -1181,6 +3474,13 @@ files:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
   $plugins/doc_fragments/oracle*: *oracle
+  $plugins/doc_fragments/service_now.py:
+    migrated_to: servicenow.servicenow
+  $plugins/doc_fragments/f5.py:
+    maintainers: caphrim007 wojtek0806
+    migrated_to: f5networks.f5_modules
+  $plugins/doc_fragments/tower.py:
+    migrated_to: awx.awx
 ###############################
 # plugins/filter
   $plugins/filter/:
@@ -1203,15 +3503,25 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
+  $plugins/httpapi/checkpoint.py:
+    migrated_to: check_point.mgmt
   $plugins/httpapi/ftd.py: *ftd
+  $plugins/httpapi/fortios.py:
+    migrated_to: fortinet.fortios
   $plugins/httpapi/exos.py:
     maintainers: $team_extreme
+  $plugins/httpapi/splunk.py:
+    migrated_to: splunk.enterprise_security
+  $plugins/httpapi/qradar.py:
+    migrated_to: ibm.qradar
 ###############################
 # plugins/inventory
   $plugins/inventory/__init__.py:
     support: core
   $plugins/inventory/aws_ec2.py:
-    maintainers: s-hertel
+    maintainers: $team_aws
+  $plugins/inventory/azure_rm.py:
+    migrated_to: azure.azcollection
   $plugins/inventory/docker: *docker
   $plugins/inventory/docker_swarm.py:
     <<: *docker
@@ -1221,6 +3531,7 @@ files:
   $plugins/inventory/gcp_compute.py:
     maintainers: $team_google
     supershipit: $team_google
+    migrated_to: google.cloud
   $plugins/inventory/hcloud.py: *hcloud
   $plugins/inventory/ini.py:
     support: core
@@ -1248,6 +3559,7 @@ files:
       - inventory
     labels:
       - cloud
+    migrated_to: openstack.cloud
   $plugins/inventory/scaleway.py: *scaleway
   $plugins/inventory/script.py:
     support: core
@@ -1263,6 +3575,10 @@ files:
   $plugins/inventory/vultr.py: *vultr
   $plugins/inventory/yaml.py:
     support: core
+  $plugins/inventory/now.py:
+    migrated_to: servicenow.servicenow
+  $plugins/inventory/tower.py:
+    migrated_to: awx.awx
 
 ###############################
 # plugins/lookup
@@ -1285,6 +3601,7 @@ files:
   $plugins/lookup/grafana_dashboard.py:
     maintainers: $team_grafana
     labels: monitoring grafana
+    migrated_to: community.grafana
   $plugins/lookup/indexed_items.py:
     support: core
   $plugins/lookup/inventory_hostnames.py:
@@ -1425,6 +3742,9 @@ files:
   $plugins/terminal/vyos.py:
     support: network
     maintainers: $team_networking
+  $plugins/terminal/bigip.py:
+    maintainers: caphrim007 wojtek0806
+    migrated_to: f5networks.f5_modules
 ###############################
 # plugins/test
   $plugins/test:
@@ -1469,7 +3789,7 @@ files:
     labels:
       - aws
       - cloud
-    maintainers: s-hertel
+    maintainers: $team_aws
   docs/docsite/rst/scenario_guides/guide_azure.rst:
     labels:
       - azure
@@ -1514,6 +3834,7 @@ files:
   test/integration/targets/gcp:
     maintainers: $team_google
     supershipit: $team_google
+    migrated_to: google.cloud
   test/integration/targets/hwc_:
     maintainers: $team_huawei
   test/integration/targets/inventory_docker: *docker
@@ -1524,7 +3845,8 @@ files:
   test/integration/targets/exos_: $team_extreme
   test/integration/targets/ios_: *ios
   test/integration/targets/iosxr_: *ios
-  test/integration/targets/meraki_: *meraki
+  test/integration/targets/meraki_:
+      migrated_to: cisco.meraki
   test/integration/targets/mso_: *aci
   test/integration/targets/mysql: *mysql
   test/integration/targets/nxos_: *nxos
@@ -1538,8 +3860,8 @@ files:
   test/integration/targets/setup_docker: *docker
   test/integration/targets/setup_openssl: *crypto
   test/integration/targets/setup_mysql_db: *mysql
-  test/integration/targets/setup_zabbix:
-    maintainers: eikef D3DeFi rubentsirunyan
+  test/integration/targets/setup_zabbix: $team_zabbix
+  test/integration/targets/zabbix_: $team_zabbix
   test/integration/targets/ucs_: *ucs
   test/integration/targets/vultr: *vultr
   test/legacy/:
@@ -1549,6 +3871,8 @@ files:
   test/lib/ansible_test/_internal/cloud/acme.py: *crypto
   test/sanity/:
     notified: mattclay
+  test/sanity/ignore.txt:
+    notified: tremble
   test/units/module_utils/docker/:
     <<: *docker
     support: community
@@ -1556,6 +3880,7 @@ files:
   test/units/module_utils/test_netapp.py:
     maintainers: $team_netapp
     support: community
+    migrated_to: netapp.ontap
   test/units/module_utils/hwc:
     maintainers: $team_huawei
   test/units/module_utils/acme: *crypto
@@ -1581,8 +3906,72 @@ files:
   test/units/modules/storage/netapp:
     maintainers: $team_netapp
     support: community
+  test/units/modules/storage/netapp/test_na_elementsw_access_group.py:
+    migrated_to: netapp.elementsw 
+  test/units/modules/storage/netapp/test_na_elementsw_cluster_config.py:
+    migrated_to: netapp.elementsw 
+  test/units/modules/storage/netapp/test_na_elementsw_cluster_snmp.py:
+    migrated_to: netapp.elementsw 
+  test/units/modules/storage/netapp/test_na_elementsw_initiators.py:
+    migrated_to: netapp.elementsw
+  test/units/modules/storage/netapp/test_na_ontap_cifs.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_command.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_dns.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_firewall_policy.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_firmware_upgrade.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_flexcache.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_igroup_initiator.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_info.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_interface.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_kerberos_realm.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_motd.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_ndmp.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_net_subnet.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_object_store.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_ports.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_qos_adaptive_policy_group.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_service_processor_network.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_snapmirror.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_snapshot_policy.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_unix_group.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_user.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_volume_autosize.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_volume_clone.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_volume.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_vscan_on_access_policy.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_vscan.py:
+    migrated_to: netapp.ontap
+  test/units/modules/storage/netapp/test_na_ontap_vserver_cifs_security.py:
+    migrated_to: netapp.ontap
   test/utils/shippable/:
     notified: mattclay
+  hacking/aws_config/:
+    maintainers: $team_aws
   hacking/report.py:
     notified: mattclay
   shippable.yml:
@@ -1591,15 +3980,15 @@ macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
-  team_aci: brunocalogero dagwieers devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
-  team_aireos: $team_ansible
-  team_aix: bcoca dagwieers d-little flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
+  team_aci: aciguru brunocalogero devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
+  team_aix: bcoca d-little flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
   team_aruba: karthikeyan-dhandapani
   team_asa: NilashishC ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
-  team_azure: haroldwongms nitzmahone yuwzho yungezz zikalino
-  team_bsd: bcoca dagwieers dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
+  team_aws: jillr s-hertel tremble
+  team_azure: haroldwongms yuwzho yungezz zikalino haiyuazhang gavinfish
+  team_bsd: bcoca dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: dpassante rhtyd
   team_crypto: felixfontein MarkusTeufelberger puiterwijk resmo Spredzy Shaps Xyon
@@ -1616,9 +4005,9 @@ macros:
   team_google: rambleraptor erjohnso
   team_grafana: rrey seuf
   team_hcloud: cschmitt-hcloud LKaemmerling
-  team_hpux: bcoca dagwieers davx8342
-  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang QijunPan xuxiaowei0512 hwDCN
-  team_imc: dagwieers
+  team_hpux: bcoca davx8342
+  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang QijunPan xuxiaowei0512 hwDCN yanzhangi
+  team_imc: []
   team_intersight: dsoper2 movinalot
   team_ios: justjais
   team_iosxr: justjais NilashishC
@@ -1626,7 +4015,7 @@ macros:
   team_jboss: jairojunior wbrefvem Wolfant
   team_kubevirt: machacekondra mmazur pkliczewski
   team_linode: InTheCloudDan decentral1se displague rmcintosh
-  team_macos: akasurde dagwieers kyleabenson martinm82
+  team_macos: akasurde kyleabenson martinm82
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: kbreit
   team_mysql: Alexander198961 bmalynovytch bmildren michaelcoburn oneiroi tolland Xyon Andersson007 kurtdavis
@@ -1648,13 +4037,14 @@ macros:
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
   team_scaleway: remyleone abarbare DenBeke jerome-quere kindermoumoute QuentinBrosse
-  team_solaris: bcoca dagwieers danowar2k fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
+  team_solaris: bcoca danowar2k fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
   team_suse: evrardjp toabctl dcermak lrupp commel
-  team_tower: ghjm matburt ryanpetrello rooftopcellist AlanCoding jladdjr kdelee chrismeyersfsu
+  team_tower: ghjm matburt ryanpetrello rooftopcellist AlanCoding jladdjr kdelee chrismeyersfsu beeankha squidboylan john-westcott-iv
   team_ucs: dsoper2 movinalot SDBrett vallard vvb
   team_vmware: Akasurde warthog9 Tomorrow9 goneri pgbidkar
   team_vmware_httpapi: Akasurde warthog9 Tomorrow9 goneri pgbidkar n3pjk
   team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
-  team_windows: jborean93 jhawkesworth nitzmahone ShachafGoldstein
+  team_windows: jborean93 jhawkesworth ShachafGoldstein
   team_windows_core: nitzmahone jborean93
+  team_zabbix: D3DeFi rubentsirunyan sky-joker

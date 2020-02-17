@@ -38,7 +38,6 @@ options:
     - Type of a database object.
     - Mutually exclusive with I(reassign_owned_by).
     type: str
-    required: yes
     choices: [ database, function, matview, sequence, schema, table, tablespace, view ]
     aliases:
     - type
@@ -388,7 +387,7 @@ def main():
         obj_name=dict(type='str'),
         obj_type=dict(type='str', aliases=['type'], choices=[
             'database', 'function', 'matview', 'sequence', 'schema', 'table', 'tablespace', 'view']),
-        reassign_owned_by=dict(type='list'),
+        reassign_owned_by=dict(type='list', elements='str'),
         fail_on_role=dict(type='bool', default=True),
         db=dict(type='str', aliases=['login_db']),
         session_role=dict(type='str'),

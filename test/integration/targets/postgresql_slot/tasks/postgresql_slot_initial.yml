@@ -73,7 +73,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ["SELECT pg_create_physical_replication_slot('slot0', False)"]
+    - result.queries == ["SELECT pg_create_physical_replication_slot('slot0', false)"]
   when: postgres_version_resp.stdout is version('9.6', '>=')
 
 - assert:
@@ -177,7 +177,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ["SELECT pg_create_physical_replication_slot('slot1', True)"]
+    - result.queries == ["SELECT pg_create_physical_replication_slot('slot1', true)"]
   when: postgres_version_resp.stdout is version('9.6', '>=')
 
 # Check, rowcount must be 1

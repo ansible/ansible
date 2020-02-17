@@ -1,0 +1,2 @@
+minor_changes:
+  - ec2_asg - Add the ability to use mixed_instance_policy in launch template driven autoscaling groups 

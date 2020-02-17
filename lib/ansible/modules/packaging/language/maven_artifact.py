@@ -59,7 +59,7 @@ options:
             - The URL of the Maven Repository to download from.
             - Use s3://... if the repository is hosted on Amazon S3, added in version 2.2.
             - Use file://... if the repository is local, added in version 2.6
-        default: http://repo1.maven.org/maven2
+        default: https://repo1.maven.org/maven2
     username:
         description:
             - The username to authenticate as to the Maven Repository. Use AWS secret key of the repository is hosted on S3
@@ -73,6 +73,15 @@ options:
             - Add custom HTTP headers to a request in hash/dict format.
         type: dict
         version_added: "2.8"
+    force_basic_auth:
+        version_added: "2.10"
+        description:
+          - httplib2, the library used by the uri module only sends authentication information when a webservice
+            responds to an initial request with a 401 status. Since some basic auth services do not properly
+            send a 401, logins will fail. This option forces the sending of the Basic authentication header
+            upon initial request.
+        default: 'no'
+        type: bool
     dest:
         description:
             - The path where the artifact should be written to
@@ -544,16 +553,19 @@ def main():
             version_by_spec=dict(default=None),
             classifier=dict(default=''),
             extension=dict(default='jar'),
-            repository_url=dict(default='http://repo1.maven.org/maven2'),
+            repository_url=dict(default='https://repo1.maven.org/maven2'),
             username=dict(default=None, aliases=['aws_secret_key']),
             password=dict(default=None, no_log=True, aliases=['aws_secret_access_key']),
             headers=dict(type='dict'),
+            force_basic_auth=dict(default=False, type='bool'),
             state=dict(default="present", choices=["present", "absent"]),  # TODO - Implement a "latest" state
             timeout=dict(default=10, type='int'),
             dest=dict(type="path", required=True),
             validate_certs=dict(required=False, default=True, type='bool'),
             keep_name=dict(required=False, default=False, type='bool'),
-            verify_checksum=dict(required=False, default='download', choices=['never', 'download', 'change', 'always'])
+            verify_checksum=dict(required=False, default='download', choices=['never', 'download', 'change', 'always']),
+            directory_mode=dict(type='str'),  # Used since https://github.com/ansible/ansible/pull/24965, not sure
+                                              # if this should really be here.
         ),
         add_file_common_args=True,
         mutually_exclusive=([('version', 'version_by_spec')])
@@ -567,7 +579,7 @@ def main():
 
     repository_url = module.params["repository_url"]
     if not repository_url:
-        repository_url = "http://repo1.maven.org/maven2"
+        repository_url = "https://repo1.maven.org/maven2"
     try:
         parsed_url = urlparse(repository_url)
     except AttributeError as e:
@@ -650,8 +662,7 @@ def main():
         except ValueError as e:
             module.fail_json(msg=e.args[0])
 
-    module.params['dest'] = dest
-    file_args = module.load_file_common_arguments(module.params)
+    file_args = module.load_file_common_arguments(module.params, path=dest)
     changed = module.set_fs_attributes_if_different(file_args, changed)
     if changed:
         module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier,

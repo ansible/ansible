@@ -1,0 +1,2 @@
+minor_changes:
+- win_domain_controller - Added the ``domain_log_path`` to control the directory for the new AD log files location - https://github.com/ansible/ansible/issues/59348

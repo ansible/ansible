@@ -4,7 +4,7 @@
 ENOS Platform Options
 ***************************************
 
-ENOS supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on ENOS in Ansible. 
+ENOS supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on ENOS in Ansible.
 
 .. contents:: Topics
 
@@ -73,3 +73,7 @@ Example CLI Task
      when: ansible_network_os == 'enos'
 
 .. include:: shared_snippets/SSH_warning.txt
+
+.. seealso::
+
+       :ref:`timeout_options`

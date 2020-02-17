@@ -97,7 +97,7 @@ options:
     suboptions:
       filename:
         description:
-          - The filename to be used to store the backup configuration. If the the filename
+          - The filename to be used to store the backup configuration. If the filename
             is not given it will be generated based on the hostname, current time and date
             in format defined by <hostname>_config.<current-date>@<current-time>
       dir_path:
@@ -208,7 +208,13 @@ def get_candidate(module):
 
 
 def format_commands(commands):
-    return [line for line in commands if len(line.strip()) > 0]
+    """
+    This function format the input commands and removes the prepend white spaces
+    for command lines having 'set' or 'delete' and it skips empty lines.
+    :param commands:
+    :return: list of commands
+    """
+    return [line.strip() if line.split()[0] in ('set', 'delete') else line for line in commands if len(line.strip()) > 0]
 
 
 def diff_config(commands, config):

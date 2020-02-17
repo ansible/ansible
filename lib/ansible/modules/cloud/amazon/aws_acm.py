@@ -92,6 +92,7 @@ options:
         If I(state=absent) and the corresponding resource exists in a different region,
         this task may report success without deleting that resource.
     type: str
+    aliases: [arn]
 
   certificate_chain:
     description:
@@ -111,6 +112,7 @@ options:
         If I(state=present) this must not be specified.
         (Since the domain name is encoded within the public certificate's body.)
     type: str
+    aliases: [domain]
 
   name_tag:
     description:
@@ -124,6 +126,7 @@ options:
         If I(state=absent), you must provide exactly one of
         I(certificate_arn), I(domain_name) or I(name_tag).
     type: str
+    aliases: [name]
 
   private_key:
     description:
@@ -224,12 +227,9 @@ arns:
 
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils.aws.acm import ACMServiceManager
-from ansible.module_utils._text import to_bytes, to_text
-from ssl import PEM_cert_to_DER_cert
+from ansible.module_utils._text import to_text
 import base64
-import traceback
 import re  # regex library
 
 
@@ -262,8 +262,7 @@ def PEM_body_to_DER(module, pem):
     try:
         der = base64.b64decode(to_text(pem))
     except (ValueError, TypeError) as e:
-        module.fail_json(msg="Unable to decode certificate chain",
-                         exception=traceback.format_exc())
+        module.fail_json_aws(e, msg="Unable to decode certificate chain")
     return der
 
 
@@ -289,10 +288,10 @@ def pem_chain_split(module, pem):
 def main():
     argument_spec = dict(
         certificate=dict(),
-        certificate_arn=dict(alias=['arn']),
+        certificate_arn=dict(aliases=['arn']),
         certificate_chain=dict(),
-        domain_name=dict(alias=['domain']),
-        name_tag=dict(alias=['name']),
+        domain_name=dict(aliases=['domain']),
+        name_tag=dict(aliases=['name']),
         private_key=dict(no_log=True),
         state=dict(default='present', choices=['present', 'absent'])
     )
@@ -323,9 +322,7 @@ def main():
     else:
         tags = None
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='acm',
-                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client('acm')
 
     # fetch the list of certificates currently in ACM
     certificates = acm.get_certificates(client=client,

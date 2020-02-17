@@ -1,0 +1,37 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "Create an Amazon EC2 instance.",
+
+  "Parameters" : {
+    "InstanceType" : {
+      "Description" : "EC2 instance type",
+      "Type" : "String",
+      "Default" : "t3.nano",
+      "AllowedValues" : [ "t3.micro", "t3.nano"]
+    },
+    "ImageId" : {
+      "Type" : "String"
+    },
+    "SubnetId" : {
+      "Type" : "String"
+    }
+  },
+
+  "Resources" : {
+    "EC2Instance" : {
+      "Type" : "AWS::EC2::Instance",
+      "Properties" : {
+        "InstanceType" : { "Ref" : "InstanceType" },
+        "ImageId" : { "Ref" : "ImageId" },
+        "SubnetId": { "Ref" : "SubnetId" }
+      }
+    }
+  },
+
+  "Outputs" : {
+    "InstanceId" : {
+      "Value" : { "Ref" : "EC2Instance" }
+    }
+  }
+}

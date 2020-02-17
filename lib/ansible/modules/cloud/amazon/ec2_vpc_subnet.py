@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: ec2_vpc_subnet
 short_description: Manage subnets in AWS virtual private clouds
 description:
-    - Manage subnets in AWS virtual private clouds
+    - Manage subnets in AWS virtual private clouds.
 version_added: "2.0"
 author:
 - Robert Estelle (@erydo)
@@ -31,6 +31,7 @@ options:
     description:
       - "The CIDR block for the subnet. E.g. 192.0.2.0/24."
     type: str
+    required: true
   ipv6_cidr:
     description:
       - "The IPv6 CIDR block for the subnet. The VPC must have a /56 block assigned and this value must be a valid IPv6 /64 that falls in the VPC range."
@@ -44,7 +45,7 @@ options:
     type: dict
   state:
     description:
-      - "Create or remove the subnet"
+      - "Create or remove the subnet."
     default: present
     choices: [ 'present', 'absent' ]
     type: str
@@ -67,7 +68,7 @@ options:
     version_added: "2.5"
   wait:
     description:
-      - "When specified,I(state=present) module will wait for subnet to be in available state before continuing."
+      - "When I(wait=true) and I(state=present), module will wait for subnet to be in available state before continuing."
     type: bool
     default: true
     version_added: "2.5"
@@ -213,7 +214,6 @@ subnet:
 
 
 import time
-import traceback
 
 try:
     import botocore
@@ -224,8 +224,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list, ansible_dict_to_boto3_tag_list,
-                                      ec2_argument_spec, camel_dict_to_snake_dict, get_aws_connection_info,
-                                      boto3_conn, boto3_tag_list_to_ansible_dict, compare_aws_tags, AWSRetry)
+                                      camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict, compare_aws_tags, AWSRetry)
 
 
 def get_subnet_info(subnet):
@@ -562,21 +561,18 @@ def ensure_subnet_absent(conn, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            az=dict(default=None, required=False),
-            cidr=dict(required=True),
-            ipv6_cidr=dict(default='', required=False),
-            state=dict(default='present', choices=['present', 'absent']),
-            tags=dict(default={}, required=False, type='dict', aliases=['resource_tags']),
-            vpc_id=dict(required=True),
-            map_public=dict(default=False, required=False, type='bool'),
-            assign_instances_ipv6=dict(default=False, required=False, type='bool'),
-            wait=dict(type='bool', default=True),
-            wait_timeout=dict(type='int', default=300, required=False),
-            purge_tags=dict(default=True, type='bool')
-        )
+    argument_spec = dict(
+        az=dict(default=None, required=False),
+        cidr=dict(required=True),
+        ipv6_cidr=dict(default='', required=False),
+        state=dict(default='present', choices=['present', 'absent']),
+        tags=dict(default={}, required=False, type='dict', aliases=['resource_tags']),
+        vpc_id=dict(required=True),
+        map_public=dict(default=False, required=False, type='bool'),
+        assign_instances_ipv6=dict(default=False, required=False, type='bool'),
+        wait=dict(type='bool', default=True),
+        wait_timeout=dict(type='int', default=300, required=False),
+        purge_tags=dict(default=True, type='bool')
     )
 
     required_if = [('assign_instances_ipv6', True, ['ipv6_cidr'])]
@@ -589,8 +585,7 @@ def main():
     if not module.botocore_at_least("1.7.0"):
         module.warn("botocore >= 1.7.0 is required to use wait_timeout for custom wait times")
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ec2')
 
     state = module.params.get('state')
 

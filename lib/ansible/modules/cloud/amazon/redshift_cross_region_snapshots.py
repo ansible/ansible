@@ -30,7 +30,6 @@ options:
   state:
     description:
       - Create or remove the cross-region snapshot configuration.
-    required: true
     choices: [ "present", "absent" ]
     default: present
     type: str
@@ -50,7 +49,6 @@ options:
     description:
       - A grant for Amazon Redshift to use a master key in the I(destination_region).
       - See U(http://boto3.readthedocs.io/en/latest/reference/services/redshift.html#Redshift.Client.create_snapshot_copy_grant)
-    required: false
     aliases: [ "copy_grant" ]
     type: str
   snapshot_retention_period:
@@ -94,7 +92,6 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec
 
 
 class SnapshotController(object):
@@ -150,16 +147,13 @@ def needs_update(actual, requested):
 
 
 def run_module():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            cluster_name=dict(type='str', required=True, aliases=['cluster']),
-            state=dict(type='str', choices=['present', 'absent'], default='present'),
-            region=dict(type='str', required=True, aliases=['source']),
-            destination_region=dict(type='str', required=True, aliases=['destination']),
-            snapshot_copy_grant=dict(type='str', aliases=['copy_grant']),
-            snapshot_retention_period=dict(type='int', required=True, aliases=['retention_period']),
-        )
+    argument_spec = dict(
+        cluster_name=dict(type='str', required=True, aliases=['cluster']),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
+        region=dict(type='str', required=True, aliases=['source']),
+        destination_region=dict(type='str', required=True, aliases=['destination']),
+        snapshot_copy_grant=dict(type='str', aliases=['copy_grant']),
+        snapshot_retention_period=dict(type='int', required=True, aliases=['retention_period']),
     )
 
     module = AnsibleAWSModule(

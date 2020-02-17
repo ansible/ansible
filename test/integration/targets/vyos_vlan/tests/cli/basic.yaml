@@ -73,8 +73,8 @@
 - name: Create VLANs using aggregate
   vyos_vlan: &agg_vlan
     aggregate:
-      - { vlan_id: 101, name: voice, interfaces: "eth0" }
-      - { vlan_id: 201, name: mgm, interfaces: "eth1" }
+      - {vlan_id: 101, name: voice, interfaces: "eth0"}
+      - {vlan_id: 201, name: mgm, interfaces: "eth1"}
     state: present
   register: result
 

@@ -186,6 +186,90 @@
           - result.configuration.runtime == 'python2.7'
           - result.configuration.tracing_config.mode == 'PassThrough'
 
+    - name: lambda_info | Gather all infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: all
+      register: lambda_infos_all
+
+    - name: lambda_info | Assert successfull retrieval of all information
+      assert:
+        that:
+          - lambda_infos_all is not failed
+          - lambda_infos_all.function[lambda_function_name].function_name == lambda_function_name
+          - lambda_infos_all.function[lambda_function_name].runtime == "python2.7"
+          - lambda_infos_all.function[lambda_function_name].versions is defined
+          - lambda_infos_all.function[lambda_function_name].aliases is defined
+          - lambda_infos_all.function[lambda_function_name].policy is defined
+          - lambda_infos_all.function[lambda_function_name].mappings is defined
+          - lambda_infos_all.function[lambda_function_name].description == ""
+          - lambda_infos_all.function[lambda_function_name].function_arn is defined
+          - lambda_infos_all.function[lambda_function_name].handler == "mini_lambda.handler"
+
+    - name: lambda_info | Gather version infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: versions
+      register: lambda_infos_versions
+
+    - name: lambda_info | Assert successfull retrieval of versions information
+      assert:
+        that:
+          - lambda_infos_versions is not failed
+          - lambda_infos_versions.function[lambda_function_name].versions|length > 0
+          - lambda_infos_versions.function[lambda_function_name].function_name is undefined
+
+    - name: lambda_info | Gather config infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: config
+      register: lambda_infos_config
+
+    - name: lambda_info | Assert successfull retrieval of config information
+      assert:
+        that:
+          - lambda_infos_config is not failed
+          - lambda_infos_config.function[lambda_function_name].function_name == lambda_function_name
+          - lambda_infos_config.function[lambda_function_name].description is defined
+          - lambda_infos_config.function[lambda_function_name].versions is undefined
+
+    - name: lambda_info | Gather policy infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: policy
+      register: lambda_infos_policy
+
+    - name: lambda_info | Assert successfull retrieval of policy information
+      assert:
+        that:
+          - lambda_infos_policy is not failed
+          - lambda_infos_policy.function[lambda_function_name].policy is defined
+          - lambda_infos_policy.function[lambda_function_name].versions is undefined
+
+    - name: lambda_info | Gather aliases infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: aliases
+      register: lambda_infos_aliases
+
+    - name: lambda_info | Assert successfull retrieval of aliases information
+      assert:
+        that:
+          - lambda_infos_aliases is not failed
+          - lambda_infos_aliases.function[lambda_function_name].aliases is defined
+
+    - name: lambda_info | Gather mappings infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: mappings
+      register: lambda_infos_mappings
+
+    - name: lambda_info | Assert successfull retrieval of mappings information
+      assert:
+        that:
+          - lambda_infos_mappings is not failed
+          - lambda_infos_mappings.function[lambda_function_name].mappings is defined
+
     # ============================================================
     - name: test state=present with security group but no vpc
       lambda:

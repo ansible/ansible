@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_schema - use query parameters with cursor object (https://github.com/ansible/ansible/pull/65679).

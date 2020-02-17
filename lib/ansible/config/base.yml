@@ -1846,6 +1846,23 @@ VARIABLE_PRECEDENCE:
   - {key: precedence, section: defaults}
   type: list
   version_added: "2.4"
+WIN_ASYNC_STARTUP_TIMEOUT:
+  name: Windows Async Startup Timeout
+  default: 5
+  description:
+    - For asynchronous tasks in Ansible (covered in Asynchronous Actions and Polling),
+      this is how long, in seconds, to wait for the task spawned by Ansible to connect back to the named pipe used
+      on Windows systems. The default is 5 seconds. This can be too low on slower systems, or systems under heavy load.
+    - This is not the total time an async command can run for, but is a separate timeout to wait for an async command to
+      start. The task will only start to be timed against its async_timeout once it has connected to the pipe, so the
+      overall maximum duration the task can take will be extended by the amount specified here.
+  env: [{name: ANSIBLE_WIN_ASYNC_STARTUP_TIMEOUT}]
+  ini:
+    - {key: win_async_startup_timeout, section: defaults}
+  type: integer
+  vars:
+    - {name: ansible_win_async_startup_timeout}
+  version_added: '2.10'
 YAML_FILENAME_EXTENSIONS:
   name: Valid YAML extensions
   default: [".yml", ".yaml", ".json"]

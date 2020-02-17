@@ -16,7 +16,6 @@ module: ucs_uuid_pool
 short_description: Configures server UUID pools on Cisco UCS Manager
 description:
 - Configures server UUID pools and UUID blocks on Cisco UCS Manager.
-- Examples can be used with the L(UCS Platform Emulator,https://communities.cisco.com/ucspe).
 extends_documentation_fragment: ucs
 options:
   state:

@@ -1,0 +1,3 @@
+minor_changes:
+  - zabbix_hostmacro - ``macro_value`` is no longer required when ``state=absent``
+  - zabbix_hostmacro - ``macro_name`` now accepts macros in zabbix native format as well (e.g. ``{$MACRO}``)

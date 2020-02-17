@@ -182,11 +182,6 @@ EXAMPLES = '''
           name: port-8000-tcp
           port: 8000
 
-- name: Create a Service object by reading the definition from a file
-  k8s:
-    state: present
-    src: /testing/service.yml
-
 - name: Remove an existing Service object
   k8s:
     state: absent
@@ -207,24 +202,24 @@ EXAMPLES = '''
     If the definition file has been encrypted with Ansible Vault it will automatically be decrypted.
   k8s:
     state: present
-    definition: "{{ lookup('file', '/testing/deployment.yml') }}"
+    definition: "{{ lookup('file', '/testing/deployment.yml') | from_yaml }}"
 
 - name: Read definition file from the Ansible controller file system after Jinja templating
   k8s:
     state: present
-    definition: "{{ lookup('template', '/testing/deployment.yml') }}"
+    definition: "{{ lookup('template', '/testing/deployment.yml') | from_yaml }}"
 
 - name: fail on validation errors
   k8s:
     state: present
-    definition: "{{ lookup('template', '/testing/deployment.yml') }}"
+    definition: "{{ lookup('template', '/testing/deployment.yml')  | from_yaml }}"
     validate:
       fail_on_error: yes
 
 - name: warn on validation errors, check for unexpected properties
   k8s:
     state: present
-    definition: "{{ lookup('template', '/testing/deployment.yml') }}"
+    definition: "{{ lookup('template', '/testing/deployment.yml') | from_yaml }}"
     validate:
       fail_on_error: no
       strict: yes

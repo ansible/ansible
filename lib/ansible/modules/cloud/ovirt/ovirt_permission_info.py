@@ -121,7 +121,7 @@ def _permissions_service(connection, module):
 def main():
     argument_spec = ovirt_info_full_argument_spec(
         authz_name=dict(required=True, aliases=['domain']),
-        user_name=dict(rdefault=None),
+        user_name=dict(default=None),
         group_name=dict(default=None),
         namespace=dict(default=None),
     )

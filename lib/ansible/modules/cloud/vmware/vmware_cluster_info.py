@@ -24,6 +24,7 @@ description:
 version_added: '2.6'
 author:
     - Abhijeet Kasurde (@Akasurde)
+    - Christian Neugum (@digifuchsi)
 notes:
     - Tested on vSphere 6.5, 6.7
 requirements:
@@ -107,6 +108,24 @@ clusters:
             "ha_vm_monitoring": null,
             "ha_vm_tools_monitoring": null,
             "vsan_auto_claim_storage": false,
+            "hosts": [
+                {
+                    "name": "esxi01.vsphere.local",
+                    "folder": "/DC0/host/DC0_C0",
+                },
+                {
+                    "name": "esxi02.vsphere.local",
+                    "folder": "/DC0/host/DC0_C0",
+                },
+                {
+                    "name": "esxi03.vsphere.local",
+                    "folder": "/DC0/host/DC0_C0",
+                },
+                {
+                    "name": "esxi04.vsphere.local",
+                    "folder": "/DC0/host/DC0_C0",
+                },
+            ],
             "tags": [
                 {
                     "category_id": "urn:vmomi:InventoryServiceCategory:9fbf83de-7903-442e-8004-70fd3940297c:GLOBAL",
@@ -186,6 +205,14 @@ class VmwreClusterInfoManager(PyVmomi):
             ha_vm_failure_interval = None
             enabled_vsan = False
             vsan_auto_claim_storage = False
+            hosts = []
+
+            # Hosts
+            for host in cluster.host:
+                hosts.append({
+                    'name': host.name,
+                    'folder': self.get_vm_path(self.content, host),
+                })
 
             # HA
             das_config = cluster.configurationEx.dasConfig
@@ -214,6 +241,7 @@ class VmwreClusterInfoManager(PyVmomi):
                 tag_info = vmware_client.get_tags_for_cluster(cluster_mid=cluster._moId)
 
             results['clusters'][cluster.name] = dict(
+                hosts=hosts,
                 enable_ha=das_config.enabled,
                 ha_failover_level=ha_failover_level,
                 ha_vm_monitoring=das_config.vmMonitoring,

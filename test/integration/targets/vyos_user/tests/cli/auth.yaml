@@ -18,7 +18,7 @@
       command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_port | default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no '/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper show version'"
       responses:
         (?i)password: "badpass"
-    ignore_errors: yes
+    ignore_errors: true
     register: results
 
   - name: check that attempt failed
@@ -27,8 +27,8 @@
         - results.failed
 
   always:
-  - name: delete user
-    vyos_user:
-      name: auth_user
-      state: absent
-    register: result
+    - name: delete user
+      vyos_user:
+        name: auth_user
+        state: absent
+      register: result

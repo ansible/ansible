@@ -1,0 +1,104 @@
+- name: create a password file
+  set_fact:
+    newpass: "{{ lookup('password', output_dir + '/lookup/password length=8') }}"
+
+- name: stat the password file directory
+  stat: path="{{output_dir}}/lookup"
+  register: result
+
+- name: assert the directory's permissions
+  assert:
+    that:
+    - result.stat.mode == '0700'
+
+- name: stat the password file
+  stat: path="{{output_dir}}/lookup/password"
+  register: result
+
+- name: assert the directory's permissions
+  assert:
+    that:
+    - result.stat.mode == '0600'
+
+- name: get password length
+  shell: wc -c {{output_dir}}/lookup/password | awk '{print $1}'
+  register: wc_result
+
+- debug: var=wc_result.stdout
+
+- name: read password
+  shell: cat {{output_dir}}/lookup/password
+  register: cat_result
+
+- debug: var=cat_result.stdout
+
+- name: verify password
+  assert:
+    that:
+        - "wc_result.stdout == '9'"
+        - "cat_result.stdout == newpass"
+        - "' salt=' not in cat_result.stdout"
+
+- name: fetch password from an existing file
+  set_fact:
+    pass2: "{{ lookup('password', output_dir + '/lookup/password length=8') }}"
+
+- name: read password (again)
+  shell: cat {{output_dir}}/lookup/password
+  register: cat_result2
+
+- debug: var=cat_result2.stdout
+
+- name: verify password (again)
+  assert:
+    that:
+        - "cat_result2.stdout == newpass"
+        - "' salt=' not in cat_result2.stdout"
+
+
+
+- name: create a password (with salt) file
+  debug: msg={{ lookup('password', output_dir + '/lookup/password_with_salt encrypt=sha256_crypt') }}
+
+- name: read password and salt
+  shell: cat {{output_dir}}/lookup/password_with_salt
+  register: cat_pass_salt
+
+- debug: var=cat_pass_salt.stdout
+
+- name: fetch unencrypted password
+  set_fact:
+    newpass: "{{ lookup('password', output_dir + '/lookup/password_with_salt') }}"
+
+- debug: var=newpass
+
+- name: verify password and salt
+  assert:
+    that:
+        - "cat_pass_salt.stdout != newpass"
+        - "cat_pass_salt.stdout.startswith(newpass)"
+        - "' salt=' in cat_pass_salt.stdout"
+        - "' salt=' not in newpass"
+
+
+- name: fetch unencrypted password (using empty encrypt parameter)
+  set_fact:
+    newpass2: "{{ lookup('password', output_dir + '/lookup/password_with_salt encrypt=') }}"
+
+- name: verify lookup password behavior
+  assert:
+    that:
+        - "newpass == newpass2"
+
+- name: verify that we can generate a 1st password without writing it
+  set_fact:
+    newpass: "{{ lookup('password', '/dev/null') }}"
+
+- name: verify that we can generate a 2nd password without writing it
+  set_fact:
+    newpass2: "{{ lookup('password', '/dev/null') }}"
+
+- name: verify lookup password behavior with /dev/null
+  assert:
+    that:
+        - "newpass != newpass2"

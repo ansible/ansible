@@ -230,9 +230,6 @@ class MerakiModule(object):
         if optional_ignore is not None:
             self.ignored_keys = self.ignored_keys + optional_ignore
 
-        if type(original) != type(proposed):
-            # self.fail_json(msg="Types don't match")
-            return True
         if isinstance(original, list):
             if len(original) != len(proposed):
                 # self.fail_json(msg="Length of lists don't match")

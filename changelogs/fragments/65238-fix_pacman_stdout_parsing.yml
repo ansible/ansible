@@ -1,0 +1,2 @@
+bugfixes:
+  - pacman - Fix pacman output parsing on localized environment. (https://github.com/ansible/ansible/issues/65237)

@@ -68,6 +68,28 @@ options:
       default: 'present'
       choices: [ 'present', 'absent' ]
       type: str
+    associable_object_types:
+      description:
+      - List of object types that can be associated with the given category.
+      choices:
+      - All objects
+      - Cluster
+      - Content Library
+      - Datacenter
+      - Datastore
+      - Datastore Cluster
+      - Distributed Port Group
+      - Distributed Switch
+      - Folder
+      - Host
+      - Library item
+      - Network
+      - Resource Pool
+      - vApp
+      - Virtual Machine
+      version_added: '2.10'
+      type: list
+      elements: str
 extends_documentation_fragment: vmware_rest_client.documentation
 '''
 
@@ -107,6 +129,19 @@ EXAMPLES = r'''
     password: "{{ vcenter_pass }}"
     category_name: Sample_Category_0002
     state: absent
+
+- name: Create category with 2 associable object types
+  vmware_category:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: False
+    category_name: 'Sample_Category_0003'
+    category_description: 'sample description'
+    associable_object_types:
+    - Datastore
+    - Cluster
+    state: present
 '''
 
 RETURN = r'''
@@ -163,7 +198,18 @@ class VmwareCategory(VmwareRestClient):
         else:
             category_spec.cardinality = CategoryModel.Cardinality.MULTIPLE
 
-        category_spec.associable_types = set()
+        associable_object_types = self.params.get('associable_object_types')
+
+        obj_types_set = []
+        if associable_object_types:
+            for obj_type in associable_object_types:
+                if obj_type.lower() == 'all objects':
+                    obj_types_set = []
+                    break
+                else:
+                    obj_types_set.append(obj_type)
+
+        category_spec.associable_types = set(obj_types_set)
 
         try:
             category_id = self.category_service.create(category_spec)
@@ -262,6 +308,17 @@ def main():
         category_cardinality=dict(type='str', choices=["multiple", "single"], default="multiple"),
         new_category_name=dict(type='str'),
         state=dict(type='str', choices=['present', 'absent'], default='present'),
+        associable_object_types=dict(
+            type='list',
+            choices=[
+                'All objects', 'Folder', 'Cluster',
+                'Datacenter', 'Datastore', 'Datastore Cluster',
+                'Distributed Port Group', 'Distributed Switch',
+                'Host', 'Content Library', 'Library item', 'Network',
+                'Resource Pool', 'vApp', 'Virtual Machine',
+            ],
+            elements=str,
+        ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

@@ -102,6 +102,19 @@
           Description: "Created by {{ resource_prefix }}"
         <<: *aws_connection_info
 
+    - name: set up testing target group (type=instance) with UDP protocol
+      elb_target_group:
+        name: "{{ tg_tcpudp_name }}"
+        protocol: udp
+        port: 53
+        vpc_id: '{{ vpc.vpc.id }}'
+        state: present
+        target_type: instance
+        tags:
+          Protocol: "UDP"
+          Description: "Created by {{ resource_prefix }}"
+        <<: *aws_connection_info
+
     - name: set up testing target group for ALB (type=instance)
       elb_target_group:
         name: "{{ tg_name }}-used"
@@ -360,6 +373,27 @@
       with_items:
         - "{{ tg_name }}"
         - "{{ tg_name }}-used"
+      ignore_errors: true
+
+    - name: remove udp testing target groups
+      elb_target_group:
+        name: "{{ item }}"
+        protocol: udp
+        port: 53
+        vpc_id: '{{ vpc.vpc.id }}'
+        state: absent
+        target_type: instance
+        tags:
+          Description: "Created by {{ resource_prefix }}"
+          Protocol: "UDP"
+        wait: true
+        wait_timeout: 200
+        <<: *aws_connection_info
+      register: removed
+      retries: 10
+      until: removed is not failed
+      with_items:
+        - "{{ tg_tcpudp_name }}"
       ignore_errors: true
 
     - name: remove application load balancer

@@ -61,7 +61,7 @@ class Vultr:
                 'api_key': self.module.params.get('api_key') or config.get('key'),
                 'api_timeout': self.module.params.get('api_timeout') or int(config.get('timeout') or 60),
                 'api_retries': self.module.params.get('api_retries') or int(config.get('retries') or 5),
-                'api_retry_max_delay': self.module.params.get('api_retries') or int(config.get('retry_max_delay') or 12),
+                'api_retry_max_delay': self.module.params.get('api_retry_max_delay') or int(config.get('retry_max_delay') or 12),
                 'api_endpoint': self.module.params.get('api_endpoint') or config.get('endpoint') or VULTR_API_ENDPOINT,
             }
         except ValueError as e:
@@ -216,7 +216,7 @@ class Vultr:
         except ValueError as e:
             self.module.fail_json(msg="Could not process response into json: %s" % e)
 
-    def query_resource_by_key(self, key, value, resource='regions', query_by='list', params=None, use_cache=False, id_key=None):
+    def query_resource_by_key(self, key, value, resource='regions', query_by='list', params=None, use_cache=False, id_key=None, optional=False):
         if not value:
             return {}
 
@@ -246,12 +246,13 @@ class Vultr:
                     return r_data
                 if id_key is not None and to_text(r_data[id_key]) == to_text(value):
                     return r_data
-
-        if id_key:
-            msg = "Could not find %s with ID or %s: %s" % (resource, key, value)
-        else:
-            msg = "Could not find %s with %s: %s" % (resource, key, value)
-        self.module.fail_json(msg=msg)
+        if not optional:
+            if id_key:
+                msg = "Could not find %s with ID or %s: %s" % (resource, key, value)
+            else:
+                msg = "Could not find %s with %s: %s" % (resource, key, value)
+            self.module.fail_json(msg=msg)
+        return {}
 
     @staticmethod
     def normalize_result(resource, schema, remove_missing_keys=True):
@@ -288,14 +289,16 @@ class Vultr:
 
         return self.result
 
-    def get_plan(self, plan=None, key='name'):
+    def get_plan(self, plan=None, key='name', optional=False):
         value = plan or self.module.params.get('plan')
 
         return self.query_resource_by_key(
             key=key,
             value=value,
             resource='plans',
-            use_cache=True
+            use_cache=True,
+            id_key='VPSPLANID',
+            optional=optional,
         )
 
     def get_firewallgroup(self, firewallgroup=None, key='description'):

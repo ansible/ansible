@@ -369,11 +369,12 @@ class Sequence(object):
                  "LEFT JOIN pg_namespace n ON n.oid = c.relnamespace "
                  "WHERE NOT pg_is_other_temp_schema(n.oid) "
                  "AND c.relkind = 'S'::\"char\" "
-                 "AND sequence_name = '%s' "
-                 "AND sequence_schema = '%s'" % (self.name,
-                                                 self.schema))
+                 "AND sequence_name = %(name)s "
+                 "AND sequence_schema = %(schema)s")
 
-        res = exec_sql(self, query, add_to_executed=False)
+        res = exec_sql(self, query,
+                       query_params={'name': self.name, 'schema': self.schema},
+                       add_to_executed=False)
 
         if not res:
             self.exists = False

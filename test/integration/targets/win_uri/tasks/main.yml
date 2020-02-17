@@ -67,7 +67,7 @@
 
 - name: get request with return_content and dest
   win_uri:
-    url: https://{{httpbin_host}}/get
+    url: https://{{httpbin_host}}/base64/{{ '{"key":"value"}' | b64encode }}
     return_content: yes
     dest: '{{ remote_tmp_dir }}\get.json'
   register: get_request_with_dest
@@ -90,7 +90,7 @@
 
 - name: get request with return_content and dest (idempotent)
   win_uri:
-    url: https://{{httpbin_host}}/get
+    url: https://{{httpbin_host}}/base64/{{ '{"key":"value"}' | b64encode }}
     return_content: yes
     dest: '{{ remote_tmp_dir }}\get.json'
   register: get_request_with_dest_again
@@ -148,47 +148,109 @@
     - post_request_with_different_content_actual.stat.exists == True
     - post_request_with_different_content_actual.stat.checksum == post_request_with_different_content.content|hash('sha1')
 
-- name: test redirect without follow_redirects
+- name: test safe redirection of get
   win_uri:
     url: https://{{httpbin_host}}/redirect/2
-    follow_redirects: none
+  register: redirect_safe
+
+- name: assert safe redirection of get
+  assert:
+    that:
+    - redirect_safe.status_code == 200
+    - redirect_safe.response_uri == 'https://' + httpbin_host + '/get'
+
+- name: test safe redirection of head
+  win_uri:
+    url: https://{{httpbin_host}}/redirect/2
+    method: HEAD
+  register: redirect_safe_head
+
+- name: assert safe redirection of head
+  assert:
+    that:
+    - redirect_safe_head.status_code == 200
+    - redirect_safe_head.response_uri == 'https://' + httpbin_host + '/get'
+
+- name: test safe redirection of put
+  win_uri:
+    url: https://{{httpbin_host}}/redirect-to?url=https://{{httpbin_host}}/put
+    body: data
     status_code: 302
-  register: redirect_without_follow
+    method: PUT
+  register: redirect_safe_put
 
-- name: assert redirect without follow_redirects
+- name: assert safe redirection of put
   assert:
     that:
-    - not redirect_without_follow.changed
-    - redirect_without_follow.location|default("") == '/relative-redirect/1'
-    - redirect_without_follow.status_code == 302
+    - redirect_safe_put.status_code == 302
+    - redirect_safe_put.response_uri == 'https://' + httpbin_host + '/redirect-to?url=https://' + httpbin_host + '/put'
 
-- name: test redirect with follow_redirects
+- name: test none redirection of get
+  win_uri:
+    url: https://{{httpbin_host}}/redirect/2
+    status_code: 302
+    follow_redirects: none
+  register: redirect_none
+
+- name: assert none redirection of get
+  assert:
+    that:
+    - redirect_none.status_code == 302
+    - redirect_none.response_uri == 'https://' + httpbin_host + '/redirect/2'
+
+- name: test none redirection of put
+  win_uri:
+    url: https://{{httpbin_host}}/redirect-to?url=https://{{httpbin_host}}/put
+    body: data
+    status_code: 302
+    method: PUT
+    follow_redirects: none
+  register: redirect_none_put
+
+- name: assert none redirection of put
+  assert:
+    that:
+    - redirect_none_put.status_code == 302
+    - redirect_none_put.response_uri == 'https://' + httpbin_host + '/redirect-to?url=https://' + httpbin_host + '/put'
+
+- name: test all redirection of get
   win_uri:
     url: https://{{httpbin_host}}/redirect/2
     follow_redirects: all
-  register: redirect_with_follow
+  register: redirect_all
 
-- name: assert redirect with follow_redirects
+- name: assert all redirection of get
   assert:
     that:
-    - not redirect_with_follow.changed
-    - redirect_with_follow.location is not defined
-    - redirect_with_follow.status_code == 200
-    - redirect_with_follow.response_uri == 'https://{{httpbin_host}}/get'
+    - redirect_all.status_code == 200
+    - redirect_all.response_uri == 'https://' + httpbin_host + '/get'
 
-- name: get request with redirect of TLS
+- name: test all redirection of put
   win_uri:
-    url: https://{{httpbin_host}}/redirect/2
+    url: https://{{httpbin_host}}/redirect-to?url=https://{{httpbin_host}}/put
+    body: data
+    method: PUT
     follow_redirects: all
-  register: redirect_with_follow_tls
+  register: redirect_all_put
 
-- name: assert redirect with redirect of TLS
+- name: assert all redirection of put
   assert:
     that:
-    - not redirect_with_follow_tls.changed
-    - redirect_with_follow_tls.location is not defined
-    - redirect_with_follow_tls.status_code == 200
-    - redirect_with_follow_tls.response_uri == 'https://{{httpbin_host}}/get'
+    - redirect_all_put.status_code == 200
+    - redirect_all_put.response_uri == 'https://' + httpbin_host + '/put'
+
+- name: test exceeded maximum redirection
+  win_uri:
+    url: https://{{httpbin_host}}/redirect/5
+    maximum_redirection: 4
+    status_code: 302
+  register: maximum_redirection
+
+- name: assert exceeded maximum redirection
+  assert:
+    that:
+    - maximum_redirection.status_code == 302
+    - maximum_redirection.response_uri == 'https://' + httpbin_host + '/relative-redirect/1'
 
 - name: test basic auth
   win_uri:

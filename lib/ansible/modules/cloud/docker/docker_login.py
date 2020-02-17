@@ -29,7 +29,6 @@ description:
     - Running in check mode will perform the authentication without updating the config file.
 options:
   registry_url:
-    required: False
     description:
       - The registry URL.
     type: str
@@ -39,16 +38,15 @@ options:
       - url
   username:
     description:
-      - The username for the registry account
+      - The username for the registry account.
+      - Required when I(state) is C(present).
     type: str
-    required: yes
   password:
     description:
-      - The plaintext password for the registry account
+      - The plaintext password for the registry account.
+      - Required when I(state) is C(present).
     type: str
-    required: yes
   email:
-    required: False
     description:
       - Does nothing, do not use.
       - Will be removed in Ansible 2.14.
@@ -171,7 +169,7 @@ if HAS_DOCKER_PY:
             from dockerpycreds.errors import StoreError, CredentialsNotFound
             from dockerpycreds.store import Store
         except ImportError as exc:
-            HAS_DOCKER_ERRROR = str(exc)
+            HAS_DOCKER_ERROR = str(exc)
             NEEDS_DOCKER_PYCREDS = True
 
 
@@ -246,9 +244,13 @@ class DockerFileStore(object):
         dir = os.path.dirname(self._config_path)
         if not os.path.exists(dir):
             os.makedirs(dir)
-        # Write config
-        with open(self._config_path, "w") as f:
-            json.dump(self._config, f, indent=4, sort_keys=True)
+        # Write config; make sure it has permissions 0x600
+        content = json.dumps(self._config, indent=4, sort_keys=True).encode('utf-8')
+        f = os.open(self._config_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        try:
+            os.write(f, content)
+        finally:
+            os.close(f)
 
     def store(self, server, username, password):
         '''

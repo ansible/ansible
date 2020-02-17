@@ -23,7 +23,9 @@ requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
 version_added: "2.2"
-author: Justin Menga (@jmenga)
+author:
+    - Justin Menga (@jmenga)
+    - Kevin Coming (@waffie1)
 options:
     stack_name:
         description:
@@ -54,6 +56,12 @@ options:
             - Get stack policy for the stack.
         type: bool
         default: false
+    stack_change_sets:
+        description:
+            - Get stack change sets for the stack
+        type: bool
+        default: false
+        version_added: '2.10'
 extends_documentation_fragment:
     - aws
     - ec2
@@ -155,23 +163,25 @@ stack_resources:
       AutoScalingGroup: "dev-someapp-AutoscalingGroup-1SKEXXBCAN0S7"
       AutoScalingSecurityGroup: "sg-abcd1234"
       ApplicationDatabase: "dazvlpr01xj55a"
+stack_change_sets:
+    description: A list of stack change sets.  Each item in the list represents the details of a specific changeset
+
+    returned: only if all_facts or stack_change_sets is true and the stack exists
+    type: list
 '''
 
 import json
 import traceback
+
 from functools import partial
+from ansible.module_utils._text import to_native
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, AWSRetry, boto3_tag_list_to_ansible_dict)
 
 try:
-    import boto3
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
-
-from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (get_aws_connection_info, ec2_argument_spec, boto3_conn,
-                                      camel_dict_to_snake_dict, AWSRetry, boto3_tag_list_to_ansible_dict)
+    pass  # handled by AnsibleAWSModule
 
 
 class CloudFormationServiceManager:
@@ -179,82 +189,94 @@ class CloudFormationServiceManager:
 
     def __init__(self, module):
         self.module = module
+        self.client = module.client('cloudformation')
 
-        try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            self.client = boto3_conn(module, conn_type='client',
-                                     resource='cloudformation', region=region,
-                                     endpoint=ec2_url, **aws_connect_kwargs)
-            backoff_wrapper = AWSRetry.jittered_backoff(retries=10, delay=3, max_delay=30)
-            self.client.describe_stacks = backoff_wrapper(self.client.describe_stacks)
-            self.client.list_stack_resources = backoff_wrapper(self.client.list_stack_resources)
-            self.client.describe_stack_events = backoff_wrapper(self.client.describe_stack_events)
-            self.client.get_stack_policy = backoff_wrapper(self.client.get_stack_policy)
-            self.client.get_template = backoff_wrapper(self.client.get_template)
-        except botocore.exceptions.NoRegionError:
-            self.module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION environment variable or in boto configuration file")
-        except Exception as e:
-            self.module.fail_json(msg="Can't establish connection - " + str(e), exception=traceback.format_exc())
+    @AWSRetry.exponential_backoff(retries=5, delay=5)
+    def describe_stacks_with_backoff(self, **kwargs):
+        paginator = self.client.get_paginator('describe_stacks')
+        return paginator.paginate(**kwargs).build_full_result()['Stacks']
 
     def describe_stacks(self, stack_name=None):
         try:
             kwargs = {'StackName': stack_name} if stack_name else {}
-            func = partial(self.client.describe_stacks, **kwargs)
-            response = self.paginated_response(func, 'Stacks')
+            response = self.describe_stacks_with_backoff(**kwargs)
             if response is not None:
                 return response
             self.module.fail_json(msg="Error describing stack(s) - an empty response was returned")
-        except Exception as e:
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             if 'does not exist' in e.response['Error']['Message']:
                 # missing stack, don't bail.
                 return {}
-            self.module.fail_json(msg="Error describing stack - " + to_native(e), exception=traceback.format_exc())
+            self.module.fail_json_aws(e, msg="Error describing stack " + stack_name)
+
+    @AWSRetry.exponential_backoff(retries=5, delay=5)
+    def list_stack_resources_with_backoff(self, stack_name):
+        paginator = self.client.get_paginator('list_stack_resources')
+        return paginator.paginate(StackName=stack_name).build_full_result()['StackResourceSummaries']
 
     def list_stack_resources(self, stack_name):
         try:
-            func = partial(self.client.list_stack_resources, StackName=stack_name)
-            return self.paginated_response(func, 'StackResourceSummaries')
-        except Exception as e:
-            self.module.fail_json(msg="Error listing stack resources - " + str(e), exception=traceback.format_exc())
+            return self.list_stack_resources_with_backoff(stack_name)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Error listing stack resources for stack " + stack_name)
+
+    @AWSRetry.exponential_backoff(retries=5, delay=5)
+    def describe_stack_events_with_backoff(self, stack_name):
+        paginator = self.client.get_paginator('describe_stack_events')
+        return paginator.paginate(StackName=stack_name).build_full_result()['StackEvents']
 
     def describe_stack_events(self, stack_name):
         try:
-            func = partial(self.client.describe_stack_events, StackName=stack_name)
-            return self.paginated_response(func, 'StackEvents')
-        except Exception as e:
-            self.module.fail_json(msg="Error describing stack events - " + str(e), exception=traceback.format_exc())
+            return self.describe_stack_events_with_backoff(stack_name)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Error listing stack events for stack " + stack_name)
+
+    @AWSRetry.exponential_backoff(retries=5, delay=5)
+    def list_stack_change_sets_with_backoff(self, stack_name):
+        paginator = self.client.get_paginator('list_change_sets')
+        return paginator.paginate(StackName=stack_name).build_full_result()['Summaries']
+
+    @AWSRetry.exponential_backoff(retries=5, delay=5)
+    def describe_stack_change_set_with_backoff(self, **kwargs):
+        paginator = self.client.get_paginator('describe_change_set')
+        return paginator.paginate(**kwargs).build_full_result()
+
+    def describe_stack_change_sets(self, stack_name):
+        changes = []
+        try:
+            change_sets = self.list_stack_change_sets_with_backoff(stack_name)
+            for item in change_sets:
+                changes.append(self.describe_stack_change_set_with_backoff(
+                               StackName=stack_name,
+                               ChangeSetName=item['ChangeSetName']))
+            return changes
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Error describing stack change sets for stack " + stack_name)
+
+    @AWSRetry.exponential_backoff(retries=5, delay=5)
+    def get_stack_policy_with_backoff(self, stack_name):
+        return self.client.get_stack_policy(StackName=stack_name)
 
     def get_stack_policy(self, stack_name):
         try:
-            response = self.client.get_stack_policy(StackName=stack_name)
+            response = self.get_stack_policy_with_backoff(stack_name)
             stack_policy = response.get('StackPolicyBody')
             if stack_policy:
                 return json.loads(stack_policy)
             return dict()
-        except Exception as e:
-            self.module.fail_json(msg="Error getting stack policy - " + str(e), exception=traceback.format_exc())
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Error getting stack policy for stack " + stack_name)
+
+    @AWSRetry.exponential_backoff(retries=5, delay=5)
+    def get_template_with_backoff(self, stack_name):
+        return self.client.get_template(StackName=stack_name)
 
     def get_template(self, stack_name):
         try:
-            response = self.client.get_template(StackName=stack_name)
+            response = self.get_template_with_backoff(stack_name)
             return response.get('TemplateBody')
-        except Exception as e:
-            self.module.fail_json(msg="Error getting stack template - " + str(e), exception=traceback.format_exc())
-
-    def paginated_response(self, func, result_key, next_token=None):
-        '''
-        Returns expanded response for paginated operations.
-        The 'result_key' is used to define the concatenated results that are combined from each paginated response.
-        '''
-        args = dict()
-        if next_token:
-            args['NextToken'] = next_token
-        response = func(**args)
-        result = response.get(result_key)
-        next_token = response.get('NextToken')
-        if not next_token:
-            return result
-        return result + self.paginated_response(func, result_key, next_token)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(e, msg="Error getting stack template for stack " + stack_name)
 
 
 def to_dict(items, key, value):
@@ -266,24 +288,21 @@ def to_dict(items, key, value):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         stack_name=dict(),
         all_facts=dict(required=False, default=False, type='bool'),
         stack_policy=dict(required=False, default=False, type='bool'),
         stack_events=dict(required=False, default=False, type='bool'),
         stack_resources=dict(required=False, default=False, type='bool'),
         stack_template=dict(required=False, default=False, type='bool'),
-    ))
+        stack_change_sets=dict(required=False, default=False, type='bool'),
+    )
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
     is_old_facts = module._name == 'cloudformation_facts'
     if is_old_facts:
         module.deprecate("The 'cloudformation_facts' module has been renamed to 'cloudformation_info', "
                          "and the renamed one no longer returns ansible_facts", version='2.13')
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
 
     service_mgr = CloudFormationServiceManager(module)
 
@@ -299,31 +318,36 @@ def main():
         # Create stack output and stack parameter dictionaries
         if facts['stack_description']:
             facts['stack_outputs'] = to_dict(facts['stack_description'].get('Outputs'), 'OutputKey', 'OutputValue')
-            facts['stack_parameters'] = to_dict(facts['stack_description'].get('Parameters'), 'ParameterKey', 'ParameterValue')
+            facts['stack_parameters'] = to_dict(facts['stack_description'].get('Parameters'),
+                                                'ParameterKey', 'ParameterValue')
             facts['stack_tags'] = boto3_tag_list_to_ansible_dict(facts['stack_description'].get('Tags'))
-
-        # normalize stack description API output
-        facts['stack_description'] = camel_dict_to_snake_dict(facts['stack_description'])
 
         # Create optional stack outputs
         all_facts = module.params.get('all_facts')
         if all_facts or module.params.get('stack_resources'):
             facts['stack_resource_list'] = service_mgr.list_stack_resources(stack_name)
-            facts['stack_resources'] = to_dict(facts.get('stack_resource_list'), 'LogicalResourceId', 'PhysicalResourceId')
+            facts['stack_resources'] = to_dict(facts.get('stack_resource_list'),
+                                               'LogicalResourceId', 'PhysicalResourceId')
         if all_facts or module.params.get('stack_template'):
             facts['stack_template'] = service_mgr.get_template(stack_name)
         if all_facts or module.params.get('stack_policy'):
             facts['stack_policy'] = service_mgr.get_stack_policy(stack_name)
         if all_facts or module.params.get('stack_events'):
             facts['stack_events'] = service_mgr.describe_stack_events(stack_name)
+        if all_facts or module.params.get('stack_change_sets'):
+            facts['stack_change_sets'] = service_mgr.describe_stack_change_sets(stack_name)
 
         if is_old_facts:
             result['ansible_facts']['cloudformation'][stack_name] = facts
         else:
-            result['cloudformation'][stack_name] = facts
+            result['cloudformation'][stack_name] = camel_dict_to_snake_dict(facts, ignore_list=('stack_outputs',
+                                                                                                'stack_parameters',
+                                                                                                'stack_policy',
+                                                                                                'stack_resources',
+                                                                                                'stack_tags',
+                                                                                                'stack_template'))
 
-    result['changed'] = False
-    module.exit_json(**result)
+    module.exit_json(changed=False, **result)
 
 
 if __name__ == '__main__':

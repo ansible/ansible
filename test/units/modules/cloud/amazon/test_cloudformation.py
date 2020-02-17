@@ -146,25 +146,6 @@ def test_missing_template_body():
     assert "Either 'template', 'template_body' or 'template_url' is required when the stack does not exist." == m.exit_kwargs['msg']
 
 
-def test_disable_rollback_and_on_failure_defined():
-    m = FakeModule(
-        on_create_failure='DELETE',
-        disable_rollback=True,
-    )
-    with pytest.raises(Exception) as exc_info:
-        cfn_module.create_stack(
-            module=m,
-            stack_params={'TemplateBody': ''},
-            cfn=None,
-            events_limit=default_events_limit
-        )
-        pytest.fail('Expected module to fail with both on_create_failure and disable_rollback defined')
-
-    assert exc_info.match('FAIL')
-    assert not m.exit_args
-    assert "You can specify either 'on_create_failure' or 'disable_rollback', but not both." == m.exit_kwargs['msg']
-
-
 def test_on_create_failure_delete(maybe_sleep, placeboify):
     m = FakeModule(
         on_create_failure='DELETE',

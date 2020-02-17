@@ -1,18 +1,15 @@
 ---
 
 - name: Integration test for AWS Step Function state machine module
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
   block:
 
     # ==== Setup ==================================================
-
-    - name: Set connection information for all tasks
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: yes
 
     - name: Create IAM service role needed for Step Functions
       iam_role:
@@ -20,7 +17,6 @@
         description: Role with permissions for AWS Step Functions actions.
         assume_role_policy_document: "{{ lookup('file', 'state_machines_iam_trust_policy.json') }}"
         state: present
-        <<: *aws_connection_info
       register: step_functions_role
 
     - name: Pause a few seconds to ensure IAM role is available to next task
@@ -41,7 +37,6 @@
         tags:
           project: helloWorld
         state: present
-        <<: *aws_connection_info
       register: creation_check
       check_mode: yes
 
@@ -58,7 +53,6 @@
         tags:
           project: helloWorld
         state: present
-        <<: *aws_connection_info
       register: creation_output
 
     - assert:
@@ -77,7 +71,6 @@
         tags:
           project: helloWorld
         state: present
-        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -94,7 +87,6 @@
         tags:
           project: helloWorld
         state: present
-        <<: *aws_connection_info
       register: result
 
     - assert:
@@ -109,7 +101,6 @@
         tags:
           differentTag: different_tag
         state: present
-        <<: *aws_connection_info
       register: update_check
       check_mode: yes
 
@@ -126,7 +117,6 @@
         tags:
           differentTag: different_tag
         state: present
-        <<: *aws_connection_info
       register: update_output
 
     - assert:
@@ -134,11 +124,136 @@
           - update_output.changed == True
           - update_output.state_machine_arn == creation_output.state_machine_arn
 
+    - name: Start execution of state machine -- check_mode
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        execution_input: "{}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+      register: start_execution_output
+      check_mode: yes
+
+    - assert:
+        that:
+          - start_execution_output.changed == True
+          - "start_execution_output.output == 'State machine execution would be started.'"
+
+    - name: Start execution of state machine
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        execution_input: "{}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+      register: start_execution_output
+
+    - assert:
+        that:
+          - start_execution_output.changed
+          - "'execution_arn' in start_execution_output"
+          - "'start_date' in start_execution_output"
+
+    - name: Start execution of state machine (check for idempotency) (check mode)
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        execution_input: "{}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+      register: start_execution_output_idem_check
+      check_mode: yes
+
+    - assert:
+        that:
+          - not start_execution_output_idem_check.changed
+          - "start_execution_output_idem_check.output == 'State machine execution already exists.'"
+
+    - name: Start execution of state machine (check for idempotency)
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        execution_input: "{}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+      register: start_execution_output_idem
+
+    - assert:
+        that:
+          - not start_execution_output_idem.changed
+
+    - name: Stop execution of state machine -- check_mode
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+      check_mode: yes
+
+    - assert:
+        that:
+          - stop_execution_output.changed
+          - "stop_execution_output.output == 'State machine execution would be stopped.'"
+
+    - name: Stop execution of state machine
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+
+    - assert:
+        that:
+          - stop_execution_output.changed
+          - "'stop_date' in stop_execution_output"
+
+    - name: Stop execution of state machine (check for idempotency)
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+
+    - assert:
+        that:
+          - not stop_execution_output.changed
+
+    - name: Try stopping a non-running execution -- check_mode
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+      check_mode: yes
+
+    - assert:
+        that:
+          - not stop_execution_output.changed
+          - "stop_execution_output.output == 'State machine execution is not running.'"
+
+    - name: Try stopping a non-running execution
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+      check_mode: yes
+
+    - assert:
+        that:
+          - not stop_execution_output.changed
+
+    - name: Start execution of state machine with the same execution name
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+      register: start_execution_output_again
+
+    - assert:
+        that:
+          - not start_execution_output_again.changed
+
     - name: Remove state machine -- check_mode
       aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
         state: absent
-        <<: *aws_connection_info
       register: deletion_check
       check_mode: yes
 
@@ -151,7 +266,6 @@
       aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
         state: absent
-        <<: *aws_connection_info
       register: deletion_output
 
     - assert:
@@ -163,7 +277,6 @@
       aws_step_functions_state_machine:
         name: "non_existing_state_machine"
         state: absent
-        <<: *aws_connection_info
       register: result
 
     - assert:
@@ -178,12 +291,10 @@
       aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
         state: absent
-        <<: *aws_connection_info
       ignore_errors: true
 
     - name: Cleanup - delete IAM role needed for Step Functions test
       iam_role:
         name: "{{ step_functions_role_name }}"
         state: absent
-        <<: *aws_connection_info
       ignore_errors: true

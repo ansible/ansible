@@ -159,8 +159,7 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 
 class CloudWatchEventRule(object):
@@ -426,28 +425,16 @@ class CloudWatchEventRuleManager(object):
         return description['state']
 
 
-def get_cloudwatchevents_client(module):
-    """Returns a boto3 client for accessing CloudWatch Events"""
-    region, ec2_url, aws_conn_kwargs = get_aws_connection_info(module, boto3=True)
-    return boto3_conn(module, conn_type='client',
-                      resource='events',
-                      region=region, endpoint=ec2_url,
-                      **aws_conn_kwargs)
-
-
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            schedule_expression=dict(),
-            event_pattern=dict(),
-            state=dict(choices=['present', 'disabled', 'absent'],
-                       default='present'),
-            description=dict(),
-            role_arn=dict(),
-            targets=dict(type='list', default=[]),
-        )
+    argument_spec = dict(
+        name=dict(required=True),
+        schedule_expression=dict(),
+        event_pattern=dict(),
+        state=dict(choices=['present', 'disabled', 'absent'],
+                   default='present'),
+        description=dict(),
+        role_arn=dict(),
+        targets=dict(type='list', default=[]),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec)
 
@@ -456,10 +443,9 @@ def main():
     )
     targets = module.params.get('targets')
     state = module.params.get('state')
+    client = module.client('events')
 
-    cwe_rule = CloudWatchEventRule(module,
-                                   client=get_cloudwatchevents_client(module),
-                                   **rule_data)
+    cwe_rule = CloudWatchEventRule(module, client=client, **rule_data)
     cwe_rule_manager = CloudWatchEventRuleManager(cwe_rule, targets)
 
     if state == 'present':

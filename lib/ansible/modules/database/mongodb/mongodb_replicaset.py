@@ -333,7 +333,7 @@ def main():
     if validate:
         if len(members) <= 2 or len(members) % 2 == 0:
             module.fail_json(msg="MongoDB Replicaset validation failed. Invalid number of replicaset members.")
-        if arbiter_at_index is not None and len(members) - 1 > arbiter_at_index:
+        if arbiter_at_index is not None and len(members) - 1 < arbiter_at_index:
             module.fail_json(msg="MongoDB Replicaset validation failed. Invalid arbiter index.")
 
     result = dict(

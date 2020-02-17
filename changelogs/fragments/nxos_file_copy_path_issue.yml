@@ -1,0 +1,6 @@
+bugfixes:
+- "CVE-2019-14905 - nxos_file_copy module accepts remote_file parameter which is used for destination name
+   and performs actions related to that on the device using the value of remote_file which is of string type
+   However, there is no user input validation done while performing actions. A malicious code could crafts
+   the filename parameter to take advantage by performing an OS command injection. This fix validates the
+   option value if it is legitimate file path or not."

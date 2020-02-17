@@ -160,7 +160,7 @@ Mock objects (from https://docs.python.org/3/library/unittest.mock.html) can be 
 useful in building unit tests for special / difficult cases, but they can also
 lead to complex and confusing coding situations.  One good use for mocks would be in
 simulating an API. As for 'six', the 'mock' python package is bundled with Ansible (use
-``import ansible.compat.tests.mock``). See for example
+``import units.compat.mock``).
 
 Ensuring failure cases are visible with mock objects
 ----------------------------------------------------
@@ -385,8 +385,8 @@ mock for :meth:`Ansible.get_bin_path`::
 
     import json
 
-    from ansible.compat.tests import unittest
-    from ansible.compat.tests.mock import patch
+    from units.compat import unittest
+    from units.compat.mock import patch
     from ansible.module_utils import basic
     from ansible.module_utils._text import to_bytes
     from ansible.modules.namespace import my_module

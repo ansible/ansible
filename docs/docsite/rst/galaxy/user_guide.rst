@@ -7,7 +7,7 @@ Galaxy User Guide
 
 :dfn:`Ansible Galaxy` refers to the `Galaxy <https://galaxy.ansible.com>`_  website, a free site for finding, downloading, and sharing community developed roles.
 
-Use Galaxy to jump-start your automation project with great content from the Ansible community. Galaxy provides pre-packaged units of work such as `roles <playbooks_reuse_roles>`_, and new in Galaxy 3.2, `collections <collections>`_.
+Use Galaxy to jump-start your automation project with great content from the Ansible community. Galaxy provides pre-packaged units of work such as :ref:`roles <playbooks_reuse_roles>`, and new in Galaxy 3.2, :ref:`collections <collections>`
 You can find roles for provisioning infrastructure, deploying applications, and all of the tasks you do everyday. The collection format provides a comprehensive package of automation that may include multiple playbooks, roles, modules, and plugins.
 
 .. contents::
@@ -77,6 +77,11 @@ Install multiple collections with a requirements file
 -----------------------------------------------------
 
 .. include:: ../shared_snippets/installing_multiple_collections.txt
+
+Listing installed collections
+-----------------------------
+
+To list installed collections, run ``ansible-galaxy collection list``. See :ref:`collections_listing` for more details.
 
 
 Configuring the ``ansible-galaxy`` client
@@ -286,6 +291,29 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
     - src: git@gitlab.company.com:mygroup/ansible-base.git
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
+
+Installing roles and collections from the same requirements.yml file
+---------------------------------------------------------------------
+
+You can install roles and collections from the same requirements files, with some caveats.
+
+.. code-block:: yaml
+
+    ---
+    roles:
+      # Install a role from Ansible Galaxy.
+      - src: geerlingguy.java
+        version: 1.9.6
+
+    collections:
+      # Install a collection from Ansible Galaxy.
+      - name: geerlingguy.php_roles
+        version: 0.9.3
+        source: https://galaxy.ansible.com
+
+.. note::
+   While both roles and collections can be specified in one requirements file, they need to be installed separately.
+   The ``ansible-galaxy role install -r requirements.yml`` will only install roles and  ``ansible-galaxy collection install -r requirements.yml -p ./`` will only install collections.
 
 Installing multiple roles from multiple files
 ---------------------------------------------

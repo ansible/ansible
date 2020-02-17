@@ -84,7 +84,7 @@
 - name: Disable interface
   vyos_interface:
     name: eth1
-    enabled: False
+    enabled: false
   register: result
 
 - assert:
@@ -95,7 +95,7 @@
 - name: Enable interface
   vyos_interface:
     name: eth1
-    enabled: True
+    enabled: true
   register: result
 
 - assert:
@@ -133,8 +133,8 @@
 - name: Set interface on aggregate
   vyos_interface:
     aggregate:
-      - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512}
-      - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256}
+      - {name: eth1, description: test-interface-1, speed: 100, duplex: half, mtu: 512}
+      - {name: eth2, description: test-interface-2, speed: 1000, duplex: full, mtu: 256}
   register: result
   when: "'virtio_net' not in lsmod_out.stdout[0]"
 
@@ -154,8 +154,8 @@
 - name: Set interface on aggregate (idempotent)
   vyos_interface:
     aggregate:
-      - { name: eth1, description: test-interface-1,  speed: 100, duplex: half, mtu: 512}
-      - { name: eth2, description: test-interface-2,  speed: 1000, duplex: full, mtu: 256}
+      - {name: eth1, description: test-interface-1, speed: 100, duplex: half, mtu: 512}
+      - {name: eth2, description: test-interface-2, speed: 1000, duplex: full, mtu: 256}
   register: result
   when: "'virtio_net' not in lsmod_out.stdout[0]"
 
@@ -170,7 +170,7 @@
       - name: eth1
       - name: eth2
     description: test-interface
-    enabled: False
+    enabled: false
   register: result
 
 - assert:
@@ -184,7 +184,7 @@
     aggregate:
       - name: eth1
       - name: eth2
-    enabled: True
+    enabled: true
   register: result
 
 - assert:

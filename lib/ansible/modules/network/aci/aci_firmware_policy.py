@@ -50,7 +50,11 @@ options:
         type: str
         choices: [absent, present, query]
         default: present
-
+    name_alias:
+        version_added: '2.10'
+        description:
+            - The alias for the current object. This relates to the nameAlias field in ACI.
+        type: str
 extends_documentation_fragment:
     - aci
 
@@ -189,6 +193,7 @@ def main():
         version=dict(type='str', aliases=['version']),
         ignoreCompat=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -203,6 +208,7 @@ def main():
     state = module.params.get('state')
     name = module.params.get('name')
     version = module.params.get('version')
+    name_alias = module.params.get('name_alias')
 
     if module.params.get('ignoreCompat'):
         ignore = 'yes'
@@ -230,6 +236,7 @@ def main():
                 name=name,
                 version=version,
                 ignoreCompat=ignore,
+                nameAlias=name_alias,
             ),
 
         )

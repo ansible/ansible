@@ -23,7 +23,6 @@ options:
   state:
     description:
       - Register or deregister the policy.
-    required: true
     default: present
     choices: ['present', 'absent']
     type: str
@@ -40,23 +39,19 @@ options:
   adjustment_type:
     description:
       - The type of change in capacity of the autoscaling group.
-    required: false
     choices: ['ChangeInCapacity','ExactCapacity','PercentChangeInCapacity']
     type: str
   scaling_adjustment:
     description:
       - The amount by which the autoscaling group is adjusted by the policy.
-    required: false
     type: int
   min_adjustment_step:
     description:
       - Minimum amount of adjustment when policy is triggered.
-    required: false
     type: int
   cooldown:
     description:
       - The minimum period of time (in seconds) between which autoscaling actions can take place.
-    required: false
     type: int
 extends_documentation_fragment:
     - aws

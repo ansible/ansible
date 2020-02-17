@@ -49,6 +49,7 @@
                 "ec2:DeleteTags",
                 "ec2:DeregisterImage",
                 "ec2:Describe*",
+                "ec2:DetachVolume",
                 "ec2:ImportKeyPair",
                 "ec2:ModifyImageAttribute",
                 "ec2:ModifyInstanceAttribute",
@@ -235,9 +236,13 @@
             "Action": [
               "states:CreateStateMachine",
               "states:DeleteStateMachine",
+              "states:DescribeExecution",
               "states:DescribeStateMachine",
+              "states:ListExecutions",
               "states:ListStateMachines",
               "states:ListTagsForResource",
+              "states:StartExecution",
+              "states:StopExecution",
               "states:TagResource",
               "states:UntagResource",
               "states:UpdateStateMachine"
@@ -251,12 +256,9 @@
             "Effect": "Allow",
             "Action": [
               "lightsail:CreateInstances",
-              "lightsail:CreateKeyPair",
               "lightsail:DeleteInstance",
-              "lightsail:DeleteKeyPair",
               "lightsail:GetInstance",
               "lightsail:GetInstances",
-              "lightsail:GetKeyPairs",
               "lightsail:RebootInstance",
               "lightsail:StartInstance",
               "lightsail:StopInstance"

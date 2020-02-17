@@ -1,0 +1,42 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_devicealias sanity test"
+
+- name: Setup - Remove device alias if configured
+  nxos_devicealias: &remove
+    da:
+      - { name: 'ansible_test1_add', remove: True}
+      - { name: 'ansible_test2_add', remove: True}
+  ignore_errors: yes
+
+- block:
+
+    - name: Configure device alias
+      nxos_devicealias: &config
+        da:
+          - { name: 'ansible_test1_add', pwwn: '57:bb:cc:dd:ee:ff:11:67'}
+          - { name: 'ansible_test2_add', pwwn: '65:22:21:20:19:18:1a:0d'}
+      register: result
+
+    - assert: &true
+        that:
+          - result.changed == true
+    - assert:
+        that: 
+          - result.commands == ["terminal dont-ask", "device-alias database", "device-alias name ansible_test1_add pwwn 57:bb:cc:dd:ee:ff:11:67", "device-alias name ansible_test2_add pwwn 65:22:21:20:19:18:1a:0d", "device-alias commit", "no terminal dont-ask"]
+    
+    - name: Idempotence Check
+      nxos_devicealias: *config
+      register: result
+
+    - assert: &false
+        that:
+          - result.changed == false
+    - assert:
+        that: 
+          - result.commands == []
+
+  always:
+    - name: Remove device alias config
+      nxos_devicealias: *remove
+
+    - debug: msg="END connection={{ ansible_connection }} nxos_devicealias sanity test"

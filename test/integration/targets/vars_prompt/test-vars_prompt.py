@@ -115,6 +115,12 @@ tests = [
      'test_spec': [
          [('prompting for variable:', '{{whole}}\r')],
          r'testhost.*ok=2']},
+
+    # Test unsupported keys
+    {'playbook': 'unsupported.yml',
+     'test_spec': [
+         [],
+         "Invalid vars_prompt data structure, found unsupported key 'when'"]},
 ]
 
 for t in tests:

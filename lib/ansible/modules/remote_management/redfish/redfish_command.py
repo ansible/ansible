@@ -294,6 +294,14 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       timeout: 20
+
+  - name: Clear Sessions
+    redfish_command:
+      category: Sessions
+      command: ClearSessions
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
 '''
 
 RETURN = '''
@@ -317,6 +325,7 @@ CATEGORY_COMMANDS_ALL = {
     "Accounts": ["AddUser", "EnableUser", "DeleteUser", "DisableUser",
                  "UpdateUserRole", "UpdateUserPassword", "UpdateUserName",
                  "UpdateAccountServiceProperties"],
+    "Sessions": ["ClearSessions"],
     "Manager": ["GracefulRestart", "ClearLogs"],
 }
 
@@ -432,6 +441,16 @@ def main():
             for command in command_list:
                 if command in led_commands:
                     result = rf_utils.manage_indicator_led(command)
+
+    elif category == "Sessions":
+        # execute only if we find SessionService resources
+        resource = rf_utils._find_sessionservice_resource()
+        if resource['ret'] is False:
+            module.fail_json(msg=resource['msg'])
+
+        for command in command_list:
+            if command == "ClearSessions":
+                result = rf_utils.clear_sessions()
 
     elif category == "Manager":
         MANAGER_COMMANDS = {

@@ -10,7 +10,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ipa_vault
 author: Juan Manuel Parrilla (@jparrill)
@@ -25,38 +25,46 @@ options:
         - Can not be changed as it is the unique identifier.
         required: true
         aliases: ["name"]
+        type: str
     description:
         description:
         - Description.
+        type: str
     ipavaulttype:
         description:
         - Vault types are based on security level.
         default: "symmetric"
-        choices: ["standard", "symmetric", "asymmetric"]
-        required: true
+        choices: ["asymmetric", "standard", "symmetric"]
         aliases: ["vault_type"]
+        type: str
     ipavaultpublickey:
         description:
         - Public key.
         aliases: ["vault_public_key"]
+        type: str
     ipavaultsalt:
         description:
         - Vault Salt.
         aliases: ["vault_salt"]
+        type: str
     username:
         description:
         - Any user can own one or more user vaults.
         - Mutually exclusive with service.
         aliases: ["user"]
+        type: list
+        elements: str
     service:
         description:
         - Any service can own one or more service vaults.
         - Mutually exclusive with user.
+        type: str
     state:
         description:
         - State to ensure.
         default: "present"
-        choices: ["present", "absent"]
+        choices: ["absent", "present"]
+        type: str
     replace:
         description:
         - Force replace the existant vault on IPA server.
@@ -72,9 +80,9 @@ extends_documentation_fragment: ipa.documentation
 version_added: "2.7"
 '''
 
-EXAMPLES = '''
-# Ensure vault is present
-- ipa_vault:
+EXAMPLES = r'''
+- name: Ensure vault is present
+  ipa_vault:
     name: vault01
     vault_type: standard
     user: user01
@@ -83,16 +91,16 @@ EXAMPLES = '''
     ipa_pass: topsecret
     validate_certs: false
 
-# Ensure vault is present for Admin user
-- ipa_vault:
+- name: Ensure vault is present for Admin user
+  ipa_vault:
     name: vault01
     vault_type: standard
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
 
-# Ensure vault is absent
-- ipa_vault:
+- name: Ensure vault is absent
+  ipa_vault:
     name: vault01
     vault_type: standard
     user: user01
@@ -101,8 +109,8 @@ EXAMPLES = '''
     ipa_user: admin
     ipa_pass: topsecret
 
-# Modify vault if already exists
-- ipa_vault:
+- name: Modify vault if already exists
+  ipa_vault:
     name: vault01
     vault_type: standard
     description: "Vault for test"
@@ -111,15 +119,15 @@ EXAMPLES = '''
     ipa_pass: topsecret
     replace: True
 
-# Get vault info if already exists
-- ipa_vault:
+- name: Get vault info if already exists
+  ipa_vault:
     name: vault01
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
 '''
 
-RETURN = '''
+RETURN = r'''
 vault:
   description: Vault as returned by IPA API
   returned: always
@@ -221,7 +229,7 @@ def main():
                          service=dict(type='str'),
                          replace=dict(type='bool', default=False, choices=[True, False]),
                          state=dict(type='str', default='present', choices=['present', 'absent']),
-                         username=dict(type='list', aliases=['user']))
+                         username=dict(type='list', elements='str', aliases=['user']))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,

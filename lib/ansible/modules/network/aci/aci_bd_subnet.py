@@ -104,6 +104,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 notes:
 - The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
@@ -361,6 +366,7 @@ def main():
         subnet_control=dict(type='str', choices=['nd_ra', 'no_gw', 'querier_ip', 'unspecified']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -401,6 +407,7 @@ def main():
     subnet_control = module.params.get('subnet_control')
     if subnet_control:
         subnet_control = SUBNET_CONTROL_MAPPING[subnet_control]
+    name_alias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(
@@ -437,6 +444,7 @@ def main():
                 preferred=preferred,
                 scope=scope,
                 virtual=enable_vip,
+                nameAlias=name_alias,
             ),
             child_configs=[
                 {'fvRsBDSubnetToProfile': {'attributes': {'tnL3extOutName': route_profile_l3_out, 'tnRtctrlProfileName': route_profile}}},

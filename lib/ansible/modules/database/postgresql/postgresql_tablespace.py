@@ -62,6 +62,7 @@ options:
     description:
     - New name of the tablespace.
     - The new name cannot begin with pg_, as such names are reserved for system tablespaces.
+    type: str
   session_role:
     description:
     - Switch to session_role after connecting. The specified session_role must
@@ -248,16 +249,15 @@ class PgTablespace(object):
             query = ("SELECT r.rolname, (SELECT Null), %s "
                      "FROM pg_catalog.pg_tablespace AS t "
                      "JOIN pg_catalog.pg_roles AS r "
-                     "ON t.spcowner = r.oid "
-                     "WHERE t.spcname = '%s'" % (location, self.name))
+                     "ON t.spcowner = r.oid " % location)
         else:
             query = ("SELECT r.rolname, t.spcoptions, %s "
                      "FROM pg_catalog.pg_tablespace AS t "
                      "JOIN pg_catalog.pg_roles AS r "
-                     "ON t.spcowner = r.oid "
-                     "WHERE t.spcname = '%s'" % (location, self.name))
+                     "ON t.spcowner = r.oid " % location)
 
-        res = exec_sql(self, query, add_to_executed=False)
+        res = exec_sql(self, query + "WHERE t.spcname = %(name)s",
+                       query_params={'name': self.name}, add_to_executed=False)
 
         if not res:
             self.exists = False
@@ -379,7 +379,7 @@ class PgTablespace(object):
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
-        tablespace=dict(type='str', aliases=['name']),
+        tablespace=dict(type='str', required=True, aliases=['name']),
         state=dict(type='str', default="present", choices=["absent", "present"]),
         location=dict(type='path', aliases=['path']),
         owner=dict(type='str'),

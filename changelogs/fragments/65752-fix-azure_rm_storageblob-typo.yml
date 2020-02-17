@@ -1,0 +1,2 @@
+minor_changes:
+    - fixed the misspelt 'last_modified' field in azure_rm_storageblob output

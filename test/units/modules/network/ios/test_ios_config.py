@@ -79,16 +79,6 @@ class TestIosConfigModule(TestIosModule):
         result = self.execute_module()
         self.assertIn('__backup__', result)
 
-    def test_ios_config_save_always(self):
-        self.run_commands.return_value = "Hostname foo"
-        set_module_args(dict(save_when='always'))
-        self.execute_module(changed=True)
-        self.assertEqual(self.run_commands.call_count, 1)
-        self.assertEqual(self.get_config.call_count, 0)
-        self.assertEqual(self.conn.edit_config.call_count, 0)
-        args = self.run_commands.call_args[0][1]
-        self.assertIn('copy running-config startup-config\r', args)
-
     def test_ios_config_save_changed_true(self):
         src = load_fixture('ios_config_src.cfg')
         set_module_args(dict(src=src, save_when='changed'))
@@ -188,7 +178,7 @@ class TestIosConfigModule(TestIosModule):
         self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff('\n'.join(lines), self.running_config, diff_match='none'))
         self.execute_module(changed=True, commands=lines)
 
-    def test_ios_config_match_none(self):
+    def test_ios_config_match_none2(self):
         lines = ['ip address 1.2.3.4 255.255.255.0', 'description test string']
         parents = ['interface GigabitEthernet0/0']
         set_module_args(dict(lines=lines, parents=parents, match='none'))
@@ -232,29 +222,29 @@ class TestIosConfigModule(TestIosModule):
     def test_ios_config_src_and_lines_fails(self):
         args = dict(src='foo', lines='foo')
         set_module_args(args)
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)
 
     def test_ios_config_src_and_parents_fails(self):
         args = dict(src='foo', parents='foo')
         set_module_args(args)
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)
 
     def test_ios_config_match_exact_requires_lines(self):
         args = dict(match='exact')
         set_module_args(args)
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)
 
     def test_ios_config_match_strict_requires_lines(self):
         args = dict(match='strict')
         set_module_args(args)
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)
 
     def test_ios_config_replace_block_requires_lines(self):
         args = dict(replace='block')
         set_module_args(args)
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)
 
     def test_ios_config_replace_config_requires_src(self):
         args = dict(replace='config')
         set_module_args(args)
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)

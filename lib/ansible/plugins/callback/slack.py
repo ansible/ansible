@@ -123,7 +123,7 @@ class CallbackModule(CallbackBase):
             'username': self.username,
             'attachments': attachments,
             'parse': 'none',
-            'icon_url': ('http://cdn2.hubspot.net/hub/330046/'
+            'icon_url': ('https://cdn2.hubspot.net/hub/330046/'
                          'file-449187601-png/ansible_badge.png'),
         }
 

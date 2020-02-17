@@ -145,17 +145,17 @@ class RoleRequirement(RoleDefinition):
             except Exception as e:
                 ran = " ".join(cmd)
                 display.debug("ran %s:" % ran)
-                display.debug("\tstdout: " + stdout)
-                display.debug("\tstderr: " + stderr)
+                display.debug("\tstdout: " + to_text(stdout))
+                display.debug("\tstderr: " + to_text(stderr))
                 raise AnsibleError("when executing %s: %s" % (ran, to_native(e)))
             if popen.returncode != 0:
-                raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(cmd), tempdir, popen.returncode))
+                raise AnsibleError("- command %s failed in directory %s (rc=%s) - %s" % (' '.join(cmd), tempdir, popen.returncode, to_native(stderr)))
 
         if scm not in ['hg', 'git']:
             raise AnsibleError("- scm %s is not currently supported" % scm)
 
         try:
-            scm_path = get_bin_path(scm, required=True)
+            scm_path = get_bin_path(scm)
         except (ValueError, OSError, IOError):
             raise AnsibleError("could not find/use %s, it is required to continue with installing %s" % (scm, src))
 

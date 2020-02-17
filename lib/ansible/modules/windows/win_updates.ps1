@@ -584,7 +584,7 @@ if ($wua_available) {
     Write-DebugLog -msg "WUA is available in current logon process, running natively"
     $result = Start-Natively -common_functions $common_functions -script $update_script_block
 } else {
-    Write-DebugLog -msg "WUA is not avialable in current logon process, running with scheduled task"
+    Write-DebugLog -msg "WUA is not available in current logon process, running with scheduled task"
     $result = Start-AsScheduledTask -common_functions $common_functions -script $update_script_block
 }
 
