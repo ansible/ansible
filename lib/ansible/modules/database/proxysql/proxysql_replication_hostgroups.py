@@ -314,7 +314,7 @@ def main():
 
     cursor = None
     try:
-        cursor, db_conn = mysql_connect(module,
+        cursor = mysql_connect(module,
                                         login_user,
                                         login_password,
                                         config_file,
