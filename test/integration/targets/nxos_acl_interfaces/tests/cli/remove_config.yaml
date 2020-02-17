@@ -18,4 +18,7 @@
         no ipv6 port traffic-filter NewACLv6 in
         no ip access-group ACL1v4 out
         no ip port access-group PortACL in
+      interface Ethernet1/4
+        no ip access-group NewACLv4 out
+
         

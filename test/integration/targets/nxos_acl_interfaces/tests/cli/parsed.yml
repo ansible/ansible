@@ -23,13 +23,7 @@
               ip port access-group PortACL in
           state: parsed
         register: result
-
-      - debug: 
-          var: result
-      
-      - debug:
-          var: result.parsed | symmetric_difference(ansible_facts.network_resources.acl_interfaces)
-
+        
       - assert:
           that:
           - "result.changed == false"

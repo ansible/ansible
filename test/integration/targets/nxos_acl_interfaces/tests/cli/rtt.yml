@@ -5,7 +5,7 @@
   - include_tasks: populate_config.yaml
 
   - block:
-      - name: Apply provided configuration
+      - name: RTT- Apply provided configuration
         nxos_acl_interfaces:
           config:
             - name: Ethernet1/2
@@ -59,27 +59,42 @@
                       port: true
           state: overridden
         register: result
-
-      - debug:
-          var: result
-          
-      - debug:
-          var: rtt | symmetric_difference(result['after'])
             
       - name: Assert that changes were applied
         assert:
-          that: "{{ rtt | symmetric_difference(result['after']) |length == 0 }}"
+          that: 
+            - "result.changed==True"
+            - "'interface Ethernet1/2' in result.commands"
+            - "'no ipv6 traffic-filter ACL1v6 in' in result.commands"
+            - "'interface Ethernet1/5' in result.commands"
+            - "'no ip access-group ACL1v4 out' in result.commands"
+            - "'no ip port access-group PortACL in' in result.commands"
+            - "'no ipv6 traffic-filter ACL1v6 in' in result.commands"
+            - "'interface Ethernet1/4' in result.commands"
+            - "'ip access-group NewACLv4 out' in result.commands"
+            - "'interface Ethernet1/3' in result.commands"
+            - "'ipv6 port traffic-filter NewACLv6 in' in result.commands"
 
       - name: Revert back to base configuration using facts round trip
         nxos_acl_interfaces:
           config: "{{ ansible_facts['network_resources']['acl_interfaces'] }}"
           state: overridden
-        register: revert
-
+        register: result
+    
       - name: Assert that config was reverted
         assert:
-          that: "{{ reverted == revert['after']}}"
-
+          that: 
+            - "result.changed==True"
+            - "'interface Ethernet1/2' in result.commands"
+            - "'ipv6 traffic-filter ACL1v6 in' in result.commands"
+            - "'interface Ethernet1/3' in result.commands"
+            - "'no ipv6 port traffic-filter NewACLv6 in' in result.commands"
+            - "'interface Ethernet1/4' in result.commands"
+            - "'no ip access-group NewACLv4 out' in result.commands"
+            - "'interface Ethernet1/5' in result.commands"
+            - "'ip access-group ACL1v4 out' in result.commands"
+            - "'ip port access-group PortACL in' in result.commands"
+            - "'ipv6 traffic-filter ACL1v6 in' in result.commands"
     always:
       - include_tasks: remove_config.yaml
 

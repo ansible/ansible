@@ -9,7 +9,6 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
-import q
 import re
 from copy import deepcopy
 

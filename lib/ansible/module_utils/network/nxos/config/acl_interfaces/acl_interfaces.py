@@ -10,7 +10,6 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
-import q
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties, dict_diff
 from ansible.module_utils.network.nxos.facts.facts import Facts
@@ -137,7 +136,6 @@ class Acl_interfaces(ConfigBase):
                     commands.extend(self._state_merged(w, have))
                 elif state == 'replaced':
                     commands.extend(self._state_replaced(w, have))
-        q(commands)
         return commands
 
     def _state_parsed(self, want):
@@ -159,7 +157,6 @@ class Acl_interfaces(ConfigBase):
         commands = []
         del_dict = {'name': want['name'], 'access_groups': []}
         obj_in_have = search_obj_in_list(want['name'], have, 'name')
-        q(obj_in_have, want)
         if obj_in_have != want:
             if obj_in_have and 'access_groups' in obj_in_have.keys():
                 for ag in obj_in_have['access_groups']:
@@ -167,7 +164,6 @@ class Acl_interfaces(ConfigBase):
                     if want.get('access_groups'):
                         want_afi = search_obj_in_list(
                             ag['afi'], want['access_groups'], 'afi')
-                    q(want_afi)
                     if not want_afi:
                       # whatever in have is not in want
                         del_dict['access_groups'].append(ag)
@@ -179,20 +175,15 @@ class Acl_interfaces(ConfigBase):
                                     del_acl.append(acl)
                             else:
                                 del_acl.append(acl)
-                        q(del_acl)
                         afi = want_afi['afi']
                         del_dict['access_groups'].append(
                             {'afi': afi, 'acls': del_acl})
-                    q(del_dict)
 
             commands.extend(self._state_deleted([del_dict], have))
-            q(commands)
             commands.extend(self._state_merged(want, have))
-            q(commands)
             for i in range(1, len(commands)):
                 if commands[i] == commands[0]:
                     commands[i] = ''
-            q(commands)
             commands = list(filter(None, commands))
         return commands
 
@@ -207,13 +198,9 @@ class Acl_interfaces(ConfigBase):
         want_intf = [w['name'] for w in want]
         for h in have:
             if h['name'] not in want_intf:
-                q(h)
                 commands.extend(self._state_deleted([h], have))
-        q(commands)
         for w in want:
-            q(w)
             commands.extend(self._state_replaced(w, have))
-        q(commands)
         return commands
 
     def _state_merged(self, want, have):
@@ -227,22 +214,17 @@ class Acl_interfaces(ConfigBase):
 
     def set_commands(self, want, have, deleted=False):
         commands = []
-        q(want, have)
         have_name = search_obj_in_list(want['name'], have, 'name')
-        q(have_name)
         if have_name and have_name.get('access_groups'):
             if want.get('access_groups'):
                 for w_afi in want['access_groups']:
-                    q(have_name)
                     ip = 'ipv6'
-                    q(w_afi)
                     if w_afi['afi'] == 'ipv4':
                         ip = 'ip'
                     have_afi = search_obj_in_list(
                         w_afi['afi'], have_name['access_groups'], 'afi')
                     if have_afi:
                         new_acls = []
-                        q(have_afi, w_afi)
                         if deleted:
                             if w_afi.get('acls') and have_afi.get('acls'):
                                 new_acls = [
@@ -253,13 +235,10 @@ class Acl_interfaces(ConfigBase):
                             if w_afi.get('acls'):
                                 new_acls = [
                                     acl for acl in w_afi['acls'] if acl not in have_afi['acls']]
-                        q(new_acls)
                         commands.extend(self.process_acl(
                             new_acls, ip, deleted))
                     else:
                         if not deleted:
-                            q('here')
-                            q(deleted)
                             if w_afi.get('acls'):
                                 commands.extend(
                                     self.process_acl(w_afi['acls'], ip))
@@ -310,7 +289,6 @@ class Acl_interfaces(ConfigBase):
                   of the provided objects
         """
         commands = []
-        q('inside deleted')
         if main_want:
             for want in main_want:
                 commands.extend(self.set_commands(want, have, deleted=True))

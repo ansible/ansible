@@ -24,10 +24,7 @@
                     port: true
         state: replaced
       register: result
-    
-    - debug:
-        var: result
-                
+      
     - assert:
         that:
           - "result.changed==True"
