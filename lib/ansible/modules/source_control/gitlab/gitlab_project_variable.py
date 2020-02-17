@@ -53,7 +53,7 @@ options:
   vars:
     description:
       - When the list element is a simple key-value pair, masked and protected will be set to false.
-      - Wnen provided a dict with the keys "value", "masked" and "protected", you have full control about if a value should be masked, protected or both.
+      - When the list element is a dict with the keys "value", "masked" and "protected", user can have full control about if a value should be masked, protected or both.
       - Wehn you masked a value, the value must be base64 compliant and has at least a length of 8 characters.
     default: {}
     type: dict
