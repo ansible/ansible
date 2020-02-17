@@ -106,6 +106,7 @@ options:
         description:
             - Set VPN instance.
               The value is a string of 1 to 31 case-sensitive characters.
+        type: str
     radius_server_name:
         description:
             - Hostname of configured server.
@@ -139,6 +140,7 @@ options:
     hwtacacs_vpn_name:
         description:
             - VPN instance name.
+        type: str
     hwtacacs_is_public_net:
         description:
             - Set the public-net.
