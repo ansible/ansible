@@ -185,7 +185,7 @@ Function Get-RegistryNameServerInfo {
             $regPath = $items.Interface -f $InterfaceGuid
 
             if (($iface = Get-Item -LiteralPath $regPath -ErrorAction Ignore)) {
-                $iprop = $iface | Get-ItemProperty | ConvertTo-AnsibleCompatibleObject
+                $iprop = $iface | Get-ItemProperty
                 $famInfo = @{
                     AddressFamily = $addrFamily
                     UsingDhcp = Get-OptionalProperty -InputObject $iprop -Name $items.EnableDhcp -As bool
