@@ -578,6 +578,10 @@ def verify_collections(collections, search_paths, apis, validate_certs, ignore_e
                             break
                     if local_collection is None:
                         raise AnsibleError(message='Collection %s is not installed in any of the collection paths.' % collection_name)
+                    if local_collection.latest_version == '*':
+                        msg = 'Collection %s does not appear to have the MANIFEST.json. ' % collection_name
+                        msg += 'A MANIFEST.json is expected if the collection has been built and installed via ansible-galaxy.'
+                        raise AnsibleError(message=msg)
 
                     # Download collection on a galaxy server for comparison
                     try:
