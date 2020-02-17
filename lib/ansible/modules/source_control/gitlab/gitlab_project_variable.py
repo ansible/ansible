@@ -80,7 +80,7 @@ EXAMPLES = '''
     vars:
       ACCESS_KEY_ID: abc123
       SECRET_ACCESS_KEY:
-        value: 321cba
+        value: 3214cbad
         masked: True
         protected: True
 
