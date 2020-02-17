@@ -66,8 +66,18 @@ class GalaxyRole(object):
         self.scm = scm
 
         if path is not None:
-            if self.name not in path:
+            if not path.endswith(os.path.join(os.path.sep, self.name)):
                 path = os.path.join(path, self.name)
+            else:
+                # Look for a meta/main.ya?ml inside the potential role dir in case
+                #  the role name is the same as parent directory of the role.
+                #
+                # Example:
+                #   ./roles/testing/testing/meta/main.yml
+                for meta_main in self.META_MAIN:
+                    if os.path.exists(os.path.join(path, name, meta_main)):
+                        path = os.path.join(path, self.name)
+                        break
             self.path = path
         else:
             # use the first path by default
