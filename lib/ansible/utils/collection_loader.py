@@ -44,12 +44,11 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         elif self._n_configured_paths is None:
             self._n_configured_paths = []
 
-        # Append all ``_ansible_community_distribution`` dirs from sys.path to the end
-        # Inside each should be the ``ansible_collections`` directory
+        # Append all ``ansible_collections`` dirs from sys.path to the end
         for path in sys.path:
-            acd_path = os.path.join(os.path.abspath(path), '_ansible_community_distribution')
-            if os.path.isdir(acd_path):
-                self._n_configured_paths.append(acd_path)
+            sys_installed_path = os.path.join(os.path.abspath(path), 'ansible_collections')
+            if os.path.isdir(sys_installed_path):
+                self._n_configured_paths.append(sys_installed_path)
 
         # expand any placeholders in configured paths
         self._n_configured_paths = [to_native(os.path.expanduser(p), errors='surrogate_or_strict') for p in self._n_configured_paths]
