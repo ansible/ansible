@@ -5,11 +5,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-from ansible.module_utils.common.collections import count
-from ansible.module_utils.basic import AnsibleModule
-from distutils.version import LooseVersion as Version
 __metaclass__ = type
-import re
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -121,6 +118,11 @@ EXAMPLES = '''
     state: present
 '''
 
+from ansible.module_utils.common.collections import count
+from ansible.module_utils.basic import AnsibleModule
+from distutils.version import LooseVersion as Version
+import re
+
 
 class RabbitMqUser(object):
     def __init__(self, module, username, password, tags, permissions,
@@ -143,8 +145,7 @@ class RabbitMqUser(object):
         self._version = self._rabbit_version()
 
     def _rabbit_version(self):
-        rc, status, err = self.module.run_command(
-                [self._rabbitmqctl, '-q', 'status'], check_rc=True)
+        rc, status, err = self.module.run_command([self._rabbitmqctl, '-q', 'status'], check_rc=True)
 
         # 3.7.x erlang style output
         version_match = re.search('{rabbit,".*","(?P<version>.*)"}', status)
