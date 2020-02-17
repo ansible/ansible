@@ -277,7 +277,10 @@ class L2_interfaces(ConfigBase):
                 if "allowed_vlans" in diff.keys() and diff["allowed_vlans"]:
                     vlan_tobe_added = diff["allowed_vlans"].split(',')
                     vlan_list = vlan_tobe_added[:]
-                    have_vlans = obj_in_have["allowed_vlans"].split(',')
+                    if obj_in_have.get("allowed_vlans"):
+                        have_vlans = obj_in_have["allowed_vlans"].split(',')
+                    else:
+                        have_vlans = []
                     for w_vlans in vlan_list:
                         if w_vlans in have_vlans:
                             vlan_tobe_added.pop(vlan_tobe_added.index(w_vlans))
