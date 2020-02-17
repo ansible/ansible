@@ -120,7 +120,7 @@ def parse_cli(output, tmpl):
                     block_started = True
 
                 elif match_end:
-                    if lines:
+                    if block_started:
                         lines.append(line)
                         blocks.append('\n'.join(lines))
                     block_started = False
