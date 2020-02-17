@@ -60,7 +60,7 @@ options:
     local_service_type:
         description:
             - The type of local user login through, such as ftp ssh snmp telnet.
-		type: str
+        type: str
     local_ftp_dir:
         description:
             - FTP user directory.
