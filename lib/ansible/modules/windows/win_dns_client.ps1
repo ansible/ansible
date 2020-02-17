@@ -41,23 +41,51 @@ Function Write-DebugLog {
     }
 }
 
-Function ConvertTo-AnsibleCompatibleObject {
+Function Get-OptionalProperty {
     <#
         .SYNOPSIS
-        Adds a ContainsKey method to any object so Get-AnsibleParam can be used
-        to easily get and verify properties from it.
+        Retreives a property that may not exist from an object that may be null.
+        Optionally returns a default value.
+        Optionally coalesces to a new type with -as.
+        May return null, but will not throw.
     #>
     [CmdletBinding()]
     param(
         [Parameter(ValueFromPipeline=$true)]
-        [Object]$Obj
+        [Object]
+        $InputObject ,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $Name ,
+
+        [Parameter()]
+        [AllowNull()]
+        [Object]
+        $Default ,
+
+        [Parameter()]
+        [System.Type]
+        $As
     )
 
     Process {
-        $Obj | Add-Member -MemberType ScriptMethod -Name ContainsKey -Value {
-            param($key)
-            $this.PSObject.Properties.Name.Contains($key)
-        } -Force -PassThru
+        if ($null -eq $InputObject) {
+            return $null
+        }
+
+        $value = if ($InputObject.PSObject.Properties.Name -contains $Name) {
+            $InputObject.$Name
+        } else {
+            $Default
+        }
+
+        if ($As) {
+            return $value -as $As
+        }
+
+        return $value
     }
 }
 
@@ -160,17 +188,17 @@ Function Get-RegistryNameServerInfo {
                 $iprop = $iface | Get-ItemProperty | ConvertTo-AnsibleCompatibleObject
                 $famInfo = @{
                     AddressFamily = $addrFamily
-                    UsingDhcp = Get-AnsibleParam -obj $iprop -name $items.EnableDhcp -type bool
+                    UsingDhcp = Get-OptionalProperty -InputObject $iprop -Name $items.EnableDhcp -As bool
                     EffectiveNameServers = @()
                     DhcpAssignedNameServers = @()
                     NameServerBadFormat = $false
                 }
 
-                if (($ns = Get-AnsibleParam -obj $iprop -name $items.DhcpNameServer -type str)) {
+                if (($ns = Get-OptionalProperty -InputObject $iprop -Name $items.DhcpNameServer)) {
                     $famInfo.EffectiveNameServers = $famInfo.DhcpAssignedNameServers = $ns.Split(' ')
                 }
 
-                if (($ns = Get-AnsibleParam -obj $iprop -name $items.StaticNameServer -type str)) {
+                if (($ns = Get-OptionalProperty -InputObject $iprop -Name $items.StaticNameServer)) {
                     $famInfo.EffectiveNameServers = $famInfo.StaticNameServers = $ns -split '[,;\ ]'
                     $famInfo.UsingDhcp = $false
                     $famInfo.NameServerBadFormat = $ns -match '[;\ ]'
