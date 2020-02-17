@@ -981,3 +981,10 @@ become_loader = PluginLoader(
     C.BECOME_PLUGIN_PATH,
     'become_plugins'
 )
+grpc_loader = PluginLoader(
+    'Grpc',
+    'ansible.plugins.grpc',
+    C.DEFAULT_GRPC_PLUGIN_PATH,
+    'grpc_plugins',
+    required_base_class='GrpcBase',
+)
