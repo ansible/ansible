@@ -2207,13 +2207,13 @@ def _get_lun_mappings(module):
                             ['iscsi', 'fcp']) else None,
                         logical_units=[
                             otypes.LogicalUnit(
-                                id=lunMapping['dest_logical_unit_id'],
-                                port=lunMapping['dest_logical_unit_port'],
-                                portal=lunMapping['dest_logical_unit_portal'],
-                                address=lunMapping['dest_logical_unit_address'],
-                                target=lunMapping['dest_logical_unit_target'],
-                                password=lunMapping['dest_logical_unit_password'],
-                                username=lunMapping['dest_logical_unit_username'],
+                                id=lunMapping.get('dest_logical_unit_id'),
+                                port=lunMapping.get('dest_logical_unit_port'),
+                                portal=lunMapping.get('dest_logical_unit_portal'),
+                                address=lunMapping.get('dest_logical_unit_address'),
+                                target=lunMapping.get('dest_logical_unit_target'),
+                                password=lunMapping.get('dest_logical_unit_password'),
+                                username=lunMapping.get('dest_logical_unit_username'),
                             )
                         ],
                     ),
