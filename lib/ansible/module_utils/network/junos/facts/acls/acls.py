@@ -78,9 +78,16 @@ class AclsFacts(object):
         for resource in resources:
             if resource:
                 xml = self._get_xml_dict(resource)
-                obj = self.render_config(self.generated_spec, xml)
-                if obj:
-                    objs.append(obj)
+                addl_ipv4 = []
+                if "filter" in xml["firewall"]:
+                    addl_ipv4.extend(utils.to_list(xml["firewall"].pop("filter")))
+
+                for family, sub_dict in xml["firewall"]["family"].items():
+                    if family == "inet" and addl_ipv4:
+                        sub_dict["filter"] = utils.to_list(sub_dict["filter"]) + addl_ipv4
+                    obj = self.render_config(self.generated_spec, dict(firewall={"family": family, **sub_dict}))
+                    if obj:
+                        objs.append(obj)
 
         facts = {}
         if objs:
@@ -110,10 +117,8 @@ class AclsFacts(object):
         :returns: The generated config
         """
         config = deepcopy(spec)
-        protocol = 'inet'
-        if config['afi'] == 'ipv6':
-            protocol = 'inet6'
-        acls = conf.get('firewall').get('family').get(protocol).get('filter')
+        config["afi"] = "ipv6" if conf["firewall"].pop("family") == "inet6" else "ipv4"
+        acls = conf.get('firewall').get('filter')
         if not isinstance(acls, list):
             acls = [acls]
         config['acls'] = []
