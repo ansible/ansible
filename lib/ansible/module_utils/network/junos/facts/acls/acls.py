@@ -129,10 +129,10 @@ class AclsFacts(object):
                     if acl['term']['from'].get('port'):
                         ace['port'] = {}
                         specified_port = acl['term']['from']['port']
-                        if isinstance(specified_port, string_types):
+                        try:
+                            ace['port']['range'] = int(specified_port)
+                        except ValueError:
                             ace["port"][specified_port] = True
-                        else:
-                            ace['port']['range'] = specified_port
                     if acl['term']['from'].get('protocol'):
                         ace['protocol'] = {}
                         protocol = acl['term']['from']['protocol']
