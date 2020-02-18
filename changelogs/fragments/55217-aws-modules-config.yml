@@ -1,0 +1,5 @@
+minor_changes:
+  - AWS modules now take an "aws_config" parameter to define botocore configuration settings
+    (https://github.com/ansible/ansible/issues/55182).
+  - AWS modules using boto can use the parameter to define the user agent, while boto3 modules
+    allow any configuration settings listed in the botocore API config documentation.

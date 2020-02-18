@@ -31,6 +31,7 @@ __metaclass__ = type
 
 import os
 import re
+import sys
 import traceback
 
 from ansible.module_utils.ansible_release import __version__
@@ -136,13 +137,15 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
                          'the conn_type parameter in the boto3_conn function '
                          'call')
 
-    if params.get('config'):
-        config = params.pop('config')
-        config.user_agent_extra = 'Ansible/{0}'.format(__version__)
-    else:
-        config = botocore.config.Config(
-            user_agent_extra='Ansible/{0}'.format(__version__),
-        )
+    config = botocore.config.Config(
+        user_agent_extra='Ansible/{0}'.format(__version__),
+    )
+
+    if params.get('config') is not None:
+        config = config.merge(params.pop('config'))
+    if params.get('aws_config') is not None:
+        config = config.merge(params.pop('aws_config'))
+
     session = boto3.session.Session(
         profile_name=profile,
     )
@@ -186,6 +189,7 @@ def aws_common_argument_spec():
         validate_certs=dict(default=True, type='bool'),
         security_token=dict(aliases=['access_token'], no_log=True),
         profile=dict(),
+        aws_config=dict(type='dict'),
     )
 
 
@@ -211,6 +215,7 @@ def get_aws_connection_info(module, boto3=False):
     region = module.params.get('region')
     profile_name = module.params.get('profile')
     validate_certs = module.params.get('validate_certs')
+    config = module.params.get('aws_config')
 
     if not ec2_url:
         if 'AWS_URL' in os.environ:
@@ -308,6 +313,13 @@ def get_aws_connection_info(module, boto3=False):
             boto_params['profile_name'] = profile_name
 
         boto_params['validate_certs'] = validate_certs
+
+    if config is not None:
+        if HAS_BOTO3 and boto3:
+            boto_params['aws_config'] = botocore.config.Config(**config)
+        elif HAS_BOTO and not boto3:
+            if 'user_agent' in config:
+                sys.modules["boto.connection"].UserAgent = config['user_agent']
 
     for param, value in boto_params.items():
         if isinstance(value, binary_type):
