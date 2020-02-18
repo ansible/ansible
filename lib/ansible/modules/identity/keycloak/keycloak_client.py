@@ -29,7 +29,7 @@ description:
       to your needs and a user having the expected roles.
 
     - The names of module options are snake_cased versions of the camelCase ones found in the
-      Keycloak API and its documentation at U(http://www.keycloak.org/docs-api/3.3/rest-api/).
+      Keycloak API and its documentation at U(https://www.keycloak.org/docs-api/8.0/rest-api/index.html).
       Aliases are provided so camelCased versions can be used as well.
 
     - The Keycloak API does not always sanity check inputs e.g. you can set
@@ -295,7 +295,7 @@ options:
     authorization_settings:
         description:
             - a data structure defining the authorization settings for this client. For reference,
-              please see the Keycloak API docs at U(http://www.keycloak.org/docs-api/3.3/rest-api/index.html#_resourceserverrepresentation).
+              please see the Keycloak API docs at U(https://www.keycloak.org/docs-api/8.0/rest-api/index.html#_resourceserverrepresentation).
               This is 'authorizationSettings' in the Keycloak REST API.
         aliases:
             - authorizationSettings

@@ -22,7 +22,7 @@ short_description: Attach/detach a volume to a device in the Packet host.
 
 description:
      - Attach/detach a volume to a device in the Packet host.
-     - API is documented at U(https://www.packet.net/developers/api/volumeattachments/).
+     - API is documented at U(https://www.packet.com/developers/api/volumes/).
      - "This module creates the attachment route in the Packet API. In order to discover
        the block devices on the server, you have to run the Attach Scripts,
        as documented at U(https://help.packet.net/technical/storage/packet-block-storage-linux)."
