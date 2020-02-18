@@ -19,7 +19,7 @@ from ansible.module_utils.network.common.utils import to_list, dict_diff, remove
 from ansible.module_utils.network.vyos.facts.facts import Facts
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network. vyos.utils.utils import get_route_type, \
-    diff_list_of_dicts, get_lst_diff_for_dicts, get_lst_same_for_dicts, dict_delete
+    get_lst_diff_for_dicts, get_lst_same_for_dicts, dict_delete
 
 
 class Static_routes(ConfigBase):
