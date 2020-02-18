@@ -84,6 +84,9 @@ class AclsArgs(object):  # pylint: disable=R0903
                                     'choices': ['permit', 'deny'],
                                     'type': 'str'
                                 },
+                                'line': {
+                                    'type': 'str'
+                                },
                                 'hop_limit': {
                                     'type': 'dict'
                                 },
