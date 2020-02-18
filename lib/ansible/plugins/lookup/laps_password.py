@@ -125,7 +125,7 @@ notes:
   be sent in plaintext.
 - Some scenarios may not work when running on a host with an older OpenLDAP install like MacOS. It is recommended to
   install the latest OpenLDAP version and build python-ldap against this, see
-  U(https://keathmilligan.net/python-ldap-and-macos/) for more information.
+  U(https://keathmilligan.net/python-ldap-and-macos) for more information.
 """
 
 EXAMPLES = """

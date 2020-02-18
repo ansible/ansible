@@ -29,7 +29,7 @@ description:
       to your needs and a user having the expected roles.
 
     - The names of module options are snake_cased versions of the camelCase ones found in the
-      Keycloak API and its documentation at U(http://www.keycloak.org/docs-api/3.3/rest-api/)
+      Keycloak API and its documentation at U(https://www.keycloak.org/docs-api/8.0/rest-api/index.html)
 
     - The Keycloak API does not always enforce for only sensible settings to be used -- you can set
       SAML-specific settings on an OpenID Connect client for instance and vice versa. Be careful.

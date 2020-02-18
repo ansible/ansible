@@ -24,7 +24,7 @@ author: "Pascal HERAUD (@pascalheraud)"
 notes:
     - Uses the python OVH Api U(https://github.com/ovh/python-ovh).
       You have to create an application (a key and secret) with a consummer
-      key as described into U(https://eu.api.ovh.com/g934.first_step_with_api)
+      key as described into U(https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/)
 requirements:
     - ovh >=  0.4.8
 options:

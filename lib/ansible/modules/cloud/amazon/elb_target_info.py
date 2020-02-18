@@ -179,10 +179,10 @@ instance_target_groups:
                     sample:
                         - us-west-2a
                 target_health:
-                    description: the target health description
-                                 (see U(https://boto3.readthedocs.io/en/latest/
-                                  reference/services/elbv2.html#ElasticLoadBalancingv2.Client.describe_target_health))
-                                 for all possible values
+                    description:
+                    - The target health description.
+                    - See following link for all the possible values
+                      U(https://boto3.readthedocs.io/en/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.describe_target_health)
                     returned: always
                     type: complex
                     contains:

@@ -28,7 +28,7 @@ notes:
 - 'To acquire XenAPI Python library, just run C(pip install XenAPI) on your Ansible Control Node. The library can also be found inside
    Citrix Hypervisor/XenServer SDK (downloadable from Citrix website). Copy the XenAPI.py file from the SDK to your Python site-packages on your
    Ansible Control Node to use it. Latest version of the library can also be acquired from GitHub:
-   https://raw.githubusercontent.com/xapi-project/xen-api/master/scripts/examples/python/XenAPI.py'
+   U(https://raw.githubusercontent.com/xapi-project/xen-api/master/scripts/examples/python/XenAPI/XenAPI.py)'
 - 'If no scheme is specified in C(hostname), module defaults to C(http://) because C(https://) is problematic in most setups. Make sure you are
    accessing XenServer host in trusted environment or use C(https://) scheme explicitly.'
 - 'To use C(https://) scheme for C(hostname) you have to either import host certificate to your OS certificate store or use C(validate_certs: no)
@@ -38,7 +38,7 @@ notes:
   detect if such support is available and utilize it, else it will use a custom method of configuration via xenstore. Since XenServer Guest
   agent only support None and Static types of network configuration, where None means DHCP configured interface, C(networks.type) and C(networks.type6)
   values C(none) and C(dhcp) have same effect. More info here:
-  https://www.citrix.com/community/citrix-developer/citrix-hypervisor-developer/citrix-hypervisor-developing-products/citrix-hypervisor-staticip.html'
+  U(https://www.citrix.com/community/citrix-developer/citrix-hypervisor-developer/citrix-hypervisor-developing-products/citrix-hypervisor-staticip.html)'
 - 'On platforms without official support for network configuration inside a guest OS, network parameters will be written to xenstore
   C(vm-data/networks/<vif_device>) key. Parameters can be inspected by using C(xenstore ls) and C(xenstore read) tools on \*nix guests or trough
   WMI interface on Windows guests. They can also be found in VM facts C(instance.xenstore_data) key as returned by the module. It is up to the user
@@ -46,7 +46,7 @@ notes:
   Take note that for xenstore data to become available inside a guest, a VM restart is needed hence module will require VM restart if any
   parameter is changed. This is a limitation of XenAPI and xenstore. Considering these limitations, network configuration trough xenstore is most
   useful for bootstraping newly deployed VMs, much less for reconfiguring existing ones. More info here:
-  https://support.citrix.com/article/CTX226713'
+  U(https://support.citrix.com/article/CTX226713)'
 requirements:
 - python >= 2.6
 - XenAPI

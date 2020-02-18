@@ -27,7 +27,7 @@ description:
       to your needs and a user having the expected roles.
 
     - The names of module options are snake_cased versions of the camelCase ones found in the
-      Keycloak API and its documentation at U(http://www.keycloak.org/docs-api/3.3/rest-api/).
+      Keycloak API and its documentation at U(https://www.keycloak.org/docs-api/8.0/rest-api/index.html).
 
     - Attributes are multi-valued in the Keycloak API. All attributes are lists of individual values and will
       be returned that way by this module. You may pass single values for attributes when calling the module,
