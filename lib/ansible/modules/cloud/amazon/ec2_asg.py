@@ -1218,12 +1218,15 @@ def create_autoscaling_group(connection):
             # Get differences
             wanted_tgs = set(target_group_arns)
             has_tgs = set(as_group['TargetGroupARNs'])
+            tgs_updated = False
+
             # check if all requested are already existing
             if has_tgs.issuperset(wanted_tgs):
                 # if wanted contains less than existing, then we need to delete some
                 tgs_to_detach = has_tgs.difference(wanted_tgs)
                 if tgs_to_detach:
                     changed = True
+                    tgs_updated = True
                     try:
                         detach_lb_target_groups(connection, group_name, list(tgs_to_detach))
                     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -1234,13 +1237,14 @@ def create_autoscaling_group(connection):
                 tgs_to_attach = wanted_tgs.difference(has_tgs)
                 if tgs_to_attach:
                     changed = True
+                    tgs_updated = True
                     try:
                         attach_lb_target_groups(connection, group_name, list(tgs_to_attach))
                     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                         module.fail_json(msg="Failed to attach load balancer target groups %s: %s" % (tgs_to_attach, to_native(e)),
                                          exception=traceback.format_exc())
 
-            if not changed:
+            if not tgs_updated:
                 # if tgs has not changed, then we need to delete and add some
                 # this might happen when both wanted_tgs and has_tgs has all different elements
 
