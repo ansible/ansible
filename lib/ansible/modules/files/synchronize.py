@@ -448,6 +448,8 @@ def main():
     verify_host = module.params['verify_host']
     link_dest = module.params['link_dest']
 
+    if ':' not in source + dest:
+        rsync_password = None
     if '/' not in rsync:
         rsync = module.get_bin_path(rsync, required=True)
 
