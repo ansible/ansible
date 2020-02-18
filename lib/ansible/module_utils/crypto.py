@@ -109,6 +109,7 @@ try:
     except ImportError:
         CRYPTOGRAPHY_HAS_ED448 = False
 
+    HAS_CRYPTOGRAPHY = True
 except ImportError:
     # Error handled in the calling module.
     CRYPTOGRAPHY_HAS_X25519 = False
@@ -116,6 +117,7 @@ except ImportError:
     CRYPTOGRAPHY_HAS_X448 = False
     CRYPTOGRAPHY_HAS_ED25519 = False
     CRYPTOGRAPHY_HAS_ED448 = False
+    HAS_CRYPTOGRAPHY = False
 
 
 import abc
@@ -2037,3 +2039,53 @@ def cryptography_compare_public_keys(key1, key2):
             b = key2.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
             return a == b
     return key1.public_numbers() == key2.public_numbers()
+
+
+if HAS_CRYPTOGRAPHY:
+    REVOCATION_REASON_MAP = {
+        'unspecified': x509.ReasonFlags.unspecified,
+        'key_compromise': x509.ReasonFlags.key_compromise,
+        'ca_compromise': x509.ReasonFlags.ca_compromise,
+        'affiliation_changed': x509.ReasonFlags.affiliation_changed,
+        'superseded': x509.ReasonFlags.superseded,
+        'cessation_of_operation': x509.ReasonFlags.cessation_of_operation,
+        'certificate_hold': x509.ReasonFlags.certificate_hold,
+        'privilege_withdrawn': x509.ReasonFlags.privilege_withdrawn,
+        'aa_compromise': x509.ReasonFlags.aa_compromise,
+        'remove_from_crl': x509.ReasonFlags.remove_from_crl,
+    }
+    REVOCATION_REASON_MAP_INVERSE = dict()
+    for k, v in REVOCATION_REASON_MAP.items():
+        REVOCATION_REASON_MAP_INVERSE[v] = k
+
+
+def cryptography_decode_revoked_certificate(cert):
+    result = {
+        'serial_number': cert.serial_number,
+        'revocation_date': cert.revocation_date,
+        'issuer': None,
+        'issuer_critical': False,
+        'reason': None,
+        'reason_critical': False,
+        'invalidity_date': None,
+        'invalidity_date_critical': False,
+    }
+    try:
+        ext = cert.extensions.get_extension_for_class(x509.CertificateIssuer)
+        result['issuer'] = list(ext.value)
+        result['issuer_critical'] = ext.critical
+    except x509.ExtensionNotFound:
+        pass
+    try:
+        ext = cert.extensions.get_extension_for_class(x509.CRLReason)
+        result['reason'] = ext.value.reason
+        result['reason_critical'] = ext.critical
+    except x509.ExtensionNotFound:
+        pass
+    try:
+        ext = cert.extensions.get_extension_for_class(x509.InvalidityDate)
+        result['invalidity_date'] = ext.value.invalidity_date
+        result['invalidity_date_critical'] = ext.critical
+    except x509.ExtensionNotFound:
+        pass
+    return result
