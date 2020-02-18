@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2020, Brian Scholer <@briantist>
 # Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
 # Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -83,11 +84,9 @@ options:
     default: False
     version_added: '2.10
 requirements:
-  - PowerShell modules needed
-      - PowerShellGet >= 1.6.0
-      - PackageManagement >= 1.1.7
-  - PowerShell package provider needed
-      - NuGet >= 2.8.5.201
+  - PowerShell Module L(PowerShellGet >= 1.6.0,https://www.powershellgallery.com/packages/PowerShellGet/)
+  - PowerShell Module L(PackageManagement >= 1.1.7,https://www.powershellgallery.com/packages/PackageManagement/)
+  - PowerShell Package Provider C(NuGet) >= 2.8.5.201
 notes:
   - See the examples on how to update the NuGet package provider.
   - You can not use C(win_psrepository) to re-register (add) removed PSGallery, use the command C(Register-PSRepository -Default) instead.
@@ -97,10 +96,10 @@ notes:
   - I(script_location), I(publish_location), and I(script_publish_location) are optional but once set can only be cleared with I(force=True).
   - Using I(force=True) will unregister and re-register the repository if there are any changes, so that it exactly matches the options specified.
 seealso:
-- module: win_psmodule
+  - module: win_psmodule
 author:
-- Wojciech Sciesinski (@it-praktyk)
-- Brian Scholer (@briantist)
+  - Wojciech Sciesinski (@it-praktyk)
+  - Brian Scholer (@briantist)
 '''
 
 EXAMPLES = '''
@@ -119,7 +118,7 @@ EXAMPLES = '''
     name: MyRepository
     state: absent
 
-- name: Add an untrusted repository 
+- name: Add an untrusted repository
   win_psrepository:
     name: MyRepository
     installation_policy: untrusted
@@ -145,7 +144,7 @@ EXAMPLES = '''
     source_location: https://myrepo.example/module/feed
     publish_location: https://myrepo.example/api/module/publish
     force: True
-    
+
 - name: Don't follow redirects when registering the repository locations
   win_psrepository:
     name: NewRepo
