@@ -15,7 +15,7 @@ __metaclass__ = type
 
 from copy import deepcopy
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list, dict_diff, remove_empties
+from ansible.module_utils.network.common.utils import to_list, remove_empties
 from ansible.module_utils.network.vyos.facts.facts import Facts
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.vyos.utils.utils import list_diff_want_only
