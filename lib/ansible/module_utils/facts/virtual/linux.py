@@ -93,7 +93,7 @@ class LinuxVirtual(Virtual):
 
         product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
 
-        if product_name in ('KVM', 'Bochs', 'AHV'):
+        if product_name in ('KVM', 'KVM Server', 'Bochs', 'AHV'):
             virtual_facts['virtualization_type'] = 'kvm'
             return virtual_facts
 
