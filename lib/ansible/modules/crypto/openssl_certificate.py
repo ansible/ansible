@@ -959,34 +959,6 @@ class Certificate(crypto_utils.OpenSSLObject):
         self.backup = module.params['backup']
         self.backup_file = None
 
-    def get_relative_time_option(self, input_string, input_name):
-        """Return an ASN1 formatted string if a relative timespec
-           or an ASN1 formatted string is provided."""
-        result = to_native(input_string)
-        if result is None:
-            raise CertificateError(
-                'The timespec "%s" for %s is not valid' %
-                input_string, input_name)
-        if result.startswith("+") or result.startswith("-"):
-            result_datetime = crypto_utils.convert_relative_to_datetime(
-                result)
-            if self.backend == 'pyopenssl':
-                return result_datetime.strftime("%Y%m%d%H%M%SZ")
-            elif self.backend == 'cryptography':
-                return result_datetime
-        if self.backend == 'cryptography':
-            for date_fmt in ['%Y%m%d%H%M%SZ', '%Y%m%d%H%MZ', '%Y%m%d%H%M%S%z', '%Y%m%d%H%M%z']:
-                try:
-                    return datetime.datetime.strptime(result, date_fmt)
-                except ValueError:
-                    pass
-
-            raise CertificateError(
-                'The time spec "%s" for %s is invalid' %
-                (input_string, input_name)
-            )
-        return input_string
-
     def _validate_privatekey(self):
         if self.backend == 'pyopenssl':
             ctx = OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_2_METHOD)
@@ -1147,8 +1119,8 @@ class SelfSignedCertificateCryptography(Certificate):
     def __init__(self, module):
         super(SelfSignedCertificateCryptography, self).__init__(module, 'cryptography')
         self.create_subject_key_identifier = module.params['selfsigned_create_subject_key_identifier']
-        self.notBefore = self.get_relative_time_option(module.params['selfsigned_not_before'], 'selfsigned_not_before')
-        self.notAfter = self.get_relative_time_option(module.params['selfsigned_not_after'], 'selfsigned_not_after')
+        self.notBefore = crypto_utils.get_relative_time_option(module.params['selfsigned_not_before'], 'selfsigned_not_before', backend=self.backend)
+        self.notAfter = crypto_utils.get_relative_time_option(module.params['selfsigned_not_after'], 'selfsigned_not_after', backend=self.backend)
         self.digest = crypto_utils.select_message_digest(module.params['selfsigned_digest'])
         self.version = module.params['selfsigned_version']
         self.serial_number = x509.random_serial_number()
@@ -1280,8 +1252,8 @@ class SelfSignedCertificate(Certificate):
         super(SelfSignedCertificate, self).__init__(module, 'pyopenssl')
         if module.params['selfsigned_create_subject_key_identifier'] != 'create_if_not_provided':
             module.fail_json(msg='selfsigned_create_subject_key_identifier cannot be used with the pyOpenSSL backend!')
-        self.notBefore = self.get_relative_time_option(module.params['selfsigned_not_before'], 'selfsigned_not_before')
-        self.notAfter = self.get_relative_time_option(module.params['selfsigned_not_after'], 'selfsigned_not_after')
+        self.notBefore = crypto_utils.get_relative_time_option(module.params['selfsigned_not_before'], 'selfsigned_not_before', backend=self.backend)
+        self.notAfter = crypto_utils.get_relative_time_option(module.params['selfsigned_not_after'], 'selfsigned_not_after', backend=self.backend)
         self.digest = module.params['selfsigned_digest']
         self.version = module.params['selfsigned_version']
         self.serial_number = randint(1000, 99999)
@@ -1379,8 +1351,8 @@ class OwnCACertificateCryptography(Certificate):
         super(OwnCACertificateCryptography, self).__init__(module, 'cryptography')
         self.create_subject_key_identifier = module.params['ownca_create_subject_key_identifier']
         self.create_authority_key_identifier = module.params['ownca_create_authority_key_identifier']
-        self.notBefore = self.get_relative_time_option(module.params['ownca_not_before'], 'ownca_not_before')
-        self.notAfter = self.get_relative_time_option(module.params['ownca_not_after'], 'ownca_not_after')
+        self.notBefore = crypto_utils.get_relative_time_option(module.params['ownca_not_before'], 'ownca_not_before', backend=self.backend)
+        self.notAfter = crypto_utils.get_relative_time_option(module.params['ownca_not_after'], 'ownca_not_after', backend=self.backend)
         self.digest = crypto_utils.select_message_digest(module.params['ownca_digest'])
         self.version = module.params['ownca_version']
         self.serial_number = x509.random_serial_number()
@@ -1575,8 +1547,8 @@ class OwnCACertificate(Certificate):
 
     def __init__(self, module):
         super(OwnCACertificate, self).__init__(module, 'pyopenssl')
-        self.notBefore = self.get_relative_time_option(module.params['ownca_not_before'], 'ownca_not_before')
-        self.notAfter = self.get_relative_time_option(module.params['ownca_not_after'], 'ownca_not_after')
+        self.notBefore = crypto_utils.get_relative_time_option(module.params['ownca_not_before'], 'ownca_not_before', backend=self.backend)
+        self.notAfter = crypto_utils.get_relative_time_option(module.params['ownca_not_after'], 'ownca_not_after', backend=self.backend)
         self.digest = module.params['ownca_digest']
         self.version = module.params['ownca_version']
         self.serial_number = randint(1000, 99999)
@@ -1937,7 +1909,7 @@ class AssertOnlyCertificateBase(Certificate):
 
         if self.not_before is not None:
             cert_not_valid_before = self._validate_not_before()
-            if cert_not_valid_before != self.get_relative_time_option(self.not_before, 'not_before'):
+            if cert_not_valid_before != crypto_utils.get_relative_time_option(self.not_before, 'not_before', backend=self.backend):
                 messages.append(
                     'Invalid not_before component (got %s, expected %s to be present)' %
                     (cert_not_valid_before, self.not_before)
@@ -1945,7 +1917,7 @@ class AssertOnlyCertificateBase(Certificate):
 
         if self.not_after is not None:
             cert_not_valid_after = self._validate_not_after()
-            if cert_not_valid_after != self.get_relative_time_option(self.not_after, 'not_after'):
+            if cert_not_valid_after != crypto_utils.get_relative_time_option(self.not_after, 'not_after', backend=self.backend):
                 messages.append(
                     'Invalid not_after component (got %s, expected %s to be present)' %
                     (cert_not_valid_after, self.not_after)
@@ -2120,15 +2092,15 @@ class AssertOnlyCertificateCryptography(AssertOnlyCertificateBase):
         return self.cert.not_valid_after
 
     def _validate_valid_at(self):
-        rt = self.get_relative_time_option(self.valid_at, 'valid_at')
+        rt = crypto_utils.get_relative_time_option(self.valid_at, 'valid_at', backend=self.backend)
         return self.cert.not_valid_before, rt, self.cert.not_valid_after
 
     def _validate_invalid_at(self):
-        rt = self.get_relative_time_option(self.invalid_at, 'invalid_at')
+        rt = crypto_utils.get_relative_time_option(self.invalid_at, 'invalid_at', backend=self.backend)
         return self.cert.not_valid_before, rt, self.cert.not_valid_after
 
     def _validate_valid_in(self):
-        valid_in_date = self.get_relative_time_option(self.valid_in, "valid_in")
+        valid_in_date = crypto_utils.get_relative_time_option(self.valid_in, "valid_in", backend=self.backend)
         return self.cert.not_valid_before, valid_in_date, self.cert.not_valid_after
 
 
@@ -2285,17 +2257,17 @@ class AssertOnlyCertificate(AssertOnlyCertificateBase):
         return self.cert.get_notAfter()
 
     def _validate_valid_at(self):
-        rt = self.get_relative_time_option(self.valid_at, "valid_at")
+        rt = crypto_utils.get_relative_time_option(self.valid_at, "valid_at", backend=self.backend)
         rt = to_bytes(rt, errors='surrogate_or_strict')
         return self.cert.get_notBefore(), rt, self.cert.get_notAfter()
 
     def _validate_invalid_at(self):
-        rt = self.get_relative_time_option(self.invalid_at, "invalid_at")
+        rt = crypto_utils.get_relative_time_option(self.invalid_at, "invalid_at", backend=self.backend)
         rt = to_bytes(rt, errors='surrogate_or_strict')
         return self.cert.get_notBefore(), rt, self.cert.get_notAfter()
 
     def _validate_valid_in(self):
-        valid_in_asn1 = self.get_relative_time_option(self.valid_in, "valid_in")
+        valid_in_asn1 = crypto_utils.get_relative_time_option(self.valid_in, "valid_in", backend=self.backend)
         valid_in_date = to_bytes(valid_in_asn1, errors='surrogate_or_strict')
         return self.cert.get_notBefore(), valid_in_date, self.cert.get_notAfter()
 
@@ -2306,7 +2278,7 @@ class EntrustCertificate(Certificate):
     def __init__(self, module, backend):
         super(EntrustCertificate, self).__init__(module, backend)
         self.trackingId = None
-        self.notAfter = self.get_relative_time_option(module.params['entrust_not_after'], 'entrust_not_after')
+        self.notAfter = crypto_utils.get_relative_time_option(module.params['entrust_not_after'], 'entrust_not_after', backend=self.backend)
 
         if self.csr_content is None or not os.path.exists(self.csr_path):
             raise CertificateError(
