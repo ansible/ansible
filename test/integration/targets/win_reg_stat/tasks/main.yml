@@ -9,8 +9,7 @@
     dest: '{{ win_output_dir }}\test_reg.reg'
 
 - name: import test registry structure
-  win_regmerge:
-    path: '{{ win_output_dir }}\test_reg.reg'
+  win_command: reg.exe import "{{ win_output_dir }}\test_reg.reg"
 
 - block:
   - name: run tests
