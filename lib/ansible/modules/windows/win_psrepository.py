@@ -82,7 +82,7 @@ options:
       - See notes for additional context.
     type: bool
     default: False
-    version_added: '2.10
+    version_added: '2.10'
 requirements:
   - PowerShell Module L(PowerShellGet >= 1.6.0,https://www.powershellgallery.com/packages/PowerShellGet/)
   - PowerShell Module L(PackageManagement >= 1.1.7,https://www.powershellgallery.com/packages/PackageManagement/)
