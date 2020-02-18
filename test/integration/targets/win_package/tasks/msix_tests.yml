@@ -14,9 +14,7 @@
     dest: '{{ test_path }}\makeappx.zip'
 
 - name: extract makeappx binaries
-  win_unzip:
-    src: '{{ test_path }}\makeappx.zip'
-    dest: '{{ test_path }}\makeappx'
+  win_shell: Expand-Archive -LiteralPath '{{ test_path }}\makeappx.zip' -DestinationPath '{{ test_path }}\makeappx'
 
 - name: setup MSIX packages
   win_make_appx:
