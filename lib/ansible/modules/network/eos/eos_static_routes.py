@@ -782,7 +782,7 @@ EXAMPLES = """
 #         "no ipv6 route vrf testvrf 2222:6::/64 Ethernet1 55",
 #         "no ipv6 route vrf testvrf 2222:6::/64 Null0 90 name testroute1"
 #     ]
-# 
+#
 # After State:
 # -----------
 
@@ -791,7 +791,7 @@ EXAMPLES = """
 # veos(config)#
 
 
-# 
+#
 # Using merged
 
 # Before : [
@@ -1190,7 +1190,7 @@ EXAMPLES = """
                 next_hops:
                   - admin_distance: 55
                     interface: "Ethernet1"
-      state: "replaced"
+    state: "replaced"
 
 # After State
 # -----------
