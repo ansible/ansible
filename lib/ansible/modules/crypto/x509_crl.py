@@ -347,7 +347,6 @@ crl:
 '''
 
 
-import datetime
 import os
 import traceback
 from distutils.version import LooseVersion
@@ -387,27 +386,6 @@ class CRLError(crypto_utils.OpenSSLObjectError):
 
 class CRL(crypto_utils.OpenSSLObject):
 
-    def get_relative_time_option(self, input_string, input_name):
-        """Return an ASN1 formatted string if a relative timespec
-           or an ASN1 formatted string is provided."""
-        result = to_native(input_string)
-        if result is None:
-            raise CRLError(
-                'The timespec "%s" for %s is not valid' %
-                input_string, input_name)
-        if result.startswith("+") or result.startswith("-"):
-            return crypto_utils.convert_relative_to_datetime(result)
-        for date_fmt in ['%Y%m%d%H%M%SZ', '%Y%m%d%H%MZ', '%Y%m%d%H%M%S%z', '%Y%m%d%H%M%z']:
-            try:
-                return datetime.datetime.strptime(result, date_fmt)
-            except ValueError:
-                pass
-
-        raise CRLError(
-            'The time spec "%s" for %s is invalid' %
-            (input_string, input_name)
-        )
-
     def __init__(self, module):
         super(CRL, self).__init__(
             module.params['path'],
@@ -430,8 +408,8 @@ class CRL(crypto_utils.OpenSSLObject):
         self.issuer = crypto_utils.parse_name_field(module.params['issuer'])
         self.issuer = [(entry[0], entry[1]) for entry in self.issuer if entry[1]]
 
-        self.last_update = self.get_relative_time_option(module.params['last_update'], 'last_update')
-        self.next_update = self.get_relative_time_option(module.params['next_update'], 'next_update')
+        self.last_update = crypto_utils.get_relative_time_option(module.params['last_update'], 'last_update')
+        self.next_update = crypto_utils.get_relative_time_option(module.params['next_update'], 'next_update')
 
         self.digest = crypto_utils.select_message_digest(module.params['digest'])
         if self.digest is None:
@@ -477,7 +455,7 @@ class CRL(crypto_utils.OpenSSLObject):
             if rc['issuer']:
                 result['issuer'] = [crypto_utils.cryptography_get_name(issuer) for issuer in rc['issuer']]
                 result['issuer_critical'] = rc['issuer_critical']
-            result['revocation_date'] = self.get_relative_time_option(
+            result['revocation_date'] = crypto_utils.get_relative_time_option(
                 rc['revocation_date'],
                 path_prefix + 'revocation_date'
             )
@@ -485,7 +463,7 @@ class CRL(crypto_utils.OpenSSLObject):
                 result['reason'] = crypto_utils.REVOCATION_REASON_MAP[rc['reason']]
                 result['reason_critical'] = rc['reason_critical']
             if rc['invalidity_date']:
-                result['invalidity_date'] = self.get_relative_time_option(
+                result['invalidity_date'] = crypto_utils.get_relative_time_option(
                     rc['invalidity_date'],
                     path_prefix + 'invalidity_date'
                 )

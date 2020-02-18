@@ -131,7 +131,7 @@ import re
 import tempfile
 
 from ansible.module_utils import six
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_native, to_bytes, to_text
 
 
 class OpenSSLObjectError(Exception):
@@ -362,6 +362,40 @@ def convert_relative_to_datetime(relative_time_string):
         return datetime.datetime.utcnow() + offset
     else:
         return datetime.datetime.utcnow() - offset
+
+
+def get_relative_time_option(input_string, input_name, backend='cryptography'):
+    """Return an absolute timespec if a relative timespec or an ASN1 formatted
+       string is provided.
+
+       The return value will be a datetime object for the cryptography backend,
+       and a ASN1 formatted string for the pyopenssl backend."""
+    result = to_native(input_string)
+    if result is None:
+        raise OpenSSLObjectError(
+            'The timespec "%s" for %s is not valid' %
+            input_string, input_name)
+    # Relative time
+    if result.startswith("+") or result.startswith("-"):
+        result_datetime = convert_relative_to_datetime(result)
+        if backend == 'pyopenssl':
+            return result_datetime.strftime("%Y%m%d%H%M%SZ")
+        elif backend == 'cryptography':
+            return result_datetime
+    # Absolute time
+    if backend == 'pyopenssl':
+        return input_string
+    elif backend == 'cryptography':
+        for date_fmt in ['%Y%m%d%H%M%SZ', '%Y%m%d%H%MZ', '%Y%m%d%H%M%S%z', '%Y%m%d%H%M%z']:
+            try:
+                return datetime.datetime.strptime(result, date_fmt)
+            except ValueError:
+                pass
+
+        raise OpenSSLObjectError(
+            'The time spec "%s" for %s is invalid' %
+            (input_string, input_name)
+        )
 
 
 def select_message_digest(digest_string):
