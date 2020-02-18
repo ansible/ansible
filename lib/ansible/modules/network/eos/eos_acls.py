@@ -88,8 +88,8 @@ options:
                 choices: ['permit', 'deny']
               line:
 ￼               description:
-￼                  This should be used when an attribute doesn't exist in the argspec but is valid for the device.
-￼                  For fact gathering, any ACE that is not fully parsed, while show up as a value of this attribute.
+￼                     - This should be used when an attribute doesn't exist in the argspec but is valid for the device.
+￼                     - For fact gathering, any ACE that is not fully parsed, while show up as a value of this attribute.
 ￼               type: str
               protocol:
                 description:
