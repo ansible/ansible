@@ -8,9 +8,6 @@
   - name: Delete all the static routes.
     vyos_static_routes: &deleted_all
       config:
-        - address_families:
-          - afi: 'ipv4'
-          - afi: 'ipv6'
       state: deleted
     register: result
 

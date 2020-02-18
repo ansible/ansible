@@ -250,6 +250,9 @@ EXAMPLES = """
 # set protocols static route 192.0.2.32/28 'blackhole'
 # set protocols static route 192.0.2.32/28 next-hop '192.0.2.6'
 # set protocols static route 192.0.2.32/28 next-hop '192.0.2.7'
+# set protocols static route 192.0.2.33/28 'blackhole'
+# set protocols static route 192.0.2.33/28 next-hop '192.0.2.3'
+# set protocols static route 192.0.2.33/28 next-hop '192.0.2.4'
 # set protocols static route6 2001:db8:1000::/36 blackhole distance '2'
 # set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::1'
 # set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::2'
@@ -266,7 +269,7 @@ EXAMPLES = """
              next_hops:
                - forward_router_address: 192.0.2.7
                  enabled: false
-               - forward_router_address: 192.0.2.8
+               - forward_router_address: 192.0.2.9
     state: replaced
 #
 #
@@ -291,6 +294,20 @@ EXAMPLES = """
 #                                },
 #                                {
 #                                    "forward_router_address": "192.0.2.7"
+#                                }
+#                            ]
+#                        },
+#                        {
+#                            "blackhole_config": {
+#                                "type": "blackhole"
+#                            },
+#                            "dest": "192.0.2.33/28",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "192.0.2.3"
+#                                },
+#                                {
+#                                    "forward_router_address": "192.0.2.4"
 #                                }
 #                            ]
 #                        }
@@ -348,6 +365,20 @@ EXAMPLES = """
 #                                    "forward_router_address": "192.0.2.9"
 #                                }
 #                            ]
+#                        },
+#                        {
+#                            "blackhole_config": {
+#                                "type": "blackhole"
+#                            },
+#                            "dest": "192.0.2.33/28",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "192.0.2.3"
+#                                },
+#                                {
+#                                    "forward_router_address": "192.0.2.4"
+#                                }
+#                            ]
 #                        }
 #                    ]
 #                },
@@ -381,6 +412,9 @@ EXAMPLES = """
 # set protocols static route 192.0.2.32/28 blackhole distance '2'
 # set protocols static route 192.0.2.32/28 next-hop 192.0.2.7 'disable'
 # set protocols static route 192.0.2.32/28 next-hop '192.0.2.9'
+# set protocols static route 192.0.2.33/28 'blackhole'
+# set protocols static route 192.0.2.33/28 next-hop '192.0.2.3'
+# set protocols static route 192.0.2.33/28 next-hop '192.0.2.4'
 # set protocols static route6 2001:db8:1000::/36 blackhole distance '2'
 # set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::1'
 # set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::2'

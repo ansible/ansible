@@ -129,22 +129,7 @@ class Static_routes(ConfigBase):
         if self.state == 'overridden':
             commands.extend(self._state_overridden(want=want, have=have))
         elif self.state == 'deleted':
-            if want:
-                routes = self._get_routes(want)
-                if not routes:
-                    for w in want:
-                        af = w['address_families']
-                        for item in af:
-                            if self.afi_in_have(have, item):
-                                commands.append(self._compute_command(afi=item['afi'], remove=True))
-                for r in routes:
-                    h_route = self.search_route_in_have(have, r['dest'])
-                    if h_route:
-                        commands.extend(self._state_deleted(want=r, have=h_route))
-            else:
-                routes = self._get_routes(have)
-                for r in routes:
-                    commands.extend(self._state_deleted(want=None, have=r))
+            commands.extend(self._state_deleted(want=want, have=have))
         elif want:
             routes = self._get_routes(want)
             for r in routes:
@@ -229,11 +214,23 @@ class Static_routes(ConfigBase):
         """
         commands = []
         if want:
-            commands.extend(self._render_updates(want, have, opr=False))
+            routes = self._get_routes(want)
+            if not routes:
+                for w in want:
+                    af = w['address_families']
+                    for item in af:
+                        if self.afi_in_have(have, item):
+                            commands.append(self._compute_command(afi=item['afi'], remove=True))
+            for r in routes:
+                h_route = self.search_route_in_have(have, r['dest'])
+                if h_route:
+                    commands.extend(self._render_updates(r, h_route, opr=False))
         else:
-            commands.append(
-                self._compute_command(dest=have['dest'], remove=True)
-            )
+            routes = self._get_routes(have)
+            if self._is_ip_route_exist(routes):
+                commands.append(self._compute_command(afi='ipv4', remove=True))
+            if self._is_ip_route_exist(routes, 'route6'):
+                commands.append(self._compute_command(afi='ipv6', remove=True))
         return commands
 
     def _render_set_commands(self, want):
@@ -497,6 +494,18 @@ class Static_routes(ConfigBase):
             return 'route'
         elif afi == 'ipv6':
             return 'route6'
+
+    def _is_ip_route_exist(self, routes, type='route'):
+        """
+        This functions checks for the type of route.
+        :param routes:
+        :param type:
+        :return: True/False
+        """
+        for r in routes:
+            if type == self.get_route_type(r['dest']):
+                return True
+        return False
 
     def _get_routes(self, lst):
         """
