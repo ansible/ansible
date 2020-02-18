@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.compat.mock import patch, MagicMock
+from units.compat.mock import patch
 from ansible.modules.network.vyos import vyos_firewall_rules
 from units.modules.utils import set_module_args
 from .vyos_module import TestVyosModule, load_fixture
