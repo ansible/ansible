@@ -55,12 +55,12 @@ options:
         description:
             - ACL number.
               The value is an integer ranging from 2000 to 2999.
-        type: int
+        type: str
     acl_step:
         description:
             - ACL step.
               The value is an integer ranging from 1 to 20. The default value is 5.
-        type: int
+        type: str
     acl_description:
         description:
             - ACL description.
@@ -76,7 +76,7 @@ options:
         description:
             - ID of a basic ACL rule in configuration mode.
               The value is an integer ranging from 0 to 4294967294.
-        type: int
+        type: str
     rule_action:
         description:
             - Matching mode of basic ACL rules.
