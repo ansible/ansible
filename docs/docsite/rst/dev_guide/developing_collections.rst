@@ -460,7 +460,7 @@ The build process for docs.ansible.com will know where to find the module docs.
   * module_utils
   * contrib/inventory script
 
-* It is NOT needed for:
+* You do NOT need to add ``migrated_to`` for:
 
   * Unit tests
   * Integration tests
