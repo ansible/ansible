@@ -1,0 +1,3 @@
+bugfixes:
+  - ec2_asg - Allow updating all tgs
+    (https://github.com/ansible/ansible/issues/65008).

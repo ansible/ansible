@@ -1240,6 +1240,28 @@ def create_autoscaling_group(connection):
                         module.fail_json(msg="Failed to attach load balancer target groups %s: %s" % (tgs_to_attach, to_native(e)),
                                          exception=traceback.format_exc())
 
+            if not changed:
+                # if tgs has not changed, then we need to delete and add some
+                # this might happen when both wanted_tgs and has_tgs has all different elements
+
+                tgs_to_detach = has_tgs.difference(wanted_tgs)
+                if tgs_to_detach:
+                    changed = True
+                    try:
+                        detach_lb_target_groups(connection, group_name, list(tgs_to_detach))
+                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                        module.fail_json(msg="Failed to detach load balancer target groups %s: %s" % (tgs_to_detach, to_native(e)),
+                                         exception=traceback.format_exc())
+
+                tgs_to_attach = wanted_tgs.difference(has_tgs)
+                if tgs_to_attach:
+                    changed = True
+                    try:
+                        attach_lb_target_groups(connection, group_name, list(tgs_to_attach))
+                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                        module.fail_json(msg="Failed to attach load balancer target groups %s: %s" % (tgs_to_attach, to_native(e)),
+                                         exception=traceback.format_exc())
+
         # check for attributes that aren't required for updating an existing ASG
         # check if min_size/max_size/desired capacity have been specified and if not use ASG values
         if min_size is None:
