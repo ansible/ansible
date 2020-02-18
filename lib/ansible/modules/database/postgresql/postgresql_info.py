@@ -238,7 +238,7 @@ databases:
 repl_slots:
   description:
   - Replication slots (available in 9.4 and later)
-    U(https://www.postgresql.org/docs/current/catalog-pg-replication-slots.html).
+    U(https://www.postgresql.org/docs/current/view-pg-replication-slots.html).
   returned: if existent
   type: dict
   sample: { "slot0": { "active": false, "database": null, "plugin": null, "slot_type": "physical" } }
