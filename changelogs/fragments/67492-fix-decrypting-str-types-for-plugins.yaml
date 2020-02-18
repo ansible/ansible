@@ -1,3 +1,2 @@
 bugfixes:
-  - plugins - If the option's type was not defined in the plugin documentation the type is assumed to be a string
-    and is decrypted if it's a vault. This fixes decrypting values for options that define the type to be a string.
+  - plugins - Allow ensure_type to decrypt the value for string types (and implicit string types) when value is an inline vault.
