@@ -73,14 +73,14 @@ options:
      description:
         -  Whether port security is enabled on the network or not.
            Network will use OpenStack defaults if this option is
-           not utilised.
+           not utilised. Requires openstacksdk>=0.18.
      type: bool
      version_added: "2.8"
    mtu:
      description:
        -  The maximum transmission unit (MTU) value to address fragmentation.
           Network will use OpenStack defaults if this option is
-          not provided.
+          not provided. Requires openstacksdk>=0.18.
      type: int
      version_added: "2.9"
    dns_domain:
@@ -199,16 +199,22 @@ def main():
     provider_segmentation_id = module.params['provider_segmentation_id']
     project = module.params['project']
 
-    net_create_kwargs = {
-        'port_security_enabled': module.params['port_security_enabled'],
-        'mtu_size': module.params['mtu']
-    }
+    net_create_kwargs = {}
+    min_version = None
+
+    if module.params['mtu'] is not None:
+        min_version = '0.18.0'
+        net_create_kwargs['mtu_size'] = module.params['mtu']
+
+    if module.params['port_security_enabled'] is not None:
+        min_version = '0.18.0'
+        net_create_kwargs['port_security_enabled'] = module.params['port_security_enabled']
 
     if module.params['dns_domain'] is not None:
-        sdk, cloud = openstack_cloud_from_module(module, min_version='0.29.0')
+        min_version = '0.29.0'
         net_create_kwargs['dns_domain'] = module.params['dns_domain']
-    else:
-        sdk, cloud = openstack_cloud_from_module(module)
+
+    sdk, cloud = openstack_cloud_from_module(module, min_version)
     try:
         if project is not None:
             proj = cloud.get_project(project)
