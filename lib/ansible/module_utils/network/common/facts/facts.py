@@ -23,6 +23,7 @@ class FactsBase(object):
         self._connection = None
         if module.params.get('state') not in ['rendered', 'parsed']:
             self._connection = get_resource_connection(module)
+
         self.ansible_facts = {'ansible_network_resources': {}}
         self.ansible_facts['ansible_net_gather_network_resources'] = list()
         self.ansible_facts['ansible_net_gather_subset'] = list()
