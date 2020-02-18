@@ -47,7 +47,7 @@ and other tools need in order to package, build and publish the collection::
 
 .. note::
     * Ansible only accepts ``.yml`` extensions for :file:`galaxy.yml`, and ``.md`` for the :file:`README` file and any files in the :file:`/docs` folder.
-    * See the `ansible-collections GitHub Org <https://github.com/ansible-collections/>`_ for examples of collection structure.
+    * See the `ansible-collections <https://github.com/ansible-collections/>`_ GitHub Org for examples of collection structure.
     * Not all directories are currently in use. Those are placeholders for future features.
 
 .. _galaxy_yml:
@@ -177,6 +177,19 @@ tests directory
 TBD. Expect tests for the collection itself to reside here.
 
 
+.. _creating_collections_skeleton:
+
+Creating a collection skeleton
+------------------------------
+
+To start a new collection:
+
+.. code-block:: bash
+
+    collection_dir#> ansible-galaxy collection init my_namespace.my_collection
+
+Once the skeleton exists, you can populate the directories with the content you want inside the collection. See `ansible-collections <https://github.com/ansible-collections/>`_ GitHub Org to get a better idea of what you can place inside a collection.
+
 .. _creating_collections:
 
 Creating collections
@@ -184,7 +197,7 @@ Creating collections
 
 To create a collection:
 
-#. Initialize a collection with :ref:`ansible-galaxy collection init<creating_collections_skeleton>` to create the skeleton directory structure.
+#. Create a collection skeleton with the ``collection init`` command. See :ref:`creating_collections_skeleton` above.
 #. Add your content to the collection.
 #. Build the collection into a collection artifact with :ref:`ansible-galaxy collection build<building_collections>`.
 #. Publish the collection artifact to Galaxy with :ref:`ansible-galaxy collection publish<publishing_collections>`.
@@ -199,20 +212,6 @@ Currently the ``ansible-galaxy collection`` command implements the following sub
 * ``install``: Install one or more collections.
 
 To learn more about the ``ansible-galaxy`` cli tool, see the :ref:`ansible-galaxy` man page.
-
-.. _creating_collections_skeleton:
-
-Creating a collection skeleton
-------------------------------
-
-To start a new collection:
-
-.. code-block:: bash
-
-    collection_dir#> ansible-galaxy collection init my_namespace.my_collection
-
-Then you can populate the directories with the content you want inside the collection. See
-`ansible-collections GitHub Org <https://github.com/ansible-collections/>`_to get a better idea of what you can place inside a collection.
 
 
 .. _building_collections:
@@ -234,11 +233,10 @@ This creates a tarball of the built collection in the current directory which ca
     ├── my_namespace-my_collection-1.0.0.tar.gz
     └── ...
 
-
 .. note::
-    * Certain files and folders are excluded when building the collection artifact. See :ref:`ignoring_files_and_folders_collections`  to exclude other files you would not wish to distribute.
-    * If you used the now-deprecated ``Mazer`` tool for any of your collections, delete any and all files it added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``.
-    * The current Galaxy maximum tarball size is 2 MB.
+   * Certain files and folders are excluded when building the collection artifact. See :ref:`ignoring_files_and_folders_collections`  to exclude other files you would not wish to distribute.
+   * If you used the now-deprecated ``Mazer`` tool for any of your collections, delete any and all files it added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``.
+   * The current Galaxy maximum tarball size is 2 MB.
 
 
 This tarball is mainly intended to upload to Galaxy
@@ -435,20 +433,21 @@ Ansibulbot will know how to redirect existing issues and PRs to the new repo.
 The build process for docs.ansible.com will know where to find the module docs.
 
 .. code-block:: yaml
-      $modules/monitoring/grafana/grafana_plugin.py:
-          migrated_to: community.grafana
-      $modules/monitoring/grafana/grafana_dashboard.py:
-          migrated_to: community.grafana
-      $modules/monitoring/grafana/grafana_datasource.py:
-          migrated_to: community.grafana
-      $plugins/callback/grafana_annotations.py:
-        maintainers: $team_grafana
-        labels: monitoring grafana
-        migrated_to: community.grafana
-      $plugins/doc_fragments/grafana.py:
-        maintainers: $team_grafana
-        labels: monitoring grafana
-        migrated_to: community.grafana
+
+   $modules/monitoring/grafana/grafana_plugin.py:
+       migrated_to: community.grafana
+   $modules/monitoring/grafana/grafana_dashboard.py:
+       migrated_to: community.grafana
+   $modules/monitoring/grafana/grafana_datasource.py:
+       migrated_to: community.grafana
+   $plugins/callback/grafana_annotations.py:
+       maintainers: $team_grafana
+       labels: monitoring grafana
+       migrated_to: community.grafana
+   $plugins/doc_fragments/grafana.py:
+       maintainers: $team_grafana
+       labels: monitoring grafana
+       migrated_to: community.grafana
 
 `Example PR <https://github.com/ansible/ansible/pull/66981/files>`_
 
