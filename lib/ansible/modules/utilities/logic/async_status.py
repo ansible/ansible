@@ -92,7 +92,7 @@ def main():
         jid=dict(type='str', required=True),
         mode=dict(type='str', default='status', choices=['cleanup', 'status']),
         # passed in from the async_status action plugin
-        async_dir=dict(type='path', required=True),
+        async_dir=dict(type='path', required=True, aliases=['_async_dir']),
     ))
 
     mode = module.params['mode']

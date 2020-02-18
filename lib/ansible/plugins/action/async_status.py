@@ -39,6 +39,7 @@ class ActionModule(ActionBase):
             # module args
             async_dir = self.get_shell_option('async_dir', default="~/.ansible_async")
 
+        # async_dir should not change as it is relied on by the Windows collection async_status.ps1.
         module_args = dict(jid=jid, mode=mode, async_dir=async_dir)
         status = self._execute_module(task_vars=task_vars,
                                       module_args=module_args)

@@ -1,0 +1,2 @@
+minor_changes:
+- async_status - Rename ``_async_dir`` to ``async_dir`` to ensure the option is seen as a stable name in a post collection world

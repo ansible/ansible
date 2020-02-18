@@ -1,0 +1,24 @@
+---
+- name: test setting async dir through env var (deprecated)
+  async_status:
+    jid: jid
+  register: async_status_env
+  environment:
+    ANSIBLE_ASYNC_DIR: env var
+
+- name: assert test setting async dir through env var (deprecated)
+  assert:
+    that:
+    - async_status_env.async_dir == 'env var'
+
+- name: test setting async dir from shell option var
+  async_status:
+    jid: jid
+  register: async_status_shell
+  vars:
+    ansible_async_dir: shell var
+
+- name: assert test setting async dir from shell option var
+  assert:
+    that:
+    - async_status_shell.async_dir == 'shell var'
