@@ -1,0 +1,25 @@
+---
+- name: Validate CRL 1
+  assert:
+    that:
+      - crl_1_check is changed
+      - crl_1 is changed
+      - crl_1_idem_check is not changed
+      - crl_1_idem is not changed
+      - crl_1_idem_content_check is not changed
+      - crl_1_idem_content is not changed
+
+- name: Validate CRL 2
+  assert:
+    that:
+      - crl_2_check is changed
+      - crl_2 is changed
+      - crl_2_idem_check is not changed
+      - crl_2_idem is not changed
+      - crl_2_idem_update_change_check is changed
+      - crl_2_idem_update_change is changed
+      - crl_2_idem_update_check is not changed
+      - crl_2_idem_update is not changed
+      - crl_2_change_check is changed
+      - crl_2_change is changed
+      - crl_2_change.crl == lookup('file', output_dir ~ '/ca-crl2.crl', rstrip=False)
