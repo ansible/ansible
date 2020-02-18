@@ -88,7 +88,7 @@ class AclsFacts(object):
             # it could be a.b.c.d or a.b.c.d/x or a.b.c.d/32
             if '/' in option:  # or 'host' in option:
                 ip = re.search('(.*)/(\d+)', option)
-                if int(ip.group(2)) < 32:
+                if int(ip.group(2)) < 32 or 32 < int(ip.group(2)) < 128:
                     ret_dict.update({'prefix': option})
                 else:
                     ret_dict.update({'host': ip.group(1)})
