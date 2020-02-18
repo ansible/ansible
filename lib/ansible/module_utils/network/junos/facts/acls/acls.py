@@ -130,7 +130,10 @@ class AclsFacts(object):
                 if acl['term'].get('from'):
                     if acl['term']['from'].get('source-address'):
                         ace['source'] = {}
-                        ace['source']['source_address'] = acl['term']['from']['source-address']['name']
+                        ace['source']['address'] = acl['term']['from']['source-address']['name']
+                    if acl['term']['from'].get('prefix-list'):
+                        ace['source'] = {}
+                        ace['source']['prefix'] = acl['term']['from']['prefix-list']['name']
                     if acl['term']['from'].get('port'):
                         ace['port'] = {}
                         specified_port = acl['term']['from']['port']
