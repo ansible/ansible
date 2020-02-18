@@ -475,9 +475,7 @@ def invoke_with_throttling_retries(function_ref, *argv, **kwargs):
 def decode_name(name):
     # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
     # tripping of things like * and @.
-    decoded_name = name.replace(r'\052', '*')
-    decoded_name = decoded_name.replace(r'\100', '@')
-    return decoded_name
+    return name.encode().decode('unicode_escape')
 
 
 def to_dict(rset, zone_in, zone_id):
@@ -648,14 +646,13 @@ def main():
             rset = invoke_with_throttling_retries(next, sets_iter)
         except StopIteration:
             break
-        # Need to save decoded name in rset, because of comparing rset.to_xml() == wanted_rset.to_xml() in next block
-        decoded_name = decode_name(rset.name)
-        rset.name = decoded_name
+        # Need to save this changes in rset, because of comparing rset.to_xml() == wanted_rset.to_xml() in next block
+        rset.name = decode_name(rset.name)
 
         if identifier_in is not None:
             identifier_in = str(identifier_in)
 
-        if rset.type == type_in and decoded_name.lower() == record_in.lower() and rset.identifier == identifier_in:
+        if rset.type == type_in and rset.name.lower() == record_in.lower() and rset.identifier == identifier_in:
             if need_to_sort_records:
                 # Sort records
                 rset.resource_records = sorted(rset.resource_records)
