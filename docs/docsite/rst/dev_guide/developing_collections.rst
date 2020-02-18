@@ -431,7 +431,7 @@ The `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.
 * ansibullbot
 * the docs build for collections-based modules
 
-Ansibulbot will know how to redirect existing issues and PRs to the new repo
+Ansibulbot will know how to redirect existing issues and PRs to the new repo.
 The build process for docs.ansible.com will know where to find the module docs.
 
 .. code-block:: yaml
@@ -452,10 +452,10 @@ The build process for docs.ansible.com will know where to find the module docs.
 
 `Example PR <https://github.com/ansible/ansible/pull/66981/files>`_
 
-* The ``migrated_to:`` key must be added explicitly for every *file*, not directories
-* ``migrated_to:`` MUST be added for every file which is a:
+* The ``migrated_to:`` key must be added explicitly for every *file*. You cannot add ``migrated_to`` at the directory level.
+* ``migrated_to:`` MUST be added for every:
 
-  * modules
+  * module
   * plugin
   * module_utils
   * contrib/inventory script
@@ -464,7 +464,7 @@ The build process for docs.ansible.com will know where to find the module docs.
 
   * Unit tests
   * Integration tests
-  * Docs, such as ``docs/docsite/rst/user_guide/``
+  * ReStructured Text docs (anything under ``docs/docsite/rst/``)
 
 
 .. seealso::
