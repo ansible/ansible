@@ -43,6 +43,7 @@ options:
   health_check_path:
     description:
       - The ping path that is the destination on the targets for health checks. The path must be defined in order to set a health check.
+      - Requires the I(health_check_protocol) parameter to be set.
     required: false
     type: str
   health_check_interval:
@@ -188,8 +189,14 @@ EXAMPLES = '''
     protocol: http
     port: 80
     vpc_id: vpc-01234567
-    health_check_path: /
-    successful_response_codes: "200,250-260"
+    health_check_protocol: http
+    health_check_path: /health_check
+    health_check_port: 80
+    successful_response_codes: 200
+    health_check_interval: 15
+    health_check_timeout: 3
+    healthy_threshold_count: 4
+    unhealthy_threshold_count: 3
     state: present
 
 # Delete a target group
@@ -203,6 +210,7 @@ EXAMPLES = '''
     protocol: http
     port: 81
     vpc_id: vpc-01234567
+    health_check_protocol: http
     health_check_path: /
     successful_response_codes: "200,250-260"
     targets:
@@ -220,6 +228,7 @@ EXAMPLES = '''
     protocol: http
     port: 81
     vpc_id: vpc-01234567
+    health_check_protocol: http
     health_check_path: /
     successful_response_codes: "200,250-260"
     target_type: ip
