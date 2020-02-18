@@ -1179,6 +1179,34 @@ class ModuleValidator(Validator):
         if doc_options is None:
             doc_options = {}
         for arg, data in spec.items():
+            restricted_argument_names = ('message', 'syslog_facility')
+            if arg.lower() in restricted_argument_names:
+                msg = "Argument '%s' in argument_spec " % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += "must not be one of %s as it is used " \
+                       "internally by Ansible Core Engine" % (",".join(restricted_argument_names))
+                self.reporter.error(
+                    path=self.object_path,
+                    code='invalid-argument-name',
+                    msg=msg,
+                )
+                continue
+            if 'aliases' in data:
+                for al in data['aliases']:
+                    if al.lower() in restricted_argument_names:
+                        msg = "Argument alias '%s' in argument_spec " % al
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += "must not be one of %s as it is used " \
+                               "internally by Ansible Core Engine" % (",".join(restricted_argument_names))
+                        self.reporter.error(
+                            path=self.object_path,
+                            code='invalid-argument-name',
+                            msg=msg,
+                        )
+                        continue
+
             if not isinstance(data, dict):
                 msg = "Argument '%s' in argument_spec" % arg
                 if context:

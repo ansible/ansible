@@ -81,6 +81,7 @@ Codes
   imports-improper-location                                    Imports              Error                  Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
   incompatible-choices                                         Documentation        Error                  Choices value from the argument_spec is not compatible with type defined in the argument_spec
   incompatible-default-type                                    Documentation        Error                  Default value from the argument_spec is not compatible with type defined in the argument_spec
+  invalid-argument-name                                        Documentation        Error                  Argument in argument_spec must not be one of 'message', 'syslog_facility' as it is used internally by Ansible Core Engine
   invalid-argument-spec                                        Documentation        Error                  Argument in argument_spec must be a dictionary/hash when used
   invalid-argument-spec-options                                Documentation        Error                  Suboptions in argument_spec are invalid
   invalid-documentation                                        Documentation        Error                  ``DOCUMENTATION`` is not valid YAML
