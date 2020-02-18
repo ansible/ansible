@@ -86,6 +86,9 @@ options:
                 description: Action to be applied on the rule
                 type: str
                 choices: ['permit', 'deny']
+              line:
+                description: For fact gathering, any ACE that is not fully parsed, while show up as a value of this attribute.
+                type: bool
               protocol:
                 description:
                       - Specify the protocol to match.
