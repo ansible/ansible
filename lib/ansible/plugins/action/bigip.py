@@ -63,9 +63,7 @@ class ActionModule(ActionNetworkModule):
             if transport == 'cli':
                 pc = copy.deepcopy(self._play_context)
                 pc.connection = 'ansible.netcommon.network_cli'
-                # TODO: Added network os FQCN name as place holder, change the
-                # value based on the collection namespace identified
-                pc.network_os = 'ansible.community.bigip'
+                pc.network_os = 'f5networks.f5_modules.bigip'
                 pc.remote_addr = provider.get('server', self._play_context.remote_addr)
                 pc.port = int(provider['server_port'] or self._play_context.port or 22)
                 pc.remote_user = provider.get('user', self._play_context.connection_user)

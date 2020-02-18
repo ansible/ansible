@@ -49,9 +49,7 @@ class ActionModule(ActionNetworkModule):
             provider = load_provider(ironware_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
             pc.connection = 'ansible.netcommon.network_cli'
-            # TODO: Added network os FQCN name as place holder, change the
-            # value based on the collection namespace identified
-            pc.network_os = 'ansible.community.ironware'
+            pc.network_os = 'community.general.ironware'
             pc.remote_addr = provider['host'] or self._play_context.remote_addr
             pc.port = int(provider['port'] or self._play_context.port or 22)
             pc.remote_user = provider['username'] or self._play_context.connection_user
