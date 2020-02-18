@@ -15,6 +15,7 @@ from ansible.module_utils.network.vyos.facts.lag_interfaces.lag_interfaces impor
 from ansible.module_utils.network.vyos.facts.lldp_global.lldp_global import Lldp_globalFacts
 from ansible.module_utils.network.vyos.facts.lldp_interfaces.lldp_interfaces import Lldp_interfacesFacts
 from ansible.module_utils.network.vyos.facts.firewall_rules.firewall_rules import Firewall_rulesFacts
+from ansible.module_utils.network.vyos.facts.static_routes.static_routes import Static_routesFacts
 from ansible.module_utils.network.vyos.facts.legacy.base import Default, Neighbors, Config
 
 
@@ -29,6 +30,7 @@ FACT_RESOURCE_SUBSETS = dict(
     lag_interfaces=Lag_interfacesFacts,
     lldp_global=Lldp_globalFacts,
     lldp_interfaces=Lldp_interfacesFacts,
+    static_routes=Static_routesFacts,
     firewall_rules=Firewall_rulesFacts
 )
 
@@ -55,5 +57,4 @@ class Facts(FactsBase):
             self.get_network_resources_facts(FACT_RESOURCE_SUBSETS, resource_facts_type, data)
         if self.VALID_LEGACY_GATHER_SUBSETS:
             self.get_network_legacy_facts(FACT_LEGACY_SUBSETS, legacy_facts_type)
-
         return self.ansible_facts, self._warnings

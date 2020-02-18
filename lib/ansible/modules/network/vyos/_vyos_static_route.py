@@ -20,7 +20,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -33,6 +33,10 @@ short_description: Manage static IP routes on Vyatta VyOS network devices
 description:
   - This module provides declarative management of static
     IP routes on Vyatta VyOS network devices.
+deprecated:
+  removed_in: '2.13'
+  alternative: vyos_static_routes
+  why: Updated modules released with more functionality.
 notes:
   - Tested against VyOS 1.1.8 (helium).
   - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
@@ -42,22 +46,28 @@ options:
       - Network prefix of the static route.
         C(mask) param should be ignored if C(prefix) is provided
         with C(mask) value C(prefix/mask).
+    type: str
   mask:
     description:
       - Network prefix mask of the static route.
+    type: str
   next_hop:
     description:
       - Next hop IP of the static route.
+    type: str
   admin_distance:
     description:
       - Admin distance of the static route.
+    type: int
   aggregate:
     description: List of static route definitions
+    type: list
   state:
     description:
       - State of the static route configuration.
     default: present
     choices: ['present', 'absent']
+    type: str
 extends_documentation_fragment: vyos
 """
 

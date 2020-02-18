@@ -1,0 +1,8 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      delete protocols static route
+      delete protocols static route6

@@ -1,0 +1,56 @@
+---
+- debug:
+      msg: "START vyos_static_routes replaced integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate.yaml
+
+- block:
+  - name: Replace device configurations of listed static routes with provided configurations
+    vyos_static_routes: &replaced
+        config:
+          - address_families:
+            - afi: 'ipv4'
+              routes:
+                - dest: 192.0.2.32/28
+                  blackhole_config:
+                    distance: 2
+                  next_hops:
+                    - forward_router_address: 192.0.2.7
+                    - forward_router_address: 192.0.2.8
+                    - forward_router_address: 192.0.2.9
+        state: replaced
+    register: result
+
+  - name: Assert that correct set of commands were generated
+    assert:
+        that:
+            - "{{ replaced['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+  - name: Assert that before dicts are correctly generated
+    assert:
+        that:
+            - "{{ populate | symmetric_difference(result['before']) |length == 0 }}"
+
+  - name: Assert that after dict is correctly generated
+    assert:
+        that:
+            - "{{ replaced['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+  - name: Replace device configurations of listed static routes with provided configurarions (IDEMPOTENT)
+    vyos_static_routes: *replaced
+    register: result
+
+  - name: Assert that task was idempotent
+    assert:
+        that:
+            - "result['changed'] == false"
+
+  - name: Assert that before dict is correctly generated
+    assert:
+        that:
+            - "{{ replaced['after'] | symmetric_difference(result['before']) |length == 0 }}"
+
+  always:
+  - include_tasks: _remove_config.yaml
