@@ -25,11 +25,36 @@ options:
       - Name of the repository to work with.
     type: str
     required: yes
-  source:
+  source_location:
     description:
       - Specifies the URI for discovering and installing modules from this repository.
       - A URI can be a NuGet server feed (most common situation), HTTP, HTTPS, FTP or file location.
+      - Required when registering a new repository or using I(force=True).
+      - Before 2.10, this option was called C(source). The name can be still be used as an alias.
     type: str
+    aliases:
+      - source
+      - module_source
+      - module_source_location
+  script_source_location:
+    description:
+      - Specifies the URI for discovering and installing scripts from this repository.
+    type: str
+    aliases:
+      - script_source
+    version_added: '2.10'
+  publish_location:
+    description:
+      - Specifies the URI for publishing modules to this repository.
+    type: str
+    aliases:
+      - module_publish_location
+    version_added: '2.10'
+  script_publish_location:
+    description:
+      - Specifies the URI for publishing scripts to this repository.
+    type: str
+    version_added: '2.10'
   state:
     description:
       - If C(present) a new repository is added or updated.
@@ -40,21 +65,42 @@ options:
   installation_policy:
     description:
       - Sets the C(InstallationPolicy) of a repository.
-      - Will default to C(trusted) when creating a new repository.
+      - Will default to C(trusted) when creating a new repository or used with I(force=True).
     type: str
     choices: [ trusted, untrusted ]
-notes:
+  follow_redirects:
+    description:
+      - If C(True), this module will follow HTTP/S redirects and use the final result for comparing and assigning the specified location.
+      - Applies to all location options. Only applies if the location type is HTTP/S. See notes for additional context.
+    type: bool
+    default: True
+    version_added: '2.10'
+  force:
+    description:
+      - If C(True), any differences from the desired state will result in the repository being unregistered, and then re-registered.
+      - See notes for additional context.
+    type: bool
+    default: False
+    version_added: '2.10
+requirements:
   - PowerShell modules needed
       - PowerShellGet >= 1.6.0
       - PackageManagement >= 1.1.7
   - PowerShell package provider needed
       - NuGet >= 2.8.5.201
+notes:
   - See the examples on how to update the NuGet package provider.
   - You can not use C(win_psrepository) to re-register (add) removed PSGallery, use the command C(Register-PSRepository -Default) instead.
+  - When registering or setting I(source_location), PowerShell will follow redirects and register the final resolves URL.
+  - If I(follow_redirects=False) and the specified URL redirects, then the comparison will see them as different, and cause a C(CHANGED) status on every run.
+  - When updating an existing repository, all options except I(name) are optional. Only supplied options will be updated. Use I(force=True) to exactly match.
+  - I(script_location), I(publish_location), and I(script_publish_location) are optional but once set can only be cleared with I(force=True).
+  - Using I(force=True) will unregister and re-register the repository if there are any changes, so that it exactly matches the options specified.
 seealso:
 - module: win_psmodule
 author:
 - Wojciech Sciesinski (@it-praktyk)
+- Brian Scholer (@briantist)
 '''
 
 EXAMPLES = '''
@@ -62,16 +108,50 @@ EXAMPLES = '''
 - name: Ensure the required NuGet package provider version is installed
   win_shell: Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force
 
-- name: Add a PowerShell module and register a repository
+- name: Register a PowerShell repository
   win_psrepository:
     name: MyRepository
-    source: https://myrepo.com
+    source_location: https://myrepo.com
     state: present
 
 - name: Remove a PowerShell repository
   win_psrepository:
     name: MyRepository
     state: absent
+
+- name: Add an untrusted repository 
+  win_psrepository:
+    name: MyRepository
+    installation_policy: untrusted
+
+- name: Add a repository with different locations
+  win_psrepository:
+    name: NewRepo
+    source_location: https://myrepo.example/module/feed
+    script_source_location: https://myrepo.example/script/feed
+    publish_location: https://myrepo.example/api/module/publish
+    script_publish_location: https://myrepo.example/api/script/publish
+
+- name: Update only two properties on the above repository
+  win_psrepository:
+    name: NewRepo
+    installation_policy: untrusted
+    script_publish_location: https://scriptprocessor.example/publish
+
+- name: Clear script locations from the above repository by re-registering it
+  win_psrepository:
+    name: NewRepo
+    installation_policy: untrusted
+    source_location: https://myrepo.example/module/feed
+    publish_location: https://myrepo.example/api/module/publish
+    force: True
+    
+- name: Don't follow redirects when registering the repository locations
+  win_psrepository:
+    name: NewRepo
+    source_location: https://myrepo.example/module/feed
+    script_source_location: https://myrepo.example/script/feed
+    follow_redirects: False
 '''
 
 RETURN = '''
