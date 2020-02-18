@@ -387,7 +387,7 @@ try:
     }
     REASON_MAP_INVERSE = dict()
     for k, v in REASON_MAP.items():
-        REASON_MAP_INVERSE[k] = v
+        REASON_MAP_INVERSE[v] = k
 except ImportError:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
     CRYPTOGRAPHY_FOUND = False
