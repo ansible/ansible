@@ -1,0 +1,2 @@
+bugfixes:
+  - facts - fix detection of virtualization type when dmi product name is KVM Server
