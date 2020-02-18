@@ -274,7 +274,7 @@ Then run the unit tests in the container of your choice. These commands install 
 
 Ansible uses pytest for unit testing. You can run unit tests against a single test module (use the correct path for your test module)::
 
-  $ ansible-test units test/units/modules/.../test/my_test.py
+  $ ansible-test units test/units/modules/.../test_my_module.py
 
 Contributing back to Ansible
 ============================
