@@ -90,6 +90,8 @@ from ansible.module_utils.common.text.converters import (
     container_to_text as json_dict_bytes_to_unicode,
 )
 
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+
 from ansible.module_utils.common.text.formatters import (
     lenient_lowercase,
     bytes_to_human,
@@ -507,48 +509,62 @@ class AnsibleModule(object):
         # Save parameter values that should never be logged
         self.no_log_values = set()
 
-        self._load_params()
-        self._set_fallbacks()
-
-        # append to legal_inputs and then possibly check against them
-        try:
-            self.aliases = self._handle_aliases()
-        except (ValueError, TypeError) as e:
-            # Use exceptions here because it isn't safe to call fail_json until no_log is processed
-            print('\n{"failed": true, "msg": "Module alias error: %s"}' % to_native(e))
-            sys.exit(1)
-
-        self._handle_no_log_values()
-
         # check the locale as set by the current environment, and reset to
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
-
+        self._load_params()
         self._set_internal_properties()
-        self._check_arguments()
+
+        self.validator = ArgumentSpecValidator(self.argument_spec, self.params,
+                                               self.mutually_exclusive,
+                                               self.required_together,
+                                               self.required_one_of,
+                                               self.required_if,
+                                               self.required_by,
+                                               _name = self._name,
+                                               )
+        self.validator.validate()
+
+        self.params.update(self.validator.validated_parameters)
+        self.no_log_values.update(self.validator._no_log_values)
+        if self.validator.error_messages:
+            self.fail_json(msg=self.validator.error_messages[0])
+        # self._set_fallbacks()
+
+        # append to legal_inputs and then possibly check against them
+        # try:
+        #     self.aliases = self._handle_aliases()
+        # except (ValueError, TypeError) as e:
+        #     # Use exceptions here because it isn't safe to call fail_json until no_log is processed
+        #     print('\n{"failed": true, "msg": "Module alias error: %s"}' % to_native(e))
+        #     sys.exit(1)
+
+        # self._handle_no_log_values()
+
+        # self._check_arguments()
 
         # check exclusive early
-        if not bypass_checks:
-            self._check_mutually_exclusive(mutually_exclusive)
+        # if not bypass_checks:
+        #     self._check_mutually_exclusive(mutually_exclusive)
 
-        self._set_defaults(pre=True)
+        # self._set_defaults(pre=True)
 
         # This is for backwards compatibility only.
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = DEFAULT_TYPE_VALIDATORS
 
-        if not bypass_checks:
-            self._check_required_arguments()
-            self._check_argument_types()
-            self._check_argument_values()
-            self._check_required_together(required_together)
-            self._check_required_one_of(required_one_of)
-            self._check_required_if(required_if)
-            self._check_required_by(required_by)
+        # if not bypass_checks:
+        #     self._check_required_arguments()
+        #     self._check_argument_types()
+        #     self._check_argument_values()
+        #     self._check_required_together(required_together)
+        #     self._check_required_one_of(required_one_of)
+        #     self._check_required_if(required_if)
+        #     self._check_required_by(required_by)
 
-        self._set_defaults(pre=False)
+        # self._set_defaults(pre=False)
 
         # deal with options sub-spec
-        self._handle_options()
+        # self._handle_options()
 
         if not self.no_log:
             self._log_invocation()
