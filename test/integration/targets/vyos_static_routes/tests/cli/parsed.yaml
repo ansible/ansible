@@ -1,0 +1,39 @@
+---
+- debug:
+    msg: "START vyos_static_routes parsed integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate.yaml
+
+- block:
+  - name: Gather static_routes facts
+    vyos_facts:
+      gather_subset:
+        - default
+      gather_network_resources:
+        - static_routes
+    register: static_routes_facts
+
+  - name: Provide the running configuration for parsing (config to be parsed)
+    vyos_static_routes: &parsed
+      running_config: 
+         "{{ lookup('file', '_parsed_config.cfg') }}"
+      state: parsed
+    register: result
+
+  - name: Assert that correct parsing done
+    assert:
+      that: "{{ ansible_facts['network_resources']['static_routes'] | symmetric_difference(result['parsed']) |length == 0 }}"
+
+  - name: Gather the existing running configuration (IDEMPOTENT)
+    vyos_static_routes: *parsed
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+        that:
+            - "result['changed'] == false"
+
+  always:
+  - include_tasks: _remove_config.yaml

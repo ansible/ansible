@@ -1,0 +1,49 @@
+---
+- debug:
+      msg: "START vyos_static_routes rendered integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate.yaml
+
+- block:
+  - name:  Structure provided configuration into device specific commands
+    vyos_static_routes: &rendered
+      config:
+       - address_families:
+         - afi: 'ipv4'
+           routes:
+             - dest: 192.0.2.32/28
+               blackhole_config:
+                 type: 'blackhole'
+               next_hops:
+                 - forward_router_address: 192.0.2.10
+                 - forward_router_address: 192.0.2.9
+       - address_families:
+         - afi: 'ipv6'
+           routes: 
+             - dest: 2001:db8:1000::/36
+               blackhole_config:
+                 distance: 2 
+               next_hops:
+                 - forward_router_address: 2001:db8:2000:2::1
+                 - forward_router_address: 2001:db8:2000:2::2
+      state: rendered
+    register: result
+
+  - name: Assert that correct set of commands were generated
+    assert:
+        that:
+            - "{{ rendered['commands'] | symmetric_difference(result['rendered']) |length == 0 }}"
+
+  - name: Structure provided configuration into device specific commands (IDEMPOTENT)
+    vyos_static_routes: *rendered
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+        that:
+            - "result['changed'] == false"
+
+  always:
+  - include_tasks: _remove_config.yaml
