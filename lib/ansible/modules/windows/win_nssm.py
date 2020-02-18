@@ -205,7 +205,7 @@ EXAMPLES = r'''
   win_service:
     name: foo
     dependencies: [ adf, tcpip ]
-    user: foouser
+    username: foouser
     password: secret
     start_mode: manual
     state: started
