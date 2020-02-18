@@ -1,0 +1,3 @@
+bugfixes:
+  - Bump the minimum openstacksdk version to 0.18.0 when os_network
+    uses the port_security_enabled or mtu arguments.
