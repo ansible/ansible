@@ -9,6 +9,9 @@ Developing collections
 Collections are a distribution format for Ansible content. You can use collections to package and distribute playbooks, roles, modules, and plugins.
 You can publish and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_.
 
+* For details on how to *use* collections see :ref:`collections`.
+* For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/general/blob/master/README.rst>`_.
+
 .. contents::
    :local:
    :depth: 2
@@ -209,7 +212,7 @@ To start a new collection:
     collection_dir#> ansible-galaxy collection init my_namespace.my_collection
 
 Then you can populate the directories with the content you want inside the collection. See
-https://github.com/ansible-collections/ to get a better idea of what you can place inside a collection.
+`ansible-collections GitHub Org <https://github.com/ansible-collections/>`_to get a better idea of what you can place inside a collection.
 
 
 .. _building_collections:
@@ -426,7 +429,7 @@ BOTMETA.yml
 
 The `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ is the source of truth for:
 * ansibullbot
-* FIXME docs stuff
+* Docs build.
 
 Ansibulbot will know how to redirect existing issues and PRs to the new repo
 The build process for docs.ansible.com will know where to find the module docs.
@@ -447,20 +450,22 @@ The build process for docs.ansible.com will know where to find the module docs.
         labels: monitoring grafana
         migrated_to: community.grafana
 
-Example PR https://github.com/ansible/ansible/pull/66981/files
+`Example PR <https://github.com/ansible/ansible/pull/66981/files>`_
 
-Why
+* The ``migrated_to:`` key must be added explicitly for every *file*, not directories
+* ``migrated_to:`` MUST be added for every file which is a:
 
-How
+  * modules
+  * plugin
+  * module_utils
+  * contrib/inventory script
 
-Details
+* It is NOT needed forL
 
-Issues and PRs
---------------
+  * Unit tests
+  * Integration tests
+  * Docs, such as ``docs/docsite/rst/user_guide/``
 
-Short term
-
-Long term
 
 .. seealso::
 
