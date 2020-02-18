@@ -88,7 +88,7 @@ options:
                 choices: ['permit', 'deny']
               line:
                 description: For fact gathering, any ACE that is not fully parsed, while show up as a value of this attribute.
-                type: bool
+                type: str
               protocol:
                 description:
                       - Specify the protocol to match.
