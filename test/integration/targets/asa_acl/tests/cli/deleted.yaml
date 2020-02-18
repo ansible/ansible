@@ -1,0 +1,48 @@
+---
+- debug:
+    msg: "Start Deleted integration state for asa_acl ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Delete attributes of provided configured acls
+      asa_acl: &deleted
+        config:
+          - acls:
+            - name: temp_access
+              aces:
+                - line: 2
+            - name: global_access
+              aces:
+                - line: 3
+        state: deleted
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ deleted['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ deleted['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ deleted['after'] | symmetric_difference(result['after']) | length == 0 }}"
+
+    - name: Delete attributes of all configured acls (IDEMPOTENT)
+      asa_acl: *deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result.changed == false"
+
+  always:
+    - include_tasks: _remove_config.yaml

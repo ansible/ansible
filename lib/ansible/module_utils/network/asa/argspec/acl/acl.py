@@ -52,7 +52,7 @@ class AclArgs(object):
                             'elements': 'dict',
                             'type': 'list',
                             'options': {
-                                'grant': {'required': True, 'choices': ['permit', 'deny'], 'type': 'str'},
+                                'grant': {'choices': ['permit', 'deny'], 'type': 'str'},
                                 'line': {'type': 'int'},
                                 'remark': {'type': 'str'},
                                 'source': {

@@ -1,0 +1,96 @@
+---
+- debug:
+      msg: "START Merged asa_acl state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Merge provided configuration with device configuration
+      asa_acl: &merged
+        config:
+          - acls:
+            - name: temp_access
+              acl_type: extended
+              aces:
+                - grant: deny
+                  line: 1
+                  protocol_options:
+                    tcp: true
+                  source:
+                    address: 192.0.2.0
+                    netmask: 255.255.255.0
+                  destination:
+                    address: 192.0.3.0
+                    netmask: 255.255.255.0
+                    port_protocol:
+                      eq: www
+                  log: default
+                - grant: deny
+                  line: 2
+                  protocol_options:
+                    igrp: true
+                  source:
+                    address: 198.51.100.0
+                    netmask: 255.255.255.0
+                  destination:
+                    address: 198.51.110.0
+                    netmask: 255.255.255.0
+                  time_range: temp
+            - name: global_access
+              acl_type: extended
+              aces:
+                - grant: deny
+                  line: 3
+                  protocol_options:
+                    tcp: true
+                  source:
+                    any: true
+                  destination:
+                    any: true
+                    port_protocol:
+                      eq: www
+                  log: errors
+            - name: R1_traffic
+              aces:
+                - grant: deny
+                  line: 2
+                  protocol_options:
+                    tcp: true
+                  source:
+                    address: 2001:db8:0:3::/64
+                    port_protocol:
+                      eq: www
+                  destination:
+                    address: 2001:fc8:0:4::/64
+                    port_protocol:
+                      eq: telnet
+                  inactive: true
+        state: merged
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ merged['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['after']) | length == 0 }}"
+
+    - name: Merge provided configuration with device configuration (IDEMPOTENT)
+      asa_acl: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml

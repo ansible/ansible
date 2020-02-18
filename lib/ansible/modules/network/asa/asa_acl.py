@@ -86,7 +86,6 @@ options:
             suboptions:
               grant:
                 description: Specify the action.
-                required: true
                 type: str
                 choices:
                   - permit
@@ -424,15 +423,106 @@ EXAMPLES = """
 # -------------
 #
 # vasa#sh access-lists
+# access-list global_access; 2 elements; name hash: 0xbd6c87a7
+# access-list global_access line 1 extended permit icmp any any log disable (hitcnt=0) 0xf1efa630
+# access-list global_access line 2 extended deny tcp any any eq telnet (hitcnt=0) 0xae5833af
+# access-list R1_traffic; 1 elements; name hash: 0xaf40d3c2
+# access-list R1_traffic line 1
+#                        extended deny tcp 2001:db8:0:3::/64 eq telnet 2001:fc8:0:4::/64 eq www
+#                        log errors interval 300 (hitcnt=0) 0x4a4660f3
 
 - name: Merge provided configuration with device configuration
   asa_acl:
     config:
+      - acls:
+        - name: temp_access
+          acl_type: extended
+          aces:
+            - grant: deny
+              line: 1
+              protocol_options:
+                tcp: true
+              source:
+                address: 192.0.2.0
+                netmask: 255.255.255.0
+              destination:
+                address: 192.0.3.0
+                netmask: 255.255.255.0
+                port_protocol:
+                  eq: www
+              log: default
+            - grant: deny
+              line: 2
+              protocol_options:
+                igrp: true
+              source:
+                address: 198.51.100.0
+                netmask: 255.255.255.0
+              destination:
+                address: 198.51.110.0
+                netmask: 255.255.255.0
+              time_range: temp
+        - name: global_access
+          acl_type: extended
+          aces:
+            - grant: deny
+              line: 3
+              protocol_options:
+                tcp: true
+              source:
+                any: true
+              destination:
+                any: true
+                port_protocol:
+                  eq: www
+              log: errors
+        - name: R1_traffic
+          aces:
+            - grant: deny
+              line: 2
+              protocol_options:
+                tcp: true
+              source:
+                address: 2001:db8:0:3::/64
+                port_protocol:
+                  eq: www
+              destination:
+                address: 2001:fc8:0:4::/64
+                port_protocol:
+                  eq: telnet
+              inactive: true
     state: merged
+
+# Commands fired:
+# ---------------
+# access-list global_access line 3 extended deny tcp any any eq www log errors interval 300
+# access-list R1_traffic line 2 extended deny tcp 2001:db8:0:3::/64 eq www 2001:fc8:0:4::/64 eq telnet inactive
+# access-list temp_access line 1 extended deny tcp 192.0.2.0 255.255.255.0 192.0.3.0 255.255.255.0 eq www log default
+# access-list temp_access line 2 extended deny igrp 198.51.100.0 255.255.255.0 198.51.110.0 255.255.255.0
+#                         time-range temp inactive
+
 # After state:
 # ------------
 #
 # vasa#sh access-lists
+# access-list global_access; 3 elements; name hash: 0xbd6c87a7
+# access-list global_access line 1 extended permit icmp any any log disable (hitcnt=0) 0xf1efa630
+# access-list global_access line 2 extended deny tcp any any eq telnet (hitcnt=0) 0xae5833af
+# access-list global_access line 3 extended deny tcp any any eq www log errors interval 300 (hitcnt=0) 0x605f2421
+# access-list R1_traffic; 2 elements; name hash: 0xaf40d3c2
+# access-list R1_traffic line 1
+#                        extended deny tcp 2001:db8:0:3::/64 eq telnet 2001:fc8:0:4::/64 eq www
+#                        log errors interval 300 (hitcnt=0) 0x4a4660f3
+# access-list R1_traffic line 2
+#                        extended deny tcp 2001:db8:0:3::/64 eq www 2001:fc8:0:4::/64 eq telnet
+#                        inactive (hitcnt=0) (inactive) 0xe922b432
+# access-list temp_access; 2 elements; name hash: 0xaf1b712e
+# access-list temp_access line 1
+#                         extended deny tcp 192.0.2.0 255.255.255.0 192.0.3.0 255.255.255.0 eq www
+#                         log default (hitcnt=0) 0xb58abb0d
+# access-list temp_access line 2
+#                         extended deny igrp 198.51.100.0 255.255.255.0 198.51.110.0 255.255.255.0
+#                         time-range temp (hitcnt=0) (inactive) 0xcd6b92ae
 
 
 # Using replaced
@@ -441,16 +531,76 @@ EXAMPLES = """
 # -------------
 #
 # vasa#sh access-lists
-
+# access-list global_access; 3 elements; name hash: 0xbd6c87a7
+# access-list global_access line 1 extended permit icmp any any log disable (hitcnt=0) 0xf1efa630
+# access-list global_access line 2 extended deny tcp any any eq telnet (hitcnt=0) 0xae5833af
+# access-list global_access line 3 extended deny tcp any any eq www log errors interval 300 (hitcnt=0) 0x605f2421
+# access-list R1_traffic; 2 elements; name hash: 0xaf40d3c2
+# access-list R1_traffic line 1
+#                        extended deny tcp 2001:db8:0:3::/64 eq telnet 2001:fc8:0:4::/64 eq www
+#                        log errors interval 300 (hitcnt=0) 0x4a4660f3
+# access-list R1_traffic line 2
+#                        extended deny tcp 2001:db8:0:3::/64 eq www 2001:fc8:0:4::/64 eq telnet
+#                        inactive (hitcnt=0) (inactive) 0xe922b432
+# access-list temp_access; 2 elements; name hash: 0xaf1b712e
+# access-list temp_access line 1
+#                         extended deny tcp 192.0.2.0 255.255.255.0 192.0.3.0 255.255.255.0 eq www
+#                         log default (hitcnt=0) 0xb58abb0d
+# access-list temp_access line 2
+#                         extended deny igrp 198.51.100.0 255.255.255.0 198.51.110.0 255.255.255.0
+#                         time-range temp (hitcnt=0) (inactive) 0xcd6b92ae
 
 - name: Replaces device configuration of listed acl with provided configuration
   asa_acl:
     config:
+      - acls:
+        - name: global_access
+          acl_type: extended
+          aces:
+            - grant: deny
+              line: 1
+              protocol_options:
+                tcp: true
+              source:
+                address: 192.0.4.0
+                netmask: 255.255.255.0
+                port_protocol:
+                  eq: telnet
+              destination:
+                address: 192.0.5.0
+                netmask: 255.255.255.0
+                port_protocol:
+                  eq: www
     state: replaced
+
+# Commands fired:
+# ---------------
+# no access-list global_access line 3 extended deny tcp any any eq www log errors interval 300
+# no access-list global_access line 2 extended deny tcp any any eq telnet
+# no access-list global_access line 1 extended permit icmp any any log disable
+# access-list global_access line 1 extended deny tcp 192.0.4.0 255.255.255.0 eq telnet 192.0.5.0 255.255.255.0 eq www
+
 # After state:
 # -------------
 #
 # vasa#sh access-lists
+# access-list global_access; 1 elements; name hash: 0xbd6c87a7
+# access-list global_access line 1 extended deny tcp 192.0.4.0 255.255.255.0 eq telnet
+#                           192.0.5.0 255.255.255.0 eq www (hitcnt=0) 0x3e5b2757
+# access-list R1_traffic; 2 elements; name hash: 0xaf40d3c2
+# access-list R1_traffic line 1
+#                        extended deny tcp 2001:db8:0:3::/64 eq telnet 2001:fc8:0:4::/64 eq www
+#                        log errors interval 300 (hitcnt=0) 0x4a4660f3
+# access-list R1_traffic line 2
+#                        extended deny tcp 2001:db8:0:3::/64 eq www 2001:fc8:0:4::/64 eq telnet
+#                        inactive (hitcnt=0) (inactive) 0xe922b432
+# access-list temp_access; 2 elements; name hash: 0xaf1b712e
+# access-list temp_access line 1
+#                         extended deny tcp 192.0.2.0 255.255.255.0 192.0.3.0 255.255.255.0 eq www
+#                         log default (hitcnt=0) 0xb58abb0d
+# access-list temp_access line 2
+#                         extended deny igrp 198.51.100.0 255.255.255.0 198.51.110.0 255.255.255.0
+#                         time-range temp (hitcnt=0) (inactive) 0xcd6b92ae
 
 # Using overridden
 
@@ -458,16 +608,70 @@ EXAMPLES = """
 # -------------
 #
 # vasa#sh access-lists
+# access-list global_access; 3 elements; name hash: 0xbd6c87a7
+# access-list global_access line 1 extended permit icmp any any log disable (hitcnt=0) 0xf1efa630
+# access-list global_access line 2 extended deny tcp any any eq telnet (hitcnt=0) 0xae5833af
+# access-list global_access line 3 extended deny tcp any any eq www log errors interval 300 (hitcnt=0) 0x605f2421
+# access-list R1_traffic; 2 elements; name hash: 0xaf40d3c2
+# access-list R1_traffic line 1
+#                        extended deny tcp 2001:db8:0:3::/64 eq telnet 2001:fc8:0:4::/64 eq www
+#                        log errors interval 300 (hitcnt=0) 0x4a4660f3
+# access-list R1_traffic line 2
+#                        extended deny tcp 2001:db8:0:3::/64 eq www 2001:fc8:0:4::/64 eq telnet
+#                        inactive (hitcnt=0) (inactive) 0xe922b432
+# access-list temp_access; 2 elements; name hash: 0xaf1b712e
+# access-list temp_access line 1
+#                         extended deny tcp 192.0.2.0 255.255.255.0 192.0.3.0 255.255.255.0 eq www
+#                         log default (hitcnt=0) 0xb58abb0d
+# access-list temp_access line 2
+#                         extended deny igrp 198.51.100.0 255.255.255.0 198.51.110.0 255.255.255.0
+#                         time-range temp (hitcnt=0) (inactive) 0xcd6b92ae
 
 
 - name: Override device configuration of all acl with provided configuration
   asa_acl:
     config:
+      - acls:
+        - name: global_access
+          acl_type: extended
+          aces:
+            - grant: deny
+              line: 1
+              protocol_options:
+                tcp: true
+              source:
+                address: 192.0.4.0
+                netmask: 255.255.255.0
+                port_protocol:
+                  eq: telnet
+              destination:
+                address: 192.0.5.0
+                netmask: 255.255.255.0
+                port_protocol:
+                  eq: www
     state: overridden
+
+# Commands fired:
+# ---------------
+# access-list temp_access line 2
+#                         extended deny igrp 198.51.100.0 255.255.255.0 198.51.110.0 255.255.255.0 time-range temp
+# no access-list temp_access line 1
+#                            extended grant deny tcp 192.0.2.0 255.255.255.0 192.0.3.0 255.255.255.0 eq www log default
+# no access-list R1_traffic line 2
+#                           extended grant deny tcp 2001:db8:0:3::/64 eq www 2001:fc8:0:4::/64 eq telnet inactive
+# no access-list R1_traffic line 1
+#                           extended grant deny tcp 2001:db8:0:3::/64 eq telnet 2001:fc8:0:4::/64 eq www log errors
+# no access-list global_access line 3 extended grant deny tcp any any eq www log errors
+# no access-list global_access line 2 extended grant deny tcp any any eq telnet
+# no access-list global_access line 1 extended grant permit icmp any any log disable
+# access-list global_access line 4 extended deny tcp 192.0.4.0 255.255.255.0 eq telnet 192.0.5.0 255.255.255.0 eq www
+
 # After state:
 # -------------
 #
 # vasa#sh access-lists
+# access-list global_access; 1 elements; name hash: 0xbd6c87a7
+# access-list global_access line 1 extended permit icmp any any log disable (hitcnt=0) 0xf1efa630
 
 # Using Deleted
 
@@ -475,26 +679,105 @@ EXAMPLES = """
 # -------------
 #
 # vasa#sh access-lists
+# access-list global_access; 3 elements; name hash: 0xbd6c87a7
+# access-list global_access line 1 extended permit icmp any any log disable (hitcnt=0) 0xf1efa630
+# access-list global_access line 2 extended deny tcp any any eq telnet (hitcnt=0) 0xae5833af
+# access-list global_access line 3 extended deny tcp any any eq www log errors interval 300 (hitcnt=0) 0x605f2421
+# access-list R1_traffic; 2 elements; name hash: 0xaf40d3c2
+# access-list R1_traffic line 1
+#                        extended deny tcp 2001:db8:0:3::/64 eq telnet 2001:fc8:0:4::/64 eq www
+#                        log errors interval 300 (hitcnt=0) 0x4a4660f3
+# access-list R1_traffic line 2
+#                        extended deny tcp 2001:db8:0:3::/64 eq www 2001:fc8:0:4::/64 eq telnet
+#                        inactive (hitcnt=0) (inactive) 0xe922b432
+# access-list temp_access; 2 elements; name hash: 0xaf1b712e
+# access-list temp_access line 1
+#                         extended deny tcp 192.0.2.0 255.255.255.0 192.0.3.0 255.255.255.0 eq www
+#                         log default (hitcnt=0) 0xb58abb0d
+# access-list temp_access line 2
+#                         extended deny igrp 198.51.100.0 255.255.255.0 198.51.110.0 255.255.255.0
+#                         time-range temp (hitcnt=0) (inactive) 0xcd6b92ae
 
 - name: "Delete module attributes of given acl (Note: This won't delete the interface itself)"
   asa_acl:
     config:
+      - acls:
+        - name: temp_access
+          aces:
+            - line: 2
+        - name: global_access
+          aces:
+            - line: 3
     state: deleted
+
+# Commands fired:
+# ---------------
+# no access-list temp_access line 2 extended deny igrp 198.51.100.0 255.255.255.0 198.51.110.0 255.255.255.0
+#                            time-range temp inactive
+# no access-list global_access line 3 extended deny tcp any any eq www log errors interval 300
+
 # After state:
 # -------------
 #
 # vasa#sh access-lists
+# access-list global_access; 2 elements; name hash: 0xbd6c87a7
+# access-list global_access line 1 extended permit icmp any any log disable (hitcnt=0) 0xf1efa630
+# access-list global_access line 2 extended deny tcp any any eq telnet (hitcnt=0) 0xae5833af
+# access-list R1_traffic; 2 elements; name hash: 0xaf40d3c2
+# access-list R1_traffic line 1
+#                        extended deny tcp 2001:db8:0:3::/64 eq telnet 2001:fc8:0:4::/64 eq www
+#                        log errors interval 300 (hitcnt=0) 0x4a4660f3
+# access-list R1_traffic line 2
+#                        extended deny tcp 2001:db8:0:3::/64 eq www 2001:fc8:0:4::/64 eq telnet
+#                        inactive (hitcnt=0) (inactive) 0xe922b432
+# access-list temp_access; 1 elements; name hash: 0xaf1b712e
+# access-list temp_access line 1
+#                         extended deny tcp 192.0.2.0 255.255.255.0 192.0.3.0 255.255.255.0 eq www
+#                         log default (hitcnt=0) 0xb58abb0d
 
 # Using Deleted without any config passed
-#"(NOTE: This will delete all of configured resource module attributes from each configured interface)"
+#"(NOTE: This will delete all of configured resource module attributes)"
+
 # Before state:
 # -------------
 #
 # vasa#sh access-lists
+# access-list global_access; 3 elements; name hash: 0xbd6c87a7
+# access-list global_access line 1 extended permit icmp any any log disable (hitcnt=0) 0xf1efa630
+# access-list global_access line 2 extended deny tcp any any eq telnet (hitcnt=0) 0xae5833af
+# access-list global_access line 3 extended deny tcp any any eq www log errors interval 300 (hitcnt=0) 0x605f2421
+# access-list R1_traffic; 2 elements; name hash: 0xaf40d3c2
+# access-list R1_traffic line 1
+#                        extended deny tcp 2001:db8:0:3::/64 eq telnet 2001:fc8:0:4::/64 eq www
+#                        log errors interval 300 (hitcnt=0) 0x4a4660f3
+# access-list R1_traffic line 2
+#                        extended deny tcp 2001:db8:0:3::/64 eq www 2001:fc8:0:4::/64 eq telnet
+#                        inactive (hitcnt=0) (inactive) 0xe922b432
+# access-list temp_access; 2 elements; name hash: 0xaf1b712e
+# access-list temp_access line 1
+#                         extended deny tcp 192.0.2.0 255.255.255.0 192.0.3.0 255.255.255.0 eq www
+#                         log default (hitcnt=0) 0xb58abb0d
+# access-list temp_access line 2
+#                         extended deny igrp 198.51.100.0 255.255.255.0 198.51.110.0 255.255.255.0
+#                         time-range temp (hitcnt=0) (inactive) 0xcd6b92ae
 
 - name: "Delete module attributes of all acl (Note: This won't delete the interface itself)"
   asa_acl:
     state: deleted
+
+# Commands fired:
+# ---------------
+# no access-list global_access line 1 extended permit icmp any any log disable
+# no access-list global_access line 2 extended deny tcp any any eq telnet
+# no access-list global_access line 3 extended deny tcp any any eq www log errors interval 300
+# no access-list R1_traffic line 1 extended deny tcp 2001:db8:0:3::/64 eq telnet 2001:fc8:0:4::/64 eq www
+#                           log errors interval 300
+# no access-list R1_traffic line 2 extended deny tcp 2001:db8:0:3::/64 eq www 2001:fc8:0:4::/64 eq telnet inactive
+# no access-list temp_access line 1 extended deny tcp 192.0.2.0 255.255.255.0 192.0.3.0 255.255.255.0 eq www log default
+# no access-list temp_access line 2 extended deny igrp 198.51.100.0 255.255.255.0 198.51.110.0 255.255.255.0
+#                            time-range temp inactive
+
+
 # After state:
 # -------------
 #
@@ -517,7 +800,7 @@ commands:
   description: The set of commands pushed to the remote device
   returned: always
   type: list
-  sample: ['access-list global_access extended permit icmp any any echo']
+  sample: ['access-list global_access line 1 extended permit icmp any any log disable']
 """
 
 from ansible.module_utils.basic import AnsibleModule

@@ -161,14 +161,10 @@ class Acl(ConfigBase):
                                                                              config_want,
                                                                              check,
                                                                              "replaced")
-                                    if cmd:
-                                        if cmd[0] not in commands:
-                                            commands.extend(cmd)
-                                        temp = self._clear_config(acls_want, config_want)
-                                        if temp:
-                                            if temp[0] not in commands:
-                                                commands.extend(temp)
-                                        check = True
+                                    if not cmd:
+                                        # Delete the configured aces which are not in want
+                                        temp = self._clear_config(ace_have, acls_have)
+                                        commands.extend(temp)
                             if check:
                                 break
                         if check:
@@ -178,10 +174,11 @@ class Acl(ConfigBase):
                         ace_want = remove_empties(ace_want)
                         commands.extend(self._set_config(ace_want,
                                                          {},
-                                                         acls_want,
-                                                         config_want['afi']))
-
-        commands = [each for each in commands if 'no' in each] + [each for each in commands if 'no' not in each]
+                                                         acls_want))
+        # Arranging the cmds suct that all delete cmds are fired before all set cmds
+        # and reversing the negate/no access-list as otherwise if deleted from top the
+        # next ace takes the line position of deleted ace from top and results in unexpected output
+        commands = [each for each in commands if 'no' in each][::-1] + [each for each in commands if 'no' not in each]
 
         return commands
 
@@ -215,25 +212,24 @@ class Acl(ConfigBase):
                                                                              config_want,
                                                                              check,
                                                                              "overridden")
-                                    if cmd:
-                                        if cmd[0] not in commands:
-                                            commands.extend(cmd)
-                                        temp = self._clear_config(acls_want, config_want)
-                                        if temp:
-                                            if temp[0] not in commands:
-                                                commands.extend(temp)
-                                        check = True
+                                    if not cmd:
+                                        # Delete the configured aces which are not in want
+                                        temp = self._clear_config(ace_have, acls_have)
+                                        commands.extend(temp)
                                     if check:
+                                        # Delete all the have acls that are present in want post configuration
+                                        # and the only want acls left will be new acls which is not in have and
+                                        # need to be configured
                                         del config_want.get('acls')[count]
                                 else:
                                     count += 1
                         if check:
                             break
-                    if check:
-                        break
-                if not check:
-                    # Delete the config not present in want config
-                    commands.extend(self._clear_config(acls_have, config_have))
+                    if not check:
+                        # Delete the config not present in want config
+                        temp = self._clear_config(ace_have, acls_have)
+                        if temp and temp[0] not in commands:
+                            commands.extend(temp)
 
         # For configuring any non-existing want config
         for config_want in temp_want:
@@ -242,11 +238,12 @@ class Acl(ConfigBase):
                     ace_want = remove_empties(ace_want)
                     commands.extend(self._set_config(ace_want,
                                                      {},
-                                                     acls_want,
-                                                     config_want['afi']))
+                                                     acls_want))
 
         # Arranging the cmds suct that all delete cmds are fired before all set cmds
-        commands = [each for each in commands if 'no' in each] + [each for each in commands if 'no' not in each]
+        # and reversing the negate/no access-list as otherwise if deleted from top the
+        # next ace takes the line position of deleted ace from top and results in unexpected output
+        commands = [each for each in commands if 'no' in each][::-1] + [each for each in commands if 'no' not in each]
 
         return commands
 
@@ -313,18 +310,22 @@ class Acl(ConfigBase):
         if want:
             for config_want in want:
                 for acls_want in config_want.get('acls'):
-                    for ace_want in ace_want.get('aces'):
+                    for ace_want in acls_want.get('aces'):
                         for config_have in have:
                             for acls_have in config_have.get('acls'):
                                 for ace_have in acls_have.get('aces'):
                                     if acls_want.get('name') == acls_have.get('name') and \
                                             ace_want.get('line') == ace_have.get('line'):
-                                        commands.extend(self._clear_config(acls_want, config_want))
+                                        commands.extend(self._clear_config(ace_have, acls_have))
         else:
             for config_have in have:
                 for acls_have in config_have.get('acls'):
                     for ace_have in acls_have.get('aces'):
                         commands.extend(self._clear_config(ace_have, acls_have))
+        # Reversing the negate/no access-list as otherwise if deleted from top the
+        # next ace takes the line position of deleted ace from top and only one ace
+        # will be deleted instead of expected aces and results in unexpected output
+        commands = commands[::-1]
 
         return commands
 
@@ -333,10 +334,10 @@ class Acl(ConfigBase):
             commands.extend(cmd)
         return commands
 
-    def common_condition_check(self, want, have, acls_want, config_want, check, state=''):
+    def common_condition_check(self, ace_want, ace_have, acls_want, config_want, check, state=''):
         """ The command formatter from the generated command
-        :param want: want config
-        :param have: have config
+        :param ace_want: ace want config
+        :param ace_have: ace have config
         :param acls_want: acl want config
         :param config_want: want config list
         :param check: for same acl in want and have config, check=True
@@ -345,65 +346,65 @@ class Acl(ConfigBase):
         :returns: commands generated from want n have config diff
         """
         commands = []
-        if want.get('destination') and have.get('destination') or \
-                want.get('source').get('address') and have.get('source'):
-            if want.get('destination').get('address') == \
-                    have.get('destination').get('address') and \
-                    want.get('source').get('address') == \
-                    have.get('source').get('address') and \
-                    want.get('protocol_options') == \
-                    have.get('protocol_options'):
-                cmd = self._set_config(want,
-                                               have,
-                                               acls_want)
+        if ace_want.get('destination') and ace_have.get('destination') or \
+                ace_want.get('source').get('address') and ace_have.get('source'):
+            if ace_want.get('destination').get('address') == \
+                    ace_have.get('destination').get('address') and \
+                    ace_want.get('source').get('address') == \
+                    ace_have.get('source').get('address') and \
+                    ace_want.get('protocol_options') == \
+                    ace_have.get('protocol_options'):
+                cmd = self._set_config(ace_want,
+                                       ace_have,
+                                       acls_want)
                 commands.extend(cmd)
                 check = True
                 if commands:
                     if state == 'replaced' or state == 'overridden':
-                        commands.extend(self._clear_config(acls_want, config_want))
-            elif want.get('destination').get('any') == \
-                    have.get('destination').get('any') and \
-                    want.get('source').get('address') == \
-                    have.get('source').get('address') and \
-                    want.get('destination').get('any') and \
-                    want.get('protocol_options') == \
-                    have.get('protocol_options'):
-                cmd = self._set_config(want,
-                                               have,
-                                               acls_want)
+                        commands.extend(self._clear_config(ace_want, acls_want))
+            elif ace_want.get('destination').get('any') == \
+                    ace_have.get('destination').get('any') and \
+                    ace_want.get('source').get('address') == \
+                    ace_have.get('source').get('address') and \
+                    ace_want.get('destination').get('any') and \
+                    ace_want.get('protocol_options') == \
+                    ace_have.get('protocol_options'):
+                cmd = self._set_config(ace_want,
+                                       ace_have,
+                                       acls_want)
                 commands.extend(cmd)
                 check = True
                 if commands:
                     if state == 'replaced' or state == 'overridden':
-                        commands.extend(self._clear_config(acls_want, config_want))
-            elif want.get('destination').get('address') == \
-                    have.get('destination').get('address') and \
-                    want.get('source').get('any') == have.get('source').get('any') and \
-                    want.get('source').get('any') and \
-                    want.get('protocol_options') == \
-                    have.get('protocol_options'):
-                cmd = self._set_config(want,
-                                               have,
-                                               acls_want)
+                        commands.extend(self._clear_config(ace_want, acls_want))
+            elif ace_want.get('destination').get('address') == \
+                    ace_have.get('destination').get('address') and \
+                    ace_want.get('source').get('any') == ace_have.get('source').get('any') and \
+                    ace_want.get('source').get('any') and \
+                    ace_want.get('protocol_options') == \
+                    ace_have.get('protocol_options'):
+                cmd = self._set_config(ace_want,
+                                       ace_have,
+                                       acls_want)
                 commands.extend(cmd)
                 check = True
                 if commands:
                     if state == 'replaced' or state == 'overridden':
-                        commands.extend(self._clear_config(acls_want, config_want))
-            elif want.get('destination').get('any') == \
-                    have.get('destination').get('any') and \
-                    want.get('source').get('any') == have.get('source').get('any') and \
-                    want.get('destination').get('any') and \
-                    want.get('protocol_options') == \
-                    have.get('protocol_options'):
-                cmd = self._set_config(want,
-                                               have,
-                                               acls_want)
+                        commands.extend(self._clear_config(ace_want, acls_want))
+            elif ace_want.get('destination').get('any') == \
+                    ace_have.get('destination').get('any') and \
+                    ace_want.get('source').get('any') == ace_have.get('source').get('any') and \
+                    ace_want.get('destination').get('any') and \
+                    ace_want.get('protocol_options') == \
+                    ace_have.get('protocol_options'):
+                cmd = self._set_config(ace_want,
+                                       ace_have,
+                                       acls_want)
                 commands.extend(cmd)
                 check = True
                 if commands:
                     if state == 'replaced' or state == 'overridden':
-                        commands.extend(self._clear_config(acls_want, config_want))
+                        commands.extend(self._clear_config(ace_want, acls_want))
 
         return commands, check
 
@@ -428,7 +429,7 @@ class Acl(ConfigBase):
         if port_protocol and (protocol_option.get('tcp') or protocol_option.get('udp')):
             cmd = cmd + ' {0} {1}'.format(list(port_protocol)[0], list(port_protocol.values())[0])
         elif port_protocol and not (protocol_option.get('tcp') or protocol_option.get('udp')):
-            print('Port Protocol option is valid only with TCP/UDP Protocol option!')
+            self._module.fail_json(msg="Port Protocol option is valid only with TCP/UDP Protocol option!")
 
         return cmd
 
@@ -447,7 +448,8 @@ class Acl(ConfigBase):
             if type == 'clear':
                 self._module.fail_json(msg="For Delete operation LINE param is required!")
         acl_type = acl_want.get('acl_type')
-        cmd = cmd + ' {0}'.format(acl_type)
+        if acl_type:
+            cmd = cmd + ' {0}'.format(acl_type)
         # Get all of aces option values from diff dict
         grant = want.get('grant')
         source = want.get('source')
@@ -471,8 +473,7 @@ class Acl(ConfigBase):
             cmd = self.source_dest_config(source, cmd, po)
         if destination:
             cmd = self.source_dest_config(destination, cmd, po)
-
-        if po_val:
+        if po_val and list(po_val)[0] != 'set':
             cmd = cmd + ' {0}'.format(list(po_val)[0])
         if log:
             cmd = cmd + ' log {0}'.format(log)

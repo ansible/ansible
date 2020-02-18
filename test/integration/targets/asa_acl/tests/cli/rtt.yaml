@@ -1,0 +1,103 @@
+---
+- debug:
+    msg: "START asa_acl round trip integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Apply the provided configuration (base config)
+      asa_acl:
+        config:
+          - acls:
+            - name: temp_access
+              acl_type: extended
+              aces:
+                - grant: deny
+                  line: 1
+                  protocol_options:
+                    tcp: true
+                  source:
+                    address: 192.0.2.0
+                    netmask: 255.255.255.0
+                  destination:
+                    address: 192.0.3.0
+                    netmask: 255.255.255.0
+                    port_protocol:
+                      eq: www
+                  log: default
+                - grant: deny
+                  line: 2
+                  protocol_options:
+                    igrp: true
+                  source:
+                    address: 198.51.100.0
+                    netmask: 255.255.255.0
+                  destination:
+                    address: 198.51.110.0
+                    netmask: 255.255.255.0
+                  time_range: temp
+            - name: global_access
+              acl_type: extended
+              aces:
+                - grant: deny
+                  line: 3
+                  protocol_options:
+                    tcp: true
+                  source:
+                    any: true
+                  destination:
+                    any: true
+                    port_protocol:
+                      eq: www
+                  log: errors
+        state: merged
+      register: base_config
+
+    - name: Gather asa acl facts
+      asa_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources:
+          - acl
+
+    - name: Apply the configuration which need to be reverted
+      asa_acl:
+        config:
+          - acls:
+            - name: R1_traffic
+              aces:
+                - grant: deny
+                  line: 2
+                  protocol_options:
+                    tcp: true
+                  source:
+                    address: 2001:db8:0:3::/64
+                    port_protocol:
+                      eq: www
+                  destination:
+                    address: 2001:fc8:0:4::/64
+                    port_protocol:
+                      eq: telnet
+                  inactive: true
+        state: overridden
+      register: result
+
+    - name: Assert that changes were applied
+      assert:
+        that: "{{ round_trip['after'] | symmetric_difference(result['after']) | length == 0  }}"
+
+    - name: Revert back to base config using facts round trip
+      asa_acl:
+        config: "{{ ansible_facts['network_resources']['acl'] }}"
+        state: overridden
+      register: revert
+
+    - name: Assert that config was reverted
+      assert:
+        that: "{{ base_config['after'] | symmetric_difference(revert['after']) | length == 0 }}"
+
+  always:
+    - include_tasks: _remove_config.yaml
