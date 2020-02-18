@@ -1,0 +1,4 @@
+bugfixes:
+- Replace parameter 'message' with appropriate parameter name in several modules, as 'message' is used internally in Ansible Core engine (https://github.com/ansible/ansible/issues/39295).
+minor_changes:
+- Added invalid-argument-name spec in ansible-test.

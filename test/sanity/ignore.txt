@@ -2599,6 +2599,7 @@ lib/ansible/modules/monitoring/airbrake_deployment.py validate-modules:doc-defau
 lib/ansible/modules/monitoring/airbrake_deployment.py validate-modules:doc-missing-type
 lib/ansible/modules/monitoring/bigpanda.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/monitoring/bigpanda.py validate-modules:doc-missing-type
+lib/ansible/modules/monitoring/bigpanda.py validate-modules:invalid-argument-name
 lib/ansible/modules/monitoring/bigpanda.py validate-modules:undocumented-parameter
 lib/ansible/modules/monitoring/circonus_annotation.py validate-modules:doc-default-incompatible-type
 lib/ansible/modules/monitoring/circonus_annotation.py validate-modules:doc-missing-type
@@ -2609,10 +2610,12 @@ lib/ansible/modules/monitoring/datadog/datadog_event.py validate-modules:doc-mis
 lib/ansible/modules/monitoring/datadog/datadog_event.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/monitoring/datadog/datadog_event.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/monitoring/datadog/datadog_monitor.py validate-modules:doc-default-does-not-match-spec
+lib/ansible/modules/monitoring/datadog/datadog_monitor.py validate-modules:invalid-argument-name
 lib/ansible/modules/monitoring/datadog/datadog_monitor.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/monitoring/datadog/datadog_monitor.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/monitoring/grafana/grafana_dashboard.py validate-modules:doc-missing-type
 lib/ansible/modules/monitoring/grafana/grafana_dashboard.py validate-modules:doc-required-mismatch
+lib/ansible/modules/monitoring/grafana/grafana_dashboard.py validate-modules:invalid-argument-name
 lib/ansible/modules/monitoring/grafana/grafana_dashboard.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/monitoring/grafana/grafana_datasource.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/monitoring/grafana/grafana_datasource.py validate-modules:doc-missing-type
@@ -2693,8 +2696,10 @@ lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:doc-choi
 lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:doc-elements-mismatch
 lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:doc-required-mismatch
+lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:invalid-argument-name
 lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:missing-suboption-docs
 lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/monitoring/zabbix/zabbix_action.py validate-modules:undocumented-parameter
 lib/ansible/modules/monitoring/zabbix/zabbix_group.py validate-modules:doc-elements-mismatch
@@ -4597,6 +4602,8 @@ lib/ansible/modules/network/fortimanager/fmgr_device_config.py validate-modules:
 lib/ansible/modules/network/fortimanager/fmgr_device_group.py validate-modules:doc-required-mismatch
 lib/ansible/modules/network/fortimanager/fmgr_device_group.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/fortimanager/fmgr_device_provision_template.py validate-modules:doc-required-mismatch
+lib/ansible/modules/network/fortimanager/fmgr_device_provision_template.py validate-modules:invalid-argument-name
+lib/ansible/modules/network/fortimanager/fmgr_device_provision_template.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/network/fortimanager/fmgr_device_provision_template.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/fortimanager/fmgr_fwobj_address.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/fortimanager/fmgr_fwobj_ippool.py validate-modules:parameter-list-no-elements
@@ -6472,8 +6479,12 @@ lib/ansible/modules/notification/catapult.py validate-modules:parameter-list-no-
 lib/ansible/modules/notification/catapult.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/notification/cisco_spark.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/notification/cisco_spark.py validate-modules:doc-missing-type
+lib/ansible/modules/notification/cisco_spark.py validate-modules:invalid-argument-name
+lib/ansible/modules/notification/cisco_spark.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/notification/cisco_spark.py validate-modules:undocumented-parameter
 lib/ansible/modules/notification/flowdock.py validate-modules:doc-missing-type
+lib/ansible/modules/notification/grove.py validate-modules:invalid-argument-name
+lib/ansible/modules/notification/grove.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/notification/grove.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/notification/hipchat.py validate-modules:doc-missing-type
 lib/ansible/modules/notification/hipchat.py validate-modules:undocumented-parameter
@@ -7099,6 +7110,8 @@ lib/ansible/modules/storage/netapp/na_ontap_lun_map.py validate-modules:doc-miss
 lib/ansible/modules/storage/netapp/na_ontap_lun_map.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/storage/netapp/na_ontap_motd.py validate-modules:doc-missing-type
 lib/ansible/modules/storage/netapp/na_ontap_ndmp.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/storage/netapp/na_ontap_motd.py validate-modules:invalid-argument-name
+lib/ansible/modules/storage/netapp/na_ontap_motd.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/storage/netapp/na_ontap_net_ifgrp.py validate-modules:doc-missing-type
 lib/ansible/modules/storage/netapp/na_ontap_net_ifgrp.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/storage/netapp/na_ontap_net_ifgrp.py validate-modules:parameter-type-not-in-doc

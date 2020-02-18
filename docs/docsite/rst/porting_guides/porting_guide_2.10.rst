@@ -123,6 +123,9 @@ Noteworthy module changes
 * :ref:`purefb_fs <purefb_fs_module>` no longer supports the deprecated ``nfs`` option. This has been superceeded by ``nfsv3``.
 * :ref:`nxos_igmp_interface <nxos_igmp_interface_module>` no longer supports the deprecated ``oif_prefix`` and ``oif_source`` options. These have been superceeded by ``oif_ps``.
 * :ref:`aws_s3 <aws_s3_module>` can now delete versioned buckets even when they are not empty - set mode to delete to delete a versioned bucket and everything in it.
+* The parameter ``message`` in :ref:`grafana_dashboard <grafana_dashboard_module>` module is renamed to ``commit_message`` since ``message`` is used by Ansible Core engine internally.
+* The parameter ``message`` in :ref:`datadog_monitor <datadog_monitor_module>` module is renamed to ``notification_message`` since ``message`` is used by Ansible Core engine internally.
+* The parameter ``message`` in :ref:`bigpanda <bigpanda_module>` module is renamed to ``deployment_message`` since ``message`` is used by Ansible Core engine internally.
 
 
 Plugins
