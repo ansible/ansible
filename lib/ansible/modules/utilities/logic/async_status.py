@@ -92,12 +92,12 @@ def main():
         jid=dict(type='str', required=True),
         mode=dict(type='str', default='status', choices=['cleanup', 'status']),
         # passed in from the async_status action plugin
-        _async_dir=dict(type='path', required=True),
+        async_dir=dict(type='path', required=True),
     ))
 
     mode = module.params['mode']
     jid = module.params['jid']
-    async_dir = module.params['_async_dir']
+    async_dir = module.params['async_dir']
 
     # setup logging directory
     logdir = os.path.expanduser(async_dir)

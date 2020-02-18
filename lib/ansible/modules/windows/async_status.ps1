@@ -11,7 +11,7 @@ $jid = Get-AnsibleParam $parsed_args "jid" -failifempty $true -resultobj $result
 $mode = Get-AnsibleParam $parsed_args "mode" -Default "status" -ValidateSet "status","cleanup"
 
 # parsed in from the async_status action plugin
-$async_dir = Get-AnsibleParam $parsed_args "_async_dir" -type "path" -failifempty $true
+$async_dir = Get-AnsibleParam $parsed_args "async_dir" -type "path" -failifempty $true
 
 $log_path = [System.IO.Path]::Combine($async_dir, $jid)
 

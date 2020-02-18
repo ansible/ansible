@@ -96,7 +96,7 @@ class ActionModule(ActionBase):
 
             while jobs:
                 for module in jobs:
-                    poll_args = {'jid': jobs[module]['ansible_job_id'], '_async_dir': os.path.dirname(jobs[module]['results_file'])}
+                    poll_args = {'jid': jobs[module]['ansible_job_id'], 'async_dir': os.path.dirname(jobs[module]['results_file'])}
                     res = self._execute_module(module_name='async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
                     if res.get('finished', 0) == 1:
                         if res.get('failed', False):
