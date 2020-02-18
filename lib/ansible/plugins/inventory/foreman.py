@@ -69,14 +69,6 @@ DOCUMENTATION = '''
         type: boolean
         default: False
         version_added: '2.10'
-      legacy_groups:
-        description:
-            - Toggle, if true the plugin will build legacy groups present in the foreman script
-            - This includes groups based on environment, location, and organization
-            - Also includes groups based on content_facet_attributes (i.e. lifecycle_environment, content_view)
-        type: boolean
-        default: False
-        version_added: '2.10'
       legacy_hostvars:
         description:
             - Toggle, if true the plugin will build legacy hostvars present in the foreman script
@@ -243,30 +235,6 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
                     group_name = to_safe_group_name('%s%s' % (self.get_option('group_prefix'), group_name.lower().replace(" ", "")))
                     group_name = self.inventory.add_group(group_name)
                     self.inventory.add_child(group_name, host_name)
-
-                if self.get_option('legacy_groups'):
-                    # create ansible groups for environment, location and organization
-                    for group in ['environment', 'location', 'organization']:
-                        group_name = host.get('%s_name' % group)
-                        if group_name:
-                            group_name = to_safe_group_name('%s%s_%s' % (
-                                self.get_option('group_prefix'),
-                                group,
-                                group_name.lower().replace(" ", "")
-                            ))
-                            group_name = self.inventory.add_group(group_name)
-                            self.inventory.add_child(group_name, host_name)
-
-                    for group in ['lifecycle_environment', 'content_view']:
-                        group_name = host.get('content_facet_attributes', {}).get('%s_name' % group)
-                        if group_name:
-                            group_name = to_safe_group_name('%s%s_%s' % (
-                                self.get_option('group_prefix'),
-                                group,
-                                to_text(group_name).lower().replace(" ", "")
-                            ))
-                            group_name = self.inventory.add_group(group_name)
-                            self.inventory.add_child(group_name, host_name)
 
                 if self.get_option('legacy_hostvars'):
                     hostvars = self._get_hostvars(host)
