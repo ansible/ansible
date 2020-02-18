@@ -155,7 +155,12 @@ def get_fingerprint_of_bytes(source):
 
     for algo in algorithms:
         f = getattr(hashlib, algo)
-        h = f(source)
+        try:
+            h = f(source)
+        except ValueError:
+            # This can happen for hash algorithms not supported in FIPS mode
+            # (https://github.com/ansible/ansible/issues/67213)
+            continue
         try:
             # Certain hash functions have a hexdigest() which expects a length parameter
             pubkey_digest = h.hexdigest()
