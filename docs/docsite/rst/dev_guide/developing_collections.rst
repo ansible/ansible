@@ -429,7 +429,7 @@ BOTMETA.yml
 
 The `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ is the source of truth for:
 * ansibullbot
-* Docs build.
+* the docs build for collections-based modules
 
 Ansibulbot will know how to redirect existing issues and PRs to the new repo
 The build process for docs.ansible.com will know where to find the module docs.
