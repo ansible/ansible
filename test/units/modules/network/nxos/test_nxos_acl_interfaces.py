@@ -285,7 +285,8 @@ class TestNxosAclInterfacesModule(TestNxosModule):
             commands), result['rendered'])
 
     def test_nxos_acl_interfaces_parsed(self):
-        set_module_args(dict(running_config='''interface Ethernet1/2\n ip access-group ACL1v4 out\n interface Ethernet1/4\n ipv6 port traffic-filter ACL2v6 in''',
+        set_module_args(dict(running_config='''interface Ethernet1/2\n ip access-group ACL1v4 out\n interface Ethernet1/4\n \
+          ipv6 port traffic-filter ACL2v6 in''',
                              state="parsed"))
         result = self.execute_module(changed=False)
         compare_list = [{'access_groups': [{'acls': [{'direction': 'out', 'name': 'ACL1v4'}], 'afi': 'ipv4'}], 'name': 'Ethernet1/2'},

@@ -30,9 +30,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-  'metadata_version': '1.1',
-  'status': ['preview'],
-  'supported_by': 'network'
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'network'
 }
 
 DOCUMENTATION = """
@@ -54,7 +54,7 @@ options:
     type: list
     elements: dict
     suboptions:
-      name: 
+      name:
         description: Name of the interface
         type: str
         required: true
@@ -73,7 +73,7 @@ options:
             type: list
             elements: dict
             suboptions:
-              name: 
+              name:
                 description: Name of the ACL to be added/removed
                 type: str
                 required: true
@@ -83,9 +83,9 @@ options:
                 required: true
                 choices: ['in','out']
               port:
-                description: Use ACL as port policy. 
+                description: Use ACL as port policy.
                 type: bool
-  state: 
+  state:
     description: The state the configuration should be left in
     type: str
     choices:
@@ -98,39 +98,302 @@ options:
       - parsed
     default: merged
 """
-EXAMPLES = """
+EXAMPLES = """# Using merged
 
+# Before state:
+# ------------
+#
 
+- name: Merge ACL interfaces configuration
+  nxos_acl_interfaces:
+    config:
+      - name: Ethernet1/2
+        access_groups:
+          - afi: ipv6
+            acls:
+              - name: ACL1v6
+                direction: in
 
+      - name: Eth1/5
+        access_groups:
+          - afi: ipv4
+            acls:
+              - name: PortACL
+                direction: in
+                port: true
 
+              - name: ACL1v4
+                direction: out
 
+          - afi: ipv6
+            acls:
+              - name: ACL1v6
+                direction: in
+    state: merged
 
+# After state:
+# ------------
+# interface Ethernet1/2
+#   ipv6 traffic-filter ACL1v6 in
+# interface Ethernet1/5
+#   ip port access-group PortACL in
+#   ip access-group ACL1v4 out
+#   ipv6 traffic-filter ACL1v6 in
 
+# Using replaced
 
+# Before state:
+# ------------
+# interface Ethernet1/2
+#   ipv6 traffic-filter ACL1v6 in
+# interface Ethernet1/5
+#   ip port access-group PortACL in
+#   ip access-group ACL1v4 out
+#   ipv6 traffic-filter ACL1v6 in
 
+- name: Replace interface configuration with given configuration
+  nxos_acl_interfaces:
+    config:
+      - name: Eth1/5
+        access_groups:
+          - afi: ipv4
+            acls:
+              - name: NewACLv4
+                direction: out
 
+      - name: Ethernet1/3
+        access_groups:
+          - afi: ipv6
+            acls:
+              - name: NewACLv6
+                direction: in
+                port: true
+    state: replaced
 
+# After state:
+# ------------
+# interface Ethernet1/2
+#   ipv6 traffic-filter ACL1v6 in
+# interface Ethernet1/3
+#   ipv6 port traffic-filter NewACLv6 in
+# interface Ethernet1/5
+#   ip access-group NewACLv4 out
 
+# Using overridden
 
+# Before state:
+# ------------
+# interface Ethernet1/2
+#   ipv6 traffic-filter ACL1v6 in
+# interface Ethernet1/5
+#   ip port access-group PortACL in
+#   ip access-group ACL1v4 out
+#   ipv6 traffic-filter ACL1v6 in
 
+- name: Override interface configuration with given configuration
+  nxos_acl_interfaces:
+    config:
+      - name: Ethernet1/3
+        access_groups:
+          - afi: ipv4
+            acls:
+              - name: ACL1v4
+                direction: out
 
+              - name: PortACL
+                port: true
+                direction: in
+          - afi: ipv6
+            acls:
+              - name: NewACLv6
+                direction: in
+                port: true
+    state: overridden
 
+# After state:
+# ------------
+# interface Ethernet1/3
+#   ip access-group ACL1v4 out
+#   ip port access-group PortACL in
+#   ipv6 port traffic-filter NewACLv6 in
 
+# Using deleted
 
+# Before state:
+# -------------
+# interface Ethernet1/2
+#   ipv6 traffic-filter ACL1v6 in
+# interface Ethernet1/5
+#   ip port access-group PortACL in
+#   ip access-group ACL1v4 out
+#   ipv6 traffic-filter ACL1v6 in
 
+- name: Delete ACL configuration on interfaces
+  nxos_acl_interfaces:
+    config:
+      - name: Ethernet1/5
+        access_groups:
+          - afi: ipv6
 
+          - afi: ipv4
+            acls:
+              - name: ACL1v4
+                direction: out
+
+      - name: Ethernet1/2
+# After state:
+# -------------
+# interface Ethernet1/2
+# interface Ethernet1/5
+#   ip port access-group PortACL in
+#   ip access-group ACL1v4 out
+#   ipv6 traffic-filter ACL1v6 in
+
+# Using parsed
+
+# Before state:
+# ------------
+#
+
+- name: Parse given configuration into structured format
+  nxos_acl_interfaces:
+    running_config: |
+      interface Ethernet1/2
+      ipv6 traffic-filter ACL1v6 in
+      interface Ethernet1/5
+      ipv6 traffic-filter ACL1v6 in
+      ip access-group ACL1v4 out
+      ip port access-group PortACL in
+    state: parsed
+
+# After state:
+# -----------
+#
+
+# returns
+# parsed:
+#   - name: Ethernet1/2
+#     access_groups:
+#       - afi: ipv6
+#         acls:
+#           - name: ACL1v6
+#             direction: in
+#  - name: Ethernet1/5
+#    access_groups:
+#      - afi: ipv4
+#        acls:
+#          - name: PortACL
+#            direction: in
+#            port: True
+#          - name: ACL1v4
+#            direction: out
+#      - afi: ipv6
+#        acls:
+#          - name: ACL1v6
+#             direction: in
+
+# Using gathered:
+
+# Before state:
+# ------------
+# interface Ethernet1/2
+#   ipv6 traffic-filter ACL1v6 in
+# interface Ethernet1/5
+#   ipv6 traffic-filter ACL1v6 in
+#   ip access-group ACL1v4 out
+#   ip port access-group PortACL in
+
+- name: Gather existing configuration from device
+  nxos_acl_interfaces:
+    config:
+    state: gathered
+# After state:
+# ------------
+# interface Ethernet1/2
+#   ipv6 traffic-filter ACL1v6 in
+# interface Ethernet1/5
+#   ipv6 traffic-filter ACL1v6 in
+#   ip access-group ACL1v4 out
+#   ip port access-group PortACL in
+
+# returns
+# gathered:
+#   - name: Ethernet1/2
+#     access_groups:
+#       - afi: ipv6
+#         acls:
+#           - name: ACL1v6
+#             direction: in
+#  - name: Ethernet1/5
+#    access_groups:
+#      - afi: ipv4
+#        acls:
+#          - name: PortACL
+#            direction: in
+#            port: True
+#          - name: ACL1v4
+#            direction: out
+#      - afi: ipv6
+#        acls:
+#          - name: ACL1v6
+#             direction: in
+
+# Using rendered
+
+# Before state:
+# ------------
+#
+
+- name: Render required configuration to be pushed to the device
+  nxos_acl_interfaces:
+    config:
+      - name: Ethernet1/2
+        access_groups:
+          - afi: ipv6
+            acls:
+              - name: ACL1v6
+                direction: in
+
+      - name: Ethernet1/5
+        access_groups:
+          - afi: ipv4
+            acls:
+              - name: PortACL
+                direction: in
+                port: true
+              - name: ACL1v4
+                direction: out
+          - afi: ipv6
+            acls:
+              - name: ACL1v6
+                direction: in
+    state: rendered
+# After state:
+# -----------
+#
+
+# returns
+# rendered:
+#   interface Ethernet1/2
+#   ipv6 traffic-filter ACL1v6 in
+#   interface Ethernet1/5
+#   ipv6 traffic-filter ACL1v6 in
+#   ip access-group ACL1v4 out
+#   ip port access-group PortACL in
 
 """
 RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
@@ -138,7 +401,7 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['interface Ethernet1/2', 'ipv6 traffic-filter ACL1v6 out', 'ip port access-group PortACL in']
 """
 
 

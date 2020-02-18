@@ -1,8 +1,7 @@
-
---- 
+---
 - name: Remove config
   cli_config:
-    config: | 
+    config: |
       no ip access-list ACL1v4
       no ip access-list NewACLv4
       no ip access-list PortACL
@@ -20,5 +19,3 @@
         no ip port access-group PortACL in
       interface Ethernet1/4
         no ip access-group NewACLv4 out
-
-        

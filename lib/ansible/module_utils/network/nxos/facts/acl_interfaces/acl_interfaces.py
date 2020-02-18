@@ -9,9 +9,11 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import re
 from copy import deepcopy
-
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.nxos.argspec.acl_interfaces.acl_interfaces import Acl_interfacesArgs
 from ansible.module_utils.network.nxos.utils.utils import normalize_interface
@@ -95,8 +97,8 @@ class Acl_interfacesFacts(object):
         v6 = {'afi': 'ipv6', 'acls': []}
         for c in conf[1:]:
             if c:
-                acl4 = re.search('ip( port)? access-group (\w*) (\w*)', c)
-                acl6 = re.search('ipv6( port)? traffic-filter (\w*) (\w*)', c)
+                acl4 = re.search(r'ip( port)? access-group (\w*) (\w*)', c)
+                acl6 = re.search(r'ipv6( port)? traffic-filter (\w*) (\w*)', c)
                 if acl4:
                     acl = {'name': acl4.group(2).strip(
                     ), 'direction': acl4.group(3).strip()}

@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import q
 import os
 import json
 
@@ -82,7 +81,6 @@ class TestNxosModule(ModuleTestCase):
     def execute_module(self, failed=False, changed=False, commands=None, sort=True, device=''):
 
         self.load_fixtures(commands, device=device)
-        q(commands)
 
         if failed:
             result = self.failed()
@@ -90,7 +88,6 @@ class TestNxosModule(ModuleTestCase):
         else:
             result = self.changed(changed)
             self.assertEqual(result['changed'], changed, result)
-        q(commands)
         if commands is not None and len(commands) > 0:
             if sort:
                 self.assertEqual(sorted(commands), sorted(
@@ -104,7 +101,6 @@ class TestNxosModule(ModuleTestCase):
     def failed(self):
         with self.assertRaises(AnsibleFailJson) as exc:
             self.module.main()
-
         result = exc.exception.args[0]
         self.assertTrue(result['failed'], result)
         return result

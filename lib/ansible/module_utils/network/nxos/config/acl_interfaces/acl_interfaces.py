@@ -10,6 +10,9 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties, dict_diff
 from ansible.module_utils.network.nxos.facts.facts import Facts
@@ -165,7 +168,7 @@ class Acl_interfaces(ConfigBase):
                         want_afi = search_obj_in_list(
                             ag['afi'], want['access_groups'], 'afi')
                     if not want_afi:
-                      # whatever in have is not in want
+                        # whatever in have is not in want
                         del_dict['access_groups'].append(ag)
                     else:
                         del_acl = []
@@ -251,7 +254,7 @@ class Acl_interfaces(ConfigBase):
                 commands.extend(self.process_access_group(want))
 
         if len(commands) > 0:
-            commands.insert(0, 'interface '+want['name'])
+            commands.insert(0, 'interface ' + want['name'])
         return commands
 
     def process_access_group(self, item, deleted=False):
@@ -277,7 +280,7 @@ class Acl_interfaces(ConfigBase):
             ag = ' access-group '
             if ip == 'ipv6':
                 ag = ' traffic-filter '
-            commands.append(no+ip + port + ag +
+            commands.append(no + ip + port + ag +
                             acl['name'] + ' ' + acl['direction'])
         return commands
 

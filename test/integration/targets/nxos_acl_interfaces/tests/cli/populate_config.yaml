@@ -1,7 +1,7 @@
---- 
+---
 - name: Adding base configuration
   cli_config:
-    config: | 
+    config: |
       ip access-list ACL1v4
       ip access-list NewACLv4
       ipv6 access-list ACL1v6
