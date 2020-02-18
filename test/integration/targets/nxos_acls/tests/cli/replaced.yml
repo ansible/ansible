@@ -14,7 +14,7 @@
               acls:
                 - name: ACL1v6
                   aces:
-                    - sequence: 20
+                    - sequence: 30
                       grant: permit
                       source: 
                         any: true
@@ -22,7 +22,8 @@
                         any: true
                       protocol: pim
 
-                    - remark: Replaced ACE
+                    - sequence: 40
+                      remark: Replaced ACE
                 - name: ACL2v6
           state: replaced
         register: result
@@ -37,8 +38,8 @@
             - "'ipv6 access-list ACL1v6' in result.commands"
             - "'no 10 permit sctp any any' in result.commands"
             - "'no 20 remark IPv6 ACL' in result.commands"
-            - "'20 permit pim any any' in result.commands"
-            - "'30 remark Replaced ACE' in result.commands"
+            - "'30 permit pim any any' in result.commands"
+            - "'40 remark Replaced ACE' in result.commands"
             - "'ipv6 access-list ACL2v6' in result.commands"
             - "'no 10 deny ipv6 any host 2001:db8:3000::36' in result.commands"
             - "'no 20 permit tcp host 2001:db8:2000:2::2 host 2001:db8:2000:ab::2' in result.commands"

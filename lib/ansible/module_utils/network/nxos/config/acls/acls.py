@@ -17,6 +17,8 @@ from copy import deepcopy
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties, dict_diff
 from ansible.module_utils.network.nxos.facts.facts import Facts
+from ansible.module_utils.network.nxos.argspec.acls.acls import AclsArgs
+from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.nxos.utils.utils import flatten_dict, search_obj_in_list, get_interface_type, normalize_interface
 
 
@@ -105,44 +107,66 @@ class Acls(ConfigBase):
                 want.append(remove_empties(w))
         have = existing_acls_facts
         if want:
-            want = self.convert_protocol(want)
+            want = self.convert_values(want)
         resp = self.set_state(want, have)
         return to_list(resp)
 
-    def convert_protocol(self, want):
-        protocol_options = {515: 'lpd', 517: 'talk', 7: 'echo', 9: 'discard', 12: 'exec', 13: 'login', 14: 'cmd', 109: 'pop2', 19: 'chargen',
-                            20: 'ftp-data', 21: 'ftp', 23: 'telnet', 25: 'smtp', 540: 'uucp', 543: 'klogin', 544: 'kshell', 37: 'time', 43: 'whois', 49: 'tacacs', 179: 'bgp', 53: 'domain', 194: 'irc', 70: 'gopher', 79: 'finger', 80: 'www', 101: 'hostname', 3949: 'drip', 110: 'pop3', 111: 'sunrpc', 496: 'pim-auto-rp', 113: 'ident', 119: 'nntp'}
-        port_protocol = {1: 'icmp', 2: 'igmp', 4: 'ip', 6: 'tcp', 103: 'pim', 108: 'pcp', 47: 'gre', 17: 'udp', 50: 'esp', 51: 'ahp', 88:
-                         'eigrp', 89: 'ospf', 94: 'nos'}
-        port_pro_num = list(port_protocol.keys())
+    def convert_values(self, want):
+        '''
+        This method is used to map and convert the user given values with what will actually be present in the device configuation
+        '''
+        port_protocol = {515: 'lpd', 517: 'talk', 7: 'echo', 9: 'discard', 12: 'exec', 13: 'login', 14: 'cmd', 109: 'pop2', 19: 'chargen',
+                         20: 'ftp-data', 21: 'ftp', 23: 'telnet', 25: 'smtp', 540: 'uucp', 543: 'klogin', 544: 'kshell', 37: 'time', 43: 'whois', 49: 'tacacs', 179: 'bgp', 53: 'domain', 194: 'irc', 70: 'gopher', 79: 'finger', 80: 'www', 101: 'hostname', 3949: 'drip', 110: 'pop3', 111: 'sunrpc', 496: 'pim-auto-rp', 113: 'ident', 119: 'nntp'}
+        protocol = {1: 'icmp', 2: 'igmp', 4: 'ip', 6: 'tcp', 103: 'pim', 108: 'pcp', 47: 'gre', 17: 'udp', 50: 'esp', 51: 'ahp', 88:
+                    'eigrp', 89: 'ospf', 94: 'nos'}
+        precedence = {0: 'routine', 1: 'priority', 2: 'immediate', 3: 'flash',
+                      4: 'flash-override', 5: 'critical', 6: 'internet', 7: 'network'}
+        dscp = {10: 'AF11', 12: 'AF12', 14: 'AF13', 18: 'AF21', 20: 'AF22', 22: 'AF23', 26: 'AF31', 28: 'AF32', 30: 'AF33', 34: 'AF41',
+                36: 'AF42', 38: 'AF43', 8: 'CS1', 16: 'CS2', 24: 'CS3', 32: 'CS4', 40: 'CS5', 48: 'CS6', 56: 'CS7', 0: 'Default', 46: 'EF'}
+        # port_pro_num = list(protocol.keys())
         for afi in want:
-            for acl in afi['acls']:
-                for ace in acl['aces']:
-                    if 'protocol' in ace.keys() and ace['protocol'].isdigit() and int(ace['protocol']) in port_protocol.keys():
-                        ace['protocol'] = port_protocol[int(ace['protocol'])]
-                        # convert number to name
-                        if ace['protocol'] in ['tcp', 'udp']:
-                            if 'port_protocol' in ace['destination'].keys():
-                                key = list(ace['destination']['port_protocol'].keys())[
-                                    0]
-                                # key could be eq,gt,lt,neq or range
-                                if key != 'range':
-                                    val = ace['destination']['port_protocol'][key]
-                                    q(val)
-                                    if val.isdigit() and int(val) in protocol_options.keys():
-                                        ace['destination']['port_protocol'][key] = protocol_options[val]
-                                else:
-                                    st = int(
-                                        ace['destination']['port_protocol']['range']['start'])
+            if 'acls' in afi.keys():
+                for acl in afi['acls']:
+                    if 'aces' in acl.keys():
+                        for ace in acl['aces']:
+                            if 'dscp' in ace.keys():
+                                if ace['dscp'].isdigit():
+                                    ace['dscp'] = dscp[int(ace['dscp'])]
+                                ace['dscp'] = ace['dscp'].lower()
+                            if 'precedence' in ace.keys():
+                                if ace['precedence'].isdigit():
+                                    ace['precedence'] = precedence[int(
+                                        ace['precedence'])]
+                            if 'protocol' in ace.keys() and ace['protocol'].isdigit() and int(ace['protocol']) in protocol.keys():
+                                ace['protocol'] = protocol[int(
+                                    ace['protocol'])]
+                                # convert number to name
+                            if 'protocol' in ace.keys() and ace['protocol'] in ['tcp', 'udp']:
+                                q(ace)
+                                for end in ['source', 'destination']:
+                                    if 'port_protocol' in ace[end].keys():
+                                        key = list(ace[end]['port_protocol'].keys())[
+                                            0]
+                                        q(key)
+                                        # key could be eq,gt,lt,neq or range
+                                        if key != 'range':
+                                            val = ace[end]['port_protocol'][key]
+                                            q(val)
+                                            if val.isdigit() and int(val) in port_protocol.keys():
+                                                ace[end]['port_protocol'][key] = port_protocol[int(
+                                                    val)]
+                                        else:
+                                            st = int(
+                                                ace[end]['port_protocol']['range']['start'])
 
-                                    end = int(
-                                        ace['destination']['port_protocol']['range']['end'])
+                                            end = int(
+                                                ace[end]['port_protocol']['range']['end'])
 
-                                    if st in protocol_options.keys():
-                                        ace['destination']['port_protocol']['range']['start'] = protocol_options[st]
-                                    if end in protocol_options.keys():
-                                        ace['destination']['port_protocol']['range']['end'] = protocol_options[end]
-
+                                            if st in port_protocol.keys():
+                                                ace[end]['port_protocol']['range']['start'] = port_protocol[st]
+                                            if end in port_protocol.keys():
+                                                ace[end]['port_protocol']['range']['end'] = port_protocol[end]
+                                q(ace)
         return want
 
     def set_state(self, want, have):
@@ -196,7 +220,7 @@ class Acls(ConfigBase):
         commands = []
         have_afi = search_obj_in_list(want['afi'], have, 'afi')
         del_dict = {'acls': []}
-        q(want)
+        q(want, have_afi)
         want_names = []
         if have_afi != want:
             if have_afi:
@@ -210,7 +234,7 @@ class Acls(ConfigBase):
                     for w in want_acls:
                         acl_commands = []
                         if w['name'] not in have_names:
-                                # creates new ACL in replaced state
+                                            # creates new ACL in replaced state
                             merge_dict = {'afi': want['afi'], 'acls': [w]}
                             q('new dict')
                             q(merge_dict)
@@ -258,7 +282,17 @@ class Acls(ConfigBase):
                     for acl in have_afi['acls']:
                         acls.append({'name': acl['name']})
                     del_dict['acls'] = acls
-            commands = list(filter(None, commands))
+                    q(del_dict)
+                    if del_dict['acls']:
+                        commands.extend(
+                            self._state_deleted([del_dict], have))
+
+            else:
+              # want_afi is not present in have
+                commands.extend(
+                    self._state_merged(want, have))
+
+        commands = list(filter(None, commands))
         return commands
 
     def _state_overridden(self, want, have):
@@ -336,10 +370,10 @@ class Acls(ConfigBase):
                                     ace_commands = []
                                     flag = 0
                                     for ace in acl['aces']:
-                                        # q(ace)
+                                                # q(ace)
                                         if list(ace.keys()) == ['sequence']:
-                                            # q('sequence')
-                                            # only sequence number is specified to be deleted
+                                                # q('sequence')
+                                                # only sequence number is specified to be deleted
                                             if 'aces' in have_name.keys():
                                                 for h_ace in have_name['aces']:
                                                     # q(h_ace)
@@ -443,7 +477,7 @@ class Acls(ConfigBase):
                             if w_acl.get('aces') and have_acl.get('aces'):
                                 # case 1 --> sequence number not given in want --> new ace
                                 # case 2 --> new sequence number in want --> new ace
-                                # case 3 --> existing sequence number given --> update rule
+                                # case 3 --> existing sequence number given --> update rule (only for merged state. For replaced and overridden, rule is deleted in the state's config)
 
                                 # ace_list = [item for item in w_acl['aces']
                                 #             if item not in have_acl['aces']]
@@ -461,26 +495,32 @@ class Acls(ConfigBase):
                                 common_seq = list(
                                     set(want_seq).intersection(set(have_seq)))
 
-                                q(want_seq, have_seq, new_seq)
+                                q(want_seq, have_seq, new_seq, common_seq)
                                 temp_list = [item for item in w_acl['aces'] if 'sequence' in item.keys(
                                 ) and item['sequence'] in new_seq]  # case 2
                                 ace_list.extend(temp_list)
-
                                 q(ace_list)
-
                                 for w in w_acl['aces']:
+                                    self.argument_spec = AclsArgs.argument_spec
+                                    q(self.argument_spec['config']
+                                      ['options']['acls']['options']['aces'], w)
+                                    params = utils.validate_config(
+                                        self.argument_spec, {'config': [{'afi': want['afi'], 'acls': [{'name': name, 'aces': ace_list}]}]})
+                                    q(params)
                                     if 'sequence' in w.keys() and w['sequence'] in common_seq:
                                         temp_obj = search_obj_in_list(
                                             w['sequence'], have_acl['aces'], 'sequence')  # case 3
-                                        for key, val in w.items():
-                                            temp_obj[key] = val
-                                        ace_list.append(temp_obj)
-                                        ace_commands.append(
-                                            'no ' + str(w['sequence']))
+                                        if temp_obj != w:
+                                            for key, val in w.items():
+                                                temp_obj[key] = val
+                                            ace_list.append(temp_obj)
+                                            if self._module.params['state'] == 'merged':
+                                                ace_commands.append(
+                                                    'no ' + str(w['sequence']))
                                         # remove existing rule to update it
                                 q(ace_commands, ace_list)
                             elif w_acl.get('aces'):
-                              # 'have' has ACL defined without any ACE
+                                # 'have' has ACL defined without any ACE
                                 ace_list = [item for item in w_acl['aces']]
                             # q(ace_list)
                             for w_ace in ace_list:
@@ -533,6 +573,9 @@ class Acls(ConfigBase):
                     q('protocol_options')
                     pro = list(w_ace['protocol_options'].keys())[0]
                     q(pro)
+                    if pro != w_ace['protocol']:
+                        self._module.fail_json(
+                            msg='protocol and protocol_options mismatch')
                     flags = ''
                     for k in w_ace['protocol_options'][pro].keys():
                         q(k)
@@ -543,7 +586,8 @@ class Acls(ConfigBase):
                     command += 'dscp '+w_ace['dscp'] + ' '
                 if 'fragments' in ace_keys:
                     command += 'fragments '
-
+                if 'precedence' in ace_keys:
+                    command += 'precedence '+w_ace['precedence']+' '
             if 'log' in ace_keys:
                 command += 'log '
         if 'sequence' in ace_keys:

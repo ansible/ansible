@@ -16,7 +16,7 @@
                   source:
                     any: true
                     port_protocol:
-                      lt: 55
+                      eq: 43
                   protocol: tcp
                   protocol_options:
                     tcp:
@@ -45,7 +45,7 @@
       that:
           - "result.changed == false"
           - "'ip access-list ACL1v4' in result.rendered"
-          - "'50 deny tcp any lt 55 192.0.2.64 0.0.0.255 ack fin' in result.rendered"
+          - "'50 deny tcp any eq whois 192.0.2.64 0.0.0.255 ack fin' in result.rendered"
           - "'ipv6 access-list ACL1v6' in result.rendered"
           - "'10 permit sctp any 2001:db8:12::/32' in result.rendered"
           - "result.rendered | length == 4"
