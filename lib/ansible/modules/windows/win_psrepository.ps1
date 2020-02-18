@@ -6,6 +6,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module @{ ModuleName = 'PowerShellGet' ; ModuleVersion = '1.6.0' }
 
 # win_psrepository (Windows PowerShell repositories Additions/Removals/Updates)
 
@@ -37,105 +38,58 @@ if ([System.Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
 }
 [System.Net.ServicePointManager]::SecurityProtocol = $security_protocols
 
-Function Write-DebugLog {
-    Param(
-        [string]$msg
-    )
 
-    $DebugPreference = "Continue"
-    $date_str = Get-Date -Format u
-    $msg = "$date_str $msg"
+Function Resolve-PSGetLocation {
+    <#
+        .SYNOPSIS
+        This is a sort of proxy function for the Resolve-Location function that PowerShellGet uses internally.
 
-    Write-Debug $msg
-    if($log_path) {
-        Add-Content -LiteralPath $log_path -Value $msg
-    }
-}
-Function Resolve-RedirectedUrl {
+        .DESCRIPTION
+        It's not exported from the module, and it needs a caller context so wrapping it in a function both convenient
+        and functional depending on how the outer module is executed (where $PSCmdlet may not be set).
+
+        Also wraps the needed to call to other internal function, Get-LocationString, which does some normalizing
+        or [uri] to [string] conversion.
+
+        .NOTES
+        - This must be an advanced function so that $PSCmdlet is populated.
+        - Some context around all the things this tries to do: https://github.com/PowerShell/PowerShellGet/issues/317
+    #>
     [CmdletBinding()]
-    [OutputType([uri])]
-    param(
+    [OutputType([string])]
+    Param
+    (
         [Parameter(Mandatory=$true)]
         [uri]
-        $Uri ,
+        $Location,
+
+        [Parameter(Mandatory=$true)]
+        [string]
+        $LocationParameterName,
 
         [Parameter()]
-        [int]
-        $RedirectCount = 0 ,
+        $Credential,
 
         [Parameter()]
-        [int]
-        $MaximumRedirectionDepth = 10 ,
+        $Proxy,
 
         [Parameter()]
-        [System.Collections.Generic.HashSet[System.Uri]]
-        $History = (New-Object -TypeName 'System.Collections.Generic.HashSet[System.Uri]') ,
-
-        [Parameter()]
-        [Microsoft.PowerShell.Commands.WebRequestMethod]
-        $Method = [Microsoft.PowerShell.Commands.WebRequestMethod]::Head
+        $ProxyCredential
     )
 
-    End {
-        if ($Uri.Scheme -notmatch '^https?') {
-            return $Uri
-        }
+    $module = Get-Module -Name PowerShellGet
 
-        $null = $History.Add($Uri)
-        try {
-            # Weirdness: even with -ea SilentlyContinue, some exceptions are still thrown and can be caught
-            # In the case of 3xx codes, it won't throw, which we want because there's no response info in the exception, but return value is valid.
-            # In the case of 5xx, it will throw, but response is available in the exception.
-            $response = Invoke-WebRequest -Uri $Uri -Method $Method -UseBasicParsing -MaximumRedirection $RedirectCount -ErrorAction SilentlyContinue
-        }
-        catch [System.InvalidOperationException] {
-            $code = $_.Exception.Response.StatusCode
-            $description = $_.Exception.Response.StatusDescription
-            if ($code -eq [System.Net.HttpStatusCode]::NotImplemented -and
-                [Microsoft.PowerShell.Commands.WebRequestMethod]::Head -eq $_.Exception.Response.Method) {
-                # let's assume the target server doesn't support HEAD, like myget.org, and switch to GET
-                Resolve-RedirectedUrl @PSBoundParameters -Method ([Microsoft.PowerShell.Commands.WebRequestMethod]::Get)
-                return
-            }
-            else {
-                # not sure what the deal is, better fail
-                Fail-Json -obj $result -message "Error contacting URL '$Uri' with method '$Method'. Got HTTP status ${code}: '$description'"
-            }
-        }
+    $module.Invoke({
+        param(
+            [System.Collections.IDictionary]
+            $Params,
 
-        $code = $response.StatusCode
-        $description = $response.StatusDescription
-        if (-not $response -or -not $code) {
-            Fail-Json -obj $result -message "Unkown error contacting URL '$Uri'."
-        }
-
-        if ((300..399) -contains $code) {
-            if (++$RedirectCount -ge $MaximumRedirectionDepth) {
-                Fail-Json -obj $result -message "Maximum redirection count ($MaximumRedirectionDepth) reached."
-            }
-            Write-DebugLog -msg "Following URL redirection: attempt $RedirectCount of $MaximumRedirectionDepth."
-
-            $target = $response.Headers.Location -as [uri]
-            if (-not $target) {
-                Fail-Json -obj $result -message "URL replied with redirect but redirect target is missing or invalid."
-            }
-
-            if ($History.Contains($target)) {
-                Fail-Json -obj $result -message "URL is redirecting infinitely (received identical response as a previous redirect: '$target')."
-            }
-
-            Resolve-RedirectedUrl -Uri $target -RedirectCount $RedirectCount -MaximumRedirectionDepth $MaximumRedirectionDepth -History $History -Method $Method
-        }
-        elseif ((200..299) -notcontains $code) {
-            Fail-Json -obj $result -message "Error contacting URL '$Uri' with method '$Method'. Got HTTP status ${code}: '$description'"
-        }
-        else {
-            if ($RedirectCount -gt 0) {
-                Add-Warning -obj $result -message "Using URL '$Uri' after $RedirectCount redirects."
-            }
-            return $Uri
-        }
-    }
+            [System.Management.Automation.PSCmdlet]
+            $CallerPSCmdlet
+        )
+        $Params.Location = Get-LocationString -LocationUri $Params.Location
+        Resolve-Location @Params -CallerPSCmdlet $CallerPSCmdlet
+    }, @($PSBoundParameters,$PSCmdlet))
 }
 
 $repository_params = @{
@@ -152,7 +106,7 @@ if ($installation_policy) {
 if ($source_location) {
     if ($source_location -as [uri]) {
         $repository_params.SourceLocation = if ($follow_redirects) {
-            Resolve-RedirectedUrl -Uri $source_location
+            Resolve-PSGetLocation -Location $source_location -LocationParameterName source_location
         }
         else {
             $source_location
@@ -169,7 +123,7 @@ elseif ($state -eq 'present' -and ($force -or -not $Repo)) {
 if ($script_source_location) {
     if ($script_source_location -as [uri]) {
         $repository_params.ScriptSourceLocation = if ($follow_redirects) {
-            Resolve-RedirectedUrl -Uri $script_source_location
+            Resolve-PSGetLocation -Location $script_source_location -LocationParameterName script_source_location
         }
         else {
             $script_source_location
@@ -183,7 +137,7 @@ if ($script_source_location) {
 if ($publish_location) {
     if ($publish_location -as [uri]) {
         $repository_params.PublishLocation = if ($follow_redirects) {
-            Resolve-RedirectedUrl -Uri $publish_location
+            Resolve-PSGetLocation -Location $publish_location -LocationParameterName publish_location
         }
         else {
             $publish_location
@@ -197,7 +151,7 @@ if ($publish_location) {
 if ($script_publish_location) {
     if ($script_publish_location -as [uri]) {
         $repository_params.ScriptPublishLocation = if ($follow_redirects) {
-            Resolve-RedirectedUrl -Uri $script_publish_location
+            Resolve-PSGetLocation -Location $script_publish_location -LocationParameterName script_publish_location
         }
         else {
             $script_publish_location
