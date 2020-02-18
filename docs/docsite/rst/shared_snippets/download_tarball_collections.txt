@@ -1,0 +1,8 @@
+
+
+To download the collection tarball from Galaxy for offline use:
+
+#. Navigate to the collection page.
+#. Click on :guilabel:`Download tarball`.
+
+You may also need to manually download any dependent collections.
