@@ -347,7 +347,6 @@ crl:
 '''
 
 
-import datetime
 import os
 import traceback
 from distutils.version import LooseVersion
@@ -369,25 +368,8 @@ try:
         RevokedCertificateBuilder,
         NameAttribute,
         Name,
-        ReasonFlags,
     )
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
-
-    REASON_MAP = {
-        'unspecified': ReasonFlags.unspecified,
-        'key_compromise': ReasonFlags.key_compromise,
-        'ca_compromise': ReasonFlags.ca_compromise,
-        'affiliation_changed': ReasonFlags.affiliation_changed,
-        'superseded': ReasonFlags.superseded,
-        'cessation_of_operation': ReasonFlags.cessation_of_operation,
-        'certificate_hold': ReasonFlags.certificate_hold,
-        'privilege_withdrawn': ReasonFlags.privilege_withdrawn,
-        'aa_compromise': ReasonFlags.aa_compromise,
-        'remove_from_crl': ReasonFlags.remove_from_crl,
-    }
-    REASON_MAP_INVERSE = dict()
-    for k, v in REASON_MAP.items():
-        REASON_MAP_INVERSE[v] = k
 except ImportError:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
     CRYPTOGRAPHY_FOUND = False
@@ -403,27 +385,6 @@ class CRLError(crypto_utils.OpenSSLObjectError):
 
 
 class CRL(crypto_utils.OpenSSLObject):
-
-    def get_relative_time_option(self, input_string, input_name):
-        """Return an ASN1 formatted string if a relative timespec
-           or an ASN1 formatted string is provided."""
-        result = to_native(input_string)
-        if result is None:
-            raise CRLError(
-                'The timespec "%s" for %s is not valid' %
-                input_string, input_name)
-        if result.startswith("+") or result.startswith("-"):
-            return crypto_utils.convert_relative_to_datetime(result)
-        for date_fmt in ['%Y%m%d%H%M%SZ', '%Y%m%d%H%MZ', '%Y%m%d%H%M%S%z', '%Y%m%d%H%M%z']:
-            try:
-                return datetime.datetime.strptime(result, date_fmt)
-            except ValueError:
-                pass
-
-        raise CRLError(
-            'The time spec "%s" for %s is invalid' %
-            (input_string, input_name)
-        )
 
     def __init__(self, module):
         super(CRL, self).__init__(
@@ -447,8 +408,8 @@ class CRL(crypto_utils.OpenSSLObject):
         self.issuer = crypto_utils.parse_name_field(module.params['issuer'])
         self.issuer = [(entry[0], entry[1]) for entry in self.issuer if entry[1]]
 
-        self.last_update = self.get_relative_time_option(module.params['last_update'], 'last_update')
-        self.next_update = self.get_relative_time_option(module.params['next_update'], 'next_update')
+        self.last_update = crypto_utils.get_relative_time_option(module.params['last_update'], 'last_update')
+        self.next_update = crypto_utils.get_relative_time_option(module.params['next_update'], 'next_update')
 
         self.digest = crypto_utils.select_message_digest(module.params['digest'])
         if self.digest is None:
@@ -494,15 +455,15 @@ class CRL(crypto_utils.OpenSSLObject):
             if rc['issuer']:
                 result['issuer'] = [crypto_utils.cryptography_get_name(issuer) for issuer in rc['issuer']]
                 result['issuer_critical'] = rc['issuer_critical']
-            result['revocation_date'] = self.get_relative_time_option(
+            result['revocation_date'] = crypto_utils.get_relative_time_option(
                 rc['revocation_date'],
                 path_prefix + 'revocation_date'
             )
             if rc['reason']:
-                result['reason'] = REASON_MAP[rc['reason']]
+                result['reason'] = crypto_utils.REVOCATION_REASON_MAP[rc['reason']]
                 result['reason_critical'] = rc['reason_critical']
             if rc['invalidity_date']:
-                result['invalidity_date'] = self.get_relative_time_option(
+                result['invalidity_date'] = crypto_utils.get_relative_time_option(
                     rc['invalidity_date'],
                     path_prefix + 'invalidity_date'
                 )
@@ -563,37 +524,6 @@ class CRL(crypto_utils.OpenSSLObject):
                 entry['invalidity_date_critical'],
             )
 
-    def _decode_revoked(self, cert):
-        result = {
-            'serial_number': cert.serial_number,
-            'revocation_date': cert.revocation_date,
-            'issuer': None,
-            'issuer_critical': False,
-            'reason': None,
-            'reason_critical': False,
-            'invalidity_date': None,
-            'invalidity_date_critical': False,
-        }
-        try:
-            ext = cert.extensions.get_extension_for_class(x509.CertificateIssuer)
-            result['issuer'] = list(ext.value)
-            result['issuer_critical'] = ext.critical
-        except x509.ExtensionNotFound:
-            pass
-        try:
-            ext = cert.extensions.get_extension_for_class(x509.CRLReason)
-            result['reason'] = ext.value.reason
-            result['reason_critical'] = ext.critical
-        except x509.ExtensionNotFound:
-            pass
-        try:
-            ext = cert.extensions.get_extension_for_class(x509.InvalidityDate)
-            result['invalidity_date'] = ext.value.invalidity_date
-            result['invalidity_date_critical'] = ext.critical
-        except x509.ExtensionNotFound:
-            pass
-        return result
-
     def check(self, perms_required=True):
         """Ensure the resource is in its desired state."""
 
@@ -616,7 +546,7 @@ class CRL(crypto_utils.OpenSSLObject):
         if want_issuer != [(sub.oid, sub.value) for sub in self.crl.issuer]:
             return False
 
-        old_entries = [self._compress_entry(self._decode_revoked(cert)) for cert in self.crl]
+        old_entries = [self._compress_entry(crypto_utils.cryptography_decode_revoked_certificate(cert)) for cert in self.crl]
         new_entries = [self._compress_entry(cert) for cert in self.revoked_certificates]
         if self.update:
             # We don't simply use a set so that duplicate entries are treated correctly
@@ -649,7 +579,7 @@ class CRL(crypto_utils.OpenSSLObject):
         if self.update and self.crl:
             new_entries = set([self._compress_entry(entry) for entry in self.revoked_certificates])
             for entry in self.crl:
-                decoded_entry = self._compress_entry(self._decode_revoked(entry))
+                decoded_entry = self._compress_entry(crypto_utils.cryptography_decode_revoked_certificate(entry))
                 if decoded_entry not in new_entries:
                     crl = crl.add_revoked_certificate(entry)
         for entry in self.revoked_certificates:
@@ -700,7 +630,7 @@ class CRL(crypto_utils.OpenSSLObject):
                 [crypto_utils.cryptography_decode_name(issuer) for issuer in entry['issuer']]
                 if entry['issuer'] is not None else None,
             'issuer_critical': entry['issuer_critical'],
-            'reason': REASON_MAP_INVERSE.get(entry['reason']) if entry['reason'] is not None else None,
+            'reason': crypto_utils.REVOCATION_REASON_MAP_INVERSE.get(entry['reason']) if entry['reason'] is not None else None,
             'reason_critical': entry['reason_critical'],
             'invalidity_date':
                 entry['invalidity_date'].strftime(TIMESTAMP_FORMAT)
@@ -758,7 +688,7 @@ class CRL(crypto_utils.OpenSSLObject):
                 result['issuer'][k] = v
             result['revoked_certificates'] = []
             for cert in self.crl:
-                entry = self._decode_revoked(cert)
+                entry = crypto_utils.cryptography_decode_revoked_certificate(cert)
                 result['revoked_certificates'].append(self._dump_revoked(entry))
 
         if self.return_content:

@@ -348,31 +348,6 @@ else:
 TIMESTAMP_FORMAT = "%Y%m%d%H%M%SZ"
 
 
-def get_relative_time_option(input_string, input_name):
-    """Return an ASN1 formatted string if a relative timespec
-       or an ASN1 formatted string is provided."""
-    result = input_string
-    if result.startswith("+") or result.startswith("-"):
-        return crypto_utils.convert_relative_to_datetime(result)
-    if result is None:
-        raise crypto_utils.OpenSSLObjectError(
-            'The timespec "%s" for %s is not valid' %
-            input_string, input_name)
-    for date_fmt in ['%Y%m%d%H%M%SZ', '%Y%m%d%H%MZ', '%Y%m%d%H%M%S%z', '%Y%m%d%H%M%z']:
-        try:
-            result = datetime.datetime.strptime(input_string, date_fmt)
-            break
-        except ValueError:
-            pass
-
-    if not isinstance(result, datetime.datetime):
-        raise crypto_utils.OpenSSLObjectError(
-            'The time spec "%s" for %s is invalid' %
-            (input_string, input_name)
-        )
-    return result
-
-
 class CertificateInfo(crypto_utils.OpenSSLObject):
     def __init__(self, module, backend):
         super(CertificateInfo, self).__init__(
@@ -394,7 +369,7 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
                     self.module.fail_json(
                         msg='The value for valid_at.{0} must be of type string (got {1})'.format(k, type(v))
                     )
-                self.valid_at[k] = get_relative_time_option(v, 'valid_at.{0}'.format(k))
+                self.valid_at[k] = crypto_utils.get_relative_time_option(v, 'valid_at.{0}'.format(k))
 
     def generate(self):
         # Empty method because crypto_utils.OpenSSLObject wants this
