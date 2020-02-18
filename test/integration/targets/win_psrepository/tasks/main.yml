@@ -11,6 +11,8 @@
   - name: run all tests
     include_tasks: tests.yml
 
+  - name: run redirection tests
+    include_tasks: redirects.yml
   always:
   - name: ensure test repo is unregistered
     win_shell: Unregister-PSRepository {{ repository_name | quote }} -ErrorAction Ignore

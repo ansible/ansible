@@ -2,3 +2,13 @@
 repository_name: My Get
 repository_sourcelocation: https://www.myget.org/F/powershellgetdemo/api/v2
 repository_sourcelocation2: '{{ remote_tmp_dir }}'
+repository_publish_location: https://www.myget.org/F/powershellgetdemo/api/v2/package
+repository_script_source_location: https://www.myget.org/F/powershellgetdemo_scripts/api/v2
+repository_script_publish_location: https://www.myget.org/F/powershellgetdemo_scripts/api/v2/package
+
+redirect_1_url: http://httpbin.org/redirect/1
+redirect_1_expected_target: http://httpbin.org/get
+
+redirect_11_url: http://httpbin.org/redirect/11
+redirect_11_expected_target: http://httpbin.org/get
+
