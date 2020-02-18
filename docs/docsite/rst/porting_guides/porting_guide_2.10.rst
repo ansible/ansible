@@ -127,7 +127,7 @@ Noteworthy module changes
 * The parameter ``message`` in :ref:`grafana_dashboard <grafana_dashboard_module>` module is renamed to ``commit_message`` since ``message`` is used by Ansible Core engine internally.
 * The parameter ``message`` in :ref:`datadog_monitor <datadog_monitor_module>` module is renamed to ``notification_message`` since ``message`` is used by Ansible Core engine internally.
 * The parameter ``message`` in :ref:`bigpanda <bigpanda_module>` module is renamed to ``deployment_message`` since ``message`` is used by Ansible Core engine internally.
-* :ref:`async_status <async_status_mode>` renamed the option ``_async_dir`` to ``async_dir`` to ensure it is seen as a stable interface and not to be changed in case a collection in the future overrides the existing async_status module.
+* :ref:`async_status <async_status_module>` renamed the option ``_async_dir`` to ``async_dir`` to ensure it is seen as a stable interface and not to be changed in case a collection in the future overrides the existing async_status module.
 
 
 Plugins
