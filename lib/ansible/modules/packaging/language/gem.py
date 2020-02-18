@@ -63,7 +63,7 @@ options:
         Specifying the mode as a decimal integer (e.g., 22) will also work, but
         an octal integer (e.g., 0022) will be converted to decimal (18) before
         evaluation, which is almost certainly not what was intended.
-    version_added: "2.8"
+    version_added: "2.10"
     required: false
     default: null
   executable:
