@@ -482,6 +482,10 @@ class PyVmomiHelper(PyVmomi):
                     disk_spec.device.backing.thinProvisioned = True
                 elif disk['disk_type'] == 'eagerzeroedthick':
                     disk_spec.device.backing.eagerlyScrub = True
+                # get Storage DRS recommended datastore from the datastore cluster
+                if disk['datastore_cluster'] is not None:
+                    datastore_name = self.get_recommended_datastore(datastore_cluster_obj=disk['datastore_cluster'], disk_spec_obj=disk_spec)
+                    disk['datastore'] = find_obj(self.content, [vim.Datastore], datastore_name)
                 if disk['filename'] is None:
                     disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (
                         disk['datastore'].name,
@@ -558,6 +562,7 @@ class PyVmomiHelper(PyVmomi):
                                 state='present',
                                 destroy=True,
                                 filename=None,
+                                datastore_cluster=None,
                                 datastore=None,
                                 autoselect_datastore=True,
                                 disk_unit_number=0,
@@ -584,15 +589,16 @@ class PyVmomiHelper(PyVmomi):
                     # Check if given value is datastore or datastore cluster
                     datastore_name = disk['datastore']
                     datastore_cluster = find_obj(self.content, [vim.StoragePod], datastore_name)
-                    if datastore_cluster:
-                        # If user specified datastore cluster so get recommended datastore
-                        datastore_name = self.get_recommended_datastore(datastore_cluster_obj=datastore_cluster)
-                    # Check if get_recommended_datastore or user specified datastore exists or not
                     datastore = find_obj(self.content, [vim.Datastore], datastore_name)
-                    if datastore is None:
-                        self.module.fail_json(msg="Failed to find datastore named '%s' "
+
+                    if datastore is None and datastore_cluster is None:
+                        self.module.fail_json(msg="Failed to find datastore or datastore cluster named '%s' "
                                                   "in given configuration." % disk['datastore'])
-                    current_disk['datastore'] = datastore
+                    if datastore_cluster:
+                        # If user specified datastore cluster, keep track of that for determining datastore later
+                        current_disk['datastore_cluster'] = datastore_cluster
+                    elif datastore:
+                        current_disk['datastore'] = datastore
                     current_disk['autoselect_datastore'] = False
                 elif 'autoselect_datastore' in disk:
                     # Find datastore which fits requirement
@@ -741,7 +747,7 @@ class PyVmomiHelper(PyVmomi):
             disks_data.append(current_disk)
         return disks_data
 
-    def get_recommended_datastore(self, datastore_cluster_obj):
+    def get_recommended_datastore(self, datastore_cluster_obj, disk_spec_obj):
         """
         Return Storage DRS recommended datastore from datastore cluster
         Args:
@@ -755,11 +761,19 @@ class PyVmomiHelper(PyVmomi):
         sdrs_status = datastore_cluster_obj.podStorageDrsEntry.storageDrsConfig.podConfig.enabled
         if sdrs_status:
             # We can get storage recommendation only if SDRS is enabled on given datastorage cluster
+            disk_loc = vim.storageDrs.PodSelectionSpec.DiskLocator()
+            pod_config = vim.storageDrs.PodSelectionSpec.VmPodConfig()
+            pod_config.storagePod = datastore_cluster_obj
+            pod_config.disk = [disk_loc]
             pod_sel_spec = vim.storageDrs.PodSelectionSpec()
-            pod_sel_spec.storagePod = datastore_cluster_obj
+            pod_sel_spec.initialVmConfig = [pod_config]
             storage_spec = vim.storageDrs.StoragePlacementSpec()
+            storage_spec.configSpec = vim.vm.ConfigSpec()
+            storage_spec.configSpec.deviceChange.append(disk_spec_obj)
+            storage_spec.resourcePool = self.vm.resourcePool
             storage_spec.podSelectionSpec = pod_sel_spec
-            storage_spec.type = 'create'
+            storage_spec.vm = self.vm
+            storage_spec.type = 'reconfigure'
 
             try:
                 rec = self.content.storageResourceManager.RecommendDatastores(storageSpec=storage_spec)
