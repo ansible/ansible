@@ -158,7 +158,7 @@
       - ownca_certificate_ed25519_ed448_2.results[1] is failed
       - ownca_certificate_ed25519_ed448_2_idempotence.results[0] is failed
       - ownca_certificate_ed25519_ed448_2_idempotence.results[1] is failed
-  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.6', '>=') and cryptography_version.stdout is version('2.8', '<')
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.6', '>=') and cryptography_version.stdout is version('2.8', '<') and ownca_certificate_ed25519_ed448_privatekey is not failed
 
 - name: (OwnCA validation, {{select_crypto_backend}}) Verify Ed25519 and Ed448 tests (for cryptography >= 2.8)
   assert:
@@ -175,4 +175,4 @@
       - ownca_certificate_ed25519_ed448_2_idempotence is succeeded
       - ownca_certificate_ed25519_ed448_2_idempotence.results[0] is not changed
       - ownca_certificate_ed25519_ed448_2_idempotence.results[1] is not changed
-  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.8', '>=')
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.8', '>=') and ownca_certificate_ed25519_ed448_privatekey is not failed
