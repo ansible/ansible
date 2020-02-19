@@ -150,7 +150,7 @@
       - selfsigned_certificate_ed25519_ed448.results[1] is failed
       - selfsigned_certificate_ed25519_ed448_idempotence.results[0] is failed
       - selfsigned_certificate_ed25519_ed448_idempotence.results[1] is failed
-  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.6', '>=') and cryptography_version.stdout is version('2.8', '<')
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.6', '>=') and cryptography_version.stdout is version('2.8', '<') and selfsigned_certificate_ed25519_ed448_privatekey is not failed
 
 - name: (Selfsigned validation, {{select_crypto_backend}}) Verify Ed25519 and Ed448 tests (for cryptography >= 2.8)
   assert:
@@ -161,4 +161,4 @@
       - selfsigned_certificate_ed25519_ed448_idempotence is succeeded
       - selfsigned_certificate_ed25519_ed448_idempotence.results[0] is not changed
       - selfsigned_certificate_ed25519_ed448_idempotence.results[1] is not changed
-  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.8', '>=')
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.8', '>=') and selfsigned_certificate_ed25519_ed448_privatekey is not failed
