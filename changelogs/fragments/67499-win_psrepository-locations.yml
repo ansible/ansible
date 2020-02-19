@@ -1,0 +1,5 @@
+bugfixes:
+  - win_psrepository - task will always be ``CHANGED`` if the source location redirects (and in some other cases; see https://github.com/ansible/ansible/issues/67504 )
+minor_changes:
+  - win_psrepository - added options for script and publish locations (https://github.com/ansible/ansible/issues/67501)
+  - win_psrepository - added ``force`` option to make repository exactly match specified setting
