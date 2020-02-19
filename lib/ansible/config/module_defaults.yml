@@ -117,6 +117,8 @@ groupings:
   - aws
   cloudformation:
   - aws
+  cloudformation_exports:
+  - aws
   cloudformation_facts:
   - aws
   cloudformation_info:

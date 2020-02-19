@@ -21,12 +21,13 @@
         region: "{{ aws_region }}"
       register: exports_result
     - set_fact:
-        export_value: "{{ exports_result['export_items']['cf-exports-param'] }}"
-    - debug:
-        var: export_value
+        export_items: "{{ exports_result['export_items']['cf-exports-param'] }}"
     - assert:
         that:
-          - export_value is defined
+          - export_items is defined
+          - export_items['cf-exports-param'] is defined
+          - "{{ export_items | length }}" == 1
+
 
 # Cleanup
   always:

@@ -29,7 +29,8 @@ EXAMPLES = '''
     profile: 'my_aws_profile'
     region: 'my_region'
   register: cf_exports
-- debug: var=cf_exports
+- debug:
+    msg: "{{ cf_exports }}"
 '''
 
 RETURN = '''
@@ -41,12 +42,6 @@ export_items:
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import AWSRetry
-
-try:
-    import botocore
-except ImportError:
-    pass  # handled by AnsibleAWSModule
-
 
 @AWSRetry.exponential_backoff()
 def list_exports(cloudformation_client):
@@ -65,12 +60,10 @@ def main():
     argument_spec = dict()
     result = dict(
         changed=False,
-        original_message='',
-        message=''
+        original_message=''
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=False)
-    result['original_message'] = module.params
     cloudformation_client = module.client('cloudformation')
 
     try:
