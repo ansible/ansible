@@ -42,6 +42,7 @@ VALID_SPEC_KEYS = [
     'scm',
     'src',
     'version',
+    'extra_opts',
 ]
 
 display = Display()

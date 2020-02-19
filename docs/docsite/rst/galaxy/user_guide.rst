@@ -246,11 +246,13 @@ Each role in the file will have one or more of the following attributes:
      to a repository within a git based SCM. See the examples below. This is a required attribute.
    scm
      Specify the SCM. As of this writing only *git* or *hg* are allowed. See the examples below. Defaults to *git*.
-   version:
+   version
      The version of the role to download. Provide a release tag value, commit hash, or branch name. Defaults to the branch set as a default in the repository, otherwise defaults to the *master*.
-   name:
+   name
      Download the role to a specific name. Defaults to the Galaxy name when downloading from Galaxy, otherwise it defaults
      to the name of the repository.
+   extra_opts
+     Advanced options for specific use-cases, see examples below.
 
 Use the following example as a guide for specifying roles in *requirements.yml*:
 
@@ -291,6 +293,28 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
     - src: git@gitlab.company.com:mygroup/ansible-base.git
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
+
+Advanced options for downloading roles in requirements.yml
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Keys are as-supported by the ``open_url`` method in :file:`lib/ansible/module_utils/urls.py:`. The most likely options you could use are:
+
+- ``ca_path``: path to a CA cert bundle for ad-hoc trust of specific roots.
+- ``client_cert``: path to a public client certificate, or combined certificate + key.
+- ``client_key``: path to a private key for the above public client certificate (not required if it's in the same file as the public cert)
+- ``url_username``: username for basic auth
+- ``url_password``: password for basic auth
+- ``force_basic_auth``: force enable basic auth
+
+For example:
+
+.. code-block:: yaml
+
+    - src: https://some.webserver.example.com/files/master.tar.xz
+      name: http-role-xz
+      extra_opts:
+        client_cert: /path/to/client.crt
+        client_key: /path/to/client.key
 
 Installing roles and collections from the same requirements.yml file
 ---------------------------------------------------------------------

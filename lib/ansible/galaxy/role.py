@@ -49,7 +49,7 @@ class GalaxyRole(object):
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
     ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
 
-    def __init__(self, galaxy, api, name, src=None, version=None, scm=None, path=None):
+    def __init__(self, galaxy, api, name, src=None, version=None, scm=None, path=None, extra_opts=None):
 
         self._metadata = None
         self._install_info = None
@@ -64,6 +64,7 @@ class GalaxyRole(object):
         self.version = version
         self.src = src or name
         self.scm = scm
+        self.extra_opts = extra_opts
 
         if path is not None:
             if not path.endswith(os.path.join(os.path.sep, self.name)):
@@ -190,7 +191,7 @@ class GalaxyRole(object):
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent())
+                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent(), **self.extra_opts)
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:
