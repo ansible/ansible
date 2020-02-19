@@ -71,3 +71,18 @@
 - name: set with_dict
   shell: echo "{{ item.key + '=' + item.value  }}"
   with_dict: "{{ mydict }}"
+
+# BUG #34144 bad template caching
+
+- name: generate two random passwords
+  set_fact:
+    password1: "{{ lookup('password', '/dev/null length=20') }}"
+    password2: "{{ lookup('password', '/dev/null length=20') }}"
+    # If the passwords are generated randomly, the chance that they
+    # coincide is neglectable (< 1e-18 assuming 120 bits of randomness
+    # per password).
+
+- name: make sure passwords are not the same
+  assert:
+    that:
+      - password1 != password2
