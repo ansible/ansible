@@ -2610,7 +2610,6 @@ lib/ansible/modules/cloud/vmware/vmware_dvs_portgroup.py validate-modules:missin
 lib/ansible/modules/cloud/vmware/vmware_dvs_portgroup.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/vmware/vmware_dvs_portgroup.py validate-modules:undocumented-parameter
 lib/ansible/modules/cloud/vmware/vmware_dvs_portgroup_find.py validate-modules:required_if-requirements-type
-lib/ansible/modules/cloud/vmware/vmware_dvs_portgroup_find.py validate-modules:required_if-requirements-unknown
 lib/ansible/modules/cloud/vmware/vmware_dvswitch.py validate-modules:missing-suboption-docs
 lib/ansible/modules/cloud/vmware/vmware_dvswitch.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/vmware/vmware_dvswitch.py validate-modules:undocumented-parameter
