@@ -451,7 +451,7 @@ The build process for docs.ansible.com will know where to find the module docs.
 
 `Example PR <https://github.com/ansible/ansible/pull/66981/files>`_
 
-* The ``migrated_to:`` key must be added explicitly for every *file*. You cannot add ``migrated_to`` at the directory level.
+* The ``migrated_to:`` key must be added explicitly for every *file*. You cannot add ``migrated_to`` at the directory level. This is to allow module and plugin webdocs to be redirected to the new collection docs.
 * ``migrated_to:`` MUST be added for every:
 
   * module
@@ -464,6 +464,7 @@ The build process for docs.ansible.com will know where to find the module docs.
   * Unit tests
   * Integration tests
   * ReStructured Text docs (anything under ``docs/docsite/rst/``)
+  * Files that never existed in ``ansible/ansible:devel``
 
 
 .. seealso::
