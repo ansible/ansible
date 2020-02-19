@@ -69,7 +69,6 @@ Function Resolve-PSGetLocation {
 
         [Parameter()]
         [pscredential]
-        [System.Management.Automation.Credential()]
         $Credential,
 
         [Parameter()]
@@ -77,7 +76,6 @@ Function Resolve-PSGetLocation {
 
         [Parameter()]
         [pscredential]
-        [System.Management.Automation.Credential()]
         $ProxyCredential
     )
 
