@@ -41,7 +41,7 @@ module: nxos_acls
 version_added: '2.10'
 short_description: Manage named IP Access Control Lists on NX-OS platform
 description: Manage named IP Access Control Lists on NX-OS platform
-author: Bradley Thornton (@cidrblock) & Adharsh Srivats Rangarajan (@adharshsrivatsr)
+author: Adharsh Srivats Rangarajan (@adharshsrivatsr)
 notes:
   - Tested against NX-OS 7.3.(0)D1(1) on VIRL
   - As NX-OS allows configuring a rule again with different sequence numbers, the user is expected to provide sequence numbers for the access control entries to preserve idempotency. If no sequence number is given, the rule will be added as a new rule by the device.
@@ -207,9 +207,6 @@ options:
                   icmp:
                     type: dict
                     suboptions:
-                      types:
-                        type: dict
-                        suboptions:
                           administratively_prohibited:
                             description: Administratively prohibited
                             type: bool
@@ -349,7 +346,6 @@ options:
                             description: All unreachables
                             type: bool
                   tcp:
-                    description: Match TCP packet flags
                     type: dict
                     suboptions:
                       ack:
@@ -449,8 +445,6 @@ EXAMPLES = """
 #  50 deny tcp any lt 55 192.0.2.64 0.0.0.255 ack fin 
 # ipv6 access-list ACL1v6
 #  10 permit sctp any any 
-
- 
 
 
 # Using replaced
@@ -769,7 +763,7 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['ip access-list ACLv4', 'permit ip any any', 'deny tcp host 192.0.2.64 192.0.2.0/16 ack']
+  sample: ['ip access-list ACL1v4', '10 permit ip any any precedence critical log', '20 deny tcp any lt smtp host 192.0.2.64 ack fin']
 """
 
 

@@ -9,7 +9,9 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
-import q
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import re
 from copy import deepcopy
 
@@ -34,6 +36,9 @@ class AclsFacts(object):
             facts_argument_spec = spec
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
+    def get_device_data(self, connection):
+        return connection.get("show running-config | section 'ip(v6)* access-list'")
+
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for acls
         :param connection: the device connection
@@ -43,8 +48,7 @@ class AclsFacts(object):
         :returns: facts
         """
         if not data:
-            data = connection.get(
-                "show running-config | section 'ip(v6)* access-list'")
+            data = self.get_device_data(connection)
         data = re.split('\nip', data)
         v6 = []
         v4 = []
@@ -81,7 +85,6 @@ class AclsFacts(object):
     def get_endpoint(self, ace, pro):
         ret_dict = {}
         option = ace.split()[0]
-        # q(ace, option)
         if option == 'any':
             ret_dict.update({'any': True})
         else:
@@ -148,11 +151,14 @@ class AclsFacts(object):
                     config['match_local_traffic'] = True
                     continue
                 acl = acl.split('\n')
+                acl = [a.strip() for a in acl]
+                acl = list(filter(None, acl))
                 acls['name'] = re.match(
-                    '(ip)?(v6)? access-list (.*)', acl[0]).group(3)
+                    '(ip)?(v6)?\s?access-list (.*)', acl[0]).group(3)
                 acls['aces'] = []
-                # q(acl)
                 for ace in list(filter(None, acl[1:])):
+                    if re.search(r'ip(.*)access-list.*', ace):
+                        break
                     entry = {}
                     ace = ace.strip()
                     seq = re.match('(\d*)', ace).group(0)

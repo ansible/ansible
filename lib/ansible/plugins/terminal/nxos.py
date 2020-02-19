@@ -53,13 +53,9 @@ class TerminalModule(TerminalBase):
         re.compile(
             br"[B|b]aud rate of console should be.* (\d*) to increase [a-z]* level", re.I),
         re.compile(br"cannot apply non-existing acl policy to interface", re.I),
-<<<<<<< HEAD
         re.compile(br"Duplicate sequence number", re.I),
         re.compile(
             br"Cannot apply ACL to an interface that is a port-channel member", re.I)
-=======
-        re.compile(br"Duplicate sequence number", re.I)
->>>>>>> Added warning detection
     ]
 
     def on_become(self, passwd=None):

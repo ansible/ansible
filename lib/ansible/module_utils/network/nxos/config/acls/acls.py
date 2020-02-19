@@ -10,7 +10,9 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
-import q
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import socket
 import re
 from copy import deepcopy
@@ -142,16 +144,13 @@ class Acls(ConfigBase):
                                     ace['protocol'])]
                                 # convert number to name
                             if 'protocol' in ace.keys() and ace['protocol'] in ['tcp', 'udp']:
-                                q(ace)
                                 for end in ['source', 'destination']:
                                     if 'port_protocol' in ace[end].keys():
                                         key = list(ace[end]['port_protocol'].keys())[
                                             0]
-                                        q(key)
                                         # key could be eq,gt,lt,neq or range
                                         if key != 'range':
                                             val = ace[end]['port_protocol'][key]
-                                            q(val)
                                             if val.isdigit() and int(val) in port_protocol.keys():
                                                 ace[end]['port_protocol'][key] = port_protocol[int(
                                                     val)]
@@ -166,7 +165,6 @@ class Acls(ConfigBase):
                                                 ace[end]['port_protocol']['range']['start'] = port_protocol[st]
                                             if end in port_protocol.keys():
                                                 ace[end]['port_protocol']['range']['end'] = port_protocol[end]
-                                q(ace)
         return want
 
     def set_state(self, want, have):
@@ -195,13 +193,11 @@ class Acls(ConfigBase):
                     commands.extend(self._state_merged(w, have))
                 elif state == 'replaced':
                     commands.extend(self._state_replaced(w, have))
-        q(commands)
         if state != 'parsed':
             commands = [c.strip() for c in commands]
         return commands
 
     def _state_parsed(self, want):
-        q(want)
         return self.get_acls_facts(want)
 
     def _state_rendered(self, want):
@@ -220,36 +216,29 @@ class Acls(ConfigBase):
         commands = []
         have_afi = search_obj_in_list(want['afi'], have, 'afi')
         del_dict = {'acls': []}
-        q(want, have_afi)
         want_names = []
         if have_afi != want:
             if have_afi:
-                q(have_afi, want)
                 del_dict.update({'afi': have_afi['afi'], 'acls': []})
                 if want.get('acls'):
                     want_names = [w['name'] for w in want['acls']]
                     have_names = [h['name'] for h in have_afi['acls']]
-                    q(have_names, want_names)
                     want_acls = want.get('acls')
                     for w in want_acls:
                         acl_commands = []
                         if w['name'] not in have_names:
                                             # creates new ACL in replaced state
                             merge_dict = {'afi': want['afi'], 'acls': [w]}
-                            q('new dict')
-                            q(merge_dict)
                             commands.extend(
                                 self._state_merged(merge_dict, have))
                         else:
                             # acl in want exists in have
                             have_name = search_obj_in_list(
                                 w['name'], have_afi['acls'], 'name')
-                            q(have_name)
                             have_aces = have_name.get(
                                 'aces') if have_name.get('aces') else []
                             merge_aces = []
                             del_aces = []
-                            q(have_name.get('aces'))
                             w_aces = w.get('aces') if w.get('aces') else []
 
                             for ace in have_aces:
@@ -258,20 +247,16 @@ class Acls(ConfigBase):
                             for ace in w_aces:
                                 if ace not in have_aces:
                                     merge_aces.append(ace)
-                            q(del_aces, merge_aces)
                             merge_dict = {'afi': want['afi'], 'acls': [
                                 {'name': w['name'], 'aces':merge_aces}]}
                             del_dict = {'afi': want['afi'], 'acls': [
                                 {'name': w['name'], 'aces': del_aces}]}
-                            q(del_dict, merge_dict)
                             if del_dict['acls']:
                                 acl_commands.extend(
                                     self._state_deleted([del_dict], have))
-                            q(acl_commands)
                             acl_commands.extend(
                                 self._state_merged(merge_dict, have))
 
-                            q(acl_commands)
                             for i in range(1, len(acl_commands)):
                                 if acl_commands[i] == acl_commands[0]:
                                     acl_commands[i] = ''
@@ -282,7 +267,6 @@ class Acls(ConfigBase):
                     for acl in have_afi['acls']:
                         acls.append({'name': acl['name']})
                     del_dict['acls'] = acls
-                    q(del_dict)
                     if del_dict['acls']:
                         commands.extend(
                             self._state_deleted([del_dict], have))
@@ -304,29 +288,21 @@ class Acls(ConfigBase):
         """
         commands = []
         want_afi = [w['afi'] for w in want]
-        q(want_afi)
         for h in have:
             if h['afi'] in want_afi:
-                q(h)
                 w = search_obj_in_list(h['afi'], want, 'afi')
                 for h_acl in h['acls']:
                     w_acl = search_obj_in_list(
                         h_acl['name'], w['acls'], 'name')
-                    q(h_acl, w_acl)
                     if not w_acl:
                         del_dict = {'afi': h['afi'], 'acls': [
                             {'name': h_acl['name']}]}
-                        q(del_dict)
                         commands.extend(self._state_deleted([del_dict], have))
             else:
-                q(h)
                 # if afi is not in want
                 commands.extend(self._state_deleted([{'afi': h['afi']}], have))
-        q(commands)
         for w in want:
-            q(w)
             commands.extend(self._state_replaced(w, have))
-        q(commands)
         return commands
 
     def _state_merged(self, want, have):
@@ -336,7 +312,6 @@ class Acls(ConfigBase):
         :returns: the commands necessary to merge the provided into
                   the current configuration
         """
-        q('inside merged')
         return self.set_commands(want, have)
 
     def _state_deleted(self, want, have):
@@ -347,49 +322,36 @@ class Acls(ConfigBase):
                   of the provided objects
         """
         commands = []
-        q('inside deleted')
-        q(want, have)
         if want:  # and have != want:
-            # q('delete want')
             for w in want:
-                # q(w)
                 ip = 'ipv6' if w['afi'] == 'ipv6' else 'ip'
                 acl_names = []
                 have_afi = search_obj_in_list(w['afi'], have, 'afi')
                 # if want['afi] not in have, ignore
-                # q(have_afi)
                 if have_afi:
                     if w.get('acls'):
                         for acl in w['acls']:
-                            # q(acl)
                             if 'aces' in acl.keys():
                                 have_name = search_obj_in_list(
                                     acl['name'], have_afi['acls'], 'name')
                                 if have_name:
-                                    # q(have_name)
                                     ace_commands = []
                                     flag = 0
                                     for ace in acl['aces']:
-                                                # q(ace)
                                         if list(ace.keys()) == ['sequence']:
-                                                # q('sequence')
                                                 # only sequence number is specified to be deleted
                                             if 'aces' in have_name.keys():
                                                 for h_ace in have_name['aces']:
-                                                    # q(h_ace)
                                                     if h_ace['sequence'] == ace['sequence']:
                                                         ace_commands.append(
                                                             'no ' + str(ace['sequence']))
                                                         flag = 1
                                         else:
-                                            # q(have_name)
                                             if 'aces' in have_name.keys():
                                                 for h_ace in have_name['aces']:
-                                                    # q(h_ace)
                                                     # when want['ace'] does not have seq number
                                                     if 'sequence' not in ace.keys():
                                                         del h_ace['sequence']
-                                                    # q(h_ace, ace)
                                                     if ace == h_ace:
                                                         ace_commands.append(
                                                             'no ' + self.process_ace(ace))
@@ -397,25 +359,21 @@ class Acls(ConfigBase):
                                     if flag:
                                         ace_commands.insert(
                                             0, ip + ' access-list ' + acl['name'])
-                                    # q(ace_commands)
                                     commands.extend(ace_commands)
                             else:
                                 # only name given
                                 for h in have_afi['acls']:
                                     if h['name'] == acl['name']:
                                         acl_names.append(acl['name'])
-                        # q(acl_names)
                         for name in acl_names:
                             commands.append(
                                 'no ' + ip + ' access-list ' + name)
 
                     else:
-                        # q('only afi is given')
+                        # 'only afi is given'
                         if have_afi.get('acls'):
                             for h in have_afi['acls']:
-                                # q(h)
                                 acl_names.append(h['name'])
-                            # q(acl_names)
                             for name in acl_names:
                                 commands.append(
                                     'no ' + ip + ' access-list ' + name)
@@ -424,7 +382,6 @@ class Acls(ConfigBase):
             v4 = []
             v6_local = v4_local = None
             for h in have:
-                # q(h)
                 if h['afi'] == 'ipv6':
                     v6 = (acl['name'] for acl in h['acls'])
                     if 'match_local_traffic' in h.keys():
@@ -433,7 +390,6 @@ class Acls(ConfigBase):
                     v4 = (acl['name'] for acl in h['acls'])
                     if 'match_local_traffic' in h.keys():
                         v4_local = True
-            # q(v4)
 
             self.no_commands(v4, commands, v4_local, 'ip')
             self.no_commands(v6, commands, v6_local, 'ipv6')
@@ -443,7 +399,6 @@ class Acls(ConfigBase):
             if v4_local:
                 commands.append('no ipv6 access-list match-local-traffic')
 
-        q(commands)
         return commands
 
     def no_commands(self, v_list, commands, match_local, ip):
@@ -461,14 +416,12 @@ class Acls(ConfigBase):
         else:
             ip = 'ip '
 
-        q(want, have_afi)
         if have_afi:
             if want.get('acls'):
                 for w_acl in want['acls']:
                     have_acl = search_obj_in_list(
                         w_acl['name'], have_afi['acls'], 'name')
                     name = w_acl['name']
-                    q(have_acl, w_acl)
                     flag = 0
                     ace_commands = []
                     if have_acl != w_acl:
@@ -478,9 +431,6 @@ class Acls(ConfigBase):
                                 # case 1 --> sequence number not given in want --> new ace
                                 # case 2 --> new sequence number in want --> new ace
                                 # case 3 --> existing sequence number given --> update rule (only for merged state. For replaced and overridden, rule is deleted in the state's config)
-
-                                # ace_list = [item for item in w_acl['aces']
-                                #             if item not in have_acl['aces']]
 
                                 ace_list = [
                                     item for item in w_acl['aces'] if 'sequence' not in item.keys()]  # case 1
@@ -495,18 +445,13 @@ class Acls(ConfigBase):
                                 common_seq = list(
                                     set(want_seq).intersection(set(have_seq)))
 
-                                q(want_seq, have_seq, new_seq, common_seq)
                                 temp_list = [item for item in w_acl['aces'] if 'sequence' in item.keys(
                                 ) and item['sequence'] in new_seq]  # case 2
                                 ace_list.extend(temp_list)
-                                q(ace_list)
                                 for w in w_acl['aces']:
                                     self.argument_spec = AclsArgs.argument_spec
-                                    q(self.argument_spec['config']
-                                      ['options']['acls']['options']['aces'], w)
                                     params = utils.validate_config(
                                         self.argument_spec, {'config': [{'afi': want['afi'], 'acls': [{'name': name, 'aces': ace_list}]}]})
-                                    q(params)
                                     if 'sequence' in w.keys() and w['sequence'] in common_seq:
                                         temp_obj = search_obj_in_list(
                                             w['sequence'], have_acl['aces'], 'sequence')  # case 3
@@ -518,11 +463,9 @@ class Acls(ConfigBase):
                                                 ace_commands.append(
                                                     'no ' + str(w['sequence']))
                                         # remove existing rule to update it
-                                q(ace_commands, ace_list)
                             elif w_acl.get('aces'):
                                 # 'have' has ACL defined without any ACE
                                 ace_list = [item for item in w_acl['aces']]
-                            # q(ace_list)
                             for w_ace in ace_list:
                                 ace_commands.append(
                                     self.process_ace(w_ace).strip())
@@ -531,17 +474,14 @@ class Acls(ConfigBase):
                             if flag:
                                 ace_commands.insert(
                                     0, ip + 'access-list ' + name)
-                            q(ace_commands, commands)
 
                         else:
-                            q(commands, name)
                             commands.append(ip + 'access-list ' + name)
                             if 'aces' in w_acl.keys():
                                 for w_ace in w_acl['aces']:
                                     commands.append(
                                         self.process_ace(w_ace).strip())
                     commands.extend(ace_commands)
-                    q(commands)
         else:
             if want.get('acls'):
                 for w_acl in want['acls']:
@@ -555,9 +495,7 @@ class Acls(ConfigBase):
 
     def process_ace(self, w_ace):
         command = ''
-        q(w_ace)
         ace_keys = w_ace.keys()
-        q(ace_keys)
         if 'remark' in ace_keys:
             command += 'remark ' + w_ace['remark'] + ' '
         else:
@@ -570,15 +508,12 @@ class Acls(ConfigBase):
                     w_ace['destination'], w_ace['protocol'])
                 command += src+dest
                 if 'protocol_options' in ace_keys:
-                    q('protocol_options')
                     pro = list(w_ace['protocol_options'].keys())[0]
-                    q(pro)
                     if pro != w_ace['protocol']:
                         self._module.fail_json(
                             msg='protocol and protocol_options mismatch')
                     flags = ''
                     for k in w_ace['protocol_options'][pro].keys():
-                        q(k)
                         k = re.sub('_', '-', k)
                         flags += k + ' '
                     command += flags
@@ -592,7 +527,6 @@ class Acls(ConfigBase):
                 command += 'log '
         if 'sequence' in ace_keys:
             command = str(w_ace['sequence']) + ' ' + command
-        # q(command)
         return command
 
     def get_address(self, endpoint, pro=''):
@@ -621,7 +555,6 @@ class Acls(ConfigBase):
     def get_options(self, item):
         com = ''
         subkey = list(item.keys())
-        q(subkey)
         if 'range' in subkey:
             com = 'range ' + item['range']['start'] + \
                 ' ' + item['range']['end']+' '
