@@ -61,7 +61,7 @@ class TestNxosAclsModule(TestNxosModule):
         def load_from_file(*args, **kwargs):
             v4 = '''\nip access-list ACL1v4\n 10 permit ip any any\n 20 deny udp any any'''
             v6 = '''\nipv6 access-list ACL1v6\n 10 permit sctp any any'''
-            return v4+v6
+            return v4 + v6
 
         self.execute_show_command.side_effect = load_from_file
 
@@ -80,7 +80,7 @@ class TestNxosAclsModule(TestNxosModule):
                                       sequence=20,
                                       protocol="tcp",
                                       protocol_options=dict(
-                                          tcp=dict(ack=True, psh=True))
+                                          tcp=dict(ack=True))
                                   )
                               ]
                               )
@@ -92,7 +92,7 @@ class TestNxosAclsModule(TestNxosModule):
                      ])
             ], state="merged"))
         commands = ['ip access-list ACL2v4',
-                    '20 deny tcp any any ack psh fragments',
+                    '20 deny tcp any any ack fragments',
                     'ipv6 access-list ACL2v6']
         self.execute_module(changed=True, commands=commands)
 
@@ -349,16 +349,22 @@ class TestNxosAclsModule(TestNxosModule):
         set_module_args(dict(running_config='''\nip access-list ACL1v4\n 10 permit ip any any\n 20 deny udp any any dscp AF23 precedence critical''',
                              state="parsed"))
         result = self.execute_module(changed=False)
-        compare_list = [{'afi': 'ipv4', 'acls': [{'name': 'ACL1v4', 'aces': [{'grant': 'permit', 'sequence': 10, 'protocol': 'ip', 'source': {'any': True}, 'destination': {'any': True}},
-                                                                             {'grant': 'deny', 'sequence': 20, 'protocol': 'udp', 'source': {
-                                                                                 'any': True}, 'destination': {'any': True}, 'dscp': 'AF23', 'precedence': 'critical'}]}]}]
+        compare_list = [{'afi': 'ipv4', 'acls': [{'name': 'ACL1v4',
+                                                  'aces': [{'grant': 'permit', 'sequence': 10, 'protocol': 'ip', 'source': {'any': True},
+                                                            'destination': {'any': True}}, {'grant': 'deny', 'sequence': 20,
+                                                                                            'protocol': 'udp', 'source': {'any': True},
+                                                                                            'destination': {'any': True},
+                                                                                            'dscp': 'AF23', 'precedence': 'critical'}]}]}]
         self.assertEqual(result['parsed'], compare_list, result['parsed'])
 
     def test_nxos_acls_gathered(self):
         set_module_args(dict(config=[], state="gathered"))
         result = self.execute_module(changed=False)
-        compare_list = [{'acls': [{'aces': [{'destination': {'any': True}, 'sequence': 10, 'protocol': 'sctp', 'source': {'any': True}, 'grant': 'permit'}], 'name': 'ACL1v6'}], 'afi': 'ipv6'},
-                        {'acls': [{'aces': [{'destination': {'any': True}, 'sequence': 10, 'protocol': 'ip', 'source': {'any': True}, 'grant': 'permit'},
-                                            {'destination': {'any': True}, 'sequence': 20, 'protocol': 'udp', 'source': {'any': True}, 'grant': 'deny'}], 'name': 'ACL1v4'}], 'afi': 'ipv4'}]
+        compare_list = [{'acls': [{'aces': [{'destination': {'any': True}, 'sequence': 10, 'protocol': 'sctp', 'source': {'any': True}, 'grant': 'permit'}],
+                                   'name': 'ACL1v6'}], 'afi': 'ipv6'}, {'acls': [{'aces': [{'destination': {'any': True}, 'sequence': 10, 'protocol': 'ip',
+                                                                                            'source': {'any': True}, 'grant': 'permit'},
+                                                                                           {'destination': {'any': True}, 'sequence': 20, 'protocol': 'udp',
+                                                                                            'source': {'any': True}, 'grant': 'deny'}], 'name': 'ACL1v4'}],
+                                                                        'afi': 'ipv4'}]
         self.assertEqual(result['gathered'],
                          compare_list, result['gathered'])

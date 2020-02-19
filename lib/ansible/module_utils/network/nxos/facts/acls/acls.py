@@ -37,7 +37,8 @@ class AclsFacts(object):
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
     def get_device_data(self, connection):
-        return connection.get("show running-config | section 'ip(v6)* access-list'")
+        return connection.get(
+            "show running-config | section 'ip(v6)* access-list'")
 
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for acls
@@ -74,8 +75,8 @@ class AclsFacts(object):
         facts = {}
 
         if objs:
-            params = utils.validate_config(
-                self.argument_spec, {'config': objs})
+            params = utils.validate_config(self.argument_spec,
+                                           {'config': objs})
             params = utils.remove_empties(params)
             facts['acls'] = params['config']
 
@@ -90,7 +91,7 @@ class AclsFacts(object):
         else:
             # it could be a.b.c.d or a.b.c.d/x or a.b.c.d/32
             if '/' in option:  # or 'host' in option:
-                ip = re.search('(.*)/(\d+)', option)
+                ip = re.search(r'(.*)/(\d+)', option)
                 if int(ip.group(2)) < 32 or 32 < int(ip.group(2)) < 128:
                     ret_dict.update({'prefix': option})
                 else:
@@ -99,24 +100,27 @@ class AclsFacts(object):
                 ret_dict.update({'address': option})
                 wb = ace.split()[1]
                 ret_dict.update({'wildcard_bits': wb})
-                ace = re.sub('{}'.format(wb), '', ace, 1)
+                ace = re.sub('{0}'.format(wb), '', ace, 1)
         ace = re.sub(option, '', ace, 1)
         if pro in ['tcp', 'udp']:
             keywords = ['eq', 'lt', 'gt', 'neq', 'range']
             if len(ace.split()) and ace.split()[0] in keywords:
                 port_protocol = {}
-                port_pro = re.search(
-                    '(eq|lt|gt|neq) (\w*)', ace)
+                port_pro = re.search(r'(eq|lt|gt|neq) (\w*)', ace)
                 if port_pro:
                     port_protocol.update(
                         {port_pro.group(1): port_pro.group(2)})
                     ace = re.sub(port_pro.group(1), '', ace, 1)
                     ace = re.sub(port_pro.group(2), '', ace, 1)
                 else:
-                    limit = re.search('(range) (\w*) (\w*)', ace)
+                    limit = re.search(r'(range) (\w*) (\w*)', ace)
                     if limit:
-                        port_protocol.update(
-                            {'range': {'start': limit.group(2), 'end': limit.group(3)}})
+                        port_protocol.update({
+                            'range': {
+                                'start': limit.group(2),
+                                'end': limit.group(3)
+                            }
+                        })
                         ace = re.sub(limit.group(2), '', ace, 1)
                         ace = re.sub(limit.group(3), '', ace, 1)
                 if port_protocol:
@@ -136,7 +140,25 @@ class AclsFacts(object):
         config = deepcopy(spec)
         protocol_options = {
             'tcp': ['fin', 'established', 'psh', 'rst', 'syn', 'urg', 'ack'],
-            'icmp': ['administratively_prohibited', 'alternate_address', 'conversion_error', 'dod_host_prohibited', 'dod_net_prohibited', 'echo', 'echo_reply', 'general_parameter_problem', 'host_isolated', 'host_precedence_unreachable', 'host_redirect', 'host_tos_redirect', 'host_tos_unreachable', 'host_unknown', 'host_unreachable', 'information_reply', 'information_request', 'mask_reply', 'mask_request', 'mobile_redirect', 'net_redirect', 'net_tos_redirect', 'net_tos_unreachable', 'net_unreachable', 'network_unknown', 'no_room_for_option', 'option_missing', 'packet_too_big', 'parameter_problem', 'port_unreachable', 'precedence_unreachable', 'protocol_unreachable', 'reassembly_timeout', 'redirect', 'router_advertisement', 'router_solicitation', 'source_quench', 'source_route_failed', 'time_exceeded', 'timestamp_reply', 'timestamp_request', 'traceroute', 'ttl_exceeded', 'unreachable'],
+            'icmp': [
+                'administratively_prohibited', 'alternate_address',
+                'conversion_error', 'dod_host_prohibited',
+                'dod_net_prohibited', 'echo', 'echo_reply',
+                'general_parameter_problem', 'host_isolated',
+                'host_precedence_unreachable', 'host_redirect',
+                'host_tos_redirect', 'host_tos_unreachable', 'host_unknown',
+                'host_unreachable', 'information_reply', 'information_request',
+                'mask_reply', 'mask_request', 'mobile_redirect',
+                'net_redirect', 'net_tos_redirect', 'net_tos_unreachable',
+                'net_unreachable', 'network_unknown', 'no_room_for_option',
+                'option_missing', 'packet_too_big', 'parameter_problem',
+                'port_unreachable', 'precedence_unreachable',
+                'protocol_unreachable', 'reassembly_timeout', 'redirect',
+                'router_advertisement', 'router_solicitation', 'source_quench',
+                'source_route_failed', 'time_exceeded', 'timestamp_reply',
+                'timestamp_request', 'traceroute', 'ttl_exceeded',
+                'unreachable'
+            ],
             'igmp': ['dvmrp', 'host_query', 'host_report'],
         }
         if conf:
@@ -153,15 +175,15 @@ class AclsFacts(object):
                 acl = acl.split('\n')
                 acl = [a.strip() for a in acl]
                 acl = list(filter(None, acl))
-                acls['name'] = re.match(
-                    '(ip)?(v6)?\s?access-list (.*)', acl[0]).group(3)
+                acls['name'] = re.match(r'(ip)?(v6)?\s?access-list (.*)',
+                                        acl[0]).group(3)
                 acls['aces'] = []
                 for ace in list(filter(None, acl[1:])):
                     if re.search(r'ip(.*)access-list.*', ace):
                         break
                     entry = {}
                     ace = ace.strip()
-                    seq = re.match('(\d*)', ace).group(0)
+                    seq = re.match(r'(\d*)', ace).group(0)
                     entry.update({'sequence': seq})
                     ace = re.sub(seq, '', ace, 1)
                     grant = ace.split()[0]
@@ -182,15 +204,15 @@ class AclsFacts(object):
                         ace, dest = self.get_endpoint(ace, pro)
                         entry.update({'destination': dest})
 
-                        dscp = re.search('dscp (\w*)', ace)
+                        dscp = re.search(r'dscp (\w*)', ace)
                         if dscp:
                             entry.update({'dscp': dscp.group(1)})
 
-                        frag = re.search('fragments', ace)
+                        frag = re.search(r'fragments', ace)
                         if frag:
                             entry.update({'fragments': True})
 
-                        prec = re.search('precedence (\w*)', ace)
+                        prec = re.search(r'precedence (\w*)', ace)
                         if prec:
                             entry.update({'precedence': prec.group(1)})
 
@@ -204,15 +226,12 @@ class AclsFacts(object):
                             for option in protocol_options[pro]:
                                 option = re.sub('_', '-', option)
                                 if option in ace:
-                                    option = re.sub(
-                                        '-', '_', option)
-                                    options.update(
-                                        {option: True})
+                                    option = re.sub('-', '_', option)
+                                    options.update({option: True})
                             if options:
                                 pro_options.update({pro: options})
                             if pro_options:
-                                entry.update(
-                                    {'protocol_options': pro_options})
+                                entry.update({'protocol_options': pro_options})
                     acls['aces'].append(entry)
                 config['acls'].append(acls)
         return utils.remove_empties(config)

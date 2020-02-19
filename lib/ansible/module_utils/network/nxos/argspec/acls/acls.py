@@ -70,24 +70,24 @@ class AclsArgs(object):  # pylint: disable=R0903
                                             ]],
                                             'options': {
                                                 'eq': {
-                                                    'type': 'str'
+                                                    'type': 'int'
                                                 },
                                                 'gt': {
-                                                    'type': 'str'
+                                                    'type': 'int'
                                                 },
                                                 'lt': {
-                                                    'type': 'str'
+                                                    'type': 'int'
                                                 },
                                                 'neq': {
-                                                    'type': 'str'
+                                                    'type': 'int'
                                                 },
                                                 'range': {
                                                     'options': {
                                                         'end': {
-                                                            'type': 'str'
+                                                            'type': 'int'
                                                         },
                                                         'start': {
-                                                            'type': 'str'
+                                                            'type': 'int'
                                                         }
                                                     },
                                                     'required_together':
@@ -118,6 +118,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                     'type': 'bool'
                                 },
                                 'grant': {
+                                    'choices': ['permit', 'deny'],
                                     'type': 'str'
                                 },
                                 'log': {
@@ -145,8 +146,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                                 'conversion_error': {
                                                     'type': 'bool'
                                                 },
-                                                'dod_host_prohibited':
-                                                {
+                                                'dod_host_prohibited': {
                                                     'type': 'bool'
                                                 },
                                                 'dod_net_prohibited': {
@@ -158,8 +158,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                                 'echo_reply': {
                                                     'type': 'bool'
                                                 },
-                                                'general_parameter_problem':
-                                                {
+                                                'general_parameter_problem': {
                                                     'type': 'bool'
                                                 },
                                                 'host_isolated': {
@@ -175,8 +174,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                                 'host_tos_redirect': {
                                                     'type': 'bool'
                                                 },
-                                                'host_tos_unreachable':
-                                                {
+                                                'host_tos_unreachable': {
                                                     'type': 'bool'
                                                 },
                                                 'host_unknown': {
@@ -188,8 +186,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                                 'information_reply': {
                                                     'type': 'bool'
                                                 },
-                                                'information_request':
-                                                {
+                                                'information_request': {
                                                     'type': 'bool'
                                                 },
                                                 'mask_reply': {
@@ -213,8 +210,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                                 'net_tos_redirect': {
                                                     'type': 'bool'
                                                 },
-                                                'net_tos_unreachable':
-                                                {
+                                                'net_tos_unreachable': {
                                                     'type': 'bool'
                                                 },
                                                 'net_unreachable': {
@@ -238,12 +234,10 @@ class AclsArgs(object):  # pylint: disable=R0903
                                                 'port_unreachable': {
                                                     'type': 'bool'
                                                 },
-                                                'precedence_unreachable':
-                                                {
+                                                'precedence_unreachable': {
                                                     'type': 'bool'
                                                 },
-                                                'protocol_unreachable':
-                                                {
+                                                'protocol_unreachable': {
                                                     'type': 'bool'
                                                 },
                                                 'reassembly_timeout': {
@@ -252,19 +246,16 @@ class AclsArgs(object):  # pylint: disable=R0903
                                                 'redirect': {
                                                     'type': 'bool'
                                                 },
-                                                'router_advertisement':
-                                                {
+                                                'router_advertisement': {
                                                     'type': 'bool'
                                                 },
-                                                'router_solicitation':
-                                                {
+                                                'router_solicitation': {
                                                     'type': 'bool'
                                                 },
                                                 'source_quench': {
                                                     'type': 'bool'
                                                 },
-                                                'source_route_failed':
-                                                {
+                                                'source_route_failed': {
                                                     'type': 'bool'
                                                 },
                                                 'time_exceeded': {
@@ -304,7 +295,8 @@ class AclsArgs(object):  # pylint: disable=R0903
                                                     'type': 'bool'
                                                 }
                                             },
-                                            'type': 'dict'
+                                            'type':
+                                            'dict'
                                         },
                                         'tcp': {
                                             'options': {
@@ -364,24 +356,24 @@ class AclsArgs(object):  # pylint: disable=R0903
                                              ['eq', 'gt', 'neq', 'range']],
                                             'options': {
                                                 'eq': {
-                                                    'type': 'str'
+                                                    'type': 'int'
                                                 },
                                                 'gt': {
-                                                    'type': 'str'
+                                                    'type': 'int'
                                                 },
                                                 'lt': {
-                                                    'type': 'str'
+                                                    'type': 'int'
                                                 },
                                                 'neq': {
-                                                    'type': 'str'
+                                                    'type': 'int'
                                                 },
                                                 'range': {
                                                     'options': {
                                                         'end': {
-                                                            'type': 'str'
+                                                            'type': 'int'
                                                         },
                                                         'start': {
-                                                            'type': 'str'
+                                                            'type': 'int'
                                                         }
                                                     },
                                                     'type': 'dict'
