@@ -695,6 +695,7 @@ files:
       - networking
       - infoblox
   $modules/net_tools/netbox/: FragmentedPacket
+    migrated_to: netbox_community.ansible_modules
   $modules/network/a10/: ericchou1 mischapeters
   $modules/network/aci/: &aci
     keywords: [ aci, cisco msc, cisco mso, multisite, multi-site ]
@@ -3549,6 +3550,7 @@ files:
   $plugins/inventory/netbox.py:
     support: community
     maintainers: $team_netbox
+    migrated_to: netbox_community.ansible_modules
   $plugins/inventory/openshift.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87
