@@ -34,6 +34,12 @@ options:
         choices: ['json', 'xml']
         default: json
         type: str
+    omit_date:
+        description:
+            - Removes the date field for the dumped template
+        required: false
+        type: bool
+        default: false
 extends_documentation_fragment:
   - zabbix
 '''
@@ -46,6 +52,7 @@ EXAMPLES = '''
     login_password: secret
     template_name: Template
     format: json
+    omit_date: yes
   register: template_json
 
 - name: Get Zabbix template as XML
@@ -55,6 +62,7 @@ EXAMPLES = '''
     login_password: secret
     template_name: Template
     format: xml
+    omit_date: no
   register: template_json
 '''
 
@@ -62,12 +70,11 @@ RETURN = '''
 ---
 template_json:
   description: The JSON of the template
-  returned: when format is json
+  returned: when format is json and omit_date is true
   type: str
   sample: {
             "zabbix_export": {
               "version": "4.0",
-              "date": "2019-10-27T14:17:24Z",
               "groups": [
                 {
                   "name": "Templates"
@@ -101,7 +108,7 @@ template_json:
 
 template_xml:
   description: The XML of the template
-  returned: when format is xml
+  returned: when format is xml and omit_date is false
   type: str
   sample: >-
     <zabbix_export>
@@ -181,19 +188,29 @@ class TemplateInfo(object):
 
         return template_id
 
-    def load_json_template(self, template_json):
+    def load_json_template(self, template_json, omit_date=False):
         try:
-            return json.loads(template_json)
+            jsondoc = json.loads(template_json)
+            # remove date field if requested
+            if omit_date and 'date' in jsondoc['zabbix_export']:
+                del jsondoc['zabbix_export']['date']
+            return jsondoc
         except ValueError as e:
             self._module.fail_json(msg='Invalid JSON provided', details=to_native(e), exception=traceback.format_exc())
 
-    def dump_template(self, template_id, template_type='json'):
+    def dump_template(self, template_id, template_type='json', omit_date=False):
         try:
             dump = self._zapi.configuration.export({'format': template_type, 'options': {'templates': template_id}})
             if template_type == 'xml':
-                return str(ET.tostring(ET.fromstring(dump.encode('utf-8')), encoding='utf-8').decode('utf-8'))
+                xmlroot = ET.fromstring(dump.encode('utf-8'))
+                # remove date field if requested
+                if omit_date:
+                    date = xmlroot.find(".date")
+                    if date is not None:
+                        xmlroot.remove(date)
+                return str(ET.tostring(xmlroot, encoding='utf-8').decode('utf-8'))
             else:
-                return self.load_json_template(dump)
+                return self.load_json_template(dump, omit_date)
 
         except ZabbixAPIException as e:
             self._module.fail_json(msg='Unable to export template: %s' % e)
@@ -210,6 +227,7 @@ def main():
             validate_certs=dict(type='bool', required=False, default=True),
             timeout=dict(type='int', default=10),
             template_name=dict(type='str', required=True),
+            omit_date=dict(type='bool', required=False, default=False),
             format=dict(type='str', choices=['json', 'xml'], default='json')
         ),
         supports_check_mode=False
@@ -227,6 +245,7 @@ def main():
     validate_certs = module.params['validate_certs']
     timeout = module.params['timeout']
     template_name = module.params['template_name']
+    omit_date = module.params['omit_date']
     format = module.params['format']
 
     try:
@@ -245,9 +264,9 @@ def main():
         module.fail_json(msg='Template not found: %s' % template_name)
 
     if format == 'json':
-        module.exit_json(changed=False, template_json=template_info.dump_template(template_id, template_type='json'))
+        module.exit_json(changed=False, template_json=template_info.dump_template(template_id, template_type='json', omit_date=omit_date))
     elif format == 'xml':
-        module.exit_json(changed=False, template_xml=template_info.dump_template(template_id, template_type='xml'))
+        module.exit_json(changed=False, template_xml=template_info.dump_template(template_id, template_type='xml', omit_date=omit_date))
 
 
 if __name__ == "__main__":
