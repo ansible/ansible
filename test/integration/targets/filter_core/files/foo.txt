@@ -61,6 +61,9 @@ TODO: realpath follows symlinks.  There isn't a test for this just now.
 TODO: add tests for set theory operations like union
 
 regex_replace = bar
+# Check regex_replace with multiline
+#bar
+#bart
 regex_search = 0001
 regex_findall = "['car', 'tar', 'bar']"
 regex_escape = \^f\.\*o\(\.\*\)\$
