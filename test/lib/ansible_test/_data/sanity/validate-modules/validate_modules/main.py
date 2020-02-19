@@ -1230,6 +1230,21 @@ class ModuleValidator(Validator):
                     msg=msg,
                 )
                 continue
+            bad_term = False
+            for term in requirements:
+                if not isinstance(term, string_types):
+                    msg = "required_if"
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " must have only strings in third value (requirements); got %r" % (term, )
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='required_if-requirements-type',
+                        msg=msg,
+                    )
+                    bad_term = True
+            if bad_term:
+                continue
             if len(set(requirements)) != len(requirements):
                 msg = "required_if"
                 if context:
