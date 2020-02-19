@@ -66,6 +66,15 @@ options:
             description:
             - Configure given VLAN in access port. It's used as the access VLAN ID.
             type: int
+      voice:
+        description:
+        - Switchport mode voice command to configure the interface with a voice vlan.
+        type: dict
+        suboptions:
+          vlan:
+            description:
+            - Configure given voice VLAN on access port. It's used as the voice VLAN ID.
+            type: int
       trunk:
         description:
         - Switchport mode trunk command to configure the interface as a Layer 2 trunk.
@@ -126,6 +135,8 @@ EXAMPLES = """
       - name: GigabitEthernet0/1
         access:
           vlan: 10
+        voice:
+          vlan: 40
       - name: GigabitEthernet0/2
         trunk:
           allowed_vlans: 10-20,40
@@ -141,6 +152,7 @@ EXAMPLES = """
 # interface GigabitEthernet0/1
 #  description Configured by Ansible
 #  switchport access vlan 10
+#  switchport access vlan 40
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test
@@ -220,6 +232,8 @@ EXAMPLES = """
       - name: GigabitEthernet0/2
         access:
           vlan: 20
+        voice:
+          vlan: 40
     state: overridden
 
 # After state:
@@ -232,6 +246,7 @@ EXAMPLES = """
 # interface GigabitEthernet0/2
 #  description This is test
 #  switchport access vlan 20
+#  switchport voice vlan 40
 #  media-type rj45
 #  negotiation auto
 
