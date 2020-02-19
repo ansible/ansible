@@ -110,13 +110,17 @@ class CollectionRequirement:
 
     @property
     def dependencies(self):
-        if self._metadata:
-            return self._metadata.dependencies
-        elif len(self.versions) > 1:
-            return None
+        if not self._metadata:
+            if len(self.versions) > 1:
+                return {}
+            self._get_metadata()
 
-        self._get_metadata()
-        return self._metadata.dependencies
+        dependencies = self._metadata.dependencies
+
+        if dependencies is None:
+            return {}
+
+        return dependencies
 
     def add_requirement(self, parent, requirement):
         self.required_by.append((parent, requirement))
