@@ -17,7 +17,7 @@ module: ec2_tag
 short_description: create and remove tags on ec2 resources
 description:
     - Creates, modifies and removes tags for any EC2 resource.
-    - Resources are referenced by their resource id (e.g. an instance being i-XXXXXXX, a VPC being vpc-XXXXXXX).
+    - Resources are referenced by their resource id (for example, an instance being i-XXXXXXX, a VPC being vpc-XXXXXXX).
     - This module is designed to be used with complex args (tags), see the examples.
 version_added: "1.3"
 requirements: [ "boto3", "botocore" ]
@@ -31,7 +31,8 @@ options:
     description:
       - Whether the tags should be present or absent on the resource.
       - The use of I(state=list) to interrogate the tags of an instance has been
-        deprecated and will be removed in Anisble 2.14.
+        deprecated and will be removed in Anisble 2.14.  The 'list'
+        functionality has been moved to a dedicated module M(ec2_tag_info).
     default: present
     choices: ['present', 'absent', 'list']
     type: str
