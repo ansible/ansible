@@ -119,6 +119,7 @@ updates:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import get_config, exec_command, cli_err_msg
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
 class AclInterface(object):
@@ -308,6 +309,7 @@ def main():
         direction=dict(choices=['inbound', 'outbound'], required=True)
     )
 
+    argument_spec.update(ce_argument_spec)
     module = AclInterface(argument_spec=argument_spec)
     module.work()
 

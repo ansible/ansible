@@ -190,7 +190,7 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, check_ip_addr
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
 
 # get acl
 CE_GET_ACL_HEADER = """
@@ -993,6 +993,7 @@ def main():
         log_flag=dict(required=False, default=False, type='bool')
     )
 
+    argument_spec.update(ce_argument_spec)
     module = BaseAcl(argument_spec=argument_spec)
     module.work()
 
