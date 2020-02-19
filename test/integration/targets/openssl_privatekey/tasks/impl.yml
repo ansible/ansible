@@ -170,6 +170,7 @@
     loop: "{{ types }}"
     loop_control:
       label: "{{ item.type }}"
+    ignore_errors: yes
     register: privatekey_t1_generate
 
   - name: Test other type generation (idempotency)
@@ -181,6 +182,7 @@
     loop: "{{ types }}"
     loop_control:
       label: "{{ item.type }}"
+    ignore_errors: yes
     register: privatekey_t1_idempotency
 
   when: select_crypto_backend == 'cryptography'
@@ -383,6 +385,7 @@
       type: X448
       format: pkcs8
       select_crypto_backend: '{{ select_crypto_backend }}'
+    ignore_errors: yes
     register: privatekey_fmt_2_step_1
 
   - name: Generate privatekey_fmt_2 - PKCS8 format (idempotent)
@@ -391,6 +394,7 @@
       type: X448
       format: pkcs8
       select_crypto_backend: '{{ select_crypto_backend }}'
+    ignore_errors: yes
     register: privatekey_fmt_2_step_2
 
   - name: Generate privatekey_fmt_2 - raw format
@@ -400,17 +404,20 @@
       format: raw
       select_crypto_backend: '{{ select_crypto_backend }}'
       return_content: yes
+    ignore_errors: yes
     register: privatekey_fmt_2_step_3
 
   - name: Read privatekey_fmt_2.pem
     slurp:
       src: "{{ output_dir }}/privatekey_fmt_2.pem"
+    ignore_errors: yes
     register: content
 
   - name: Generate privatekey_fmt_2 - verify that returned content is base64 encoded
     assert:
       that:
         - privatekey_fmt_2_step_3.privatekey == content.content
+    when: privatekey_fmt_2_step_1 is not failed
 
   - name: Generate privatekey_fmt_2 - raw format (idempotent)
     openssl_privatekey:
@@ -419,17 +426,20 @@
       format: raw
       select_crypto_backend: '{{ select_crypto_backend }}'
       return_content: yes
+    ignore_errors: yes
     register: privatekey_fmt_2_step_4
 
   - name: Read privatekey_fmt_2.pem
     slurp:
       src: "{{ output_dir }}/privatekey_fmt_2.pem"
+    ignore_errors: yes
     register: content
 
   - name: Generate privatekey_fmt_2 - verify that returned content is base64 encoded
     assert:
       that:
         - privatekey_fmt_2_step_4.privatekey == content.content
+    when: privatekey_fmt_2_step_1 is not failed
 
   - name: Generate privatekey_fmt_2 - auto format (ignore)
     openssl_privatekey:
@@ -438,17 +448,20 @@
       format: auto_ignore
       select_crypto_backend: '{{ select_crypto_backend }}'
       return_content: yes
+    ignore_errors: yes
     register: privatekey_fmt_2_step_5
 
   - name: Read privatekey_fmt_2.pem
     slurp:
       src: "{{ output_dir }}/privatekey_fmt_2.pem"
+    ignore_errors: yes
     register: content
 
   - name: Generate privatekey_fmt_2 - verify that returned content is base64 encoded
     assert:
       that:
         - privatekey_fmt_2_step_5.privatekey == content.content
+    when: privatekey_fmt_2_step_1 is not failed
 
   - name: Generate privatekey_fmt_2 - auto format (no ignore)
     openssl_privatekey:
@@ -457,12 +470,14 @@
       format: auto
       select_crypto_backend: '{{ select_crypto_backend }}'
       return_content: yes
+    ignore_errors: yes
     register: privatekey_fmt_2_step_6
 
   - name: Generate privatekey_fmt_2 - verify that returned content is not base64 encoded
     assert:
       that:
         - privatekey_fmt_2_step_6.privatekey == lookup('file', output_dir ~ '/privatekey_fmt_2.pem', rstrip=False)
+    when: privatekey_fmt_2_step_1 is not failed
 
   when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")'
 
