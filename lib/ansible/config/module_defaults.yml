@@ -297,6 +297,8 @@ groupings:
   - aws
   ec2_tag:
   - aws
+  ec2_tag_info:
+  - aws
   ec2_transit_gateway:
   - aws
   ec2_transit_gateway_info:
