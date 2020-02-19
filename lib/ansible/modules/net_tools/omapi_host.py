@@ -203,13 +203,10 @@ class OmapiHostManager:
             msg.obj.append((to_bytes('hardware-address'), pack_mac(self.module.params['macaddr'])))
             msg.obj.append((to_bytes('hardware-type'), struct.pack('!I', 1)))
             msg.obj.append((to_bytes('name'), to_bytes(self.module.params['hostname'])))
-
-
             if self.module.params['ip'] is not None:
                 msg.obj.append((to_bytes("ip-address", errors='surrogate_or_strict'), pack_ip(self.module.params['ip'])))
 
             stmt_join = ""
-
             if self.module.params['ddns']:
                 stmt_join += 'ddns-hostname "{0}"; '.format(self.module.params['hostname'])
 
@@ -225,7 +222,6 @@ class OmapiHostManager:
 
             try:
                 response = self.omapi.query_server(msg)
-
                 if response.opcode != OMAPI_OP_UPDATE:
                     self.module.fail_json(msg="Failed to add host, ensure authentication and host parameters "
                                               "are valid.")
