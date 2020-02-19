@@ -9,6 +9,9 @@ Developing collections
 Collections are a distribution format for Ansible content. You can use collections to package and distribute playbooks, roles, modules, and plugins.
 You can publish and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_.
 
+* For details on how to *use* collections see :ref:`collections`.
+* For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/general/blob/master/README.rst>`_.
+
 .. contents::
    :local:
    :depth: 2
@@ -44,7 +47,7 @@ and other tools need in order to package, build and publish the collection::
 
 .. note::
     * Ansible only accepts ``.yml`` extensions for :file:`galaxy.yml`, and ``.md`` for the :file:`README` file and any files in the :file:`/docs` folder.
-    * See the `draft collection <https://github.com/bcoca/collection>`_ for an example of a full collection structure.
+    * See the `ansible-collections <https://github.com/ansible-collections/>`_ GitHub Org for examples of collection structure.
     * Not all directories are currently in use. Those are placeholders for future features.
 
 .. _galaxy_yml:
@@ -189,6 +192,19 @@ Ansible Collection Testing because the act of installing the stable release of
 Ansible containing `ansible-test` is expected to setup those things for you.
 
 
+.. _creating_collections_skeleton:
+
+Creating a collection skeleton
+------------------------------
+
+To start a new collection:
+
+.. code-block:: bash
+
+    collection_dir#> ansible-galaxy collection init my_namespace.my_collection
+
+Once the skeleton exists, you can populate the directories with the content you want inside the collection. See `ansible-collections <https://github.com/ansible-collections/>`_ GitHub Org to get a better idea of what you can place inside a collection.
+
 .. _creating_collections:
 
 Creating collections
@@ -196,7 +212,7 @@ Creating collections
 
 To create a collection:
 
-#. Initialize a collection with :ref:`ansible-galaxy collection init<creating_collections_skeleton>` to create the skeleton directory structure.
+#. Create a collection skeleton with the ``collection init`` command. See :ref:`creating_collections_skeleton` above.
 #. Add your content to the collection.
 #. Build the collection into a collection artifact with :ref:`ansible-galaxy collection build<building_collections>`.
 #. Publish the collection artifact to Galaxy with :ref:`ansible-galaxy collection publish<publishing_collections>`.
@@ -211,20 +227,6 @@ Currently the ``ansible-galaxy collection`` command implements the following sub
 * ``install``: Install one or more collections.
 
 To learn more about the ``ansible-galaxy`` cli tool, see the :ref:`ansible-galaxy` man page.
-
-.. _creating_collections_skeleton:
-
-Creating a collection skeleton
-------------------------------
-
-To start a new collection:
-
-.. code-block:: bash
-
-    collection_dir#> ansible-galaxy collection init my_namespace.my_collection
-
-Then you can populate the directories with the content you want inside the collection. See
-https://github.com/bcoca/collection to get a better idea of what you can place inside a collection.
 
 
 .. _docfragments_collections:
@@ -269,11 +271,10 @@ This creates a tarball of the built collection in the current directory which ca
     ├── my_namespace-my_collection-1.0.0.tar.gz
     └── ...
 
-
 .. note::
-    * Certain files and folders are excluded when building the collection artifact. See :ref:`ignoring_files_and_folders_collections`  to exclude other files you would not wish to distribute.
-    * If you used the now-deprecated ``Mazer`` tool for any of your collections, delete any and all files it added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``.
-    * The current Galaxy maximum tarball size is 2 MB.
+   * Certain files and folders are excluded when building the collection artifact. See :ref:`ignoring_files_and_folders_collections`  to exclude other files you would not wish to distribute.
+   * If you used the now-deprecated ``Mazer`` tool for any of your collections, delete any and all files it added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``.
+   * The current Galaxy maximum tarball size is 2 MB.
 
 
 This tarball is mainly intended to upload to Galaxy
@@ -458,6 +459,51 @@ You can experiment with migrating existing modules into a collection using the `
 	This tool is in active development and is provided only for experimentation and feedback at this point.
 
 See the `content_collector README <https://github.com/ansible/content_collector>`_ for full details and usage guidelines.
+
+BOTMETA.yml
+-----------
+
+The `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ is the source of truth for:
+* ansibullbot
+* the docs build for collections-based modules
+
+Ansibulbot will know how to redirect existing issues and PRs to the new repo.
+The build process for docs.ansible.com will know where to find the module docs.
+
+.. code-block:: yaml
+
+   $modules/monitoring/grafana/grafana_plugin.py:
+       migrated_to: community.grafana
+   $modules/monitoring/grafana/grafana_dashboard.py:
+       migrated_to: community.grafana
+   $modules/monitoring/grafana/grafana_datasource.py:
+       migrated_to: community.grafana
+   $plugins/callback/grafana_annotations.py:
+       maintainers: $team_grafana
+       labels: monitoring grafana
+       migrated_to: community.grafana
+   $plugins/doc_fragments/grafana.py:
+       maintainers: $team_grafana
+       labels: monitoring grafana
+       migrated_to: community.grafana
+
+`Example PR <https://github.com/ansible/ansible/pull/66981/files>`_
+
+* The ``migrated_to:`` key must be added explicitly for every *file*. You cannot add ``migrated_to`` at the directory level. This is to allow module and plugin webdocs to be redirected to the new collection docs.
+* ``migrated_to:`` MUST be added for every:
+
+  * module
+  * plugin
+  * module_utils
+  * contrib/inventory script
+
+* You do NOT need to add ``migrated_to`` for:
+
+  * Unit tests
+  * Integration tests
+  * ReStructured Text docs (anything under ``docs/docsite/rst/``)
+  * Files that never existed in ``ansible/ansible:devel``
+
 
 .. seealso::
 
