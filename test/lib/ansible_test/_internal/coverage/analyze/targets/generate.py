@@ -57,21 +57,22 @@ def command_coverage_analyze_targets_generate(args):  # type: (CoverageAnalyzeTa
     """Analyze code coverage data to determine which integration test targets provide coverage for each arc or line."""
     root = data_context().content.root
     target_indexes = {}
-    arcs = dict((os.path.relpath(path, root), data) for path, data in analyze_python_coverage(args, target_indexes).items())
-    lines = dict((os.path.relpath(path, root), data) for path, data in analyze_powershell_coverage(args, target_indexes).items())
+    arcs = dict((os.path.relpath(path, root), data) for path, data in analyze_python_coverage(args, args.input_dir, target_indexes).items())
+    lines = dict((os.path.relpath(path, root), data) for path, data in analyze_powershell_coverage(args, args.input_dir, target_indexes).items())
     report = make_report(target_indexes, arcs, lines)
     write_report(args, report, args.output_file)
 
 
 def analyze_python_coverage(
         args,  # type: CoverageAnalyzeTargetsGenerateConfig
+        path,  # type: str
         target_indexes,  # type: TargetIndexes
 ):  # type: (...) -> Arcs
     """Analyze Python code coverage."""
     results = {}  # type: Arcs
     collection_search_re, collection_sub_re = get_collection_path_regexes()
     modules = get_python_modules()
-    python_files = get_python_coverage_files()
+    python_files = get_python_coverage_files(path)
     coverage = initialize_coverage(args)
 
     for python_file in python_files:
@@ -95,12 +96,13 @@ def analyze_python_coverage(
 
 def analyze_powershell_coverage(
         args,  # type: CoverageAnalyzeTargetsGenerateConfig
+        path,  # type: str
         target_indexes,  # type: TargetIndexes
 ):  # type: (...) -> Lines
     """Analyze PowerShell code coverage"""
     results = {}  # type: Lines
     collection_search_re, collection_sub_re = get_collection_path_regexes()
-    powershell_files = get_powershell_coverage_files()
+    powershell_files = get_powershell_coverage_files(path)
 
     for powershell_file in powershell_files:
         if not is_integration_coverage_file(powershell_file):
