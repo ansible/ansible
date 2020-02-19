@@ -1155,7 +1155,13 @@ class ModuleValidator(Validator):
     def _validate_list_of_module_args(self, name, terms, spec, context):
         if terms is None:
             return
+        if not isinstance(terms, (list, tuple)):
+            # This is already reported by schema checking
+            return
         for check in terms:
+            if not isinstance(check, (list, tuple)):
+                # This is already reported by schema checking
+                continue
             bad_term = False
             for term in check:
                 if not isinstance(term, string_types):
@@ -1195,7 +1201,13 @@ class ModuleValidator(Validator):
     def _validate_required_if(self, terms, spec, context, module):
         if terms is None:
             return
+        if not isinstance(terms, (list, tuple)):
+            # This is already reported by schema checking
+            return
         for check in terms:
+            if not isinstance(check, (list, tuple)) or len(check) not in [3, 4]:
+                # This is already reported by schema checking
+                continue
             if len(check) == 4 and not isinstance(check[3], bool):
                 msg = "required_if"
                 if context:
@@ -1284,9 +1296,19 @@ class ModuleValidator(Validator):
     def _validate_required_by(self, terms, spec, context):
         if terms is None:
             return
+        if not isinstance(terms, Mapping):
+            # This is already reported by schema checking
+            return
         for key, value in terms.items():
             if isinstance(value, string_types):
                 value = [value]
+            if not isinstance(value, (list, tuple)):
+                # This is already reported by schema checking
+                continue
+            for term in value:
+                if not isinstance(term, string_types):
+                    # This is already reported by schema checking
+                    continue
             if len(set(value)) != len(value) or key in value:
                 msg = "required_by"
                 if context:
