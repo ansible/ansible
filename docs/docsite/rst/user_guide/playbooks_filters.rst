@@ -1396,6 +1396,9 @@ To replace text in a string with regex, use the "regex_replace" filter::
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
 
+    # change a multiline string
+    {{ var | regex_replace('^', '#CommentThis#', multiline=True) }}
+
 .. note:: If you want to match the whole string and you are using ``*`` make sure to always wraparound your regular expression with the start/end anchors.
    For example ``^(.*)$`` will always match only one result, while ``(.*)`` on some Python versions will match the whole string and an empty string at the
    end, which means it will make two replacements::

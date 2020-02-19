@@ -1,0 +1,2 @@
+minor_changes:
+- regexp_replace filter - add multiline support for regex_replace filter (https://github.com/ansible/ansible/issues/61985)
