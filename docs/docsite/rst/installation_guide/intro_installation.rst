@@ -88,7 +88,7 @@ Which Ansible version to install is based on your particular needs. You can choo
 
 .. note::
 
-	You should only run Ansible from ``devel`` if you are actively developing content for Ansible. This is a rapidly changing source of code and can become unstable at any point.
+	You should only run Ansible from ``devel`` if you are modifying the Ansible engine, or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
 
 
 Ansible creates new releases two to three times a year. Due to this short release cycle,
@@ -363,7 +363,7 @@ Running Ansible from source (devel)
 
 .. note::
 
-	You should only run Ansible from ``devel`` if you are actively developing content for Ansible. This is a rapidly changing source of code and can become unstable at any point.
+	You should only run Ansible from ``devel`` if you are modifying the Ansible engine, or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
 
 Ansible is easy to run from source. You do not need ``root`` permissions
 to use it and there is no software to actually install. No daemons
