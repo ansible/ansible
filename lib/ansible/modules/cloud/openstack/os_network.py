@@ -73,7 +73,7 @@ options:
      description:
         -  Whether port security is enabled on the network or not.
            Network will use OpenStack defaults if this option is
-           not utilised.
+           not utilised. Requires openstacksdk>=0.18.
      type: bool
      version_added: "2.8"
 requirements:
@@ -179,9 +179,15 @@ def main():
     provider_network_type = module.params['provider_network_type']
     provider_segmentation_id = module.params['provider_segmentation_id']
     project = module.params.get('project')
-    port_security_enabled = module.params.get('port_security_enabled')
 
-    sdk, cloud = openstack_cloud_from_module(module)
+    net_create_kwargs = {}
+    min_version = None
+
+    if module.params['port_security_enabled'] is not None:
+        min_version = '0.18.0'
+        net_create_kwargs['port_security_enabled'] = module.params['port_security_enabled']
+
+    sdk, cloud = openstack_cloud_from_module(module, min_version)
     try:
         if project is not None:
             proj = cloud.get_project(project)
@@ -207,11 +213,11 @@ def main():
                 if project_id is not None:
                     net = cloud.create_network(name, shared, admin_state_up,
                                                external, provider, project_id,
-                                               port_security_enabled=port_security_enabled)
+                                               **net_create_kwargs)
                 else:
                     net = cloud.create_network(name, shared, admin_state_up,
                                                external, provider,
-                                               port_security_enabled=port_security_enabled)
+                                               **net_create_kwargs)
                 changed = True
             else:
                 changed = False
