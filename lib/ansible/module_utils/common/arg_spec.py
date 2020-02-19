@@ -27,7 +27,12 @@ from ansible.module_utils.common.parameters import (
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.warnings import deprecate, warn
 from ansible.module_utils.common.validation import (
+    check_mutually_exclusive,
     check_required_arguments,
+    check_required_by,
+    check_required_if,
+    check_required_one_of,
+    check_required_together,
 )
 
 from ansible.module_utils.six import string_types
@@ -36,13 +41,26 @@ from ansible.module_utils.six import string_types
 class ArgumentSpecValidator():
     """Argument spec validation class"""
 
-    def __init__(self, argument_spec, parameters):
+    def __init__(self, argument_spec, parameters,
+                 mutually_exclusive=None,
+                 required_together=None,
+                 required_one_of=None,
+                 required_if=None,
+                 required_by=None,
+                 _kind='module',
+                 _name=None,
+                 ):
+
         self._error_messages = []
         self._no_log_values = set()
-        self.argument_spec = argument_spec
-        # Make a copy of the original parameters to avoid changing them
-        self._validated_parameters = deepcopy(parameters)
+        self._validated_parameters = deepcopy(parameters)  # Make a copy of the original parameters to avoid changing them
         self._unsupported_parameters = set()
+        self.argument_spec = argument_spec
+        self.mutually_exclusive = mutually_exclusive
+        self.required_together = required_together
+        self.required_one_of = required_one_of
+        self.required_if = required_if
+        self.required_by = required_by
 
     @property
     def error_messages(self):
@@ -106,6 +124,11 @@ class ArgumentSpecValidator():
             legal_inputs = list(alias_results.keys()) + list(self.argument_spec.keys())
         self._unsupported_parameters.update(get_unsupported_parameters(self.argument_spec, self._validated_parameters, legal_inputs))
 
+        try:
+            check_mutually_exclusive(self.mutually_exclusive, self._validated_parameters)
+        except TypeError as te:
+            self._add_error(to_native(te))
+
         self._no_log_values.update(set_defaults(self.argument_spec, self._validated_parameters, False))
 
         try:
@@ -117,6 +140,20 @@ class ArgumentSpecValidator():
         validate_argument_values(self.argument_spec, self._validated_parameters, errors=self._error_messages)
 
         self._no_log_values.update(set_defaults(self.argument_spec, self._validated_parameters))
+
+        checks = (
+            {'func': check_required_together, 'attr': getattr(self, 'required_together')},
+            {'func': check_required_one_of, 'attr': getattr(self, 'required_one_of')},
+            {'func': check_required_if, 'attr': getattr(self, 'required_if')},
+            {'func': check_required_by, 'attr': getattr(self, 'required_by')},
+        )
+
+        for check in checks:
+            if check['attr'] is not None:
+                try:
+                    check['func'](check['attr'], self._validated_parameters)
+                except TypeError as te:
+                    self._add_error(to_native(te))
 
         validate_sub_spec(self.argument_spec, self._validated_parameters,
                           errors=self._error_messages,
