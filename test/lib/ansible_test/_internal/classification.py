@@ -813,11 +813,9 @@ class PathMapper:
             if dirname == 'test/utils/shippable':
                 test_map = {
                     'cloud.sh': 'integration:cloud/',
-                    'freebsd.sh': 'integration:all',
                     'linux.sh': 'integration:all',
                     'network.sh': 'network-integration:all',
-                    'osx.sh': 'integration:all',
-                    'rhel.sh': 'integration:all',
+                    'remote.sh': 'integration:all',
                     'sanity.sh': 'sanity:all',
                     'units.sh': 'units:all',
                     'windows.sh': 'windows-integration:all',
