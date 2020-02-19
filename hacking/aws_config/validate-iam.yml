@@ -1,0 +1,56 @@
+# Usage: ansible-playbook validate-iam.yml -vv
+#
+# Attempts to validate the hacking policies
+#
+
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    aws_region: "{{ region | default('us-east-1') }}"
+  tasks:
+    - name: Get aws account ID
+      aws_caller_info:
+        profile: "{{ profile|default(omit) }}"
+      register: aws_caller_info
+
+    - name: Set aws_account_fact
+      set_fact:
+        aws_account: "{{ aws_caller_info.account }}"
+        iam_managed_policies: {}
+        test_output: {}
+
+    - name: Ensure Managed IAM policies exist
+      vars:
+        policy_name: "AnsibleTest{{ item|basename|regex_replace('-.*', '')|capitalize }}Policy"
+        policy: "{{ lookup('template', item) }}"
+      set_fact:
+        iam_managed_policies: '{{ iam_managed_policies | combine({ policy_name: policy}) }}'
+      with_fileglob: "testing_policies/*.json"
+
+    - name: Test IAM Policy
+      command:
+        argv:
+        - 'aws'
+        - 'iam'
+        - 'simulate-custom-policy'
+        - '--policy-input-list'
+        - '{{ item.value | to_json }}'
+        - '--action-names'
+        - 'ec2:TagInstance'
+      loop: '{{ iam_managed_policies | dict2items }}'
+      loop_control:
+        label: '{{ item.key }}'
+      register: policy_results
+
+    - name: Extract results
+      vars:
+        _output: '{{ item.stdout | from_json }}'
+      set_fact:
+        test_output: '{{ test_output | combine({ item.item.key: _output }) }}'
+      loop: '{{ policy_results.results }}'
+      register: policy_results_parsed
+
+    - name: Dump results
+      debug:
+        var: test_output
