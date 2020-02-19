@@ -11,15 +11,6 @@ matrix:
     - env: T=freebsd/11.3/1
     - env: T=freebsd/12.1/1
 
-    - env: T=freebsd/11.3/2
-    - env: T=freebsd/12.1/2
-
-    - env: T=freebsd/11.3/3
-    - env: T=freebsd/12.1/3
-
-    - env: T=freebsd/11.3/4
-    - env: T=freebsd/12.1/4
-
     - env: T=freebsd/11.3/5
     - env: T=freebsd/12.1/5
 branches:
