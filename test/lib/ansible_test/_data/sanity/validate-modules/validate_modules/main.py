@@ -50,7 +50,7 @@ from .schema import ansible_module_kwargs_schema, doc_schema, metadata_1_1_schem
 from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml
 from voluptuous.humanize import humanize_error
 
-from ansible.module_utils.six import PY3, with_metaclass
+from ansible.module_utils.six import PY3, with_metaclass, string_types
 
 if PY3:
     # Because there is no ast.TryExcept in Python 3 ast module
@@ -1152,7 +1152,200 @@ class ModuleValidator(Validator):
 
         self._validate_argument_spec(docs, spec, kwargs)
 
-    def _validate_argument_spec(self, docs, spec, kwargs, context=None):
+    def _validate_list_of_module_args(self, name, terms, spec, context):
+        if terms is None:
+            return
+        if not isinstance(terms, (list, tuple)):
+            # This is already reported by schema checking
+            return
+        for check in terms:
+            if not isinstance(check, (list, tuple)):
+                # This is already reported by schema checking
+                continue
+            bad_term = False
+            for term in check:
+                if not isinstance(term, string_types):
+                    msg = name
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " must contain strings in the lists or tuples; found value %r" % (term, )
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=name + '-type',
+                        msg=msg,
+                    )
+                    bad_term = True
+            if bad_term:
+                continue
+            if len(set(check)) != len(check):
+                msg = name
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " has repeated terms"
+                self.reporter.error(
+                    path=self.object_path,
+                    code=name + '-collision',
+                    msg=msg,
+                )
+            if not set(check) <= set(spec):
+                msg = name
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " contains terms which are not part of argument_spec: %s" % ", ".join(sorted(set(check).difference(set(spec))))
+                self.reporter.error(
+                    path=self.object_path,
+                    code=name + '-unknown',
+                    msg=msg,
+                )
+
+    def _validate_required_if(self, terms, spec, context, module):
+        if terms is None:
+            return
+        if not isinstance(terms, (list, tuple)):
+            # This is already reported by schema checking
+            return
+        for check in terms:
+            if not isinstance(check, (list, tuple)) or len(check) not in [3, 4]:
+                # This is already reported by schema checking
+                continue
+            if len(check) == 4 and not isinstance(check[3], bool):
+                msg = "required_if"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " must have forth value omitted or of type bool; got %r" % (check[3], )
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_if-is_one_of-type',
+                    msg=msg,
+                )
+            requirements = check[2]
+            if not isinstance(requirements, (list, tuple)):
+                msg = "required_if"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " must have third value (requirements) being a list or tuple; got type %r" % (requirements, )
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_if-requirements-type',
+                    msg=msg,
+                )
+                continue
+            bad_term = False
+            for term in requirements:
+                if not isinstance(term, string_types):
+                    msg = "required_if"
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " must have only strings in third value (requirements); got %r" % (term, )
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='required_if-requirements-type',
+                        msg=msg,
+                    )
+                    bad_term = True
+            if bad_term:
+                continue
+            if len(set(requirements)) != len(requirements):
+                msg = "required_if"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " has repeated terms in requirements"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_if-requirements-collision',
+                    msg=msg,
+                )
+            if not set(requirements) <= set(spec):
+                msg = "required_if"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " contains terms in requirements which are not part of argument_spec: %s" % ", ".join(sorted(set(requirements).difference(set(spec))))
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_if-requirements-unknown',
+                    msg=msg,
+                )
+            key = check[0]
+            if key not in spec:
+                msg = "required_if"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " must have its key %s in argument_spec" % key
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_if-unknown-key',
+                    msg=msg,
+                )
+                continue
+            if key in requirements:
+                msg = "required_if"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " contains its key %s in requirements" % key
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_if-key-in-requirements',
+                    msg=msg,
+                )
+            value = check[1]
+            if value is not None:
+                _type = spec[key].get('type', 'str')
+                if callable(_type):
+                    _type_checker = _type
+                else:
+                    _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
+                try:
+                    with CaptureStd():
+                        dummy = _type_checker(value)
+                except (Exception, SystemExit):
+                    msg = "required_if"
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " has value %r which does not fit to %s's parameter type %r" % (value, key, _type)
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='required_if-value-type',
+                        msg=msg,
+                    )
+
+    def _validate_required_by(self, terms, spec, context):
+        if terms is None:
+            return
+        if not isinstance(terms, Mapping):
+            # This is already reported by schema checking
+            return
+        for key, value in terms.items():
+            if isinstance(value, string_types):
+                value = [value]
+            if not isinstance(value, (list, tuple)):
+                # This is already reported by schema checking
+                continue
+            for term in value:
+                if not isinstance(term, string_types):
+                    # This is already reported by schema checking
+                    continue
+            if len(set(value)) != len(value) or key in value:
+                msg = "required_by"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " has repeated terms"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_by-collision',
+                    msg=msg,
+                )
+            if not set(value) <= set(spec) or key not in spec:
+                msg = "required_by"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " contains terms which are not part of argument_spec: %s" % ", ".join(sorted(set(value).difference(set(spec))))
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_by-unknown',
+                    msg=msg,
+                )
+
+    def _validate_argument_spec(self, docs, spec, kwargs, context=None, last_context_spec=None):
         if not self.analyze_arg_spec:
             return
 
@@ -1161,6 +1354,9 @@ class ModuleValidator(Validator):
 
         if context is None:
             context = []
+
+        if last_context_spec is None:
+            last_context_spec = kwargs
 
         try:
             if not context:
@@ -1171,6 +1367,12 @@ class ModuleValidator(Validator):
 
         # Use this to access type checkers later
         module = NoArgsAnsibleModule({})
+
+        self._validate_list_of_module_args('mutually_exclusive', last_context_spec.get('mutually_exclusive'), spec, context)
+        self._validate_list_of_module_args('required_together', last_context_spec.get('required_together'), spec, context)
+        self._validate_list_of_module_args('required_one_of', last_context_spec.get('required_one_of'), spec, context)
+        self._validate_required_if(last_context_spec.get('required_if'), spec, context, module)
+        self._validate_required_by(last_context_spec.get('required_by'), spec, context)
 
         provider_args = set()
         args_from_argspec = set()
@@ -1541,7 +1743,8 @@ class ModuleValidator(Validator):
                         code='missing-suboption-docs',
                         msg=msg
                     )
-                self._validate_argument_spec({'options': doc_suboptions}, spec_suboptions, kwargs, context=context + [arg])
+                self._validate_argument_spec({'options': doc_suboptions}, spec_suboptions, kwargs,
+                                             context=context + [arg], last_context_spec=data)
 
         for arg in args_from_argspec:
             if not str(arg).isidentifier():

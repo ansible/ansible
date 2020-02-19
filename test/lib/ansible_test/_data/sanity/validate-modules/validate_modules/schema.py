@@ -75,7 +75,7 @@ argument_spec_modifiers = {
     'mutually_exclusive': sequence_of_sequences(min=2),
     'required_together': sequence_of_sequences(min=2),
     'required_one_of': sequence_of_sequences(min=2),
-    'required_if': sequence_of_sequences(min=3),
+    'required_if': sequence_of_sequences(min=3, max=4),
     'required_by': Schema({str: Any(list_string_types, tuple_string_types, *string_types)}),
 }
 
