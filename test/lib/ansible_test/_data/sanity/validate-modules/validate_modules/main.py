@@ -1156,6 +1156,7 @@ class ModuleValidator(Validator):
         if terms is None:
             return
         for check in terms:
+            bad_term = False
             for term in check:
                 if not isinstance(term, string_types):
                     msg = name
@@ -1167,6 +1168,9 @@ class ModuleValidator(Validator):
                         code=name + '-type',
                         msg=msg,
                     )
+                    bad_term = True
+            if bad_term:
+                continue
             if len(set(check)) != len(check):
                 msg = name
                 if context:
@@ -1213,6 +1217,7 @@ class ModuleValidator(Validator):
                     code='required_if-requirements-type',
                     msg=msg,
                 )
+                continue
             if len(set(requirements)) != len(requirements):
                 msg = "required_if"
                 if context:
