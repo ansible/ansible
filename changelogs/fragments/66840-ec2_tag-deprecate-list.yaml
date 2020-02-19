@@ -1,0 +1,2 @@
+deprecated_features:
+- 'ec2_tag: deprecate the `list` option in favor of ec2_tag_info'
