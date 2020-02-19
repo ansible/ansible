@@ -1228,7 +1228,7 @@ DEPRECATION_WARNINGS:
   - {key: deprecation_warnings, section: defaults}
   type: boolean
 DEVEL_WARNING:
-  nane: Running devel warning
+  name: Running devel warning
   default: True
   description: Toggle to control showing warnings related to running devel
   env: [{name: ANSIBLE_DEVEL_WARNING}]
