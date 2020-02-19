@@ -1,4 +1,7 @@
 ---
+- set_fact:
+    system_potentially_has_no_algorithm_support: "{{ ansible_os_family == 'FreeBSD' }}"
+
 - name: Validate privatekey1 idempotency and content returned
   assert:
     that:
@@ -120,9 +123,6 @@
   loop_control:
     label: "{{ item.item.curve }}"
 
-- set_fact:
-    system_potentially_has_no_algorithm_support: "{{ ansible_os_family == 'FreeBSD' }}"
-
 - name: Validate other type generation (just check changed)
   assert:
     that:
@@ -195,13 +195,21 @@
       - privatekey_fmt_1_step_9_before.public_key == privatekey_fmt_1_step_9_after.public_key
   when: 'select_crypto_backend == "cryptography"'
 
+- name: Validate format 2 (failed)
+  assert:
+    that:
+      - system_potentially_has_no_algorithm_support
+      - privatekey_fmt_2_step_1 is failed
+      - "'Cryptography backend does not support the algorithm required for ' in privatekey_fmt_2_step_1.msg"
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")' and privatekey_fmt_2_step_1 is failed
+
 - name: Validate format 2
   assert:
     that:
-      - privatekey_fmt_2_step_1 is changed
-      - privatekey_fmt_2_step_2 is not changed
-      - privatekey_fmt_2_step_3 is changed
-      - privatekey_fmt_2_step_4 is not changed
-      - privatekey_fmt_2_step_5 is not changed
-      - privatekey_fmt_2_step_6 is changed
-  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")'
+      - privatekey_fmt_2_step_1 is succeeded and privatekey_fmt_2_step_1 is changed
+      - privatekey_fmt_2_step_2 is succeeded and privatekey_fmt_2_step_2 is not changed
+      - privatekey_fmt_2_step_3 is succeeded and privatekey_fmt_2_step_3 is changed
+      - privatekey_fmt_2_step_4 is succeeded and privatekey_fmt_2_step_4 is not changed
+      - privatekey_fmt_2_step_5 is succeeded and privatekey_fmt_2_step_5 is not changed
+      - privatekey_fmt_2_step_6 is succeeded and privatekey_fmt_2_step_6 is changed
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")' and privatekey_fmt_2_step_1 is not failed
