@@ -71,6 +71,7 @@ def ansible_environment(args, color=True, ansible_config=None):
         ANSIBLE_RETRY_FILES_ENABLED='false',
         ANSIBLE_CONFIG=ansible_config,
         ANSIBLE_LIBRARY='/dev/null',
+        ANSIBLE_DEVEL_WARNING='false',  # Don't show warnings that CI is running devel
         PYTHONPATH=get_ansible_python_path(),
         PAGER='/bin/cat',
         PATH=path,
