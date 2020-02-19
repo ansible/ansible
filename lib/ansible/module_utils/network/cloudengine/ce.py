@@ -70,18 +70,6 @@ ce_provider_spec = {
 ce_argument_spec = {
     'provider': dict(type='dict', options=ce_provider_spec),
 }
-ce_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-    'use_ssl': dict(removed_in_version=2.9, type='bool'),
-    'validate_certs': dict(removed_in_version=2.9, type='bool'),
-    'timeout': dict(removed_in_version=2.9, type='int'),
-    'transport': dict(removed_in_version=2.9, choices=['cli', 'netconf']),
-}
-ce_argument_spec.update(ce_top_spec)
 
 
 def to_string(data):
