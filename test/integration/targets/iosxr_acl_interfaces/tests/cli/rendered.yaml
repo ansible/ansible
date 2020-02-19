@@ -1,0 +1,35 @@
+---
+- debug:
+      msg: "START iosxr_acl_interfaces rendered integration tests on connection={{ ansible_connection }}"
+
+- name: Render platform specific commands from task input using rendered state
+  iosxr_acl_interfaces:
+    config:
+      - name: GigabitEthernet0/0/0/0
+        access_groups:
+          - afi: ipv4
+            acls:
+              - name: acl_1
+                direction: in
+              - name: acl_2
+                direction: out
+          - afi: ipv6
+            acls:
+              - name: acl6_1
+                direction: in
+              - name: acl6_2
+                direction: out
+      
+      - name: GigabitEthernet0/0/0/1
+        access_groups:
+          - afi: ipv4
+            acls:
+              - name: acl_1
+                direction: out
+    state: rendered
+  register: result
+
+- name: Assert that correct set of commands were rendered
+  assert:
+    that:
+      - "{{ merged['commands'] | symmetric_difference(result['rendered']) |length == 0 }}"

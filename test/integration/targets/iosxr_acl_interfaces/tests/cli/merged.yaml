@@ -1,0 +1,115 @@
+---
+- debug:
+      msg: "START iosxr_acl_interfaces merged integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- name: Populate the device with ACLs
+  iosxr_config:
+    lines: |
+      ipv4 access-list acl_1
+      10 permit ipv4 any any
+      ipv4 access-list acl_2
+      10 permit ipv4 any any
+      ipv6 access-list acl6_1
+      10 permit ipv6 any any
+      ipv6 access-list acl6_2
+      10 permit ipv6 any any
+
+- block:
+    - name: Merge the provided configuration with the existing running configuration
+      iosxr_acl_interfaces: &merged
+        config:
+          - name: GigabitEthernet0/0/0/0
+            access_groups:
+              - afi: ipv4
+                acls:
+                  - name: acl_1
+                    direction: in
+                  - name: acl_2
+                    direction: out
+              - afi: ipv6
+                acls:
+                  - name: acl6_1
+                    direction: in
+                  - name: acl6_2
+                    direction: out
+          
+          - name: GigabitEthernet0/0/0/1
+            access_groups:
+              - afi: ipv4
+                acls:
+                  - name: acl_1
+                    direction: out
+        state: merged
+      register: result
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that: "{{ merged['before'] | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that after dicts was correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+      iosxr_acl_interfaces: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+          - "result.commands|length == 0"
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
+    
+    - name: Update acl_interfaces configuration using merged
+      iosxr_acl_interfaces: &merged_update
+        config:
+          - name: GigabitEthernet0/0/0/1
+            access_groups:
+              - afi: ipv4
+                acls:
+                  - name: acl_2
+                    direction: out
+                  - name: acl_1
+                    direction: in
+        state: merged
+      register: result
+    
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that: "{{ merged['update_before'] | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['update_commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that after dicts was correctly generated
+      assert:
+        that:
+          - "{{ merged['update_after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Update acl_interfaces configuration using merged (IDEMPOTENT)
+      iosxr_acl_interfaces: *merged_update
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+          - "result.commands|length == 0"
+
+  always:
+    - include_tasks: _remove_config.yaml

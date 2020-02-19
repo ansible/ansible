@@ -98,7 +98,10 @@ def filter_dict_having_none_value(want, have):
                     test_dict.update({'ipv4': test_key_dict})
                 # Checks if want doesn't have secondary IP but have has secondary IP set
                 elif have.get('ipv4'):
-                    if [True for each_have in have.get('ipv4') if 'secondary' in each_have]:
+                    if [
+                            True for each_have in have.get('ipv4')
+                            if 'secondary' in each_have
+                    ]:
                         test_dict.update({'ipv4': {'secondary': True}})
         if k == 'l2protocol':
             if want[k] != have.get('l2protocol') and have.get('l2protocol'):
@@ -167,7 +170,7 @@ def pad_commands(commands, interface):
     commands.insert(0, 'interface {0}'.format(interface))
 
 
-def diff_list_of_dicts(w, h):
+def diff_list_of_dicts(w, h, key='member'):
     """
     Returns a list containing diff between
     two list of dictionaries
@@ -179,11 +182,11 @@ def diff_list_of_dicts(w, h):
 
     diff = []
     for w_item in w:
-        h_item = search_obj_in_list(w_item['member'], h, key='member') or {}
+        h_item = search_obj_in_list(w_item[key], h, key=key) or {}
         d = dict_diff(h_item, w_item)
         if d:
-            if 'member' not in d.keys():
-                d['member'] = w_item['member']
+            if key not in d.keys():
+                d[key] = w_item[key]
             diff.append(d)
 
     return diff
@@ -196,7 +199,9 @@ def validate_ipv4(value, module):
             module.fail_json(msg='address format is <ipv4 address>/<mask>, got invalid format {0}'.format(value))
 
         if not is_masklen(address[1]):
-            module.fail_json(msg='invalid value for mask: {0}, mask should be in range 0-32'.format(address[1]))
+            module.fail_json(
+                msg='invalid value for mask: {0}, mask should be in range 0-32'
+                .format(address[1]))
 
 
 def validate_ipv6(value, module):

@@ -1,0 +1,31 @@
+---
+- name: Populate the device with ACLs
+  iosxr_config:
+    lines: |
+      ipv4 access-list acl_1
+      10 permit ipv4 any any
+      ipv4 access-list acl_2
+      10 permit ipv4 any any
+      ipv4 access-list acl_3
+      10 permit ipv4 any any
+      ipv6 access-list acl6_1
+      10 permit ipv6 any any
+      ipv6 access-list acl6_2
+      10 permit ipv6 any any
+      ipv6 access-list acl6_3
+      10 permit ipv6 any any
+
+- name: Setup ACL interfaces configuration for GigabitEthernet0/0/0/0
+  iosxr_config:
+    lines: |
+      ipv4 access-group acl_1 ingress
+      ipv4 access-group acl_2 egress
+      ipv6 access-group acl6_1 ingress
+      ipv6 access-group acl6_2 egress
+    parents: interface GigabitEthernet0/0/0/0
+
+- name: Setup ACL interfaces configuration for GigabitEthernet0/0/0/1
+  iosxr_config:
+    lines: ipv4 access-group acl_1 egress
+    parents: interface GigabitEthernet0/0/0/1
+     

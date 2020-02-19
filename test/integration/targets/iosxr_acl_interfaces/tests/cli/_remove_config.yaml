@@ -1,0 +1,34 @@
+---
+- name: Remove/Default Resources
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      default interface GigabitEthernet0/0/0/0
+      default interface GigabitEthernet0/0/0/1
+      no ipv4 access-list acl_1
+      no ipv4 access-list acl_2
+      no ipv6 access-list acl6_1
+      no ipv6 access-list acl6_2
+      no ipv6 access-list acl6_3
+
+- name: Initialize interfaces
+  iosxr_config:
+    lines: shutdown
+    parents: "{{ item }}"
+  loop:
+    - interface GigabitEthernet0/0/0/0
+    - interface GigabitEthernet0/0/0/1
+
+# To make sure our assertions are not affected by
+# spill overs from previous tests
+- name: Remove unwanted interfaces from config
+  iosxr_config:
+    lines:
+      - "no interface GigabitEthernet{{ item }}"
+  loop:
+    - 0/0/0/2
+    - 0/0/0/3
+    - 0/0/0/4
+    - 0/0/0/5
+  ignore_errors: yes
