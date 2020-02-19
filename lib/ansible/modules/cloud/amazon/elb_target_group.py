@@ -449,8 +449,10 @@ def create_or_update_target_group(connection, module):
     changed = False
     new_target_group = False
     params = dict()
+    target_type = module.params.get("target_type")
     params['Name'] = module.params.get("name")
-    if module.params.get("target_type") != "lambda":
+    params['TargetType'] = target_type
+    if target_type != "lambda":
         params['Protocol'] = module.params.get("protocol").upper()
         params['Port'] = module.params.get("port")
         params['VpcId'] = module.params.get("vpc_id")
@@ -500,10 +502,8 @@ def create_or_update_target_group(connection, module):
                 params['Matcher']['HttpCode'] = module.params.get("successful_response_codes")
 
     # Get target type
-    if module.params.get("target_type") is not None:
-        params['TargetType'] = module.params.get("target_type")
-        if params['TargetType'] == 'ip':
-            fail_if_ip_target_type_not_supported(module)
+    if target_type == 'ip':
+        fail_if_ip_target_type_not_supported(module)
 
     # Get target group
     tg = get_target_group(connection, module)
@@ -578,7 +578,7 @@ def create_or_update_target_group(connection, module):
 
             if module.params.get("targets"):
 
-                if module.params.get("target_type") != "lambda":
+                if target_type != "lambda":
                     params['Targets'] = module.params.get("targets")
 
                     # Correct type of target ports
@@ -660,7 +660,7 @@ def create_or_update_target_group(connection, module):
                         module.fail_json_aws(
                             e, msg="Couldn't register targets")
             else:
-                if module.params.get("target_type") != "lambda":
+                if target_type != "lambda":
 
                     current_instances = current_targets['TargetHealthDescriptions']
 
@@ -701,7 +701,7 @@ def create_or_update_target_group(connection, module):
         tg = get_target_group(connection, module)
 
         if module.params.get("targets"):
-            if module.params.get("target_type") != "lambda":
+            if target_type != "lambda":
                 params['Targets'] = module.params.get("targets")
                 try:
                     connection.register_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=params['Targets'])
