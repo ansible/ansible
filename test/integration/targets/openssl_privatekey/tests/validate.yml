@@ -201,7 +201,7 @@
       - system_potentially_has_no_algorithm_support
       - privatekey_fmt_2_step_1 is failed
       - "'Cryptography backend does not support the algorithm required for ' in privatekey_fmt_2_step_1.msg"
-  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")' and privatekey_fmt_2_step_1 is failed
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=") and privatekey_fmt_2_step_1 is failed'
 
 - name: Validate format 2
   assert:
@@ -212,4 +212,4 @@
       - privatekey_fmt_2_step_4 is succeeded and privatekey_fmt_2_step_4 is not changed
       - privatekey_fmt_2_step_5 is succeeded and privatekey_fmt_2_step_5 is not changed
       - privatekey_fmt_2_step_6 is succeeded and privatekey_fmt_2_step_6 is changed
-  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")' and privatekey_fmt_2_step_1 is not failed
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=") and privatekey_fmt_2_step_1 is not failed'
