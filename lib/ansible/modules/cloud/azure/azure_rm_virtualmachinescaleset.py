@@ -254,6 +254,14 @@ options:
             - timeout time for termination notification event
             - in range between 5 and 15
         version_added: "2.10"
+    priority:
+        description:
+            - If you want to request low-priority VMs for the VMSS, set this to "Low". The default is "Regular"
+        default: Regular
+        choices:
+            - Regular
+            - Low
+        version_added: "2.10"
 
 extends_documentation_fragment:
     - azure
@@ -533,7 +541,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                       product=dict(type='str', required=True), name=dict(type='str', required=True),
                       promotion_code=dict(type='str'))),
             scale_in_policy=dict(type='str', choices=['Default', 'OldestVM', 'NewestVM']),
-            terminate_event_timeout_minutes=dict(type='int')
+            terminate_event_timeout_minutes=dict(type='int'),
+            priority=dict(type='str', choices=['Regular', 'Low'], default='Regular')
         )
 
         self.resource_group = None
@@ -570,6 +579,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.plan = None
         self.scale_in_policy = None
         self.terminate_event_timeout_minutes = None
+        self.priority = None
 
         mutually_exclusive = [('load_balancer', 'application_gateway')]
         self.results = dict(
@@ -881,6 +891,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         ),
                         plan=plan,
                         virtual_machine_profile=self.compute_models.VirtualMachineScaleSetVMProfile(
+                            priority=self.priority,
                             os_profile=os_profile,
                             storage_profile=self.compute_models.VirtualMachineScaleSetStorageProfile(
                                 os_disk=self.compute_models.VirtualMachineScaleSetOSDisk(
