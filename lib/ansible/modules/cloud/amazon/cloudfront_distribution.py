@@ -1859,11 +1859,12 @@ class CloudFrontValidationManager(object):
             self.module.fail_json_aws(e, msg="Error validating lambda function associations")
 
     def validate_field_level_encryption_id(self, config, field_level_encryption_id, cache_behavior):
-        # only set field_level_encryption_id if it's already set or if it was passed
         if field_level_encryption_id is not None:
             cache_behavior['field_level_encryption_id'] = field_level_encryption_id
         elif 'field_level_encryption_id' in config:
             cache_behavior['field_level_encryption_id'] = config.get('field_level_encryption_id')
+        else:
+            cache_behavior['field_level_encryption_id'] = ""
         return cache_behavior
 
     def validate_allowed_methods(self, config, allowed_methods, cache_behavior):

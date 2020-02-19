@@ -1,0 +1,2 @@
+bugfixes:
+- cloudfront_distribution - Always add field_level_encryption_id to cache behaviour to match AWS requirements
