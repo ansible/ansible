@@ -170,6 +170,7 @@
     loop: "{{ types }}"
     loop_control:
       label: "{{ item.type }}"
+    ignore_errors: yes
     register: privatekey_t1_generate
 
   - name: Test other type generation (idempotency)
@@ -181,6 +182,7 @@
     loop: "{{ types }}"
     loop_control:
       label: "{{ item.type }}"
+    ignore_errors: yes
     register: privatekey_t1_idempotency
 
   when: select_crypto_backend == 'cryptography'
