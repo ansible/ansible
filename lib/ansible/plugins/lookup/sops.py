@@ -32,7 +32,7 @@ from subprocess import Popen, PIPE
 
 DOCUMENTATION = """
     lookup: sops
-    author: Edoardo Tenani <e.tenani@arduino.cc>
+    author: Edoardo Tenani (@endorama) <e.tenani@arduino.cc>
     version_added: "2.10"
     short_description: Read sops encrypted file contents
     description:
