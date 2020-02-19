@@ -248,7 +248,7 @@
               "states:UpdateStateMachine"
             ],
             "Resource": [
-              "arn:aws:states:*"
+              "arn:aws:states:*:*:*"
             ]
         },
         {
