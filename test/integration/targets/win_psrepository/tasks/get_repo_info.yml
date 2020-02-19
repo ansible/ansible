@@ -14,4 +14,4 @@
 
 - name: Set Repo Response Variable
   set_fact:
-    repo_result: "{{ _retrieve_repo_result.stdout | from_json }}"
+    "{{ repo_result_var | default('repo_result') }}": "{{ _retrieve_repo_result.stdout | from_json }}"

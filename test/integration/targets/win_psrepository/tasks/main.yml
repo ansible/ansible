@@ -13,6 +13,9 @@
 
   - name: run redirection tests
     include_tasks: redirects.yml
+
+  - name: run update and force behavior tests
+    include_tasks: update_and_force.yml
   always:
   - name: ensure test repo is unregistered
     win_shell: Unregister-PSRepository {{ repository_name | quote }} -ErrorAction Ignore

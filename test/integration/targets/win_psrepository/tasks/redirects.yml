@@ -3,41 +3,201 @@
 # Copyright: (c) 2020, Brian Scholer <@briantist>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
-- name: Add a repository with a redirected URL (check mode)
+- name: Tests for adding a new repository with a redirect
+  block:
+    - name: Add a repository with a redirected URL (check mode)
+      win_psrepository:
+        name: "{{ repository_name }}"
+        source_location: "{{ redirect_url }}/1"
+      register: redirect_add_check
+      check_mode: True
+
+    - name: Assert that task response is changed
+      assert:
+        that:
+          - redirect_add_check is changed
+
+    - import_tasks: get_repo_info.yml
+
+    - name: Assert that the repository was not created (check mode)
+      assert:
+        that:
+          - not repo_result.exists
+
+    - name: Add a repository with a redirected URL
+      win_psrepository:
+        name: "{{ repository_name }}"
+        source_location: "{{ redirect_url }}/1"
+      register: redirect_add_check
+
+    - name: Assert that task response is changed
+      assert:
+        that:
+          - redirect_add_check is changed
+
+    - import_tasks: get_repo_info.yml
+
+    - name: Assert that the repository was created with expected destination
+      assert:
+        that:
+          - repo_result.exists
+          - repo_result.repo.SourceLocation == redirect_expected_target
+
+- name: Tests for updating a repository with the same options but without location resolution
+  block:
+    - name: Update with same options but no location resolution (check mode)
+      win_psrepository:
+        name: "{{ repository_name }}"
+        source_location: "{{ redirect_url }}/1"
+        resolve_locations: False
+      register: no_redirect_check
+      check_mode: True
+
+    - name: Assert that the task is changed (check mode)
+      assert:
+        that:
+          - no_redirect_check is changed
+
+    - name: Update with same options but no location resolution
+      win_psrepository:
+        name: "{{ repository_name }}"
+        source_location: "{{ redirect_url }}/1"
+        resolve_locations: False
+      register: no_redirect_check
+
+    - name: Assert that the task is changed
+      assert:
+        that:
+          - no_redirect_check is changed
+
+    - import_tasks: get_repo_info.yml
+      vars:
+        repo_result_var: repo_new_info
+
+    - name: Assert that the repository info is actually identical to before
+      assert:
+        that:
+          - repo_new_info.exists
+          - repo_new_info.repo.SourceLocation         == repo_result.repo.SourceLocation
+          - repo_new_info.repo.PublishLocation        == repo_result.repo.PublishLocation
+          - repo_new_info.repo.ScriptSourceLocation   == repo_result.repo.ScriptSourceLocation
+          - repo_new_info.repo.ScriptPublishLocation  == repo_result.repo.ScriptPublishLocation
+
+- name: Tests for setting all locations to redirected URLs
+  block:
+    - name: Set all locations to redirected URLs (check mode)
+      win_psrepository:
+        name: "{{ repository_name }}"
+        source_location:          "{{ redirect_url }}/1"
+        publish_location:         "{{ redirect_publish_url }}"
+        script_source_location:   "{{ redirect_script_source_url }}"
+        script_publish_location:  "{{ redirect_script_publish_url }}"
+      register: all_redirect_check
+      check_mode: True
+
+    - name: Assert that the result is changed (check mode)
+      assert:
+        that:
+          - all_redirect_check is changed
+
+    - import_tasks: get_repo_info.yml
+
+    - name: Assert that the repo is not changed (check mode)
+      assert:
+        that:
+          - repo_result.exists
+          - repo_new_info.repo.SourceLocation         == repo_result.repo.SourceLocation
+          - repo_new_info.repo.PublishLocation        == repo_result.repo.PublishLocation
+          - repo_new_info.repo.ScriptSourceLocation   == repo_result.repo.ScriptSourceLocation
+          - repo_new_info.repo.ScriptPublishLocation  == repo_result.repo.ScriptPublishLocation
+
+    - name: Set all locations to redirected URLs
+      win_psrepository:
+        name: "{{ repository_name }}"
+        source_location:          "{{ redirect_url }}/1"
+        publish_location:         "{{ redirect_publish_url }}"
+        script_source_location:   "{{ redirect_script_source_url }}"
+        script_publish_location:  "{{ redirect_script_publish_url }}"
+      register: all_redirect_check
+
+    - name: Assert that the result is changed (check mode)
+      assert:
+        that:
+          - all_redirect_check is changed
+
+    - import_tasks: get_repo_info.yml
+
+    - name: Assert that the repo uses the expected URLs
+      assert:
+        that:
+          - repo_result.exists
+          - repo_result.repo.SourceLocation         == redirect_expected_target
+          - repo_result.repo.PublishLocation        == redirect_publish_expected_target
+          - repo_result.repo.ScriptSourceLocation   == redirect_script_source_expected_target
+          - repo_result.repo.ScriptPublishLocation  == redirect_script_publish_expected_target
+
+    - name: Set all locations to redirected URLs again (check mode)
+      win_psrepository:
+        name: "{{ repository_name }}"
+        source_location:          "{{ redirect_url }}/1"
+        publish_location:         "{{ redirect_publish_url }}"
+        script_source_location:   "{{ redirect_script_source_url }}"
+        script_publish_location:  "{{ redirect_script_publish_url }}"
+      register: all_redirect_check
+      check_mode: True
+
+    - name: Assert that the result is not changed (check mode)
+      assert:
+        that:
+          - all_redirect_check is not changed
+
+- name: Tests for using URLs with too many redirects
+  block:
+    # There seems to be an internal limit somewhere in HttpClient of 50 redirects.
+    # Not certain where this is or whether it varies by platform / psedition.
+    # These tests may not be very useful until / unless we support PowerShell against non-Windows or Nano.
+    - name: Try to trigger too many redirects (check mode)
+      win_psrepository:
+        name: "{{ repository_name }}"
+        source_location: "{{ redirect_url }}/51"
+      register: too_many_redirects_check
+      ignore_errors: True
+      check_mode: True
+
+    - name: Assert that the task errored out (check mode)
+      assert:
+        that:
+          - too_many_redirects_check is failed
+          - too_many_redirects_check.msg is search('invalid Web Uri')
+
+    - name: Try to trigger too many redirects
+      win_psrepository:
+        name: "{{ repository_name }}"
+        source_location: "{{ redirect_url }}/51"
+      register: too_many_redirects_check
+      ignore_errors: True
+
+    - name: Assert that the task errored out
+      assert:
+        that:
+          - too_many_redirects_check is failed
+          - too_many_redirects_check.msg is search('invalid Web Uri')
+
+    - name: Prove a mismatch between regular and check mode when location resolution is off (check mode)
+      win_psrepository:
+        name: "{{ repository_name }}"
+        source_location: "{{ redirect_url }}/51"
+        resolve_locations: False
+      register: too_many_redirects_check
+      ignore_errors: True
+      check_mode: True
+
+    - name: Assert that the task was successful (check mode)
+      assert:
+        that:
+          - too_many_redirects_check is not failed
+
+- name: remove repository (redirect tests)
   win_psrepository:
     name: "{{ repository_name }}"
-    source_location: "{{ redirect_1_url }}"
-  check_mode: True
-  register: redirect_add_check
-
-- name: Assert that task response is changed
-  assert:
-    that:
-      - redirect_add_check is changed
-
-- import_tasks: get_repo_info.yml
-
-- name: Assert that the repository was not created (check mode)
-  assert:
-    that:
-      - not repo_result.exists
-
-- name: Add a repository with a redirected URL
-  win_psrepository:
-    name: "{{ repository_name }}"
-    source_location: "{{ redirect_1_url }}"
-  register: redirect_add_check
-
-- name: Assert that task response is changed
-  assert:
-    that:
-      - redirect_add_check is changed
-
-- import_tasks: get_repo_info.yml
-
-- name: Assert that the repository was created with expected destination
-  assert:
-    that:
-      - repo_result.exists
-      - repo_result.repo.SourceLocation == redirect_1_expected_target
-
+    state: absent

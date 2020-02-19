@@ -1,0 +1,368 @@
+# This file is part of Ansible
+
+# Copyright: (c) 2020, Brian Scholer <@briantist>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Tests for creating a repository with all locations set
+  block:
+    - name: Add a repository with all locations set (check mode)
+      win_psrepository:
+        name:                     "{{ repository_name }}"
+        source_location:          "{{ repository_source_location }}"
+        publish_location:         "{{ repository_publish_location }}"
+        script_source_location:   "{{ repository_script_source_location }}"
+        script_publish_location:  "{{ repository_script_publish_location }}"
+      register: all_register_check
+      check_mode: True
+
+    - name: Assert that task is changed (check mode)
+      assert:
+        that:
+          - all_register_check is changed
+
+    - import_tasks: get_repo_info.yml
+
+    - name: Assert that the repository was not created (check mode)
+      assert:
+        that:
+          - not repo_result.exists
+
+    - name: Add a repository with all locations set
+      win_psrepository:
+        name:                     "{{ repository_name }}"
+        source_location:          "{{ repository_source_location }}"
+        publish_location:         "{{ repository_publish_location }}"
+        script_source_location:   "{{ repository_script_source_location }}"
+        script_publish_location:  "{{ repository_script_publish_location }}"
+      register: all_register_check
+
+    - name: Assert that task is changed
+      assert:
+        that:
+          - all_register_check is changed
+
+    - import_tasks: get_repo_info.yml
+
+    - name: Assert that the repository was created with expected locations
+      assert:
+        that:
+          - repo_result.exists
+          - repo_result.repo.SourceLocation         == repository_source_location
+          - repo_result.repo.PublishLocation        == repository_publish_location
+          - repo_result.repo.ScriptSourceLocation   == repository_script_source_location
+          - repo_result.repo.ScriptPublishLocation  == repository_script_publish_location
+
+    - name: Add a repository with all locations set again (check mode)
+      win_psrepository:
+        name:                     "{{ repository_name }}"
+        source_location:          "{{ repository_source_location }}"
+        publish_location:         "{{ repository_publish_location }}"
+        script_source_location:   "{{ repository_script_source_location }}"
+        script_publish_location:  "{{ repository_script_publish_location }}"
+      register: all_register_check
+      check_mode: True
+
+    - name: Assert that task is not changed
+      assert:
+        that:
+          - all_register_check is not changed
+
+- name: Tests for upating individual locations without changing existing ones
+  block:
+    - name: Update source location
+      block:
+        - name: Update source_location only (check mode)
+          win_psrepository:
+            name:                     "{{ repository_name }}"
+            source_location:          "{{ repository_source_location_alt }}"
+          register: single_update_check
+          check_mode: True
+
+        - name: Assert that task is changed (check mode)
+          assert:
+            that:
+              - single_update_check is changed
+
+        - import_tasks: get_repo_info.yml
+
+        - name: Assert that source location was not updated (check mode)
+          assert:
+            that:
+              - repo_result.exists
+              - repo_result.repo.SourceLocation         != repository_source_location_alt
+              - repo_result.repo.PublishLocation        == repository_publish_location
+              - repo_result.repo.ScriptSourceLocation   == repository_script_source_location
+              - repo_result.repo.ScriptPublishLocation  == repository_script_publish_location
+
+        - name: Update source_location only
+          win_psrepository:
+            name:                     "{{ repository_name }}"
+            source_location:          "{{ repository_source_location_alt }}"
+          register: single_update_check
+
+        - name: Assert that task is changed
+          assert:
+            that:
+              - single_update_check is changed
+
+        - import_tasks: get_repo_info.yml
+
+        - name: Assert that source location was updated
+          assert:
+            that:
+              - repo_result.exists
+              - repo_result.repo.SourceLocation         == repository_source_location_alt
+              - repo_result.repo.PublishLocation        == repository_publish_location
+              - repo_result.repo.ScriptSourceLocation   == repository_script_source_location
+              - repo_result.repo.ScriptPublishLocation  == repository_script_publish_location
+
+    - name: Update publish location
+      block:
+        - name: Update publish_location only (check mode)
+          win_psrepository:
+            name:                     "{{ repository_name }}"
+            publish_location:         "{{ repository_publish_location_alt }}"
+          register: single_update_check
+          check_mode: True
+
+        - name: Assert that task is changed (check mode)
+          assert:
+            that:
+              - single_update_check is changed
+
+        - import_tasks: get_repo_info.yml
+
+        - name: Assert that publish location was not updated (check mode)
+          assert:
+            that:
+              - repo_result.exists
+              - repo_result.repo.SourceLocation         == repository_source_location_alt
+              - repo_result.repo.PublishLocation        != repository_publish_location_alt
+              - repo_result.repo.ScriptSourceLocation   == repository_script_source_location
+              - repo_result.repo.ScriptPublishLocation  == repository_script_publish_location
+
+        - name: Update publish_location only
+          win_psrepository:
+            name:                     "{{ repository_name }}"
+            publish_location:         "{{ repository_publish_location_alt }}"
+          register: single_update_check
+
+        - name: Assert that task is changed
+          assert:
+            that:
+              - single_update_check is changed
+
+        - import_tasks: get_repo_info.yml
+
+        - name: Assert that publish location was updated
+          assert:
+            that:
+              - repo_result.exists
+              - repo_result.repo.SourceLocation         == repository_source_location_alt
+              - repo_result.repo.PublishLocation        == repository_publish_location_alt
+              - repo_result.repo.ScriptSourceLocation   == repository_script_source_location
+              - repo_result.repo.ScriptPublishLocation  == repository_script_publish_location
+
+    - name: Update script source location
+      block:
+        - name: Update script_source_location only (check mode)
+          win_psrepository:
+            name:                     "{{ repository_name }}"
+            script_source_location:   "{{ repository_script_source_location_alt }}"
+          register: single_update_check
+          check_mode: True
+
+        - name: Assert that task is changed (check mode)
+          assert:
+            that:
+              - single_update_check is changed
+
+        - import_tasks: get_repo_info.yml
+
+        - name: Assert that script source location was not updated (check mode)
+          assert:
+            that:
+              - repo_result.exists
+              - repo_result.repo.SourceLocation         == repository_source_location_alt
+              - repo_result.repo.PublishLocation        == repository_publish_location_alt
+              - repo_result.repo.ScriptSourceLocation   != repository_script_source_location_alt
+              - repo_result.repo.ScriptPublishLocation  == repository_script_publish_location
+
+        - name: Update script_source_location only
+          win_psrepository:
+            name:                     "{{ repository_name }}"
+            script_source_location:   "{{ repository_script_source_location_alt }}"
+          register: single_update_check
+
+        - name: Assert that task is changed
+          assert:
+            that:
+              - single_update_check is changed
+
+        - import_tasks: get_repo_info.yml
+
+        - name: Assert that script source location was updated
+          assert:
+            that:
+              - repo_result.exists
+              - repo_result.repo.SourceLocation         == repository_source_location_alt
+              - repo_result.repo.PublishLocation        == repository_publish_location_alt
+              - repo_result.repo.ScriptSourceLocation   == repository_script_source_location_alt
+              - repo_result.repo.ScriptPublishLocation  == repository_script_publish_location
+
+    - name: Update script publish location
+      block:
+        - name: Update script_publish_location only (check mode)
+          win_psrepository:
+            name:                     "{{ repository_name }}"
+            script_publish_location:   "{{ repository_script_publish_location_alt }}"
+          register: single_update_check
+          check_mode: True
+
+        - name: Assert that task is changed (check mode)
+          assert:
+            that:
+              - single_update_check is changed
+
+        - import_tasks: get_repo_info.yml
+
+        - name: Assert that script publish location was not updated (check mode)
+          assert:
+            that:
+              - repo_result.exists
+              - repo_result.repo.SourceLocation         == repository_source_location_alt
+              - repo_result.repo.PublishLocation        == repository_publish_location_alt
+              - repo_result.repo.ScriptSourceLocation   == repository_script_source_location_alt
+              - repo_result.repo.ScriptPublishLocation  != repository_script_publish_location_alt
+
+        - name: Update script_publish_location only
+          win_psrepository:
+            name:                     "{{ repository_name }}"
+            script_publish_location:   "{{ repository_script_publish_location_alt }}"
+          register: single_update_check
+
+        - name: Assert that task is changed
+          assert:
+            that:
+              - single_update_check is changed
+
+        - import_tasks: get_repo_info.yml
+
+        - name: Assert that script publish location was updated
+          assert:
+            that:
+              - repo_result.exists
+              - repo_result.repo.SourceLocation         == repository_source_location_alt
+              - repo_result.repo.PublishLocation        == repository_publish_location_alt
+              - repo_result.repo.ScriptSourceLocation   == repository_script_source_location_alt
+              - repo_result.repo.ScriptPublishLocation  == repository_script_publish_location_alt
+
+- name: Tests for using force
+  block:
+    - name: Ensure repository is not unnecessarily re-registered (check mode)
+      win_psrepository:
+        force: True
+        name:                     "{{ repository_name }}"
+        source_location:          "{{ repository_source_location_alt }}"
+        publish_location:         "{{ repository_publish_location_alt }}"
+        script_source_location:   "{{ repository_script_source_location_alt }}"
+        script_publish_location:  "{{ repository_script_publish_location_alt }}"
+      register: force_check
+      check_mode: True
+
+    - name: Assert that task is not changed (check mode)
+      assert:
+        that:
+          - force_check is not changed
+
+    - import_tasks: get_repo_info.yml
+
+    - name: Assert that repository settings remain identical (check mode)
+      assert:
+        that:
+          - repo_result.exists
+          - repo_result.repo.SourceLocation         == repository_source_location_alt
+          - repo_result.repo.PublishLocation        == repository_publish_location_alt
+          - repo_result.repo.ScriptSourceLocation   == repository_script_source_location_alt
+          - repo_result.repo.ScriptPublishLocation  == repository_script_publish_location_alt
+
+    - name: Ensure repository is not unnecessarily re-registered
+      win_psrepository:
+        force: True
+        name:                     "{{ repository_name }}"
+        source_location:          "{{ repository_source_location_alt }}"
+        publish_location:         "{{ repository_publish_location_alt }}"
+        script_source_location:   "{{ repository_script_source_location_alt }}"
+        script_publish_location:  "{{ repository_script_publish_location_alt }}"
+      register: force_check
+
+    - name: Assert that task is not changed
+      assert:
+        that:
+          - force_check is not changed
+
+    - import_tasks: get_repo_info.yml
+
+    - name: Assert that repository settings remain identical
+      assert:
+        that:
+          - repo_result.exists
+          - repo_result.repo.SourceLocation         == repository_source_location_alt
+          - repo_result.repo.PublishLocation        == repository_publish_location_alt
+          - repo_result.repo.ScriptSourceLocation   == repository_script_source_location_alt
+          - repo_result.repo.ScriptPublishLocation  == repository_script_publish_location_alt
+
+    - name: Set only two locations (check mode)
+      win_psrepository:
+        force: True
+        name:                     "{{ repository_name }}"
+        source_location:          "{{ repository_source_location }}"
+        script_source_location:   "{{ repository_script_source_location }}"
+      register: force_check
+      check_mode: True
+
+    - name: Assert that task is changed (check mode)
+      assert:
+        that:
+          - force_check is changed
+
+    - import_tasks: get_repo_info.yml
+
+    - name: Assert that repository settings remain identical (check mode)
+      assert:
+        that:
+          - repo_result.exists
+          - repo_result.repo.SourceLocation         == repository_source_location_alt
+          - repo_result.repo.PublishLocation        == repository_publish_location_alt
+          - repo_result.repo.ScriptSourceLocation   == repository_script_source_location_alt
+          - repo_result.repo.ScriptPublishLocation  == repository_script_publish_location_alt
+
+    - name: Set only two locations
+      win_psrepository:
+        force: True
+        name:                     "{{ repository_name }}"
+        source_location:          "{{ repository_source_location }}"
+        script_source_location:   "{{ repository_script_source_location }}"
+      register: force_check
+
+    - name: Assert that task is changed
+      assert:
+        that:
+          - force_check is changed
+
+    - import_tasks: get_repo_info.yml
+
+    - name: Assert that repository settings were updated
+      assert:
+        that:
+          - repo_result.exists
+          - repo_result.repo.SourceLocation         == repository_source_location
+          - repo_result.repo.ScriptSourceLocation   == repository_script_source_location
+            # these won't be blank because PowerShellGet tries to discover publish locations based on sources
+          - repo_result.repo.PublishLocation        != repository_publish_location_alt
+          - repo_result.repo.ScriptPublishLocation  != repository_script_publish_location_alt
+
+- name: remove repository (update and force tests)
+  win_psrepository:
+    name: "{{ repository_name }}"
+    state: absent
