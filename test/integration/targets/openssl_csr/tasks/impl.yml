@@ -735,7 +735,7 @@
       ignore_errors: yes
 
     - name: Generate CSR if private key generation succeeded
-      when: ownca_certificate_ed25519_ed448_privatekey is not failed
+      when: generate_csr_ed25519_ed448_privatekey is not failed
       block:
 
         - name: Generate CSR
