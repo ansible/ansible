@@ -20,7 +20,7 @@ $publish_location = Get-AnsibleParam -obj $params -name "publish_location" -alia
 $script_publish_location = Get-AnsibleParam -obj $params -name "script_publish_location" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
 $installation_policy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -validateset "trusted", "untrusted"
-$follow_redirects = Get-AnsibleParam -obj $params -name "follow_redirects" -type "bool" -default $true
+$resolve_locations = Get-AnsibleParam -obj $params -name "resolve_locations" -type "bool" -default $true
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
 
 $result = @{"changed" = $false}
@@ -68,12 +68,16 @@ Function Resolve-PSGetLocation {
         $LocationParameterName,
 
         [Parameter()]
+        [pscredential]
+        [System.Management.Automation.Credential()]
         $Credential,
 
         [Parameter()]
         $Proxy,
 
         [Parameter()]
+        [pscredential]
+        [System.Management.Automation.Credential()]
         $ProxyCredential
     )
 
@@ -105,7 +109,7 @@ if ($installation_policy) {
 # Validate location params are valid URIs and add them to the params
 if ($source_location) {
     if ($source_location -as [uri]) {
-        $repository_params.SourceLocation = if ($follow_redirects) {
+        $repository_params.SourceLocation = if ($resolve_locations) {
             Resolve-PSGetLocation -Location $source_location -LocationParameterName source_location
         }
         else {
@@ -122,7 +126,7 @@ elseif ($state -eq 'present' -and ($force -or -not $Repo)) {
 
 if ($script_source_location) {
     if ($script_source_location -as [uri]) {
-        $repository_params.ScriptSourceLocation = if ($follow_redirects) {
+        $repository_params.ScriptSourceLocation = if ($resolve_locations) {
             Resolve-PSGetLocation -Location $script_source_location -LocationParameterName script_source_location
         }
         else {
@@ -136,7 +140,7 @@ if ($script_source_location) {
 
 if ($publish_location) {
     if ($publish_location -as [uri]) {
-        $repository_params.PublishLocation = if ($follow_redirects) {
+        $repository_params.PublishLocation = if ($resolve_locations) {
             Resolve-PSGetLocation -Location $publish_location -LocationParameterName publish_location
         }
         else {
@@ -150,7 +154,7 @@ if ($publish_location) {
 
 if ($script_publish_location) {
     if ($script_publish_location -as [uri]) {
-        $repository_params.ScriptPublishLocation = if ($follow_redirects) {
+        $repository_params.ScriptPublishLocation = if ($resolve_locations) {
             Resolve-PSGetLocation -Location $script_publish_location -LocationParameterName script_publish_location
         }
         else {

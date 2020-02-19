@@ -69,17 +69,17 @@ options:
       - Will default to C(trusted) when creating a new repository or used with I(force=True).
     type: str
     choices: [ trusted, untrusted ]
-  follow_redirects:
+  resolve_locations:
     description:
-      - If C(True), this module will follow HTTP/S redirects and use the final result for comparing and assigning the specified location.
-      - Applies to all location options. Only applies if the location type is HTTP/S. See notes for additional context.
+      - If C(True), location options will be transformed the same way PowerShellGet transforms them before comparison.
+      - Applies to all location options. See notes for additional context.
     type: bool
     default: True
     version_added: '2.10'
   force:
     description:
       - If C(True), any differences from the desired state will result in the repository being unregistered, and then re-registered.
-      - See notes for additional context.
+      - I(force) has no effect when I(state=absent). See notes for additional context.
     type: bool
     default: False
     version_added: '2.10'
@@ -90,8 +90,9 @@ requirements:
 notes:
   - See the examples on how to update the NuGet package provider.
   - You can not use C(win_psrepository) to re-register (add) removed PSGallery, use the command C(Register-PSRepository -Default) instead.
-  - When registering or setting I(source_location), PowerShell will follow redirects and register the final resolves URL.
-  - If I(follow_redirects=False) and the specified URL redirects, then the comparison will see them as different, and cause a C(CHANGED) status on every run.
+  - When registering or setting I(source_location), PowerShellGet will transform the location according to internal rules, such as following HTTP/S redirects.
+  - If I(resolve_locations=False) and the specified location is transformed before registering, then they will compare as different on subsequent runs.
+  - This will always cause a C(CHANGED) status as the values will never match and will be "reset" each time.
   - When updating an existing repository, all options except I(name) are optional. Only supplied options will be updated. Use I(force=True) to exactly match.
   - I(script_location), I(publish_location), and I(script_publish_location) are optional but once set can only be cleared with I(force=True).
   - Using I(force=True) will unregister and re-register the repository if there are any changes, so that it exactly matches the options specified.
@@ -150,7 +151,7 @@ EXAMPLES = '''
     name: NewRepo
     source_location: https://myrepo.example/module/feed
     script_source_location: https://myrepo.example/script/feed
-    follow_redirects: False
+    resolve_locations: False
 '''
 
 RETURN = '''
