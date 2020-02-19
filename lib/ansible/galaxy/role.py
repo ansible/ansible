@@ -108,13 +108,11 @@ class GalaxyRole(object):
                     meta_path = os.path.join(path, meta_main)
                     if os.path.isfile(meta_path):
                         try:
-                            f = open(meta_path, 'r')
-                            self._metadata = yaml.safe_load(f)
+                            with open(meta_path, 'r') as f:
+                                self._metadata = yaml.safe_load(f)
                         except Exception:
                             display.vvvvv("Unable to load metadata for %s" % self.name)
                             return False
-                        finally:
-                            f.close()
                         break
 
         return self._metadata
