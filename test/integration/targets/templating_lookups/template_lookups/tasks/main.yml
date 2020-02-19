@@ -75,6 +75,7 @@
 # BUG #34144 bad template caching
 
 - name: generate two random passwords
+  set_fact:
     password1: "{{ lookup('password', '/dev/null length=20') }}"
     password2: "{{ lookup('password', '/dev/null length=20') }}"
     # If the passwords are generated randomly, the chance that they
