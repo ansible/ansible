@@ -39,13 +39,13 @@ class Static_Routes(ConfigBase):
     def __init__(self, module):
         super(Static_Routes, self).__init__(module)
 
-    def get_static_routes_facts(self):
+    def get_static_routes_facts(self, data=None):
         """ Get the 'facts' (the current configuration)
 
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
+        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources, data=data)
         static_routes_facts = facts['ansible_network_resources'].get('static_routes')
         if not static_routes_facts:
             return []
@@ -84,7 +84,9 @@ class Static_Routes(ConfigBase):
         elif self.state == 'parsed':
             running_config = self._module.params['running_config']
             if not running_config:
-                self._module.fail_json(msg="Value of running_config parameter must not be empty for state parsed")
+                self._module.fail_json(
+                    msg="value of running_config parameter must not be empty for state parsed"
+                )
             result['parsed'] = self.get_static_routes_facts(data=running_config)
         else:
             changed_static_routes_facts = []
@@ -123,14 +125,14 @@ class Static_Routes(ConfigBase):
                   to the desired configuration
         """
         state = self._module.params['state']
-        if state in ('overridden', 'merged', 'replaced') and not want:
+        if state in ('overridden', 'merged', 'replaced', 'rendered') and not want:
             self._module.fail_json(msg='value of config parameter must not be empty for state {0}'.format(state))
         commands = []
         if state == 'overridden':
             commands = self._state_overridden(want, have)
         elif state == 'deleted':
             commands = self._state_deleted(want, have)
-        elif state == 'merged':
+        elif state == 'merged' or state == 'rendered':
             commands = self._state_merged(want, have)
         elif state == 'replaced':
             commands = self._state_replaced(want, have)
@@ -176,17 +178,20 @@ class Static_Routes(ConfigBase):
                                         if v is not None:
                                             new_have_dict.update({k: v})
 
-                                    # if the have_dict has only name and forward_router_address then skip deleting
-                                    # else if it has other diff first delete the respective config and then set the
-                                    # new config with user provided want next_hops
-                                    if len(new_have_dict) > 2:
-                                        clear_route_have = copy.deepcopy(route_have)
-                                        clear_route_have['next_hops'] = [new_have_dict]
-                                        commands.extend(self._clear_config(w, h, addr_want, addr_have,
-                                                                           route_want, clear_route_have))
                                     # Set the new config from the user provided want config
-                                    commands.extend(self._set_config(w, h, addr_want,
-                                                                     route_want, route_have, new_hops, have_set))
+                                    cmd = self._set_config(w, h, addr_want, route_want, route_have, new_hops, have_set)
+
+                                    if cmd:
+                                        # since inplace update isn't allowed for static routes, preconfigured
+                                        # static routes needs to be deleted before the new want static routes changes
+                                        # are applied
+                                        clear_route_have = copy.deepcopy(route_have)
+                                        # inplace update is allowed in case of ipv6 static routes, so not deleting it
+                                        # before applying the want changes
+                                        if ':' not in route_want.get('dest'):
+                                            commands.extend(self._clear_config({}, h, {}, addr_have,
+                                                                               {}, clear_route_have))
+                                    commands.extend(cmd)
                             if check:
                                 break
                         if check:
@@ -272,7 +277,6 @@ class Static_Routes(ConfigBase):
         :returns: the commands necessary to merge the provided into
                   the current configuration
         """
-
         commands = []
 
         # Drill each iteration of want n have and then based on dest and afi tyoe comparison take config call
@@ -322,20 +326,30 @@ class Static_Routes(ConfigBase):
         if want:
             # Drill each iteration of want n have and then based on dest and afi type comparison fire delete config call
             for w in want:
-                for addr_want in w.get('address_families'):
-                    for route_want in addr_want.get('routes'):
-                        check = False
-                        for h in have:
-                            for addr_have in h.get('address_families'):
-                                for route_have in addr_have.get('routes'):
-                                    if route_want.get('dest') == route_have.get('dest') \
-                                            and addr_want['afi'] == addr_have['afi']:
-                                        check = True
-                                        commands.extend(self._clear_config({}, h, {}, addr_have, {}, route_have))
+                if w.get('address_families'):
+                    for addr_want in w.get('address_families'):
+                        for route_want in addr_want.get('routes'):
+                            check = False
+                            for h in have:
+                                for addr_have in h.get('address_families'):
+                                    for route_have in addr_have.get('routes'):
+                                        if route_want.get('dest') == route_have.get('dest') \
+                                                and addr_want['afi'] == addr_have['afi']:
+                                            check = True
+                                            if route_want.get('next_hops'):
+                                                commands.extend(self._clear_config({}, w, {}, addr_want, {}, route_want))
+                                            else:
+                                                commands.extend(self._clear_config({}, h, {}, addr_have, {}, route_have))
+                                    if check:
+                                        break
                                 if check:
                                     break
-                            if check:
-                                break
+                else:
+                    for h in have:
+                        for addr_have in h.get('address_families'):
+                            for route_have in addr_have.get('routes'):
+                                if w.get('vrf') == h.get('vrf'):
+                                    commands.extend(self._clear_config({}, h, {}, addr_have, {}, route_have))
         else:
             # Drill each iteration of have and then based on dest and afi type comparison fire delete config call
             for h in have:
