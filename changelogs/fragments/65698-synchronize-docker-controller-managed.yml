@@ -1,0 +1,2 @@
+bugfixes:
+  - synchronize - allow data to be passed between two managed nodes when using the docker connection plugin (https://github.com/ansible/ansible/pull/65698)
