@@ -1,2 +1,2 @@
 dependencies:
-  - setup_postgresql_db
+  - setup_postgresql_replication
