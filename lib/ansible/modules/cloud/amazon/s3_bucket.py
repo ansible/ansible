@@ -334,13 +334,10 @@ def create_or_update_bucket(s3_client, module, location):
         result['tags'] = current_tags_dict
 
     # Encryption
-    if hasattr(s3_client, "get_bucket_encryption"):
-        try:
-            current_encryption = get_bucket_encryption(s3_client, name)
-        except (ClientError, BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Failed to get bucket encryption")
-    elif encryption is not None:
-        module.fail_json(msg="Using bucket encryption requires botocore version >= 1.7.41")
+    try:
+        current_encryption = get_bucket_encryption(s3_client, name)
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to get bucket encryption")
 
     if encryption is not None:
         current_encryption_algorithm = current_encryption.get('SSEAlgorithm') if current_encryption else None
@@ -726,6 +723,9 @@ def main():
     encryption = module.params.get("encryption")
     encryption_key_id = module.params.get("encryption_key_id")
 
+    if not hasattr(s3_client, "get_bucket_encryption"):
+        if encryption is not None:
+            module.fail_json(msg="Using bucket encryption requires botocore version >= 1.7.41")
     # Parameter validation
     if encryption_key_id is not None and encryption is None:
         module.fail_json(msg="You must specify encryption parameter along with encryption_key_id.")
