@@ -65,6 +65,7 @@ options:
               - Specifies the AFI for the ACL(s) to be configured on this interface.
             type: str
             choices: ['ipv4', 'ipv6']
+            required: True
           acls:
             type: list
             description:
@@ -81,6 +82,7 @@ options:
                   - Specifies the direction of packets that the ACL will be applied on.
                 type: str
                 choices: ['in', 'out']
+                required: True
   running_config:
     description:
       - The module, by default, will connect to the remote device and
