@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-galaxy - the option to skip certificate verification now also applies when cloning via SCM (git/hg) (https://github.com/ansible/ansible/issues/41077)
