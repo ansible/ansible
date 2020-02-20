@@ -62,6 +62,40 @@ If you use the persistent cache, inventory plugins can also use the configured c
 
 .. _developing_an_inventory_plugin:
 
+Directory layout
+----------------
+
+The `PluginLoader` class defines a property named `config`, which is a list of directories that will be searched for inventory plugins. By default, it may contain::
+
+   /home/foo/.ansible/plugins/inventory
+   /usr/share/ansible/plugins/inventory
+   /usr/lib/python3.7/site-packages/ansible/plugins/inventory
+   /usr/lib/python3.7/site-packages/ansible/plugins/inventory/__pycache__
+
+This means that if you enable your `foo` dynamic inventory in `ansible.cfg` and save its `foo.py` in one of those directories, Ansible will try to use it while parsing your inventory file.
+
+Example::
+
+    /etc/ansible/ansible.cfg
+      [inventory]
+      enable_plugins = foo, host_list, script, auto, yaml, ini, toml
+
+      [defaults]
+      inventory = /home/foo/ansible/inventories
+
+    /home/foo/.ansible/plugins/inventory/foo.py
+      (see below)
+
+    /home/foo/ansible/.
+                      ├── inventories
+                      │   └── foo.yml
+                      │          plugin: foo
+                      │          bar: bar
+                      │          baz: baz
+                      └── playbook.yml
+
+The layout above enables the `foo` inventory plugin and tells Ansible to try it first when parsing configuration files like `foo.yml` in the inventories directory. If needed, you can add directories to the `config` list with `ansible.cfg`'s `DEFAULT_INVENTORY_PLUGIN_PATH` option.
+
 Developing an inventory plugin
 ------------------------------
 
