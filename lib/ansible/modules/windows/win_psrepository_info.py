@@ -84,7 +84,7 @@ repositories:
     provider_options:
       description:
         - Provider-specific options for this repository.
-      type: complex
+      type: dict
     source_location:
       description:
         - The location used to find and retrieve modules. This should always have a value.
