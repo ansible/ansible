@@ -5,11 +5,12 @@ Set-StrictMode -Version 2.0
 $ErrorActionPreference = "Stop"
 $WarningPreference = "Stop"
 
-$module_path = $args[0]
-if (-not $module_path) {
+$manifest = ConvertFrom-Json -InputObject $args[0] -AsHashtable
+if (-not $manifest.Contains('module_path') -or -not $manifest.module_path) {
     Write-Error -Message "No module specified."
     exit 1
 }
+$module_path = $manifest.module_path
 
 # Check if the path is relative and get the full path to the module
 if (-not ([System.IO.Path]::IsPathRooted($module_path))) {
@@ -51,33 +52,26 @@ $module_code = Get-Content -LiteralPath $module_path -Raw
 $powershell = [PowerShell]::Create()
 $powershell.Runspace.SessionStateProxy.SetVariable("ErrorActionPreference", "Stop")
 
-# Load the PowerShell module utils as the module may be using them to refer to shared module options
-# FUTURE: Lookup utils in the role or collection's module_utils dir based on #AnsibleRequires
-$script_requirements = [ScriptBlock]::Create($module_code).Ast.ScriptRequirements
-$required_modules = @()
-if ($null -ne $script_requirements) {
-    $required_modules = $script_requirements.RequiredModules
-}
-foreach ($required_module in $required_modules) {
-    if (-not $required_module.Name.StartsWith('Ansible.ModuleUtils.')) {
-        continue
+# Load the PowerShell module utils as the module may be using them to refer to shared module options. Currently we
+# can only load the PowerShell utils due to cross platform compatiblity issues.
+if ($manifest.Contains('ps_utils')) {
+    foreach ($util_info in $manifest.ps_utils.GetEnumerator()) {
+        $util_name = $util_info.Key
+        $util_path = $util_info.Value
+
+        if (-not (Test-Path -LiteralPath $util_path -PathType Leaf)) {
+            # Failed to find the util path, just silently ignore for now and hope for the best.
+            continue
+        }
+
+        $util_sb = [ScriptBlock]::Create((Get-Content -LiteralPath $util_path -Raw))
+        $powershell.AddCommand('New-Module').AddParameters(@{
+            Name = $util_name
+            ScriptBlock = $util_sb
+        }) > $null
+        $powershell.AddCommand('Import-Module').AddParameter('WarningAction', 'SilentlyContinue') > $null
+        $powershell.AddCommand('Out-Null').AddStatement() > $null
     }
-
-    $module_util_path = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($module_path, '..', '..', '..',
-        'module_utils', 'powershell', "$($required_module.Name).psm1"))
-    if (-not (Test-Path -LiteralPath $module_util_path -PathType Leaf)) {
-        # Failed to find path, just silently ignore for now and hope for the best
-        continue
-    }
-
-    $module_util_sb = [ScriptBlock]::Create((Get-Content -LiteralPath $module_util_path -Raw))
-    $powershell.AddCommand('New-Module').AddParameters(@{
-        Name = $required_module.Name
-        ScriptBlock = $module_util_sb
-    }) > $null
-    $powershell.AddCommand('Import-Module').AddParameter('WarningAction', 'SilentlyContinue') > $null
-    $powershell.AddCommand('Out-Null').AddStatement() > $null
-
 }
 
 $powershell.AddScript($module_code) > $null
