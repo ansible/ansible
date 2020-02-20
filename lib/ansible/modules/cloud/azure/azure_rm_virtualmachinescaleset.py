@@ -151,6 +151,14 @@ options:
                     - ReadWrite
                 default: ReadOnly
                 version_added: "2.4"
+            create_option:
+                description:
+                    - Specify whether disk should be created Empty or FromImage.  This is required to allow custom
+                      images with data disks to be used.
+                choices:
+                    - Empty
+                    - FromImage
+                version_added: "2.10"
     virtual_network_resource_group:
         description:
             - When creating a virtual machine, if a specific virtual network from another resource group should be
@@ -344,6 +352,26 @@ EXAMPLES = '''
     admin_password: password01
     managed_disk_type: Standard_LRS
     image: customimage001
+
+- name: Create a VMSS with a custom image and override data disk
+  azure_rm_virtualmachinescaleset:
+    resource_group: myResourceGroup
+    name: testvmss
+    vm_size: Standard_DS1_v2
+    capacity: 2
+    virtual_network_name: testvnet
+    upgrade_policy: Manual
+    subnet_name: testsubnet
+    admin_username: adminUser
+    admin_password: password01
+    managed_disk_type: Standard_LRS
+    image: customimage001
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+        create_option: FromImage
 
 - name: Create a VMSS with over 100 instances
   azure_rm_virtualmachinescaleset:
@@ -963,7 +991,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             data_disks.append(self.compute_models.VirtualMachineScaleSetDataDisk(
                                 lun=data_disk.get('lun', None),
                                 caching=data_disk.get('caching', None),
-                                create_option=self.compute_models.DiskCreateOptionTypes.empty,
+                                create_option=data_disk.get('create_option', self.compute_models.DiskCreateOptionTypes.empty),
                                 disk_size_gb=data_disk.get('disk_size_gb', None),
                                 managed_disk=data_disk_managed_disk,
                             ))
@@ -1020,7 +1048,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             data_disks.append(self.compute_models.VirtualMachineScaleSetDataDisk(
                                 lun=data_disk['lun'],
                                 caching=data_disk['caching'],
-                                create_option=self.compute_models.DiskCreateOptionTypes.empty,
+                                create_option=data_disk.get('create_option', self.compute_models.DiskCreateOptionTypes.empty),
                                 disk_size_gb=data_disk['disk_size_gb'],
                                 managed_disk=self.compute_models.VirtualMachineScaleSetManagedDiskParameters(
                                     storage_account_type=data_disk.get('managed_disk_type', None)
