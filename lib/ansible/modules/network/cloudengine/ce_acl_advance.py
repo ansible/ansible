@@ -16,9 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -43,7 +40,6 @@ options:
         required: false
         default: present
         choices: ['present','absent','delete_acl']
-        type: str
     acl_name:
         description:
             - ACL number or name.
@@ -51,134 +47,108 @@ options:
               For a named rule group, the value is a string of 1 to 32 case-sensitive characters starting
               with a letter, spaces not supported.
         required: true
-        type: str
     acl_num:
         description:
             - ACL number.
               The value is an integer ranging from 3000 to 3999.
-        type: str
     acl_step:
         description:
             - ACL step.
               The value is an integer ranging from 1 to 20. The default value is 5.
-        type: str
     acl_description:
         description:
             - ACL description.
               The value is a string of 1 to 127 characters.
-        type: str
     rule_name:
         description:
             - Name of a basic ACL rule.
               The value is a string of 1 to 32 characters.
-        type: str
     rule_id:
         description:
             - ID of a basic ACL rule in configuration mode.
               The value is an integer ranging from 0 to 4294967294.
-        type: str
     rule_action:
         description:
             - Matching mode of basic ACL rules.
         choices: ['permit','deny']
-        type: str
     protocol:
         description:
             - Protocol type.
         choices: ['ip', 'icmp', 'igmp', 'ipinip', 'tcp', 'udp', 'gre', 'ospf']
-        type: str
     source_ip:
         description:
             - Source IP address.
               The value is a string of 0 to 255 characters.The default value is 0.0.0.0.
               The value is in dotted decimal notation.
-        type: str
     src_mask:
         description:
             - Source IP address mask.
               The value is an integer ranging from 1 to 32.
-        type: str
     src_pool_name:
         description:
             - Name of a source pool.
               The value is a string of 1 to 32 characters.
-        type: str
     dest_ip:
         description:
             - Destination IP address.
               The value is a string of 0 to 255 characters.The default value is 0.0.0.0.
               The value is in dotted decimal notation.
-        type: str
     dest_mask:
         description:
             - Destination IP address mask.
               The value is an integer ranging from 1 to 32.
-        type: str
     dest_pool_name:
         description:
             - Name of a destination pool.
               The value is a string of 1 to 32 characters.
-        type: str
     src_port_op:
         description:
             - Range type of the source port.
         choices: ['lt','eq', 'gt', 'range']
-        type: str
     src_port_begin:
         description:
             - Start port number of the source port.
               The value is an integer ranging from 0 to 65535.
-        type: str
     src_port_end:
         description:
             - End port number of the source port.
               The value is an integer ranging from 0 to 65535.
-        type: str
     src_port_pool_name:
         description:
             - Name of a source port pool.
               The value is a string of 1 to 32 characters.
-        type: str
     dest_port_op:
         description:
             - Range type of the destination port.
         choices: ['lt','eq', 'gt', 'range']
-        type: str
     dest_port_begin:
         description:
             - Start port number of the destination port.
               The value is an integer ranging from 0 to 65535.
-        type: str
     dest_port_end:
         description:
             - End port number of the destination port.
               The value is an integer ranging from 0 to 65535.
-        type: str
     dest_port_pool_name:
         description:
             - Name of a destination port pool.
               The value is a string of 1 to 32 characters.
-        type: str
     frag_type:
         description:
             - Type of packet fragmentation.
         choices: ['fragment', 'clear_fragment']
-        type: str
     precedence:
         description:
             - Data packets can be filtered based on the priority field.
               The value is an integer ranging from 0 to 7.
-        type: str
     tos:
         description:
             - ToS value on which data packet filtering is based.
               The value is an integer ranging from 0 to 15.
-        type: str
     dscp:
         description:
             - Differentiated Services Code Point.
               The value is an integer ranging from 0 to 63.
-        type: str
     icmp_name:
         description:
             - ICMP name.
@@ -188,17 +158,14 @@ options:
                   'port-unreachable', 'protocol-unreachable', 'reassembly-timeout', 'source-quench',
                   'source-route-failed', 'timestamp-reply', 'timestamp-request', 'ttl-exceeded',
                   'address-mask-reply', 'address-mask-request', 'custom']
-        type: str
     icmp_type:
         description:
             - ICMP type. This parameter is available only when the packet protocol is ICMP.
               The value is an integer ranging from 0 to 255.
-        type: str
     icmp_code:
         description:
             - ICMP message code. Data packets can be filtered based on the ICMP message code.
               The value is an integer ranging from 0 to 255.
-        type: str
     ttl_expired:
         description:
             - Whether TTL Expired is matched, with the TTL value of 1.
@@ -208,17 +175,14 @@ options:
         description:
             - VPN instance name.
               The value is a string of 1 to 31 characters.The default value is _public_.
-        type: str
     syn_flag:
         description:
             - TCP flag value.
               The value is an integer ranging from 0 to 63.
-        type: str
     tcp_flag_mask:
         description:
             - TCP flag mask value.
               The value is an integer ranging from 0 to 63.
-        type: str
     established:
         description:
             - Match established connections.
@@ -227,17 +191,14 @@ options:
     time_range:
         description:
             - Name of a time range in which an ACL rule takes effect.
-        type: str
     rule_description:
         description:
             - Description about an ACL rule.
-        type: str
     igmp_type:
         description:
             - Internet Group Management Protocol.
         choices: ['host-query', 'mrouter-adver', 'mrouter-solic', 'mrouter-termi', 'mtrace-resp', 'mtrace-route',
                   'v1host-report', 'v2host-report', 'v2leave-group', 'v3host-report']
-        type: str
     log_flag:
         description:
             - Flag of logging matched data packets.
@@ -247,17 +208,31 @@ options:
 
 EXAMPLES = '''
 
+- name: CloudEngine advance acl test
+  hosts: cloudengine
+  connection: local
+  gather_facts: no
+  vars:
+    cli:
+      host: "{{ inventory_hostname }}"
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      transport: cli
+
   tasks:
 
   - name: "Config ACL"
     ce_acl_advance:
       state: present
       acl_name: 3200
+      provider: "{{ cli }}"
 
   - name: "Undo ACL"
     ce_acl_advance:
       state: delete_acl
       acl_name: 3200
+      provider: "{{ cli }}"
 
   - name: "Config ACL advance rule"
     ce_acl_advance:
@@ -270,6 +245,7 @@ EXAMPLES = '''
       source_ip: 10.10.10.10
       src_mask: 24
       frag_type: fragment
+      provider: "{{ cli }}"
 
   - name: "Undo ACL advance rule"
     ce_acl_advance:
@@ -282,6 +258,7 @@ EXAMPLES = '''
       source_ip: 10.10.10.10
       src_mask: 24
       frag_type: fragment
+      provider: "{{ cli }}"
 '''
 
 RETURN = '''
@@ -314,7 +291,7 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, check_ip_addr
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
 
 
 # get acl
@@ -1762,6 +1739,7 @@ def main():
         log_flag=dict(required=False, default=False, type='bool')
     )
 
+    argument_spec.update(ce_argument_spec)
     module = AdvanceAcl(argument_spec=argument_spec)
     module.work()
 
