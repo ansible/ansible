@@ -1951,7 +1951,7 @@ class VmsModule(BaseModule):
         existed_numa_nodes = numa_nodes_service.list()
         if len(self.param('numa_nodes')) > 0:
             # Remove all existing virtual numa nodes before adding new ones
-            for current_numa_node in sorted(existed_numa_nodes, reverse=True, key=lambda x:x.index):
+            for current_numa_node in sorted(existed_numa_nodes, reverse=True, key=lambda x: x.index):
                 numa_nodes_service.node_service(current_numa_node.id).remove()
 
         for numa_node in self.param('numa_nodes'):
