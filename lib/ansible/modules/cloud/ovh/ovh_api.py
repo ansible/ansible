@@ -89,7 +89,8 @@ changed:
     description: Return changed.
     returned: always
     type: boolean
-description: Raw response from Ovh API, content varies with API.
+result:
+    description: Raw response from Ovh API, content varies with API.
     returned: success
     type: complex
 msg:
