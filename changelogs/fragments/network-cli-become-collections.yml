@@ -1,0 +1,2 @@
+bugfixes:
+  - Skipping of become for ``network_cli`` connections now works when ``network_cli`` is sourced from a collection.
