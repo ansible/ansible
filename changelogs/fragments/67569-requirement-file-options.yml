@@ -1,2 +1,2 @@
 minor_changes:
-- "requirements file now supports extra options for downloads, for example client certificate and basic auth. See Ansible Galaxy user guide for details."
+- "ansible-galaxy - requirements file now supports extra options for downloads, for example client certificate and basic auth. See Ansible Galaxy user guide for details."
