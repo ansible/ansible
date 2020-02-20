@@ -97,7 +97,7 @@ ansible_facts:
               type: bool
               sample: true
             certificate:
-              description: Pth to a PFX certificate for X509 authenticated feeds
+              description: Path to a PFX certificate for X509 authenticated feeds
               returned: always
               type: str
               sample: C:\chocolatey\cert.pfx
