@@ -728,16 +728,21 @@ options:
         suboptions:
             index:
                 description:
-                    - "The index of this NUMA node (mandatory)."
+                    - "The index of this NUMA node."
+                required: True
             memory:
                 description:
-                    - "Memory size of the NUMA node in MiB (mandatory)."
+                    - "Memory size of the NUMA node in MiB."
+                required: True
             cores:
                 description:
-                    - "list of VM CPU cores indexes to be included in this NUMA node (mandatory)."
+                    - "List of VM CPU cores indexes to be included in this NUMA node."
+                type: list
+                required: True
             numa_node_pins:
                 description:
-                    - "list of physical NUMA node indexes to pin this virtual NUMA node to."
+                    - "List of physical NUMA node indexes to pin this virtual NUMA node to."
+                type: list
         version_added: "2.6"
     rng_device:
         description:
