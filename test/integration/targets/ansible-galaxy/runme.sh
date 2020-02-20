@@ -169,7 +169,11 @@ f_ansible_galaxy_status \
     grep 'description: Description in galaxy_info' out.txt
 
     # Both top level 'description' and galaxy_info['description'] exist in file
-    sed -i -e '1i description: Top level' ./testroles/testdesc/meta/main.yml
+    # Use shell-fu instead of sed to prepend a line to a file because BSD
+    # and macOS sed don't work the same as GNU sed.
+    echo 'description: Top level' | \
+        cat - ./testroles/testdesc/meta/main.yml > tmp.yml && \
+        mv tmp.yml ./testroles/testdesc/meta/main.yml
     ansible-galaxy role info -p ./testroles --offline testdesc | tee out.txt
     grep 'description: Description in galaxy_info' out.txt
 
