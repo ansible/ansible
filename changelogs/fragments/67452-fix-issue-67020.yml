@@ -1,2 +1,2 @@
 removed_features:
-    - ce_aaa_server, ce_aaa_host, ce_acl, ce_acl_interface, ce_acl_advance have options which should have been removed for Ansible 2.9 (https://github.com/ansible/ansible/issues/67020).
+    - Some modules have options which should have been removed for Ansible 2.9 (https://github.com/ansible/ansible/issues/67020).
