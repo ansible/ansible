@@ -2,7 +2,7 @@
 #
 # Copyright: (c) Ansible Project
 #
-# GPLv3
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -70,8 +70,6 @@ options:
 seealso:
     - module: jenkins_job
     - module: jenkins_plugin
-requirements:
-    - "python-jenkins >= 1.4.0"
 author: "Nalin Garg (@nalingarg2)"
 '''
 
@@ -108,7 +106,7 @@ EXAMPLES = '''
             msg: "Bringing node offline."
 
 -   name: Bring Node online.
-    jenkins_node: 
+    jenkins_node:
         host: myhost
         jenkins_server: https://jenkins.example.com
         jenkins_username: test_username
@@ -271,15 +269,15 @@ def node_config_change(host, server_node, dict_label,
                 # delete existing label.
                 if 'delete' in dict_label.keys():
                     current_label_list = list(map(lambda x: re.sub('^%s$' % dict_label['delete'], "", x),
-                                             current_label_list))
+                                                  current_label_list))
                 # delete existing prefix label.
                 if 'delete_prefix' in dict_label.keys():
                     current_label_list = list(map(lambda x: re.sub('^%s' % dict_label['delete_prefix'], "", x),
-                                             current_label_list))
+                                                  current_label_list))
                 # delete existing suffix label.
                 if 'delete_suffix' in dict_label.keys():
                     current_label_list = list(map(lambda x: re.sub('%s$' % dict_label['delete_suffix'], "", x),
-                                             current_label_list))
+                                                  current_label_list))
                 child.text = " ".join(list(set(list(filter(None, current_label_list)))))
         if not set(list(filter(None, current_label_list))) == set(list(filter(None, current_label.split(" ")))):
             server_node.reconfig_node(host, ET.tostring(tree, encoding='utf8', method='xml').decode("utf-8"))
@@ -350,7 +348,7 @@ def main():
 
     # mark node as offline
     if online:
-       set_node_status(server_node, host, online)
+        set_node_status(server_node, host, online)
 
     # delete node
     if delete:
@@ -361,7 +359,7 @@ def main():
         module.exit_json(changed=True, msg="Changed node label")
     elif dict_label and wait_until_free and not online and not delete:
         module.exit_json(changed=True, msg="Changed node label and Node is Idle now.")
-    elif dict_label and wait_until_free and not online and  delete:
+    elif dict_label and wait_until_free and not online and delete:
         module.exit_json(changed=True, msg="Node is deleted from jenkins server.")
     else:
         module.exit_json(changed=True, msg="Node Status: {0}".format(online))
