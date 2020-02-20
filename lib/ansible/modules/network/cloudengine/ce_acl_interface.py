@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -40,37 +43,29 @@ options:
               For a named rule group, the value is a string of 1 to 32 case-sensitive characters starting
               with a letter, spaces not supported.
         required: true
+        type: str
     interface:
         description:
             - Interface name.
               Only support interface full name, such as "40GE2/0/1".
         required: true
+        type: str
     direction:
         description:
             - Direction ACL to be applied in on the interface.
         required: true
         choices: ['inbound', 'outbound']
+        type: str
     state:
         description:
             - Determines whether the config should be present or not on the device.
         required: false
         default: present
+        type: str
         choices: ['present', 'absent']
 '''
 
 EXAMPLES = '''
-
-- name: CloudEngine acl interface test
-  hosts: cloudengine
-  connection: local
-  gather_facts: no
-  vars:
-    cli:
-      host: "{{ inventory_hostname }}"
-      port: "{{ ansible_ssh_port }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      transport: cli
 
   tasks:
 
@@ -80,7 +75,6 @@ EXAMPLES = '''
       acl_name: 2000
       interface: 40GE1/0/1
       direction: outbound
-      provider: "{{ cli }}"
 
   - name: "Undo acl from interface"
     ce_acl_interface:
@@ -88,7 +82,6 @@ EXAMPLES = '''
       acl_name: 2000
       interface: 40GE1/0/1
       direction: outbound
-      provider: "{{ cli }}"
 '''
 
 RETURN = '''

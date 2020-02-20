@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -39,6 +42,7 @@ options:
             - Specify desired state of the resource.
         default: present
         choices: ['present','absent','delete_acl']
+        type: str
     acl_name:
         description:
             - ACL number or name.
@@ -46,58 +50,71 @@ options:
               For a named rule group, the value is a string of 1 to 32 case-sensitive characters starting
               with a letter, spaces not supported.
         required: true
+        type: str
     acl_num:
         description:
             - ACL number.
               The value is an integer ranging from 2000 to 2999.
+        type: str
     acl_step:
         description:
             - ACL step.
               The value is an integer ranging from 1 to 20. The default value is 5.
+        type: str
     acl_description:
         description:
             - ACL description.
               The value is a string of 1 to 127 characters.
+        type: str
     rule_name:
         description:
             - Name of a basic ACL rule.
               The value is a string of 1 to 32 characters.
               The value is case-insensitive, and cannot contain spaces or begin with an underscore (_).
+        type: str
     rule_id:
         description:
             - ID of a basic ACL rule in configuration mode.
               The value is an integer ranging from 0 to 4294967294.
+        type: str
     rule_action:
         description:
             - Matching mode of basic ACL rules.
         choices: ['permit','deny']
+        type: str
     source_ip:
         description:
             - Source IP address.
               The value is a string of 0 to 255 characters.The default value is 0.0.0.0.
               The value is in dotted decimal notation.
+        type: str
     src_mask:
         description:
             - Mask of a source IP address.
               The value is an integer ranging from 1 to 32.
+        type: str
     frag_type:
         description:
             - Type of packet fragmentation.
         choices: ['fragment', 'clear_fragment']
+        type: str
     vrf_name:
         description:
             - VPN instance name.
               The value is a string of 1 to 31 characters.The default value is _public_.
+        type: str
     time_range:
         description:
             - Name of a time range in which an ACL rule takes effect.
               The value is a string of 1 to 32 characters.
               The value is case-insensitive, and cannot contain spaces. The name must start with an uppercase
               or lowercase letter. In addition, the word "all" cannot be specified as a time range name.
+        type: str
     rule_description:
         description:
             - Description about an ACL rule.
               The value is a string of 1 to 127 characters.
+        type: str
     log_flag:
         description:
             - Flag of logging matched data packets.
@@ -106,32 +123,17 @@ options:
 '''
 
 EXAMPLES = '''
-
-- name: CloudEngine acl test
-  hosts: cloudengine
-  connection: local
-  gather_facts: no
-  vars:
-    cli:
-      host: "{{ inventory_hostname }}"
-      port: "{{ ansible_ssh_port }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      transport: cli
-
   tasks:
 
   - name: "Config ACL"
     ce_acl:
       state: present
       acl_name: 2200
-      provider: "{{ cli }}"
 
   - name: "Undo ACL"
     ce_acl:
       state: delete_acl
       acl_name: 2200
-      provider: "{{ cli }}"
 
   - name: "Config ACL base rule"
     ce_acl:
@@ -144,7 +146,6 @@ EXAMPLES = '''
       src_mask: 24
       frag_type: fragment
       time_range: wdz_acl_time
-      provider: "{{ cli }}"
 
   - name: "undo ACL base rule"
     ce_acl:
@@ -157,7 +158,6 @@ EXAMPLES = '''
       src_mask: 24
       frag_type: fragment
       time_range: wdz_acl_time
-      provider: "{{ cli }}"
 '''
 
 RETURN = '''
