@@ -19,6 +19,7 @@ from .util import (
     display,
     raw_command,
     get_docker_completion,
+    get_network_completion,
     get_remote_completion,
     generate_pip_command,
     read_lines_without_comments,
@@ -208,6 +209,10 @@ def parse_args():
         epilog = 'Tab completion available using the "argcomplete" python package.'
     else:
         epilog = 'Install the "argcomplete" python package to enable tab completion.'
+
+    def key_value_type(value):  # type: (str) -> t.Tuple[str, str]
+        """Wrapper around key_value."""
+        return key_value(argparse, value)
 
     parser = argparse.ArgumentParser(epilog=epilog)
 
@@ -412,6 +417,18 @@ def parse_args():
                                      metavar='PLATFORM',
                                      action='append',
                                      help='network platform/version').completer = complete_network_platform
+
+    network_integration.add_argument('--platform-collection',
+                                     type=key_value_type,
+                                     metavar='PLATFORM=COLLECTION',
+                                     action='append',
+                                     help='collection used to test platform').completer = complete_network_platform_collection
+
+    network_integration.add_argument('--platform-connection',
+                                     type=key_value_type,
+                                     metavar='PLATFORM=CONNECTION',
+                                     action='append',
+                                     help='connection used to test platform').completer = complete_network_platform_connection
 
     network_integration.add_argument('--inventory',
                                      metavar='PATH',
@@ -633,6 +650,16 @@ def parse_args():
         args.color = sys.stdout.isatty()
 
     return args
+
+
+def key_value(argparse, value):  # type: (argparse_module, str) -> t.Tuple[str, str]
+    """Type parsing and validation for argparse key/value pairs separated by an '=' character."""
+    parts = value.split('=')
+
+    if len(parts) != 2:
+        raise argparse.ArgumentTypeError('"%s" must be in the format "key=value"' % value)
+
+    return tuple(parts)
 
 
 # noinspection PyProtectedMember
@@ -1035,9 +1062,33 @@ def complete_network_platform(prefix, parsed_args, **_):
     :type parsed_args: any
     :rtype: list[str]
     """
-    images = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', 'network.txt'), remove_blank_lines=True)
+    images = sorted(get_network_completion())
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
+
+
+def complete_network_platform_collection(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    left = prefix.split('=')[0]
+    images = sorted(set(image.split('/')[0] for image in get_network_completion()))
+
+    return [i + '=' for i in images if i.startswith(left) and (not parsed_args.platform_collection or i not in [x[0] for x in parsed_args.platform_collection])]
+
+
+def complete_network_platform_connection(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    left = prefix.split('=')[0]
+    images = sorted(set(image.split('/')[0] for image in get_network_completion()))
+
+    return [i + '=' for i in images if i.startswith(left) and (not parsed_args.platform_connection or i not in [x[0] for x in parsed_args.platform_connection])]
 
 
 def complete_network_testcase(prefix, parsed_args, **_):

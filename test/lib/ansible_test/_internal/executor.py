@@ -62,6 +62,7 @@ from .util import (
     generate_pip_command,
     find_python,
     get_docker_completion,
+    get_network_settings,
     get_remote_completion,
     cmd_quote,
     ANSIBLE_LIB_ROOT,
@@ -560,9 +561,11 @@ def network_inventory(remotes):
             ansible_host=remote.connection.hostname,
             ansible_user=remote.connection.username,
             ansible_ssh_private_key_file=os.path.abspath(remote.ssh_key.key),
-            ansible_network_os=remote.platform,
-            ansible_connection='local'
         )
+
+        settings = get_network_settings(remote.args, remote.platform, remote.version)
+
+        options.update(settings.inventory_vars)
 
         groups[remote.platform].append(
             '%s %s' % (
@@ -1401,7 +1404,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             win_output_dir=r'C:\ansible_testing',
         ))
     elif isinstance(args, NetworkIntegrationConfig):
-        hosts = target.name[:target.name.find('_')]
+        hosts = target.network_platform
         gather_facts = False
     else:
         hosts = 'testhost'

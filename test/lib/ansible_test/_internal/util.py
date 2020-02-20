@@ -64,6 +64,7 @@ except AttributeError:
 
 DOCKER_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
 REMOTE_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
+NETWORK_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
 PYTHON_PATHS = {}  # type: t.Dict[str, str]
 
 try:
@@ -132,6 +133,13 @@ def get_remote_completion():
     :rtype: dict[str, dict[str, str]]
     """
     return get_parameterized_completion(REMOTE_COMPLETION, 'remote')
+
+
+def get_network_completion():
+    """
+    :rtype: dict[str, dict[str, str]]
+    """
+    return get_parameterized_completion(NETWORK_COMPLETION, 'network')
 
 
 def get_parameterized_completion(cache, name):
@@ -741,6 +749,30 @@ class MissingEnvironmentVariable(ApplicationError):
         super(MissingEnvironmentVariable, self).__init__('Missing environment variable: %s' % name)
 
         self.name = name
+
+
+class NetworkPlatformSettings:
+    """Settings required for provisioning a network platform."""
+    def __init__(self, collection, inventory_vars):  # type: (str, t.Type[str, str]) -> None
+        self.collection = collection
+        self.inventory_vars = inventory_vars
+
+
+def get_network_settings(args, platform, version):  # type: (NetworkIntegrationConfig, str, str) -> NetworkPlatformSettings
+    """Returns settings for the given network platform and version."""
+    platform_version = '%s/%s' % (platform, version)
+    completion = get_network_completion().get(platform_version, {})
+    collection = args.platform_collection.get(platform, completion.get('collection'))
+
+    settings = NetworkPlatformSettings(
+        collection,
+        dict(
+            ansible_connection=args.platform_connection.get(platform, completion.get('connection')),
+            ansible_network_os='%s.%s' % (collection, platform) if collection else platform,
+        )
+    )
+
+    return settings
 
 
 def docker_qualify_image(name):
