@@ -21,7 +21,6 @@ __metaclass__ = type
 
 from functools import partial
 import types
-from ansible.module_utils import six
 
 try:
     import netaddr
