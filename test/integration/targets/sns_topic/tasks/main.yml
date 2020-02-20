@@ -129,9 +129,14 @@
       register: sns_topic_add_delivery_policy
 
     - name: assert that adding delivery policy worked
+      vars:
+        delivery_policy: '{{ sns_topic_add_delivery_policy.sns_topic.delivery_policy | from_json }}'
       assert:
         that:
           - sns_topic_add_delivery_policy.changed
+          - delivery_policy.http.defaultHealthyRetryPolicy.minDelayTarget == 20
+          - delivery_policy.http.defaultHealthyRetryPolicy.maxDelayTarget == 20
+          - delivery_policy.http.defaultHealthyRetryPolicy.numRetries == 3
 
     - name: rerun same delivery policy
       sns_topic:
@@ -150,9 +155,14 @@
       register: sns_topic_rerun_delivery_policy
 
     - name: assert that rerunning delivery_policy had no effect
+      vars:
+        delivery_policy: '{{ sns_topic_rerun_delivery_policy.sns_topic.delivery_policy | from_json }}'
       assert:
         that:
           - not sns_topic_rerun_delivery_policy.changed
+          - delivery_policy.http.defaultHealthyRetryPolicy.minDelayTarget == 20
+          - delivery_policy.http.defaultHealthyRetryPolicy.maxDelayTarget == 20
+          - delivery_policy.http.defaultHealthyRetryPolicy.numRetries == 3
 
     - name: rerun a slightly different delivery policy
       sns_topic:
@@ -171,9 +181,14 @@
       register: sns_topic_rerun_delivery_policy
 
     - name: assert that rerunning delivery_policy worked
+      vars:
+        delivery_policy: '{{ sns_topic_rerun_delivery_policy.sns_topic.delivery_policy | from_json }}'
       assert:
         that:
           - sns_topic_rerun_delivery_policy.changed
+          - delivery_policy.http.defaultHealthyRetryPolicy.minDelayTarget == 40
+          - delivery_policy.http.defaultHealthyRetryPolicy.maxDelayTarget == 40
+          - delivery_policy.http.defaultHealthyRetryPolicy.numRetries == 6
 
     - name: create temp dir
       tempfile:
