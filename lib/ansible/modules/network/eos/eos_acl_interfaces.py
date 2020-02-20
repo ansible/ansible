@@ -321,6 +321,46 @@ EXAMPLES = """
 # interface Ethernet2
 # interface Ethernet3
 
+# Before state:
+# -------------
+#
+# eos#sh running-config | include interface| access-group
+# interface Ethernet1
+# interface Ethernet2
+#  ip access-group acl01 in
+#  ipv6 access-group acl03 out
+# interface Ethernet3
+#  ip access-group acl01 out
+
+- name: "Delete acls under afi"
+  eos_acl_interfaces:
+    config:
+      - name: Ethernet3
+        access_groups:
+          - afi: "ipv4"
+      - name: Ethernet2
+        access_groups:
+          - afi: "ipv6"
+    state: deleted
+
+# Commands Fired:
+# ---------------
+#
+# interface Ethernet2
+# no ipv6 access-group acl03 out
+# interface Ethernet3
+# no ip access-group acl01 out
+
+# After state:
+# -------------
+#
+# eos#sh running-config | include interface| access-group
+# interface Loopback888
+# interface Ethernet1
+# interface Ethernet2
+#   ip access-group acl01 in
+# interface Ethernet3
+
 
 """
 RETURN = """
@@ -342,7 +382,12 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample:
+    - interface Ethernet2
+    - ip access-group acl01 in
+    - ipv6 access-group acl03 out
+    - interface Ethernet3
+    - ip access-group acl01 out
 """
 
 
@@ -357,6 +402,12 @@ def main():
 
     :returns: the result form module invocation
     """
+    required_if = [('state', 'merged', ('config',)),
+                   ('state', 'replaced', ('config',)),
+                   ('state', 'overridden', ('config',)),
+                   ('state', 'rendered', ('config',)),
+                   ('state', 'parsed', ('running_config',))]
+
     module = AnsibleModule(argument_spec=Acl_interfacesArgs.argument_spec,
                            supports_check_mode=True)
 

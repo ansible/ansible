@@ -46,6 +46,7 @@ class Acl_interfacesArgs(object):  # pylint: disable=R0903
                             'elements': 'dict',
                             'options': {
                                 'direction': {
+                                    'required': True,
                                     'choices': ['in', 'out'],
                                     'type': 'str'
                                 },
@@ -57,6 +58,7 @@ class Acl_interfacesArgs(object):  # pylint: disable=R0903
                             'type': 'list'
                         },
                         'afi': {
+                            'required': True,
                             'choices': ['ipv4', 'ipv6'],
                             'type': 'str'
                         }
