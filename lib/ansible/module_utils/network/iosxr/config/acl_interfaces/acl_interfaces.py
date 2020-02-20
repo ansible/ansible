@@ -21,7 +21,6 @@ from ansible.module_utils.network.iosxr.utils.utils import normalize_interface, 
 from ansible.module_utils.network.common.utils \
     import (
         to_list,
-        dict_diff,
         search_obj_in_list,
         remove_empties
     )
