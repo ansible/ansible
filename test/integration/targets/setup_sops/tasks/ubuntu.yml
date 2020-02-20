@@ -1,0 +1,17 @@
+---
+
+- name: install sops release
+  apt:
+    deb: https://github.com/mozilla/sops/releases/download/v3.5.0/sops_3.5.0_amd64.deb
+
+- name: install gpg2
+  apt:
+    package: gpg
+
+- name: download sops test GPG key
+  get_url:
+    url: https://raw.githubusercontent.com/mozilla/sops/master/pgp/sops_functional_tests_key.asc
+    dest: /tmp/sops_functional_tests_key.asc
+
+- name: import sops test GPG key
+  command: gpg --import /tmp/sops_functional_tests_key.asc
