@@ -1,0 +1,3 @@
+deprecated_features:
+- Deprecated the ``become``, ``become_method``, ``become_user``, ``become_password``, and ``become_flags`` kwargs for ``modify_module()`` called by action plugins. There were effectively a no-op argument except for Windows and should not be used going forward.
+- Added deprecation notice for the play context fallback if a become plugin does not implement ``become_user``, ``become_pass``, ``become_flags``, or ``become_exe``. 3rd party become plugins should implement these 4 options if they are used by an Ansible plugin.

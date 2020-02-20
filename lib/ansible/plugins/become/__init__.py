@@ -13,6 +13,9 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.plugins import AnsiblePlugin
+from ansible.utils.display import Display
+
+display = Display()
 
 
 def _gen_id(length=32):
@@ -43,13 +46,16 @@ class BecomeBase(AnsiblePlugin):
     def get_option(self, option, hostvars=None, playcontext=None):
         """ Overrides the base get_option to provide a fallback to playcontext vars in case a 3rd party plugin did not
         implement the base become options required in Ansible. """
-        # TODO: add deprecation warning for ValueError in devel that removes the playcontext fallback
         try:
             return super(BecomeBase, self).get_option(option, hostvars=hostvars)
         except KeyError:
             pc_fallback = ['become_user', 'become_pass', 'become_flags', 'become_exe']
-            if option not in pc_fallback:
+            if not playcontext or option not in pc_fallback:
                 raise
+
+            display.deprecated('become plugin %s does not implement base become option %s. The become plugin should '
+                               'be updated to include this option in its config.' % (self.name, option),
+                               version='2.14')
 
             return getattr(playcontext, option, None)
 

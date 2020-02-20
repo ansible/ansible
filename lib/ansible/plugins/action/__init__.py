@@ -187,17 +187,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         final_environment = dict()
         self._compute_environment_string(final_environment)
 
-        become_kwargs = {}
-        if self._connection.become:
-            become_kwargs['become'] = True
-            become_kwargs['become_method'] = self._connection.become.name
-            become_kwargs['become_user'] = self._connection.become.get_option('become_user',
-                                                                              playcontext=self._play_context)
-            become_kwargs['become_password'] = self._connection.become.get_option('become_pass',
-                                                                                  playcontext=self._play_context)
-            become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
-                                                                               playcontext=self._play_context)
-
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for dummy in (1, 2):
             try:
@@ -206,7 +195,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                                                             module_compression=self._play_context.module_compression,
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
-                                                                            **become_kwargs)
+                                                                            become_plugin=self._connection.become)
                 break
             except InterpreterDiscoveryRequiredError as idre:
                 self._discovered_interpreter = AnsibleUnsafeText(discover_interpreter(

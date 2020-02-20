@@ -440,6 +440,11 @@ NEW_STYLE_PYTHON_MODULE_RE = re.compile(
 )
 
 
+class DefaultKwargSentinel(object):
+    def __new__(cls, *args, **kwargs):
+        return cls
+
+
 class ModuleDepFinder(ast.NodeVisitor):
 
     def __init__(self, module_fqn, *args, **kwargs):
@@ -955,8 +960,8 @@ def _add_module_to_zip(zf, remote_module_fqn, b_module_data):
         zf.writestr(package_path, b'')
 
 
-def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, become_flags, environment):
+def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout,
+                       become, environment):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -1196,8 +1201,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # bytes
         b_module_data = ps_manifest._create_powershell_wrapper(
             b_module_data, module_path, module_args, environment,
-            async_timeout, become, become_method, become_user, become_password,
-            become_flags, module_substyle, task_vars
+            async_timeout, become, module_substyle, task_vars
         )
 
     elif module_substyle == 'jsonargs':
@@ -1222,8 +1226,10 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     return (b_module_data, module_style, shebang)
 
 
-def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
-                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None):
+def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0,
+                  become=DefaultKwargSentinel, become_method=DefaultKwargSentinel, become_user=DefaultKwargSentinel,
+                  become_password=DefaultKwargSentinel, become_flags=DefaultKwargSentinel, become_plugin=None,
+                  environment=None):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -1239,13 +1245,28 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
 
        ... will result in the insertion of basic.py into the module
        from the module_utils/ directory in the source tree.
-
-    For powershell, this code effectively no-ops, as the exec wrapper requires access to a number of
-    properties not available here.
-
     """
     task_vars = {} if task_vars is None else task_vars
     environment = {} if environment is None else environment
+
+    # These kwargs were only used in the powershell wrapper but this information is derived from the become plugin
+    # passed in. Because this is a public function we cannot just remove the exisitng kwargs and will need to deprecate
+    # it over 4 releases. No one should have this set except for Windows internally but you never know.
+    dep_become_kwargs = {
+        'become': become,
+        'become_method': become_method,
+        'become_user': become_user,
+        'become_password': become_password,
+        'become_flags': become_flags,
+    }
+    used_dep_become_kwargs = []
+    for name, value in dep_become_kwargs.items():
+        if value != DefaultKwargSentinel:
+            used_dep_become_kwargs.append(name)
+
+    if used_dep_become_kwargs:
+        display.deprecated('The following kwargs in modify_module are deprecated as they do nothing: %s'
+                           % ', '.join(used_dep_become_kwargs), version='2.14')
 
     with open(module_path, 'rb') as f:
 
@@ -1253,9 +1274,7 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
         b_module_data = f.read()
 
     (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
-                                                                async_timeout=async_timeout, become=become, become_method=become_method,
-                                                                become_user=become_user, become_password=become_password, become_flags=become_flags,
-                                                                environment=environment)
+                                                                async_timeout=async_timeout, become=become_plugin, environment=environment)
 
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))

@@ -259,8 +259,7 @@ def _strip_comments(source):
 
 def _create_powershell_wrapper(b_module_data, module_path, module_args,
                                environment, async_timeout, become,
-                               become_method, become_user, become_password,
-                               become_flags, substyle, task_vars):
+                               substyle, task_vars):
     # creates the manifest/wrapper used in PowerShell/C# modules to enable
     # things like become and async - this is also called in action/script.py
 
@@ -297,14 +296,14 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
         exec_manifest["async_timeout_sec"] = async_timeout
         exec_manifest["async_startup_timeout"] = C.config.get_config_value("WIN_ASYNC_STARTUP_TIMEOUT", variables=task_vars)
 
-    if become and become_method.split('.')[-1] == 'runas':  # runas and namespace.collection.runas
+    if become and become.name.endswith('runas'):  # runas and namespace.collection.runas
         finder.scan_exec_script('exec_wrapper')
         finder.scan_exec_script('become_wrapper')
 
         exec_manifest["actions"].insert(0, 'become_wrapper')
-        exec_manifest["become_user"] = become_user
-        exec_manifest["become_password"] = become_password
-        exec_manifest['become_flags'] = become_flags
+        exec_manifest["become_user"] = become.get_option('become_user')
+        exec_manifest["become_password"] = become.get_option('become_pass')
+        exec_manifest['become_flags'] = become.get_option('become_flags')
 
     exec_manifest['min_ps_version'] = finder.ps_version
     exec_manifest['min_os_version'] = finder.os_version
