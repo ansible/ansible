@@ -534,6 +534,9 @@ def validate_collection_name(name):
     if AnsibleCollectionRef.is_valid_collection_name(collection):
         return name
 
+    if collection.endswith('.tar.gz'):
+        raise AnsibleError("File does not exist: '%s'" % collection)
+
     raise AnsibleError("Invalid collection name '%s', "
                        "name must be in the format <namespace>.<collection>. \n"
                        "Please make sure namespace and collection name contains "
