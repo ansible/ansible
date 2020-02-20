@@ -36,7 +36,7 @@ options:
         default: 'present'
     server:
         description:
-            - Apply DNS modification on this server.
+            - Apply DNS modification on this server, specified by IPv4 or IPv6 address.
         required: true
     port:
         description:
