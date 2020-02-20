@@ -1,0 +1,34 @@
+---
+
+- name: Test lookup with missing file
+  set_fact:
+    sops_file_does_not_exists: "{{ lookup('sops', 'file-does-not-exists.sops.yml') }}"
+  ignore_errors: yes
+  register: sops_lookup_missing_file
+
+- assert:
+    that:
+      - "sops_lookup_missing_file is failed"
+      - "'could not locate file in lookup: file-does-not-exists.sops.yml' in sops_lookup_missing_file.msg"
+
+- name: Test lookup of non-sops file
+  set_fact:
+    sops_wrong_file: "{{ lookup('sops', 'wrong.yaml') }}"
+  ignore_errors: yes
+  register: sops_lookup_wrong_file
+
+- assert:
+    that:
+      - "sops_lookup_wrong_file is failed"
+      - "'sops metadata not found' in sops_lookup_wrong_file.msg"
+
+- name: Test simple lookup 
+  set_fact:
+    sops_success: "{{ lookup('sops', 'simple.sops.yaml') }}"
+  ignore_errors: yes
+  register: sops_lookup_simple
+    
+- assert:
+    that:
+      - "sops_lookup_simple is success"
+
