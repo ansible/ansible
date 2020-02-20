@@ -26,7 +26,9 @@ import sys
 
 from contextlib import contextmanager
 
+from ansible.executor.powershell.module_manifest import PSModuleDepFinder
 from ansible.module_utils.six import reraise
+from ansible.module_utils._text import to_bytes, to_text
 
 from .utils import CaptureStd, find_executable, get_module_name_from_filename
 
@@ -93,8 +95,22 @@ def get_ps_argument_spec(filename):
     if not pwsh:
         raise FileNotFoundError('Required program for PowerShell arg spec inspection "pwsh" not found.')
 
+    module_path = os.path.join(os.getcwd(), filename)
+    b_module_path = to_bytes(module_path, errors='surrogate_or_strict')
+    with open(b_module_path, mode='rb') as module_fd:
+        b_module_data = module_fd.read()
+
+    ps_dep_finder = PSModuleDepFinder()
+    ps_dep_finder.scan_module(b_module_data)
+
+    util_manifest = json.dumps({
+        'module_path': to_text(module_path, errors='surrogiate_or_strict'),
+        'ps_utils': dict([(name, info['path']) for name, info in ps_dep_finder.ps_modules.items()])
+    })
+
     script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ps_argspec.ps1')
-    proc = subprocess.Popen([script_path, filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+    proc = subprocess.Popen([script_path, util_manifest], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            shell=False)
     stdout, stderr = proc.communicate()
 
     if proc.returncode != 0:
