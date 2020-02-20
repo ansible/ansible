@@ -2,7 +2,7 @@
 #
 # Copyright: (c) Ansible Project
 #
-# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+# GPLv3
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -19,7 +19,7 @@ description:
  - Bring node online or offline with message.
  - Wait for node to become idle and then proceed with the ansible tasks.
 
-version_added: "2.8.0"
+version_added: "2.10"
 requirements:
     - "python-jenkins >= 1.4.0"
 options:
@@ -65,6 +65,8 @@ options:
     delete:
         description:
             - Delete  node from jenkins master.
+        type: bool
+        required: false
 seealso:
     - module: jenkins_job
     - module: jenkins_plugin
@@ -205,7 +207,7 @@ def host_config(module, jenkins_server, jenkins_username, jenkins_token):
                                  username=jenkins_username,
                                  password=jenkins_token)
     except Exception as e:
-        module.fail_json(msg="Unable to contact jenkins server: {}".format(e))
+        module.fail_json(msg="Unable to contact jenkins server: {0}".format(e))
     return server
 
 
@@ -214,7 +216,7 @@ def jenkins_node_info(host, server_node, module):
     try:
         node_info = server_node.get_node_info(host)
     except Exception as e:
-        module.fail_json(msg="Unable to contact jenkins node {}: {},".format(host, e))
+        module.fail_json(msg="Unable to contact jenkins node {0}: {1},".format(host, e))
     return node_info
 
 
@@ -223,7 +225,7 @@ def delete_node(server_node, host, module):
     try:
         server_node.delete_node(host)
     except jenkins.JenkinsException:
-        module.fail_json(msg="Could not delete {}'.format(host)".format(host))
+        module.fail_json(msg="Could not delete {0}'.format(host)".format(host))
 
 
 def set_node_status(server_node, host, dict_online):
@@ -240,7 +242,7 @@ def node_config_change(host, server_node, dict_label,
         tree = ET.fromstring(server_node.get_node_config(host))
         root = ET.ElementTree(element=tree).getroot()
     except Exception as e:
-        module.fail_json(msg="Unable to contact jenkins node {}: (get_node_config): {}".format(host, e))
+        module.fail_json(msg="Unable to contact jenkins node {0}: (get_node_config): {1}".format(host, e))
     try:
         for child in root:
             if child.tag == 'label':
@@ -268,7 +270,7 @@ def node_config_change(host, server_node, dict_label,
                     current_label_list = list(map(lambda x: x + dict_label['new_suffix'], current_label_list))
                 # delete existing label.
                 if 'delete' in dict_label.keys():
-                    current_label_list = list(map(lambda x:  re.sub('^%s$' % dict_label['delete'], "", x),
+                    current_label_list = list(map(lambda x: re.sub('^%s$' % dict_label['delete'], "", x),
                                              current_label_list))
                 # delete existing prefix label.
                 if 'delete_prefix' in dict_label.keys():
@@ -286,7 +288,7 @@ def node_config_change(host, server_node, dict_label,
             result['changed'] = False
         result['label'] = current_label_list
     except Exception as e:
-        module.fail_json(msg="Unable to reconfigure jenkins node with desired label: {}".format(e))
+        module.fail_json(msg="Unable to reconfigure jenkins node with desired label: {0}".format(e))
     return result
 
 
@@ -362,7 +364,7 @@ def main():
     elif dict_label and wait_until_free and not online and  delete:
         module.exit_json(changed=True, msg="Node is deleted from jenkins server.")
     else:
-        module.exit_json(changed=True, msg="Node Status: {}".format(online))
+        module.exit_json(changed=True, msg="Node Status: {0}".format(online))
 
 
 if __name__ == '__main__':
