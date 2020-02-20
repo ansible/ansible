@@ -1939,12 +1939,12 @@ class VmsModule(BaseModule):
                 )
             )
 
-    def __get_numa(self, original):
+    def __get_numa_serialized(self, numa):
         return sorted([(x.index,
                         [y.index for y in x.cpu.cores] if x.cpu else [],
                         x.memory,
                         [y.index for y in x.numa_node_pins] if x.numa_node_pins else []
-                        ) for x in original], key=lambda x: x[0])
+                        ) for x in numa], key=lambda x: x[0])
 
     def __attach_numa_nodes(self, entity):
         numa_nodes_service = self._service.service(entity.id).numa_nodes_service()
@@ -1976,7 +1976,7 @@ class VmsModule(BaseModule):
                     ] if numa_node.get('numa_node_pins') is not None else None,
                 )
             )
-        return self.__get_numa(numa_nodes_service.list()) != self.__get_numa(existed_numa_nodes)
+        return self.__get_numa_serialized(numa_nodes_service.list()) != self.__get_numa_serialized(existed_numa_nodes)
 
     def __attach_watchdog(self, entity):
         watchdogs_service = self._service.service(entity.id).watchdogs_service()
