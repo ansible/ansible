@@ -53,7 +53,12 @@ ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'instal
 
 class CollectionRequirement:
 
-    _FILE_MAPPING = [(b'MANIFEST.json', 'manifest_file'), (b'FILES.json', 'files_file')]
+    _FILE_MAPPING = [
+        (b'MANIFEST.json', 'manifest_file'),
+        (b'FILES.json', 'files_file'),
+        (b'galaxy.yml', 'galaxy_yml'),
+        (b'galaxy.yaml', 'galaxy_yml'),
+    ]
 
     def __init__(self, namespace, name, b_path, api, versions, requirement, force, parent=None, metadata=None,
                  files=None, skip=False):
@@ -343,9 +348,13 @@ class CollectionRequirement:
             if not os.path.exists(b_file_path):
                 continue
 
+            b_file_ext = b_file_name.split(b'.')[-1]
             with open(b_file_path, 'rb') as file_obj:
                 try:
-                    info[property_name] = json.loads(to_text(file_obj.read(), errors='surrogate_or_strict'))
+                    if b_file_ext in (b'yml', b'yaml'):
+                        info[property_name] = _get_galaxy_yml(b_file_path)
+                    else:
+                        info[property_name] = json.loads(to_text(file_obj.read(), errors='surrogate_or_strict'))
                 except ValueError:
                     raise AnsibleError("Collection file at '%s' does not contain a valid json string."
                                        % to_native(b_file_path))
@@ -362,8 +371,15 @@ class CollectionRequirement:
                 version = '*'
 
             dependencies = manifest['dependencies']
+        elif 'galaxy_yml' in info:
+            namespace = info['galaxy_yml']['namespace']
+            name = info['galaxy_yml']['name']
+            version = to_text(info['galaxy_yml']['version'], errors='surrogate_or_strict')
+            dependencies = info['galaxy_yml']['dependencies']
+            if dependencies is None:
+                dependencies = {}
         else:
-            display.warning("Collection at '%s' does not have a MANIFEST.json file, cannot detect version."
+            display.warning("Collection at '%s' does not have a MANIFEST.json or galaxy.yml file, cannot detect version."
                             % to_text(b_path))
             parent_dir, name = os.path.split(to_text(b_path, errors='surrogate_or_strict'))
             namespace = os.path.split(parent_dir)[1]

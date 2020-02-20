@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - read information from ``galaxy.yml`` when listing collections if no ``MANIFEST.JSON`` exists (https://github.com/ansible/ansible/issues/67490)
