@@ -43,6 +43,13 @@ export_items:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import AWSRetry
 
+try:
+    from botocore.exceptions import ClientError
+    from botocore.exceptions import BotoCoreError
+except ImportError:
+    pass  # handled by AnsibleAWSModule
+
+
 @AWSRetry.exponential_backoff()
 def list_exports(cloudformation_client):
     '''Get Exports Names and Values and return in dictionary '''
@@ -69,7 +76,7 @@ def main():
     try:
         result['export_items'] = list_exports(cloudformation_client)
 
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (ClientError, BotoCoreError) as e:
         module.fail_json_aws(e)
 
     result.update()
