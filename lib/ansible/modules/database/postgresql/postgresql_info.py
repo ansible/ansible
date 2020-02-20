@@ -612,9 +612,6 @@ class PgClusterInfo(object):
 
     def get_pub_info(self):
         """Get publication statistics."""
-        if self.cursor.connection.server_version < 10000:
-            return
-
         query = ("SELECT p.*, r.rolname AS ownername "
                  "FROM pg_catalog.pg_publication AS p "
                  "JOIN pg_catalog.pg_roles AS r "
@@ -959,7 +956,8 @@ class PgClusterInfo(object):
             db_dict[datname]['namespaces'] = self.get_namespaces()
             db_dict[datname]['extensions'] = self.get_ext_info()
             db_dict[datname]['languages'] = self.get_lang_info()
-            db_dict[datname]['publications'] = self.get_pub_info()
+            if self.cursor.connection.server_version >= 10000:
+                db_dict[datname]['publications'] = self.get_pub_info()
 
         self.pg_info["databases"] = db_dict
 
