@@ -86,12 +86,16 @@ EXAMPLES = '''
 
 RETURN = '''
 changed:
-  description: Return changed.
-  returned: always
-  type: boolean
+    description: Return changed.
+    returned: always
+    type: boolean
 description: Raw response from Ovh API, content varies with API.
-  returned: success
-  type: complex
+    returned: success
+    type: complex
+msg:
+    description: Module error message.
+    returned: failure
+    type: string
 '''
 
 import os
