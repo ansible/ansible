@@ -643,6 +643,10 @@ class IntegrationTarget(CompletionTarget):
         self.needs_file = tuple(sorted(set('/'.join(g.split('/')[2:]) for g in groups if
                                            g.startswith('needs/file/') and not g.startswith('needs/file/%s/' % targets_relative_path))))
 
+        # network platform
+        networks = [g.split('/')[1] for g in groups if g.startswith('network/')]
+        self.network_platform = networks[0] if networks else None
+
         for group in itertools.islice(groups, 0, len(groups)):
             if '/' in group:
                 parts = group.split('/')

@@ -12,6 +12,7 @@ from .util import (
     cmd_quote,
     display,
     ANSIBLE_TEST_DATA_ROOT,
+    get_network_settings,
 )
 
 from .util_common import (
@@ -149,11 +150,14 @@ class ManageNetworkCI:
 
     def wait(self):
         """Wait for instance to respond to ansible ping."""
+        settings = get_network_settings(self.core_ci.args, self.core_ci.platform, self.core_ci.version)
+
         extra_vars = [
             'ansible_host=%s' % self.core_ci.connection.hostname,
             'ansible_port=%s' % self.core_ci.connection.port,
-            'ansible_connection=local',
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
+        ] + [
+            '%s=%s' % (key, value) for key, value in settings.inventory_vars.items()
         ]
 
         name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '-'))
@@ -161,7 +165,7 @@ class ManageNetworkCI:
         env = ansible_environment(self.core_ci.args)
         cmd = [
             'ansible',
-            '-m', '%s_command' % self.core_ci.platform,
+            '-m', '%s%s_command' % (settings.collection + '.' if settings.collection else '', self.core_ci.platform),
             '-a', 'commands=?',
             '-u', self.core_ci.connection.username,
             '-i', '%s,' % name,

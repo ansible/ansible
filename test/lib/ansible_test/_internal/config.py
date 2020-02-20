@@ -313,6 +313,8 @@ class NetworkIntegrationConfig(IntegrationConfig):
         super(NetworkIntegrationConfig, self).__init__(args, 'network-integration')
 
         self.platform = args.platform  # type: t.List[str]
+        self.platform_collection = dict(args.platform_collection or [])  # type: t.Dict[str, str]
+        self.platform_connection = dict(args.platform_connection or [])  # type: t.Dict[str, str]
         self.inventory = args.inventory  # type: str
         self.testcase = args.testcase  # type: str
 
