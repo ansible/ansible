@@ -337,7 +337,7 @@ def map_interfaces_to_commands(want, ports, module):
     return commands
 
 
-def parse_vlan_brief(vlan_out):
+def parse_vlan(vlan_out):
     have = []
     for line in vlan_out.split('\n'):
         obj = re.match(r'(?P<vlan_id>\d+)\s+(?P<name>[^\s]+)\s+', line)
@@ -390,7 +390,7 @@ def map_ports_to_obj(module):
 
 
 def map_config_to_obj(module):
-    return parse_vlan_brief(run_commands(module, ['show vlan brief'])[0])
+    return parse_vlan(run_commands(module, ['show vlan'])[0])
 
 
 def check_params(module, want):

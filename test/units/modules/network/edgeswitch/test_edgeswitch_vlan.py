@@ -20,7 +20,7 @@ __metaclass__ = type
 
 from units.compat.mock import patch
 from ansible.modules.network.edgeswitch import edgeswitch_vlan
-from ansible.modules.network.edgeswitch.edgeswitch_vlan import parse_vlan_brief, parse_interfaces_switchport
+from ansible.modules.network.edgeswitch.edgeswitch_vlan import parse_vlan, parse_interfaces_switchport
 from units.modules.utils import set_module_args
 from .edgeswitch_module import TestEdgeswitchModule, load_fixture
 
@@ -137,8 +137,8 @@ class TestEdgeswitchVlanModule(TestEdgeswitchModule):
         self.assertEqual(result['0/3'], i3)
         self.assertEqual(result['0/5'], i5)
 
-    def test_parse_vlan_brief(self):
-        result = parse_vlan_brief(load_fixture('edgeswitch_vlan_show_vlan_brief'))
+    def test_parse_vlan(self):
+        result = parse_vlan(load_fixture('edgeswitch_vlan_show_vlan'))
         obj = [
             {
                 'vlan_id': '1',
