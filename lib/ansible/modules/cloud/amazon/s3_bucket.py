@@ -685,8 +685,12 @@ def main():
         encryption_key_id=dict()
     )
 
+    required_by = dict(
+        encryption_key_id=('encryption',),
+    )
+
     module = AnsibleAWSModule(
-        argument_spec=argument_spec,
+        argument_spec=argument_spec, required_by=required_by
     )
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
@@ -726,10 +730,9 @@ def main():
     if not hasattr(s3_client, "get_bucket_encryption"):
         if encryption is not None:
             module.fail_json(msg="Using bucket encryption requires botocore version >= 1.7.41")
+
     # Parameter validation
-    if encryption_key_id is not None and encryption is None:
-        module.fail_json(msg="You must specify encryption parameter along with encryption_key_id.")
-    elif encryption_key_id is not None and encryption != 'aws:kms':
+    if encryption_key_id is not None and encryption != 'aws:kms':
         module.fail_json(msg="Only 'aws:kms' is a valid option for encryption parameter when you specify encryption_key_id.")
 
     if state == 'present':
