@@ -900,6 +900,7 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
+            zone=dict(required=True, type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             properties=dict(
@@ -1318,7 +1319,7 @@ class InstanceTemplateInitializeparams(object):
             {
                 u'diskName': self.request.get('disk_name'),
                 u'diskSizeGb': self.request.get('disk_size_gb'),
-                u'diskType': disk_type_selflink(self.request.get('disk_type'), self.module.params),
+                u'diskType': self.request.get('disk_type'),
                 u'sourceImage': self.request.get('source_image'),
                 u'sourceImageEncryptionKey': InstanceTemplateSourceimageencryptionkey(
                     self.request.get('source_image_encryption_key', {}), self.module
