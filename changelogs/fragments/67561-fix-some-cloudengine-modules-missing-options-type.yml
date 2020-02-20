@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix ce some modules in which doc options miss type (https://github.com/ansible/ansible/issues/67561).
