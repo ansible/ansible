@@ -29,6 +29,7 @@ from ansible.plugins.loader import ps_module_utils_loader
 class PSModuleDepFinder(object):
 
     def __init__(self):
+        # This is also used by validate-modules to get a module's required utils in base and a collection.
         self.ps_modules = dict()
         self.exec_scripts = dict()
 
