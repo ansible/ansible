@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-galaxy - Fail with a more helpful error when a tar.gz file is not found
+    (https://github.com/ansible/ansible/issues/67440)
