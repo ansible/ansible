@@ -24,6 +24,8 @@ from ansible.module_utils.network.iosxr.facts.lag_interfaces.lag_interfaces impo
 from ansible.module_utils.network.iosxr.facts.l2_interfaces.l2_interfaces import L2_InterfacesFacts
 from ansible.module_utils.network.iosxr.facts.l3_interfaces.l3_interfaces import L3_InterfacesFacts
 from ansible.module_utils.network.iosxr.facts.acl_interfaces.acl_interfaces import Acl_interfacesFacts
+from ansible.module_utils.network.iosxr.facts.acls.acls import AclsFacts
+
 
 FACT_LEGACY_SUBSETS = dict(
     default=Default,
@@ -40,7 +42,8 @@ FACT_RESOURCE_SUBSETS = dict(
     l2_interfaces=L2_InterfacesFacts,
     lag_interfaces=Lag_interfacesFacts,
     l3_interfaces=L3_InterfacesFacts,
-    acl_interfaces=Acl_interfacesFacts
+    acl_interfaces=Acl_interfacesFacts,
+    acls=AclsFacts
 )
 
 
