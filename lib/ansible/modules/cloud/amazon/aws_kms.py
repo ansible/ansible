@@ -32,7 +32,8 @@ options:
     type: str
   key_id:
     description:
-    - Key ID or ARN of the key. One of C(alias) or C(key_id) are required.
+    - Key ID or ARN of the key.
+    - One of I(alias) or I(key_id) are required.
     required: false
     aliases:
       - key_arn
@@ -50,7 +51,8 @@ options:
     type: str
   policy_role_name:
     description:
-    - (deprecated) Role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
+    - (deprecated) Role to allow/deny access.
+    - One of I(policy_role_name) or I(policy_role_arn) are required.
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
     - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
@@ -60,7 +62,8 @@ options:
     type: str
   policy_role_arn:
     description:
-    - (deprecated) ARN of role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
+    - (deprecated) ARN of role to allow/deny access.
+    - One of I(policy_role_name) or I(policy_role_arn) are required.
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
     - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
@@ -70,7 +73,8 @@ options:
     - role_arn
   policy_grant_types:
     description:
-    - (deprecated) List of grants to give to user/role. Likely "role,role grant" or "role,role grant,admin". Required when C(policy_mode=grant).
+    - (deprecated) List of grants to give to user/role. Likely "role,role grant" or "role,role grant,admin".
+    - Required when I(policy_mode=grant).
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
     - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
@@ -400,9 +404,7 @@ from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.ec2 import compare_aws_tags, compare_policies
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native
 
-import traceback
 import json
 
 try:
@@ -500,26 +502,6 @@ def get_kms_policies(connection, module, key_id):
         return []
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, msg="Failed to obtain key policies")
-
-
-def key_matches_filter(key, filtr):
-    if filtr[0] == 'key-id':
-        return filtr[1] == key['key_id']
-    if filtr[0] == 'tag-key':
-        return filtr[1] in key['tags']
-    if filtr[0] == 'tag-value':
-        return filtr[1] in key['tags'].values()
-    if filtr[0] == 'alias':
-        return filtr[1] in key['aliases']
-    if filtr[0].startswith('tag:'):
-        return key['Tags'][filtr[0][4:]] == filtr[1]
-
-
-def key_matches_filters(key, filters):
-    if not filters:
-        return True
-    else:
-        return all([key_matches_filter(key, filtr) for filtr in filters.items()])
 
 
 def camel_to_snake_grant(grant):
@@ -625,134 +607,193 @@ def compare_grants(existing_grants, desired_grants, purge_grants=False):
     return to_add, to_remove
 
 
-def ensure_enabled_disabled(connection, module, key):
-    changed = False
-    if key['key_state'] == 'Disabled' and module.params['enabled']:
-        try:
-            connection.enable_key(KeyId=key['key_arn'])
-            changed = True
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Failed to enable key")
+def start_key_deletion(connection, module, key_metadata):
+    if key_metadata['KeyState'] == 'PendingDeletion':
+        return False
 
-    if key['key_state'] == 'Enabled' and not module.params['enabled']:
-        try:
-            connection.disable_key(KeyId=key['key_arn'])
-            changed = True
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Failed to disable key")
-    return changed
+    if module.check_mode:
+        return True
+
+    try:
+        connection.schedule_key_deletion(KeyId=key_metadata['Arn'])
+        return True
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to schedule key for deletion")
 
 
-def update_alias(connection, module, key_id, alias):
-    if not alias.startswith('alias/'):
-        alias = 'alias/' + alias
-    aliases = get_kms_aliases_with_backoff(connection)['Aliases']
-    if key_id:
-        # We will only add new aliases, not rename existing ones
-        if alias not in [_alias['AliasName'] for _alias in aliases]:
-            try:
-                connection.create_alias(KeyId=key_id, AliasName=alias)
-                return True
-            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                module.fail_json_aws(e, msg="Failed create key alias")
-    return False
-
-
-def update_key(connection, module, key):
-    changed = False
-    alias = module.params.get('alias')
+def cancel_key_deletion(connection, module, key):
     key_id = key['key_arn']
+    if key['key_state'] != 'PendingDeletion':
+        return False
 
-    if alias:
-        changed = update_alias(connection, module, key_id, alias) or changed
+    if module.check_mode:
+        return True
 
-    if key['key_state'] == 'PendingDeletion':
+    try:
+        connection.cancel_key_deletion(KeyId=key_id)
+        # key is disabled after deletion cancellation
+        # set this so that ensure_enabled_disabled works correctly
+        key['key_state'] = 'Disabled'
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to cancel key deletion")
+
+    return True
+
+
+def ensure_enabled_disabled(connection, module, key, enabled):
+    desired_state = 'Enabled'
+    if not enabled:
+        desired_state = 'Disabled'
+
+    if key['key_state'] == desired_state:
+        return False
+
+    key_id = key['key_arn']
+    if not module.check_mode:
+        if enabled:
+            try:
+                connection.enable_key(KeyId=key_id)
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Failed to enable key")
+        else:
+            try:
+                connection.disable_key(KeyId=key_id)
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Failed to disable key")
+
+    return True
+
+
+def update_alias(connection, module, key, alias):
+    alias = canonicalize_alias_name(alias)
+
+    if alias is None:
+        return False
+
+    key_id = key['key_arn']
+    aliases = get_kms_aliases_with_backoff(connection)['Aliases']
+    # We will only add new aliases, not rename existing ones
+    if alias in [_alias['AliasName'] for _alias in aliases]:
+        return False
+
+    if not module.check_mode:
         try:
-            connection.cancel_key_deletion(KeyId=key_id)
-            # key is disabled after deletion cancellation
-            # set this so that ensure_enabled_disabled works correctly
-            key['key_state'] = 'Disabled'
-            changed = True
+            connection.create_alias(TargetKeyId=key_id, AliasName=alias)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Failed to cancel key deletion")
+            module.fail_json_aws(e, msg="Failed create key alias")
 
-    changed = ensure_enabled_disabled(connection, module, key) or changed
+    return True
 
-    description = module.params.get('description')
-    # don't update description if description is not set
-    # (means you can't remove a description completely)
-    if description and key['description'] != description:
+
+def update_description(connection, module, key, description):
+    if description is None:
+        return False
+    if key['description'] == description:
+        return False
+
+    key_id = key['key_arn']
+    if not module.check_mode:
         try:
             connection.update_key_description(KeyId=key_id, Description=description)
-            changed = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Failed to update key description")
 
-    desired_tags = module.params.get('tags')
-    to_add, to_remove = compare_aws_tags(key['tags'], desired_tags,
-                                         module.params.get('purge_tags'))
-    if to_remove:
-        try:
-            connection.untag_resource(KeyId=key_id, TagKeys=to_remove)
-            changed = True
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Unable to remove or update tag")
-    if to_add:
-        try:
-            connection.tag_resource(KeyId=key_id,
-                                    Tags=[{'TagKey': tag_key, 'TagValue': desired_tags[tag_key]}
-                                          for tag_key in to_add])
-            changed = True
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Unable to add tag to key")
+    return True
 
-    # Update existing policy before trying to tweak grants
-    if module.params.get('policy'):
-        policy = module.params.get('policy')
-        try:
-            keyret = connection.get_key_policy(KeyId=key_id, PolicyName='default')
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            # If we can't fetch the current policy assume we're making a change
-            # Could occur if we have PutKeyPolicy without GetKeyPolicy
-            original_policy = {}
+
+def update_tags(connection, module, key, desired_tags, purge_tags):
+    # purge_tags needs to be explicitly set, so an empty tags list means remove
+    # all tags
+
+    to_add, to_remove = compare_aws_tags(key['tags'], desired_tags, purge_tags)
+    if not (bool(to_add) or bool(to_remove)):
+        return False
+
+    key_id = key['key_arn']
+    if not module.check_mode:
+        if to_remove:
+            try:
+                connection.untag_resource(KeyId=key_id, TagKeys=to_remove)
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Unable to remove tag")
+        if to_add:
+            try:
+                tags = ansible_dict_to_boto3_tag_list(module.params['tags'], tag_name_key_name='TagKey', tag_value_key_name='TagValue')
+                connection.tag_resource(KeyId=key_id, Tags=tags)
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Unable to add tag to key")
+
+    return True
+
+
+def update_policy(connection, module, key, policy):
+    if policy is None:
+        return False
+    try:
+        new_policy = json.loads(policy)
+    except ValueError as e:
+        module.fail_json_aws(e, msg="Unable to parse new policy as JSON")
+
+    key_id = key['key_arn']
+    try:
+        keyret = connection.get_key_policy(KeyId=key_id, PolicyName='default')
         original_policy = json.loads(keyret['Policy'])
-        try:
-            new_policy = json.loads(policy)
-        except ValueError as e:
-            module.fail_json_aws(e, msg="Unable to parse new policy as JSON")
-        if compare_policies(original_policy, new_policy):
-            changed = True
-            if not module.check_mode:
-                try:
-                    connection.put_key_policy(KeyId=key_id, PolicyName='default', Policy=policy)
-                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                    module.fail_json_aws(e, msg="Unable to update key policy")
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
+        # If we can't fetch the current policy assume we're making a change
+        # Could occur if we have PutKeyPolicy without GetKeyPolicy
+        original_policy = {}
 
-    desired_grants = module.params.get('grants')
+    if not compare_policies(original_policy, new_policy):
+        return False
+
+    if not module.check_mode:
+        try:
+            connection.put_key_policy(KeyId=key_id, PolicyName='default', Policy=policy)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Unable to update key policy")
+
+    return True
+
+
+def update_grants(connection, module, key, desired_grants, purge_grants):
     existing_grants = key['grants']
 
-    to_add, to_remove = compare_grants(existing_grants, desired_grants,
-                                       module.params.get('purge_grants'))
-    if to_remove:
+    to_add, to_remove = compare_grants(existing_grants, desired_grants, purge_grants)
+    if not (bool(to_add) or bool(to_remove)):
+        return False
+
+    key_id = key['key_arn']
+    if not module.check_mode:
         for grant in to_remove:
             try:
                 connection.retire_grant(KeyId=key_id, GrantId=grant['grant_id'])
-                changed = True
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Unable to retire grant")
-
-    if to_add:
         for grant in to_add:
             grant_params = convert_grant_params(grant, key)
             try:
                 connection.create_grant(**grant_params)
-                changed = True
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Unable to create grant")
 
+    return True
+
+
+def update_key(connection, module, key):
+    changed = False
+
+    changed |= cancel_key_deletion(connection, module, key)
+    changed |= ensure_enabled_disabled(connection, module, key, module.params['enabled'])
+    changed |= update_alias(connection, module, key, module.params['alias'])
+    changed |= update_description(connection, module, key, module.params['description'])
+    changed |= update_tags(connection, module, key, module.params['tags'], module.params.get('purge_tags'))
+    changed |= update_policy(connection, module, key, module.params.get('policy'))
+    changed |= update_grants(connection, module, key, module.params.get('grants'), module.params.get('purge_grants'))
+
     # make results consistent with kms_facts before returning
-    result = get_key_details(connection, module, key_id)
-    module.exit_json(changed=changed, **result)
+    result = get_key_details(connection, module, key['key_arn'])
+    result['changed'] = changed
+    return result
 
 
 def create_key(connection, module):
@@ -771,58 +812,25 @@ def create_key(connection, module):
         module.fail_json_aws(e, msg="Failed to create initial key")
     key = get_key_details(connection, module, result['KeyId'])
 
-    alias = module.params['alias']
-    if not alias.startswith('alias/'):
-        alias = 'alias/' + alias
-    try:
-        connection.create_alias(AliasName=alias, TargetKeyId=key['key_id'])
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Failed to create alias")
+    update_alias(connection, module, key, module.params['alias'])
 
-    ensure_enabled_disabled(connection, module, key)
-    for grant in module.params.get('grants'):
-        grant_params = convert_grant_params(grant, key)
-        try:
-            connection.create_grant(**grant_params)
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Failed to add grant to key")
+    ensure_enabled_disabled(connection, module, key, module.params.get('enabled'))
+    update_grants(connection, module, key, module.params.get('grants'), False)
 
     # make results consistent with kms_facts
     result = get_key_details(connection, module, key['key_id'])
-    module.exit_json(changed=True, **result)
+    result['changed'] = True
+    return result
 
 
-def delete_key(connection, module, key_metadata, key_id):
+def delete_key(connection, module, key_metadata):
     changed = False
 
-    if key_metadata['KeyState'] != 'PendingDeletion':
-        try:
-            connection.schedule_key_deletion(KeyId=key_id)
-            changed = True
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Failed to schedule key for deletion")
+    changed |= start_key_deletion(connection, module, key_metadata)
 
-    result = get_key_details(connection, module, key_id)
-    module.exit_json(changed=changed, **result)
-
-
-def get_arn_from_kms_alias(kms, aliasname):
-    ret = kms.list_aliases()
-    key_id = None
-    for a in ret['Aliases']:
-        if a['AliasName'] == aliasname:
-            key_id = a['TargetKeyId']
-            break
-    if not key_id:
-        raise Exception('could not find alias {0}'.format(aliasname))
-
-    # now that we have the ID for the key, we need to get the key's ARN. The alias
-    # has an ARN but we need the key itself.
-    ret = kms.list_keys()
-    for k in ret['Keys']:
-        if k['KeyId'] == key_id:
-            return k['KeyArn']
-    raise Exception('could not find key from id: {0}'.format(key_id))
+    result = get_key_details(connection, module, key_metadata['Arn'])
+    result['changed'] = changed
+    return result
 
 
 def get_arn_from_role_name(iam, rolename):
@@ -832,78 +840,85 @@ def get_arn_from_role_name(iam, rolename):
     raise Exception('could not find arn for name {0}.'.format(rolename))
 
 
-def do_policy_grant(module, kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clean_invalid_entries=True):
+def _clean_statement_principals(statement, clean_invalid_entries):
+
+    # create Principal and 'AWS' so we can safely use them later.
+    if not isinstance(statement.get('Principal'), dict):
+        statement['Principal'] = dict()
+
+    # If we have a single AWS Principal, ensure we still have a list (to manipulate)
+    if 'AWS' in statement['Principal'] and isinstance(statement['Principal']['AWS'], string_types):
+        statement['Principal']['AWS'] = [statement['Principal']['AWS']]
+    if not isinstance(statement['Principal'].get('AWS'), list):
+        statement['Principal']['AWS'] = list()
+
+    invalid_entries = [item for item in statement['Principal']['AWS'] if not item.startswith('arn:aws:iam::')]
+    valid_entries = [item for item in statement['Principal']['AWS'] if item.startswith('arn:aws:iam::')]
+
+    if bool(invalid_entries) and clean_invalid_entries:
+        statement['Principal']['AWS'] = valid_entries
+        return True
+
+    return False
+
+
+def _do_statement_grant(statement, role_arn, grant_types, mode, grant_type):
+
+    if mode == 'grant':
+        if grant_type in grant_types:
+            if role_arn not in statement['Principal']['AWS']:  # needs to be added.
+                statement['Principal']['AWS'].append(role_arn)
+                return 'add'
+        elif role_arn in statement['Principal']['AWS']:  # not one the places the role should be
+            statement['Principal']['AWS'].remove(role_arn)
+            return 'remove'
+        return None
+
+    if mode == 'deny' and role_arn in statement['Principal']['AWS']:
+        # we don't selectively deny. that's a grant with a
+        # smaller list. so deny=remove all of this arn.
+        statement['Principal']['AWS'].remove(role_arn)
+        return 'remove'
+    return None
+
+
+def do_policy_grant(module, kms, keyarn, role_arn, grant_types, mode='grant', dry_run=True, clean_invalid_entries=True):
     ret = {}
-    keyret = get_key_policy_with_backoff(kms, keyarn, 'default')
-    policy = json.loads(keyret['Policy'])
+    policy = json.loads(get_key_policy_with_backoff(kms, keyarn, 'default')['Policy'])
 
     changes_needed = {}
-    assert_policy_shape(policy)
+    assert_policy_shape(module, policy)
     had_invalid_entries = False
     for statement in policy['Statement']:
-        for granttype in ['role', 'role grant', 'admin']:
-            # do we want this grant type? Are we on its statement?
-            # and does the role have this grant type?
+        # We already tested that these are the only types in the statements
+        for grant_type in statement_label:
+            # Are we on this grant type's statement?
+            if statement['Sid'] != statement_label[grant_type]:
+                continue
 
-            # create Principal and 'AWS' so we can safely use them later.
-            if not isinstance(statement.get('Principal'), dict):
-                statement['Principal'] = dict()
-
-            if 'AWS' in statement['Principal'] and isinstance(statement['Principal']['AWS'], string_types):
-                # convert to list
-                statement['Principal']['AWS'] = [statement['Principal']['AWS']]
-            if not isinstance(statement['Principal'].get('AWS'), list):
-                statement['Principal']['AWS'] = list()
-
-            if mode == 'grant' and statement['Sid'] == statement_label[granttype]:
-                # we're granting and we recognize this statement ID.
-
-                if granttype in granttypes:
-                    invalid_entries = [item for item in statement['Principal']['AWS'] if not item.startswith('arn:aws:iam::')]
-                    if clean_invalid_entries and invalid_entries:
-                        # we have bad/invalid entries. These are roles that were deleted.
-                        # prune the list.
-                        valid_entries = [item for item in statement['Principal']['AWS'] if item.startswith('arn:aws:iam::')]
-                        statement['Principal']['AWS'] = valid_entries
-                        had_invalid_entries = True
-
-                    if role_arn not in statement['Principal']['AWS']:  # needs to be added.
-                        changes_needed[granttype] = 'add'
-                        if not dry_run:
-                            statement['Principal']['AWS'].append(role_arn)
-                elif role_arn in statement['Principal']['AWS']:  # not one the places the role should be
-                    changes_needed[granttype] = 'remove'
-                    if not dry_run:
-                        statement['Principal']['AWS'].remove(role_arn)
-
-            elif mode == 'deny' and statement['Sid'] == statement_label[granttype] and role_arn in statement['Principal']['AWS']:
-                # we don't selectively deny. that's a grant with a
-                # smaller list. so deny=remove all of this arn.
-                changes_needed[granttype] = 'remove'
-                if not dry_run:
-                    statement['Principal']['AWS'].remove(role_arn)
-
-    try:
-        if len(changes_needed) and not dry_run:
-            policy_json_string = json.dumps(policy)
-            kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
-            # returns nothing, so we have to just assume it didn't throw
-            ret['changed'] = True
-    except Exception as e:
-        module.fail_json(msg='Could not update key_policy', new_policy=policy_json_string, details=to_native(e), exception=traceback.format_exc())
-        raise
+            had_invalid_entries |= _clean_statement_principals(statement, clean_invalid_entries)
+            change = _do_statement_grant(statement, role_arn, grant_types, mode, grant_type)
+            if change:
+                changes_needed[grant_type] = change
 
     ret['changes_needed'] = changes_needed
     ret['had_invalid_entries'] = had_invalid_entries
     ret['new_policy'] = policy
-    if dry_run:
-        # true if changes > 0
-        ret['changed'] = len(changes_needed) > 0
+    ret['changed'] = bool(changes_needed)
+
+    if dry_run or not ret['changed']:
+        return ret
+
+    try:
+        policy_json_string = json.dumps(policy)
+        kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg='Could not update key_policy', new_policy=policy_json_string)
 
     return ret
 
 
-def assert_policy_shape(policy):
+def assert_policy_shape(module, policy):
     '''Since the policy seems a little, uh, fragile, make sure we know approximately what we're looking at.'''
     errors = []
     if policy['Version'] != "2012-10-17":
@@ -915,13 +930,61 @@ def assert_policy_shape(policy):
             if statement['Sid'] == sidlabel:
                 found_statement_type[label] = True
 
-    for statementtype in statement_label.keys():
+    for statementtype in statement_label:
         if not found_statement_type.get(statementtype):
             errors.append('Policy is missing {0}.'.format(statementtype))
 
-    if len(errors):
-        raise Exception('Problems asserting policy shape. Cowardly refusing to modify it: {0}'.format(' '.join(errors)) + "\n" + str(policy))
-    return None
+    if errors:
+        module.fail_json(msg='Problems asserting policy shape. Cowardly refusing to modify it', errors=errors, policy=policy)
+
+
+def canonicalize_alias_name(alias):
+    if alias is None:
+        return None
+    if alias.startswith('alias/'):
+        return alias
+    return 'alias/' + alias
+
+
+def fetch_key_metadata(connection, module, key_id, alias):
+
+    alias = canonicalize_alias_name(module.params.get('alias'))
+
+    try:
+        # Fetch by key_id where possible
+        if key_id:
+            return get_kms_metadata_with_backoff(connection, key_id)['KeyMetadata']
+        # Or try alias as a backup
+        return get_kms_metadata_with_backoff(connection, alias)['KeyMetadata']
+
+    except connection.exceptions.NotFoundException:
+        return None
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, 'Failed to fetch key metadata.')
+
+
+def update_policy_grants(connection, module, key_metadata, mode):
+    iam = module.client('iam')
+    key_id = key_metadata['Arn']
+
+    if module.params.get('policy_role_name') and not module.params.get('policy_role_arn'):
+        module.params['policy_role_arn'] = get_arn_from_role_name(iam, module.params['policy_role_name'])
+    if not module.params.get('policy_role_arn'):
+        module.fail_json(msg='policy_role_arn or policy_role_name is required to {0}'.format(module.params['policy_mode']))
+
+    # check the grant types for 'grant' only.
+    if mode == 'grant':
+        for grant_type in module.params['policy_grant_types']:
+            if grant_type not in statement_label:
+                module.fail_json(msg='{0} is an unknown grant type.'.format(grant_type))
+
+    return do_policy_grant(module, connection,
+                           key_id,
+                           module.params['policy_role_arn'],
+                           module.params['policy_grant_types'],
+                           mode=mode,
+                           dry_run=module.check_mode,
+                           clean_invalid_entries=module.params['policy_clean_invalid_entries'])
 
 
 def main():
@@ -949,77 +1012,34 @@ def main():
         required_one_of=[['alias', 'key_id']],
     )
 
-    result = {}
     mode = module.params['policy_mode']
 
     kms = module.client('kms')
-    iam = module.client('iam')
 
-    key_id = module.params.get('key_id')
-    alias = module.params.get('alias')
-    if alias and alias.startswith('alias/'):
-        alias = alias[6:]
-
-    # Fetch/Canonicalize key_id where possible
-    if key_id:
-        try:
-            # Don't use get_key_details it triggers module.fail when the key
-            # doesn't exist
-            key_metadata = get_kms_metadata_with_backoff(kms, key_id)['KeyMetadata']
-            key_id = key_metadata['Arn']
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            # We can't create keys with a specific ID, if we can't access the
-            # key we'll have to fail
-            if module.params.get('state') == 'present':
-                module.fail_json(msg="Could not find key with id %s to update")
-            key_metadata = None
-    elif alias:
-        try:
-            key_metadata = get_kms_metadata_with_backoff(kms, 'alias/%s' % alias)['KeyMetadata']
-            key_id = key_metadata['Arn']
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            key_metadata = None
+    key_metadata = fetch_key_metadata(kms, module, module.params.get('key_id'), module.params.get('alias'))
+    # We can't create keys with a specific ID, if we can't access the key we'll have to fail
+    if module.params.get('state') == 'present' and module.params.get('key_id') and not key_metadata:
+        module.fail_json(msg="Could not find key with id %s to update")
 
     if module.params.get('policy_grant_types') or mode == 'deny':
         module.deprecate('Managing the KMS IAM Policy via policy_mode and policy_grant_types is fragile'
                          ' and has been deprecated in favour of the policy option.', version='2.13')
-        if module.params.get('policy_role_name') and not module.params.get('policy_role_arn'):
-            module.params['policy_role_arn'] = get_arn_from_role_name(iam, module.params['policy_role_name'])
-        if not module.params.get('policy_role_arn'):
-            module.fail_json(msg='policy_role_arn or policy_role_name is required to {0}'.format(module.params['policy_mode']))
-
-        # check the grant types for 'grant' only.
-        if mode == 'grant':
-            for g in module.params['policy_grant_types']:
-                if g not in statement_label:
-                    module.fail_json(msg='{0} is an unknown grant type.'.format(g))
-
-        ret = do_policy_grant(module, kms,
-                              key_id,
-                              module.params['policy_role_arn'],
-                              module.params['policy_grant_types'],
-                              mode=mode,
-                              dry_run=module.check_mode,
-                              clean_invalid_entries=module.params['policy_clean_invalid_entries'])
-        result.update(ret)
-
+        result = update_policy_grants(kms, module, key_metadata, mode)
         module.exit_json(**result)
 
-    else:
-        if module.params.get('state') == 'present':
-            if key_metadata:
-                key_details = get_key_details(kms, module, key_id)
-                update_key(kms, module, key_details)
-            else:
-                if key_id:
-                    module.fail_json(msg="Could not find key with id %s to update" % key_id)
-                else:
-                    create_key(kms, module)
-        else:
-            if key_metadata:
-                delete_key(kms, module, key_metadata, key_id)
-            else:
-                module.exit_json(changed=False)
+    if module.params.get('state') == 'absent':
+        if key_metadata is None:
+            module.exit_json(changed=False)
+        result = delete_key(kms, module, key_metadata)
+        module.exit_json(**result)
+
+    if key_metadata:
+        key_details = get_key_details(kms, module, key_metadata['Arn'])
+        result = update_key(kms, module, key_details)
+        module.exit_json(**result)
+
+    result = create_key(kms, module)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
