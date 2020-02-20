@@ -498,7 +498,8 @@ def wait_policy_is_applied(module, s3_client, bucket_name, expected_policy, shou
         else:
             return current_policy
     if should_fail:
-        module.fail_json(msg="Bucket policy failed to apply in the expected time")
+        module.fail_json(msg="Bucket policy failed to apply in the expected time",
+                         requested_policy=expected_policy, live_policy=current_policy)
     else:
         return None
 
@@ -514,7 +515,8 @@ def wait_payer_is_applied(module, s3_client, bucket_name, expected_payer, should
         else:
             return requester_pays_status
     if should_fail:
-        module.fail_json(msg="Bucket request payment failed to apply in the expected time")
+        module.fail_json(msg="Bucket request payment failed to apply in the expected time",
+                         requested_status=expected_payer, live_status=requester_pays_status)
     else:
         return None
 
@@ -529,7 +531,8 @@ def wait_encryption_is_applied(module, s3_client, bucket_name, expected_encrypti
             time.sleep(5)
         else:
             return encryption
-    module.fail_json(msg="Bucket encryption failed to apply in the expected time")
+    module.fail_json(msg="Bucket encryption failed to apply in the expected time",
+                     requested_encryption=expected_encryption, live_encryption=encryption)
 
 
 def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioning):
@@ -542,7 +545,8 @@ def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioni
             time.sleep(8)
         else:
             return versioning_status
-    module.fail_json(msg="Bucket versioning failed to apply in the expected time")
+    module.fail_json(msg="Bucket versioning failed to apply in the expected time",
+                     requested_versioning=required_versioning, live_versioning=versioning_status)
 
 
 def wait_tags_are_applied(module, s3_client, bucket_name, expected_tags_dict):
@@ -555,7 +559,8 @@ def wait_tags_are_applied(module, s3_client, bucket_name, expected_tags_dict):
             time.sleep(5)
         else:
             return current_tags_dict
-    module.fail_json(msg="Bucket tags failed to apply in the expected time")
+    module.fail_json(msg="Bucket tags failed to apply in the expected time",
+                     requested_tags=expected_tags_dict, live_tags=current_tags_dict)
 
 
 def get_current_bucket_tags_dict(s3_client, bucket_name):
