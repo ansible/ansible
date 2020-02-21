@@ -31,7 +31,7 @@ Designing module interfaces
 General guidelines & tips
 =========================
 
-* Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
+* Each module should be self-contained in one file, so it can be auto-transferred by Ansible.
 * Module name MUST use underscores instead of hyphens or spaces as a word separator. Using hyphens and spaces will prevent Ansible from importing your module.
 * Always use the ``hacking/test-module.py`` script when developing modules - it will warn you about common pitfalls.
 * If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
