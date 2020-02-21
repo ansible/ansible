@@ -93,6 +93,7 @@ result:
     description: Raw response from Ovh API, content varies with API.
     returned: success
     type: complex
+    contains:
 msg:
     description: Module error message.
     returned: failure
