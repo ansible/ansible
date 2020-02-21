@@ -127,7 +127,7 @@ class TestEosAclsModule(TestEosModule):
                               ])
                      ])
             ], state="replaced"))
-        commands = ['no ip access-list test1', 'ip access-list test1', '10 permit ospf 30.2.0.0/8 any log']
+        commands = ['ip access-list test1', 'no 35', 'no 45', '10 permit ospf 30.2.0.0/8 any log']
         result = self.execute_module(changed=True, commands=commands)
 
     def test_eos_acls_replaced_idempotent(self):
@@ -146,7 +146,8 @@ class TestEosAclsModule(TestEosModule):
                                   dict(grant="permit",
                                        source=dict(any="true"),
                                        destination=dict(any="true"),
-                                       protocol=6)
+                                       sequence="45",
+                                       protocol="tcp")
                               ])
                      ])
             ], state="replaced"))
@@ -187,7 +188,8 @@ class TestEosAclsModule(TestEosModule):
                                   dict(grant="permit",
                                        source=dict(any="true"),
                                        destination=dict(any="true"),
-                                       protocol=6)
+                                       sequence="45",
+                                       protocol="tcp")
                               ])
                      ])
             ], state="overridden"))

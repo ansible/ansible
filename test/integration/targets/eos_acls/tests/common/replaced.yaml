@@ -70,7 +70,7 @@
   
   - assert:
       that:
-        - "result.commands|length == 3"
+        - "result.commands|length == 5"
         - "result.changed == true"
         - "ansible_facts.network_resources.acls|symmetric_difference(result.after) == []"
     become: yes

@@ -191,8 +191,9 @@ class Acls(ConfigBase):
         commands = []
         have_commands = []
         remove_cmds = []
-        ace_diff = {}
+        diff = {}
         present = False
+        diff_present = False
         for w in want:
             afi = "ipv6" if w["afi"] == "ipv6" else "ipv4"
             for acl in w["acls"]:
@@ -204,10 +205,13 @@ class Acls(ConfigBase):
                     if h_acl["name"] == name:
                         present = True
                         h = {"afi": afi, "acls": [{"name": name}]}
-                        ace_diff = get_ace_diff(want_ace, h_acl["aces"])
-                        if ace_diff:
-                            remove_cmds = del_commands(h, have)
-        if ace_diff or not present:
+                        for h_ace in h_acl['aces']:
+                            diff = get_ace_diff(h_ace, want_ace)
+                            if diff:
+                               diff_present = True
+                               h = {"afi": afi, "acls": [{"name": name, "aces": [h_ace]}]}
+                               remove_cmds.append(del_commands(h, have))
+        if diff_present or not present:
             config_cmds = set_commands(want, have)
             config_cmds = list(itertools.chain(*config_cmds))
             for cmd in have:
@@ -215,10 +219,13 @@ class Acls(ConfigBase):
                 have_commands.append(have_configs)
             have_commands = list(itertools.chain(*have_commands))
             if remove_cmds:
+                remove_cmds = list(itertools.chain(*remove_cmds))
                 commands.append(remove_cmds)
             commands.append(config_cmds)
             commands = list(itertools.chain(*commands))
-        return commands
+        commandset = []
+        [commandset.append(cmd) for cmd in commands if cmd not in commandset]
+        return commandset
 
     @staticmethod
     def _state_overridden(want, have):
@@ -252,12 +259,13 @@ class Acls(ConfigBase):
                         for h_acl in h["acls"]:
                             h_names.append(h_acl["name"])
                             if h_acl["name"] == w_acl["name"]:
-                                ace_diff = get_ace_diff(w_acl["aces"], h_acl["aces"])
-                                if ace_diff:
-                                    diff = True
-                                    h = {"afi": h["afi"], "acls": [{"name": h_acl["name"], "aces": h_acl["aces"]}]}
-                                    remove_cmds = del_commands(h, have)
-                                    commands.append(remove_cmds)
+                                for w_ace in w_acl['aces']:
+                                    ace_diff = get_ace_diff(w_ace, h_acl["aces"])
+                                    if ace_diff:
+                                        diff = True
+                                        h = {"afi": h["afi"], "acls": [{"name": h_acl["name"], "aces": h_acl["aces"]}]}
+                                        remove_cmds = del_commands(h, have)
+                                        commands.append(remove_cmds)
                     for hname in h_names:
                         if hname not in w_names:
                             h = {"afi": h["afi"], "acls": [{"name": hname}]}
@@ -466,5 +474,8 @@ def del_commands(want, have):
 
 
 def get_ace_diff(want_ace, have_ace):
-    d = dict_diff(want_ace[0], have_ace[0])
+    for h_a in have_ace:
+        d = dict_diff(want_ace, h_a)
+        if not d:
+            break
     return d
