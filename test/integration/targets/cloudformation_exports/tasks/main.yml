@@ -21,7 +21,7 @@
         region: "{{ aws_region }}"
       register: exports_result
     - set_fact:
-        export_items: "{{ exports_result['export_items']['cf-exports-param'] }}"
+        export_items: "{{ exports_result['export_items'] }}"
     - assert:
         that:
           - export_items is defined
