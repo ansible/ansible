@@ -7,7 +7,7 @@ Cliconf Plugins
    :local:
    :depth: 2
 
-Cliconf plugins are abstactions over the CLI interface to network devices. They provide a standard interface
+Cliconf plugins are abstractions over the CLI interface to network devices. They provide a standard interface
 for Ansible to execute tasks on those network devices.
 
 These plugins generally correspond one-to-one to network device platforms. The appropriate cliconf plugin will

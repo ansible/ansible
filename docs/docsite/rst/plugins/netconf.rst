@@ -7,7 +7,7 @@ Netconf Plugins
    :local:
    :depth: 2
 
-Netconf plugins are abstactions over the Netconf interface to network devices. They provide a standard interface
+Netconf plugins are abstractions over the Netconf interface to network devices. They provide a standard interface
 for Ansible to execute tasks on those network devices.
 
 These plugins generally correspond one-to-one to network device platforms. The appropriate netconf plugin will
