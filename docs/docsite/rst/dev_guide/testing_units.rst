@@ -161,7 +161,7 @@ files that aren't themselves tests.
 Fixtures files
 ``````````````
 
-To mock out fetching results from devices, or provide other complex datastructures that
+To mock out fetching results from devices, or provide other complex data structures that
 come from external libraries, you can use ``fixtures`` to read in pre-generated data.
 
 Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
