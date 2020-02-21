@@ -103,7 +103,7 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {{config_option}}
 {{ '-' * config_len }}
 
-{% if config.get('description', '') not in ('', ['TODO: write it']) %}
+{% if config.get('description', ['']) not in ([''], ['TODO: write it']) %}
 :Description: {{' '.join(config['description'])}}
 {% endif %}
 {% if config['type'] %}
