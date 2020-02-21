@@ -1,0 +1,3 @@
+bugfixes:
+- fixed issue with sns_topic's delivery_policy option resulting in changed
+  always being true
