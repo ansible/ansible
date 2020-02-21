@@ -1,20 +1,27 @@
 ---
   - name: set up elb_target_info test prerequisites
+    module_defaults:
+      group/aws:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token | default(omit) }}"
+        region: "{{ aws_region }}"
 
     block:
 
-    - name:
-      debug: msg="********** Setting up elb_target_info test dependencies **********"
     # ============================================================
 
-    - name: set up aws connection info
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: yes
+    - name:
+      debug: msg="********** Setting up elb_target_info test dependencies **********"
+
+    - name: Find AMI to use
+      ec2_ami_info:
+        owners: 'amazon'
+        filters:
+          name: '{{ ec2_ami_name }}'
+      register: ec2_amis
+    - set_fact:
+        ec2_ami_image: '{{ ec2_amis.images[0].image_id }}'
 
     # ============================================================
 
@@ -23,7 +30,6 @@
         name: "{{ resource_prefix }}-vpc"
         state: present
         cidr_block: 20.0.0.0/16
-        <<: *aws_connection_info
         tags:
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
@@ -33,7 +39,6 @@
       ec2_vpc_igw:
         vpc_id: "{{ vpc.vpc.id }}"
         state: present
-        <<: *aws_connection_info
       register: igw
 
     - name: set up testing subnet
@@ -44,7 +49,6 @@
         az: "{{ aws_region }}a"
         resource_tags:
           Name: "{{ resource_prefix }}-subnet"
-        <<: *aws_connection_info
       register: subnet_1
 
     - name: set up testing subnet
@@ -55,7 +59,6 @@
         az: "{{ aws_region }}b"
         resource_tags:
           Name: "{{ resource_prefix }}-subnet"
-        <<: *aws_connection_info
       register: subnet_2
 
     - name: create routing rules
@@ -69,7 +72,6 @@
         subnets:
           - "{{ subnet_1.subnet.id }}"
           - "{{ subnet_2.subnet.id }}"
-        <<: *aws_connection_info
       register: route_table
 
     - name: create testing security group
@@ -86,7 +88,6 @@
             from_port: 22
             to_port: 22
             cidr_ip: 0.0.0.0/0
-        <<: *aws_connection_info
       register: sg
 
     - name: set up testing target group (type=instance)
@@ -103,7 +104,6 @@
         deregistration_delay_timeout: 30
         tags:
           Description: "Created by {{ resource_prefix }}"
-        <<: *aws_connection_info
 
     - name: set up testing target group (type=ip)
       register: nlb_target_group
@@ -116,10 +116,9 @@
         state: present
         # set this to 30 to test polling for changes, instead of having everything go out immediately
         deregistration_delay_timeout: 30
-        target_type: ip 
+        target_type: ip
         tags:
           Description: "Created by {{ resource_prefix }}"
-        <<: *aws_connection_info
 
     - name: set up testing target group which will not be associated with any load balancers
       register: idle_target_group
@@ -130,16 +129,15 @@
         port: 80
         vpc_id: '{{ vpc.vpc.id }}'
         state: present
-        target_type: instance 
+        target_type: instance
         tags:
           Description: "Created by {{ resource_prefix }}"
-        <<: *aws_connection_info
 
     - name: set up ec2 instance to use as a target
       ec2:
         group_id: "{{ sg.group_id }}"
         instance_type: t2.micro
-        image: "{{ ec2_ami_image[aws_region] }}"
+        image: "{{ ec2_ami_image }}"
         vpc_subnet_id: "{{ subnet_2.subnet.id }}"
         instance_tags:
           Name: "{{ resource_prefix }}-inst"
@@ -159,7 +157,6 @@
           runcmd:
             - "service httpd start"
             - echo "HELLO ANSIBLE" > /var/www/html/index.html
-        <<: *aws_connection_info
       register: ec2
 
     - name: create an application load balancer
@@ -177,7 +174,6 @@
               - Type: forward
                 TargetGroupName: "{{ tg_name }}-inst"
         state: present
-        <<: *aws_connection_info
 
 
     - name: create a network load balancer
@@ -193,23 +189,20 @@
               - Type: forward
                 TargetGroupName: "{{ tg_name }}-ip"
         state: present
-        <<: *aws_connection_info
- 
+
     - name: register with the ALB
       elb_target:
         target_group_name: "{{ tg_name }}-inst"
         target_id: "{{ ec2.instance_ids[0] }}"
         state: present
-        target_status: "initial" 
-        <<: *aws_connection_info
+        target_status: "initial"
 
     - name: register with the NLB IP target group
       elb_target:
         target_group_name: "{{ tg_name }}-ip"
-        target_id: "{{ ec2.instances[0].private_ip }}" 
+        target_id: "{{ ec2.instances[0].private_ip }}"
         state: present
         target_status: "initial"
-        <<: *aws_connection_info
 
     # ============================================================
 
@@ -219,7 +212,6 @@
     - name: gather facts
       elb_target_info:
         instance_id: "{{ ec2.instance_ids[0]}}"
-        <<: *aws_connection_info
       register: target_facts
 
     - assert:
@@ -237,12 +229,10 @@
         target_id: "{{ ec2.instance_ids[0]}}"
         state: present
         target_status: "unused"
-        <<: *aws_connection_info
 
     - name: gather facts again, including the idle group
       elb_target_info:
         instance_id: "{{ ec2.instance_ids[0]}}"
-        <<: *aws_connection_info
       register: target_facts
 
     - assert:
@@ -257,7 +247,6 @@
       elb_target_info:
         instance_id: "{{ ec2.instance_ids[0]}}"
         get_unused_target_groups: false
-        <<: *aws_connection_info
       register: target_facts
 
     - assert:
@@ -267,29 +256,27 @@
           - "{{ idle_target_group.target_group_arn not in (target_facts.instance_target_groups | map(attribute='target_group_arn')) }}"
           - (target_facts.instance_target_groups | length) == 2
         msg: "target_facts.instance_target_groups did not gather unused target groups when variable was set"
-        
+
     - name: register twice in the same target group
       elb_target:
         target_group_name: "{{ tg_name }}-ip"
         target_port: 22
-        target_id: "{{ ec2.instances[0].private_ip }}" 
+        target_id: "{{ ec2.instances[0].private_ip }}"
         state: present
         target_status: "healthy"
-        target_status_timeout: 300
-        <<: *aws_connection_info
+        target_status_timeout: 400
 
     - name: gather facts
       elb_target_info:
         instance_id: "{{ ec2.instance_ids[0] }}"
         get_unused_target_groups: false
-        <<: *aws_connection_info
       register: target_facts
 
     - assert:
         that:
           - alb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn'))
           - nlb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn'))
-          - (target_facts.instance_target_groups | length) == 2 
+          - (target_facts.instance_target_groups | length) == 2
           - (target_facts.instance_target_groups |
              selectattr('target_group_arn', 'equalto', nlb_target_group.target_group_arn) |
              map(attribute='targets') |
@@ -309,7 +296,6 @@
           target_id: "{{ item.1.target_id }}"
           state: absent
           target_status: "draining"
-          <<: *aws_connection_info
       with_subelements:
         - "{{ original_target_groups }}"
         - "targets"
@@ -318,7 +304,6 @@
       elb_target_info:
         get_unused_target_groups: false
         instance_id: "{{ ec2.instance_ids[0] }}"
-        <<: *aws_connection_info
       register: target_facts
       until: (target_facts.instance_target_groups | length) == 0
       retries: 60
@@ -332,7 +317,6 @@
         target_id: "{{ item.1.target_id }}"
         state: present
         target_status: "initial"
-        <<: *aws_connection_info
       with_subelements:
         - "{{ original_target_groups }}"
         - "targets"
@@ -343,7 +327,6 @@
       elb_target_info:
         get_unused_target_groups: false
         instance_id: "{{ ec2.instance_ids[0] }}"
-        <<: *aws_connection_info
       register: target_facts
       until: >
                 (target_facts.instance_target_groups |
@@ -361,7 +344,7 @@
         that:
           - alb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn'))
           - nlb_target_group.target_group_arn in (target_facts.instance_target_groups | map(attribute='target_group_arn'))
-          - (target_facts.instance_target_groups | length) == 2 
+          - (target_facts.instance_target_groups | length) == 2
           - (target_facts.instance_target_groups |
              selectattr('target_group_arn', 'equalto', nlb_target_group.target_group_arn) |
              map(attribute='targets') |
@@ -379,7 +362,7 @@
       ec2:
         group_id: "{{ sg.group_id }}"
         instance_type: t2.micro
-        image: "{{ ec2_ami_image[aws_region] }}"
+        image: "{{ ec2_ami_image }}"
         vpc_subnet_id: "{{ subnet_2.subnet.id }}"
         instance_tags:
           Name: "{{ resource_prefix }}-inst"
@@ -390,7 +373,6 @@
         volumes: []
         wait: true
         ebs_optimized: false
-        <<: *aws_connection_info
       ignore_errors: true
 
     - name: remove application load balancer
@@ -410,7 +392,6 @@
         state: absent
         wait: true
         wait_timeout: 200
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
@@ -421,7 +402,6 @@
       elb_network_lb:
         name: "{{ lb_name }}-nlb"
         state: absent
-        <<: *aws_connection_info
 
     - name: remove testing target groups
       elb_target_group:
@@ -436,7 +416,6 @@
           Description: "Created by {{ resource_prefix }}"
         wait: true
         wait_timeout: 200
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
@@ -461,7 +440,6 @@
             from_port: 22
             to_port: 22
             cidr_ip: 0.0.0.0/0
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
@@ -472,7 +450,6 @@
         state: absent
         lookup: id
         route_table_id: "{{ route_table.route_table.id }}"
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
@@ -486,7 +463,6 @@
         az: "{{ aws_region }}a"
         resource_tags:
           Name: "{{ resource_prefix }}-subnet"
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
@@ -500,7 +476,6 @@
         az: "{{ aws_region }}b"
         resource_tags:
           Name: "{{ resource_prefix }}-subnet"
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
@@ -510,7 +485,6 @@
       ec2_vpc_igw:
         vpc_id: "{{ vpc.vpc.id }}"
         state: absent
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
@@ -524,7 +498,6 @@
         tags:
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
