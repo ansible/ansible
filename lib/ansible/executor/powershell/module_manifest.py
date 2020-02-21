@@ -297,7 +297,7 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
         exec_manifest["async_timeout_sec"] = async_timeout
         exec_manifest["async_startup_timeout"] = C.config.get_config_value("WIN_ASYNC_STARTUP_TIMEOUT", variables=task_vars)
 
-    if become and become_method == 'runas':
+    if become and become_method.split('.')[-1] == 'runas':  # runas and namespace.collection.runas
         finder.scan_exec_script('exec_wrapper')
         finder.scan_exec_script('become_wrapper')
 
