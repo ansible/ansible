@@ -3,7 +3,7 @@
 # Copyright: (c) Ansible Project
 #
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
-from __future__ import (absolute_import, division, print_function)
+from __future__ import (absolute_import, division, print_function) # noqa: missing-gplv3-license
 
 __metaclass__ = type
 
@@ -246,7 +246,7 @@ def label_list(requested_label, current_label_list, action):
         current_label_list = requested_label
     # add new label to existing list.
     elif action == 'new':
-        if not action in current_label_list:
+        if requested_label not in current_label_list:
             current_label_list.append(requested_label)
     else:
         # add/delete prefix/suffix to existing label.
