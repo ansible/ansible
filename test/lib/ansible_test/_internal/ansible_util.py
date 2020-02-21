@@ -5,6 +5,8 @@ __metaclass__ = type
 import json
 import os
 
+from . import types as t
+
 from .constants import (
     SOFT_RLIMIT_NOFILE,
 )
@@ -102,6 +104,65 @@ def ansible_environment(args, color=True, ansible_config=None):
         env.update(dict(
             ANSIBLE_COLLECTIONS_PATHS=data_context().content.collection.root,
         ))
+
+    if data_context().content.is_ansible:
+        env.update(configure_plugin_paths(args))
+
+    return env
+
+
+def configure_plugin_paths(args):  # type: (CommonConfig) -> t.Dict[str, str]
+    """Return environment variables with paths to plugins relevant for the current command."""
+    # temporarily require opt-in to this feature
+    # once collection migration has occurred this feature should always be enabled
+    if not isinstance(args, IntegrationConfig) or not args.enable_test_support:
+        return {}
+
+    support_path = os.path.join(ANSIBLE_SOURCE_ROOT, 'test', 'support', args.command)
+
+    # provide private copies of collections for integration tests
+    collection_root = os.path.join(support_path, 'collections')
+
+    env = dict(
+        ANSIBLE_COLLECTIONS_PATHS=collection_root,
+    )
+
+    # provide private copies of plugins for integration tests
+    plugin_root = os.path.join(support_path, 'plugins')
+
+    plugin_list = [
+        'action',
+        'become',
+        'cache',
+        'callback',
+        'cliconf',
+        'connection',
+        'filter',
+        'httpapi',
+        'inventory',
+        'lookup',
+        'netconf',
+        # 'shell' is not configurable
+        'strategy',
+        'terminal',
+        'test',
+        'vars',
+    ]
+
+    # most plugins follow a standard naming convention
+    plugin_map = dict(('%s_plugins' % name, name) for name in plugin_list)
+
+    # these plugins do not follow the standard naming convention
+    plugin_map.update(
+        doc_fragment='doc_fragments',
+        library='modules',
+        module_utils='module_utils',
+    )
+
+    env.update(dict(('ANSIBLE_%s' % key.upper(), os.path.join(plugin_root, value)) for key, value in plugin_map.items()))
+
+    # only configure directories which exist
+    env = dict((key, value) for key, value in env.items() if os.path.isdir(value))
 
     return env
 
