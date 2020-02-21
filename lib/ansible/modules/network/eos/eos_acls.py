@@ -485,7 +485,7 @@ EXAMPLES = """
              grant: "deny"
              protocol: "ospf"
              source:
-               subnetaddress: 20.0.0.0/8
+               subnet_address: 20.0.0.0/8
              destnation:
                any: true
     state: merged
@@ -572,7 +572,7 @@ EXAMPLES = """
               grant: "permit"
               protocol: "ospf"
               source:
-                subnetaddress: 20.0.0.0/8
+                subnet_address: 20.0.0.0/8
               destination:
                 any: true
     state: replaced
@@ -621,7 +621,7 @@ EXAMPLES = """
                 action: "permit"
                 protocol: "ospf"
                 source:
-                  subnetaddress: 20.0.0.0/8
+                  subnet_address: 20.0.0.0/8
                 destination:
                   any: true
     state: overridden
@@ -728,7 +728,7 @@ EXAMPLES = """
 #            grant: "deny"
 #            protocol: "ospf"
 #            source:
-#              subnetaddress: 20.0.0.0/8
+#              subnet_address: 20.0.0.0/8
 #            destination:
 #              any: true
 #     - afi: "ipv6"
@@ -759,7 +759,7 @@ EXAMPLES = """
             grant: "deny"
             protocol: "ospf"
             source:
-              subnetaddress: 20.0.0.0/8
+              subnet_address: 20.0.0.0/8
             destination:
               any: true
      - afi: "ipv6"
