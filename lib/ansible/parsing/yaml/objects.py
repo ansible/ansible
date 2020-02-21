@@ -57,7 +57,7 @@ class AnsibleBaseYAMLObject(object):
 
 # try to always use orderddict with yaml, after py3.6 the dict type already does this
 odict = dict
-if C.FORCE_YAML_ORDERED_MAP and (PY2 or sys.version_info[:2] < (3, 7)):
+if PY2 or sys.version_info[:2] < (3, 7):
     # if python 2.7 or py3 < 3.7
     try:
         from collections import OrderedDict as odict
