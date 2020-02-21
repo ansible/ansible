@@ -183,7 +183,7 @@ The following playbook will create an SSH key, 3 Packet servers, and then wait u
 
 As with most Ansible modules, the default states of the Packet modules are idempotent, meaning the resources in your project will remain the same after re-runs of a playbook. Thus, we can keep the ``packet_sshkey`` module call in our playbook. If the public key is already in your Packet account, the call will have no effect.
 
-The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoresOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter.
+The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoreOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter.
 
 The ``packet_device`` module has a ``wait_for_public_IPv`` that is used to specify the version of the IP address to wait for (valid values are ``4`` or ``6`` for IPv4 or IPv6). If specified, Ansible will wait until the GET API call for a device contains an Internet-routeable IP address of the specified version. When referring to an IP address of a created device in subsequent module calls, it's wise to use the ``wait_for_public_IPv`` parameter, or ``state: active`` in the packet_device module call.
 
