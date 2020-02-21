@@ -4,6 +4,7 @@
 #
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -179,8 +180,10 @@ changed:
 import time
 import re
 import traceback
+
 try:
     import jenkins
+
     python_jenkins_installed = True
 except ImportError:
     JENKINS_IMP_ERR = traceback.format_exc()
@@ -235,6 +238,29 @@ def set_node_status(server_node, host, dict_online):
         server_node.enable_node(host)
 
 
+def label_list(requested_label, current_label_list, action):
+    substitution_strategy = {'new_prefix': '^%s', 'new_suffix': '%s$', 'delete': '^%s$',
+                             'delete_prefix': '^%s', 'delete_suffix': '%s$'}
+    # replace all existing label with new label.
+    if action == 'replace':
+        current_label_list = requested_label
+    # add new label to existing list.
+    elif action == 'new':
+        if not action in current_label_list:
+            current_label_list.append(requested_label)
+    else:
+        # add/delete prefix/suffix to existing label.
+        # First remove prefix/suffix and then add to avoid duplicate.
+        current_label_list = list(map(lambda x: re.sub(substitution_strategy[action] % requested_label, "", x),
+                                      current_label_list))
+        if "new" in action:
+            if 'prefix' in substitution_strategy[action]:
+                current_label_list = list(map(lambda x: requested_label + x, current_label_list))
+            else:
+                current_label_list = list(map(lambda x: x + requested_label, current_label_list))
+    return current_label_list
+
+
 def node_config_change(host, server_node, dict_label,
                        result, module):
     try:
@@ -248,37 +274,9 @@ def node_config_change(host, server_node, dict_label,
                 current_label = child.text
                 # list with unique elements and not extra spaces.
                 current_label_list = list(set(list(filter(None, current_label.split(" ")))))
-                # replace all existing label with new label.
-                if 'replace' in dict_label.keys():
-                    current_label_list = dict_label['replace']
-                # add new label to existing list.
-                if 'new' in dict_label.keys():
-                    if not dict_label['new'] in current_label_list:
-                        current_label_list.append(dict_label['new'])
-                # add prefix to existing label.
-                # First remove prefix and then add to avoid duplicate.
-                if 'new_prefix' in dict_label.keys():
-                    current_label_list = list(map(lambda x: re.sub('^%s' % dict_label['new_prefix'], "", x),
-                                                  current_label_list))
-                    current_label_list = list(map(lambda x: dict_label['new_prefix'] + x, current_label_list))
-                # add suffix to existing label.
-                # First remove prefix and then add to avoid duplicate.
-                if 'new_suffix' in dict_label.keys():
-                    current_label_list = list(map(lambda x: re.sub('%s$' % dict_label['new_suffix'], "", x),
-                                                  current_label_list))
-                    current_label_list = list(map(lambda x: x + dict_label['new_suffix'], current_label_list))
-                # delete existing label.
-                if 'delete' in dict_label.keys():
-                    current_label_list = list(map(lambda x: re.sub('^%s$' % dict_label['delete'], "", x),
-                                                  current_label_list))
-                # delete existing prefix label.
-                if 'delete_prefix' in dict_label.keys():
-                    current_label_list = list(map(lambda x: re.sub('^%s' % dict_label['delete_prefix'], "", x),
-                                                  current_label_list))
-                # delete existing suffix label.
-                if 'delete_suffix' in dict_label.keys():
-                    current_label_list = list(map(lambda x: re.sub('%s$' % dict_label['delete_suffix'], "", x),
-                                                  current_label_list))
+                # label replacement logic
+                for action in dict_label.keys():
+                    current_label_list = label_list(dict_label[action], current_label_list, action)
                 child.text = " ".join(list(set(list(filter(None, current_label_list)))))
         if not set(list(filter(None, current_label_list))) == set(list(filter(None, current_label.split(" ")))):
             server_node.reconfig_node(host, ET.tostring(tree, encoding='utf8', method='xml').decode("utf-8"))
