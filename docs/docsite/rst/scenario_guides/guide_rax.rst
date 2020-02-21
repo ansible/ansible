@@ -554,7 +554,7 @@ Build a complete webserver environment with servers, custom networks and load ba
 RackConnect and Managed Cloud
 +++++++++++++++++++++++++++++
 
-When using RackConnect version 2 or Rackspace Managed Cloud there are Rackspace automation tasks that are executed on the servers you create after they are successfully built. If your automation executes before the RackConnect or Managed Cloud automation, you can cause failures and un-usable servers.
+When using RackConnect version 2 or Rackspace Managed Cloud there are Rackspace automation tasks that are executed on the servers you create after they are successfully built. If your automation executes before the RackConnect or Managed Cloud automation, you can cause failures and unusable servers.
 
 These examples show creating servers, and ensuring that the Rackspace automation has completed before Ansible continues onwards.
 
