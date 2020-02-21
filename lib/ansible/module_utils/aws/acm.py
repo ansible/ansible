@@ -71,18 +71,18 @@ class ACMServiceManager(object):
             kwargs['CertificateStatuses'] = statuses
         return paginator.paginate(**kwargs).build_full_result()['CertificateSummaryList']
 
-    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0, catch_extra_error_codes=['ResourceNotFoundException'])
     def get_certificate_with_backoff(self, client, certificate_arn):
         response = client.get_certificate(CertificateArn=certificate_arn)
         # strip out response metadata
         return {'Certificate': response['Certificate'],
                 'CertificateChain': response['CertificateChain']}
 
-    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0, catch_extra_error_codes=['ResourceNotFoundException'])
     def describe_certificate_with_backoff(self, client, certificate_arn):
         return client.describe_certificate(CertificateArn=certificate_arn)['Certificate']
 
-    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0, catch_extra_error_codes=['ResourceNotFoundException'])
     def list_certificate_tags_with_backoff(self, client, certificate_arn):
         return client.list_tags_for_certificate(CertificateArn=certificate_arn)['Tags']
 

@@ -219,7 +219,7 @@ def retry_not_found(to_call, *args, **kwargs):
         try:
             return to_call(*args, **kwargs)
         except EC2ResponseError as e:
-            if e.error_code == 'InvalidDhcpOptionID.NotFound':
+            if e.error_code in ['InvalidDhcpOptionID.NotFound', 'InvalidDhcpOptionsID.NotFound']:
                 sleep(3)
                 continue
             raise e
