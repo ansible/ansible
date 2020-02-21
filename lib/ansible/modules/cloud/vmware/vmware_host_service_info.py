@@ -112,7 +112,7 @@ class VmwareServiceManager(PyVmomi):
         for host in self.hosts:
             host_service_info = []
             host_service_system = host.configManager.serviceSystem
-            if host_service_system:
+            if host_service_system and host_service_system.serviceInfo:
                 services = host_service_system.serviceInfo.service
                 for service in services:
                     host_service_info.append(
