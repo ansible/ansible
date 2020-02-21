@@ -244,7 +244,7 @@ except ImportError as e:
     pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (get_aws_connection_info, compare_aws_tags, camel_dict_to_snake_dict,
+from ansible.module_utils.ec2 import (compare_aws_tags, camel_dict_to_snake_dict,
                                       ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
 
 
@@ -263,7 +263,7 @@ class EFSConnection(object):
 
     def __init__(self, module):
         self.connection = module.client('efs')
-        region = get_aws_connection_info(module, boto3=True)[0]
+        region = module.region
 
         self.module = module
         self.region = region

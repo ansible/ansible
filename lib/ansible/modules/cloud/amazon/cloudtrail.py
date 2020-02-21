@@ -268,7 +268,7 @@ except ImportError:
     pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (get_aws_connection_info, camel_dict_to_snake_dict,
+from ansible.module_utils.ec2 import (camel_dict_to_snake_dict,
                                       ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
 
 
@@ -498,7 +498,7 @@ def main():
         ct_params['KmsKeyId'] = module.params['kms_key_id']
 
     client = module.client('cloudtrail')
-    region = get_aws_connection_info(module, boto3=True)[0]
+    region = module.region
 
     results = dict(
         changed=False,
