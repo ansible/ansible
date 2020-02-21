@@ -1,0 +1,2 @@
+feature:
+  - aws_kms - add option to enable or disable automatically key rotation.
