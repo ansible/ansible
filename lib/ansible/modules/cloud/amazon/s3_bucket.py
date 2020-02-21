@@ -353,11 +353,7 @@ def create_or_update_bucket(s3_client, module, location):
             expected_encryption = {'SSEAlgorithm': encryption}
             if encryption == 'aws:kms' and encryption_key_id is not None:
                 expected_encryption.update({'KMSMasterKeyID': encryption_key_id})
-            try:
-                put_bucket_encryption(s3_client, name, expected_encryption)
-            except (BotoCoreError, ClientError) as e:
-                module.fail_json_aws(e, msg="Failed to set bucket encryption")
-            current_encryption = wait_encryption_is_applied(module, s3_client, name, expected_encryption)
+            current_encryption = put_bucket_encryption_with_retry(module, s3_client, name, expected_encryption)
             changed = True
 
         result['encryption'] = current_encryption
@@ -454,6 +450,25 @@ def get_bucket_encryption(s3_client, bucket_name):
         return None
 
 
+def put_bucket_encryption_with_retry(module, s3_client, name, expected_encryption):
+    max_retries = 3
+    for retries in range(1, max_retries + 1):
+        try:
+            put_bucket_encryption(s3_client, name, expected_encryption)
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg="Failed to set bucket encryption")
+        current_encryption = wait_encryption_is_applied(module, s3_client, name, expected_encryption,
+                                                        should_fail=(retries == max_retries), retries=5)
+        if current_encryption == expected_encryption:
+            return current_encryption
+
+    # We shouldn't get here, the only time this should happen is if
+    # current_encryption != expected_encryption and retries == max_retries
+    # Which should use module.fail_json and fail out first.
+    module.fail_json(msg='Failed to apply bucket encryption',
+                     current=current_encryption, expected=expected_encryption, retries=retries)
+
+
 @AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
 def put_bucket_encryption(s3_client, bucket_name, encryption):
     server_side_encryption_configuration = {'Rules': [{'ApplyServerSideEncryptionByDefault': encryption}]}
@@ -518,8 +533,8 @@ def wait_payer_is_applied(module, s3_client, bucket_name, expected_payer, should
         return None
 
 
-def wait_encryption_is_applied(module, s3_client, bucket_name, expected_encryption):
-    for dummy in range(0, 12):
+def wait_encryption_is_applied(module, s3_client, bucket_name, expected_encryption, should_fail=True, retries=12):
+    for dummy in range(0, retries):
         try:
             encryption = get_bucket_encryption(s3_client, bucket_name)
         except (BotoCoreError, ClientError) as e:
@@ -528,8 +543,12 @@ def wait_encryption_is_applied(module, s3_client, bucket_name, expected_encrypti
             time.sleep(5)
         else:
             return encryption
-    module.fail_json(msg="Bucket encryption failed to apply in the expected time",
-                     requested_encryption=expected_encryption, live_encryption=encryption)
+
+    if should_fail:
+        module.fail_json(msg="Bucket encryption failed to apply in the expected time",
+                         requested_encryption=expected_encryption, live_encryption=encryption)
+
+    return encryption
 
 
 def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioning):
