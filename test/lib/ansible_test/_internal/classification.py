@@ -809,6 +809,9 @@ class PathMapper:
         if path.startswith('test/lib/'):
             return all_tests(self.args)  # test infrastructure, run all tests
 
+        if path.startswith('test/support/'):
+            return all_tests(self.args)  # test infrastructure, run all tests
+
         if path.startswith('test/utils/shippable/'):
             if dirname == 'test/utils/shippable':
                 test_map = {
