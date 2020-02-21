@@ -126,25 +126,29 @@ class AclsFacts(object):
             acl_dict = {'name': acl['name'],
                         'aces': []}
             if acl.get('term'):
-                ace = {'name': acl['term'].get('name')}
-                if acl['term'].get('from'):
-                    if acl['term']['from'].get('source-address'):
-                        ace['source'] = {}
-                        ace['source']['address'] = acl['term']['from']['source-address']['name']
-                    if acl['term']['from'].get('prefix-list'):
-                        ace['source'] = {}
-                        ace['source']['prefix'] = acl['term']['from']['prefix-list']['name']
-                    if acl['term']['from'].get('port'):
-                        ace['port'] = {}
-                        specified_port = acl['term']['from']['port']
-                        try:
-                            ace['port']['range'] = int(specified_port)
-                        except ValueError:
-                            ace["port"][specified_port] = True
-                    if acl['term']['from'].get('protocol'):
-                        ace['protocol'] = {}
-                        protocol = acl['term']['from']['protocol']
-                        ace['protocol'][protocol] = True
-                acl_dict['aces'].append(ace)
+                terms = acl["term"]
+                if not isinstance(terms, list):
+                    terms = [terms]
+                for term in terms:
+                    ace = {'name': term.get('name')}
+                    if term.get('from'):
+                        if term['from'].get('source-address'):
+                            ace['source'] = {}
+                            ace['source']['address'] = term['from']['source-address']['name']
+                        if term['from'].get('prefix-list'):
+                            ace['source'] = {}
+                            ace['source']['prefix'] = term['from']['prefix-list']['name']
+                        if term['from'].get('port'):
+                            ace['port'] = {}
+                            specified_port = term['from']['port']
+                            try:
+                                ace['port']['range'] = int(specified_port)
+                            except ValueError:
+                                ace["port"][specified_port] = True
+                        if term['from'].get('protocol'):
+                            ace['protocol'] = {}
+                            protocol = term['from']['protocol']
+                            ace['protocol'][protocol] = True
+                    acl_dict['aces'].append(ace)
             config['acls'].append(acl_dict)
         return utils.remove_empties(config)
