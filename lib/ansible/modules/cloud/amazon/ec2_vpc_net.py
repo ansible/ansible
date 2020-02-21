@@ -253,10 +253,7 @@ def get_vpc(module, connection, vpc_id):
         module.fail_json_aws(e, msg="Unable to wait for VPC {0} to be available.".format(vpc_id))
 
     try:
-        vpc_obj = AWSRetry.backoff(
-            delay=3, tries=8,
-            catch_extra_error_codes=['InvalidVpcID.NotFound'],
-        )(connection.describe_vpcs)(VpcIds=[vpc_id])['Vpcs'][0]
+        vpc_obj = connection.describe_vpcs(VpcIds=[vpc_id], aws_retry=True)['Vpcs'][0]
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Failed to describe VPCs")
     try:
@@ -279,10 +276,7 @@ def update_vpc_tags(connection, module, vpc_id, tags, name):
         if tags_to_update:
             if not module.check_mode:
                 tags = ansible_dict_to_boto3_tag_list(tags_to_update)
-                vpc_obj = AWSRetry.backoff(
-                    delay=1, tries=5,
-                    catch_extra_error_codes=['InvalidVpcID.NotFound'],
-                )(connection.create_tags)(Resources=[vpc_id], Tags=tags)
+                vpc_obj = connection.create_tags(Resources=[vpc_id], Tags=tags, aws_retry=True)
 
                 # Wait for tags to be updated
                 expected_tags = boto3_tag_list_to_ansible_dict(tags)

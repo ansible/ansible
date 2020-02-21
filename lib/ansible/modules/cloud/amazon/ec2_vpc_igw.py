@@ -91,6 +91,7 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import (
     AWSRetry,
     camel_dict_to_snake_dict,
@@ -237,6 +238,11 @@ class AnsibleEc2Igw(object):
 
             try:
                 response = self._connection.create_internet_gateway()
+
+                # Ensure the gateway exists before trying to attach it or add tags
+                waiter = get_waiter(self._connection, 'internet_gateway_exists')
+                waiter.wait(InternetGatewayIds=[response['InternetGateway']['InternetGatewayId']])
+
                 igw = camel_dict_to_snake_dict(response['InternetGateway'])
                 self._connection.attach_internet_gateway(InternetGatewayId=igw['internet_gateway_id'], VpcId=vpc_id)
                 self._results['changed'] = True

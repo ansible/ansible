@@ -126,7 +126,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 
-@AWSRetry.jittered_backoff(retries=10, delay=10)
+@AWSRetry.jittered_backoff(retries=10, delay=10, catch_extra_error_codes=['TargetGroupNotFound'])
 def describe_target_groups_with_backoff(connection, tg_name):
     return connection.describe_target_groups(Names=[tg_name])
 
@@ -147,7 +147,7 @@ def convert_tg_name_to_arn(connection, module, tg_name):
     return tg_arn
 
 
-@AWSRetry.jittered_backoff(retries=10, delay=10)
+@AWSRetry.jittered_backoff(retries=10, delay=10, catch_extra_error_codes=['TargetGroupNotFound'])
 def describe_targets_with_backoff(connection, tg_arn, target):
     if target is None:
         tg = []

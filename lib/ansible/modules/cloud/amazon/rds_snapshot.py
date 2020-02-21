@@ -338,7 +338,7 @@ def main():
         required_if=[['state', 'present', ['db_instance_identifier']]]
     )
 
-    client = module.client('rds', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+    client = module.client('rds', retry_decorator=AWSRetry.jittered_backoff(retries=10, catch_extra_error_codes=['DBSnapshotNotFound']))
 
     if module.params['state'] == 'absent':
         ret_dict = ensure_snapshot_absent(client, module)

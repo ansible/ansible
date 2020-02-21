@@ -213,12 +213,11 @@ class AnsibleEc2TgwInfo(object):
         try:
             response = self._connection.describe_transit_gateways(
                 TransitGatewayIds=transit_gateway_ids, Filters=filters)
-        except (BotoCoreError, ClientError) as e:
+        except ClientError as e:
             if e.response['Error']['Code'] == 'InvalidTransitGatewayID.NotFound':
                 self._results['transit_gateways'] = []
                 return
-            else:
-                self._module.fail_json_aws(e)
+            raise
 
         for transit_gateway in response['TransitGateways']:
             transit_gateway_info.append(camel_dict_to_snake_dict(transit_gateway, ignore_list=['Tags']))
@@ -257,7 +256,10 @@ def main():
     )
 
     tgwf_manager = AnsibleEc2TgwInfo(module=module, results=results)
-    tgwf_manager.describe_transit_gateways()
+    try:
+        tgwf_manager.describe_transit_gateways()
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e)
 
     module.exit_json(**results)
 
