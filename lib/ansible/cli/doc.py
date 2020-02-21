@@ -333,7 +333,7 @@ class DocCLI(CLI):
             display.vvvv("Found %s" % plugin_name)
             full_path = '/'.join([path, plugin_name])
 
-            if is_collection_ref:
+            if is_collection_ref(plugin):
                 full = plugin_name.split('.')
                 collection = full[:1]
                 plugin = full[2:]
