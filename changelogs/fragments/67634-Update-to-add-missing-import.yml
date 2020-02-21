@@ -1,2 +1,2 @@
 bugfixes:
-    - Some cloudengine modules miss "import __future__" and "mateclass", update to add them. (https://github.com/ansible/ansible/pull/67634).
+    - Some cloudengine modules miss "import __future__" and "mateclass", update to add them. (https://github.com/ansible/ansible/pull/67635).
