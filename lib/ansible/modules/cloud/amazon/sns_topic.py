@@ -217,6 +217,7 @@ sns_topic:
 
 import json
 import re
+import copy
 
 try:
     import botocore
@@ -298,6 +299,20 @@ class SnsTopicManager(object):
             self.topic_arn = response['TopicArn']
         return True
 
+    def _compare_delivery_policies(self, policy_a, policy_b):
+        _policy_a = copy.deepcopy(policy_a)
+        _policy_b = copy.deepcopy(policy_b)
+        # AWS automatically injects disableSubscriptionOverrides if you set an
+        # http policy
+        if 'http' in policy_a:
+            if 'disableSubscriptionOverrides' not in policy_a['http']:
+                _policy_a['http']['disableSubscriptionOverrides'] = False
+        if 'http' in policy_b:
+            if 'disableSubscriptionOverrides' not in policy_b['http']:
+                _policy_b['http']['disableSubscriptionOverrides'] = False
+        comparison = (_policy_a != _policy_b)
+        return comparison
+
     def _set_topic_attrs(self):
         changed = False
         try:
@@ -326,7 +341,7 @@ class SnsTopicManager(object):
                     self.module.fail_json_aws(e, msg="Couldn't set topic policy")
 
         if self.delivery_policy and ('DeliveryPolicy' not in topic_attributes or
-                                     compare_policies(self.delivery_policy, json.loads(topic_attributes['DeliveryPolicy']))):
+                                     self._compare_delivery_policies(self.delivery_policy, json.loads(topic_attributes['DeliveryPolicy']))):
             changed = True
             self.attributes_set.append('delivery_policy')
             if not self.check_mode:

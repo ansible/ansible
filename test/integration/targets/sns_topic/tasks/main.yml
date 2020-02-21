@@ -1,14 +1,10 @@
-- block:
-
-    - name: set up AWS connection info
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_secret_key: "{{ aws_secret_key|default() }}"
-          aws_access_key: "{{ aws_access_key|default() }}"
-          security_token: "{{ security_token|default() }}"
-          region: "{{ aws_region|default() }}"
-      no_log: yes
-
+- module_defaults:
+    group/aws:
+      aws_secret_key: "{{ aws_secret_key }}"
+      aws_access_key: "{{ aws_access_key }}"
+      security_token: "{{ security_token|default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
     # This should exist, but there's no expectation that the test user should be able to
     # create/update this role, merely validate that it's there.
     # Use ansible -m iam_role -a 'name=ansible_lambda_role
@@ -20,7 +16,6 @@
         name: ansible_lambda_role
         assume_role_policy_document: "{{ lookup('file', 'lambda-trust-policy.json', convert_data=False) }}"
         create_instance_profile: no
-        <<: *aws_connection_info
       register: iam_role
 
     - name: pause if role was created
@@ -35,7 +30,6 @@
         iam_type: role
         policy_json: "{{ lookup('file', 'lambda-policy.json') }}"
         state: present
-        <<: *aws_connection_info
       register: iam_policy
 
     - name: pause if policy was created
@@ -47,7 +41,6 @@
       sns_topic:
         name: "{{ sns_topic_topic_name }}"
         display_name: "My topic name"
-        <<: *aws_connection_info
       register: sns_topic_create
 
     - name: assert that creation worked
@@ -63,7 +56,6 @@
       sns_topic:
         name: "{{ sns_topic_topic_name }}"
         display_name: "My topic name"
-        <<: *aws_connection_info
       register: sns_topic_no_change
 
     - name: assert that recreation had no effect
@@ -76,7 +68,6 @@
       sns_topic:
         name: "{{ sns_topic_topic_name }}"
         display_name: "My new topic name"
-        <<: *aws_connection_info
       register: sns_topic_update_name
 
     - name: assert that updating name worked
@@ -90,7 +81,6 @@
         name: "{{ sns_topic_topic_name }}"
         display_name: "My new topic name"
         policy: "{{ lookup('template', 'initial-policy.json') }}"
-        <<: *aws_connection_info
       register: sns_topic_add_policy
 
     - name: assert that adding policy worked
@@ -103,7 +93,6 @@
         name: "{{ sns_topic_topic_name }}"
         display_name: "My new topic name"
         policy: "{{ lookup('template', 'initial-policy.json') }}"
-        <<: *aws_connection_info
       register: sns_topic_rerun_policy
 
     - name: assert that rerunning policy had no effect
@@ -116,13 +105,90 @@
         name: "{{ sns_topic_topic_name }}"
         display_name: "My new topic name"
         policy: "{{ lookup('template', 'updated-policy.json') }}"
-        <<: *aws_connection_info
       register: sns_topic_update_policy
 
     - name: assert that updating policy worked
       assert:
         that:
           - sns_topic_update_policy.changed
+
+    - name: add delivery policy
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        delivery_policy:
+            http:
+              defaultHealthyRetryPolicy:
+                minDelayTarget: 20
+                maxDelayTarget: 20
+                numRetries: 3
+                numMaxDelayRetries: 0
+                numNoDelayRetries: 0
+                numMinDelayRetries: 0
+                backoffFunction: 'linear'
+      register: sns_topic_add_delivery_policy
+
+    - name: assert that adding delivery policy worked
+      vars:
+        delivery_policy: '{{ sns_topic_add_delivery_policy.sns_topic.delivery_policy | from_json }}'
+      assert:
+        that:
+          - sns_topic_add_delivery_policy.changed
+          - delivery_policy.http.defaultHealthyRetryPolicy.minDelayTarget == 20
+          - delivery_policy.http.defaultHealthyRetryPolicy.maxDelayTarget == 20
+          - delivery_policy.http.defaultHealthyRetryPolicy.numRetries == 3
+
+    - name: rerun same delivery policy
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        delivery_policy:
+            http:
+              defaultHealthyRetryPolicy:
+                minDelayTarget: 20
+                maxDelayTarget: 20
+                numRetries: 3
+                numMaxDelayRetries: 0
+                numNoDelayRetries: 0
+                numMinDelayRetries: 0
+                backoffFunction: 'linear'
+      register: sns_topic_rerun_delivery_policy
+
+    - name: assert that rerunning delivery_policy had no effect
+      vars:
+        delivery_policy: '{{ sns_topic_rerun_delivery_policy.sns_topic.delivery_policy | from_json }}'
+      assert:
+        that:
+          - not sns_topic_rerun_delivery_policy.changed
+          - delivery_policy.http.defaultHealthyRetryPolicy.minDelayTarget == 20
+          - delivery_policy.http.defaultHealthyRetryPolicy.maxDelayTarget == 20
+          - delivery_policy.http.defaultHealthyRetryPolicy.numRetries == 3
+
+    - name: rerun a slightly different delivery policy
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        delivery_policy:
+            http:
+              defaultHealthyRetryPolicy:
+                minDelayTarget: 40
+                maxDelayTarget: 40
+                numRetries: 6
+                numMaxDelayRetries: 0
+                numNoDelayRetries: 0
+                numMinDelayRetries: 0
+                backoffFunction: 'linear'
+      register: sns_topic_rerun_delivery_policy
+
+    - name: assert that rerunning delivery_policy worked
+      vars:
+        delivery_policy: '{{ sns_topic_rerun_delivery_policy.sns_topic.delivery_policy | from_json }}'
+      assert:
+        that:
+          - sns_topic_rerun_delivery_policy.changed
+          - delivery_policy.http.defaultHealthyRetryPolicy.minDelayTarget == 40
+          - delivery_policy.http.defaultHealthyRetryPolicy.maxDelayTarget == 40
+          - delivery_policy.http.defaultHealthyRetryPolicy.numRetries == 6
 
     - name: create temp dir
       tempfile:
@@ -143,7 +209,6 @@
         runtime: 'python2.7'
         role: ansible_lambda_role
         handler: '{{ sns_topic_lambda_function }}.handler'
-        <<: *aws_connection_info
       register: lambda_result
 
     - set_fact:
@@ -155,7 +220,6 @@
         display_name: "My new topic name"
         purge_subscriptions: no
         subscriptions: "{{ sns_topic_subscriptions }}"
-        <<: *aws_connection_info
       register: sns_topic_subscribe
 
     - name: assert that subscribing worked
@@ -169,7 +233,6 @@
         name: "{{ sns_topic_topic_name }}"
         display_name: "My new topic name"
         purge_subscriptions: no
-        <<: *aws_connection_info
       register: sns_topic_no_purge
 
     - name: assert that not purging subscriptions had no effect
@@ -183,7 +246,6 @@
         name: "{{ sns_topic_topic_name }}"
         display_name: "My new topic name"
         purge_subscriptions: yes
-        <<: *aws_connection_info
       register: sns_topic_purge
 
     - name: assert that purging subscriptions worked
@@ -196,12 +258,10 @@
       sns_topic:
         name: "{{ sns_topic_topic_name }}"
         state: absent
-        <<: *aws_connection_info
 
     - name: no-op with third party topic (effectively get existing subscriptions)
       sns_topic:
         name: "{{ sns_topic_third_party_topic_arn }}"
-        <<: *aws_connection_info
         region: "{{ sns_topic_third_party_region }}"
       register: third_party_topic
 
@@ -209,7 +269,6 @@
       sns_topic:
         name: "{{ sns_topic_third_party_topic_arn }}"
         subscriptions: "{{ sns_topic_subscriptions }}"
-        <<: *aws_connection_info
         region: "{{ sns_topic_third_party_region }}"
       register: third_party_topic_subscribe
 
@@ -224,7 +283,6 @@
         name: "{{ sns_topic_third_party_topic_arn }}"
         display_name: "This should not work"
         subscriptions: "{{ sns_topic_subscriptions }}"
-        <<: *aws_connection_info
         region: "{{ sns_topic_third_party_region }}"
       ignore_errors: yes
       register: third_party_name_change
@@ -238,7 +296,6 @@
       sns_topic:
         name: "{{ sns_topic_third_party_topic_arn }}"
         subscriptions: "{{ third_party_topic.sns_topic.subscriptions }}"
-        <<: *aws_connection_info
         region: "{{ sns_topic_third_party_region }}"
       register: third_party_unsubscribe
 
@@ -253,7 +310,6 @@
         name: "{{ sns_topic_third_party_topic_arn }}"
         state: absent
         subscriptions: "{{ subscriptions }}"
-        <<: *aws_connection_info
         region: "{{ sns_topic_third_party_region }}"
       ignore_errors: yes
       register: third_party_deletion
@@ -261,7 +317,6 @@
     - name: no-op after third party deletion
       sns_topic:
         name: "{{ sns_topic_third_party_topic_arn }}"
-        <<: *aws_connection_info
         region: "{{ sns_topic_third_party_region }}"
       register: third_party_deletion_facts
 
@@ -281,7 +336,6 @@
       sns_topic:
         name: "{{ sns_topic_topic_name }}"
         state: absent
-        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: unsubscribe from third party topic
@@ -289,7 +343,6 @@
         name: "{{ sns_topic_third_party_topic_arn }}"
         subscriptions: []
         purge_subscriptions: yes
-        <<: *aws_connection_info
         region: "{{ sns_topic_third_party_region }}"
       ignore_errors: yes
 
@@ -297,7 +350,6 @@
       lambda:
         name: '{{ sns_topic_lambda_name }}'
         state: absent
-        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: remove tempdir
