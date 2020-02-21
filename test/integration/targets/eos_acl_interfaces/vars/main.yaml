@@ -1,0 +1,83 @@
+Interfaces:
+  int1:
+    GigabitEthernet0/0
+  int2:
+    GigabitEthernet0/1
+
+deleted1:
+  commands:
+    - interface GigabitEthernet0/0
+    - no ip access-group aclv401 in
+    - no ip access-group aclv402 out
+    - no ipv6 traffic-filter aclv601 out
+
+merged:
+  commands:
+    - interface GigabitEthernet0/0
+    - ip access-group aclv401 in
+    - ip access-group aclv402 out
+    - ipv6 traffic-filter aclv601 out
+    - interface GigabitEthernet0/1
+    - ipv6 traffic-filter aclv601 in
+
+replaced:
+  commands:
+    - interface GigabitEthernet0/1
+    - no ipv6 traffic-filter aclv601 in
+    - ip access-group aclv401 in
+
+overridden:
+  commands:
+    - interface GigabitEthernet0/0
+    - no ip access-group aclv401 in
+    - no ip access-group aclv402 out
+    - no ipv6 traffic-filter aclv601 out
+    - interface GigabitEthernet0/1
+    - no ipv6 traffic-filter aclv601 in
+    - ip access-group aclv401 in
+
+# Interface names will changed based on the platform used. Following configs are wrt ios.
+gathered:
+  config:
+    - name: Loopback888
+    - access_groups:
+      - acls:
+        - direction: in
+          name: aclv401
+        - direction: out
+          name: aclv402
+        afi: ipv4
+      - acls:
+        - direction: out
+          name: aclv601
+        afi: ipv6
+      name: GigabitEthernet0/0
+    - access_groups:
+      - acls:
+        - direction: in
+          name: aclv601
+        afi: ipv6
+      name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+    - name: GigabitEthernet0/3
+
+parsed:
+  config:
+    - access_groups:
+      - acls:
+        - direction: in
+          name: aclv401
+        - direction: out
+          name: aclv402
+        afi: ipv4
+      - acls:
+        - direction: out
+          name: aclv601
+        afi: ipv6
+      name: GigabitEthernet0/0
+    - access_groups:
+      - acls:
+        - direction: in
+          name: aclv601
+        afi: ipv6
+      name: GigabitEthernet0/1
