@@ -1,0 +1,2 @@
+bugfixes:
+    - Some cloudengine modules were missing ``import __future__`` and ``metaclass``. (https://github.com/ansible/ansible/pull/67635).
