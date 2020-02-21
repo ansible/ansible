@@ -75,7 +75,8 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info
+from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn
+from ansible.module_utils.ec2 import get_aws_connection_info, get_aws_region
 
 # We will also export HAS_BOTO3 so end user modules can use it.
 __all__ = ('AnsibleAWSModule', 'HAS_BOTO3', 'is_boto3_error_code')
@@ -188,6 +189,10 @@ class AnsibleAWSModule(object):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
         return boto3_conn(self, conn_type='resource', resource=service,
                           region=region, endpoint=ec2_url, **aws_connect_kwargs)
+
+    @property
+    def region(self, boto3=True):
+        return get_aws_region(self, boto3)
 
     def fail_json_aws(self, exception, msg=None):
         """call fail_json with processed exception

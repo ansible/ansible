@@ -67,7 +67,7 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import AWSRetry, get_aws_connection_info
+from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict
 
 
@@ -119,12 +119,9 @@ def list_ec2_volumes(connection, module):
     except ClientError as e:
         module.fail_json_aws(e, msg="Failed to describe volumes.")
 
-    # We add region to the volume info so we need it here
-    region = get_aws_connection_info(module, boto3=True)[0]
-
     for volume in all_volumes["Volumes"]:
         volume = camel_dict_to_snake_dict(volume, ignore_list=['Tags'])
-        volume_dict_array.append(get_volume_info(volume, region))
+        volume_dict_array.append(get_volume_info(volume, module.region))
     module.exit_json(volumes=volume_dict_array)
 
 

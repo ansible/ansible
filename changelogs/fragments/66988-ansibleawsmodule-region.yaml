@@ -1,0 +1,2 @@
+minor_changes:
+- 'AnsibleAWSModule - Add a helper (region) so that modules which migrate to using module.client() can still access the region information'
