@@ -44,7 +44,7 @@ options:
     required: false
     default: false
     type: bool
-    version_added: 2.10
+    version_added: '2.10'
   policy_mode:
     description:
     - (deprecated) Grant or deny access.
