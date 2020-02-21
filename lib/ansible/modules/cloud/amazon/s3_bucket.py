@@ -485,7 +485,7 @@ def delete_bucket_encryption(s3_client, bucket_name):
     s3_client.delete_bucket_encryption(Bucket=bucket_name)
 
 
-@AWSRetry.exponential_backoff(max_delay=120)
+@AWSRetry.exponential_backoff(max_delay=240, catch_extra_error_codes=['OperationAborted'])
 def delete_bucket(s3_client, bucket_name):
     try:
         s3_client.delete_bucket(Bucket=bucket_name)
