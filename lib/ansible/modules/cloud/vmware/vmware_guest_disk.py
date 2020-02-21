@@ -486,13 +486,7 @@ class PyVmomiHelper(PyVmomi):
                 if disk['datastore_cluster'] is not None:
                     datastore_name = self.get_recommended_datastore(datastore_cluster_obj=disk['datastore_cluster'], disk_spec_obj=disk_spec)
                     disk['datastore'] = find_obj(self.content, [vim.Datastore], datastore_name)
-                if disk['filename'] is None:
-                    disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (
-                        disk['datastore'].name,
-                        vm_name, vm_name,
-                        str(scsi_controller),
-                        str(disk['disk_unit_number']))
-                else:
+                if disk['filename'] is not None:
                     disk_spec.device.backing.fileName = disk['filename']
                 disk_spec.device.backing.datastore = disk['datastore']
                 disk_spec = self.get_ioandshares_diskconfig(disk_spec, disk)

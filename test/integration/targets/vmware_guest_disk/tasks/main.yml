@@ -230,3 +230,53 @@
   assert:
      that:
          - test_shares_IoLimits is changed
+
+- name: remove disks without destroy file
+  vmware_guest_disk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    validate_certs: no
+    name: "{{ virtual_machines[0].name }}"
+    disk:
+        - state: "absent"
+          scsi_controller: 0
+          unit_number: 4
+          destroy: false
+  register: test_remove_without_destroy
+
+- debug:
+    msg: "{{ test_remove_without_destroy }}"
+
+- name: assert that changes were made
+  assert:
+    that:
+        - test_remove_without_destroy is changed
+
+- name: re-create disk with valid disk mode
+  vmware_guest_disk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    validate_certs: no
+    name: "{{ virtual_machines[0].name }}"
+    disk:
+        - datastore: "{{ rw_datastore }}"
+          disk_mode: "persistent"
+          scsi_controller: 0
+          scsi_type: 'paravirtual'
+          size_gb: 1
+          state: present
+          type: eagerzeroedthick
+          unit_number: 4
+  register: test_recreate_disk
+
+- debug:
+    msg: "{{ test_recreate_disk }}"
+
+- name: assert that changes were made
+  assert:
+    that:
+        - test_recreate_disk is changed
