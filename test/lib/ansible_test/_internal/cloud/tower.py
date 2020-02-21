@@ -75,7 +75,7 @@ class TowerCloudProvider(CloudProvider):
             '3.2.3': '3.3.0',
             '3.3.5': '3.3.3',
             '3.4.3': '3.3.3',
-            '3.6.2': '3.3.8',
+            '3.6.3': '3.3.8',
         }
 
         cli_version = tower_cli_version_map.get(self.version, fallback)
@@ -104,7 +104,7 @@ class TowerCloudProvider(CloudProvider):
         display.info('Provisioning %s cloud environment.' % self.platform, verbosity=1)
 
         # temporary solution to allow version selection
-        self.version = os.environ.get('TOWER_VERSION', '3.6.2')
+        self.version = os.environ.get('TOWER_VERSION', '3.6.3')
         self.check_tower_version(os.environ.get('TOWER_CLI_VERSION'))
 
         aci = get_tower_aci(self.args, self.version)
