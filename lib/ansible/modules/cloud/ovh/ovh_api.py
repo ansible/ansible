@@ -88,7 +88,7 @@ RETURN = r'''
 result:
     description: Raw response from Ovh API, content varies with API.
     returned: success
-    type: complex
+    type: dict
     sample: {"firstname": "Francois", "name": "Lallart", "organisation": "@fraff", "language": "fr_FR", "city": "Lille", "country": "FR"}
 msg:
     description: Module error message.
