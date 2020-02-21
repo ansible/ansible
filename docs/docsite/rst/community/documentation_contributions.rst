@@ -89,7 +89,7 @@ These required packages are listed in two :file:`requirements.txt` files to make
     pip install --user -r requirements.txt
     pip install --user -r docs/docsite/requirements.txt
 
-You can drop ``--user`` if you have set up a virtual invironment (venv/virtenv).
+You can drop ``--user`` if you have set up a virtual environment (venv/virtenv).
 
 .. note::
 
