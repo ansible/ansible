@@ -208,9 +208,9 @@ class Acls(ConfigBase):
                         for h_ace in h_acl['aces']:
                             diff = get_ace_diff(h_ace, want_ace)
                             if diff:
-                               diff_present = True
-                               h = {"afi": afi, "acls": [{"name": name, "aces": [h_ace]}]}
-                               remove_cmds.append(del_commands(h, have))
+                                diff_present = True
+                                h = {"afi": afi, "acls": [{"name": name, "aces": [h_ace]}]}
+                                remove_cmds.append(del_commands(h, have))
         if diff_present or not present:
             config_cmds = set_commands(want, have)
             config_cmds = list(itertools.chain(*config_cmds))

@@ -41,15 +41,8 @@ FACT_RESOURCE_SUBSETS = dict(
     lldp_global=Lldp_globalFacts,
     lldp_interfaces=Lldp_interfacesFacts,
     vlans=VlansFacts,
-<<<<<<< HEAD
-<<<<<<< HEAD
     acl_interfaces=Acl_interfacesFacts,
-=======
-    static_routes=Static_routesFacts,
-=======
->>>>>>> Resolving issues due to rebase
     acls=AclsFacts,
->>>>>>> eos_acls resource module added
 )
 
 
