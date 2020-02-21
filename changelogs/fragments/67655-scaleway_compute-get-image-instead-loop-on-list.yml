@@ -1,0 +1,2 @@
+bugfixes:
+- 'scaleway_compute(check_image_id): use get image instead loop on first page of images results'
