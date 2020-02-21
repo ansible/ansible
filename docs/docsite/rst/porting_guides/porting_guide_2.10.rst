@@ -25,6 +25,9 @@ Playbook
 
 * Fixed a bug on boolean keywords that made random strings return 'False', now they should return an error if they are not a proper boolean
   Example: `diff: yes-` was returning `False`.
+* A new fact, ``ansible_processor_nproc`` reflects the number of vcpus
+  available to processes (falls back to the number of vcpus available to
+  the scheduler).
 
 
 Command Line
