@@ -69,7 +69,7 @@
     job_type: run
     state: present
     survey_enabled: yes
-    survey_spec: '{"spec": [{"index": 0, "question_name": "my question?", "default": "mydef", "variable": "myvar", "type": "text", "required": "false"}], "description": "test", "name": "test"}'
+    survey_spec: '{"spec": [{"index": 0, "question_name": "my question?", "default": "mydef", "variable": "myvar", "type": "text", "required": false}], "description": "test", "name": "test"}'
 
 
 - name: Create a workflow job template
