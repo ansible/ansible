@@ -1909,7 +1909,7 @@ def cryptography_get_name(name):
                 raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}"'.format(name))
             return x509.OtherName(x509.oid.ObjectIdentifier(m.group(1)), _parse_hex(m.group(2)))
         if name.startswith('dirName:'):
-            return x509.DirectoryName(x509.Name(_parse_dn(name[8:])))
+            return x509.DirectoryName(x509.Name(_parse_dn(to_text(name[8:]))))
     except Exception as e:
         raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}": {1}'.format(name, e))
     if ':' not in name:
