@@ -132,6 +132,7 @@ import tempfile
 
 from ansible.module_utils import six
 from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.compat import ipaddress as compat_ipaddress
 
 
 class OpenSSLObjectError(Exception):
@@ -2199,3 +2200,16 @@ def cryptography_decode_revoked_certificate(cert):
     except x509.ExtensionNotFound:
         pass
     return result
+
+
+def pyopenssl_normalize_name_attribute(san):
+    # apparently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
+    # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
+    if san.startswith('IP Address:'):
+        san = 'IP:' + san[len('IP Address:'):]
+    if san.startswith('IP:'):
+        ip = compat_ipaddress.ip_address(san[3:])
+        san = 'IP:{0}'.format(ip.compressed)
+    if san.startswith('Registered ID:'):
+        san = 'RID:' + san[len('Registered ID:'):]
+    return san

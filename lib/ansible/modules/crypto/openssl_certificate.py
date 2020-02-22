@@ -887,7 +887,6 @@ from distutils.version import LooseVersion
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.compat import ipaddress as compat_ipaddress
 from ansible.module_utils.ecs.api import ECSClient, RestOperationException, SessionConfigurationException
 
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.6'
@@ -2224,27 +2223,15 @@ class AssertOnlyCertificate(AssertOnlyCertificateBase):
             if self.extended_key_usage:
                 return NO_EXTENSION
 
-    def _normalize_san(self, san):
-        # Apparently OpenSSL returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
-        # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
-        if san.startswith('IP Address:'):
-            san = 'IP:' + san[len('IP Address:'):]
-        if san.startswith('IP:'):
-            ip = compat_ipaddress.ip_address(san[3:])
-            san = 'IP:{0}'.format(ip.compressed)
-        if san.startswith('Registered ID:'):
-            san = 'RID:' + san[len('Registered ID:'):]
-        return san
-
     def _validate_subject_alt_name(self):
         found = False
         for extension_idx in range(0, self.cert.get_extension_count()):
             extension = self.cert.get_extension(extension_idx)
             if extension.get_short_name() == b'subjectAltName':
                 found = True
-                l_altnames = [self._normalize_san(altname.strip()) for altname in
+                l_altnames = [crypto_utils.pyopenssl_normalize_name_attribute(altname.strip()) for altname in
                               to_text(extension, errors='surrogate_or_strict').split(', ')]
-                sans = [self._normalize_san(to_text(san, errors='surrogate_or_strict')) for san in self.subject_alt_name]
+                sans = [crypto_utils.pyopenssl_normalize_name_attribute(to_text(san, errors='surrogate_or_strict')) for san in self.subject_alt_name]
                 if not compare_sets(sans, l_altnames, self.subject_alt_name_strict):
                     return self.subject_alt_name, l_altnames
         if not found:
