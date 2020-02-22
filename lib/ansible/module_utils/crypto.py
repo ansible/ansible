@@ -1824,6 +1824,22 @@ def cryptography_oid_to_name(oid, short=False):
         return _NORMALIZE_NAMES.get(name, name)
 
 
+def _get_hex(bytesstr):
+    if bytesstr is None:
+        return bytesstr
+    data = binascii.hexlify(bytesstr)
+    data = to_text(b':'.join(data[i:i + 2] for i in range(0, len(data), 2)))
+    return data
+
+
+def _parse_hex(bytesstr):
+    if bytesstr is None:
+        return bytesstr
+    data = ''.join([('0' * (2 - len(p)) + p) if len(p) < 2 else p for p in to_text(bytesstr).split(':')])
+    data = binascii.unhexlify(data)
+    return data
+
+
 def cryptography_get_name(name):
     '''
     Given a name string, returns a cryptography x509.Name object.
@@ -1838,19 +1854,21 @@ def cryptography_get_name(name):
             return x509.RFC822Name(to_text(name[6:]))
         if name.startswith('URI:'):
             return x509.UniformResourceIdentifier(to_text(name[4:]))
+        if name.startswith('RID:'):
+            m = re.match(r'^([0-9]+(?:\.[0-9]+)*)$', to_text(name[4:]))
+            if not m:
+                raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}"'.format(name))
+            return x509.RegisteredID(x509.oid.ObjectIdentifier(m.group(1)))
+        if name.startswith('otherName:'):
+            m = re.match(r'^([0-9]+(?:\.[0-9]+)*);([0-9a-fA-F]{1,2}(?::[0-9a-fA-F]{1,2})*)$', to_text(name[10:]))
+            if not m:
+                raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}"'.format(name))
+            return x509.OtherName(x509.oid.ObjectIdentifier(m.group(1)), _parse_hex(m.group(2)))
     except Exception as e:
         raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}": {1}'.format(name, e))
     if ':' not in name:
         raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}" (forgot "DNS:" prefix?)'.format(name))
     raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}" (potentially unsupported by cryptography backend)'.format(name))
-
-
-def _get_hex(bytesstr):
-    if bytesstr is None:
-        return bytesstr
-    data = binascii.hexlify(bytesstr)
-    data = to_text(b':'.join(data[i:i + 2] for i in range(0, len(data), 2)))
-    return data
 
 
 def cryptography_decode_name(name):
@@ -1868,13 +1886,11 @@ def cryptography_decode_name(name):
         return 'URI:{0}'.format(name.value)
     if isinstance(name, x509.DirectoryName):
         # FIXME: test
-        return 'DirName:' + ''.join(['/{0}:{1}'.format(attribute.oid._name, attribute.value) for attribute in name.value])
+        return 'dirName:' + ''.join(['/{0}:{1}'.format(attribute.oid._name, attribute.value) for attribute in name.value])
     if isinstance(name, x509.RegisteredID):
-        # FIXME: test
-        return 'RegisteredID:{0}'.format(name.value)
+        return 'RID:{0}'.format(name.value.dotted_string)
     if isinstance(name, x509.OtherName):
-        # FIXME: test
-        return '{0}:{1}'.format(name.type_id.dotted_string, _get_hex(name.value))
+        return 'otherName:{0};{1}'.format(name.type_id.dotted_string, _get_hex(name.value))
     raise OpenSSLObjectError('Cannot decode name "{0}"'.format(name))
 
 

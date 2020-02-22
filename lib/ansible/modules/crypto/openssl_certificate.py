@@ -2232,6 +2232,8 @@ class AssertOnlyCertificate(AssertOnlyCertificateBase):
         if san.startswith('IP:'):
             ip = compat_ipaddress.ip_address(san[3:])
             san = 'IP:{0}'.format(ip.compressed)
+        if san.startswith('Registered ID:'):
+            san = 'RID:' + san[len('Registered ID:'):]
         return san
 
     def _validate_subject_alt_name(self):
