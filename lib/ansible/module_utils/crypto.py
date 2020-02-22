@@ -1840,6 +1840,50 @@ def _parse_hex(bytesstr):
     return data
 
 
+def _parse_dn(name):
+    '''
+    Parse a Distinguished Name.
+
+    Can be of the form ``CN=Test, O = Something`` or ``CN = Test,O= Something``.
+    '''
+    original_name = name
+    name = name.lstrip()
+    sep = ','
+    if name.startswith('/'):
+        sep = '/'
+        name = name[1:]
+    sep_str = sep + '\\'
+    result = []
+    start_re = re.compile(r'^ *([a-zA-z0-9]+) *= *')
+    while name:
+        m = start_re.match(name)
+        if not m:
+            raise OpenSSLObjectError('Error while parsing distinguished name "{0}": cannot start part in "{1}"'.format(original_name, name))
+        oid = cryptography_name_to_oid(m.group(1))
+        idx = len(m.group(0))
+        decoded_name = []
+        length = len(name)
+        while idx < length:
+            i = idx
+            while i < length and name[i] not in sep_str:
+                i += 1
+            if i > idx:
+                decoded_name.append(name[idx:i])
+                idx = i
+            while idx + 1 < length and name[idx] == '\\':
+                decoded_name.append(name[idx + 1])
+                idx += 2
+            if idx < length and name[idx] == sep:
+                break
+        result.append(x509.NameAttribute(oid, ''.join(decoded_name)))
+        name = name[idx:]
+        if name:
+            if name[0] != sep or len(name) < 2:
+                raise OpenSSLObjectError('Error while parsing distinguished name "{0}": unexpected end of string'.format(original_name))
+            name = name[1:]
+    return result
+
+
 def cryptography_get_name(name):
     '''
     Given a name string, returns a cryptography x509.Name object.
@@ -1864,11 +1908,25 @@ def cryptography_get_name(name):
             if not m:
                 raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}"'.format(name))
             return x509.OtherName(x509.oid.ObjectIdentifier(m.group(1)), _parse_hex(m.group(2)))
+        if name.startswith('dirName:'):
+            return x509.DirectoryName(x509.Name(_parse_dn(name[8:])))
     except Exception as e:
         raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}": {1}'.format(name, e))
     if ':' not in name:
         raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}" (forgot "DNS:" prefix?)'.format(name))
     raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}" (potentially unsupported by cryptography backend)'.format(name))
+
+
+def _dn_escape_value(value):
+    '''
+    Escape Distinguished Name's attribute value.
+    '''
+    value = value.replace('\\', '\\\\')
+    for ch in [',', '#', '+', '<', '>', ';', '"', '=', '/']:
+        value = value.replace(ch, '\\%s' % ch)
+    if value.startswith(' '):
+        value = r'\ ' + value[1:]
+    return value
 
 
 def cryptography_decode_name(name):
@@ -1885,8 +1943,10 @@ def cryptography_decode_name(name):
     if isinstance(name, x509.UniformResourceIdentifier):
         return 'URI:{0}'.format(name.value)
     if isinstance(name, x509.DirectoryName):
-        # FIXME: test
-        return 'dirName:' + ''.join(['/{0}:{1}'.format(attribute.oid._name, attribute.value) for attribute in name.value])
+        return 'dirName:' + ''.join([
+            '/{0}={1}'.format(cryptography_oid_to_name(attribute.oid), _dn_escape_value(attribute.value))
+            for attribute in name.value
+        ])
     if isinstance(name, x509.RegisteredID):
         return 'RID:{0}'.format(name.value.dotted_string)
     if isinstance(name, x509.OtherName):

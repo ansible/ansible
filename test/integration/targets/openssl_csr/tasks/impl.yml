@@ -586,6 +586,8 @@
       - "URI:https://example.org/test/index.html"
       - "RID:1.2.3.4"
       - '{{ "otherName:1.2.3.4;0c:07:63:65:72:74:72:65:71" if select_crypto_backend != "pyopenssl" else "" }}'
+      - '{{ "dirName:O = Example Net, CN = example.net" if select_crypto_backend != "pyopenssl" else "" }}'
+      - '{{ "dirName:/O=Example Com/CN=example.com" if select_crypto_backend != "pyopenssl" else "" }}'
   register: everything_1
 
 - name: Generate CSR with everything (idempotent, check mode)
@@ -657,6 +659,8 @@
       - "URI:https://example.org/test/index.html"
       - "RID:1.2.3.4"
       - '{{ "otherName:1.2.3.4;0c:07:63:65:72:74:72:65:71" if select_crypto_backend != "pyopenssl" else "" }}'
+      - '{{ "dirName:O=Example Net,CN=example.net" if select_crypto_backend != "pyopenssl" else "" }}'
+      - '{{ "dirName:/O = Example Com/CN = example.com" if select_crypto_backend != "pyopenssl" else "" }}'
   check_mode: yes
   register: everything_2
 
@@ -729,6 +733,8 @@
       - "URI:https://example.org/test/index.html"
       - "RID:1.2.3.4"
       - '{{ "otherName:1.2.3.4;0c:07:63:65:72:74:72:65:71" if select_crypto_backend != "pyopenssl" else "" }}'
+      - '{{ "dirName:O  =Example Net,    CN= example.net" if select_crypto_backend != "pyopenssl" else "" }}'
+      - '{{ "dirName:/O  =Example Com/CN=  example.com" if select_crypto_backend != "pyopenssl" else "" }}'
   register: everything_3
 
 - name: Ed25519 and Ed448 tests (for cryptography >= 2.6)
