@@ -13,14 +13,12 @@ created
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import copy
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.ios.facts.facts import Facts
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.common.utils import remove_empties
-from ansible.module_utils.network.ios.utils.utils import new_dict_to_set
-import q
+from ansible.module_utils.network.ios.utils.utils import remove_duplicate_interface
+
 
 class Acl_Interfaces(ConfigBase):
     """
@@ -39,12 +37,12 @@ class Acl_Interfaces(ConfigBase):
     def __init__(self, module):
         super(Acl_Interfaces, self).__init__(module)
 
-    def get_acl_interfaces_facts(self):
+    def get_acl_interfaces_facts(self, data=None):
         """ Get the 'facts' (the current configuration)
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
+        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources, data=data)
         acl_interfaces_facts = facts['ansible_network_resources'].get('acl_interfaces')
         if not acl_interfaces_facts:
             return []
@@ -83,7 +81,9 @@ class Acl_Interfaces(ConfigBase):
         elif self.state == 'parsed':
             running_config = self._module.params['running_config']
             if not running_config:
-                self._module.fail_json(msg="Value of running_config parameter must not be empty for state parsed")
+                self._module.fail_json(
+                    msg="value of running_config parameter must not be empty for state parsed"
+                )
             result['parsed'] = self.get_acl_interfaces_facts(data=running_config)
         else:
             changed_acl_interfaces_facts = []
@@ -122,14 +122,14 @@ class Acl_Interfaces(ConfigBase):
         commands = []
 
         state = self._module.params['state']
-        if state in ('overridden', 'merged', 'replaced') and not want:
+        if state in ('overridden', 'merged', 'replaced', 'rendered') and not want:
             self._module.fail_json(msg='value of config parameter must not be empty for state {0}'.format(state))
 
         if state == 'overridden':
             commands = self._state_overridden(want, have)
         elif state == 'deleted':
             commands = self._state_deleted(want, have)
-        elif state == 'merged':
+        elif state == 'merged' or state == 'rendered':
             commands = self._state_merged(want, have)
         elif state == 'replaced':
             commands = self._state_replaced(want, have)
@@ -146,6 +146,16 @@ class Acl_Interfaces(ConfigBase):
         """
         commands = []
 
+        for interface in want:
+            for each in have:
+                if each['name'] == interface['name']:
+                    break
+            else:
+                continue
+            commands.extend(self._clear_config(interface, each, 'replaced'))
+            commands.extend(self._set_config(interface, each))
+        # Remove the duplicate interface call
+        commands = remove_duplicate_interface(commands)
 
         return commands
 
@@ -159,6 +169,20 @@ class Acl_Interfaces(ConfigBase):
         """
         commands = []
 
+        for each in have:
+            for interface in want:
+                if each['name'] == interface['name']:
+                    break
+            else:
+                # We didn't find a matching desired state, which means we can
+                # pretend we recieved an empty desired state.
+                interface = dict(name=each['name'])
+                commands.extend(self._clear_config(interface, each))
+                continue
+            commands.extend(self._clear_config(interface, each, 'overridden'))
+            commands.extend(self._set_config(interface, each))
+        # Remove the duplicate interface call
+        commands = remove_duplicate_interface(commands)
 
         return commands
 
@@ -171,7 +195,7 @@ class Acl_Interfaces(ConfigBase):
                   the current configuration
         """
         commands = []
-        q(want, have)
+
         for interface in want:
             for each in have:
                 if each['name'] == interface['name']:
@@ -182,8 +206,6 @@ class Acl_Interfaces(ConfigBase):
                 continue
             commands.extend(self._set_config(interface, each))
 
-        q(commands)
-        commands = []
         return commands
 
     def _state_deleted(self, want, have):
@@ -195,14 +217,45 @@ class Acl_Interfaces(ConfigBase):
                   of the provided objects
         """
         commands = []
+
         if want:
-            pass
+            for interface in want:
+                for each in have:
+                    if each['name'] == interface['name']:
+                        break
+                else:
+                    continue
+                commands.extend(self._clear_config(interface, each))
         else:
-            for config_have in have:
-                for acls_have in config_have.get('acls'):
-                    commands.extend(self._clear_config(acls_have, config_have))
+            for each in have:
+                commands.extend(self._clear_config(dict(), each))
 
         return commands
+
+    def dict_to_set(self, input_dict, test_set, final_set, count=0):
+        # recursive function to convert input dict to set for comparision
+        test_dict = dict()
+        if isinstance(input_dict, dict):
+            input_dict_len = len(input_dict)
+            for k, v in sorted(iteritems(input_dict)):
+                count += 1
+                if isinstance(v, list):
+                    for each in v:
+                        if isinstance(each, dict):
+                            input_dict_len = len(each)
+                            if [True for i in each.values() if type(i) == list]:
+                                self.dict_to_set(each, set(), final_set, count)
+                            else:
+                                self.dict_to_set(each, test_set, final_set, 0)
+                else:
+                    if v is not None:
+                        test_dict.update({k: v})
+                    if tuple(iteritems(test_dict)) not in test_set and count == input_dict_len:
+                        test_set.add(tuple(iteritems(test_dict)))
+                        count = 0
+                    if count == input_dict_len + 1:
+                        test_set.update(tuple(iteritems(test_dict)))
+                        final_set.add(tuple(test_set))
 
     def _set_config(self, want, have):
         """ Function that sets the acls config based on the want and have config
@@ -214,111 +267,71 @@ class Acl_Interfaces(ConfigBase):
         :returns: the commands generated based on input want/have params
         """
         commands = []
-        change = False
+
         want_set = set()
         have_set = set()
-        # Convert the want and have dict to its respective set for taking the set diff
-        new_dict_to_set(want, [], want_set)
-        new_dict_to_set(have, [], have_set)
-        diff = want_set - have_set
-        q(want, have, diff)
-        return
-        # Populate the config only when there's a diff b/w want and have config
-        if diff:
-            name = acl_want.get('name')
-            if afi == 'ipv4':
-                try:
-                    name = int(name)
-                    # If name is numbered acl
-                    if name <= 99:
-                        cmd = 'ip access-list standard {0}'.format(name)
-                    elif name >= 100:
-                        cmd = 'ip access-list extended {0}'.format(name)
-                except ValueError:
-                    # If name is named acl
-                    acl_type = acl_want.get('acl_type')
-                    if acl_type:
-                        cmd = 'ip access-list {0} {1}'.format(acl_type, name)
-                    else:
-                        self._module.fail_json(msg='ACL type value is required for Named ACL!')
+        self.dict_to_set(want, set(), want_set)
+        self.dict_to_set(have, set(), have_set)
 
-            elif afi == 'ipv6':
-                cmd = 'ipv6 access-list {0}'.format(name)
-
-            # Get all of aces option values from diff dict
-            sequence = want.get('sequence')
-            grant = want.get('grant')
-            source = want.get('source')
-            destination = want.get('destination')
-            po = want.get('protocol_options')
-            dscp = want.get('dscp')
-            fragments = want.get('fragments')
-            log = want.get('log')
-            log_input = want.get('log_input')
-            option = want.get('option')
-            precedence = want.get('precedence')
-            time_range = want.get('time_range')
-            tos = want.get('tos')
-            ttl = want.get('ttl')
-
-            if sequence:
-                if afi == 'ipv6':
-                    cmd = cmd + ' sequence {0}'.format(sequence)
+        for w in want_set:
+            want_afi = dict(w).get('afi')
+            if have_set:
+                def common_diff_config_code(diff_list, cmd, commands):
+                    for each in diff_list:
+                        try:
+                            temp = dict(each)
+                            temp_cmd = cmd + ' {0} {1}'.format(temp['name'], temp['direction'])
+                            if temp_cmd not in commands:
+                                commands.append(temp_cmd)
+                        except ValueError:
+                            continue
+                for h in have_set:
+                    have_afi = dict(h).get('afi')
+                    if have_afi == want_afi:
+                        if want_afi == 'ipv4':
+                            diff = set(w) - set(h)
+                            if diff:
+                                cmd = 'ip access-group'
+                                common_diff_config_code(diff, cmd, commands)
+                        if want_afi == 'ipv6':
+                            diff = set(w) - set(h)
+                            if diff:
+                                cmd = 'ipv6 traffic-filter'
+                                common_diff_config_code(diff, cmd, commands)
+                        break
                 else:
-                    cmd = cmd + ' {0}'.format(sequence)
-            if grant:
-                cmd = cmd + ' {0}'.format(grant)
-            if po and isinstance(po, dict):
-                po_key = list(po)[0]
-                cmd = cmd + ' {0}'.format(po_key)
-                if po.get('icmp'):
-                    po_val = po.get('icmp')
-                elif po.get('igmp'):
-                    po_val = po.get('igmp')
-                elif po.get('tcp'):
-                    po_val = po.get('tcp')
-            if source:
-                cmd = self.source_dest_config(source, cmd, po)
-            if destination:
-                cmd = self.source_dest_config(destination, cmd, po)
-            if po:
-                cmd = cmd + ' {0}'.format(list(po_val)[0])
-            if dscp:
-                cmd = cmd + ' dscp {0}'.format(dscp)
-            if fragments:
-                cmd = cmd + ' fragments {0}'.format(fragments)
-            if log:
-                cmd = cmd + ' log {0}'.format(log)
-            if log_input:
-                cmd = cmd + ' log-input {0}'.format(log_input)
-            if option:
-                cmd = cmd + ' option {0}'.format(list(option)[0])
-            if precedence:
-                cmd = cmd + ' precedence {0}'.format(precedence)
-            if time_range:
-                cmd = cmd + ' time-range {0}'.format(time_range)
-            if tos:
-                for k, v in iteritems(tos):
-                    if k == 'service_value':
-                        cmd = cmd + ' tos {0}'.format(v)
-                    else:
-                        cmd = cmd + ' tos {0}'.format(v)
-            if ttl:
-                for k, v in iteritems(ttl):
-                    if k == 'range' and v:
-                        start = v.get('start')
-                        end = v.get('start')
-                        cmd = cmd + ' ttl {0} {1}'.format(start, end)
-                    elif v:
-                        cmd = cmd + ' ttl {0} {1}'.format(k, v)
-
-            commands.append(cmd)
+                    if want_afi == 'ipv4':
+                        diff = set(w) - set(h)
+                        if diff:
+                            cmd = 'ip access-group'
+                            common_diff_config_code(diff, cmd, commands)
+                    if want_afi == 'ipv6':
+                        diff = set(w) - set(h)
+                        if diff:
+                            cmd = 'ipv6 traffic-filter'
+                            common_diff_config_code(diff, cmd, commands)
+            else:
+                def common_want_config_code(want, cmd, commands):
+                    for each in want:
+                        if each[0] == 'afi':
+                            continue
+                        temp = dict(each)
+                        temp_cmd = cmd + ' {0} {1}'.format(temp['name'], temp['direction'])
+                        commands.append(temp_cmd)
+                if want_afi == 'ipv4':
+                    cmd = 'ip access-group'
+                    common_want_config_code(w, cmd, commands)
+                if want_afi == 'ipv6':
+                    cmd = 'ipv6 traffic-filter'
+                    common_want_config_code(w, cmd, commands)
+        commands.sort()
         if commands:
-            change = True
+            interface = want.get('name')
+            commands.insert(0, 'interface {0}'.format(interface))
 
-        return commands, change
+        return commands
 
-    def _clear_config(self, acl, config, sequence=''):
+    def _clear_config(self, want, have, state=''):
         """ Function that deletes the acl config based on the want and have config
         :param acl: acl config
         :param config: config
@@ -326,40 +339,63 @@ class Acl_Interfaces(ConfigBase):
         :returns: the commands generated based on input acl/config params
         """
         commands = []
-        afi = config.get('afi')
-        name = acl.get('name')
-        if afi == 'ipv4' and name:
-            try:
-                name = int(name)
-                if name <= 99 and not sequence:
-                    cmd = 'no ip access-list standard {0}'.format(name)
-                elif name >= 100 and not sequence:
-                    cmd = 'no ip access-list extended {0}'.format(name)
-                elif sequence:
-                    if name <= 99:
-                        cmd = 'ip access-list standard {0} '.format(name)
-                    elif name >= 100:
-                        cmd = 'ip access-list extended {0} '.format(name)
-                    cmd += 'no {0}'.format(sequence)
-            except ValueError:
-                acl_type = acl.get('acl_type')
-                if acl_type == 'extended' and not sequence:
-                    cmd = 'no ip access-list extended {0}'.format(name)
-                elif acl_type == 'standard' and not sequence:
-                    cmd = 'no ip access-list standard {0}'.format(name)
-                elif sequence:
-                    if acl_type == 'extended':
-                        cmd = 'ip access-list extended {0} '.format(name)
-                    elif acl_type == 'standard':
-                        cmd = 'ip access-list standard {0}'.format(name)
-                    cmd += 'no {0}'.format(sequence)
-                else:
-                    self._module.fail_json(msg="ACL type value is required for Named ACL!")
-        elif afi == 'ipv6' and name:
-            if sequence:
-                cmd = 'no sequence {0}'.format(sequence)
-            else:
-                cmd = 'no ipv6 access-list {0}'.format(name)
-        commands.append(cmd)
+
+        if want.get('name'):
+            interface = 'interface ' + want['name']
+        else:
+            interface = 'interface ' + have['name']
+
+        w_access_group = want.get('access_groups')
+        temp_want_afi = []
+        temp_want_acl_name = []
+        if w_access_group:
+            # get the user input afi and acls
+            for each in w_access_group:
+                want_afi = each.get('afi')
+                want_acls = each.get('acls')
+                if want_afi:
+                    temp_want_afi.append(want_afi)
+                if want_acls:
+                    for each in want_acls:
+                        temp_want_acl_name.append(each.get('name'))
+
+        h_access_group = have.get('access_groups')
+        if h_access_group:
+            for access_grp in h_access_group:
+                for acl in access_grp.get('acls'):
+                    have_afi = access_grp.get('afi')
+                    acl_name = acl.get('name')
+                    acl_direction = acl.get('direction')
+                    if temp_want_afi and state not in ['replaced', 'overridden']:
+                        # if user want to delete acls based on afi
+                        if 'ipv4' in temp_want_afi and have_afi == 'ipv4':
+                            if acl_name in temp_want_acl_name:
+                                continue
+                            cmd = 'no ip access-group'
+                            cmd += ' {0} {1}'.format(acl_name, acl_direction)
+                            commands.append(cmd)
+                        if 'ipv6' in temp_want_afi and have_afi == 'ipv6':
+                            if acl_name in temp_want_acl_name:
+                                continue
+                            cmd = 'no ipv6 traffic-filter'
+                            cmd += ' {0} {1}'.format(acl_name, acl_direction)
+                            commands.append(cmd)
+                    else:
+                        # if user want to delete acls based on interface
+                        if access_grp.get('afi') == 'ipv4':
+                            if acl_name in temp_want_acl_name:
+                                continue
+                            cmd = 'no ip access-group'
+                            cmd += ' {0} {1}'.format(acl_name, acl_direction)
+                            commands.append(cmd)
+                        elif access_grp.get('afi') == 'ipv6':
+                            if acl_name in temp_want_acl_name:
+                                continue
+                            cmd = 'no ipv6 traffic-filter'
+                            cmd += ' {0} {1}'.format(acl_name, acl_direction)
+                            commands.append(cmd)
+        if commands:
+            # inserting the interface at first
+            commands.insert(0, interface)
 
         return commands

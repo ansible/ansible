@@ -18,9 +18,9 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.network.common import utils
-from ansible.module_utils.network.ios.utils.utils import get_interface_type, normalize_interface
+from ansible.module_utils.network.ios.utils.utils import get_interface_type
 from ansible.module_utils.network.ios.argspec.acl_interfaces.acl_interfaces import Acl_InterfacesArgs
-import q
+
 
 class Acl_InterfacesFacts(object):
     """ The ios_acl_interfaces fact class
@@ -40,7 +40,7 @@ class Acl_InterfacesFacts(object):
 
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
-    def get_acl_data(self, connection):
+    def get_acl_interfaces_data(self, connection):
         return connection.get('sh running-config | include interface|ip access-group|ipv6 traffic-filter')
 
     def populate_facts(self, connection, ansible_facts, data=None):
@@ -54,7 +54,7 @@ class Acl_InterfacesFacts(object):
         objs = []
 
         if not data:
-            data = self.get_acl_data(connection)
+            data = self.get_acl_interfaces_data(connection)
         # operate on a collection of resource x
         config = data.split('interface ')
         for conf in config:
@@ -94,6 +94,7 @@ class Acl_InterfacesFacts(object):
         config['access_groups'] = []
         acl_v4_config = {}
         acl_v6_config = {}
+
         def common_iter_code(cmd, conf):
             # Common code for IPV4 and IPV6 config parsing
             acls = []

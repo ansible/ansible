@@ -74,7 +74,9 @@ config:
              description: Specifies the name of the IPv4/IPv4 ACL for the interface.
              type: str
            direction:
-             description: Specifies the direction of packets that the ACL will be applied on.
+             description:
+             - Specifies the direction of packets that the ACL will be applied on.
+             - With one direction already assigned, other acl direction cannot be same.
              type: str
              choices:
              - in
@@ -110,7 +112,6 @@ EXAMPLES = """
 # interface GigabitEthernet0/0
 # interface GigabitEthernet0/1
 # interface GigabitEthernet0/2
-#  ip access-group 110 out
 
 - name: "Merge module attributes of given access-groups"
   ios_acl_interfaces:
@@ -119,20 +120,38 @@ EXAMPLES = """
         access_groups:
           - afi: ipv4
             acls:
-              name: 110
-              direction: in
+              - name: 110
+                direction: in
+              - name: 123
+                direction: out
           - afi: ipv6
             acls:
-              name: test_v6
-              direction: out
+              - name: test_v6
+                direction: out
+              - name: temp_v6
+                direction: in
+      - name: GigabitEthernet0/2
+        access_groups:
+          - afi: ipv4
+            acls:
+              - name: 100
+                direction: in
+              - name: 123
+                direction: out
     state: merged
 
 # Commands Fired:
 # ---------------
 #
-# interface GigabitEthernet 0/1
-#  ip access-group 110 in
-#  ipv6 traffic-filter test_v6 out
+# interface GigabitEthernet0/1
+# ip access-group 110 in
+# ip access-group 123 out
+# ipv6 traffic-filter test_v6 out
+# ipv6 traffic-filter temp_v6 in
+# interface GigabitEthernet0/2
+# ip access-group 110 in
+# ip access-group 123 out
+
 
 # After state:
 # -------------
@@ -142,9 +161,12 @@ EXAMPLES = """
 # interface GigabitEthernet0/0
 # interface GigabitEthernet0/1
 #  ip access-group 110 in
+#  ip access-group 123 out
 #  ipv6 traffic-filter test_v6 out
+#  ipv6 traffic-filter temp_v6 in
 # interface GigabitEthernet0/2
-#  ip access-group 110 out
+#  ip access-group 110 in
+#  ip access-group 123 out
 
 # Using Replaced
 
@@ -156,9 +178,12 @@ EXAMPLES = """
 # interface GigabitEthernet0/0
 # interface GigabitEthernet0/1
 #  ip access-group 110 in
+#  ip access-group 123 out
 #  ipv6 traffic-filter test_v6 out
+#  ipv6 traffic-filter temp_v6 in
 # interface GigabitEthernet0/2
-#  ip access-group 110 out
+#  ip access-group 110 in
+#  ip access-group 123 out
 
 - name: "Replace module attributes of given access-groups"
   ios_acl_interfaces:
@@ -167,17 +192,20 @@ EXAMPLES = """
         access_groups:
           - afi: ipv4
             acls:
-              name: 110
-              direction: out
+              - name: 100
+                direction: out
+              - name: 110
+                direction: in
     state: replaced
 
 # Commands Fired:
 # ---------------
 #
-# interface GigabitEthernet 0/1
-# no ip access-group 110 in
-# no ipv6 traffic-filter test_v6 in
-# ip access-group 110 out
+# interface GigabitEthernet0/1
+# no ip access-group 123 out
+# no ipv6 traffic-filter temp_v6 in
+# no ipv6 traffic-filter test_v6 out
+# ip access-group 100 out
 
 # After state:
 # -------------
@@ -186,9 +214,11 @@ EXAMPLES = """
 # interface Loopback888
 # interface GigabitEthernet0/0
 # interface GigabitEthernet0/1
-#  ip access-group 110 out
+#  ip access-group 100 out
+#  ip access-group 110 in
 # interface GigabitEthernet0/2
-#  ip access-group 110 out
+#  ip access-group 110 in
+#  ip access-group 123 out
 
 # Using Overridden
 
@@ -200,9 +230,12 @@ EXAMPLES = """
 # interface GigabitEthernet0/0
 # interface GigabitEthernet0/1
 #  ip access-group 110 in
+#  ip access-group 123 out
 #  ipv6 traffic-filter test_v6 out
+#  ipv6 traffic-filter temp_v6 in
 # interface GigabitEthernet0/2
-#  ip access-group 110 out
+#  ip access-group 110 in
+#  ip access-group 123 out
 
 - name: "Overridden module attributes of given access-groups"
   ios_acl_interfaces:
@@ -211,19 +244,23 @@ EXAMPLES = """
         access_groups:
           - afi: ipv4
             acls:
-              name: 110
-              direction: out
+              - name: 100
+                direction: out
+              - name: 110
+                direction: in
     state: overridden
 
 # Commands Fired:
 # ---------------
 #
-# interface GigabitEthernet 0/1
-# no ip access-group 110 in
+# interface GigabitEthernet0/1
+# no ip access-group 123 out
 # no ipv6 traffic-filter test_v6 out
-# ip access-group 110 out
-# interface GigabitEthernet 0/2
-# no ip access-group 110 out
+# no ipv6 traffic-filter temp_v6 in
+# ip access-group 100 out
+# interface GigabitEthernet0/2
+# no ip access-group 110 in
+# no ip access-group 123 out
 
 # After state:
 # -------------
@@ -232,7 +269,8 @@ EXAMPLES = """
 # interface Loopback888
 # interface GigabitEthernet0/0
 # interface GigabitEthernet0/1
-#  ip access-group 110 out
+#  ip access-group 100 out
+#  ip access-group 110 in
 # interface GigabitEthernet0/2
 
 # Using Deleted
@@ -245,31 +283,27 @@ EXAMPLES = """
 # interface GigabitEthernet0/0
 # interface GigabitEthernet0/1
 #  ip access-group 110 in
+#  ip access-group 123 out
 #  ipv6 traffic-filter test_v6 out
+#  ipv6 traffic-filter temp_v6 in
 # interface GigabitEthernet0/2
-#  ip access-group 110 out
+#  ip access-group 110 in
+#  ip access-group 123 out
 
-- name: "Delete module attributes of given access-groups"
+- name: "Delete module attributes of given Interface"
   ios_acl_interfaces:
     config:
       - name: GigabitEthernet0/1
-        access_groups:
-          - afi: ipv4
-            acls:
-              name: 110
-              direction: in
-          - afi: ipv6
-            acls:
-              name: test_v6
-              direction: out
     state: deleted
 
 # Commands Fired:
 # ---------------
 #
-# interface GigabitEthernet 0/1
+# interface GigabitEthernet0/1
 # no ip access-group 110 in
+# no ip access-group 123 out
 # no ipv6 traffic-filter test_v6 out
+# no ipv6 traffic-filter temp_v6 in
 
 # After state:
 # -------------
@@ -279,8 +313,51 @@ EXAMPLES = """
 # interface GigabitEthernet0/0
 # interface GigabitEthernet0/1
 # interface GigabitEthernet0/2
-#  ip access-group 110 out
+#  ip access-group 110 in
+#  ip access-group 123 out
 
+# Before state:
+# -------------
+#
+# vios#sh running-config | include interface|ip access-group|ipv6 traffic-filter
+# interface Loopback888
+# interface GigabitEthernet0/0
+# interface GigabitEthernet0/1
+#  ip access-group 110 in
+#  ip access-group 123 out
+#  ipv6 traffic-filter test_v6 out
+#  ipv6 traffic-filter temp_v6 in
+# interface GigabitEthernet0/2
+#  ip access-group 110 in
+#  ip access-group 123 out
+
+- name: "Delete module attributes of given Interface based on AFI"
+  ios_acl_interfaces:
+    config:
+      - name: GigabitEthernet0/1
+        access_groups:
+          - afi: ipv4
+    state: deleted
+
+# Commands Fired:
+# ---------------
+#
+# interface GigabitEthernet0/1
+# no ip access-group 110 in
+# no ip access-group 123 out
+
+# After state:
+# -------------
+#
+# vios#sh running-config | include interface|ip access-group|ipv6 traffic-filter
+# interface Loopback888
+# interface GigabitEthernet0/0
+# interface GigabitEthernet0/1
+#  ipv6 traffic-filter test_v6 out
+#  ipv6 traffic-filter temp_v6 in
+# interface GigabitEthernet0/2
+#  ip access-group 110 in
+#  ip access-group 123 out
 
 # Using DELETED without any config passed
 #"(NOTE: This will delete all of configured resource module attributes from each configured interface)"
@@ -293,9 +370,12 @@ EXAMPLES = """
 # interface GigabitEthernet0/0
 # interface GigabitEthernet0/1
 #  ip access-group 110 in
+#  ip access-group 123 out
 #  ipv6 traffic-filter test_v6 out
+#  ipv6 traffic-filter temp_v6 in
 # interface GigabitEthernet0/2
-#  ip access-group 110 out
+#  ip access-group 110 in
+#  ip access-group 123 out
 
 - name: "Delete module attributes of given access-groups from ALL Interfaces"
   ios_acl_interfaces:
@@ -305,11 +385,14 @@ EXAMPLES = """
 # Commands Fired:
 # ---------------
 #
-# interface GigabitEthernet 0/1
+# interface GigabitEthernet0/1
 # no ip access-group 110 in
+# no ip access-group 123 out
 # no ipv6 traffic-filter test_v6 out
-# interface GigabitEthernet 0/2
+# no ipv6 traffic-filter temp_v6 in
+# interface GigabitEthernet0/2
 # no ip access-group 110 out
+# no ip access-group 123 out
 
 # After state:
 # -------------
@@ -319,6 +402,178 @@ EXAMPLES = """
 # interface GigabitEthernet0/0
 # interface GigabitEthernet0/1
 # interface GigabitEthernet0/2
+
+# Using Gathered
+
+# Before state:
+# -------------
+#
+# vios#sh running-config | include interface|ip access-group|ipv6 traffic-filter
+# interface Loopback888
+# interface GigabitEthernet0/0
+# interface GigabitEthernet0/1
+#  ip access-group 110 in
+#  ip access-group 123 out
+#  ipv6 traffic-filter test_v6 out
+#  ipv6 traffic-filter temp_v6 in
+# interface GigabitEthernet0/2
+#  ip access-group 110 in
+#  ip access-group 123 out
+
+- name: Gather listed acl interfaces with provided configurations
+  ios_acl_interfaces:
+    config:
+    state: gathered
+
+# Module Execution Result:
+# ------------------------
+#
+"gathered": [
+        {
+            "name": "Loopback888"
+        },
+        {
+            "name": "GigabitEthernet0/0"
+        },
+        {
+            "access_groups": [
+                {
+                    "acls": [
+                        {
+                            "direction": "in",
+                            "name": "110"
+                        },
+                        {
+                            "direction": "out",
+                            "name": "123"
+                        }
+                    ],
+                    "afi": "ipv4"
+                },
+                {
+                    "acls": [
+                        {
+                            "direction": "in",
+                            "name": "temp_v6"
+                        },
+                        {
+                            "direction": "out",
+                            "name": "test_v6"
+                        }
+                    ],
+                    "afi": "ipv6"
+                }
+            ],
+            "name": "GigabitEthernet0/1"
+        },
+        {
+            "access_groups": [
+                {
+                    "acls": [
+                        {
+                            "direction": "in",
+                            "name": "100"
+                        },
+                        {
+                            "direction": "out",
+                            "name": "123"
+                        }
+                    ],
+                    "afi": "ipv4"
+                }
+            ],
+            "name": "GigabitEthernet0/2"
+        }
+    ]
+
+# After state:
+# ------------
+#
+# vios#sh running-config | include interface|ip access-group|ipv6 traffic-filter
+# interface Loopback888
+# interface GigabitEthernet0/0
+# interface GigabitEthernet0/1
+#  ip access-group 110 in
+#  ip access-group 123 out
+#  ipv6 traffic-filter test_v6 out
+#  ipv6 traffic-filter temp_v6 in
+# interface GigabitEthernet0/2
+#  ip access-group 110 in
+#  ip access-group 123 out
+
+# Using Rendered
+
+- name: Render the commands for provided  configuration
+  ios_acl_interfaces:
+    config:
+      - name: GigabitEthernet0/1
+        access_groups:
+          - afi: ipv4
+            acls:
+              - name: 110
+                direction: in
+              - name: 123
+                direction: out
+          - afi: ipv6
+            acls:
+              - name: test_v6
+                direction: out
+              - name: temp_v6
+                direction: in
+    state: rendered
+
+# Module Execution Result:
+# ------------------------
+#
+# "rendered": [
+#         "interface GigabitEthernet0/1",
+#         "ip access-group 110 in",
+#         "ip access-group 123 out",
+#         "ipv6 traffic-filter temp_v6 in",
+#         "ipv6 traffic-filter test_v6 out"
+#     ]
+
+# Using Parsed
+
+- name: Parse the commands for provided configuration
+  ios_acl_interfaces:
+    running_config:
+      "interface GigabitEthernet0/1
+       ip access-group 110 in
+       ip access-group 123 out
+       ipv6 traffic-filter temp_v6 in
+       ipv6 traffic-filter test_v6 out"
+    state: parsed
+
+# Module Execution Result:
+# ------------------------
+#
+"parsed": [
+        {
+            "access_groups": [
+                {
+                    "acls": [
+                        {
+                            "direction": "in",
+                            "name": "110"
+                        }
+                    ],
+                    "afi": "ipv4"
+                },
+                {
+                    "acls": [
+                        {
+                            "direction": "in",
+                            "name": "temp_v6"
+                        }
+                    ],
+                    "afi": "ipv6"
+                }
+            ],
+            "name": "GigabitEthernet0/1"
+        }
+    ]
+
 """
 
 RETURN = """
@@ -336,7 +591,7 @@ commands:
   description: The set of commands pushed to the remote device
   returned: always
   type: list
-  sample: ['interface GigabitEthernet 0/1', 'ip access-group 110 in', 'ipv6 traffic-filter test_v6 out']
+  sample: ['interface GigabitEthernet0/1', 'ip access-group 110 in', 'ipv6 traffic-filter test_v6 out']
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -351,7 +606,10 @@ def main():
     """
     required_if = [('state', 'merged', ('config',)),
                    ('state', 'replaced', ('config',)),
-                   ('state', 'overridden', ('config',))]
+                   ('state', 'overridden', ('config',)),
+                   ('state', 'rendered', ('config',)),
+                   ('state', 'parsed', ('running_config',))]
+
     mutually_exclusive = [('config', 'running_config')]
 
     module = AnsibleModule(argument_spec=Acl_InterfacesArgs.argument_spec,
