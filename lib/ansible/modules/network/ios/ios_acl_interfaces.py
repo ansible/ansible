@@ -41,58 +41,58 @@ short_description: Configure and manage access-control (ACL) attributes of inter
 description: This module configures and manages the access-control (ACL) attributes of interfaces on IOS platforms.
 author: Sumit Jaiswal (@justjais)
 notes:
-- Tested against Cisco IOSv Version 15.2 on VIRL
-- This module works with connection C(network_cli).
-See L(IOS Platform Options,../network/user_guide/platform_ios.html).
+  - Tested against Cisco IOSv Version 15.2 on VIRL
+  - This module works with connection C(network_cli).
+    See L(IOS Platform Options,../network/user_guide/platform_ios.html).
 options:
-config:
-  description: A dictionary of ACL options
-  type: list
-  elements: dict
-  suboptions:
-    name:
-      description: Full name of the interface excluding any logical unit number, i.e. GigabitEthernet0/1.
-      type: str
-      required: True
-    access_groups:
-      description: Specify access-group for IP access list (standard or extended).
-      type: list
-      elements: dict
-      suboptions:
-        afi:
-          description: Specifies the AFI for the ACLs to be configured on this interface.
-          type: str
-          choices:
-          - ipv4
-          - ipv6
-        acls:
-         description: Specifies the ACLs for the provided AFI.
-         type: list
-         elements: dict
-         suboptions:
-           name:
-             description: Specifies the name of the IPv4/IPv4 ACL for the interface.
-             type: str
-           direction:
-             description:
-             - Specifies the direction of packets that the ACL will be applied on.
-             - With one direction already assigned, other acl direction cannot be same.
-             type: str
-             choices:
-             - in
-             - out
-state:
-  description:
-  - The state the configuration should be left in
-  type: str
-  choices:
-  - merged
-  - replaced
-  - overridden
-  - deleted
-  - gathered
-  - parsed
-  - rendered
+  config:
+    description: A dictionary of ACL options
+    type: list
+    elements: dict
+    suboptions:
+      name:
+        description: Full name of the interface excluding any logical unit number, i.e. GigabitEthernet0/1.
+        type: str
+        required: True
+      access_groups:
+        description: Specify access-group for IP access list (standard or extended).
+        type: list
+        elements: dict
+        suboptions:
+          afi:
+            description: Specifies the AFI for the ACLs to be configured on this interface.
+            type: str
+            choices:
+              - ipv4
+              - ipv6
+          acls:
+            description: Specifies the ACLs for the provided AFI.
+            type: list
+            elements: dict
+          suboptions:
+             name:
+               description: Specifies the name of the IPv4/IPv4 ACL for the interface.
+               type: str
+             direction:
+               description:
+                 - Specifies the direction of packets that the ACL will be applied on.
+                 - With one direction already assigned, other acl direction cannot be same.
+               type: str
+               choices:
+                 - in
+                 - out
+  state:
+    description:
+      - The state the configuration should be left in
+    type: str
+    choices:
+      - merged
+      - replaced
+      - overridden
+      - deleted
+      - gathered
+      - parsed
+      - rendered
   default: merged
 description:
 - The state of the configuration after module completion
@@ -428,63 +428,63 @@ EXAMPLES = """
 # Module Execution Result:
 # ------------------------
 #
-"gathered": [
-        {
-            "name": "Loopback888"
-        },
-        {
-            "name": "GigabitEthernet0/0"
-        },
-        {
-            "access_groups": [
-                {
-                    "acls": [
-                        {
-                            "direction": "in",
-                            "name": "110"
-                        },
-                        {
-                            "direction": "out",
-                            "name": "123"
-                        }
-                    ],
-                    "afi": "ipv4"
-                },
-                {
-                    "acls": [
-                        {
-                            "direction": "in",
-                            "name": "temp_v6"
-                        },
-                        {
-                            "direction": "out",
-                            "name": "test_v6"
-                        }
-                    ],
-                    "afi": "ipv6"
-                }
-            ],
-            "name": "GigabitEthernet0/1"
-        },
-        {
-            "access_groups": [
-                {
-                    "acls": [
-                        {
-                            "direction": "in",
-                            "name": "100"
-                        },
-                        {
-                            "direction": "out",
-                            "name": "123"
-                        }
-                    ],
-                    "afi": "ipv4"
-                }
-            ],
-            "name": "GigabitEthernet0/2"
-        }
-    ]
+# "gathered": [
+#         {
+#             "name": "Loopback888"
+#         },
+#         {
+#             "name": "GigabitEthernet0/0"
+#         },
+#         {
+#             "access_groups": [
+#                 {
+#                     "acls": [
+#                         {
+#                             "direction": "in",
+#                             "name": "110"
+#                         },
+#                         {
+#                             "direction": "out",
+#                             "name": "123"
+#                         }
+#                     ],
+#                     "afi": "ipv4"
+#                 },
+#                 {
+#                     "acls": [
+#                         {
+#                             "direction": "in",
+#                             "name": "temp_v6"
+#                         },
+#                         {
+#                             "direction": "out",
+#                             "name": "test_v6"
+#                         }
+#                     ],
+#                     "afi": "ipv6"
+#                 }
+#             ],
+#             "name": "GigabitEthernet0/1"
+#         },
+#         {
+#             "access_groups": [
+#                 {
+#                     "acls": [
+#                         {
+#                             "direction": "in",
+#                             "name": "100"
+#                         },
+#                         {
+#                             "direction": "out",
+#                             "name": "123"
+#                         }
+#                     ],
+#                     "afi": "ipv4"
+#                 }
+#             ],
+#             "name": "GigabitEthernet0/2"
+#         }
+#     ]
 
 # After state:
 # ------------
@@ -548,31 +548,31 @@ EXAMPLES = """
 # Module Execution Result:
 # ------------------------
 #
-"parsed": [
-        {
-            "access_groups": [
-                {
-                    "acls": [
-                        {
-                            "direction": "in",
-                            "name": "110"
-                        }
-                    ],
-                    "afi": "ipv4"
-                },
-                {
-                    "acls": [
-                        {
-                            "direction": "in",
-                            "name": "temp_v6"
-                        }
-                    ],
-                    "afi": "ipv6"
-                }
-            ],
-            "name": "GigabitEthernet0/1"
-        }
-    ]
+# "parsed": [
+#         {
+#             "access_groups": [
+#                 {
+#                     "acls": [
+#                         {
+#                             "direction": "in",
+#                             "name": "110"
+#                         }
+#                     ],
+#                     "afi": "ipv4"
+#                 },
+#                 {
+#                     "acls": [
+#                         {
+#                             "direction": "in",
+#                             "name": "temp_v6"
+#                         }
+#                     ],
+#                     "afi": "ipv6"
+#                 }
+#             ],
+#             "name": "GigabitEthernet0/1"
+#         }
+#     ]
 
 """
 

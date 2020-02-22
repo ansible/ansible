@@ -39,7 +39,7 @@ class Acl_InterfacesArgs(object):
             'elements': 'dict',
             'options': {
                 'name': {'required': True, 'type': 'str'},
-                'access_groups':{
+                'access_groups': {
                     'type': 'list',
                     'elements': 'dict',
                     'options': {

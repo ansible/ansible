@@ -98,7 +98,7 @@ class Acl_InterfacesFacts(object):
         def common_iter_code(cmd, conf):
             # Common code for IPV4 and IPV6 config parsing
             acls = []
-            re_cmd = cmd + ' (\S+.*)'
+            re_cmd = cmd + ' (\\S+.*)'
             ip_all = re.findall(re_cmd, conf)
             for each in ip_all:
                 acl = {}

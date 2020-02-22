@@ -38,6 +38,8 @@ overridden:
 
 gathered:
   config:
+    - name: loopback888
+    - name: loopback999
     - name: GigabitEthernet0/0
     - access_groups:
       - acls:

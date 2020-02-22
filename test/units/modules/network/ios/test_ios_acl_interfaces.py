@@ -51,6 +51,7 @@ class TestIosAclInterfacesModule(TestIosModule):
     def load_fixtures(self, commands=None, transport='cli', filename=None):
         if filename is None:
             filename = 'ios_acl_interfaces.cfg'
+
         def load_from_file(*args, **kwargs):
             return load_fixture(filename)
         self.execute_show_command.side_effect = load_from_file
@@ -283,38 +284,37 @@ class TestIosAclInterfacesModule(TestIosModule):
                     ]
         self.execute_module(changed=True, commands=commands)
 
-
     def test_ios_acl_interfaces_gathered(self):
         set_module_args(
             dict(state="gathered"))
         result = self.execute_module(changed=False, filename='ios_acl_interfaces.cfg')
-        commands = []
+
         gathered_list = [
             {'access_groups':
-                 [
-                     {'acls':
-                          [
-                              {'direction': 'in', 'name': '110'},
-                              {'direction': 'out', 'name': '123'}
-                          ],
-                         'afi': 'ipv4'},
-                     {'acls':
-                          [
-                              {'direction': 'in', 'name': 'temp_v6'},
-                              {'direction': 'out', 'name': 'test_v6'}
-                          ],
-                         'afi': 'ipv6'}
-                 ],
+                [
+                    {'acls':
+                        [
+                            {'direction': 'in', 'name': '110'},
+                            {'direction': 'out', 'name': '123'}
+                        ],
+                        'afi': 'ipv4'},
+                    {'acls':
+                        [
+                            {'direction': 'in', 'name': 'temp_v6'},
+                            {'direction': 'out', 'name': 'test_v6'}
+                        ],
+                        'afi': 'ipv6'}
+                ],
                 'name': 'GigabitEthernet0/1'},
             {'access_groups':
-                 [
-                     {'acls':
-                          [
-                              {'direction': 'in', 'name': '110'},
-                              {'direction': 'out', 'name': '123'}
-                          ],
-                         'afi': 'ipv4'}
-                 ],
+                [
+                    {'acls':
+                        [
+                            {'direction': 'in', 'name': '110'},
+                            {'direction': 'out', 'name': '123'}
+                        ],
+                        'afi': 'ipv4'}
+                ],
                 'name': 'GigabitEthernet0/2'}]
         self.assertEqual(gathered_list, result['gathered'])
 
@@ -326,19 +326,20 @@ class TestIosAclInterfacesModule(TestIosModule):
             )
         )
         result = self.execute_module(changed=False)
-        parsed_list = [{'access_groups':
-                            [
-                                {'acls':
-                                     [
-                                         {'direction': 'in', 'name': '110'}
-                                     ], 'afi': 'ipv4'},
-                                {'acls':
-                                     [
-                                         {'direction': 'out', 'name': 'test_v6'}
-                                     ],
-                                    'afi': 'ipv6'}
-                            ],
-            'name': 'GigabitEthernet0/1'}]
+        parsed_list = [
+            {'access_groups':
+                [
+                    {'acls':
+                        [
+                            {'direction': 'in', 'name': '110'}
+                        ], 'afi': 'ipv4'},
+                    {'acls':
+                        [
+                            {'direction': 'out', 'name': 'test_v6'}
+                        ],
+                        'afi': 'ipv6'}
+                ],
+                'name': 'GigabitEthernet0/1'}]
         self.assertEqual(parsed_list, result['parsed'])
 
     def test_ios_acl_interfaces_rendered(self):
