@@ -264,17 +264,17 @@ EXAMPLES = """
 
 # Commands fired:
 # ---------------
-# no ip route 192.168.3.0 255.255.255.0 10.0.0.1 110 multicast name route_1 tag 40
-# no ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name route_2
-# no ip route 192.168.3.0 255.255.255.0 10.0.0.3 name route_3
-# ip route 192.168.3.0 255.255.255.0 10.0.0.1 175 name replaced_route track 150 tag 70
+# no ip route 198.51.100.0 255.255.255.0 198.51.101.1 110 multicast name route_1 tag 40
+# no ip route 198.51.100.0 255.255.255.0 198.51.101.2 30 name route_2
+# no ip route 198.51.100.0 255.255.255.0 198.51.101.3 name route_3
+# ip route 198.51.100.0 255.255.255.0 198.51.101.1 175 name replaced_route track 150 tag 70
 
 # After state:
 # ------------
 #
 # vios#show running-config | include ip route|ipv6 route
 # ip route vrf ansible_temp_vrf 192.0.2.0 255.255.255.0 192.0.2.1 name test_vrf track 150 tag 50
-# ip route 192.168.3.0 255.255.255.0 10.0.0.1 175 name replaced_route track 150 tag 70
+# ip route 198.51.100.0 255.255.255.0 198.51.101.1 175 name replaced_route track 150 tag 70
 # ipv6 route 2001:DB8:0:3::/64 2001:DB8:0:3::2 tag 105 name test_v6
 
 # Using overridden
@@ -298,7 +298,7 @@ EXAMPLES = """
           routes:
           - dest: 192.0.2.0/24
             next_hops:
-            - forward_router_address: 10.0.0.4
+            - forward_router_address: 192.0.2.1
               name: override_vrf
               tag: 50
               track: 150
@@ -306,12 +306,12 @@ EXAMPLES = """
 
 # Commands fired:
 # ---------------
-# no ip route 192.168.3.0 255.255.255.0 10.0.0.1 110 multicast name route_1 tag 40
-# no ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name route_2
-# no ip route 192.168.3.0 255.255.255.0 10.0.0.3 name route_3
-# no ip route vrf ansible_temp_vrf 192.168.2.0 255.255.255.0 10.0.0.8 name test_vrf track 150 tag 50
+# no ip route 198.51.100.0 255.255.255.0 198.51.101.1 110 multicast name route_1 tag 40
+# no ip route 198.51.100.0 255.255.255.0 198.51.101.2 30 name route_2
+# no ip route 198.51.100.0 255.255.255.0 198.51.101.3 name route_3
+# no ip route vrf ansible_temp_vrf 192.0.2.0 255.255.255.0 198.51.101.8 name test_vrf track 150 tag 50
 # no ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 name test_v6 tag 105
-# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.4 name override_vrf track 150 tag 50
+# ip route vrf blue 192.0.2.0 255.255.255.0 198.51.101.4 name override_vrf track 150 tag 50
 
 # After state:
 # ------------
@@ -361,7 +361,7 @@ EXAMPLES = """
             - forward_router_address: 198.51.101.2
               name: route_2
               distance_metric: 30
-            - forward_router_address: 10.0.0.3
+            - forward_router_address: 198.51.101.3
               name: route_3
         - afi: ipv6
           routes:
@@ -374,10 +374,10 @@ EXAMPLES = """
 
 # Commands fired:
 # ---------------
-# no ip route vrf ansible_temp_vrf 192.168.2.0 255.255.255.0 10.0.0.8 name test_vrf track 150 tag 50
-# no ip route 192.168.3.0 255.255.255.0 10.0.0.1 110 multicast name route_1 tag 40
-# no ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name route_2
-# no ip route 192.168.3.0 255.255.255.0 10.0.0.3 name route_3
+# no ip route vrf ansible_temp_vrf 192.0.2.0 255.255.255.0 198.51.101.8 name test_vrf track 150 tag 50
+# no ip route 198.51.100.0 255.255.255.0 198.51.101.1 110 multicast name route_1 tag 40
+# no ip route 198.51.100.0 255.255.255.0 198.51.101.2 30 name route_2
+# no ip route 198.51.100.0 255.255.255.0 198.51.101.3 name route_3
 # no ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 name test_v6 tag 105
 
 # After state:
@@ -444,7 +444,7 @@ EXAMPLES = """
 
 # Commands fired:
 # ---------------
-# no ip route vrf ansible_temp_vrf 192.168.2.0 255.255.255.0 10.0.0.8 name test_vrf track 150 tag 50
+# no ip route vrf ansible_temp_vrf 192.0.2.0 255.255.255.0 192.0.2.1 name test_vrf track 150 tag 50
 
 # After state:
 # ------------
@@ -506,74 +506,74 @@ EXAMPLES = """
 # Module Execution Result:
 # ------------------------
 #
-"gathered": [
-        {
-            "address_families": [
-                {
-                    "afi": "ipv4",
-                    "routes": [
-                        {
-                            "dest": "192.0.2.0/24",
-                            "next_hops": [
-                                {
-                                    "forward_router_address": "192.0.2.1",
-                                    "name": "test_vrf",
-                                    "tag": 50,
-                                    "track": 150
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ],
-            "vrf": "ansible_temp_vrf"
-        },
-        {
-            "address_families": [
-                {
-                    "afi": "ipv6",
-                    "routes": [
-                        {
-                            "dest": "2001:DB8:0:3::/64",
-                            "next_hops": [
-                                {
-                                    "forward_router_address": "2001:DB8:0:3::2",
-                                    "name": "test_v6",
-                                    "tag": 105
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "afi": "ipv4",
-                    "routes": [
-                        {
-                            "dest": "198.51.100.0/24",
-                            "next_hops": [
-                                {
-                                    "distance_metric": 110,
-                                    "forward_router_address": "198.51.101.1",
-                                    "multicast": true,
-                                    "name": "route_1",
-                                    "tag": 40
-                                },
-                                {
-                                    "distance_metric": 30,
-                                    "forward_router_address": "198.51.101.2",
-                                    "name": "route_2"
-                                },
-                                {
-                                    "forward_router_address": "198.51.101.3",
-                                    "name": "route_3"
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
+# "gathered": [
+#         {
+#             "address_families": [
+#                 {
+#                     "afi": "ipv4",
+#                     "routes": [
+#                         {
+#                             "dest": "192.0.2.0/24",
+#                             "next_hops": [
+#                                 {
+#                                     "forward_router_address": "192.0.2.1",
+#                                     "name": "test_vrf",
+#                                     "tag": 50,
+#                                     "track": 150
+#                                 }
+#                             ]
+#                         }
+#                     ]
+#                 }
+#             ],
+#             "vrf": "ansible_temp_vrf"
+#         },
+#         {
+#             "address_families": [
+#                 {
+#                     "afi": "ipv6",
+#                     "routes": [
+#                         {
+#                             "dest": "2001:DB8:0:3::/64",
+#                             "next_hops": [
+#                                 {
+#                                     "forward_router_address": "2001:DB8:0:3::2",
+#                                     "name": "test_v6",
+#                                     "tag": 105
+#                                 }
+#                             ]
+#                         }
+#                     ]
+#                 },
+#                 {
+#                     "afi": "ipv4",
+#                     "routes": [
+#                         {
+#                             "dest": "198.51.100.0/24",
+#                             "next_hops": [
+#                                 {
+#                                     "distance_metric": 110,
+#                                     "forward_router_address": "198.51.101.1",
+#                                     "multicast": true,
+#                                     "name": "route_1",
+#                                     "tag": 40
+#                                 },
+#                                 {
+#                                     "distance_metric": 30,
+#                                     "forward_router_address": "198.51.101.2",
+#                                     "name": "route_2"
+#                                 },
+#                                 {
+#                                     "forward_router_address": "198.51.101.3",
+#                                     "name": "route_3"
+#                                 }
+#                             ]
+#                         }
+#                     ]
+#                 }
+#             ]
+#         }
+#     ]
 
 # After state:
 # ------------
@@ -693,6 +693,7 @@ def main():
     required_if = [('state', 'merged', ('config',)),
                    ('state', 'replaced', ('config',)),
                    ('state', 'overridden', ('config',)),
+                   ('state', 'rendered', ('config',)),
                    ('state', 'parsed', ('running_config',))]
     mutually_exclusive = [('config', 'running_config')]
 

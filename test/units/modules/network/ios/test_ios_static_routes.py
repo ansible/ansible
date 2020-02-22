@@ -257,3 +257,101 @@ class TestIosStaticRoutesModule(TestIosModule):
             )], state="overridden"
         ))
         self.execute_module(changed=False, commands=[], sort=True)
+
+    def test_ios_delete_static_route_config(self):
+        set_module_args(dict(
+            config=[dict(
+                vrf="ansible_vrf",
+                address_families=[dict(
+                    afi="ipv4",
+                    routes=[dict(
+                        dest="192.0.2.0/24",
+                        next_hops=[dict(
+                            forward_router_address="192.0.2.1",
+                            name="test_vrf",
+                            tag=50,
+                            track=175
+                        )],
+                    )],
+                )],
+            ), dict(
+                address_families=[dict(
+                    afi="ipv4",
+                    routes=[dict(
+                        dest="198.51.100.0/24",
+                        next_hops=[dict(
+                            forward_router_address="198.51.101.1",
+                            name="route_1",
+                            distance_metric=110,
+                            tag=60,
+                            multicast=True
+                        )],
+                    )],
+                )],
+            )], state="deleted"
+        ))
+        result = self.execute_module(changed=True)
+        commands = [
+            'no ip route vrf ansible_vrf 192.0.2.0 255.255.255.0 192.0.2.1 name test_vrf track 175 tag 50',
+            'no ip route 198.51.100.0 255.255.255.0 198.51.101.1 110 multicast name route_1 tag 60'
+            ]
+        self.assertEqual(result['commands'], commands)
+
+    def test_ios_delete_static_route_dest_based(self):
+        set_module_args(dict(
+            config=[dict(
+                address_families=[dict(
+                    afi="ipv4",
+                    routes=[dict(
+                        dest="198.51.100.0/24"
+                    )],
+                )],
+            )], state="deleted"
+        ))
+        result = self.execute_module(changed=True)
+        commands = [
+            'no ip route 198.51.100.0 255.255.255.0 198.51.101.1 110 multicast name route_1 tag 60'
+            ]
+        self.assertEqual(result['commands'], commands)
+
+    def test_ios_delete_static_route_vrf_based(self):
+        set_module_args(dict(
+            config=[dict(
+                vrf="ansible_vrf",
+                address_families=[dict(
+                    afi="ipv4",
+                    routes=[dict(
+                        dest="192.0.2.0/24"
+                    )],
+                )],
+            )], state="deleted"
+        ))
+        result = self.execute_module(changed=True)
+        commands = [
+            'no ip route vrf ansible_vrf 192.0.2.0 255.255.255.0 192.0.2.1 name test_vrf track 175 tag 50'
+            ]
+        self.assertEqual(result['commands'], commands)
+
+    def test_static_route_rendered(self):
+        set_module_args(dict(
+            config=[dict(
+                vrf="ansible_vrf",
+                address_families=[dict(
+                    afi="ipv4",
+                    routes=[dict(
+                        dest="192.0.2.0/24",
+                        next_hops=[dict(
+                            forward_router_address="192.0.2.1",
+                            name="test_vrf",
+                            tag=50,
+                            track=175
+                        )],
+                    )],
+                )],
+            )], state="rendered"
+        ))
+        commands = [
+            'ip route vrf ansible_vrf 192.0.2.0 255.255.255.0 192.0.2.1 name test_vrf track 175 tag 50'
+        ]
+        result = self.execute_module(changed=False)
+        self.assertEqual(sorted(result['rendered']), commands)

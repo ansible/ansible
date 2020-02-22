@@ -4,8 +4,6 @@
 
 - include_tasks: _remove_config.yaml
 
-- include_tasks: _intial_setup_config.yaml
-
 - block:
     - name: Apply the provided configuration (base config)
       ios_static_routes:
@@ -57,9 +55,11 @@
         state: overridden
       register: result
 
-    - name: Assert that changes were applied
-      assert:
-        that: "{{ round_trip['after'] | symmetric_difference(result['after']) | length == 0  }}"
+    - assert:
+        that:
+          - "result.commands|length == 3"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(rtt.override_commands) == []"
 
     - name: Revert back to base config using facts round trip
       ios_static_routes:
@@ -67,9 +67,11 @@
         state: overridden
       register: revert
 
-    - name: Assert that config was reverted
-      assert:
-        that: "{{ base_config['after'] | symmetric_difference(revert['after']) | length == 0 }}"
+    - assert:
+        that:
+          - "revert.commands|length == 1"
+          - "revert.changed == true"
+          - "revert.commands|symmetric_difference(rtt.override_revert_commands) == []"
 
   always:
     - include_tasks: _populate_config.yaml

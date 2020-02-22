@@ -45,19 +45,10 @@
       state: rendered
     register: result
 
-  - name: Assert that correct set of commands were generated
-    assert:
-        that:
-            - "{{ rendered['commands'] | symmetric_difference(result['rendered']) |length == 0 }}"
-
-  - name: Rendered the provided configuration with the exisiting running configuration (IDEMPOTENT)
-    ios_static_routes: *rendered
-    register: result
-
-  - name: Assert that the previous task was idempotent
-    assert:
-        that:
-            - "result['changed'] == false"
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.rendered|symmetric_difference(rendered.commands) == []"
 
   always:
   - include_tasks: _remove_config.yaml

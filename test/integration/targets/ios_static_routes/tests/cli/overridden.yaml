@@ -37,50 +37,11 @@
         state: overridden
       register: result
 
-    - name: Assert that correct set of commands were generated
-      assert:
+    - assert:
         that:
-          - "{{ overridden['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
-
-    - name: Assert that before dicts are correctly generated
-      assert:
-         that:
-           - "{{ overridden['before'] | symmetric_difference(result['before']) | length == 0 }}"
-      register: overridden_before
-      ignore_errors: yes
-
-    - name: Assert that alternate before dicts are correctly generated
-      assert:
-        that:
-          - "{{ overridden_alternate['before'] | symmetric_difference(result['before']) | length == 0 }}"
-      register: overridden_before_alternate
-      ignore_errors: yes
-
-    - name: check for errors
-      fail:
-        msg: Assertion failed
-      when: (overridden_before['msg'] == "Assertion failed") and
-            (overridden_before_alternate['msg'] == "Assertion failed")
-
-    - name: Assert that after dict is correctly generated
-      assert:
-        that:
-          - "{{ overridden['after'] | symmetric_difference(result['after']) | length == 0 }}"
-      register: overridden_after
-      ignore_errors: yes
-
-    - name: Assert that alternate after dicts are correctly generated
-      assert:
-        that:
-          - "{{ overridden_alternate['after'] | symmetric_difference(result['after']) | length == 0 }}"
-      register: overridden_after_alternate
-      ignore_errors: yes
-
-    - name: check for errors
-      fail:
-        msg: Assertion failed
-      when: (overridden_after['msg'] == "Assertion failed") and
-            (overridden_after_alternate['msg'] == "Assertion failed")
+          - "result.commands|length == 8"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(overridden.commands) == []"
 
     - name: Override device configuration of all interfaces with provided configuration (IDEMPOTENT)
       ios_static_routes: *overridden
@@ -88,8 +49,9 @@
 
     - name: Assert that task was idempotent
       assert:
-       that:
-         - "result['changed'] == false"
+        that:
+          - "result.commands|length == 0"
+          - "result['changed'] == false"
 
   always:
     - include_tasks: _populate_config.yaml
