@@ -163,8 +163,15 @@ class GitlabProjectVariables(object):
     def update_variable(self, key, var, value, masked, protected):
         if var.value == value and var.protected == protected and var.masked == masked:
             return False
+
         if self._module.check_mode:
             return True
+
+        if var.protected == protected and vaar.masked == masked:
+            var.value = value
+            var.save()
+            return True
+
         self.delete_variable(key)
         self.create_variable(key, value, masked, protected)
         return True
@@ -185,14 +192,16 @@ def native_python_main(this_gitlab, purge, var_list, state):
 
     for key in var_list:
 
-        if isinstance(var_list[key], str):
+        if isinstance(var_list[key], string_types):
             value = var_list[key]
             masked = False
             protected = False
-        else:
+        elif isinstance(var_list[key], dict):
             value = var_list[key].get('value')
             masked = var_list[key].get('masked', False)
             protected = var_list[key].get('protected', False)
+        else:
+          self._module.fail_json(msg="value must be from type string or dict")
 
         if key in existing_variables:
             index = existing_variables.index(key)
