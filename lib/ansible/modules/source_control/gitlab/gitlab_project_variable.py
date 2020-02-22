@@ -82,7 +82,7 @@ EXAMPLES = '''
       ACCESS_KEY_ID: abc123
       SECRET_ACCESS_KEY:
         value: 3214cbad
-        masked: True
+        masked: true
         protected: True
 
 - name: Delete one variable
