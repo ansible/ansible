@@ -49,7 +49,7 @@
         value: checkmode
   register: gitlab_project_variable_state
 
-- name: state must be changed
+- name: state must be not changed
   assert:
     that:
       - gitlab_project_variable_state is not changed
