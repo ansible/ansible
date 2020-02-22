@@ -117,7 +117,7 @@
     that:
       - gitlab_project_variable_state is changed
 
-- name: revert again masked attribute by not mention it
+- name: revert again masked attribute by not mention it (idempotent)
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
     api_token: "{{ gitlab_login_token }}"
