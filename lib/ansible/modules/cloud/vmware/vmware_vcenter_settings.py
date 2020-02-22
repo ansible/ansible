@@ -229,6 +229,11 @@ class VmwareVcenterSettings(PyVmomi):
         if not self.is_vcenter():
             self.module.fail_json(msg="You have to connect to a vCenter server!")
 
+        self.option_manager = self.content.setting
+
+    def get_default_setting_value(self, setting_key):
+        return self.option_manager.QueryOptions(name=setting_key)[0].value
+
     def ensure(self):
         """Manage settings for a vCenter server"""
         result = dict(changed=False, msg='')
@@ -237,9 +242,20 @@ class VmwareVcenterSettings(PyVmomi):
         db_task_retention = self.params['database'].get('task_retention')
         db_event_cleanup = self.params['database'].get('event_cleanup')
         db_event_retention = self.params['database'].get('event_retention')
-        runtime_unique_id = self.params['runtime_settings'].get('unique_id')
-        runtime_managed_address = self.params['runtime_settings'].get('managed_address')
-        runtime_server_name = self.params['runtime_settings'].get('vcenter_server_name')
+
+        # runtime default value
+        runtime_unique_id = self.get_default_setting_value('instance.id')
+        runtime_managed_address = self.get_default_setting_value('VirtualCenter.ManagedIP')
+        runtime_server_name = self.get_default_setting_value('VirtualCenter.InstanceName')
+
+        if self.params['runtime_settings']:
+            if self.params['runtime_settings'].get('unique_id') is not None:
+                runtime_unique_id = self.params['runtime_settings'].get('unique_id')
+            if self.params['runtime_settings'].get('managed_address') is not None:
+                runtime_managed_address = self.params['runtime_settings'].get('managed_address')
+            if self.params['runtime_settings'].get('vcenter_server_name') is not None:
+                runtime_server_name = self.params['runtime_settings'].get('vcenter_server_name')
+
         directory_timeout = self.params['user_directory'].get('timeout')
         directory_query_limit = self.params['user_directory'].get('query_limit')
         directory_query_limit_size = self.params['user_directory'].get('query_limit_size')
@@ -289,8 +305,7 @@ class VmwareVcenterSettings(PyVmomi):
         result['timeout_long_operations'] = timeout_long_operations
         result['logging_options'] = logging_options
         change_option_list = []
-        option_manager = self.content.setting
-        for setting in option_manager.setting:
+        for setting in self.option_manager.setting:
             # Database
             if setting.key == 'VirtualCenter.MaxDBConnection' and setting.value != db_max_connections:
                 changed = True
@@ -554,7 +569,7 @@ class VmwareVcenterSettings(PyVmomi):
             message += changed_suffix
             if not self.module.check_mode:
                 try:
-                    option_manager.UpdateOptions(changedValue=change_option_list)
+                    self.option_manager.UpdateOptions(changedValue=change_option_list)
                 except (vmodl.fault.SystemError, vmodl.fault.InvalidArgument) as invalid_argument:
                     self.module.fail_json(
                         msg="Failed to update option(s) as one or more OptionValue contains an invalid value: %s" %

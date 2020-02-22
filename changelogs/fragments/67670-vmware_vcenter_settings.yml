@@ -1,0 +1,2 @@
+bugfixes:
+  - vmware_vcenter_settings - Fixed when runtime_settings parameters not defined occur error(https://github.com/ansible/ansible/issues/66713)
