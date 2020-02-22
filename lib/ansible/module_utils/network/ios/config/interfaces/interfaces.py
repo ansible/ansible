@@ -292,5 +292,4 @@ class Interfaces(ConfigBase):
             if have.get('mtu') and want.get('mtu') != have.get('mtu'):
                 remove_command_from_config_list(interface, 'mtu', commands)
 
-
         return commands
