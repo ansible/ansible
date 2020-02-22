@@ -48,9 +48,7 @@ class TestIosAclInterfacesModule(TestIosModule):
         self.mock_load_config.stop()
         self.mock_execute_show_command.stop()
 
-    def load_fixtures(self, commands=None):#, transport='cli', filename=None):
-        # if filename is None:
-        #     filename =
+    def load_fixtures(self, commands=None):
 
         def load_from_file(*args, **kwargs):
             return load_fixture('ios_acl_interfaces.cfg')

@@ -43,13 +43,13 @@ class Acl_InterfacesArgs(object):
                     'type': 'list',
                     'elements': 'dict',
                     'options': {
-                        'afi': {'choices': ['ipv4', 'ipv6'], 'type': 'str'},
+                        'afi': {'required': True, 'choices': ['ipv4', 'ipv6'], 'type': 'str'},
                         'acls': {
                             'type': 'list',
                             'elements': 'dict',
                             'options': {
                                 'name': {'required': True, 'type': 'str'},
-                                'direction': {'choices': ['in', 'out'], 'type': 'str'}
+                                'direction': {'required': True, 'choices': ['in', 'out'], 'type': 'str'}
                             }
                         }
                     }

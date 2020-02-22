@@ -62,6 +62,7 @@ options:
           afi:
             description: Specifies the AFI for the ACLs to be configured on this interface.
             type: str
+            required: True
             choices:
               - ipv4
               - ipv6
@@ -73,14 +74,26 @@ options:
               name:
                 description: Specifies the name of the IPv4/IPv4 ACL for the interface.
                 type: str
+                required: True
               direction:
                 description:
                   - Specifies the direction of packets that the ACL will be applied on.
                   - With one direction already assigned, other acl direction cannot be same.
                 type: str
+                required: True
                 choices:
                   - in
                   - out
+  running_config:
+    description:
+      - The module, by default, will connect to the remote device and retrieve the current
+        running-config to use as a base for comparing against the contents of source.
+        There are times when it is not desirable to have the task get the current running-config
+        for every task in a playbook.  The I(running_config) argument allows the implementer to
+        pass in the configuration to use as the base config for comparison. This value of this
+        option should be the output received from device by executing command.
+        C(show configuration commands | grep 'static route')
+    type: str
   state:
     description:
       - The state the configuration should be left in
