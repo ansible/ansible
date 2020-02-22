@@ -167,7 +167,7 @@ class GitlabProjectVariables(object):
         if self._module.check_mode:
             return True
 
-        if var.protected == protected and vaar.masked == masked:
+        if var.protected == protected and var.masked == masked:
             var.value = value
             var.save()
             return True
