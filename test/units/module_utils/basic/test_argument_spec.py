@@ -84,9 +84,9 @@ INVALID_SPECS = (
     ({'arg': {'type': 'list', 'elements': MOCK_VALIDATOR_FAIL}}, {'arg': [1, "bad"]}, "bad conversion"),
     # unknown parameter
     ({'arg': {'type': 'int'}}, {'other': 'bad', '_ansible_module_name': 'ansible_unittest'},
-     'Unsupported parameters for (ansible_unittest) module: other Supported parameters include: arg'),
+     'Unsupported parameters for (ansible_unittest) module: other. Supported parameters include: arg.'),
     ({'arg': {'type': 'int', 'aliases': ['argument']}}, {'other': 'bad', '_ansible_module_name': 'ansible_unittest'},
-     'Unsupported parameters for (ansible_unittest) module: other Supported parameters include: arg (argument)'),
+     'Unsupported parameters for (ansible_unittest) module: other. Supported parameters include: arg (argument).'),
     # parameter is required
     ({'arg': {'required': True}}, {}, 'missing required arguments: arg'),
 )

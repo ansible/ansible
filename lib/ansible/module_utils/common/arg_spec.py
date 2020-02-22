@@ -5,6 +5,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import os
 
 from copy import deepcopy
 
@@ -54,7 +55,10 @@ class ArgumentSpecValidator():
         self._error_messages = []
         self._no_log_values = set()
         self._validated_parameters = deepcopy(parameters)  # Make a copy of the original parameters to avoid changing them
+        self._valid_parameter_names = []
         self._unsupported_parameters = set()
+        self._kind = _kind
+        self._name = _name or os.path.basename(__file__)
         self.argument_spec = argument_spec
         self.mutually_exclusive = mutually_exclusive
         self.required_together = required_together
@@ -69,6 +73,21 @@ class ArgumentSpecValidator():
     @property
     def validated_parameters(self):
         return self._validated_parameters
+
+    @property
+    def valid_parameter_names(self):
+        if self._valid_parameter_names:
+            return self._validated_parameter_names
+        valid_parameter_names = []
+        for key in sorted(self.argument_spec.keys()):
+            aliases = self.argument_spec[key].get('aliases')
+            if aliases:
+                valid_parameter_names.append("{key} ({aliases})".format(key=key, aliases=", ".join(sorted(aliases))))
+            else:
+                valid_parameter_names.append(key)
+
+        self._valid_parameter_names = valid_parameter_names
+        return valid_parameter_names
 
     def _add_error(self, error):
         if isinstance(error, string_types):
@@ -161,7 +180,10 @@ class ArgumentSpecValidator():
                           unsupported_parameters=self._unsupported_parameters)
 
         if self._unsupported_parameters:
-            self._add_error('Unsupported parameters: %s' % ', '.join(sorted(list(self._unsupported_parameters))))
+            unsupported_string = ", ".join(sorted(list(self._unsupported_parameters)))
+            supported_string = ", ".join(self.valid_parameter_names)
+            self._add_error("Unsupported parameters for ({0}) {1}: {2}. "
+                            "Supported parameters include: {3}.".format(self._name, self._kind, unsupported_string, supported_string))
 
         self._sanitize_error_messages()
 

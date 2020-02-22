@@ -1361,7 +1361,7 @@ class AnsibleModule(object):
         unsupported_parameters = get_unsupported_parameters(spec, param, legal_inputs)
 
         if unsupported_parameters:
-            msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
+            msg = "Unsupported parameters for (%s) module: %s." % (self._name, ', '.join(sorted(list(unsupported_parameters))))
             if self._options_context:
                 msg += " found in %s." % " -> ".join(self._options_context)
             supported_parameters = list()
@@ -1370,7 +1370,7 @@ class AnsibleModule(object):
                     supported_parameters.append("%s (%s)" % (key, ', '.join(sorted(spec[key]['aliases']))))
                 else:
                     supported_parameters.append(key)
-            msg += " Supported parameters include: %s" % (', '.join(supported_parameters))
+            msg += " Supported parameters include: %s." % (', '.join(supported_parameters))
             self.fail_json(msg=msg)
 
         if self.check_mode and not self.supports_check_mode:
