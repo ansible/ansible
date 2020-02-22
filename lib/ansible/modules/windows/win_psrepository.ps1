@@ -25,20 +25,6 @@ $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $fals
 
 $result = @{"changed" = $false}
 
-# Update protocols so repos that disable weak TLS can be used
-# Logic taken from Ansible.ModuleUtils.WebRequest
-# ---
-# Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)
-$security_protocols = [System.Net.ServicePointManager]::SecurityProtocol -bor [System.Net.SecurityProtocolType]::SystemDefault
-if ([System.Net.SecurityProtocolType].GetMember("Tls11").Count -gt 0) {
-    $security_protocols = $security_protocols -bor [System.Net.SecurityProtocolType]::Tls11
-}
-if ([System.Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
-    $security_protocols = $security_protocols -bor [System.Net.SecurityProtocolType]::Tls12
-}
-[System.Net.ServicePointManager]::SecurityProtocol = $security_protocols
-
-
 Function Resolve-PSGetLocation {
     <#
         .SYNOPSIS
