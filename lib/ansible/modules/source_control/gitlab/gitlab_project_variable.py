@@ -83,7 +83,7 @@ EXAMPLES = '''
       SECRET_ACCESS_KEY:
         value: 3214cbad
         masked: true
-        protected: True
+        protected: true
 
 - name: Delete one variable
   gitlab_project_variable:
