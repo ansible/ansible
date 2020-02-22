@@ -256,6 +256,14 @@ class Interfaces(ConfigBase):
 
         if diff:
             diff = dict(diff)
+            for item in self.params:
+                if diff.get(item):
+                    cmd = item + ' ' + str(want.get(item))
+                    add_command_to_config_list(interface, cmd, commands)
+            if diff.get('enabled'):
+                add_command_to_config_list(interface, 'no shutdown', commands)
+            elif diff.get('enabled') is False:
+                add_command_to_config_list(interface, 'shutdown', commands)
 
         return commands
 
@@ -263,6 +271,26 @@ class Interfaces(ConfigBase):
         # Delete the interface config based on the want and have config
         commands = []
 
+        if want.get('name'):
+            interface_type = get_interface_type(want['name'])
+            interface = 'interface ' + want['name']
+        else:
+            interface_type = get_interface_type(have['name'])
+            interface = 'interface ' + have['name']
+
+        if have.get('description') and want.get('description') != have.get('description'):
+            remove_command_from_config_list(interface, 'description', commands)
+        if not have.get('enabled') and want.get('enabled') != have.get('enabled'):
+            # if enable is False set enable as True which is the default behavior
+            remove_command_from_config_list(interface, 'shutdown', commands)
+
+        if interface_type.lower() == 'gigabitethernet':
+            if have.get('speed') and have.get('speed') != 'auto' and want.get('speed') != have.get('speed'):
+                remove_command_from_config_list(interface, 'speed', commands)
+            if have.get('duplex') and have.get('duplex') != 'auto' and want.get('duplex') != have.get('duplex'):
+                remove_command_from_config_list(interface, 'duplex', commands)
+            if have.get('mtu') and want.get('mtu') != have.get('mtu'):
+                remove_command_from_config_list(interface, 'mtu', commands)
 
 
         return commands
