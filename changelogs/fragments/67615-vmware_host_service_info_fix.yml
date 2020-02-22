@@ -1,0 +1,2 @@
+bugfixes:
+- Handle NoneType error when accessing service system info in vmware_host_service_info module (https://github.com/ansible/ansible/issues/67615).
