@@ -1,0 +1,2 @@
+minor_changes:
+- "openssl_* modules - the cryptography backend now properly supports ``dirName``, ``otherName`` and ``RID`` (Registered ID) names."
