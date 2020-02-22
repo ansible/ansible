@@ -182,7 +182,7 @@ class GitlabProjectVariables(object):
         return self.project.variables.delete(key)
 
 
-def native_python_main(this_gitlab, purge, var_list, state):
+def native_python_main(this_gitlab, purge, var_list, state, module):
 
     change = False
     return_value = dict(added=list(), updated=list(), removed=list(), untouched=list())
@@ -201,7 +201,7 @@ def native_python_main(this_gitlab, purge, var_list, state):
             masked = var_list[key].get('masked', False)
             protected = var_list[key].get('protected', False)
         else:
-            self._module.fail_json(msg="value must be of type string or dict")
+            module.fail_json(msg="value must be of type string or dict")
 
         if key in existing_variables:
             index = existing_variables.index(key)
@@ -276,7 +276,7 @@ def main():
 
     this_gitlab = GitlabProjectVariables(module=module, gitlab_instance=gitlab_instance)
 
-    change, return_value = native_python_main(this_gitlab, purge, var_list, state)
+    change, return_value = native_python_main(this_gitlab, purge, var_list, state, module)
 
     module.exit_json(changed=change, project_variable=return_value)
 
