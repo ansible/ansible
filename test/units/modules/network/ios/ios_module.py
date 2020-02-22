@@ -49,18 +49,8 @@ def load_fixture(name):
 
 class TestIosModule(ModuleTestCase):
 
-    def execute_module(self, failed=False,
-                       changed=False,
-                       commands=None,
-                       sort=True,
-                       defaults=False,
-                       transport='cli',
-                       filename=None):
-
-        if filename is None:
-            self.load_fixtures(commands, transport=transport)
-        else:
-            self.load_fixtures(commands, transport=transport, filename=filename)
+    def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False):
+        self.load_fixtures(commands)
 
         if failed:
             result = self.failed()
@@ -93,5 +83,5 @@ class TestIosModule(ModuleTestCase):
         self.assertEqual(result['changed'], changed, result)
         return result
 
-    def load_fixtures(self, commands=None, transport='cli', filename=None):
+    def load_fixtures(self, commands=None):
         pass

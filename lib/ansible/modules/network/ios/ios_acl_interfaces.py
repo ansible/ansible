@@ -46,7 +46,7 @@ notes:
     See L(IOS Platform Options,../network/user_guide/platform_ios.html).
 options:
   config:
-    description: A dictionary of ACL options
+    description: A dictionary of ACL interfaces options
     type: list
     elements: dict
     suboptions:
@@ -69,18 +69,18 @@ options:
             description: Specifies the ACLs for the provided AFI.
             type: list
             elements: dict
-          suboptions:
-             name:
-               description: Specifies the name of the IPv4/IPv4 ACL for the interface.
-               type: str
-             direction:
-               description:
-                 - Specifies the direction of packets that the ACL will be applied on.
-                 - With one direction already assigned, other acl direction cannot be same.
-               type: str
-               choices:
-                 - in
-                 - out
+            suboptions:
+              name:
+                description: Specifies the name of the IPv4/IPv4 ACL for the interface.
+                type: str
+              direction:
+                description:
+                  - Specifies the direction of packets that the ACL will be applied on.
+                  - With one direction already assigned, other acl direction cannot be same.
+                type: str
+                choices:
+                  - in
+                  - out
   state:
     description:
       - The state the configuration should be left in
@@ -93,10 +93,7 @@ options:
       - gathered
       - parsed
       - rendered
-  default: merged
-description:
-- The state of the configuration after module completion
-type: str
+    default: merged
 """
 
 EXAMPLES = """

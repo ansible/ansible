@@ -38,29 +38,27 @@ overridden:
 
 gathered:
   config:
-    - name: loopback888
-    - name: loopback999
     - name: GigabitEthernet0/0
     - access_groups:
       - acls:
-        - direction: in
-          name: 110
-        - direction: out
-          name: 123
-        afi: ipv4
+        - direction: 'in'
+          name: '110'
+        - direction: 'out'
+          name: '123'
+        afi: 'ipv4'
       - acls:
-        - direction: in
-          name: temp_v6
-        - direction: out
-          name: test_v6
-        afi: ipv6
+        - direction: 'in'
+          name: 'temp_v6'
+        - direction: 'out'
+          name: 'test_v6'
+        afi: 'ipv6'
       name: GigabitEthernet0/1
     - access_groups:
       - acls:
-        - direction: in
-          name: 110
-        - direction: out
-          name: 123
+        - direction: 'in'
+          name: '110'
+        - direction: 'out'
+          name: '123'
         afi: ipv4
       name: GigabitEthernet0/2
 
