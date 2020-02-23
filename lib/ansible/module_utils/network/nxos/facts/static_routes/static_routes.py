@@ -109,22 +109,26 @@ class Static_routesFacts(object):
         '''
         conf = re.sub('\s*ip(v6)? route', '', conf)
         # strip 'ip route'
-        inner_dict['dest'] = re.match("^\s*(\S+\/\d+) .*", conf).group(1)
+        inner_dict['dest'] = re.match(r'^\s*(\S+\/\d+) .*', conf).group(1)
         # ethernet1/2/23
-        iface = re.match(".* ([a-zA-Z0-9]+\d*\/\d+(\/?\.?\d*)*) .*", conf)
-        if iface:
-            inner_dict['interface'] = (iface.group(1))
+        iface = re.match(
+            r'.* (Ethernet|loopback|mgmt|port\-channel)(.*) .*', conf)
+        i = ['Ethernet', 'loopback', 'mgmt', 'port-channel']
+        if iface and iface.group(1) in i:
+            inner_dict['interface'] = (iface.group(1)) + (iface.group(2))
             conf = re.sub(inner_dict['interface'], '', conf)
 
         if '.' in inner_dict['dest']:
+            conf = re.sub(inner_dict['dest'], '', conf)
             inner_dict['afi'] = 'ipv4'
-            ipv4 = re.match(r'.* (\d+\.\d+\.\d+\.\d+).*',
+            ipv4 = re.match(r'.* (\d+\.\d+\.\d+\.\d+\/?\d*).*',
                             conf)  # gets next hop ip
             inner_dict['forward_router_address'] = ipv4.group(1)
 
         else:
             inner_dict['afi'] = 'ipv6'
-            ipv6 = re.match(r'.* (\S*:\S*:\S*).*', conf)
+            conf = re.sub(inner_dict['dest'], '', conf)
+            ipv6 = re.match(r'.* (\S*:\S*:\S*\/?\d*).*', conf)
             inner_dict['forward_router_address'] = ipv6.group(1)
         conf = re.sub(inner_dict['forward_router_address'], '', conf)
 
