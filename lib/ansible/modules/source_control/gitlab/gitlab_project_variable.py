@@ -55,6 +55,9 @@ options:
       - When the list element is a simple key-value pair, masked and protected will be set to false.
       - When the list element is a dict with the keys I(value), I(masked) and I(protected), the user can
         have full control about whether a value should be masked, protected or both.
+      - When a I(value) must be I(protected), GitLab >= 9.3 is required.
+      - When a I(value) must be I(masked), GitLab >= 11.10 is required.
+      - A I(value) must be a string or a number.
       - When a value is masked, it must be in Base64 and have a length of at least 8 characters.
     default: {}
     type: dict
