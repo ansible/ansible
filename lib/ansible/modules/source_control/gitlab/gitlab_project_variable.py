@@ -132,6 +132,7 @@ from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.six import string_types
+from ansible.module_utils.six import integer_types
 
 
 GITLAB_IMP_ERR = None
@@ -196,7 +197,7 @@ def native_python_main(this_gitlab, purge, var_list, state, module):
 
     for key in var_list:
 
-        if isinstance(var_list[key], string_types):
+        if isinstance(var_list[key], string_types) or isinstance(var_list[key], integer_types):
             value = var_list[key]
             masked = False
             protected = False
