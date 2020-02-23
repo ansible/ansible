@@ -1,0 +1,2 @@
+minor_changes:
+  - implement masked and protected attributes for gitlab project variable
