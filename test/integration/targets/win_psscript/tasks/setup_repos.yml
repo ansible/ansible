@@ -1,0 +1,58 @@
+# This file is part of Ansible
+
+# Copyright: (c) 2020, Brian Scholer <@briantist>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Unregister all repositories
+  win_shell: |
+    Get-PSRepository | Unregister-PSRepository
+  notify: Add PSGallery
+
+- name: Create repo folders
+  win_file:
+    path: '{{ item.path }}'
+    state: directory
+  loop: "{{ repos }}"
+  notify: Remove Directories
+
+- name: Register repos
+  win_psrepository:
+    name: '{{ item.name }}'
+    source: '{{ item.path }}'
+    installation_policy: '{{ item.policy }}'
+  notify: Clear Repositories
+  loop: "{{ repos }}"
+
+- name: Create and Publish Scripts
+  win_shell: |
+    $tmp = '{{ remote_tmp_dir }}'
+
+    # it looks like Tls12 is not added during the nuget bootstrapping process
+    # hitting connection closed errors during some tests. May be related to this:
+    # https://devblogs.microsoft.com/nuget/deprecating-tls-1-0-and-1-1-on-nuget-org/
+    [System.Net.ServicePointManager]::SecurityProtocol = `
+        [System.Net.ServicePointManager]::SecurityProtocol -bor
+        [System.Net.SecurityProtocolType]::SystemDefault -bor
+        [System.Net.SecurityProtocolType]::Tls11 -bor
+        [System.Net.SecurityProtocolType]::Tls12
+
+    {% for version in versions %}
+    {% for repo in repos %}
+    {% for script in repo.scripts %}
+
+      $script = '{{ script }}'
+      $repo = '{{ repo.name }}'
+      $ver = '{{ version }}'
+      $file = "${script}.ps1"
+      $out = $tmp | Join-Path -ChildPath $file
+
+    try {
+      New-ScriptFileInfo -Description $script -Version $ver -Path $out -Force
+      Publish-Script -Path $out -Repository $repo -Force
+    } finally {
+      Remove-Item -LiteralPath $out -Force -ErrorAction SilentlyContinue
+    }
+
+    {% endfor %}
+    {% endfor %}
+    {% endfor %}

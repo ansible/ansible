@@ -1,0 +1,22 @@
+# This file is part of Ansible
+
+# Copyright: (c) 2020, Brian Scholer <@briantist>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Clear Repositories
+  win_shell: |
+    Get-PSRepository | Unregister-PSRepository
+
+- name: Add PSGallery
+  win_shell: |
+    Register-PSRepository -Default
+
+- name: Clear Installed Scripts
+  win_shell: |
+    Get-InstalledScript | Uninstall-Script -Force
+
+- name: Remove Directories
+  win_file:
+    path: '{{ item.path }}'
+    state: absent
+  loop: "{{ repos }}"

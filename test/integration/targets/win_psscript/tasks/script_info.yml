@@ -1,0 +1,81 @@
+# This file is part of Ansible
+
+# Copyright: (c) 2020, Brian Scholer <@briantist>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Get installed scripts
+  win_shell: |
+    $pMachine = "$env:ProgramFiles\WindowsPowerShell\Scripts"
+    # 2012/2012R2 test environments seem to have blank values for some environment vars
+    $userStub = 'Documents\WindowsPowerShell\Scripts'
+    $userBase = if ($Home) {
+        $Home
+    }
+    elseif ($env:UserProfile) {
+        $env:UserProfile
+    }
+    elseif ($env:HomeDrive -and $env:HomePath) {
+        "${env:HomeDrive}${env:HomePath}\$userStub"
+    }
+    elseif ($env:UserName) {
+        $root = if ($env:SystemDrive) {
+            $env:SystemDrive
+        }
+        elseif ($emv:HomeDrive) {
+            $env:HomeDrive
+        }
+        else {
+            'C:'
+        }
+        "${root}\Users\${env:UserName}"
+    }
+    $pUser = "${userBase}\${userStub}"
+
+    $scripts = Get-InstalledScript |
+        Select-Object Name,Version,InstalledLocation,Repository,@{
+            Name = 'current_user'
+            Expression = { $_.InstalledLocation -eq $pUser }
+        },
+        @{
+            Name = 'all_users'
+            Expression = { $_.InstalledLocation -eq $pMachine }
+        },
+        @{
+            # this is for troubleshooting tests
+            # 2012/2012R2 test environments seem to have blank values for some environment vars
+            Name = 'paths_to_compare'
+            Expression = {
+                @{
+                    pUser = $pUser
+                    pMachine = $pMachine
+                    home = $Home
+                    homedrive = $env:HOMEDRIVE
+                    homepath = $env:HOMEPATH
+                    providerhome = (Get-PSProvider -PSProvider FileSystem).Home
+                    userprofile = $env:UserProfile
+                    username = $env:UserName
+                }
+            }
+        }
+
+    if (-not $scripts) {
+        $scripts = @()
+    }
+
+    ConvertTo-Json -Depth 5 -InputObject ([object[]]$scripts)
+  register: _raw_info
+
+- name: Set script info var
+  set_fact:
+    "{{ script_info_var | default('scripts') }}": "{{
+      dict(
+        _raw_info.stdout
+        | from_json
+        | map(attribute='Name')
+        | list
+        | zip(
+          _raw_info.stdout
+          | from_json
+        )
+      )
+    }}"

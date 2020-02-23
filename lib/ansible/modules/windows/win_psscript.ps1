@@ -143,7 +143,9 @@ if ($state -eq 'absent') {
     if ($existing.Count) {
         try {
             $module.Result.changed = $true
-            $existing.Values | Uninstall-Script -Force -WhatIf:$module.CheckMode -ErrorAction Stop
+            if (-not $module.CheckMode) {
+                $existing.Values | Uninstall-Script -Force -ErrorAction Stop
+            }
         } catch {
             $module.FailJson("Error uninstalling scripts.", $_)
         }
@@ -158,19 +160,21 @@ else { # state is 'present' or 'latest'
 
     try {
         $toInstall = $remote | Where-Object -FilterScript {
-            $install = -not $existing.ContainsKey($_.Name) -or (
+            -not $existing.ContainsKey($_.Name) -or (
                 $state -eq 'latest' -and
                 ($_.Version -as [version]) -gt ($existing[$_.Name].Version -as [version])
             )
-            $module.Result.changed = $module.Result.changed -or $install
-            $install
         }
 
         if (($toInstall | Group-Object -Property Name -NoElement | Where-Object -Property Count -gt 1)) {
             $module.FailJson("Multiple scripts found. Please choose a specific repository.")
         }
 
-        $toInstall | Install-Script -Scope:$pInstall.scope -Force -WhatIf:$module.CheckMode -ErrorAction Stop
+        $module.Result.changed = $toInstall -as [bool]
+
+        if ($toInstall -and -not $module.CheckMode) {
+            $toInstall | Install-Script -Scope:$pInstall.scope -Force -ErrorAction Stop
+        }
     } catch {
         $module.FailJson("Error installing scripts.", $_)
     }

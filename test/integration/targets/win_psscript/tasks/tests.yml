@@ -1,0 +1,555 @@
+# This file is part of Ansible
+
+# Copyright: (c) 2020, Brian Scholer <@briantist>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Basic Tests Script 1
+  tags:
+    - basic1
+  vars:
+    script: Test-One
+    scope: all_users
+    expected:
+      repo: Repo1
+      version: "{{ latest_version }}"
+  block:
+    - name: Install a script (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is changed (check mode)
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure nothing was installed (check mode)
+      assert:
+        that:
+          - scripts | length == 0
+          - script not in scripts
+
+    - name: Install a script
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+      register: result
+      notify: Clear Installed Scripts
+
+    - name: Assert task is changed
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure script was installed
+      assert:
+        that:
+          - scripts | length == 1
+          - script in scripts
+          - scripts[script].Version is version(expected.version, '==')
+          - scripts[script].Repository == expected.repo
+          - scripts[script][scope]
+
+    - name: Install script again (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is not changed (check mode)
+      assert:
+        that: result is not changed
+
+- name: Basic Tests Script 2
+  tags:
+    - basic2
+  vars:
+    script: Test-Two
+    scope: current_user
+    expected:
+      repo: Repo2
+      version: "{{ latest_version }}"
+  block:
+    - name: Install a script (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is changed (check mode)
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure nothing was installed (check mode)
+      assert:
+        that:
+          - scripts | length == 1
+          - script not in scripts
+
+    - name: Install a script
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+      register: result
+      notify: Clear Installed Scripts
+
+    - name: Assert task is changed
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure script was installed
+      assert:
+        that:
+          - scripts | length == 2
+          - script in scripts
+          - scripts[script].Version is version(expected.version, '==')
+          - scripts[script].Repository == expected.repo
+          - scripts[script][scope]
+
+    - name: Install script again (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is not changed (check mode)
+      assert:
+        that: result is not changed
+
+- name: Removal Tests Script 1
+  tags:
+    - remove1
+  vars:
+    script: Test-One
+    state: absent
+  block:
+    - name: Remove Script (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        state: "{{ state }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is changed (check mode)
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure script was not removed (check mode)
+      assert:
+        that:
+          - scripts | length == 2
+          - script in scripts
+
+    - name: Remove Script
+      win_psscript:
+        name: "{{ script }}"
+        state: "{{ state }}"
+      register: result
+
+    - name: Assert task is changed
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure script was removed
+      assert:
+        that:
+          - scripts | length == 1
+          - script not in scripts
+
+    - name: Remove Script Again (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        state: "{{ state }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is not changed (check mode)
+      assert:
+        that: result is not changed
+
+- name: Removal Tests Script 2
+  tags:
+    - remove2
+  vars:
+    script: Test-Two
+    state: absent
+  block:
+    - name: Remove Script (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        state: "{{ state }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is changed (check mode)
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure script was not removed (check mode)
+      assert:
+        that:
+          - scripts | length == 1
+          - script in scripts
+
+    - name: Remove Script
+      win_psscript:
+        name: "{{ script }}"
+        state: "{{ state }}"
+      register: result
+
+    - name: Assert task is changed
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure script was removed
+      assert:
+        that:
+          - scripts | length == 0
+          - script not in scripts
+
+    - name: Remove Script Again (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        state: "{{ state }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is not changed (check mode)
+      assert:
+        that: result is not changed
+
+- name: Tests for Script in Multiple Repos
+  tags:
+    - multi
+  vars:
+    script: Test-Multi
+    scope: all_users
+    expected:
+      repo: Repo2
+      version: "{{ latest_version }}"
+  block:
+    - name: Install a script from multiple repos
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+      register: result
+      failed_when: result.msg is not search('Multiple scripts found')
+
+    - name: Install a script from multiple repos by chosing one (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+        repository: "{{ expected.repo }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is changed (check mode)
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure nothing was installed (check mode)
+      assert:
+        that:
+          - scripts | length == 0
+          - script not in scripts
+
+    - name: Install a script from multiple repos by chosing one
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+        repository: "{{ expected.repo }}"
+      register: result
+      notify: Clear Installed Scripts
+
+    - name: Assert task is changed
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure script was installed
+      assert:
+        that:
+          - scripts | length == 1
+          - script in scripts
+          - scripts[script].Version is version(expected.version, '==')
+          - scripts[script].Repository == expected.repo
+          - scripts[script][scope]
+
+    - name: Install script again (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+        repository: "{{ expected.repo }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is not changed (check mode)
+      assert:
+        that: result is not changed
+
+- name: Exact Version Tests
+  tags:
+    - exact
+  vars:
+    script: Test-Two
+    scope: current_user
+    expected:
+      repo: Repo2
+      version: "{{ earliest_version }}"
+  block:
+    - name: Install a script (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+        required_version: "{{ expected.version }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is changed (check mode)
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure nothing was installed (check mode)
+      assert:
+        that:
+          - script not in scripts
+
+    - name: Install a script
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+        required_version: "{{ expected.version }}"
+      register: result
+      notify: Clear Installed Scripts
+
+    - name: Assert task is changed
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure script was installed
+      assert:
+        that:
+          - script in scripts
+          - scripts[script].Version is version(expected.version, '==')
+          - scripts[script].Repository == expected.repo
+          - scripts[script][scope]
+
+    - name: Install script again (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+        required_version: "{{ expected.version }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is not changed (check mode)
+      assert:
+        that: result is not changed
+
+- name: Minimum / Maximum Version Tests
+  tags:
+    - minmax
+    - present
+  vars:
+    script: Test-Two
+    scope: current_user
+    minver: 1.0.1
+    maxver: 2.0.0
+    expected:
+      repo: Repo2
+      version: "1.0.10"
+  block:
+    - name: Install a script (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+        minimum_version: "{{ minver }}"
+        maximum_version: "{{ maxver }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is changed (check mode)
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure nothing was installed (check mode)
+      assert:
+        that:
+          - script not in scripts or scripts[script].Version is version(expected.version, '<')
+
+    - name: Install a script
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+        minimum_version: "{{ minver }}"
+        maximum_version: "{{ maxver }}"
+      register: result
+      notify: Clear Installed Scripts
+
+    - name: Assert task is changed
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure script was installed
+      assert:
+        that:
+          - script in scripts
+          - scripts[script].Version is version(expected.version, '==')
+          - scripts[script].Repository == expected.repo
+          - scripts[script][scope]
+
+    - name: Install script again (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        scope: "{{ scope }}"
+        minimum_version: "{{ minver }}"
+        maximum_version: "{{ maxver }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is not changed (check mode)
+      assert:
+        that: result is not changed
+
+- name: State Present Tests
+  tags:
+    - present
+  vars:
+    script: Test-Two
+    state: present
+    scope: all_users   # implied
+    curver: 1.0.10
+    expected:
+      repo: Repo2
+      version: "{{ curver }}"
+  block:
+    - name: Install present script (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        state: "{{ state }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is not changed (check mode)
+      assert:
+        that: result is not changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure nothing was installed (check mode)
+      assert:
+        that:
+          - script in scripts
+          - scripts[script].Version is version(expected.version, '==')
+          - scripts[script].Repository == expected.repo
+
+    - name: Install present script
+      win_psscript:
+        name: "{{ script }}"
+        state: "{{ state }}"
+      register: result
+      notify: Clear Installed Scripts
+
+    - name: Assert task is not changed
+      assert:
+        that: result is not changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure script was not installed
+      assert:
+        that:
+          - script in scripts
+          - scripts[script].Version is version(expected.version, '==')
+          - scripts[script].Repository == expected.repo
+
+- name: State Latest Tests
+  tags:
+    - latest
+  vars:
+    script: Test-Two
+    state: latest
+    scope: all_users   # implied
+    expected:
+      repo: Repo2
+      version: "10.0.10"
+  block:
+    - name: Install latest script (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        state: "{{ state }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is changed (check mode)
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure nothing was installed (check mode)
+      assert:
+        that:
+          - script not in scripts or scripts[script].Version is version(expected.version, '<')
+
+    - name: Install latest script
+      win_psscript:
+        name: "{{ script }}"
+        state: "{{ state }}"
+      register: result
+      notify: Clear Installed Scripts
+
+    - name: Assert task is changed
+      assert:
+        that: result is changed
+
+    - import_tasks: script_info.yml
+
+    - name: Ensure script was installed
+      assert:
+        that:
+          - script in scripts
+          - scripts[script].Version is version(expected.version, '==')
+          - scripts[script].Repository == expected.repo
+          - scripts[script][scope]
+
+    - name: Install latest script again (check mode)
+      win_psscript:
+        name: "{{ script }}"
+        state: "{{ state }}"
+      register: result
+      check_mode: True
+
+    - name: Assert task is not changed (check mode)
+      assert:
+        that: result is not changed
