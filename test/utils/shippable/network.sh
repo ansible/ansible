@@ -24,9 +24,9 @@ python_versions=(
     3.6
 )
 
-for version in "${python_versions[@]}"; do
+for python_version in "${python_versions[@]}"; do
     # terminate remote instances on the final python version tested
-    if [ "${version}" = "${python_versions[-1]}" ]; then
+    if [ "${python_version}" = "${python_versions[-1]}" ]; then
         terminate="always"
     else
         terminate="never"
@@ -34,7 +34,7 @@ for version in "${python_versions[@]}"; do
 
     # shellcheck disable=SC2086
     ansible-test network-integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
-        --platform "${platform}" \
-        --docker default --python "${version}" \
+        --platform "${platform}/{$version}" \
+        --docker default --python "${python_version}" \
         --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done
