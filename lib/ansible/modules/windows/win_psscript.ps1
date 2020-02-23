@@ -146,7 +146,8 @@ if ($state -eq 'absent') {
             if (-not $module.CheckMode) {
                 $existing.Values | Uninstall-Script -Force -ErrorAction Stop
             }
-        } catch {
+        }
+        catch {
             $module.FailJson("Error uninstalling scripts.", $_)
         }
     }
@@ -154,7 +155,8 @@ if ($state -eq 'absent') {
 else { # state is 'present' or 'latest'
     try {
         $remote = Find-Script @pFind -ErrorAction Stop
-    } catch {
+    }
+    catch {
         $module.FailJson("Error searching for scripts.", $_)
     }
 
@@ -175,7 +177,8 @@ else { # state is 'present' or 'latest'
         if ($toInstall -and -not $module.CheckMode) {
             $toInstall | Install-Script -Scope:$pInstall.scope -Force -ErrorAction Stop
         }
-    } catch {
+    }
+    catch {
         $module.FailJson("Error installing scripts.", $_)
     }
 }

@@ -93,12 +93,12 @@ author:
 EXAMPLES = r'''
 - name: Install a script from PSGallery
   win_psscript:
-    name: Invoke-NeatStuff
+    name: Test-RPC
     repository: PSGallery
 
 - name: Find and install the latest version of a script from any repository
   win_psscript:
-    name: Start-Utility
+    name: Get-WindowsAutoPilotInfo
     state: latest
 
 - name: Remove a script that isn't needed
