@@ -63,7 +63,8 @@ matrix:
     - env: T=windows/2016/7
     - env: T=windows/2019/7
 
-    - env: T=network
+    - env: T=ios/csr1000v/1
+    - env: T=vyos/1.1.8/1
 
     - env: T=aix/7.2/1
     - env: T=osx/10.11/1
