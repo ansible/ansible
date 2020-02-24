@@ -172,6 +172,10 @@ options:
       - Header to identify as, generally appears in web server logs.
     type: str
     default: ansible-httpget
+  socks5_proxy:
+    description:
+      - "SOCKS5 configuration in the following format: ip_address:port."
+    type: str
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
@@ -365,8 +369,15 @@ import re
 import shutil
 import sys
 import tempfile
+import socket
 
-from ansible.module_utils.basic import AnsibleModule
+try:
+    import socks
+    HAVE_PYSOCKS = True
+except ImportError:
+    HAVE_PYSOCKS = False
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import PY2, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
@@ -585,6 +596,7 @@ def main():
         headers=dict(type='dict', default={}),
         unix_socket=dict(type='path'),
         remote_src=dict(type='bool', default=False),
+        socks5_proxy=dict(type='str')
     )
 
     module = AnsibleModule(
@@ -606,11 +618,20 @@ def main():
     removes = module.params['removes']
     status_code = [int(x) for x in list(module.params['status_code'])]
     socket_timeout = module.params['timeout']
+    socks5_proxy = module.params['socks5_proxy']
 
     dict_headers = module.params['headers']
 
+    if not HAVE_PYSOCKS and socks5_proxy:
+        module.fail_json(msg=missing_required_lib('PySocks'))
+
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
+
+    if socks5_proxy:
+        host, port = socks5_proxy.split(':')
+        socks.set_default_proxy(socks.SOCKS5, host, port=int(port))
+        socket.socket = socks.socksocket
 
     if body_format == 'json':
         # Encode the body unless its a string, then assume it is pre-formatted JSON
