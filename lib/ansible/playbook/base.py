@@ -305,6 +305,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             for action_group in action_groups:
                 if 'group/%s' % action_group in module_default:
                     for module in action_groups[action_group]:
+                        if not len(module.split('.')) == 3:
+                            # Looks like FQ was not provided: assume the default should only be applied to the module within the collection
+                            module = '%s.%s.%s' % (action_group.split('.')[0], action_group.split('.')[1], module)
                         module_defaults.append({module: module_default['group/%s' % action_group]})
 
         setattr(self, name, module_defaults)
