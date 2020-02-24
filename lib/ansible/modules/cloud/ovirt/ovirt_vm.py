@@ -728,16 +728,21 @@ options:
         suboptions:
             index:
                 description:
-                    - "The index of this NUMA node (mandatory)."
+                    - "The index of this NUMA node."
+                required: True
             memory:
                 description:
-                    - "Memory size of the NUMA node in MiB (mandatory)."
+                    - "Memory size of the NUMA node in MiB."
+                required: True
             cores:
                 description:
-                    - "list of VM CPU cores indexes to be included in this NUMA node (mandatory)."
+                    - "List of VM CPU cores indexes to be included in this NUMA node."
+                type: list
+                required: True
             numa_node_pins:
                 description:
-                    - "list of physical NUMA node indexes to pin this virtual NUMA node to."
+                    - "List of physical NUMA node indexes to pin this virtual NUMA node to."
+                type: list
         version_added: "2.6"
     rng_device:
         description:
@@ -1934,17 +1939,20 @@ class VmsModule(BaseModule):
                 )
             )
 
-    def __attach_numa_nodes(self, entity):
-        updated = False
-        numa_nodes_service = self._service.service(entity.id).numa_nodes_service()
+    def __get_numa_serialized(self, numa):
+        return sorted([(x.index,
+                        [y.index for y in x.cpu.cores] if x.cpu else [],
+                        x.memory,
+                        [y.index for y in x.numa_node_pins] if x.numa_node_pins else []
+                        ) for x in numa], key=lambda x: x[0])
 
+    def __attach_numa_nodes(self, entity):
+        numa_nodes_service = self._service.service(entity.id).numa_nodes_service()
+        existed_numa_nodes = numa_nodes_service.list()
         if len(self.param('numa_nodes')) > 0:
             # Remove all existing virtual numa nodes before adding new ones
-            existed_numa_nodes = numa_nodes_service.list()
-            existed_numa_nodes.sort(reverse=len(existed_numa_nodes) > 1 and existed_numa_nodes[1].index > existed_numa_nodes[0].index)
-            for current_numa_node in existed_numa_nodes:
+            for current_numa_node in sorted(existed_numa_nodes, reverse=True, key=lambda x: x.index):
                 numa_nodes_service.node_service(current_numa_node.id).remove()
-                updated = True
 
         for numa_node in self.param('numa_nodes'):
             if numa_node is None or numa_node.get('index') is None or numa_node.get('cores') is None or numa_node.get('memory') is None:
@@ -1968,9 +1976,7 @@ class VmsModule(BaseModule):
                     ] if numa_node.get('numa_node_pins') is not None else None,
                 )
             )
-            updated = True
-
-        return updated
+        return self.__get_numa_serialized(numa_nodes_service.list()) != self.__get_numa_serialized(existed_numa_nodes)
 
     def __attach_watchdog(self, entity):
         watchdogs_service = self._service.service(entity.id).watchdogs_service()
