@@ -40,6 +40,14 @@ Install multiple collections with a requirements file
 
 .. include:: ../shared_snippets/installing_multiple_collections.txt
 
+.. _collection_offline_download:
+
+Downloading a collection for offline use
+-----------------------------------------
+
+.. include:: ../shared_snippets/download_tarball_collections.txt
+
+
 .. _galaxy_server_config:
 
 Configuring the ``ansible-galaxy`` client
