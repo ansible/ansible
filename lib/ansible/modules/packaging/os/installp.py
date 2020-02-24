@@ -52,28 +52,28 @@ EXAMPLES = r'''
   installp:
     name: foo
     repository_path: /repository/AIX71/installp/base
-    package_license: yes
+    accept_license: yes
     state: present
 
 - name: Install bos.sysmgt that includes bos.sysmgt.nim.master, bos.sysmgt.nim.spot
   installp:
     name: bos.sysmgt
     repository_path: /repository/AIX71/installp/base
-    package_license: yes
+    accept_license: yes
     state: present
 
 - name: Install bos.sysmgt.nim.master only
   installp:
     name: bos.sysmgt.nim.master
     repository_path: /repository/AIX71/installp/base
-    package_license: yes
+    accept_license: yes
     state: present
 
 - name: Install bos.sysmgt.nim.master and bos.sysmgt.nim.spot
   installp:
     name: bos.sysmgt.nim.master, bos.sysmgt.nim.spot
     repository_path: /repository/AIX71/installp/base
-    package_license: yes
+    accept_license: yes
     state: present
 
 - name: Remove packages bos.sysmgt.nim.master
