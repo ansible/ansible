@@ -77,22 +77,13 @@ def stdin(mocker, request):
 @pytest.fixture
 def am(stdin, request):
     """Return a patched Ansible module instance."""
-    old_args = ansible.module_utils.basic._ANSIBLE_ARGS
-    ansible.module_utils.basic._ANSIBLE_ARGS = None
-    old_argv = sys.argv
-    sys.argv = ['ansible_unittest']
-
     argspec = {}
-    if hasattr(request, 'param'):
-        if isinstance(request.param, dict):
-            argspec = request.param
+    if isinstance(getattr(request, 'param', None), dict):
+        argspec = request.param
 
     ans_mod = ansible.module_utils.basic.AnsibleModule(
         argument_spec=argspec,
     )
     ans_mod._name = 'ansible_unittest'  # pylint: disable=protected-access
 
-    yield ans_mod
-
-    ansible.module_utils.basic._ANSIBLE_ARGS = old_args
-    sys.argv = old_argv
+    return ans_mod
