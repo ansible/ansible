@@ -51,11 +51,13 @@ options:
         version_added: "1.3"
         description:
             - Path used for local ansible facts (C(*.fact)) - files in this dir
-              will be run (if executable) and their results be added to C(ansible_local) facts
-              if a file is not executable it is read. Check notes for Windows options. (from 2.1 on)
+              will be run (if executable) and their results be added to C(ansible_local) facts.
+              If a file is not executable it is read instead. Check notes for Windows options. (from 2.1 on)
               File/results format can be JSON or INI-format. The default C(fact_path) can be
               specified in C(ansible.cfg) for when setup is automatically called as part of
               C(gather_facts).
+              NOTE - For windows clients, the results will be added to a variable named after the
+              local file (without extension suffix), rather than C(ansible_local).
         required: false
         default: /etc/ansible/facts.d
 description:
