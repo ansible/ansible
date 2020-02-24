@@ -54,14 +54,10 @@ def stdin(mocker, monkeypatch, request):
 
     fake_stdin_buffer = BytesIO(to_bytes(args, errors='surrogate_or_strict'))
 
-    monkeypatch.setattr(
-        ansible.module_utils.basic.sys, 'stdin',
-        mocker.MagicMock(),
-    )
-    monkeypatch.setattr(
-        ansible.module_utils.basic.sys.stdin, 'buffer',
-        fake_stdin_buffer,
-    )
+    fake_stdin = mocker.MagicMock()
+    fake_stdin.buffer = fake_stdin_buffer
+
+    monkeypatch.setattr(ansible.module_utils.basic.sys, 'stdin', fake_stdin)
 
     return fake_stdin_buffer
 
