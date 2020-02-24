@@ -7,9 +7,10 @@ IFS='/:' read -ra args <<< "$1"
 
 platform="${args[0]}"
 version="${args[1]}"
+python_version="${args[2]}"
 
-if [ "${#args[@]}" -gt 2 ]; then
-    target="shippable/${platform}/group${args[2]}/"
+if [ "${#args[@]}" -gt 3 ]; then
+    target="shippable/${platform}/group${args[3]}/"
 else
     target="shippable/${platform}/"
 fi
@@ -23,6 +24,11 @@ python_versions=(
     2.7
     3.6
 )
+
+if [ "${python_version}" ]; then
+    # limit tests to a single python version
+    python_versions=("${python_version}")
+fi
 
 for python_version in "${python_versions[@]}"; do
     # terminate remote instances on the final python version tested
