@@ -182,6 +182,9 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             if kind.endswith('List'):
                 resource = self.find_resource(kind, api_version, fail=False)
                 flattened_definitions.extend(self.flatten_list_kind(resource, definition))
+            elif kind == 'BuildRequest':
+                resource = self.find_resource('BuildConfig', api_version, fail=True).subresources['instantiate']
+                flattened_definitions.append((resource, definition))
             else:
                 resource = self.find_resource(kind, api_version, fail=True)
                 flattened_definitions.append((resource, definition))
@@ -223,7 +226,6 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             return [_prepend_resource_info(resource, msg) for msg in warnings + errors]
 
     def set_defaults(self, resource, definition):
-        definition['kind'] = resource.kind
         definition['apiVersion'] = resource.group_version
         metadata = definition.get('metadata', {})
         if self.name and not metadata.get('name'):
@@ -267,7 +269,9 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 pass
         except ForbiddenError as exc:
             if definition['kind'] in ['Project', 'ProjectRequest'] and state != 'absent':
-                return self.create_project_request(definition)
+                return self.create_request('ProjectRequest', definition)
+            if definition['kind'] == 'BuildRequest' and state != 'absent':
+                return self.create_request('BuildRequest', definition, resource)
             self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc.body),
                            error=exc.status, status=exc.status, reason=exc.reason)
         except DynamicApiError as exc:
@@ -423,10 +427,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             error = dict(msg=msg, error=exc.status, status=exc.status, reason=exc.reason, warnings=self.warnings)
             return None, error
 
-    def create_project_request(self, definition):
-        definition['kind'] = 'ProjectRequest'
+    def create_request(self, kind, definition, resource=None):
+        definition['kind'] = kind
         result = {'changed': False, 'result': {}}
-        resource = self.find_resource('ProjectRequest', definition['apiVersion'], fail=True)
+        if not resource:
+            resource = self.find_resource(kind, definition['apiVersion'], fail=True)
         if not self.check_mode:
             try:
                 k8s_obj = resource.create(definition)
