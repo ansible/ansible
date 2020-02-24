@@ -56,6 +56,29 @@ options:
         the AF. This argument accepts a list of dicts that specify the
         route-target, the direction (import|export|both) and state of each
         route-target. Default direction is C(direction=both). See examples.
+    suboptions:
+      rt:
+        description:
+          - Defindes the route-target itself
+        required: true
+        type: str
+      direction:
+        description:
+          - Indicates the direction of the route-target (import|export|both)
+        choices:
+          - import
+          - export
+          - both
+        default: both
+      state:
+        description:
+          - Determines whether the route-target with the given direction
+            should be present or not on the device.
+        choices:
+          - present
+          - absent
+        default: present
+    elements: dict
     type: list
     version_added: "2.10"
   state:
@@ -156,17 +179,19 @@ def main():
         route_target_both_auto_evpn=dict(required=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present'),
         route_targets=dict(
-            rt=dict(type='str'),
-            direction=dict(
-                choices=['import', 'export', 'both'],
-                default='both'
-            ),
-            state=dict(
-                choices=['present', 'absent'],
-                default='present'
-            ),
+            type='list',
             elements='dict',
-            type='list'
+            options=dict(
+                rt=dict(type='str'),
+                direction=dict(
+                    choices=['import', 'export', 'both'],
+                    default='both'
+                ),
+                state=dict(
+                    choices=['present', 'absent'],
+                    default='present'
+                ),
+            )
         ),
     )
 
