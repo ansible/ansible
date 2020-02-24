@@ -31,21 +31,30 @@ class TestVyosFirewallRulesModule(TestVyosModule):
 
     def setUp(self):
         super(TestVyosFirewallRulesModule, self).setUp()
-        self.mock_get_config = patch('ansible.module_utils.network.common.network.Config.get_config')
+        self.mock_get_config = patch(
+            'ansible.module_utils.network.common.network.Config.get_config')
         self.get_config = self.mock_get_config.start()
 
-        self.mock_load_config = patch('ansible.module_utils.network.common.network.Config.load_config')
+        self.mock_load_config = patch(
+            'ansible.module_utils.network.common.network.Config.load_config')
         self.load_config = self.mock_load_config.start()
 
-        self.mock_get_resource_connection_config = patch('ansible.module_utils.network.common.cfg.base.get_resource_connection')
-        self.get_resource_connection_config = self.mock_get_resource_connection_config.start()
+        self.mock_get_resource_connection_config = patch(
+            'ansible.module_utils.network.common.cfg.base.get_resource_connection'
+        )
+        self.get_resource_connection_config = self.mock_get_resource_connection_config.start(
+        )
 
-        self.mock_get_resource_connection_facts = patch('ansible.module_utils.network.common.facts.facts.get_resource_connection')
-        self.get_resource_connection_facts = self.mock_get_resource_connection_facts.start()
+        self.mock_get_resource_connection_facts = patch(
+            'ansible.module_utils.network.common.facts.facts.get_resource_connection'
+        )
+        self.get_resource_connection_facts = self.mock_get_resource_connection_facts.start(
+        )
 
-        self.mock_execute_show_command = patch('ansible.module_utils.network.vyos.facts.firewall_global.firewall_global.Firewall_globalFacts.get_device_data')
-        # self.mock_execute_show_command = patch('ansible.module_utils.network.vyos.facts.firewall_rules.firewall_rules.Firewall_rulesFacts.get_device_data')
-        
+        self.mock_execute_show_command = patch(
+            'ansible.module_utils.network.vyos.facts.firewall_global.firewall_global.Firewall_globalFacts.get_device_data'
+        )
+
         self.execute_show_command = self.mock_execute_show_command.start()
 
     def tearDown(self):
@@ -59,187 +68,124 @@ class TestVyosFirewallRulesModule(TestVyosModule):
     def load_fixtures(self, commands=None):
         def load_from_file(*args, **kwargs):
             return load_fixture('vyos_firewall_global_config.cfg')
+
         self.execute_show_command.side_effect = load_from_file
 
     def test_vyos_firewall_global_set_01_merged(self):
         set_module_args(
             dict(config=dict(
-                    validation='strict',
-                    config_trap=True,
-                    log_martians=True,
-                    syn_cookies=True,
-                    twa_hazards_protection=True,
-                    ping=dict(
-                        all=True,
-                        broadcast=True),
-                    state_policy=[
+                validation='strict',
+                config_trap=True,
+                log_martians=True,
+                syn_cookies=True,
+                twa_hazards_protection=True,
+                ping=dict(all=True, broadcast=True),
+                state_policy=[
+                    dict(
+                        connection_type='established',
+                        action='accept',
+                        log=True,
+                    ),
+                    dict(connection_type='invalid', action='reject')
+                ],
+                route_redirects=[
+                    dict(afi='ipv4',
+                         ip_src_route=True,
+                         icmp_redirects=dict(send=True, receive=False))
+                ],
+                group=dict(
+                    address_group=[
                         dict(
-                            connection_type='established',
-                            action='accept',
-                            log=True,
-                        ),
-                        dict(
-                            connection_type='invalid',
-                            action='reject'
-                        )
-                    ],
-                    route_redirects=[
-                        dict(
-                            afi='ipv4',
-                            ip_src_route=True,
-                            icmp_redirects=dict(
-                                send=True,
-                                receive=False
-                                )
-                            )
-                        ],
-                    group=dict(
-                        address_group=[
-                            dict(
                             name='MGMT-HOSTS',
                             description='This group has the Management hosts address lists',
-                            address=[
-                                '192.0.1.1',
-                                '192.0.1.3',
-                                '192.0.1.5'
-                                ]
-                            ),
-                            ],
-                        network_group=[
-                         dict(
-                            name='MGMT',
-                            description='This group has the Management network addresses',
-                            address=[
-                                  '192.0.1.0/24'
-                                 ]
-                            )
-                      ]
-                )
-        ),
+                            address=['192.0.1.1', '192.0.1.3', '192.0.1.5']),
+                    ],
+                    network_group=[
+                        dict(name='MGMT',
+                             description='This group has the Management network addresses',
+                             address=['192.0.1.0/24'])
+                    ])),
                 state="merged"))
         commands = [
-                "set firewall group address-group MGMT-HOSTS address 192.0.1.1", 
-                "set firewall group address-group MGMT-HOSTS address 192.0.1.3", 
-                "set firewall group address-group MGMT-HOSTS address 192.0.1.5", 
-                "set firewall group address-group MGMT-HOSTS description 'This group has the Management hosts address lists'", 
-                "set firewall group address-group MGMT-HOSTS", 
-                "set firewall group network-group MGMT network 192.0.1.0/24", 
-                "set firewall group network-group MGMT description 'This group has the Management network addresses'", 
-                "set firewall group network-group MGMT", 
-                "set firewall ip-src-route 'enable'", 
-                "set firewall receive-redirects 'disable'", 
-                "set firewall send-redirects 'enable'", 
-                "set firewall config-trap 'enable'", 
-                "set firewall state-policy established action 'accept'", 
-                "set firewall state-policy established log 'enable'", 
-                "set firewall state-policy invalid action 'reject'", 
-                "set firewall broadcast-ping 'enable'", 
-                "set firewall all-ping 'enable'", 
-                "set firewall log-martians 'enable'", 
-                "set firewall twa-hazards-protection 'enable'", 
-                "set firewall syn-cookies 'enable'", 
-                "set firewall source-validation 'strict'"
-                    ]
+            "set firewall group address-group MGMT-HOSTS address 192.0.1.1",
+            "set firewall group address-group MGMT-HOSTS address 192.0.1.3",
+            "set firewall group address-group MGMT-HOSTS address 192.0.1.5",
+            "set firewall group address-group MGMT-HOSTS description 'This group has the Management hosts address lists'",
+            "set firewall group address-group MGMT-HOSTS",
+            "set firewall group network-group MGMT network 192.0.1.0/24",
+            "set firewall group network-group MGMT description 'This group has the Management network addresses'",
+            "set firewall group network-group MGMT",
+            "set firewall ip-src-route 'enable'",
+            "set firewall receive-redirects 'disable'",
+            "set firewall send-redirects 'enable'",
+            "set firewall config-trap 'enable'",
+            "set firewall state-policy established action 'accept'",
+            "set firewall state-policy established log 'enable'",
+            "set firewall state-policy invalid action 'reject'",
+            "set firewall broadcast-ping 'enable'",
+            "set firewall all-ping 'enable'",
+            "set firewall log-martians 'enable'",
+            "set firewall twa-hazards-protection 'enable'",
+            "set firewall syn-cookies 'enable'",
+            "set firewall source-validation 'strict'"
+        ]
         self.execute_module(changed=True, commands=commands)
 
     def test_vyos_firewall_global_set_01_merged_idem(self):
         set_module_args(
-            dict(config=dict(
-                    group=dict(
-                        address_group=[
-                            dict(
-                            name='RND-HOSTS',
-                            description='This group has the Management hosts address lists',
-                            address=[
-                                '192.0.2.1',
-                                '192.0.2.3',
-                                '192.0.2.5'
-                                ]
-                            )
-                            ],
-                        network_group=[
-                         dict(
-                            name='RND',
-                            description='This group has the Management network addresses',
-                            address=[
-                                  '192.0.2.0/24'
-                                 ]
-                            )
-                      ]
-                )
-        ),
+            dict(config=dict(group=dict(
+                address_group=[
+                    dict(name='RND-HOSTS',
+                         description='This group has the Management hosts address lists',
+                         address=['192.0.2.1', '192.0.2.3', '192.0.2.5'])
+                ],
+                network_group=[
+                    dict(name='RND',
+                         description='This group has the Management network addresses',
+                         address=['192.0.2.0/24'])
+                ])),
                 state="merged"))
         self.execute_module(changed=False, commands=[])
 
     def test_vyos_firewall_global_set_01_replaced(self):
         set_module_args(
-            dict(config=dict(
-                    group=dict(
-                        address_group=[
-                            dict(
-                            name='RND-HOSTS',
-                            description='This group has the Management hosts address lists',
-                            address=[
-                                '192.0.2.1',
-                                '192.0.2.7',
-                                '192.0.2.9'
-                                ]
-                            )
-                            ],
-                        network_group=[
-                         dict(
-                            name='RND',
-                            description='This group has the Management network addresses',
-                            address=[
-                                  '192.0.2.0/24'
-                                 ]
-                            )
-                      ]
-                )
-        ),
+            dict(config=dict(group=dict(
+                address_group=[
+                    dict(name='RND-HOSTS',
+                         description='This group has the Management hosts address lists',
+                         address=['192.0.2.1', '192.0.2.7', '192.0.2.9'])
+                ],
+                network_group=[
+                    dict(name='RND',
+                         description='This group has the Management network addresses',
+                         address=['192.0.2.0/24'])
+                ])),
                 state="replaced"))
-        commands=[
-                "delete firewall group address-group RND-HOSTS address 192.0.2.3", 
-                "delete firewall group address-group RND-HOSTS address 192.0.2.5", 
-                "set firewall group address-group RND-HOSTS address 192.0.2.7", 
-                "set firewall group address-group RND-HOSTS address 192.0.2.9" 
-                    ]
+        commands = [
+            "delete firewall group address-group RND-HOSTS address 192.0.2.3",
+            "delete firewall group address-group RND-HOSTS address 192.0.2.5",
+            "set firewall group address-group RND-HOSTS address 192.0.2.7",
+            "set firewall group address-group RND-HOSTS address 192.0.2.9"
+        ]
         self.execute_module(changed=True, commands=commands)
 
     def test_vyos_firewall_global_set_01_replaced_idem(self):
         set_module_args(
-            dict(config=dict(
-                    group=dict(
-                        address_group=[
-                            dict(
-                            name='RND-HOSTS',
-                            description='This group has the Management hosts address lists',
-                            address=[
-                                '192.0.2.1',
-                                '192.0.2.3',
-                                '192.0.2.5'
-                                ]
-                            )
-                            ],
-                        network_group=[
-                         dict(
-                            name='RND',
-                            description='This group has the Management network addresses',
-                            address=[
-                                  '192.0.2.0/24'
-                                 ]
-                            )
-                      ]
-                )
-        ),
+            dict(config=dict(group=dict(
+                address_group=[
+                    dict(name='RND-HOSTS',
+                         description='This group has the Management hosts address lists',
+                         address=['192.0.2.1', '192.0.2.3', '192.0.2.5'])
+                ],
+                network_group=[
+                    dict(name='RND',
+                         description='This group has the Management network addresses',
+                         address=['192.0.2.0/24'])
+                ])),
                 state="replaced"))
         self.execute_module(changed=False, commands=[])
 
     def test_vyos_firewall_global_set_01_deleted(self):
-        set_module_args(
-            dict(config=dict(),
-                state="deleted"))
-        commands=[
-                "delete firewall " 
-                    ]
+        set_module_args(dict(config=dict(), state="deleted"))
+        commands = ["delete firewall "]
         self.execute_module(changed=True, commands=commands)
