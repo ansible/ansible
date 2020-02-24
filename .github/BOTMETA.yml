@@ -564,6 +564,7 @@ files:
     maintainers: $team_oracle
     support: community
   $modules/cloud/ovirt/: *ovirt
+    migrated_to: ovirt.ovirt_collection
   $modules/cloud/profitbricks/: baldwinSPC
   $modules/cloud/rackspace/:
     ignored: sivel angstwad
@@ -3167,6 +3168,7 @@ files:
     migrated_to: openstack.cloud
   $module_utils/oracle/: *oracle
   $module_utils/ovirt.py: *ovirt
+    migrated_to: ovirt.ovirt_collection
   $module_utils/postgres.py: *postgresql
   $module_utils/powershell: *windows_core
   $module_utils/pure.py:
@@ -3539,7 +3541,9 @@ files:
   $plugins/doc_fragments/ucs.py: *ucs
   $plugins/doc_fragments/vultr.py: *vultr
   $plugins/doc_fragments/ovirt.py: *ovirt
+    migrated_to: ovirt.ovirt_collection
   $plugins/doc_fragments/ovirt_info.py: *ovirt
+    migrated_to: ovirt.ovirt_collection
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
