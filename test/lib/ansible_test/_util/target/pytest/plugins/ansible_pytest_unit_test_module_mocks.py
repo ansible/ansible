@@ -21,16 +21,28 @@ from collections.abc import MutableMapping
 @pytest.fixture
 def patch_ansible_module(monkeypatch, request):
     """Monkey-patch given Ansible module."""
-    request.param = {'ANSIBLE_MODULE_ARGS': request.param}
-    request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
-    request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
+    inp_args = request.param
 
-    args = json.dumps(request.param)
+    module_args_defaults = {
+        '_ansible_keep_remote_files': False,
+        '_ansible_remote_tmp': '/tmp',
+    }
 
-    monkeypatch.setattr(
-        ansible.module_utils.basic, '_ANSIBLE_ARGS',
-        to_bytes(args),
-    )
+    if isinstance(inp_args, str):
+        args = inp_args
+    elif isinstance(inp_args, MutableMapping):
+        mod_args = inp_args.get('ANSIBLE_MODULE_ARGS', inp_args)
+        mod_args = dict(module_args_defaults, **mod_args)
+        args = json.dumps({'ANSIBLE_MODULE_ARGS': mod_args})
+    else:
+        raise Exception(
+            'Malformed data to the `patch_ansible_module` '
+            'pytest fixture',
+        )
+
+    args = to_bytes(args)
+
+    monkeypatch.setattr(ansible.module_utils.basic, '_ANSIBLE_ARGS', args)
 
 
 @pytest.fixture
