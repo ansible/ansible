@@ -1,0 +1,4 @@
+---
+- name: stop falaxy server
+  command: kill '{{ falaxy_pid.content | b64decode }}'
+  ignore_errors: yes

@@ -341,7 +341,7 @@ def test_publish_failure(api_version, collection_url, response, expected, collec
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, import_uri, full_import_uri', [
     ('https://galaxy.server.com/api', 'v2', 'Token', GalaxyToken('my token'),
      '1234',
-     'https://galaxy.server.com/api/v2/collection-imports/1234'),
+     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub/', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
@@ -374,7 +374,7 @@ def test_wait_import_task(server_url, api_version, token_type, token_ins, import
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, import_uri, full_import_uri', [
     ('https://galaxy.server.com/api/', 'v2', 'Token', GalaxyToken('my token'),
      '1234',
-     'https://galaxy.server.com/api/v2/collection-imports/1234'),
+     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
@@ -421,7 +421,7 @@ def test_wait_import_task_multiple_requests(server_url, api_version, token_type,
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, import_uri, full_import_uri,', [
     ('https://galaxy.server.com/api/', 'v2', 'Token', GalaxyToken('my token'),
      '1234',
-     'https://galaxy.server.com/api/v2/collection-imports/1234'),
+     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub/', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
@@ -498,7 +498,7 @@ def test_wait_import_task_with_failure(server_url, api_version, token_type, toke
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, import_uri, full_import_uri', [
     ('https://galaxy.server.com/api/', 'v2', 'Token', GalaxyToken('my_token'),
      '1234',
-     'https://galaxy.server.com/api/v2/collection-imports/1234'),
+     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub/', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
@@ -571,7 +571,7 @@ def test_wait_import_task_with_failure_no_error(server_url, api_version, token_t
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, import_uri, full_import_uri', [
     ('https://galaxy.server.com/api', 'v2', 'Token', GalaxyToken('my token'),
      '1234',
-     'https://galaxy.server.com/api/v2/collection-imports/1234'),
+     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),

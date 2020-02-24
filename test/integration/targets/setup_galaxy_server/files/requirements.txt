@@ -1,0 +1,3 @@
+flask
+Flask-SQLAlchemy
+semantic_version
