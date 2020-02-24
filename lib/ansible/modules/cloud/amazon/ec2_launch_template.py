@@ -479,7 +479,7 @@ def delete_template(module):
 
 
 def create_or_update(module, template_options):
-    ec2 = module.client('ec2', retry_decorator=AWSRetry.jittered_backoff())
+    ec2 = module.client('ec2', retry_decorator=AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidLaunchTemplateId.NotFound']))
     template, template_versions = existing_templates(module)
     out = {}
     lt_data = params_to_launch_data(module, dict((k, v) for k, v in module.params.items() if k in template_options))

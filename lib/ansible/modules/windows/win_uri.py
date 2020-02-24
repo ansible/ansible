@@ -66,6 +66,7 @@ options:
     - A valid, numeric, HTTP status code that signifies success of the request.
     - Can also be comma separated list of status codes.
     type: list
+    elements: int
     default: [ 200 ]
     version_added: '2.4'
   url_username:
@@ -73,12 +74,20 @@ options:
     - The username to use for authentication.
     - Was originally called I(user) but was changed to I(url_username) in
       Ansible 2.9.
+    - The aliases I(user) and I(username) are deprecated and will be removed in
+      Ansible 2.14.
+    aliases:
+    - user
+    - username
     version_added: "2.4"
   url_password:
     description:
     - The password for I(url_username).
     - Was originally called I(password) but was changed to I(url_password) in
       Ansible 2.9.
+    - The alias I(password) is deprecated and will be removed in Ansible 2.14.
+    aliases:
+    - password
     version_added: "2.4"
   follow_redirects:
     version_added: "2.4"

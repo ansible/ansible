@@ -1,0 +1,2 @@
+bugfixes:
+  - ismount - clone upstream version of ismount() (https://github.com/ansible/ansible/issues/63977)

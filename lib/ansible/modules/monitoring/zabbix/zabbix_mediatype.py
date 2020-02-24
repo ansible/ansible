@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_mediatype
 short_description: Create/Update/Delete Zabbix media types
@@ -40,7 +40,6 @@ options:
             - present
             - absent
         default: 'present'
-        required: true
     type:
         type: 'str'
         description:
@@ -85,6 +84,7 @@ options:
             - Required when I(type=script).
     script_params:
         type: 'list'
+        elements: str
         description:
             - List of script parameters.
             - Required when I(type=script).
@@ -168,10 +168,9 @@ extends_documentation_fragment:
 
 '''
 
-RETURN = '''
-'''
+RETURN = r''' # '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: 'Create an email mediatype with SMTP authentication'
   zabbix_mediatype:
     name: "Ops email"

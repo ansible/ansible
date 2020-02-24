@@ -133,6 +133,8 @@ class VariableManager:
         self._inventory = data.get('inventory', None)
         self._options_vars = data.get('options_vars', dict())
         self.safe_basedir = data.get('safe_basedir', False)
+        self._loader = None
+        self._hostvars = None
 
     @property
     def extra_vars(self):
@@ -451,6 +453,7 @@ class VariableManager:
         variables = {}
         variables['playbook_dir'] = os.path.abspath(self._loader.get_basedir())
         variables['ansible_playbook_python'] = sys.executable
+        variables['ansible_config_file'] = C.CONFIG_FILE
 
         if play:
             # This is a list of all role names of all dependencies for all roles for this play

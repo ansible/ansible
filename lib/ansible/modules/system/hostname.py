@@ -802,6 +802,12 @@ class OsmcHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class VoidLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Void'
+    strategy_class = DebianStrategy
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(

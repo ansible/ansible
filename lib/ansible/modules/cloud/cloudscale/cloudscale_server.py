@@ -30,6 +30,7 @@ version_added: '2.3'
 author:
   - Gaudenz Steinlin (@gaudenz)
   - René Moser (@resmo)
+  - Denis Krienbühl (@href)
 options:
   state:
     description:
@@ -55,6 +56,11 @@ options:
     description:
       - Image used to create the server.
     type: str
+  zone:
+    description:
+      - Zone in which the server resides (e.g. C(lgp1) or C(rma1)).
+    type: str
+    version_added: '2.10'
   volume_size_gb:
     description:
       - Size of the root volume in GB.
@@ -131,6 +137,7 @@ EXAMPLES = '''
     flavor: flex-4
     ssh_keys: ssh-rsa XXXXXXXXXX...XXXX ansible@cloudscale
     server_groups: shiny-group
+    zone: lpg1
     use_private_network: True
     bulk_volume_size_gb: 100
     api_token: xxxxxx
@@ -143,6 +150,7 @@ EXAMPLES = '''
     flavor: flex-8
     ssh_keys: ssh-rsa XXXXXXXXXXX ansible@cloudscale
     server_groups: shiny-group
+    zone: lpg1
     api_token: xxxxxx
 
 
@@ -211,13 +219,19 @@ state:
 flavor:
   description: The flavor that has been used for this server
   returned: success when not state == absent
-  type: str
-  sample: flex-8
+  type: dict
+  sample: { "slug": "flex-4", "name": "Flex-4", "vcpu_count": 2, "memory_gb": 4 }
 image:
   description: The image used for booting this server
   returned: success when not state == absent
-  type: str
-  sample: debian-8
+  type: dict
+  sample: { "default_username": "ubuntu", "name": "Ubuntu 18.04 LTS", "operating_system": "Ubuntu", "slug": "ubuntu-18.04" }
+zone:
+  description: The zone used for booting this server
+  returned: success when not state == absent
+  type: dict
+  sample: { 'slug': 'lpg1' }
+  version_added: '2.10'
 volumes:
   description: List of volumes attached to the server
   returned: success when not state == absent
@@ -511,6 +525,7 @@ def main():
         uuid=dict(),
         flavor=dict(),
         image=dict(),
+        zone=dict(),
         volume_size_gb=dict(type='int', default=10),
         bulk_volume_size_gb=dict(type='int'),
         ssh_keys=dict(type='list'),

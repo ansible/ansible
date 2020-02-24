@@ -13,7 +13,7 @@
     name: '{{ test_db }}'
 
 - name: Dump all databases from the master
-  shell: 'mysqldump -P {{ master_port }} -h 127.0.01 --all-databases --master-data=2 > {{ dump_path }}'
+  shell: 'mysqldump -P {{ master_port }} -h 127.0.0.1 --all-databases --master-data=2 > {{ dump_path }}'
 
 - name: Restore the dump to the standby
   shell: 'mysql -P {{ standby_port }} -h 127.0.0.1 < {{ dump_path }}'
@@ -31,6 +31,46 @@
     - master_status.Is_Master == true
     - master_status.Position != 0
     - master_status is not changed
+
+# Test startslave fails without changemaster first. This needs fail_on_error
+- name: Start slave and fail because master is not specified; failing on error as requested
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: startslave
+    fail_on_error: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is failed
+
+# Test startslave doesn't fail if fail_on_error: no
+- name: Start slave and fail without propagating it to ansible as we were asked not to
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: startslave
+    fail_on_error: no
+  register: result
+
+- assert:
+    that:
+    - result is not failed
+
+# Test startslave doesn't fail if there is no fail_on_error.
+# This is suboptimal because nothing happens, but it's the old behavior.
+- name: Start slave and fail without propagating it to ansible as previous versions did not fail on error
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: startslave
+  register: result
+
+- assert:
+    that:
+    - result is not failed
 
 # Test changemaster mode:
 # master_ssl_ca will be set as '' to check the module's behaviour for #23976,
@@ -112,6 +152,18 @@
     that:
     - slave_status.Exec_Master_Log_Pos != master_status.Position
 
+- name: Start slave that is already running
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: startslave
+    fail_on_error: true
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+
 # Test stopslave mode:
 - name: Stop slave
   mysql_replication:
@@ -124,3 +176,16 @@
     that:
     - result is changed
     - result.queries == ["STOP SLAVE"]
+
+# Test stopslave mode:
+- name: Stop slave that is no longer running
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: stopslave
+    fail_on_error: true
+  register: result
+
+- assert:
+    that:
+    - result is not changed

@@ -103,6 +103,7 @@ $domain_admin_password= Get-AnsibleParam -obj $params -name "domain_admin_passwo
 $local_admin_password= Get-AnsibleParam -obj $params -name "local_admin_password"
 $database_path = Get-AnsibleParam -obj $params -name "database_path" -type "path"
 $sysvol_path = Get-AnsibleParam -obj $params -name "sysvol_path" -type "path"
+$domain_log_path = Get-AnsibleParam -obj $params -name "domain_log_path" -type "path"  # TODO: Use log_path and alias domain_log_path once the log_path for debug logging option has been removed.
 $read_only = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -default $false
 $site_name = Get-AnsibleParam -obj $params -name "site_name" -type "str" -failifempty $read_only
 $install_dns = Get-AnsibleParam -obj $params -name "install_dns" -type "bool"
@@ -110,6 +111,10 @@ $install_dns = Get-AnsibleParam -obj $params -name "install_dns" -type "bool"
 $state = Get-AnsibleParam -obj $params -name "state" -validateset ("domain_controller", "member_server") -failifempty $result
 
 $log_path = Get-AnsibleParam -obj $params -name "log_path"
+if ($log_path) {
+    $msg = "Param 'log_path' is deprecated. See the module docs for more information"
+    Add-DeprecationWarning -obj $result -message $msg -version "2.14"
+}
 $_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 $global:log_path = $log_path
@@ -201,6 +206,9 @@ Try {
                 }
                 if ($database_path) {
                     $install_params.DatabasePath = $database_path
+                }
+                if ($domain_log_path) {
+                    $install_params.LogPath = $domain_log_path
                 }
                 if ($sysvol_path) {
                     $install_params.SysvolPath = $sysvol_path

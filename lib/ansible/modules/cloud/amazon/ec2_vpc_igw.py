@@ -88,14 +88,12 @@ vpc_id:
 try:
     import botocore
 except ImportError:
-    pass  # Handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import (
     AWSRetry,
-    boto3_conn,
-    ec2_argument_spec,
-    get_aws_connection_info,
     camel_dict_to_snake_dict,
     boto3_tag_list_to_ansible_dict,
     ansible_dict_to_boto3_filter_list,
@@ -240,6 +238,11 @@ class AnsibleEc2Igw(object):
 
             try:
                 response = self._connection.create_internet_gateway()
+
+                # Ensure the gateway exists before trying to attach it or add tags
+                waiter = get_waiter(self._connection, 'internet_gateway_exists')
+                waiter.wait(InternetGatewayIds=[response['InternetGateway']['InternetGatewayId']])
+
                 igw = camel_dict_to_snake_dict(response['InternetGateway'])
                 self._connection.attach_internet_gateway(InternetGatewayId=igw['internet_gateway_id'], VpcId=vpc_id)
                 self._results['changed'] = True
@@ -257,13 +260,10 @@ class AnsibleEc2Igw(object):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            vpc_id=dict(required=True),
-            state=dict(default='present', choices=['present', 'absent']),
-            tags=dict(default=dict(), required=False, type='dict', aliases=['resource_tags'])
-        )
+    argument_spec = dict(
+        vpc_id=dict(required=True),
+        state=dict(default='present', choices=['present', 'absent']),
+        tags=dict(default=dict(), required=False, type='dict', aliases=['resource_tags'])
     )
 
     module = AnsibleAWSModule(

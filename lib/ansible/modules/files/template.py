@@ -47,7 +47,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-- name: Template a file to /etc/files.conf
+- name: Template a file to /etc/file.conf
   template:
     src: /mytemplates/foo.j2
     dest: /etc/file.conf

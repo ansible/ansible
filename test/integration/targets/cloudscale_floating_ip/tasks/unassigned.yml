@@ -4,6 +4,7 @@
     ip_version: 6
     server: '{{ test01.uuid }}'
     reverse_ptr: '{{ cloudscale_resource_prefix }}-unassigned.example.com'
+    region: '{{ cloudscale_test_region }}'
   register: floating_ip
 
 # The only way to have an unassigned floating IP is to delete the server

@@ -40,13 +40,20 @@ from .cloud import (
     CloudEnvironmentConfig,
 )
 
+from .io import (
+    make_dirs,
+    open_text_file,
+    read_binary_file,
+    read_text_file,
+    write_text_file,
+)
+
 from .util import (
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
     display,
     remove_tree,
-    make_dirs,
     is_shippable,
     is_binary_file,
     find_executable,
@@ -55,6 +62,7 @@ from .util import (
     generate_pip_command,
     find_python,
     get_docker_completion,
+    get_network_settings,
     get_remote_completion,
     cmd_quote,
     ANSIBLE_LIB_ROOT,
@@ -71,7 +79,6 @@ from .util_common import (
     intercept_command,
     named_temporary_file,
     run_command,
-    write_text_file,
     write_json_test_results,
     ResultType,
     handle_layout_messages,
@@ -237,14 +244,15 @@ def install_command_requirements(args, python_version=None):
             raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
                                    '\n'.join((' '.join(cmd_quote(c) for c in cmd) for cmd in changes)))
 
-    # ask pip to check for conflicts between installed packages
-    try:
-        run_command(args, pip + ['check', '--disable-pip-version-check'], capture=True)
-    except SubprocessError as ex:
-        if ex.stderr.strip() == 'ERROR: unknown command "check"':
-            display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
-        else:
-            raise
+    if args.pip_check:
+        # ask pip to check for conflicts between installed packages
+        try:
+            run_command(args, pip + ['check', '--disable-pip-version-check'], capture=True)
+        except SubprocessError as ex:
+            if ex.stderr.strip() == 'ERROR: unknown command "check"':
+                display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
+            else:
+                raise
 
 
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
@@ -290,6 +298,15 @@ def generate_egg_info(args):
     :type args: EnvironmentConfig
     """
     if args.explain:
+        return
+
+    ansible_version = get_ansible_version()
+
+    # inclusion of the version number in the path is optional
+    # see: https://setuptools.readthedocs.io/en/latest/formats.html#filename-embedded-metadata
+    egg_info_path = ANSIBLE_LIB_ROOT + '-%s.egg-info' % ansible_version
+
+    if os.path.exists(egg_info_path):
         return
 
     egg_info_path = ANSIBLE_LIB_ROOT + '.egg-info'
@@ -544,9 +561,11 @@ def network_inventory(remotes):
             ansible_host=remote.connection.hostname,
             ansible_user=remote.connection.username,
             ansible_ssh_private_key_file=os.path.abspath(remote.ssh_key.key),
-            ansible_network_os=remote.platform,
-            ansible_connection='local'
         )
+
+        settings = get_network_settings(remote.args, remote.platform, remote.version)
+
+        options.update(settings.inventory_vars)
 
         groups[remote.platform].append(
             '%s %s' % (
@@ -1190,12 +1209,12 @@ def inject_httptester(args):
     """
     comment = ' # ansible-test httptester\n'
     append_lines = ['127.0.0.1 %s%s' % (host, comment) for host in HTTPTESTER_HOSTS]
+    hosts_path = '/etc/hosts'
 
-    with open('/etc/hosts', 'r+') as hosts_fd:
-        original_lines = hosts_fd.readlines()
+    original_lines = read_text_file(hosts_path).splitlines(True)
 
-        if not any(line.endswith(comment) for line in original_lines):
-            hosts_fd.writelines(append_lines)
+    if not any(line.endswith(comment) for line in original_lines):
+        write_text_file(hosts_path, ''.join(original_lines + append_lines))
 
     # determine which forwarding mechanism to use
     pfctl = find_executable('pfctl', required=False)
@@ -1385,7 +1404,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             win_output_dir=r'C:\ansible_testing',
         ))
     elif isinstance(args, NetworkIntegrationConfig):
-        hosts = target.name[:target.name.find('_')]
+        hosts = target.network_platform
         gather_facts = False
     else:
         hosts = 'testhost'
@@ -1500,8 +1519,7 @@ def detect_changes(args):
     elif args.changed_from or args.changed_path:
         paths = args.changed_path or []
         if args.changed_from:
-            with open(args.changed_from, 'r') as changes_fd:
-                paths += changes_fd.read().splitlines()
+            paths += read_text_file(args.changed_from).splitlines()
     elif args.changed:
         paths = detect_changes_local(args)
     else:
@@ -1589,8 +1607,7 @@ def detect_changes_local(args):
                 args.metadata.changes[path] = ((0, 0),)
                 continue
 
-            with open(path, 'r') as source_fd:
-                line_count = len(source_fd.read().splitlines())
+            line_count = len(read_text_file(path).splitlines())
 
             args.metadata.changes[path] = ((1, line_count),)
 
@@ -2046,7 +2063,7 @@ class EnvironmentDescription:
         :type path: str
         :rtype: str
         """
-        with open(path) as script_fd:
+        with open_text_file(path) as script_fd:
             return script_fd.readline().strip()
 
     @staticmethod
@@ -2060,8 +2077,7 @@ class EnvironmentDescription:
 
         file_hash = hashlib.md5()
 
-        with open(path, 'rb') as file_fd:
-            file_hash.update(file_fd.read())
+        file_hash.update(read_binary_file(path))
 
         return file_hash.hexdigest()
 

@@ -1,0 +1,68 @@
+---
+- debug:
+      msg: "START iosxr_acls overridden integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Overridde all ACLs configuration with provided configuration
+      iosxr_acls: &overridden
+        config:
+          - afi: ipv4
+            acls:
+              - name: acl_1
+                aces:
+                  - sequence: 10
+                    grant: permit
+                    source:
+                      any: True
+                    destination:
+                      any: True
+                    protocol: tcp
+              
+              - name: acl_2
+                aces:
+                  - sequence: 20
+                    grant: permit
+                    source:
+                      any: True
+                    destination:
+                      any: True
+                    protocol: igmp
+        state: overridden
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ overridden['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Overridde all interface LAG interface configuration with provided configuration (IDEMPOTENT)
+      iosxr_acls: *overridden
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+         - "result.commands|length == 0"
+
+    - name: Assert that before dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] | symmetric_difference(result['before']) |length == 0 }}"
+  
+  always:
+    - include_tasks: _remove_config.yaml

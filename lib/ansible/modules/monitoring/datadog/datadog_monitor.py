@@ -68,12 +68,14 @@ options:
           - The name of the alert.
         required: true
         type: str
-    message:
+    notification_message:
         description:
           - A message to include with notifications for this monitor.
           - Email notifications can be sent to specific users by using the same '@username' notation as events.
           - Monitor message template variables can be accessed by using double square brackets, i.e '[[' and ']]'.
+          - C(message) alias is deprecated in Ansible 2.10, since it is used internally by Ansible Core Engine.
         type: str
+        aliases: [ 'message' ]
     silenced:
         description:
           - Dictionary of scopes to silence, with timestamps or None.
@@ -154,7 +156,7 @@ EXAMPLES = '''
     name: "Test monitor"
     state: "present"
     query: "datadog.agent.up.over('host:host1').last(2).count_by_status()"
-    message: "Host [[host.name]] with IP [[host.ip]] is failing to report to datadog."
+    notification_message: "Host [[host.name]] with IP [[host.ip]] is failing to report to datadog."
     api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
     app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
 
@@ -213,7 +215,7 @@ def main():
             type=dict(required=False, choices=['metric alert', 'service check', 'event alert', 'process alert']),
             name=dict(required=True),
             query=dict(required=False),
-            message=dict(required=False, default=None),
+            notification_message=dict(required=False, default=None, aliases=['message'], deprecated_aliases=[dict(name='message', version='2.14')]),
             silenced=dict(required=False, default=None, type='dict'),
             notify_no_data=dict(required=False, default=False, type='bool'),
             no_data_timeframe=dict(required=False, default=None),
@@ -234,6 +236,9 @@ def main():
     # Prepare Datadog
     if not HAS_DATADOG:
         module.fail_json(msg=missing_required_lib('datadogpy'), exception=DATADOG_IMP_ERR)
+
+    if 'message' in module.params:
+        module.fail_json(msg="'message' is reserved keyword, please change this parameter to 'notification_message'")
 
     options = {
         'api_key': module.params['api_key'],
@@ -285,7 +290,7 @@ def _post_monitor(module, options):
     try:
         kwargs = dict(type=module.params['type'], query=module.params['query'],
                       name=_fix_template_vars(module.params['name']),
-                      message=_fix_template_vars(module.params['message']),
+                      message=_fix_template_vars(module.params['notification_message']),
                       escalation_message=_fix_template_vars(module.params['escalation_message']),
                       options=options)
         if module.params['tags'] is not None:
@@ -343,7 +348,7 @@ def install_monitor(module):
 
     if module.params['type'] == "service check":
         options["thresholds"] = module.params['thresholds'] or {'ok': 1, 'critical': 1, 'warning': 1}
-    if module.params['type'] == "metric alert" and module.params['thresholds'] is not None:
+    if module.params['type'] in ["metric alert", "log alert"] and module.params['thresholds'] is not None:
         options["thresholds"] = module.params['thresholds']
 
     monitor = _get_monitor(module)

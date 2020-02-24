@@ -95,7 +95,7 @@
       # was created
       set_fact:
         load_balancer_name: "{{ item }}-lb"
-      with_items: "{{ resource_prefix | regex_findall('.{8}$') }}"
+      loop: "{{ resource_prefix | regex_findall('.{8}$') }}"
 
     # Set up the testing dependencies: VPC, subnet, security group, and two launch configurations
 
@@ -164,7 +164,7 @@
             - "service httpd start"
         security_groups: "{{ sg.group_id }}"
         instance_type: t3.micro
-      with_items:
+      loop:
         - "{{ resource_prefix }}-lc"
         - "{{ resource_prefix }}-lc-2"
 
@@ -314,6 +314,10 @@
         name: "{{ resource_prefix }}-asg"
         state: absent
         wait_timeout: 800
+      register: output
+      retries: 3
+      until: output is succeeded
+      delay: 10
       async: 400
 
     # ============================================================
@@ -411,6 +415,43 @@
 
     # ============================================================
 
+    # Test max_instance_lifetime option
+
+    - name: enable asg max_instance_lifetime
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        max_instance_lifetime: 604801
+      register: output
+
+    - name: ensure max_instance_lifetime is set
+      assert:
+        that:
+        - output.max_instance_lifetime == 604801
+
+    - name: run without max_instance_lifetime
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_config_name: "{{ resource_prefix }}-lc"
+
+    - name: ensure max_instance_lifetime not affected by defaults
+      assert:
+        that:
+        - output.max_instance_lifetime == 604801
+
+    - name: disable asg max_instance_lifetime
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_config_name: "{{ resource_prefix }}-lc"
+        max_instance_lifetime: 0
+      register: output
+
+    - name: ensure max_instance_lifetime is not set
+      assert:
+        that:
+        - not output.max_instance_lifetime
+
+    # ============================================================
+
     # # perform rolling replace with different launch configuration
 
     - name: perform rolling update to new AMI
@@ -434,7 +475,7 @@
     - assert:
         that:
         - "item.value.launch_config_name == '{{ resource_prefix }}-lc-2'"
-      with_dict: "{{ output.instance_facts }}"
+      loop: "{{ output.instance_facts | dict2items }}"
 
     # assert they are all healthy and that the rolling update resulted in the appropriate number of instances
     - assert:
@@ -466,7 +507,7 @@
     - assert:
         that:
         - "item.value.launch_config_name == '{{ resource_prefix }}-lc'"
-      with_dict: "{{ output.instance_facts }}"
+      loop: "{{ output.instance_facts | dict2items }}"
 
     # assert they are all healthy and that the rolling update resulted in the appropriate number of instances
     # there should be the same number of instances as there were before the rolling update was performed
@@ -502,22 +543,21 @@
       poll: 0
       register: asg_job
 
-    - name: get ec2_asg facts for 3 minutes
+    - name: get ec2_asg info for 3 minutes
       ec2_asg_info:
         name: "{{ resource_prefix }}-asg"
       register: output
       loop_control:
           pause: 15
-      with_sequence: count=12
-
-    - set_fact:
-        inst_id_json_query: 'results[*].results[*].instances[*].instance_id'
+      loop: "{{ range(12) | list }}"
 
     # Since we started with 3 servers and replace all of them.
     # We should see 6 servers total.
     - assert:
         that:
-          - "lookup('flattened',output|json_query(inst_id_json_query)).split(',')|unique|length == 6"
+          - output | json_query(inst_id_json_query) | unique | length == 6
+      vars:
+        inst_id_json_query: results[].results[].instances[].instance_id
 
     - name: Ensure ec2_asg task completes
       async_status: jid="{{ asg_job.ansible_job_id }}"
@@ -568,16 +608,15 @@
       register: output
       loop_control:
           pause: 15
-      with_sequence: count=12
-
-    - set_fact:
-        inst_id_json_query: 'results[*].results[*].instances[*].instance_id'
+      loop: "{{ range(12) | list }}"
 
     # Get all instance_ids we saw and assert we saw number expected
     # Should only see 3 (don't replace instances we just created)
     - assert:
         that:
-          - "lookup('flattened',output|json_query(inst_id_json_query)).split(',')|unique|length == 3"
+          - output | json_query(inst_id_json_query) | unique | length == 3
+      vars:
+        inst_id_json_query: results[].results[].instances[].instance_id
 
     - name: Ensure ec2_asg task completes
       async_status: jid="{{ asg_job.ansible_job_id }}"
@@ -585,6 +624,44 @@
       until: status is finished
       retries: 200
       delay: 15
+    
+    # we need a launch template, otherwise we cannot test the mixed instance policy
+    - name: create launch template for autoscaling group to test its mixed instance policy
+      ec2_launch_template:
+        template_name: "{{ resource_prefix }}-lt"
+        image_id: "{{ ec2_ami_image }}"
+        instance_type: t3.micro
+        credit_specification:
+          cpu_credits: standard
+        network_interfaces:
+          - associate_public_ip_address: yes
+            delete_on_termination: yes
+            device_index: 0
+            groups:
+              - "{{ sg.group_id }}"
+
+    - name: update autoscaling group with mixed-instance policy
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_template: 
+          launch_template_name: "{{ resource_prefix }}-lt"
+        desired_capacity: 1
+        min_size: 1
+        max_size: 1
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        state: present
+        mixed_instances_policy:
+          instance_types:
+            - t3.micro
+            - t3a.micro
+        wait_for_instances: yes
+      register: output
+
+    - assert:
+        that:
+          - "output.mixed_instances_policy | length == 2"
+          - "output.mixed_instances_policy[0] == 't3.micro'"
+          - "output.mixed_instances_policy[1] == 't3a.micro'"
 
 # ============================================================
 
@@ -635,9 +712,18 @@
       until: removed is not failed
       ignore_errors: yes
       retries: 10
-      with_items:
+      loop:
         - "{{ resource_prefix }}-lc"
         - "{{ resource_prefix }}-lc-2"
+
+    - name: delete launch template
+      ec2_launch_template:
+        name: "{{ resource_prefix }}-lt"
+        state: absent
+      register: del_lt
+      retries: 10
+      until: del_lt is not failed
+      ignore_errors: true
 
     - name: remove the security group
       ec2_group:

@@ -18,7 +18,6 @@ description:
 - Configures Managed Objects on Cisco UCS Manager.
 - The Python SDK module, Python class within the module (UCSM Class), and all properties must be directly specified.
 - More information on the UCSM Python SDK and how to directly configure Managed Objects is available at L(UCSM Python SDK,http://ucsmsdk.readthedocs.io/).
-- Examples can be used with the UCS Platform Emulator U(https://communities.cisco.com/ucspe).
 extends_documentation_fragment: ucs
 options:
   state:

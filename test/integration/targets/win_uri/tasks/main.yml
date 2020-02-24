@@ -67,7 +67,7 @@
 
 - name: get request with return_content and dest
   win_uri:
-    url: https://{{httpbin_host}}/get
+    url: https://{{httpbin_host}}/base64/{{ '{"key":"value"}' | b64encode }}
     return_content: yes
     dest: '{{ remote_tmp_dir }}\get.json'
   register: get_request_with_dest
@@ -90,7 +90,7 @@
 
 - name: get request with return_content and dest (idempotent)
   win_uri:
-    url: https://{{httpbin_host}}/get
+    url: https://{{httpbin_host}}/base64/{{ '{"key":"value"}' | b64encode }}
     return_content: yes
     dest: '{{ remote_tmp_dir }}\get.json'
   register: get_request_with_dest_again

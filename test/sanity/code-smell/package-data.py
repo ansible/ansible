@@ -26,6 +26,7 @@ def assemble_files_to_ship(complete_file_list):
         'changelogs/fragments/*',
         'hacking/aws_config/*',
         'hacking/aws_config/*/*',
+        'hacking/shippable/*',
         'hacking/tests/*',
         'hacking/ticket_stubs/*',
         'test/legacy/*',

@@ -18,6 +18,9 @@ DOCUMENTATION = """
 module: cli_config
 version_added: "2.7"
 author: "Trishna Guha (@trishnaguha)"
+notes:
+  - The commands will be returned only for platforms that do not support onbox diff.
+    The C(--diff) option with the playbook will return the difference in configuration for devices that has support for onbox diff
 short_description: Push text based configuration to network devices over network_cli
 description:
   - This module provides platform agnostic way of pushing text based
@@ -130,7 +133,7 @@ options:
     suboptions:
       filename:
         description:
-          - The filename to be used to store the backup configuration. If the the filename
+          - The filename to be used to store the backup configuration. If the filename
             is not given it will be generated based on the hostname, current time and date
             in format defined by <hostname>_config.<current-date>@<current-time>
       dir_path:
@@ -297,11 +300,16 @@ def run(module, device_operations, connection, candidate, running, rollback_id):
             else:
                 candidate = config_diff.splitlines()
 
-            kwargs = {'candidate': candidate, 'commit': commit, 'replace': replace,
-                      'comment': commit_comment}
+            kwargs = {
+                'candidate': candidate,
+                'commit': commit,
+                'replace': replace,
+                'comment': commit_comment
+            }
             if commit:
                 connection.edit_config(**kwargs)
             result['changed'] = True
+            result['commands'] = config_diff.split('\n')
 
         if banner_diff:
             candidate = json.dumps(banner_diff)

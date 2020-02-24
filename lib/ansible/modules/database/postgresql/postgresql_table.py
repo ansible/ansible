@@ -125,7 +125,7 @@ seealso:
   link: https://www.postgresql.org/docs/current/sql-droptable.html
 - name: PostgreSQL data types
   description: Complete reference of the PostgreSQL data types documentation.
-  link: postgresql.org/docs/current/datatype.html
+  link: https://www.postgresql.org/docs/current/datatype.html
 author:
 - Andrei Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
@@ -473,8 +473,8 @@ def main():
         including=dict(type='str'),
         rename=dict(type='str'),
         truncate=dict(type='bool', default=False),
-        columns=dict(type='list'),
-        storage_params=dict(type='list'),
+        columns=dict(type='list', elements='str'),
+        storage_params=dict(type='list', elements='str'),
         session_role=dict(type='str'),
         cascade=dict(type='bool', default=False),
     )

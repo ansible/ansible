@@ -664,7 +664,7 @@ def map_config_to_obj(module):
 
 def check_fail(module, output):
     error = [
-        re.compile(br"^error", re.I)
+        re.compile(r"^error", re.I)
     ]
     for x in output:
         for regex in error:

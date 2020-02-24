@@ -171,8 +171,9 @@ from ansible.module_utils.ovirt import (
 
 class NetworksModule(BaseModule):
     def build_entity(self):
-        ons_service = self._connection.system_service().openstack_network_providers_service()
-        on_service = ons_service.provider_service(get_id_by_name(ons_service, self.param('external_provider')))
+        if self.param('external_provider'):
+            ons_service = self._connection.system_service().openstack_network_providers_service()
+            on_service = ons_service.provider_service(get_id_by_name(ons_service, self.param('external_provider')))
         return otypes.Network(
             name=self._module.params['name'],
             comment=self._module.params['comment'],

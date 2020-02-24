@@ -34,8 +34,14 @@ options:
     path:
         description:
             - Remote absolute path where the certificate file is loaded from.
+            - Either I(path) or I(content) must be specified, but not both.
         type: path
-        required: true
+    content:
+        description:
+            - Content of the X.509 certificate in PEM format.
+            - Either I(path) or I(content) must be specified, but not both.
+        type: str
+        version_added: "2.10"
     valid_at:
         description:
             - A dict of names mapping to time specifications. Every time specified here
@@ -342,41 +348,19 @@ else:
 TIMESTAMP_FORMAT = "%Y%m%d%H%M%SZ"
 
 
-def get_relative_time_option(input_string, input_name):
-    """Return an ASN1 formatted string if a relative timespec
-       or an ASN1 formatted string is provided."""
-    result = input_string
-    if result.startswith("+") or result.startswith("-"):
-        return crypto_utils.convert_relative_to_datetime(result)
-    if result is None:
-        raise crypto_utils.OpenSSLObjectError(
-            'The timespec "%s" for %s is not valid' %
-            input_string, input_name)
-    for date_fmt in ['%Y%m%d%H%M%SZ', '%Y%m%d%H%MZ', '%Y%m%d%H%M%S%z', '%Y%m%d%H%M%z']:
-        try:
-            result = datetime.datetime.strptime(input_string, date_fmt)
-            break
-        except ValueError:
-            pass
-
-    if not isinstance(result, datetime.datetime):
-        raise crypto_utils.OpenSSLObjectError(
-            'The time spec "%s" for %s is invalid' %
-            (input_string, input_name)
-        )
-    return result
-
-
 class CertificateInfo(crypto_utils.OpenSSLObject):
     def __init__(self, module, backend):
         super(CertificateInfo, self).__init__(
-            module.params['path'],
+            module.params['path'] or '',
             'present',
             False,
             module.check_mode,
         )
         self.backend = backend
         self.module = module
+        self.content = module.params['content']
+        if self.content is not None:
+            self.content = self.content.encode('utf-8')
 
         self.valid_at = module.params['valid_at']
         if self.valid_at:
@@ -385,7 +369,7 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
                     self.module.fail_json(
                         msg='The value for valid_at.{0} must be of type string (got {1})'.format(k, type(v))
                     )
-                self.valid_at[k] = get_relative_time_option(v, 'valid_at.{0}'.format(k))
+                self.valid_at[k] = crypto_utils.get_relative_time_option(v, 'valid_at.{0}'.format(k))
 
     def generate(self):
         # Empty method because crypto_utils.OpenSSLObject wants this
@@ -465,7 +449,7 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
 
     def get_info(self):
         result = dict()
-        self.cert = crypto_utils.load_certificate(self.path, backend=self.backend)
+        self.cert = crypto_utils.load_certificate(self.path, content=self.content, backend=self.backend)
 
         result['signature_algorithm'] = self._get_signature_algorithm()
         subject = self._get_subject_ordered()
@@ -810,20 +794,28 @@ class CertificateInfoPyOpenSSL(CertificateInfo):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(type='path', required=True),
+            path=dict(type='path'),
+            content=dict(type='str'),
             valid_at=dict(type='dict'),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
+        ),
+        required_one_of=(
+            ['path', 'content'],
+        ),
+        mutually_exclusive=(
+            ['path', 'content'],
         ),
         supports_check_mode=True,
     )
 
     try:
-        base_dir = os.path.dirname(module.params['path']) or '.'
-        if not os.path.isdir(base_dir):
-            module.fail_json(
-                name=base_dir,
-                msg='The directory %s does not exist or the file is not a directory' % base_dir
-            )
+        if module.params['path'] is not None:
+            base_dir = os.path.dirname(module.params['path']) or '.'
+            if not os.path.isdir(base_dir):
+                module.fail_json(
+                    name=base_dir,
+                    msg='The directory %s does not exist or the file is not a directory' % base_dir
+                )
 
         backend = module.params['select_crypto_backend']
         if backend == 'auto':

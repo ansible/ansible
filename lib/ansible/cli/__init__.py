@@ -70,6 +70,13 @@ class CLI(with_metaclass(ABCMeta, object)):
         self.parser = None
         self.callback = callback
 
+        if C.DEVEL_WARNING and __version__.endswith('dev0'):
+            display.warning(
+                'You are running the development version of Ansible. You should only run Ansible from "devel" if '
+                'you are modifying the Ansible engine, or trying out features under development. This is a rapidly '
+                'changing source of code and can become unstable at any point.'
+            )
+
     @abstractmethod
     def run(self):
         """Run the ansible command

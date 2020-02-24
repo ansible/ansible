@@ -82,14 +82,6 @@ options:
       - name: ANSIBLE_PRIVATE_KEY_FILE
     vars:
       - name: ansible_private_key_file
-  timeout:
-    type: int
-    description:
-      - Sets the connection time, in seconds, for communicating with the
-        remote device.  This timeout is used as the default timeout value when
-        awaiting a response after issuing a call to a RPC.  If the RPC
-        does not return in timeout seconds, an error is generated.
-    default: 120
   look_for_keys:
     default: True
     description:
@@ -215,7 +207,7 @@ class Connection(NetworkConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         # If network_os is not specified then set the network os to auto
-        # This will be used to trigger the the use of guess_network_os when connecting.
+        # This will be used to trigger the use of guess_network_os when connecting.
         self._network_os = self._network_os or 'auto'
 
         self.netconf = netconf_loader.get(self._network_os, self)

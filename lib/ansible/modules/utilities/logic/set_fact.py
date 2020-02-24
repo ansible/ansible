@@ -62,9 +62,9 @@ EXAMPLES = r'''
 
 # Example setting host facts using complex arguments
 - set_fact:
-     one_fact: something
-     other_fact: "{{ local_var * 2 }}"
-     another_fact: "{{ some_registered_var.results | map(attribute='ansible_facts.some_fact') | list }}"
+    one_fact: something
+    other_fact: "{{ local_var * 2 }}"
+    another_fact: "{{ some_registered_var.results | map(attribute='ansible_facts.some_fact') | list }}"
 
 # Example setting facts so that they will be persisted in the fact cache
 - set_fact:

@@ -249,9 +249,14 @@ class PacketInventory(object):
 
     def get_projects(self):
         '''Makes a Packet API call to get the list of projects'''
+
+        params = {
+            'per_page': self.items_per_page
+        }
+
         try:
             manager = self.connect()
-            projects = manager.list_projects()
+            projects = manager.list_projects(params=params)
             return projects
         except Exception as e:
             traceback.print_exc()
@@ -351,9 +356,9 @@ class PacketInventory(object):
 
         # Inventory: Group by OS
         if self.group_by_operating_system:
-            self.push(self.inventory, device.operating_system.slug, dest)
+            self.push(self.inventory, device.operating_system['slug'], dest)
             if self.nested_groups:
-                self.push_group(self.inventory, 'operating_systems', device.operating_system.slug)
+                self.push_group(self.inventory, 'operating_systems', device.operating_system['slug'])
 
         # Inventory: Group by plan type
         if self.group_by_plan_type:
@@ -400,7 +405,7 @@ class PacketInventory(object):
             elif key == 'packet_facility':
                 device_vars[key] = value['code']
             elif key == 'packet_operating_system':
-                device_vars[key] = value.slug
+                device_vars[key] = value['slug']
             elif key == 'packet_plan':
                 device_vars[key] = value['slug']
             elif key == 'packet_tags':

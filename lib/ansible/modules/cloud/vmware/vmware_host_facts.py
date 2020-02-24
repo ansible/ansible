@@ -126,6 +126,36 @@ EXAMPLES = r'''
       - config.product.apiVersion
       - overallStatus
   register: host_facts
+
+- name: How to retrieve Product, Version, Build, Update info for ESXi from vCenter
+  block:
+    - name: Gather product version info for ESXi from vCenter
+      vmware_host_facts:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_user }}"
+        password: "{{ vcenter_pass }}"
+        validate_certs: no
+        esxi_hostname: "{{ esxi_hostname }}"
+        schema: vsphere
+        properties:
+          - config.product
+          - config.option
+      register: gather_host_facts_result
+
+    - name: Extract update level info from option properties
+      set_fact:
+        update_level_info: "{{ item.value }}"
+      loop: "{{ gather_host_facts_result.ansible_facts.config.option }}"
+      when:
+        - item.key == 'Misc.HostAgentUpdateLevel'
+
+    - name: The output of Product, Version, Build, Update info for ESXi
+      debug:
+        msg:
+          - "Product : {{ gather_host_facts_result.ansible_facts.config.product.name }}"
+          - "Version : {{ gather_host_facts_result.ansible_facts.config.product.version }}"
+          - "Build   : {{ gather_host_facts_result.ansible_facts.config.product.build }}"
+          - "Update  : {{ update_level_info }}"
 '''
 
 RETURN = r'''

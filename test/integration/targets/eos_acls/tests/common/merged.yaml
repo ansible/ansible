@@ -1,0 +1,152 @@
+---
+- debug:
+    msg: "Start eos_acls merged integration tests ansible_connection={{ ansible_connection }}"
+
+
+- set_fact:
+    config:
+      - afi: "ipv4"
+        acls:
+         - name: test1
+           aces:
+             - sequence: 35
+               grant: "deny"
+               protocol: "tcp"
+               source:
+                 subnet_address: 20.0.0.0/8
+               destination:
+                 any: true
+               log: true
+             - remark: "Run by ansible"
+               sequence: 45
+             - grant: "permit"
+               sequence: 55
+               protocol: "tcp"
+               source:
+                any: true
+               destination:
+                any: true
+         - name: test4
+           aces:
+             - grant: "permit"
+               sequence: 10
+               source:
+                 any: true
+                 port_protocol:
+                  eq: "smtp"
+               destination:
+                 any: true
+                 port_protocol:
+                  eq: "www"
+               protocol: "tcp"
+               ttl:
+                 eq: "55"
+      - afi: "ipv6"
+        acls:
+          - name: test2
+            standard: true
+            aces:
+              - grant: "permit"
+                sequence: 10
+                log: "true"
+                source:
+                  any: true
+
+- block:
+  - name: merge attributes of given acls.
+    eos_acls: &merged
+      config:
+        - afi: "ipv4"
+          acls:
+           - name: test1
+             aces:
+               - sequence: 35
+                 grant: "deny"
+                 protocol: "tcp"
+                 source:
+                   subnet_address: 20.0.0.0/8
+                 destination:
+                   any: true
+                 log: true
+               - remark: "Run by ansible"
+               - grant: "permit"
+                 protocol: "6"
+                 source:
+                  any: true
+                 destination:
+                  any: true
+           - name: test4
+             aces:
+               - grant: "permit"
+                 source:
+                   any: true
+                   port_protocol:
+                    eq: "25"
+                 destination:
+                   any: true
+                   port_protocol:
+                    eq: "www"
+                 protocol: "tcp"
+                 ttl:
+                   eq: "55"
+        - afi: "ipv6"
+          acls:
+            - name: test2
+              standard: true
+              aces:
+                - grant: "permit"
+                  log: "true"
+                  source:
+                    any: true
+      state: merged
+    become: yes
+    register: result
+  
+  - eos_facts:
+      gather_network_resources: acls
+    become: yes
+  
+  - assert:
+      that:
+        - "result.commands|length == 8"
+        - "result.changed == true"
+    become: yes
+  
+  - name: Idempotency check
+    eos_acls: *merged
+    become: yes
+    register: result
+  
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+        - "ansible_facts.network_resources.acls|symmetric_difference(result.before) == []"
+
+  - name: merge attributes with an existing ace
+    eos_acls:
+      config:
+        - afi: "ipv4"
+          acls:
+           - name: test1
+             aces:
+               - sequence: 35
+                 log: true
+                 ttl:
+                   eq: 33
+                 source:
+                   any: true
+      state: merged
+    become: yes
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "result.commands|length == 3"
+        - "'no 35' in result.commands"
+        - "'35 deny tcp any any ttl eq 33 log'  in result.commands"
+
+  
+  always:
+   - include_tasks: _remove_config.yaml

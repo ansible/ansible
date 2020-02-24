@@ -18,6 +18,8 @@
             - address: 198.51.100.1/24
               secondary: True
             - address: 198.51.100.2/24
+            ipv6:
+            - address: 2001:db8:1:1::/64
         state: replaced
       register: result
 

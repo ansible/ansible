@@ -313,7 +313,6 @@ class AnsibleEc2Tgw(object):
 
         return transit_gateway
 
-    @AWSRetry.exponential_backoff()
     def get_matching_tgw(self, tgw_id, description=None, skip_deleted=True):
         """ search for  an existing tgw by either tgw_id or description
         :param tgw_id:  The AWS id of the transit gateway
@@ -326,7 +325,7 @@ class AnsibleEc2Tgw(object):
             filters = ansible_dict_to_boto3_filter_list({'transit-gateway-id': tgw_id})
 
         try:
-            response = self._connection.describe_transit_gateways(Filters=filters)
+            response = AWSRetry.exponential_backoff()(self._connection.describe_transit_gateways)(Filters=filters)
         except (ClientError, BotoCoreError) as e:
             self._module.fail_json_aws(e)
 

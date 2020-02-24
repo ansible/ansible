@@ -267,3 +267,50 @@
         state: absent
   # only applicable to Linux, limit further to CentOS where 'luseradd' is installed
   when: ansible_distribution == 'CentOS'
+
+# https://github.com/ansible/ansible/pull/59772
+- block:
+  - name: create group with a gid
+    group:
+      name: group1_test
+      gid: 1337
+      local: no
+      state: present
+    register: create_group_gid
+
+  - name: get gid of created group
+    command: "{{ ansible_python_interpreter | quote }} -c \"import grp; print(grp.getgrnam('group1_test').gr_gid)\""
+    register: create_group_gid_actual
+
+  - name: assert create group with a gid
+    assert:
+        that:
+        - create_group_gid is changed
+        - create_group_gid.gid | int == 1337 | int
+        - create_group_gid_actual.stdout | trim | int == 1337 | int
+
+  - name: create local group with the same gid
+    group:
+      name: group1_test
+      gid: 1337
+      local: yes
+      state: present
+    register: create_local_group_gid
+
+  - name: assert create local group with a gid
+    assert:
+        that:
+        - create_local_group_gid.gid | int == 1337 | int
+  always:
+    - name: Cleanup create group with a gid
+      group:
+        name: group1_test
+        local: no
+        state: absent
+    - name: Cleanup create local group with the same gid
+      group:
+        name: group1_test
+        local: yes
+        state: absent
+  # only applicable to Linux, limit further to CentOS where 'lgroupadd' is installed
+  when: ansible_distribution == 'CentOS'

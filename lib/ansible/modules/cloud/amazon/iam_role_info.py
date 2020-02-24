@@ -157,8 +157,7 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
-from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict, AWSRetry
 
 
 @AWSRetry.exponential_backoff()
@@ -239,11 +238,10 @@ def main():
     """
      Module action handler
     """
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(aliases=['role_name']),
         path_prefix=dict(),
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,
@@ -251,9 +249,7 @@ def main():
     if module._name == 'iam_role_facts':
         module.deprecate("The 'iam_role_facts' module has been renamed to 'iam_role_info'", version='2.13')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='iam',
-                        region=region, endpoint=ec2_url, **aws_connect_params)
+    client = module.client('iam')
 
     module.exit_json(changed=False, iam_roles=describe_iam_roles(module, client))
 

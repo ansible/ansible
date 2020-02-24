@@ -53,7 +53,7 @@ options:
     aliases: ['region_id']
   ssh_keys:
     description:
-     - array of SSH key (numeric) ID that you would like to be added to the server.
+     - array of SSH key Fingerprint that you would like to be added to the server.
     required: False
   private_networking:
     description:
@@ -120,6 +120,7 @@ EXAMPLES = '''
     region: sfo1
     image: ubuntu-16-04-x64
     wait_timeout: 500
+    ssh_keys: [ .... ]
   register: my_droplet
 
 - debug:
@@ -135,8 +136,19 @@ EXAMPLES = '''
     region: sfo1
     image: ubuntu-16-04-x64
     wait_timeout: 500
-'''
 
+- name: ensure a droplet is present with SSH keys installed
+  digital_ocean_droplet:
+    state: present
+    id: 123
+    name: mydroplet
+    oauth_token: XXX
+    size: 2gb
+    region: sfo1
+    ssh_keys: ['1534404', '1784768']
+    image: ubuntu-16-04-x64
+    wait_timeout: 500
+'''
 
 RETURN = '''
 # Digital Ocean API info https://developers.digitalocean.com/documentation/v2/#droplets

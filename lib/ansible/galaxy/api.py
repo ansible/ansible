@@ -298,7 +298,7 @@ class GalaxyAPI:
             done = (data.get('next_link', None) is None)
 
             # https://github.com/ansible/ansible/issues/64355
-            # api_server contains part of the API path but next_link includes the the /api part so strip it out.
+            # api_server contains part of the API path but next_link includes the /api part so strip it out.
             url_info = urlparse(self.api_server)
             base_url = "%s://%s/" % (url_info.scheme, url_info.netloc)
 

@@ -6,6 +6,11 @@ import json
 import os
 import time
 
+from .io import (
+    open_binary_file,
+    read_text_file,
+)
+
 from .util import (
     ApplicationError,
     common_environment,
@@ -41,8 +46,7 @@ def get_docker_container_id():
     if not os.path.exists(path):
         return None
 
-    with open(path) as cgroup_fd:
-        contents = cgroup_fd.read()
+    contents = read_text_file(path)
 
     paths = [line.split(':')[2] for line in contents.splitlines()]
     container_ids = set(path.split('/')[2] for path in paths if path.startswith('/docker/'))
@@ -110,7 +114,7 @@ def docker_put(args, container_id, src, dst):
     :type dst: str
     """
     # avoid 'docker cp' due to a bug which causes 'docker rm' to fail
-    with open(src, 'rb') as src_fd:
+    with open_binary_file(src) as src_fd:
         docker_exec(args, container_id, ['dd', 'of=%s' % dst, 'bs=%s' % BUFFER_SIZE],
                     options=['-i'], stdin=src_fd, capture=True)
 
@@ -123,7 +127,7 @@ def docker_get(args, container_id, src, dst):
     :type dst: str
     """
     # avoid 'docker cp' due to a bug which causes 'docker rm' to fail
-    with open(dst, 'wb') as dst_fd:
+    with open_binary_file(dst, 'wb') as dst_fd:
         docker_exec(args, container_id, ['dd', 'if=%s' % src, 'bs=%s' % BUFFER_SIZE],
                     options=['-i'], stdout=dst_fd, capture=True)
 

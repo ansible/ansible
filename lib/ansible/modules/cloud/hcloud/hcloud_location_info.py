@@ -157,7 +157,7 @@ def main():
         ansible_info = {
             'hcloud_location_facts': result['hcloud_location_info']
         }
-        module.exit_json(ansible_s=ansible_info)
+        module.exit_json(ansible_facts=ansible_info)
     else:
         ansible_info = {
             'hcloud_location_info': result['hcloud_location_info']

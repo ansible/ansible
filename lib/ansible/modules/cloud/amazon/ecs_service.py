@@ -485,13 +485,12 @@ DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
 }
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, map_complex_type, get_ec2_security_group_ids_from_names
 
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 class EcsServiceManager:
@@ -652,8 +651,7 @@ class EcsServiceManager:
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(required=True, choices=['present', 'absent', 'deleting']),
         name=dict(required=True, type='str'),
         cluster=dict(required=False, type='str'),
@@ -677,7 +675,7 @@ def main():
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         service_registries=dict(required=False, type='list', default=[]),
         scheduling_strategy=dict(required=False, choices=['DAEMON', 'REPLICA'])
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,

@@ -156,8 +156,8 @@ from ansible.module_utils.postgres import (
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
-        groups=dict(type='list', aliases=['group', 'source_role', 'source_roles']),
-        target_roles=dict(type='list', aliases=['target_role', 'user', 'users']),
+        groups=dict(type='list', elements='str', required=True, aliases=['group', 'source_role', 'source_roles']),
+        target_roles=dict(type='list', elements='str', required=True, aliases=['target_role', 'user', 'users']),
         fail_on_role=dict(type='bool', default=True),
         state=dict(type='str', default='present', choices=['absent', 'present']),
         db=dict(type='str', aliases=['login_db']),

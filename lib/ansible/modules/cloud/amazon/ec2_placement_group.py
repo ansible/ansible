@@ -91,10 +91,7 @@ placement_group:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (AWSRetry,
-                                      boto3_conn,
-                                      ec2_argument_spec,
-                                      get_aws_connection_info)
+from ansible.module_utils.ec2 import AWSRetry
 try:
     from botocore.exceptions import (BotoCoreError, ClientError)
 except ImportError:
@@ -167,13 +164,10 @@ def delete_placement_group(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True, type='str'),
-            state=dict(default='present', choices=['present', 'absent']),
-            strategy=dict(default='cluster', choices=['cluster', 'spread'])
-        )
+    argument_spec = dict(
+        name=dict(required=True, type='str'),
+        state=dict(default='present', choices=['present', 'absent']),
+        strategy=dict(default='cluster', choices=['cluster', 'spread'])
     )
 
     module = AnsibleAWSModule(
@@ -181,12 +175,7 @@ def main():
         supports_check_mode=True
     )
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(
-        module, boto3=True)
-
-    connection = boto3_conn(module,
-                            resource='ec2', conn_type='client',
-                            region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ec2')
 
     state = module.params.get("state")
 

@@ -1,0 +1,2 @@
+bugfixes:
+  - s3_bucket - Accept XNotImplemented response to support NetApp StorageGRID.

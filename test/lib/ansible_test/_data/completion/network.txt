@@ -1,4 +1,2 @@
-ios/csr1000v
-junos/vmx
-junos/vsrx
-vyos/1.1.8
+ios/csr1000v connection=network_cli
+vyos/1.1.8 connection=local

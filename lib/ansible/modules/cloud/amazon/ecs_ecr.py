@@ -181,12 +181,10 @@ import traceback
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass  # Taken care of by ec2.HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, boto_exception, ec2_argument_spec,
-                                      get_aws_connection_info, compare_policies,
-                                      sort_json_policy_dict)
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import boto_exception, compare_policies, sort_json_policy_dict
 from ansible.module_utils.six import string_types
 
 
@@ -205,15 +203,8 @@ def build_kwargs(registry_id):
 
 class EcsEcr:
     def __init__(self, module):
-        region, ec2_url, aws_connect_kwargs = \
-            get_aws_connection_info(module, boto3=True)
-
-        self.ecr = boto3_conn(module, conn_type='client',
-                              resource='ecr', region=region,
-                              endpoint=ec2_url, **aws_connect_kwargs)
-        self.sts = boto3_conn(module, conn_type='client',
-                              resource='sts', region=region,
-                              endpoint=ec2_url, **aws_connect_kwargs)
+        self.ecr = module.client('ecr')
+        self.sts = module.client('sts')
         self.check_mode = module.check_mode
         self.changed = False
         self.skipped = False
@@ -507,8 +498,7 @@ def run(ecr, params):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         registry_id=dict(required=False),
         state=dict(required=False, choices=['present', 'absent'],
@@ -517,23 +507,16 @@ def main():
         policy=dict(required=False, type='json'),
         image_tag_mutability=dict(required=False, choices=['mutable', 'immutable'],
                                   default='mutable'),
-        purge_policy=dict(required=False, type='bool', aliases=['delete_policy']),
+        purge_policy=dict(required=False, type='bool', aliases=['delete_policy'],
+                          deprecated_aliases=[dict(name='delete_policy', version='2.14')]),
         lifecycle_policy=dict(required=False, type='json'),
-        purge_lifecycle_policy=dict(required=False, type='bool')))
+        purge_lifecycle_policy=dict(required=False, type='bool')
+    )
+    mutually_exclusive = [
+        ['policy', 'purge_policy'],
+        ['lifecycle_policy', 'purge_lifecycle_policy']]
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True,
-                           mutually_exclusive=[
-                               ['policy', 'purge_policy'],
-                               ['lifecycle_policy', 'purge_lifecycle_policy']])
-    if module.params.get('delete_policy'):
-        module.deprecate(
-            'The alias "delete_policy" has been deprecated and will be removed, '
-            'use "purge_policy" instead',
-            version='2.14')
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True, mutually_exclusive=mutually_exclusive)
 
     ecr = EcsEcr(module)
     passed, result = run(ecr, module.params)

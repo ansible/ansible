@@ -1,0 +1,2 @@
+minor_changes:
+- Refator net_base action plugin to support collection with network platform agnostic modules.

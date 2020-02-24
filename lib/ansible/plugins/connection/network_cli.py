@@ -75,14 +75,6 @@ options:
       - name: ANSIBLE_PRIVATE_KEY_FILE
     vars:
       - name: ansible_private_key_file
-  timeout:
-    type: int
-    description:
-      - Sets the connection time, in seconds, for communicating with the
-        remote device.  This timeout is used as the default timeout value for
-        commands when issuing a command to the network CLI.  If the command
-        does not return in timeout seconds, an error is generated.
-    default: 120
   become:
     type: boolean
     description:

@@ -203,12 +203,12 @@ EXAMPLES = '''
     state: latest
     install_recommends: no
 
-- name: Upgrade all packages to the latest version
+- name: Update all packages to their latest version
   apt:
     name: "*"
     state: latest
 
-- name: Update all packages to the latest version
+- name: Upgrade the OS (apt-get dist-upgrade)
   apt:
     upgrade: dist
 

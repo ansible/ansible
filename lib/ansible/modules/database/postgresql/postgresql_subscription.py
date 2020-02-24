@@ -39,7 +39,6 @@ options:
     - The subscription state.
     - C(present) implies that if I(name) subscription doesn't exist, it will be created.
     - C(absent) implies that if I(name) subscription exists, it will be removed.
-    - C(stat) implies that if I(name) subscription exists, returns current configuration.
     - C(refresh) implies that if I(name) subscription exists, it will be refreshed.
       Fetch missing table information from publisher. Always returns ``changed`` is ``True``.
       This will start replication of tables that were added to the subscribed-to publications
@@ -48,13 +47,8 @@ options:
       should be copied once the replication starts.
     - For more information about C(refresh) see U(https://www.postgresql.org/docs/current/sql-altersubscription.html).
     type: str
-    choices: [ absent, present, refresh, stat ]
+    choices: [ absent, present, refresh ]
     default: present
-  relinfo:
-    description:
-    - Get information of the state for each replicated relation in the subscription.
-    type: bool
-    default: false
   owner:
     description:
     - Subscription owner.
@@ -66,6 +60,7 @@ options:
     - The publication names on the publisher to use for the subscription.
     - Ignored when I(state) is not C(present).
     type: list
+    elements: str
   connparams:
     description:
     - The connection dict param-value to connect to the publisher.
@@ -92,6 +87,7 @@ notes:
 
 seealso:
 - module: postgresql_publication
+- module: postgresql_info
 - name: CREATE SUBSCRIPTION reference
   description: Complete reference of the CREATE SUBSCRIPTION command documentation.
   link: https://www.postgresql.org/docs/current/sql-createsubscription.html
@@ -143,15 +139,6 @@ EXAMPLES = r'''
     db: mydb
     name: acme
     state: refresh
-
-- name: >
-    Return the configuration of subscription acme if exists in mydb database.
-    Also return state of replicated relations.
-  postgresql_subscription:
-    db: mydb
-    name: acme
-    state: stat
-    relinfo: yes
 
 - name: Drop acme subscription from mydb with dependencies (cascade=yes)
   postgresql_subscription:
@@ -272,9 +259,6 @@ class PgSubscription():
         name (str): The name of the subscription.
         db (str): The database name the subscription will be associated with.
 
-    Kwargs:
-        relinfo (bool): Flag indicates the relation information is needed.
-
     Attributes:
         module (AnsibleModule): Object of AnsibleModule class.
         cursor (cursor): Cursor object of psycopg2 library to work with PostgreSQL.
@@ -284,12 +268,11 @@ class PgSubscription():
         exists (bool): Flag indicates the subscription exists or not.
     """
 
-    def __init__(self, module, cursor, name, db, relinfo):
+    def __init__(self, module, cursor, name, db):
         self.module = module
         self.cursor = cursor
         self.name = name
         self.db = db
-        self.relinfo = relinfo
         self.executed_queries = []
         self.attrs = {
             'owner': None,
@@ -298,7 +281,6 @@ class PgSubscription():
             'conninfo': {},
             'slotname': None,
             'publications': [],
-            'relinfo': None,
         }
         self.empty_attrs = deepcopy(self.attrs)
         self.exists = self.check_subscr()
@@ -338,9 +320,6 @@ class PgSubscription():
                     self.attrs['conninfo'][tmp[0]] = int(tmp[1])
                 except ValueError:
                     self.attrs['conninfo'][tmp[0]] = tmp[1]
-
-        if self.relinfo:
-            self.attrs['relinfo'] = self.__get_rel_info()
 
         return True
 
@@ -563,24 +542,6 @@ class PgSubscription():
         else:
             return False
 
-    def __get_rel_info(self):
-        """Get and return state of relations replicated by the subscription.
-
-        Returns:
-            List of dicts containing relations state if successful, False otherwise.
-        """
-        query = ("SELECT c.relname, r.srsubstate, r.srsublsn "
-                 "FROM pg_catalog.pg_subscription_rel r "
-                 "JOIN pg_catalog.pg_subscription s ON s.oid = r.srsubid "
-                 "JOIN pg_catalog.pg_class c ON c.oid = r.srrelid "
-                 "WHERE s.subname = %(name)s")
-
-        result = exec_sql(self, query, query_params={'name': self.name}, add_to_executed=False)
-        if result:
-            return [dict(row) for row in result]
-        else:
-            return False
-
     def __exec_sql(self, query, check_mode=False):
         """Execute SQL query.
 
@@ -612,15 +573,14 @@ class PgSubscription():
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
-        name=dict(required=True),
-        db=dict(type='str', aliases=['login_db']),
-        state=dict(type='str', default='present', choices=['absent', 'present', 'refresh', 'stat']),
-        publications=dict(type='list'),
+        name=dict(type='str', required=True),
+        db=dict(type='str', required=True, aliases=['login_db']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'refresh']),
+        publications=dict(type='list', elements='str'),
         connparams=dict(type='dict'),
         cascade=dict(type='bool', default=False),
         owner=dict(type='str'),
         subsparams=dict(type='dict'),
-        relinfo=dict(type='bool', default=False),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -636,7 +596,6 @@ def main():
     owner = module.params['owner']
     subsparams = module.params['subsparams']
     connparams = module.params['connparams']
-    relinfo = module.params['relinfo']
 
     if state == 'present' and cascade:
         module.warn('parameter "cascade" is ignored when state is not absent')
@@ -668,18 +627,13 @@ def main():
 
     ###################################
     # Create object and do rock'n'roll:
-    subscription = PgSubscription(module, cursor, name, db, relinfo)
+    subscription = PgSubscription(module, cursor, name, db)
 
     if subscription.exists:
         initial_state = deepcopy(subscription.attrs)
         final_state = deepcopy(initial_state)
 
-    # If module.check_mode=True, nothing will be changed:
-    if state == 'stat':
-        # Information has been collected already, so nothing is needed:
-        pass
-
-    elif state == 'present':
+    if state == 'present':
         if not subscription.exists:
             if subsparams:
                 subsparams = convert_subscr_params(subsparams)
@@ -711,9 +665,8 @@ def main():
         # Always returns True:
         changed = subscription.refresh(check_mode=module.check_mode)
 
-    # Get final subscription info if needed:
-    if state != 'stat':
-        final_state = subscription.get_info()
+    # Get final subscription info:
+    final_state = subscription.get_info()
 
     # Connection is not needed any more:
     cursor.close()

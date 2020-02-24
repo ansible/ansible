@@ -268,7 +268,6 @@ def map_obj_to_commands(updates, module, warnings):
             add('no protocol unix-socket')
         else:
             add('protocol unix-socket')
-
     if needs_update('state'):
         if want['state'] == 'stopped':
             add('shutdown')

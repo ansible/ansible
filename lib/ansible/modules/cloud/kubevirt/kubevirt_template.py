@@ -41,7 +41,7 @@ options:
             - List of any valid API objects, such as a I(DeploymentConfig), I(Service), etc. The object
               will be created exactly as defined here, with any parameter values substituted in prior to creation.
               The definition of these objects can reference parameters defined earlier.
-            - As part of the the list user can pass also I(VirtualMachine) kind. When passing I(VirtualMachine)
+            - As part of the list user can pass also I(VirtualMachine) kind. When passing I(VirtualMachine)
               user must use Ansible structure of the parameters not the Kubernetes API structure. For more information
               please take a look at M(kubevirt_vm) module and at EXAMPLES section, where you can see example.
         type: list

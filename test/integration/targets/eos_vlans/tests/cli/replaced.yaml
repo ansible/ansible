@@ -5,6 +5,7 @@
     config:
       - vlan_id: 20
         state: suspend
+        name: twentyreplaced
     other_config:
       - vlan_id: 10
         name: ten

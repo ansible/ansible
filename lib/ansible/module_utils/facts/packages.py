@@ -79,5 +79,8 @@ class CLIMgr(PkgMgr):
         super(CLIMgr, self).__init__()
 
     def is_available(self):
-        self._cli = get_bin_path(self.CLI, False)
-        return bool(self._cli)
+        try:
+            self._cli = get_bin_path(self.CLI)
+        except ValueError:
+            return False
+        return True

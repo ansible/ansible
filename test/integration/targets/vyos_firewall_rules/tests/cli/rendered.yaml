@@ -1,0 +1,63 @@
+---
+- debug:
+      msg: "START vyos_firewall_rules rendered integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate.yaml
+
+- block:
+  - name:  Structure provided configuration into device specific commands
+    vyos_firewall_rules: &rendered
+      config:
+        - afi: 'ipv6'
+          rule_sets:
+          - name: 'UPLINK'
+            description: 'This is ipv6 specific rule-set'
+            default_action: 'accept'
+        - afi: 'ipv4'
+          rule_sets:
+            - name: 'INBOUND'
+              description: 'IPv4 INBOUND rule set'
+              default_action: 'accept'
+              rules:
+                - number: 101
+                  action: 'accept'
+                  description: 'Rule 101 is configured by Ansible'
+                  ipsec: 'match-ipsec'
+                - number: 102
+                  action: 'reject'
+                  description: 'Rule 102 is configured by Ansible'
+                  ipsec: 'match-ipsec'
+                - number: 103
+                  action: 'accept'
+                  description: 'Rule 103 is configured by Ansible'
+                  destination:
+                    group:
+                      address_group: 'inbound'
+                  source:
+                    address: '192.0.2.0'
+                  state:
+                    established: true
+                    new: false
+                    invalid: false
+                    related: true
+      state: rendered
+    register: result
+
+  - name: Assert that correct set of commands were generated
+    assert:
+        that:
+            - "{{ rendered['commands'] | symmetric_difference(result['rendered']) |length == 0 }}"
+
+  - name: Structure provided configuration into device specific commands (IDEMPOTENT)
+    vyos_firewall_rules: *rendered
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+        that:
+            - "result['changed'] == false"
+
+  always:
+  - include_tasks: _remove_config.yaml

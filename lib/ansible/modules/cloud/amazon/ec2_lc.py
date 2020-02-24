@@ -249,6 +249,30 @@ EXAMPLES = '''
     volumes:
     - device_name: /dev/sdf
       no_device: true
+
+- name: Use EBS snapshot ID for volume
+  block:
+  - name: Set Volume Facts
+    set_fact:
+      volumes:
+      - device_name: /dev/sda1
+        volume_size: 20
+        ebs:
+          snapshot: snap-XXXX
+          volume_type: gp2
+          delete_on_termination: true
+          encrypted: no
+
+  - name: Create launch configuration
+    ec2_lc:
+      name: lc1
+      image_id: ami-xxxx
+      assign_public_ip: yes
+      instance_type: t2.medium
+      key_name: my-key
+      security_groups: "['sg-xxxx']"
+      volumes: "{{ volumes }}"
+    register: lc_info
 '''
 
 RETURN = '''

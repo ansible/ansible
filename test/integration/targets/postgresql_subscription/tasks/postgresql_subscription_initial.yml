@@ -59,60 +59,16 @@
       - result.final_state.conninfo.user == '{{ replication_role }}'
       - result.final_state.conninfo.password == '{{ replication_pass }}'
 
-  #################
-  # Test mode: stat
-  #################
-
-  - name: Stat mode in check mode
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
-    check_mode: yes
+      query: "SELECT subname FROM pg_subscription WHERE subname = '{{ test_subscription }}'"
 
   - assert:
       that:
-      - result is not changed
-      - result.name == '{{ test_subscription }}'
-      - result.exists == true
-      - result.final_state == result.initial_state
-      - result.final_state.owner == '{{ pg_user }}'
-      - result.final_state.enabled == true
-      - result.final_state.publications == ["{{ test_pub }}"]
-      - result.final_state.synccommit == true
-      - result.final_state.slotname == '{{ test_subscription }}'
-      - result.final_state.conninfo.dbname == '{{ test_db }}'
-      - result.final_state.conninfo.host == '127.0.0.1'
-      - result.final_state.conninfo.port == {{ master_port }}
-      - result.final_state.conninfo.user == '{{ replication_role }}'
-      - result.final_state.conninfo.password == '{{ replication_pass }}'
-
-  - name: Stat mode
-    <<: *task_parameters
-    postgresql_subscription: 
-      <<: *pg_parameters
-      login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
-
-  - assert:
-      that:
-      - result is not changed
-      - result.name == '{{ test_subscription }}'
-      - result.exists == true
-      - result.final_state == result.initial_state
-      - result.final_state.owner == '{{ pg_user }}'
-      - result.final_state.enabled == true
-      - result.final_state.publications == ["{{ test_pub }}"]
-      - result.final_state.synccommit == true
-      - result.final_state.slotname == '{{ test_subscription }}'
-      - result.final_state.conninfo.dbname == '{{ test_db }}'
-      - result.final_state.conninfo.host == '127.0.0.1'
-      - result.final_state.conninfo.port == {{ master_port }}
-      - result.final_state.conninfo.user == '{{ replication_role }}'
-      - result.final_state.conninfo.password == '{{ replication_pass }}'
+      - result.rowcount == 1
 
   ###################
   # Test mode: absent
@@ -133,19 +89,16 @@
       - result.queries == ["DROP SUBSCRIPTION {{ test_subscription }}"]
       - result.final_state == result.initial_state
 
-  - name: Check the subscription exists
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
+      query: "SELECT subname FROM pg_subscription WHERE subname = '{{ test_subscription }}'"
 
   - assert:
       that:
-      - result is not changed
-      - result.name == '{{ test_subscription }}'
-      - result.exists == true
+      - result.rowcount == 1
 
   - name: Drop subscription
     <<: *task_parameters
@@ -161,19 +114,16 @@
       - result.queries == ["DROP SUBSCRIPTION {{ test_subscription }}"]
       - result.final_state != result.initial_state
 
-  - name: Check the subscription doesn't exist
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
+      query: "SELECT subname FROM pg_subscription WHERE subname = '{{ test_subscription }}'"
 
   - assert:
       that:
-      - result is not changed
-      - result.name == '{{ test_subscription }}'
-      - result.exists == false
+      - result.rowcount == 0
 
   ##################
   # Test owner param
@@ -216,20 +166,19 @@
       - result.initial_state == result.final_state
       - result.final_state.owner == '{{ test_role1 }}'
 
-  - name: Check owner
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
+      query: >
+        SELECT subname FROM pg_subscription AS s
+        JOIN pg_catalog.pg_roles AS r ON s.subowner = r.oid
+        WHERE subname = '{{ test_subscription }}' and r.rolname = '{{ test_role1 }}'
 
   - assert:
       that:
-      - result is not changed
-      - result.name == '{{ test_subscription }}'
-      - result.exists == true
-      - result.initial_state.owner == '{{ test_role1 }}'
+      - result.rowcount == 1
 
   - name: Set another owner in check mode
     <<: *task_parameters
@@ -249,20 +198,19 @@
       - result.final_state.owner == '{{ test_role1 }}'
       - result.queries == ['ALTER SUBSCRIPTION {{ test_subscription }} OWNER TO "{{ test_role2 }}"']
 
-  - name: Check owner
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
+      query: >
+        SELECT subname FROM pg_subscription AS s
+        JOIN pg_catalog.pg_roles AS r ON s.subowner = r.oid
+        WHERE subname = '{{ test_subscription }}' and r.rolname = '{{ test_role1 }}'
 
   - assert:
       that:
-      - result is not changed
-      - result.name == '{{ test_subscription }}'
-      - result.exists == true
-      - result.initial_state.owner == '{{ test_role1 }}'
+      - result.rowcount == 1
 
   - name: Set another owner
     <<: *task_parameters
@@ -281,24 +229,23 @@
       - result.final_state.owner == '{{ test_role2 }}'
       - result.queries == ['ALTER SUBSCRIPTION {{ test_subscription }} OWNER TO "{{ test_role2 }}"']
 
-  - name: Check owner
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
+      query: >
+        SELECT subname FROM pg_subscription AS s
+        JOIN pg_catalog.pg_roles AS r ON s.subowner = r.oid
+        WHERE subname = '{{ test_subscription }}' and r.rolname = '{{ test_role2 }}'
 
   - assert:
       that:
-      - result is not changed
-      - result.name == '{{ test_subscription }}'
-      - result.exists == true
-      - result.initial_state.owner == '{{ test_role2 }}'
+      - result.rowcount == 1
 
-  ##############################
-  # Test cascade and owner param
-  ##############################
+  ##############
+  # Test cascade
+  ##############
 
   - name: Drop subscription cascade in check mode
     <<: *task_parameters
@@ -316,19 +263,16 @@
       - result.queries == ["DROP SUBSCRIPTION {{ test_subscription }} CASCADE"]
       - result.final_state == result.initial_state
 
-  - name: Check the subscription exists
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
+      query: "SELECT subname FROM pg_subscription WHERE subname = '{{ test_subscription }}'"
 
   - assert:
       that:
-      - result is not changed
-      - result.name == '{{ test_subscription }}'
-      - result.exists == true
+      - result.rowcount == 1
 
   - name: Drop subscription cascade
     <<: *task_parameters
@@ -345,19 +289,16 @@
       - result.queries == ["DROP SUBSCRIPTION {{ test_subscription }} CASCADE"]
       - result.final_state != result.initial_state
 
-  - name: Check the subscription doesn't exist
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
+      query: "SELECT subname FROM pg_subscription WHERE subname = '{{ test_subscription }}'"
 
   - assert:
       that:
-      - result is not changed
-      - result.name == '{{ test_subscription }}'
-      - result.exists == false
+      - result.rowcount == 0
 
   ###########################
   # Test subsparams parameter
@@ -390,19 +331,18 @@
       - result.final_state.enabled == false
       - result.final_state.synccommit == false
 
-  - name: Stat mode
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
+      query: >
+        SELECT subname FROM pg_subscription WHERE subname = '{{ test_subscription }}'
+        AND subenabled = 'f' AND subsynccommit = 'false'
 
   - assert:
       that:
-      - result.name == '{{ test_subscription }}'
-      - result.final_state.enabled == false
-      - result.final_state.synccommit == false
+      - result.rowcount == 1
 
   - name: Enable changed params
     <<: *task_parameters
@@ -424,19 +364,18 @@
       - result.final_state.enabled == true
       - result.final_state.synccommit == true
 
-  - name: Stat mode
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
+      query: >
+        SELECT subname FROM pg_subscription WHERE subname = '{{ test_subscription }}'
+        AND subenabled = 't' AND subsynccommit = 'true'
 
   - assert:
       that:
-      - result.name == '{{ test_subscription }}'
-      - result.final_state.enabled == true
-      - result.final_state.synccommit == true
+      - result.rowcount == 1
 
   - name: Enable the same params again
     <<: *task_parameters
@@ -483,18 +422,18 @@
       - result.final_state.publications == ['{{ test_pub }}']
       - result.queries == ['ALTER SUBSCRIPTION {{ test_subscription }} SET PUBLICATION {{ test_pub }}, {{ test_pub2 }}']
 
-  - name: Check publications
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
+      query: >
+        SELECT subname FROM pg_subscription WHERE subname = '{{ test_subscription }}'
+        AND subpublications = '{"{{ test_pub }}"}'
 
   - assert:
       that:
-      - result.name == '{{ test_subscription }}'
-      - result.final_state.publications == ['{{ test_pub }}']
+      - result.rowcount == 1
 
   - name: Change publications
     <<: *task_parameters
@@ -515,18 +454,18 @@
       - result.final_state.publications == ['{{ test_pub }}', '{{ test_pub2 }}']
       - result.queries == ['ALTER SUBSCRIPTION {{ test_subscription }} SET PUBLICATION {{ test_pub }}, {{ test_pub2 }}']
 
-  - name: Check publications
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
+      query: >
+        SELECT subname FROM pg_subscription WHERE subname = '{{ test_subscription }}'
+        AND subpublications = '{"{{ test_pub }}", "{{ test_pub2 }}"}'
 
   - assert:
       that:
-      - result.name == '{{ test_subscription }}'
-      - result.final_state.publications == ['{{ test_pub }}', '{{ test_pub2 }}']
+      - result.rowcount == 1
 
   - name: Change publications with the same values again
     <<: *task_parameters
@@ -546,6 +485,19 @@
       - result.final_state.publications == result.initial_state.publications
       - result.final_state.publications == ['{{ test_pub }}', '{{ test_pub2 }}']
       - result.queries == []
+
+  - name: Check
+    <<: *task_parameters
+    postgresql_query: 
+      <<: *pg_parameters
+      login_port: '{{ replica_port }}'
+      query: >
+        SELECT subname FROM pg_subscription WHERE subname = '{{ test_subscription }}'
+        AND subpublications = '{"{{ test_pub }}", "{{ test_pub2 }}"}'
+
+  - assert:
+      that:
+      - result.rowcount == 1
 
   ######################
   # Test update conninfo
@@ -581,7 +533,6 @@
       login_port: '{{ replica_port }}'
       name: '{{ test_subscription }}'
       state: present
-      relinfo: yes
       connparams:
         host: 127.0.0.1
         port: '{{ master_port }}'
@@ -597,18 +548,16 @@
       - result.queries == ["ALTER SUBSCRIPTION {{ test_subscription }} CONNECTION 'host=127.0.0.1 port={{ master_port }} user={{ replication_role }} password={{ replication_pass }} dbname={{ test_db }} connect_timeout={{ conn_timeout }}'"]
       - result.initial_state.conninfo != result.final_state.conninfo
 
-  - name: Check publications
+  - name: Check
     <<: *task_parameters
-    postgresql_subscription: 
+    postgresql_query: 
       <<: *pg_parameters
       login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
+      query: "SELECT * FROM pg_subscription WHERE subname = '{{ test_subscription }}'"
 
   - assert:
       that:
-      - result.name == '{{ test_subscription }}'
-      - result.final_state.conninfo.connect_timeout == {{ conn_timeout }}
+      - result.query_result[0].subconninfo == "host=127.0.0.1 port={{ master_port }} user={{ replication_role }} password={{ replication_pass }} dbname={{ test_db }} connect_timeout={{ conn_timeout }}"
 
   - name: Try to change conninfo again with the same values
     <<: *task_parameters
@@ -665,25 +614,6 @@
       - result is changed
       - result.name == '{{ test_subscription }}'
       - result.queries == ["ALTER SUBSCRIPTION {{ test_subscription }} REFRESH PUBLICATION"]
-
-  ####################
-  # Test relinfo param
-  ####################
-
-  - name: Get relinfo
-    <<: *task_parameters
-    postgresql_subscription: 
-      <<: *pg_parameters
-      login_port: '{{ replica_port }}'
-      name: '{{ test_subscription }}'
-      state: stat
-      relinfo: yes
-
-  - assert:
-      that:
-      - result.name == '{{ test_subscription }}'
-      - result.final_state.relinfo[0].relname == '{{ test_table1 }}'
-      - result.final_state == result.initial_state
 
   ##########
   # Clean up

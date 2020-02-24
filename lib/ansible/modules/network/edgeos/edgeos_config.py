@@ -93,7 +93,7 @@ options:
     suboptions:
       filename:
         description:
-          - The filename to be used to store the backup configuration. If the the filename
+          - The filename to be used to store the backup configuration. If the filename
             is not given it will be generated based on the hostname, current time and date
             in format defined by <hostname>_config.<current-date>@<current-time>
       dir_path:
@@ -137,11 +137,6 @@ commands:
   returned: always
   type: list
   sample: ['...', '...']
-filtered:
-  description: The list of configuration commands removed to avoid a load failure
-  returned: always
-  type: list
-  sample: ['...', '...']
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
@@ -158,10 +153,6 @@ from ansible.module_utils.network.edgeos.edgeos import load_config, get_config, 
 
 
 DEFAULT_COMMENT = 'configured by edgeos_config'
-
-CONFIG_FILTERS = [
-    re.compile(r'set system login user \S+ authentication encrypted-password')
-]
 
 
 def config_to_commands(config):
@@ -195,15 +186,34 @@ def get_candidate(module):
     return config_to_commands(contents)
 
 
-def diff_config(commands, config):
-    config = [to_native(c).replace("'", '') for c in config.splitlines()]
+def check_command(module, command):
+    """Tests against a command line to be valid otherwise raise errors
+
+    Error on uneven single quote which breaks ansible waiting for further input. Ansible
+    will handle even single quote failures correctly.
+
+    :param command: the command line from current or new config
+    :type command: string
+    :raises ValueError:
+      * if contains odd number of single quotes
+    :return: command string unchanged
+    :rtype: string
+    """
+    if command.count("'") % 2 != 0:
+        module.fail_json(msg="Unmatched single (') quote found in command: " + command)
+
+    return command
+
+
+def diff_config(module, commands, config):
+    config = [to_native(check_command(module, c)) for c in config.splitlines()]
 
     updates = list()
     visited = set()
     delete_commands = [line for line in commands if line.startswith('delete')]
 
     for line in commands:
-        item = to_native(line).replace("'", '')
+        item = to_native(check_command(module, line))
 
         if not item.startswith('set') and not item.startswith('delete'):
             raise ValueError('line must start with either `set` or `delete`')
@@ -234,15 +244,6 @@ def diff_config(commands, config):
     return list(updates)
 
 
-def sanitize_config(config, result):
-    result['filtered'] = list()
-    for regex in CONFIG_FILTERS:
-        for index, line in reversed(list(enumerate(config))):
-            if regex.search(line):
-                result['filtered'].append(line)
-                del config[index]
-
-
 def run(module, result):
     # get the current active config from the node or passed in via
     # the config param
@@ -252,8 +253,7 @@ def run(module, result):
     candidate = get_candidate(module)
 
     # create loadable config that includes only the configuration updates
-    commands = diff_config(candidate, config)
-    sanitize_config(commands, result)
+    commands = diff_config(module, candidate, config)
 
     result['commands'] = commands
 
@@ -262,10 +262,6 @@ def run(module, result):
 
     if commands:
         load_config(module, commands, commit=commit, comment=comment)
-
-        if result.get('filtered'):
-            result['warnings'].append('Some configuration commands were '
-                                      'removed, please see the filtered key')
 
         result['changed'] = True
 

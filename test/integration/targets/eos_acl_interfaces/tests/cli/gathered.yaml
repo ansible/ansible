@@ -1,0 +1,23 @@
+---
+- debug:
+      msg: "START eos_acl_interfaces gathered integration tests on connection={{ ansible_connection }}"
+
+
+- include_tasks: _populate.yaml
+
+- block:
+  - name: Gathered the provided configuration with the exisiting running configuration
+    eos_acl_interfaces: &gathered
+      config:
+      state: gathered
+    become: yes
+    register: result
+
+  - name: Assert 
+    assert:
+      that:
+        - "gathered['config'] | symmetric_difference(result.gathered) == []"
+        - "result['changed'] == false"
+
+  always:
+  - include_tasks: _remove_config.yaml

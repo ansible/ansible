@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test - the module validation code now checks whether ``elements`` documentation for options matches the argument_spec."

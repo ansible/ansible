@@ -67,6 +67,8 @@ Codes
   doc-choices-incompatible-type                                Documentation        Error                  Choices value from the documentation is not compatible with type defined in the argument_spec
   doc-default-does-not-match-spec                              Documentation        Error                  Value for "default" from the argument_spec does not match the documentation
   doc-default-incompatible-type                                Documentation        Error                  Default value from the documentation is not compatible with type defined in the argument_spec
+  doc-elements-invalid                                         Documentation        Error                  Documentation specifies elements for argument, when "type" is not ``list``.
+  doc-elements-mismatch                                        Documentation        Error                  Argument_spec defines elements different than documentation does
   doc-missing-type                                             Documentation        Error                  Documentation doesn't specify a type but argument in ``argument_spec`` use default type (``str``)
   doc-required-mismatch                                        Documentation        Error                  argument in argument_spec is required but documentation says it is not, or vice versa
   doc-type-does-not-match-spec                                 Documentation        Error                  Argument_spec defines type different than documentation does
@@ -79,6 +81,7 @@ Codes
   imports-improper-location                                    Imports              Error                  Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
   incompatible-choices                                         Documentation        Error                  Choices value from the argument_spec is not compatible with type defined in the argument_spec
   incompatible-default-type                                    Documentation        Error                  Default value from the argument_spec is not compatible with type defined in the argument_spec
+  invalid-argument-name                                        Documentation        Error                  Argument in argument_spec must not be one of 'message', 'syslog_facility' as it is used internally by Ansible Core Engine
   invalid-argument-spec                                        Documentation        Error                  Argument in argument_spec must be a dictionary/hash when used
   invalid-argument-spec-options                                Documentation        Error                  Suboptions in argument_spec are invalid
   invalid-documentation                                        Documentation        Error                  ``DOCUMENTATION`` is not valid YAML
@@ -123,6 +126,8 @@ Codes
   parameter-alias-repeated                                     Parameters           Error                  argument in argument_spec has at least one alias specified multiple times in aliases
   parameter-alias-self                                         Parameters           Error                  argument in argument_spec is specified as its own alias
   parameter-documented-multiple-times                          Documentation        Error                  argument in argument_spec with aliases is documented multiple times
+  parameter-list-no-elements                                   Parameters           Error                  argument in argument_spec "type" is specified as ``list`` without defining "elements"
+  parameter-state-invalid-choice                               Parameters           Error                  Argument ``state`` includes ``get``, ``list`` or ``info`` as a choice.  Functionality should be in an ``_info`` or (if further conditions apply) ``_facts`` module.
   python-syntax-error                                          Syntax               Error                  Python ``SyntaxError`` while parsing module
   return-syntax-error                                          Documentation        Error                  ``RETURN`` is not valid YAML, ``RETURN`` fragments missing  or invalid
   subdirectory-missing-init                                    Naming               Error                  Ansible module subdirectories must contain an ``__init__.py``
@@ -136,4 +141,22 @@ Codes
   use-run-command-not-os-call                                  Imports              Error                  ``os.call`` used instead of ``module.run_command``
   use-run-command-not-popen                                    Imports              Error                  ``subprocess.Popen`` used instead of ``module.run_command``
   use-short-gplv3-license                                      Documentation        Error                  GPLv3 license header should be the :ref:`short form <copyright>` for new modules
+  mutually_exclusive-type                                      Documentation        Error                  mutually_exclusive entry contains non-string value
+  mutually_exclusive-collision                                 Documentation        Error                  mutually_exclusive entry has repeated terms
+  mutually_exclusive-unknown                                   Documentation        Error                  mutually_exclusive entry contains option which does not appear in argument_spec (potentially an alias of an option?)
+  required_one_of-type                                         Documentation        Error                  required_one_of entry contains non-string value
+  required_one_of-collision                                    Documentation        Error                  required_one_of entry has repeated terms
+  required_one_of-unknown                                      Documentation        Error                  required_one_of entry contains option which does not appear in argument_spec (potentially an alias of an option?)
+  required_together-type                                       Documentation        Error                  required_together entry contains non-string value
+  required_together-collision                                  Documentation        Error                  required_together entry has repeated terms
+  required_together-unknown                                    Documentation        Error                  required_together entry contains option which does not appear in argument_spec (potentially an alias of an option?)
+  required_if-is_one_of-type                                   Documentation        Error                  required_if entry has a fourth value which is not a bool
+  required_if-requirements-type                                Documentation        Error                  required_if entry has a third value (requirements) which is not a list or tuple
+  required_if-requirements-collision                           Documentation        Error                  required_if entry has repeated terms in requirements
+  required_if-requirements-unknown                             Documentation        Error                  required_if entry's requirements contains option which does not appear in argument_spec (potentially an alias of an option?)
+  required_if-unknown-key                                      Documentation        Error                  required_if entry's key does not appear in argument_spec (potentially an alias of an option?)
+  required_if-key-in-requirements                              Documentation        Error                  required_if entry contains its key in requirements list/tuple
+  required_if-value-type                                       Documentation        Error                  required_if entry's value is not of the type specified for its key
+  required_by-collision                                        Documentation        Error                  required_by entry has repeated terms
+  required_by-unknown                                          Documentation        Error                  required_by entry contains option which does not appear in argument_spec (potentially an alias of an option?)
 ============================================================   ==================   ====================   =========================================================================================

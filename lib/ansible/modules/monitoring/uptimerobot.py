@@ -59,6 +59,7 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_text
 
 
 API_BASE = "https://api.uptimerobot.com/"
@@ -79,7 +80,7 @@ def checkID(module, params):
     data = urlencode(params)
     full_uri = API_BASE + API_ACTIONS['status'] + data
     req, info = fetch_url(module, full_uri)
-    result = req.read()
+    result = to_text(req.read())
     jsonresult = json.loads(result)
     req.close()
     return jsonresult
@@ -91,7 +92,7 @@ def startMonitor(module, params):
     data = urlencode(params)
     full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
     req, info = fetch_url(module, full_uri)
-    result = req.read()
+    result = to_text(req.read())
     jsonresult = json.loads(result)
     req.close()
     return jsonresult['stat']
@@ -103,7 +104,7 @@ def pauseMonitor(module, params):
     data = urlencode(params)
     full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
     req, info = fetch_url(module, full_uri)
-    result = req.read()
+    result = to_text(req.read())
     jsonresult = json.loads(result)
     req.close()
     return jsonresult['stat']

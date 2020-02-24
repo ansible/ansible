@@ -2,7 +2,7 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- when: False
+- when: vcsim is not defined
   block:
   - import_role:
       name: prepare_vmware_tests
@@ -17,13 +17,13 @@
       password: "{{ vcenter_password }}"
       esxi_hostname: '{{ esxi1 }}'
       validate_certs: no
-      acceptance_level: vmware_certified
+      acceptance_level: community
       state: present
     register: host_acceptance_info
   - debug: var=host_acceptance_info
   - assert:
       that:
-        - host_acceptance_info.info is defined
+        - host_acceptance_info.facts is defined
 
   - name: Change acceptance level of given hosts in check mode
     vmware_host_acceptance:
@@ -32,11 +32,11 @@
       password: "{{ vcenter_password }}"
       esxi_hostname: '{{ esxi1 }}'
       validate_certs: no
-      acceptance_level: vmware_certified
+      acceptance_level: community
       state: present
     register: host_acceptance_info_check_mode
     check_mode: yes
   - debug: var=host_acceptance_info_check_mode
   - assert:
       that:
-        - host_acceptance_info_check_mode.info is defined
+        - host_acceptance_info_check_mode.facts is defined

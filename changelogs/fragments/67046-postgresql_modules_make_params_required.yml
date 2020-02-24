@@ -1,0 +1,4 @@
+bugfixes:
+- postgresql_membership - make the ``groups`` and ``target_roles`` parameters required (https://github.com/ansible/ansible/pull/67046).
+- postgresql_slot - make the ``name`` parameter required (https://github.com/ansible/ansible/pull/67046).
+- postgresql_tablespace - make the ``tablespace`` parameter required (https://github.com/ansible/ansible/pull/67046).

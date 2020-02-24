@@ -115,7 +115,8 @@ from time import time, sleep
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, camel_dict_to_snake_dict,
-                                      ec2_argument_spec, get_aws_connection_info)
+                                      ec2_argument_spec, get_aws_connection_info,
+                                      AWSRetry)
 
 try:
     import boto3
@@ -125,10 +126,15 @@ except ImportError:
     HAS_BOTO3 = False
 
 
+@AWSRetry.jittered_backoff(retries=10, delay=10, catch_extra_error_codes=['TargetGroupNotFound'])
+def describe_target_groups_with_backoff(connection, tg_name):
+    return connection.describe_target_groups(Names=[tg_name])
+
+
 def convert_tg_name_to_arn(connection, module, tg_name):
 
     try:
-        response = connection.describe_target_groups(Names=[tg_name])
+        response = describe_target_groups_with_backoff(connection, tg_name)
     except ClientError as e:
         module.fail_json(msg="Unable to describe target group {0}: {1}".format(tg_name, to_native(e)),
                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -141,7 +147,17 @@ def convert_tg_name_to_arn(connection, module, tg_name):
     return tg_arn
 
 
-def describe_targets(connection, module, tg_arn, target):
+@AWSRetry.jittered_backoff(retries=10, delay=10, catch_extra_error_codes=['TargetGroupNotFound'])
+def describe_targets_with_backoff(connection, tg_arn, target):
+    if target is None:
+        tg = []
+    else:
+        tg = [target]
+
+    return connection.describe_target_health(TargetGroupArn=tg_arn, Targets=tg)
+
+
+def describe_targets(connection, module, tg_arn, target=None):
 
     """
     Describe targets in a target group
@@ -154,7 +170,7 @@ def describe_targets(connection, module, tg_arn, target):
     """
 
     try:
-        targets = connection.describe_target_health(TargetGroupArn=tg_arn, Targets=target)['TargetHealthDescriptions']
+        targets = describe_targets_with_backoff(connection, tg_arn, target)['TargetHealthDescriptions']
         if not targets:
             return {}
         return targets[0]
@@ -164,6 +180,11 @@ def describe_targets(connection, module, tg_arn, target):
     except BotoCoreError as e:
         module.fail_json(msg="Unable to describe target health for target {0}: {1}".format(target, to_native(e)),
                          exception=traceback.format_exc())
+
+
+@AWSRetry.jittered_backoff(retries=10, delay=10)
+def register_target_with_backoff(connection, target_group_arn, target):
+    connection.register_targets(TargetGroupArn=target_group_arn, Targets=[target])
 
 
 def register_target(connection, module):
@@ -193,12 +214,12 @@ def register_target(connection, module):
     if target_port:
         target['Port'] = target_port
 
-    target_description = describe_targets(connection, module, target_group_arn, [target])
+    target_description = describe_targets(connection, module, target_group_arn, target)
 
     if 'Reason' in target_description['TargetHealth']:
         if target_description['TargetHealth']['Reason'] == "Target.NotRegistered":
             try:
-                connection.register_targets(TargetGroupArn=target_group_arn, Targets=[target])
+                register_target_with_backoff(connection, target_group_arn, target)
                 changed = True
                 if target_status:
                     target_status_check(connection, module, target_group_arn, target, target_status, target_status_timeout)
@@ -210,9 +231,14 @@ def register_target(connection, module):
                                  exception=traceback.format_exc())
 
     # Get all targets for the target group
-    target_descriptions = describe_targets(connection, module, target_group_arn, [])
+    target_descriptions = describe_targets(connection, module, target_group_arn)
 
     module.exit_json(changed=changed, target_health_descriptions=camel_dict_to_snake_dict(target_descriptions), target_group_arn=target_group_arn)
+
+
+@AWSRetry.jittered_backoff(retries=10, delay=10)
+def deregister_target_with_backoff(connection, target_group_arn, target):
+    connection.deregister_targets(TargetGroupArn=target_group_arn, Targets=[target])
 
 
 def deregister_target(connection, module):
@@ -240,7 +266,7 @@ def deregister_target(connection, module):
     if target_port:
         target['Port'] = target_port
 
-    target_description = describe_targets(connection, module, target_group_arn, [target])
+    target_description = describe_targets(connection, module, target_group_arn, target)
     current_target_state = target_description['TargetHealth']['State']
     current_target_reason = target_description['TargetHealth'].get('Reason')
 
@@ -254,7 +280,7 @@ def deregister_target(connection, module):
 
     if needs_deregister:
         try:
-            connection.deregister_targets(TargetGroupArn=target_group_arn, Targets=[target])
+            deregister_target_with_backoff(connection, target_group_arn, target)
             changed = True
         except ClientError as e:
             module.fail_json(msg="Unable to deregister target {0}: {1}".format(target, to_native(e)),
@@ -271,7 +297,7 @@ def deregister_target(connection, module):
         target_status_check(connection, module, target_group_arn, target, target_status, target_status_timeout)
 
     # Get all targets for the target group
-    target_descriptions = describe_targets(connection, module, target_group_arn, [])
+    target_descriptions = describe_targets(connection, module, target_group_arn)
 
     module.exit_json(changed=changed, target_health_descriptions=camel_dict_to_snake_dict(target_descriptions), target_group_arn=target_group_arn)
 
@@ -280,7 +306,7 @@ def target_status_check(connection, module, target_group_arn, target, target_sta
     reached_state = False
     timeout = target_status_timeout + time()
     while time() < timeout:
-        health_state = describe_targets(connection, module, target_group_arn, [target])['TargetHealth']['State']
+        health_state = describe_targets(connection, module, target_group_arn, target)['TargetHealth']['State']
         if health_state == target_status:
             reached_state = True
             break

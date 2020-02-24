@@ -31,6 +31,7 @@ __metaclass__ = type
 
 import os
 import re
+import sys
 import traceback
 
 from ansible.module_utils.ansible_release import __version__
@@ -111,8 +112,7 @@ class AWSRetry(CloudRetry):
         if catch_extra_error_codes:
             retry_on.extend(catch_extra_error_codes)
 
-        not_found = re.compile(r'^\w+.NotFound')
-        return response_code in retry_on or not_found.search(response_code)
+        return response_code in retry_on
 
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
@@ -137,13 +137,15 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
                          'the conn_type parameter in the boto3_conn function '
                          'call')
 
-    if params.get('config'):
-        config = params.pop('config')
-        config.user_agent_extra = 'Ansible/{0}'.format(__version__)
-    else:
-        config = botocore.config.Config(
-            user_agent_extra='Ansible/{0}'.format(__version__),
-        )
+    config = botocore.config.Config(
+        user_agent_extra='Ansible/{0}'.format(__version__),
+    )
+
+    if params.get('config') is not None:
+        config = config.merge(params.pop('config'))
+    if params.get('aws_config') is not None:
+        config = config.merge(params.pop('aws_config'))
+
     session = boto3.session.Session(
         profile_name=profile,
     )
@@ -187,6 +189,7 @@ def aws_common_argument_spec():
         validate_certs=dict(default=True, type='bool'),
         security_token=dict(aliases=['access_token'], no_log=True),
         profile=dict(),
+        aws_config=dict(type='dict'),
     )
 
 
@@ -200,6 +203,39 @@ def ec2_argument_spec():
     return spec
 
 
+def get_aws_region(module, boto3=False):
+    region = module.params.get('region')
+
+    if region:
+        return region
+
+    if 'AWS_REGION' in os.environ:
+        return os.environ['AWS_REGION']
+    if 'AWS_DEFAULT_REGION' in os.environ:
+        return os.environ['AWS_DEFAULT_REGION']
+    if 'EC2_REGION' in os.environ:
+        return os.environ['EC2_REGION']
+
+    if not boto3:
+        if not HAS_BOTO:
+            module.fail_json(msg=missing_required_lib('boto'), exception=BOTO_IMP_ERR)
+        # boto.config.get returns None if config not found
+        region = boto.config.get('Boto', 'aws_region')
+        if region:
+            return region
+        return boto.config.get('Boto', 'ec2_region')
+
+    if not HAS_BOTO3:
+        module.fail_json(msg=missing_required_lib('boto3'), exception=BOTO3_IMP_ERR)
+
+    # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
+    try:
+        profile_name = module.params.get('profile')
+        return botocore.session.Session(profile=profile_name).get_config_variable('region')
+    except botocore.exceptions.ProfileNotFound as e:
+        return None
+
+
 def get_aws_connection_info(module, boto3=False):
 
     # Check module args for credentials, then check environment vars
@@ -209,9 +245,10 @@ def get_aws_connection_info(module, boto3=False):
     access_key = module.params.get('aws_access_key')
     secret_key = module.params.get('aws_secret_key')
     security_token = module.params.get('security_token')
-    region = module.params.get('region')
+    region = get_aws_region(module, boto3)
     profile_name = module.params.get('profile')
     validate_certs = module.params.get('validate_certs')
+    config = module.params.get('aws_config')
 
     if not ec2_url:
         if 'AWS_URL' in os.environ:
@@ -249,31 +286,6 @@ def get_aws_connection_info(module, boto3=False):
             # in case secret_key came in as empty string
             secret_key = None
 
-    if not region:
-        if 'AWS_REGION' in os.environ:
-            region = os.environ['AWS_REGION']
-        elif 'AWS_DEFAULT_REGION' in os.environ:
-            region = os.environ['AWS_DEFAULT_REGION']
-        elif 'EC2_REGION' in os.environ:
-            region = os.environ['EC2_REGION']
-        else:
-            if not boto3:
-                if HAS_BOTO:
-                    # boto.config.get returns None if config not found
-                    region = boto.config.get('Boto', 'aws_region')
-                    if not region:
-                        region = boto.config.get('Boto', 'ec2_region')
-                else:
-                    module.fail_json(msg=missing_required_lib('boto'), exception=BOTO_IMP_ERR)
-            elif HAS_BOTO3:
-                # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
-                try:
-                    region = botocore.session.Session(profile=profile_name).get_config_variable('region')
-                except botocore.exceptions.ProfileNotFound as e:
-                    pass
-            else:
-                module.fail_json(msg=missing_required_lib('boto3'), exception=BOTO3_IMP_ERR)
-
     if not security_token:
         if os.environ.get('AWS_SECURITY_TOKEN'):
             security_token = os.environ['AWS_SECURITY_TOKEN']
@@ -309,6 +321,13 @@ def get_aws_connection_info(module, boto3=False):
             boto_params['profile_name'] = profile_name
 
         boto_params['validate_certs'] = validate_certs
+
+    if config is not None:
+        if HAS_BOTO3 and boto3:
+            boto_params['aws_config'] = botocore.config.Config(**config)
+        elif HAS_BOTO and not boto3:
+            if 'user_agent' in config:
+                sys.modules["boto.connection"].UserAgent = config['user_agent']
 
     for param, value in boto_params.items():
         if isinstance(value, binary_type):

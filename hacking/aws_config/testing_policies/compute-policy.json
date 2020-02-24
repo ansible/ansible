@@ -49,6 +49,7 @@
                 "ec2:DeleteTags",
                 "ec2:DeregisterImage",
                 "ec2:Describe*",
+                "ec2:DetachVolume",
                 "ec2:ImportKeyPair",
                 "ec2:ModifyImageAttribute",
                 "ec2:ModifyInstanceAttribute",
@@ -96,17 +97,16 @@
                 "elasticloadbalancing:*TargetGroup",
                 "elasticloadbalancing:AddTags",
                 "elasticloadbalancing:ConfigureHealthCheck",
-                "elasticloadbalancing:CreateListener",
-                "elasticloadbalancing:CreateRule",
-                "elasticloadbalancing:DeleteListener",
-                "elasticloadbalancing:DeleteRule",
-                "elasticloadbalancing:DescribeInstanceHealth",
-                "elasticloadbalancing:DescribeLoadBalancer*",
-                "elasticloadbalancing:DescribeTags",
-                "elasticloadbalancing:ModifyListener",
-                "elasticloadbalancing:ModifyLoadBalancerAttributes",
-                "elasticloadbalancing:ModifyRule",
-                "elasticloadbalancing:RemoveTags"
+                "elasticloadbalancing:Create*",
+                "elasticloadbalancing:Delete*",
+                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                "elasticloadbalancing:Describe*",
+                "elasticloadbalancing:DisableAvailabilityZonesForLoadBalancer",
+                "elasticloadbalancing:EnableAvailabilityZonesForLoadBalancer",
+                "elasticloadbalancing:Modify*",
+                "elasticloadbalancing:Register*",
+                "elasticloadbalancing:Deregister*",
+                "elasticloadbalancing:Remove*"
             ],
             "Resource": "*"
         },
@@ -247,7 +247,7 @@
               "states:UpdateStateMachine"
             ],
             "Resource": [
-              "arn:aws:states:*"
+              "arn:aws:states:*:*:*"
             ]
         },
         {

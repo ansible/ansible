@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_host
 short_description: Create/update/delete Zabbix hosts
@@ -35,36 +35,46 @@ options:
             - Name of the host in Zabbix.
             - I(host_name) is the unique identifier used and cannot be updated using this module.
         required: true
+        type: str
     visible_name:
         description:
             - Visible name of the host in Zabbix.
         version_added: '2.3'
+        type: str
     description:
         description:
             - Description of the host in Zabbix.
         version_added: '2.5'
+        type: str
     host_groups:
         description:
             - List of host groups the host is part of.
+        type: list
+        elements: str
     link_templates:
         description:
             - List of templates linked to the host.
+        type: list
+        elements: str
     inventory_mode:
         description:
             - Configure the inventory mode.
         choices: ['automatic', 'manual', 'disabled']
         version_added: '2.1'
+        type: str
     inventory_zabbix:
         description:
             - Add Facts for a zabbix inventory (e.g. Tag) (see example below).
             - Please review the interface documentation for more information on the supported properties
             - U(https://www.zabbix.com/documentation/3.2/manual/api/reference/host/object#host_inventory)
         version_added: '2.5'
+        type: dict
     status:
         description:
             - Monitoring status of the host.
         choices: ['enabled', 'disabled']
         default: 'enabled'
+        type: str
     state:
         description:
             - State of the host.
@@ -72,11 +82,14 @@ options:
             - On C(absent) will remove a host if it exists.
         choices: ['present', 'absent']
         default: 'present'
+        type: str
     proxy:
         description:
             - The name of the Zabbix proxy to be used.
+        type: str
     interfaces:
         type: list
+        elements: dict
         description:
             - List of interfaces to be created for the host (see example below).
             - For more information, review host interface documentation at
@@ -143,6 +156,7 @@ options:
             - Works only with >= Zabbix 3.0
         default: 1
         version_added: '2.5'
+        type: int
     tls_accept:
         description:
             - Specifies what types of connections are allowed for incoming connections.
@@ -152,29 +166,34 @@ options:
             - Works only with >= Zabbix 3.0
         default: 1
         version_added: '2.5'
+        type: int
     tls_psk_identity:
         description:
             - It is a unique name by which this specific PSK is referred to by Zabbix components
             - Do not put sensitive information in the PSK identity string, it is transmitted over the network unencrypted.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
+        type: str
     tls_psk:
         description:
             - PSK value is a hard to guess string of hexadecimal digits.
             - The preshared key, at least 32 hex digits. Required if either I(tls_connect) or I(tls_accept) has PSK enabled.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
+        type: str
     ca_cert:
         description:
             - Required certificate issuer.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
         aliases: [ tls_issuer ]
+        type: str
     tls_subject:
         description:
             - Required certificate subject.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
+        type: str
     ipmi_authtype:
         description:
             - IPMI authentication algorithm.
@@ -186,6 +205,7 @@ options:
               any of the I(ipmi_)-options; this means that if you attempt to set any of the four
               options individually, the rest will be reset to default values.
         version_added: '2.5'
+        type: int
     ipmi_privilege:
         description:
             - IPMI privilege level.
@@ -195,27 +215,78 @@ options:
               being the API default.
             - also see the last note in the I(ipmi_authtype) documentation
         version_added: '2.5'
+        type: int
     ipmi_username:
         description:
             - IPMI username.
             - also see the last note in the I(ipmi_authtype) documentation
         version_added: '2.5'
+        type: str
     ipmi_password:
         description:
             - IPMI password.
             - also see the last note in the I(ipmi_authtype) documentation
         version_added: '2.5'
+        type: str
     force:
         description:
             - Overwrite the host configuration, even if already present.
         type: bool
         default: 'yes'
         version_added: '2.0'
+    macros:
+        description:
+            - List of user macros to assign to the zabbix host.
+            - Providing I(macros=[]) with I(force=yes) will clean all of the existing user macros from the host.
+        type: list
+        elements: dict
+        version_added: '2.10'
+        suboptions:
+            macro:
+                description:
+                    - Name of the user macro.
+                    - Can be in zabbix native format "{$MACRO}" or short format "MACRO".
+                type: str
+                required: true
+            value:
+                description:
+                    - Value of the user macro.
+                type: str
+                required: true
+            description:
+                description:
+                    - Description of the user macro.
+                    - Works only with >= Zabbix 4.4.
+                type: str
+                required: false
+                default: ''
+        aliases: [ user_macros ]
+    tags:
+        description:
+            - List of host tags to assign to the zabbix host.
+            - Works only with >= Zabbix 4.2.
+            - Providing I(tags=[]) with I(force=yes) will clean all of the tags from the host.
+        type: list
+        elements: dict
+        version_added: '2.10'
+        suboptions:
+            tag:
+                description:
+                    - Name of the host tag.
+                type: str
+                required: true
+            value:
+                description:
+                    - Value of the host tag.
+                type: str
+                default: ''
+        aliases: [ host_tags ]
+
 extends_documentation_fragment:
     - zabbix
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a new host or update an existing host's info
   local_action:
     module: zabbix_host
@@ -260,6 +331,17 @@ EXAMPLES = '''
         dns: ""
         port: "12345"
     proxy: a.zabbix.proxy
+    macros:
+      - macro: '{$EXAMPLEMACRO}'
+        value: ExampleMacroValue
+      - macro: EXAMPLEMACRO2
+        value: ExampleMacroValue2
+        description: Example desc that work only with Zabbix 4.4 and higher
+    tags:
+      - tag: ExampleHostsTag
+      - tag: ExampleHostsTag2
+        value: ExampleTagValue
+
 - name: Update an existing host's TLS settings
   local_action:
     module: zabbix_host
@@ -325,7 +407,7 @@ class Host(object):
 
     def add_host(self, host_name, group_ids, status, interfaces, proxy_id, visible_name, description, tls_connect,
                  tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
-                 ipmi_username, ipmi_password):
+                 ipmi_username, ipmi_password, macros, tags):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
@@ -353,6 +435,10 @@ class Host(object):
                 parameters['ipmi_username'] = ipmi_username
             if ipmi_password is not None:
                 parameters['ipmi_password'] = ipmi_password
+            if macros is not None:
+                parameters['macros'] = macros
+            if tags is not None:
+                parameters['tags'] = tags
 
             host_list = self._zapi.host.create(parameters)
             if len(host_list) >= 1:
@@ -361,8 +447,8 @@ class Host(object):
             self._module.fail_json(msg="Failed to create host %s: %s" % (host_name, e))
 
     def update_host(self, host_name, group_ids, status, host_id, interfaces, exist_interface_list, proxy_id,
-                    visible_name, description, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype,
-                    ipmi_privilege, ipmi_username, ipmi_password):
+                    visible_name, description, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer,
+                    tls_subject, ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password, macros, tags):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
@@ -390,6 +476,10 @@ class Host(object):
                 parameters['ipmi_username'] = ipmi_username
             if ipmi_password:
                 parameters['ipmi_password'] = ipmi_password
+            if macros is not None:
+                parameters['macros'] = macros
+            if tags is not None:
+                parameters['tags'] = tags
 
             self._zapi.host.update(parameters)
             interface_list_copy = exist_interface_list
@@ -431,7 +521,19 @@ class Host(object):
 
     # get host by host name
     def get_host_by_host_name(self, host_name):
-        host_list = self._zapi.host.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'host': [host_name]}})
+        params = {
+            'output': 'extend',
+            'selectInventory': 'extend',
+            'selectMacros': 'extend',
+            'filter': {
+                'host': [host_name]
+            }
+        }
+
+        if LooseVersion(self._zbx_api_version) >= LooseVersion('4.2.0'):
+            params.update({'selectTags': 'extend'})
+
+        host_list = self._zapi.host.get(params)
         if len(host_list) < 1:
             self._module.fail_json(msg="Host not found: %s" % host_name)
         else:
@@ -499,7 +601,7 @@ class Host(object):
                              exist_interfaces, host, proxy_id, visible_name, description, host_name,
                              inventory_mode, inventory_zabbix, tls_accept, tls_psk_identity, tls_psk,
                              tls_issuer, tls_subject, tls_connect, ipmi_authtype, ipmi_privilege,
-                             ipmi_username, ipmi_password):
+                             ipmi_username, ipmi_password, macros, tags):
         # get the existing host's groups
         exist_host_groups = sorted(self.get_group_ids_by_host_id(host_id), key=lambda k: k['groupid'])
         if sorted(group_ids, key=lambda k: k['groupid']) != exist_host_groups:
@@ -583,6 +685,20 @@ class Host(object):
                 return True
         if ipmi_password is not None:
             if host['ipmi_password'] != ipmi_password:
+                return True
+
+        # hostmacroid and hostid are present in every item of host['macros'] and need to be removed
+        if macros is not None and 'macros' in host:
+            existing_macros = sorted(host['macros'], key=lambda k: k['macro'])
+            for macro in existing_macros:
+                macro.pop('hostid', False)
+                macro.pop('hostmacroid', False)
+
+            if sorted(macros, key=lambda k: k['macro']) != existing_macros:
+                return True
+
+        if tags is not None and 'tags' in host:
+            if sorted(tags, key=lambda k: k['tag']) != sorted(host['tags'], key=lambda k: k['tag']):
                 return True
 
         return False
@@ -671,9 +787,9 @@ def main():
             validate_certs=dict(type='bool', required=False, default=True),
             host_groups=dict(type='list', required=False),
             link_templates=dict(type='list', required=False),
-            status=dict(default="enabled", choices=['enabled', 'disabled']),
-            state=dict(default="present", choices=['present', 'absent']),
-            inventory_mode=dict(required=False, choices=['automatic', 'manual', 'disabled']),
+            status=dict(type='str', default="enabled", choices=['enabled', 'disabled']),
+            state=dict(type='str', default="present", choices=['present', 'absent']),
+            inventory_mode=dict(type='str', required=False, choices=['automatic', 'manual', 'disabled']),
             ipmi_authtype=dict(type='int', default=None),
             ipmi_privilege=dict(type='int', default=None),
             ipmi_username=dict(type='str', required=False, default=None),
@@ -684,13 +800,32 @@ def main():
             tls_psk=dict(type='str', required=False),
             ca_cert=dict(type='str', required=False, aliases=['tls_issuer']),
             tls_subject=dict(type='str', required=False),
-            inventory_zabbix=dict(required=False, type='dict'),
+            inventory_zabbix=dict(type='dict', required=False),
             timeout=dict(type='int', default=10),
             interfaces=dict(type='list', required=False),
             force=dict(type='bool', default=True),
             proxy=dict(type='str', required=False),
             visible_name=dict(type='str', required=False),
-            description=dict(type='str', required=False)
+            description=dict(type='str', required=False),
+            macros=dict(
+                type='list',
+                elements='dict',
+                aliases=['user_macros'],
+                options=dict(
+                    macro=dict(type='str', required=True),
+                    value=dict(type='str', required=True),
+                    description=dict(type='str', required=False, default='')
+                )
+            ),
+            tags=dict(
+                type='list',
+                elements='dict',
+                aliases=['host_tags'],
+                options=dict(
+                    tag=dict(type='str', required=True),
+                    value=dict(type='str', default='')
+                )
+            )
         ),
         supports_check_mode=True
     )
@@ -727,6 +862,8 @@ def main():
     interfaces = module.params['interfaces']
     force = module.params['force']
     proxy = module.params['proxy']
+    macros = module.params['macros']
+    tags = module.params['tags']
 
     # convert enabled to 0; disabled to 1
     status = 1 if status == "disabled" else 0
@@ -793,6 +930,18 @@ def main():
             if interface['type'] == 1:
                 ip = interface['ip']
 
+    if macros:
+        # convert macros to zabbix native format - {$MACRO}
+        for macro in macros:
+            macro['macro'] = macro['macro'].upper()
+            if not macro['macro'].startswith('{$'):
+                macro['macro'] = '{$' + macro['macro']
+            if not macro['macro'].endswith('}'):
+                macro['macro'] = macro['macro'] + '}'
+            if LooseVersion(zbx.api_version()[:5]) <= LooseVersion('4.4.0'):
+                if 'description' in macro:
+                    macro.pop('description', False)
+
     # Use proxy specified, or set to 0
     if proxy:
         proxy_id = host.get_proxyid_by_proxy_name(proxy)
@@ -853,18 +1002,38 @@ def main():
                     if group_id not in group_ids:
                         group_ids.append(group_id)
 
+                # Macros not present in host.update will be removed if we dont copy them when force=no
+                if macros is not None and 'macros' in zabbix_host_obj.keys():
+                    provided_macros = [m['macro'] for m in macros]
+                    existing_macros = zabbix_host_obj['macros']
+                    for macro in existing_macros:
+                        if macro['macro'] not in provided_macros:
+                            macros.append(macro)
+
+                # Tags not present in host.update will be removed if we dont copy them when force=no
+                if tags is not None and 'tags' in zabbix_host_obj.keys():
+                    provided_tags = [t['tag'] for t in tags]
+                    existing_tags = zabbix_host_obj['tags']
+                    for tag in existing_tags:
+                        if tag['tag'] not in provided_tags:
+                            tags.append(tag)
+
             # update host
-            if host.check_all_properties(host_id, group_ids, status, interfaces, template_ids,
-                                         exist_interfaces, zabbix_host_obj, proxy_id, visible_name,
-                                         description, host_name, inventory_mode, inventory_zabbix,
-                                         tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, tls_connect,
-                                         ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password):
-                host.update_host(host_name, group_ids, status, host_id,
-                                 interfaces, exist_interfaces, proxy_id, visible_name, description, tls_connect, tls_accept,
-                                 tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password)
-                host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
-                                            tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
-                                            ipmi_username, ipmi_password)
+            if host.check_all_properties(
+                    host_id, group_ids, status, interfaces, template_ids, exist_interfaces, zabbix_host_obj, proxy_id,
+                    visible_name, description, host_name, inventory_mode, inventory_zabbix, tls_accept,
+                    tls_psk_identity, tls_psk, tls_issuer, tls_subject, tls_connect, ipmi_authtype, ipmi_privilege,
+                    ipmi_username, ipmi_password, macros, tags):
+
+                host.update_host(
+                    host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id, visible_name,
+                    description, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject,
+                    ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password, macros, tags)
+
+                host.link_or_clear_template(
+                    host_id, template_ids, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer,
+                    tls_subject, ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password)
+
                 host.update_inventory_mode(host_id, inventory_mode)
                 host.update_inventory_zabbix(host_id, inventory_zabbix)
 
@@ -886,13 +1055,18 @@ def main():
             module.fail_json(msg="Specify at least one interface for creating host '%s'." % host_name)
 
         # create host
-        host_id = host.add_host(host_name, group_ids, status, interfaces, proxy_id, visible_name, description, tls_connect,
-                                tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
-                                ipmi_username, ipmi_password)
-        host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
-                                    tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password)
+        host_id = host.add_host(
+            host_name, group_ids, status, interfaces, proxy_id, visible_name, description, tls_connect, tls_accept,
+            tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege, ipmi_username,
+            ipmi_password, macros, tags)
+
+        host.link_or_clear_template(
+            host_id, template_ids, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject,
+            ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password)
+
         host.update_inventory_mode(host_id, inventory_mode)
         host.update_inventory_zabbix(host_id, inventory_zabbix)
+
         module.exit_json(changed=True, result="Successfully added host %s (%s) and linked with template '%s'" % (
             host_name, ip, link_templates))
 

@@ -15,7 +15,8 @@ DOCUMENTATION = """
     description:
       - "Retrieves credentials from Conjur using the controlling host's Conjur identity. Conjur info: U(https://www.conjur.org/)."
     requirements:
-      - 'The controlling host running Ansible has a Conjur identity. (More: U(https://developer.conjur.net/key_concepts/machine_identity.html))'
+      - 'The controlling host running Ansible has a Conjur identity.
+        (More: U(https://docs.conjur.org/Latest/en/Content/Get%20Started/key_concepts/machine_identity.html))'
     options:
       _term:
         description: Variable path

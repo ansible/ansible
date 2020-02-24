@@ -63,7 +63,9 @@ options:
         default: true
     esc_period:
         description:
-            - Default operation step duration. Must be greater than 60 seconds. Accepts seconds, time unit with suffix and user macro.
+            - Default operation step duration. Must be greater than 60 seconds.
+            - Accepts only seconds in int for <= Zabbix 3.2
+            - Accepts seconds, time unit with suffix and user macro since => Zabbix 3.4
             - Required when C(state=present).
         required: false
     conditions:
@@ -226,7 +228,8 @@ options:
                 description:
                     - Duration of an escalation step in seconds.
                     - Must be greater than 60 seconds.
-                    - Accepts seconds, time unit with suffix and user macro.
+                    - Accepts only seconds in int for <= Zabbix 3.2
+                    - Accepts seconds, time unit with suffix and user macro since => Zabbix 3.4
                     - If set to 0 or 0s, the default action escalation period will be used.
                 default: 0s
             esc_step_from:
@@ -396,7 +399,7 @@ EXAMPLES = '''
     event_source: 'trigger'
     state: present
     status: enabled
-    esc_period: 60
+    esc_period: 1m
     conditions:
       - type: 'trigger_name'
         operator: 'like'
@@ -429,7 +432,7 @@ EXAMPLES = '''
     event_source: 'trigger'
     state: present
     status: enabled
-    esc_period: 60
+    esc_period: 1h
     conditions:
       - type: 'trigger_severity'
         operator: '>='
@@ -1687,7 +1690,7 @@ def main():
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
-            esc_period=dict(type='int', required=False),
+            esc_period=dict(type='str', required=False),
             timeout=dict(type='int', default=10),
             name=dict(type='str', required=True),
             event_source=dict(type='str', required=False, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
@@ -1738,7 +1741,7 @@ def main():
                             'set_host_inventory_mode',
                         ]
                     ),
-                    esc_period=dict(type='int', required=False),
+                    esc_period=dict(type='str', required=False),
                     esc_step_from=dict(type='int', required=False, default=1),
                     esc_step_to=dict(type='int', required=False, default=1),
                     operation_condition=dict(

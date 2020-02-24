@@ -1,0 +1,338 @@
+---
+merged:
+  before: []
+
+  commands:
+    - ipv6 access-list acl6_1
+    - 10 deny tcp 2001:db8:1234::/48 range ftp telnet any syn ttl range 180 250 authen routing log
+    - 20 permit icmpv6 any any router-advertisement precedence network destopts
+    - ipv4 access-list acl_1
+    - 16 remark TEST_ACL_1_REMARK
+    - 21 permit tcp host 192.0.2.10 range pop3 121 198.51.100.0 0.0.0.15 rst
+    - 23 deny icmp any 198.51.100.0 0.0.0.15 reassembly-timeout dscp lt af12
+    - ipv4 access-list acl_2
+    - 10 remark TEST_ACL_2_REMARK
+
+  after:
+  - acls:
+    - aces:
+      - remark: TEST_ACL_1_REMARK
+        sequence: 16
+      
+      - destination:
+          address: 198.51.100.0
+          wildcard_bits: 0.0.0.15
+        grant: permit
+        protocol: tcp
+        protocol_options:
+          tcp:
+            rst: true
+        sequence: 21
+        source:
+          host: 192.0.2.10
+          port_protocol:
+            range:
+              end: '121'
+              start: pop3
+      
+      - destination:
+          address: 198.51.100.0
+          wildcard_bits: 0.0.0.15
+        dscp:
+          lt: af12
+        grant: deny
+        protocol: icmp
+        protocol_options:
+          icmp:
+            reassembly_timeout: true
+        sequence: 23
+        source:
+          any: true
+      name: acl_1
+    
+    - aces:
+      - remark: TEST_ACL_2_REMARK
+        sequence: 10
+      name: acl_2
+    afi: ipv4
+  
+  - acls:
+    - aces:
+      - authen: true
+        destination:
+          any: true
+        grant: deny
+        log: true
+        protocol: tcp
+        protocol_options:
+          tcp:
+            syn: true
+        routing: true
+        sequence: 10
+        source:
+          port_protocol:
+            range:
+              end: telnet
+              start: ftp
+          prefix: 2001:db8:1234::/48
+        ttl:
+          range:
+            end: 250
+            start: 180
+      
+      - destination:
+          any: true
+        destopts: true
+        grant: permit
+        precedence: network
+        protocol: icmpv6
+        protocol_options:
+          icmpv6:
+            router_advertisement: true
+        sequence: 20
+        source:
+          any: true
+      name: acl6_1
+    afi: ipv6
+
+
+replaced:
+  commands:
+    - ipv4 access-list acl_2
+    - no 10
+    - 11 permit igmp host 198.51.100.130 any ttl eq 100
+    - 12 deny icmp any any
+  
+  after:
+    - acls:
+      - aces:
+        - remark: TEST_ACL_1_REMARK
+          sequence: 16
+        - destination:
+            address: 198.51.100.0
+            wildcard_bits: 0.0.0.15
+          grant: permit
+          protocol: tcp
+          protocol_options:
+            tcp:
+              rst: true
+          sequence: 21
+          source:
+            host: 192.0.2.10
+            port_protocol:
+              range:
+                end: '121'
+                start: pop3
+        - destination:
+            address: 198.51.100.0
+            wildcard_bits: 0.0.0.15
+          dscp:
+            lt: af12
+          grant: deny
+          protocol: icmp
+          protocol_options:
+            icmp:
+              reassembly_timeout: true
+          sequence: 23
+          source:
+            any: true
+        name: acl_1
+      
+      - aces:
+        - destination:
+            any: true
+          grant: permit
+          protocol: igmp
+          sequence: 11
+          source:
+            host: 198.51.100.130
+          ttl:
+            eq: 100
+        - destination:
+            any: true
+          grant: deny
+          protocol: icmp
+          sequence: 12
+          source:
+            any: true
+        name: acl_2
+      afi: ipv4
+    
+    - acls:
+      - aces:
+        - authen: true
+          destination:
+            any: true
+          grant: deny
+          log: true
+          protocol: tcp
+          protocol_options:
+            tcp:
+              syn: true
+          routing: true
+          sequence: 10
+          source:
+            port_protocol:
+              range:
+                end: telnet
+                start: ftp
+            prefix: 2001:db8:1234::/48
+          ttl:
+            range:
+              end: 250
+              start: 180
+        
+        - destination:
+            any: true
+          destopts: true
+          grant: permit
+          precedence: network
+          protocol: icmpv6
+          protocol_options:
+            icmpv6:
+              router_advertisement: true
+          sequence: 20
+          source:
+            any: true
+        name: acl6_1
+      afi: ipv6
+
+overridden:
+  commands:
+    - no ipv6 access-list acl6_1
+    - ipv4 access-list acl_1
+    - no 16
+    - no 21
+    - no 23
+    - 10 permit tcp any any
+    - ipv4 access-list acl_2
+    - no 10
+    - 20 permit igmp any any
+
+  after:
+    - acls:
+      - aces:
+        - destination:
+            any: true
+          grant: permit
+          protocol: tcp
+          sequence: 10
+          source:
+            any: true
+        name: acl_1
+      
+      - aces:
+        - destination:
+            any: true
+          grant: permit
+          protocol: igmp
+          sequence: 20
+          source:
+            any: true
+        name: acl_2
+      afi: ipv4
+
+deleted:
+  commands:
+    - no ipv4 access-list acl_1
+    - no ipv4 access-list acl_2
+    - no ipv6 access-list acl6_1
+
+  after: []
+
+parsed:
+  - acls:
+    - aces:
+      - remark: TEST_ACL_2_REMARK
+        sequence: 10
+      name: acl_1
+    - aces:
+      - authen: true
+        destination:
+          any: true
+        grant: deny
+        log: true
+        protocol: tcp
+        protocol_options:
+          tcp:
+            syn: true
+        routing: true
+        sequence: 11
+        source:
+          port_protocol:
+            range:
+              end: telnet
+              start: ftp
+          prefix: 2001:db8:1234::/48
+        ttl:
+          range:
+            end: 250
+            start: 180
+      - destination:
+          any: true
+        destopts: true
+        grant: permit
+        packet_length:
+          eq: 576
+        precedence: network
+        protocol: icmpv6
+        protocol_options:
+          icmpv6:
+            router_advertisement: true
+        sequence: 21
+        source:
+          any: true
+      name: acl_2
+    afi: ipv4
+  - acls:
+    - aces:
+      - authen: true
+        destination:
+          any: true
+        grant: deny
+        log: true
+        protocol: tcp
+        protocol_options:
+          tcp:
+            syn: true
+        routing: true
+        sequence: 10
+        source:
+          port_protocol:
+            range:
+              end: telnet
+              start: ftp
+          prefix: 2001:db8:1234::/48
+        ttl:
+          range:
+            end: 250
+            start: 180
+      - destination:
+          any: true
+        destopts: true
+        grant: permit
+        packet_length:
+          eq: 576
+        precedence: network
+        protocol: icmpv6
+        protocol_options:
+          icmpv6:
+            router_advertisement: true
+        sequence: 20
+        source:
+          any: true
+      name: acl6_1
+    afi: ipv6
+
+round_trip:
+  after:
+    - members:
+        - member: GigabitEthernet0/0/0/8
+          mode: passive
+        - member: GigabitEthernet0/0/0/9
+          mode: active
+      name: Bundle-Ether10
+    
+    - mode: active
+      name: Bundle-Ether11
+    

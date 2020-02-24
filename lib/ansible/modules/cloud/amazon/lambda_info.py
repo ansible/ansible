@@ -84,7 +84,7 @@ function.TheName:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 import json
 import datetime
 import re
@@ -93,7 +93,7 @@ import re
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass  # protected by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def fix_return(node):
@@ -354,16 +354,7 @@ def main():
         if len(function_name) > 64:
             module.fail_json(msg='Function name "{0}" exceeds 64 character limit'.format(function_name))
 
-    try:
-        region, endpoint, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        aws_connect_kwargs.update(dict(region=region,
-                                       endpoint=endpoint,
-                                       conn_type='client',
-                                       resource='lambda'
-                                       ))
-        client = boto3_conn(module, **aws_connect_kwargs)
-    except ClientError as e:
-        module.fail_json_aws(e, "trying to set up boto connection")
+    client = module.client('lambda')
 
     invocations = dict(
         aliases='alias_details',

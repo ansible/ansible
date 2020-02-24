@@ -237,18 +237,15 @@ tags:
 
 from time import sleep
 from time import time as timestamp
-import traceback
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError as e:
-    pass  # Taken care of by ec2.HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
-from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict,
-                                      ec2_argument_spec, get_aws_connection_info, ansible_dict_to_boto3_tag_list,
-                                      compare_aws_tags, boto3_tag_list_to_ansible_dict)
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (compare_aws_tags, camel_dict_to_snake_dict,
+                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
 
 
 def _index_by_key(key, items):
@@ -264,10 +261,9 @@ class EFSConnection(object):
     STATE_DELETING = 'deleting'
     STATE_DELETED = 'deleted'
 
-    def __init__(self, module, region, **aws_connect_params):
-        self.connection = boto3_conn(module, conn_type='client',
-                                     resource='efs', region=region,
-                                     **aws_connect_params)
+    def __init__(self, module):
+        self.connection = module.client('efs')
+        region = module.region
 
         self.module = module
         self.region = region
@@ -441,12 +437,8 @@ class EFSConnection(object):
             try:
                 self.connection.create_file_system(**params)
                 changed = True
-            except ClientError as e:
-                self.module.fail_json(msg="Unable to create file system: {0}".format(to_native(e)),
-                                      exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-            except BotoCoreError as e:
-                self.module.fail_json(msg="Unable to create file system: {0}".format(to_native(e)),
-                                      exception=traceback.format_exc())
+            except (ClientError, BotoCoreError) as e:
+                self.module.fail_json_aws(e, msg="Unable to create file system.")
 
         # we always wait for the state to be available when creating.
         # if we try to take any actions on the file system before it's available
@@ -483,12 +475,8 @@ class EFSConnection(object):
                 try:
                     self.connection.update_file_system(FileSystemId=fs_id, **params)
                     changed = True
-                except ClientError as e:
-                    self.module.fail_json(msg="Unable to update file system: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                except BotoCoreError as e:
-                    self.module.fail_json(msg="Unable to update file system: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc())
+                except (ClientError, BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Unable to update file system.")
         return changed
 
     def converge_file_system(self, name, tags, purge_tags, targets, throughput_mode, provisioned_throughput_in_mibps):
@@ -507,12 +495,8 @@ class EFSConnection(object):
                         FileSystemId=fs_id,
                         TagKeys=tags_to_delete
                     )
-                except ClientError as e:
-                    self.module.fail_json(msg="Unable to delete tags: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                except BotoCoreError as e:
-                    self.module.fail_json(msg="Unable to delete tags: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc())
+                except (ClientError, BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Unable to delete tags.")
 
                 result = True
 
@@ -522,12 +506,8 @@ class EFSConnection(object):
                         FileSystemId=fs_id,
                         Tags=ansible_dict_to_boto3_tag_list(tags_need_modify)
                     )
-                except ClientError as e:
-                    self.module.fail_json(msg="Unable to create tags: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                except BotoCoreError as e:
-                    self.module.fail_json(msg="Unable to create tags: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc())
+                except (ClientError, BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Unable to create tags.")
 
                 result = True
 
@@ -710,8 +690,7 @@ def main():
     """
      Module action handler
     """
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         encrypt=dict(required=False, type="bool", default=False),
         state=dict(required=False, type='str', choices=["present", "absent"], default="present"),
         kms_key_id=dict(required=False, type='str', default=None),
@@ -725,14 +704,11 @@ def main():
         provisioned_throughput_in_mibps=dict(required=False, type='float'),
         wait=dict(required=False, type="bool", default=False),
         wait_timeout=dict(required=False, type="int", default=0)
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec)
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
+    module = AnsibleAWSModule(argument_spec=argument_spec)
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = EFSConnection(module, region, **aws_connect_params)
+    connection = EFSConnection(module)
 
     name = module.params.get('name')
     fs_id = module.params.get('id')

@@ -31,7 +31,8 @@ You can also keep a collection adjacent to the current playbook, under a ``colle
 
 .. code-block:: text
 
-    play.yml
+    ./
+    ├── play.yml
     ├── collections/
     │   └── ansible_collections/
     │               └── my_namespace/

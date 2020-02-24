@@ -46,9 +46,9 @@
       report_llg: true
       immediate_leave: true
       group_timeout: 300
-      # deprecated
-      oif_prefix: 239.255.255.2
-      oif_source: 192.0.2.1
+      oif_ps:
+        - source: 192.0.2.1
+          prefix: 239.255.255.2
       state: present
     register: result
 

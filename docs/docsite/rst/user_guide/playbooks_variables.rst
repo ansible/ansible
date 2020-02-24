@@ -1009,7 +1009,7 @@ If multiple variables of the same name are defined in different places, they get
 Here is the order of precedence from least to greatest (the last listed variables winning prioritization):
 
   #. command line values (eg "-u user")
-  #. role defaults [1]_
+  #. role defaults (defined in role/defaults/main.yml) [1]_
   #. inventory file or script group vars [2]_
   #. inventory group_vars/all [3]_
   #. playbook group_vars/all [3]_

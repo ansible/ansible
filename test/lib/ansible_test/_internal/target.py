@@ -10,13 +10,19 @@ import abc
 
 from . import types as t
 
+from .encoding import (
+    to_bytes,
+)
+
+from .io import (
+    read_text_file,
+)
+
 from .util import (
     ApplicationError,
     display,
     read_lines_without_comments,
     is_subdir,
-    to_text,
-    to_bytes,
 )
 
 from .data import (
@@ -291,8 +297,7 @@ def load_integration_prefixes():
 
     for file_path in file_paths:
         prefix = os.path.splitext(file_path)[1][1:]
-        with open(file_path, 'r') as prefix_fd:
-            prefixes.update(dict((k, prefix) for k in prefix_fd.read().splitlines()))
+        prefixes.update(dict((k, prefix) for k in read_text_file(file_path).splitlines()))
 
     return prefixes
 
@@ -398,12 +403,11 @@ def analyze_integration_target_dependencies(integration_targets):
 
         for meta_path in meta_paths:
             if os.path.exists(meta_path):
-                with open(meta_path, 'rb') as meta_fd:
-                    # try and decode the file as a utf-8 string, skip if it contains invalid chars (binary file)
-                    try:
-                        meta_lines = to_text(meta_fd.read()).splitlines()
-                    except UnicodeDecodeError:
-                        continue
+                # try and decode the file as a utf-8 string, skip if it contains invalid chars (binary file)
+                try:
+                    meta_lines = read_text_file(meta_path).splitlines()
+                except UnicodeDecodeError:
+                    continue
 
                 for meta_line in meta_lines:
                     if re.search(r'^ *#.*$', meta_line):
@@ -638,6 +642,10 @@ class IntegrationTarget(CompletionTarget):
         # Ignore references to test targets, as those must be defined using `needs/target/*` or other target references.
         self.needs_file = tuple(sorted(set('/'.join(g.split('/')[2:]) for g in groups if
                                            g.startswith('needs/file/') and not g.startswith('needs/file/%s/' % targets_relative_path))))
+
+        # network platform
+        networks = [g.split('/')[1] for g in groups if g.startswith('network/')]
+        self.network_platform = networks[0] if networks else None
 
         for group in itertools.islice(groups, 0, len(groups)):
             if '/' in group:

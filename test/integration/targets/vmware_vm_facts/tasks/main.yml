@@ -32,25 +32,25 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-  register: vm_facts_0001
+  register: vm_facts
 
-- debug: var=vm_facts_0001
+- &set_vm_by_name
+  set_fact:
+    vm_by_name: "{{ dict(vm_facts.virtual_machines|map(attribute='guest_name')|zip(vm_facts.virtual_machines)) }}"
 
+- set_fact:
+    my_vm1: "{{ vm_by_name['DC0_H0_VM1'] }}"
 - &vm_fact_check
   name: Verify if VM facts exist
   assert:
     that:
-      - "item.esxi_hostname is defined"
-      - "item.guest_fullname is defined"
-      - "item.ip_address is defined"
-      - "item.mac_address is defined"
-      - "item.power_state is defined"
-      - "item.uuid is defined"
-      - "item.vm_network is defined"
-  with_items:
-    - "{{ vm_facts_0001.virtual_machines | json_query(query) }}"
-  vars:
-    query: "[?guest_name=='DC0_H0_VM0']"
+      - "my_vm1.esxi_hostname is defined"
+      - "my_vm1.guest_fullname is defined"
+      - "my_vm1.ip_address is defined"
+      - "my_vm1.mac_address is defined"
+      - "my_vm1.power_state is defined"
+      - "my_vm1.uuid is defined"
+      - "my_vm1.vm_network is defined"
 
 - <<: *vm_data
   name: Get facts about available vms in check mode
@@ -83,17 +83,18 @@
   when: folder_path_info.folders is defined
 - debug: var=vm_facts
 
+- <<: *set_vm_by_name
+
+- set_fact:
+    my_vm0: "{{ vm_by_name['DC0_H0_VM0'] }}"
+
 - name: Check if facts are returned for VM with folder specified
   assert:
     that:
-      - "item.esxi_hostname is defined"
-      - "item.guest_fullname is defined"
-      - "item.ip_address is defined"
-      - "item.mac_address is defined"
-      - "item.power_state is defined"
-      - "item.uuid is defined"
-      - "item.vm_network is defined"
-  with_items:
-    - "{{ vm_facts.virtual_machines | json_query(query) }}"
-  vars:
-    query: "[?guest_name=='DC0_H0_VM0']"
+      - "my_vm0.esxi_hostname is defined"
+      - "my_vm0.guest_fullname is defined"
+      - "my_vm0.ip_address is defined"
+      - "my_vm0.mac_address is defined"
+      - "my_vm0.power_state is defined"
+      - "my_vm0.uuid is defined"
+      - "my_vm0.vm_network is defined"

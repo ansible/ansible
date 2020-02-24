@@ -259,6 +259,10 @@ class ProxySQLServer(object):
 
         cursor.execute(query_string, query_data)
         check_count = cursor.fetchone()
+
+        if isinstance(check_count, tuple):
+            return int(check_count[0]) > 0
+
         return (int(check_count['host_count']) > 0)
 
     def get_server_config(self, cursor):
@@ -448,7 +452,7 @@ def main():
                                         login_user,
                                         login_password,
                                         config_file,
-                                        cursor_class=mysql_driver.cursors.DictCursor)
+                                        cursor_class='DictCursor')
     except mysql_driver.Error as e:
         module.fail_json(
             msg="unable to connect to ProxySQL Admin Module.. %s" % to_native(e)

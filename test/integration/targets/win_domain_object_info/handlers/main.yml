@@ -1,0 +1,5 @@
+---
+- name: remove test domain user
+  win_domain_user:
+    name: '{{ test_user.distinguished_name }}'
+    state: absent

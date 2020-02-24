@@ -1,0 +1,156 @@
+---
+## Task file for setup/teardown AWS resources for aws_ssm integration testing
+- block:
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{aws_access_key}}"
+          aws_secret_key: "{{aws_secret_key}}"
+          security_token: "{{security_token}}"
+          region: "{{aws_region}}"
+      no_log: yes
+
+    - name: AMI Lookup
+      ec2_ami_info:
+        owners: 'amazon'
+        filters:
+          name: '{{ item }}'
+        <<: *aws_connection_info  
+      register: ec2_amis
+      loop:
+        - '{{ linux_ami_name }}'
+        - '{{ windows_ami_name }}'
+
+    - name: Set facts with latest AMIs
+      vars:
+        latest_linux_ami: '{{ ec2_amis.results[0].images | sort(attribute="creation_date") | last }}'
+        latest_windows_ami: '{{ ec2_amis.results[1].images | sort(attribute="creation_date") | last }}'
+      set_fact:
+        linux_ami_id: '{{ latest_linux_ami.image_id }}'
+        windows_ami_id: '{{ latest_windows_ami.image_id }}'
+
+    - name: Install Session Manager Plugin for Debian/Ubuntu
+      include_tasks: debian.yml
+      when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+      register: install_plugin_debian
+
+    - name: Install Session Manager Plugin for RedHat/Amazon
+      include_tasks: redhat.yml
+      when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat" or ansible_distribution == "Amazon"
+      register: install_plugin_redhat
+
+    - name: Fail if the plugin was not installed
+      fail:
+        msg: The distribution does not contain the required Session Manager Plugin
+      when:
+        - install_plugin_debian is skipped
+        - install_plugin_redhat is skipped
+
+    - name: Install Boto3
+      pip:
+        name: boto3
+
+    - name: Install Boto
+      pip:
+        name: boto
+
+    - name: Ensure IAM instance role exists
+      iam_role:
+        name: "ansible-test-{{resource_prefix}}-aws-ssm-role"
+        assume_role_policy_document: "{{ lookup('file','ec2-trust-policy.json') }}"
+        state: present
+        create_instance_profile: yes
+        managed_policy:
+        - AmazonEC2RoleforSSM
+        <<: *aws_connection_info
+      register: role_output
+
+    - name: Create S3 bucket
+      s3_bucket:
+        name: "{{resource_prefix}}-aws-ssm-s3"
+        <<: *aws_connection_info
+      register: s3_output
+
+    - name: Wait for IAM Role getting created
+      pause:
+        seconds: 10
+
+    - name: Create Linux EC2 instance
+      ec2:
+        instance_type: "{{instance_type}}"
+        image: "{{linux_ami_id}}"
+        wait: "yes"
+        count: 1
+        instance_profile_name: "{{role_output.iam_role.role_name}}"
+        instance_tags:
+          Name: "{{resource_prefix}}-integration-test-aws-ssm-linux"
+        user_data: |
+                    #!/bin/sh
+                    sudo systemctl start amazon-ssm-agent
+        state: present
+        <<: *aws_connection_info
+      register: linux_output
+
+    - name: Create Windows EC2 instance
+      ec2:
+        instance_type: "{{instance_type}}"
+        image: "{{windows_ami_id}}"
+        wait: "yes"
+        count: 1
+        instance_profile_name: "{{role_output.iam_role.role_name}}"
+        instance_tags:
+          Name: "{{resource_prefix}}-integration-test-aws-ssm-windows"
+        user_data: |
+                    <powershell>
+                    Invoke-WebRequest -Uri "https://amazon-ssm-us-east-1.s3.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe" -OutFile "C:\AmazonSSMAgentSetup.exe"
+                    Start-Process -FilePath C:\AmazonSSMAgentSetup.exe -ArgumentList "/S","/v","/qn" -Wait
+                    Restart-Service AmazonSSMAgent
+                    </powershell>
+        state: present
+        <<: *aws_connection_info
+      register: windows_output
+
+    - name: Wait for EC2 to be available
+      wait_for_connection:
+        delay: 300
+
+    - name: Create Inventory file for Linux host
+      template:
+        dest: "{{playbook_dir}}/inventory-linux.aws_ssm"
+        src: inventory-linux.aws_ssm.j2
+
+    - name: Create Inventory file for Windows host
+      template:
+        dest: "{{playbook_dir}}/inventory-windows.aws_ssm"
+        src: inventory-windows.aws_ssm.j2
+
+    - name: Create AWS Keys Environement
+      template:
+        dest: "{{playbook_dir}}/aws-env-vars.sh"
+        src: aws-env-vars.j2
+      no_log: yes
+
+  always:
+    - name: Create EC2 Linux vars_to_delete.yml
+      template:
+        dest: "{{playbook_dir}}/ec2_linux_vars_to_delete.yml"
+        src: ec2_linux_vars_to_delete.yml.j2
+      ignore_errors: yes
+
+    - name: Create EC2 Windows vars_to_delete.yml
+      template:
+        dest: "{{playbook_dir}}/ec2_windows_vars_to_delete.yml"
+        src: ec2_windows_vars_to_delete.yml.j2
+      ignore_errors: yes
+
+    - name: Create S3 vars_to_delete.yml
+      template:
+        dest: "{{playbook_dir}}/s3_vars_to_delete.yml"
+        src: s3_vars_to_delete.yml.j2
+      ignore_errors: yes
+
+    - name: Create IAM Role vars_to_delete.yml
+      template:
+        dest: "{{playbook_dir}}/iam_role_vars_to_delete.yml"
+        src: iam_role_vars_to_delete.yml.j2
+      ignore_errors: yes

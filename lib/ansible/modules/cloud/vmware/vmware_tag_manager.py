@@ -35,8 +35,10 @@ options:
     tag_names:
       description:
       - List of tag(s) to be managed.
-      - You can also specify category name by specifying colon separated value. For example, "category_name:tag_name".
-      - You can skip category name if you have unique tag names.
+      - User can also specify category name by specifying colon separated value. For example, "category_name:tag_name".
+      - User can also specify tag and category as dict, when tag or category contains colon.
+        See example for more information. Added in version 2.10.
+      - User can skip category name if you have unique tag names.
       required: True
       type: list
     state:
@@ -72,6 +74,22 @@ EXAMPLES = r'''
     tag_names:
       - Sample_Tag_0002
       - Category_0001:Sample_Tag_0003
+    object_name: Fedora_VM
+    object_type: VirtualMachine
+    state: add
+  delegate_to: localhost
+
+- name: Specify tag and category as dict
+  vmware_tag_manager:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+    tag_names:
+      - tag: tag_0001
+        category: cat_0001
+      - tag: tag_0002
+        category: cat_0002
     object_name: Fedora_VM
     object_type: VirtualMachine
     state: add
@@ -218,15 +236,24 @@ class VmwareTagManager(VmwareRestClient):
         removed_tags_for_set = False
         for tag in self.tag_names:
             category_obj, category_name, tag_name = None, None, None
-            if ":" in tag:
-                # User specified category
-                category_name, tag_name = tag.split(":", 1)
-                category_obj = self.search_svc_object_by_name(self.category_service, category_name)
-                if not category_obj:
-                    self.module.fail_json(msg="Unable to find the category %s" % category_name)
-            else:
-                # User specified only tag
-                tag_name = tag
+            if isinstance(tag, dict):
+                tag_name = tag.get('tag')
+                category_name = tag.get('category')
+                if category_name:
+                    # User specified category
+                    category_obj = self.search_svc_object_by_name(self.category_service, category_name)
+                    if not category_obj:
+                        self.module.fail_json(msg="Unable to find the category %s" % category_name)
+            elif isinstance(tag, str):
+                if ":" in tag:
+                    # User specified category
+                    category_name, tag_name = tag.split(":", 1)
+                    category_obj = self.search_svc_object_by_name(self.category_service, category_name)
+                    if not category_obj:
+                        self.module.fail_json(msg="Unable to find the category %s" % category_name)
+                else:
+                    # User specified only tag
+                    tag_name = tag
 
             if category_name:
                 tag_obj = self.get_tag_by_category(tag_name=tag_name, category_name=category_name)

@@ -1,0 +1,2 @@
+minor_changes:
+- "The ``AWSRetry`` decorator no longer catches ``NotFound`` exceptions unless they're explicitly added via ``catch_extra_error_codes``."

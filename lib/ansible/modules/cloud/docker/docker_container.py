@@ -644,6 +644,9 @@ options:
         container port, 9000 is a host port, and 0.0.0.0 is a host interface."
       - Port ranges can be used for source and destination ports. If two ranges with
         different lengths are specified, the shorter range will be used.
+        Since Ansible 2.10, if the source port range has length 1, the port will not be assigned
+        to the first port of the destination range, but to a free port in that range. This is the
+        same behavior as for C(docker) command line utility.
       - "Bind addresses must be either IPv4 or IPv6 addresses. Hostnames are *not* allowed. This
         is different from the C(docker) command line utility. Use the L(dig lookup,../lookup/dig.html)
         to resolve hostnames."
@@ -886,8 +889,17 @@ EXAMPLES = '''
     devices:
      - "/dev/sda:/dev/xvda:rwm"
     ports:
+     # Publish container port 9000 as host port 8080
      - "8080:9000"
+     # Publish container UDP port 9001 as host port 8081 on interface 127.0.0.1
      - "127.0.0.1:8081:9001/udp"
+     # Publish container port 9002 as a random host port
+     - "9002"
+     # Publish container port 9003 as a free host port in range 8000-8100
+     # (the host port will be selected by the Docker daemon)
+     - "8000-8100:9003"
+     # Publish container ports 9010-9020 to host ports 7000-7010
+     - "7000-7010:9010-9020"
     env:
         SECRET_KEY: "ssssh"
         # Values which might be parsed as numbers, booleans or other types by the YAML parser need to be quoted
@@ -1480,6 +1492,10 @@ class TaskParameters(DockerBaseClass):
                 if self.client.option_minimal_versions[value]['supported']:
                     result[key] = getattr(self, value)
 
+        if self.disable_healthcheck:
+            # Make sure image's health check is overridden
+            result['healthcheck'] = {'test': ['NONE']}
+
         if self.networks_cli_compatible and self.networks:
             network = self.networks[0]
             params = dict()
@@ -1495,16 +1511,16 @@ class TaskParameters(DockerBaseClass):
         new_vols = []
         for vol in self.volumes:
             if ':' in vol:
-                if len(vol.split(':')) == 3:
-                    host, container, mode = vol.split(':')
+                parts = vol.split(':')
+                if len(parts) == 3:
+                    host, container, mode = parts
                     if not is_volume_permissions(mode):
                         self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if re.match(r'[.~]', host):
                         host = os.path.abspath(os.path.expanduser(host))
                     new_vols.append("%s:%s:%s" % (host, container, mode))
                     continue
-                elif len(vol.split(':')) == 2:
-                    parts = vol.split(':')
+                elif len(parts) == 2:
                     if not is_volume_permissions(parts[1]) and re.match(r'[.~]', parts[0]):
                         host = os.path.abspath(os.path.expanduser(parts[0]))
                         new_vols.append("%s:%s:rw" % (host, parts[1]))
@@ -1520,15 +1536,13 @@ class TaskParameters(DockerBaseClass):
         result = []
         if self.volumes:
             for vol in self.volumes:
+                # Only pass anonymous volumes to create container
                 if ':' in vol:
-                    if len(vol.split(':')) == 3:
-                        dummy, container, dummy = vol.split(':')
-                        result.append(container)
+                    parts = vol.split(':')
+                    if len(parts) == 3:
                         continue
-                    if len(vol.split(':')) == 2:
-                        parts = vol.split(':')
+                    if len(parts) == 2:
                         if not is_volume_permissions(parts[1]):
-                            result.append(parts[1])
                             continue
                 result.append(vol)
         self.log("mounts:")
@@ -1654,7 +1668,10 @@ class TaskParameters(DockerBaseClass):
             if p_len == 1:
                 port_binds = len(container_ports) * [(default_ip,)]
             elif p_len == 2:
-                port_binds = [(default_ip, port) for port in parse_port_range(parts[0], self.client)]
+                if len(container_ports) == 1:
+                    port_binds = [(default_ip, parts[0])]
+                else:
+                    port_binds = [(default_ip, port) for port in parse_port_range(parts[0], self.client)]
             elif p_len == 3:
                 # We only allow IPv4 and IPv6 addresses for the bind address
                 ipaddr = parts[0]
@@ -1664,7 +1681,10 @@ class TaskParameters(DockerBaseClass):
                 if re.match(r'^\[[0-9a-fA-F:]+\]$', ipaddr):
                     ipaddr = ipaddr[1:-1]
                 if parts[1]:
-                    port_binds = [(ipaddr, port) for port in parse_port_range(parts[1], self.client)]
+                    if len(container_ports) == 1:
+                        port_binds = [(ipaddr, parts[1])]
+                    else:
+                        port_binds = [(ipaddr, port) for port in parse_port_range(parts[1], self.client)]
                 else:
                     port_binds = len(container_ports) * [(ipaddr,)]
 
@@ -1698,7 +1718,7 @@ class TaskParameters(DockerBaseClass):
                             self.fail('Found invalid volumes mode: {0}'.format(mode))
                     elif len(parts) == 2:
                         if not is_volume_permissions(parts[1]):
-                            host, container, mode = (vol.split(':') + ['rw'])
+                            host, container, mode = (parts + ['rw'])
                 if host is not None:
                     result[host] = dict(
                         bind=container,
@@ -2445,14 +2465,14 @@ class Container(DockerBaseClass):
             for vol in self.parameters.volumes:
                 host = None
                 if ':' in vol:
-                    if len(vol.split(':')) == 3:
-                        host, container, mode = vol.split(':')
+                    parts = vol.split(':')
+                    if len(parts) == 3:
+                        host, container, mode = parts
                         if not is_volume_permissions(mode):
                             self.fail('Found invalid volumes mode: {0}'.format(mode))
-                    if len(vol.split(':')) == 2:
-                        parts = vol.split(':')
+                    if len(parts) == 2:
                         if not is_volume_permissions(parts[1]):
-                            host, container, mode = vol.split(':') + ['rw']
+                            host, container, mode = parts + ['rw']
                 if host:
                     param_vols.append("%s:%s:%s" % (host, container, mode))
         result = list(set(image_vols + param_vols))
@@ -2494,22 +2514,15 @@ class Container(DockerBaseClass):
 
         if self.parameters.volumes:
             for vol in self.parameters.volumes:
-                container = None
+                # We only expect anonymous volumes to show up in the list
                 if ':' in vol:
-                    if len(vol.split(':')) == 3:
-                        dummy, container, mode = vol.split(':')
-                        if not is_volume_permissions(mode):
-                            self.fail('Found invalid volumes mode: {0}'.format(mode))
-                    if len(vol.split(':')) == 2:
-                        parts = vol.split(':')
+                    parts = vol.split(':')
+                    if len(parts) == 3:
+                        continue
+                    if len(parts) == 2:
                         if not is_volume_permissions(parts[1]):
-                            dummy, container, mode = vol.split(':') + ['rw']
-                new_vol = dict()
-                if container:
-                    new_vol[container] = dict()
-                else:
-                    new_vol[vol] = dict()
-                expected_vols.update(new_vol)
+                            continue
+                expected_vols[vol] = dict()
 
         if not expected_vols:
             expected_vols = None
@@ -2745,7 +2758,7 @@ class ContainerManager(DockerBaseClass):
                 self.container_stop(container.Id)
                 container = self._get_container(container.Id)
 
-            if state == 'started' and container.paused is not None and container.paused != self.parameters.paused:
+            if state == 'started' and self.parameters.paused is not None and container.paused != self.parameters.paused:
                 self.diff_tracker.add('paused', parameter=self.parameters.paused, active=was_paused)
                 if not self.check_mode:
                     try:

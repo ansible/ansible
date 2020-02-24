@@ -27,18 +27,6 @@ options:
         type: path
         required: yes
         aliases: [ dest, name ]
-    get_md5:
-        description:
-            - Whether to return the checksum sum of the file. Between Ansible 1.9
-              and Ansible 2.2 this is no longer an MD5, but a SHA1 instead. As of Ansible
-              2.3 this is back to an MD5. Will return None if host is unable to
-              use specified algorithm.
-            - The default of this option changed from C(yes) to C(no) in Ansible 2.5
-              and will be removed altogether in Ansible 2.9.
-            - Use C(get_checksum=yes) with C(checksum_algorithm=md5) to return an
-              md5 hash under the C(checksum) return value.
-        type: bool
-        default: no
     get_checksum:
         description:
             - Whether to return a checksum of the file (default sha1)
@@ -220,11 +208,6 @@ stat:
             returned: success, path exists and the path is a symbolic link or junction point
             type: str
             sample: ..\link
-        md5:
-            description: The MD5 checksum of a file (Between Ansible 1.9 and Ansible 2.2 this was returned as a SHA1 hash), will be removed in Ansible 2.9.
-            returned: success, path exist, path is a file, get_md5 == True
-            type: str
-            sample: 09cb79e8fc7453c84a07f644e441fd81623b7f98
         nlink:
             description: Number of links to the file (hard links).
             returned: success, path exists

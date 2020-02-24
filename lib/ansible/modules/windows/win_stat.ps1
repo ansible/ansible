@@ -59,7 +59,6 @@ $spec = @{
         path = @{ type='path'; required=$true; aliases=@( 'dest', 'name' ) }
         get_checksum = @{ type='bool'; default=$true }
         checksum_algorithm = @{ type='str'; default='sha1'; choices=@( 'md5', 'sha1', 'sha256', 'sha384', 'sha512' ) }
-        get_md5 = @{ type='bool'; default=$false; removed_in_version='2.9' }
         follow = @{ type='bool'; default=$false }
     }
     supports_check_mode = $true
@@ -68,7 +67,6 @@ $spec = @{
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 $path = $module.Params.path
-$get_md5 = $module.Params.get_md5
 $get_checksum = $module.Params.get_checksum
 $checksum_algorithm = $module.Params.checksum_algorithm
 $follow = $module.Params.follow
@@ -111,7 +109,6 @@ If ($null -ne $info) {
         # owner = set outsite this dict in case it fails
         # sharename = a directory and isshared is True
         # checksum = a file and get_checksum: True
-        # md5 = a file and get_md5: True
     }
     try {
         $stat.owner = $info.GetAccessControl().Owner
@@ -144,13 +141,6 @@ If ($null -ne $info) {
         $stat.isreg = $true
         $stat.size = $info.Length
 
-        if ($get_md5) {
-            try {
-                $stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
-            } catch {
-                $module.FailJson("Failed to get MD5 hash of file, remove get_md5 to ignore this error: $($_.Exception.Message)", $_)
-            }
-        }
         if ($get_checksum) {
             try {
                 $stat.checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
