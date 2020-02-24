@@ -1,0 +1,2 @@
+bugfixes:
+    - also strip spaces around config values in pathlist as we do in list types
