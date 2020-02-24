@@ -1,0 +1,2 @@
+minor_changes:
+  - uri - add support for SOCKS5 proxy (https://github.com/ansible/ansible/issues/44338)
