@@ -113,6 +113,9 @@ options:
                   gre:
                     description: Cisco's GRE tunneling.
                     type: bool
+                  hbh:
+                    description: Hop by Hop options header. Valid for IPV6
+                    type: bool
                   icmp:
                     description: Internet Control Message Protocol.
                     type: dict
@@ -297,6 +300,9 @@ options:
                         type: bool
                   ip:
                     description: Any Internet Protocol.
+                    type: bool
+                  ipv6:
+                    description: Any IPv6.
                     type: bool
                   ipinip:
                     description: IP in IP tunneling.

@@ -114,6 +114,7 @@ class AclArgs(object):
                                         'eigrp': {'type': 'bool'},
                                         'esp': {'type': 'bool'},
                                         'gre': {'type': 'bool'},
+                                        'hbh': {'type': 'bool'},
                                         'icmp': {
                                             'type': 'dict',
                                             'options': {
@@ -181,6 +182,7 @@ class AclArgs(object):
                                             }
                                         },
                                         'ip': {'type': 'bool'},
+                                        'ipv6': {'type': 'bool'},
                                         'ipinip': {'type': 'bool'},
                                         'nos': {'type': 'bool'},
                                         'ospf': {'type': 'bool'},

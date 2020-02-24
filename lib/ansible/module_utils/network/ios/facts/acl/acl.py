@@ -354,8 +354,8 @@ class AclFacts(object):
                 ace_options['grant'] = 'deny'
                 each_list.remove('deny')
 
-            protocol_option = ['ahp', 'eigrp', 'esp', 'gre', 'icmp', 'igmp', 'ip', 'ipinip', 'nos', 'ospf', 'pcp',
-                               'pim', 'sctp', 'tcp', 'udp']
+            protocol_option = ['ahp', 'eigrp', 'esp', 'gre', 'hbh', 'icmp', 'igmp', 'ip', 'ipv6', 'ipinip', 'nos',
+                               'ospf', 'pcp', 'pim', 'sctp', 'tcp', 'udp']
             tcp_flags = ['ack', 'established', 'fin', 'psh', 'rst', 'syn', 'urg']
             icmp_options = ['administratively_prohibited', 'alternate_address', 'conversion_error',
                             'dod_host_prohibited', 'dod_net_prohibited', 'echo', 'echo_reply',
