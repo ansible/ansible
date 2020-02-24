@@ -98,12 +98,16 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                         dict(
                             name='MGMT-HOSTS',
                             description='This group has the Management hosts address lists',
-                            address=['192.0.1.1', '192.0.1.3', '192.0.1.5']),
+                            members=[
+                                dict(address='192.0.1.1'),
+                                dict(address='192.0.1.3'),
+                                dict(address='192.0.1.5')
+                            ])
                     ],
                     network_group=[
                         dict(name='MGMT',
                              description='This group has the Management network addresses',
-                             address=['192.0.1.0/24'])
+                             members=[dict(address='192.0.1.0/24')])
                     ])),
                 state="merged"))
         commands = [
@@ -137,12 +141,16 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                 address_group=[
                     dict(name='RND-HOSTS',
                          description='This group has the Management hosts address lists',
-                         address=['192.0.2.1', '192.0.2.3', '192.0.2.5'])
+                         members=[
+                             dict(address='192.0.2.1'),
+                             dict(address='192.0.2.3'),
+                             dict(address='192.0.2.5')
+                         ])
                 ],
                 network_group=[
                     dict(name='RND',
                          description='This group has the Management network addresses',
-                         address=['192.0.2.0/24'])
+                         members=[dict(address='192.0.2.0/24')])
                 ])),
                 state="merged"))
         self.execute_module(changed=False, commands=[])
@@ -153,12 +161,16 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                 address_group=[
                     dict(name='RND-HOSTS',
                          description='This group has the Management hosts address lists',
-                         address=['192.0.2.1', '192.0.2.7', '192.0.2.9'])
+                         members=[
+                             dict(address='192.0.2.1'),
+                             dict(address='192.0.2.7'),
+                             dict(address='192.0.2.9')
+                         ])
                 ],
                 network_group=[
                     dict(name='RND',
                          description='This group has the Management network addresses',
-                         address=['192.0.2.0/24'])
+                         members=[dict(address='192.0.2.0/24')])
                 ])),
                 state="replaced"))
         commands = [
@@ -175,12 +187,16 @@ class TestVyosFirewallRulesModule(TestVyosModule):
                 address_group=[
                     dict(name='RND-HOSTS',
                          description='This group has the Management hosts address lists',
-                         address=['192.0.2.1', '192.0.2.3', '192.0.2.5'])
+                         members=[
+                             dict(address='192.0.2.1'),
+                             dict(address='192.0.2.3'),
+                             dict(address='192.0.2.5')
+                         ])
                 ],
                 network_group=[
                     dict(name='RND',
                          description='This group has the Management network addresses',
-                         address=['192.0.2.0/24'])
+                         members=[dict(address='192.0.2.0/24')])
                 ])),
                 state="replaced"))
         self.execute_module(changed=False, commands=[])

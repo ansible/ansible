@@ -34,20 +34,20 @@
             address_group: 
               - name: 'SALES-HOSTS'
                 description: 'Sales office hosts address list'
-                address:
-                  - 192.0.2.1
-                  - 192.0.2.2
-                  - 192.0.2.3
+                members:
+                  - address: 192.0.2.1
+                  - address: 192.0.2.2
+                  - address: 192.0.2.3
               - name: 'ENG-HOSTS'
                 description: 'Sales office hosts address list'
-                address:
-                  - 192.0.3.1
-                  - 192.0.3.2
+                members:
+                  - address: 192.0.3.1
+                  - address: 192.0.3.2
             network_group: 
               - name: 'MGMT'
                 description: 'This group has the Management network addresses'
-                address:
-                  - 192.0.1.0/24
+                members:
+                  - address: 192.0.1.0/24
         state: replaced
     register: result
 

@@ -222,11 +222,11 @@ class Firewall_globalFacts(object):
         a_lst = ['name', 'description']
         group = self.parse_attr(conf, a_lst)
         key = self.get_key(type)
-        r_sub = {key[0]: self.parse_address_lst(conf, name, key[1])}
+        r_sub = {key[0]: self.parse_address_port_lst(conf, name, key[1])}
         group.update(r_sub)
         return group
 
-    def parse_address_lst(self, conf, name, key):
+    def parse_address_port_lst(self, conf, name, key):
         """
         This function forms the regex to fetch the
         group members attributes.
@@ -239,7 +239,10 @@ class Firewall_globalFacts(object):
         attribs = findall(r'^.*' + name + ' ' + key + ' (\\S+)', conf, M)
         if attribs:
             for attr in attribs:
-                l_lst.append(attr.strip("'"))
+                if key == 'port':
+                    l_lst.append({"port": attr.strip("'")})
+                else:
+                    l_lst.append({"address": attr.strip("'")})
         return l_lst
 
     def parse_attr(self, conf, attr_list, match=None, type=None):
@@ -285,11 +288,11 @@ class Firewall_globalFacts(object):
         """
         key = ()
         if type == 'port-group':
-            key = ('port_member', 'port')
+            key = ('members', 'port')
         elif type == 'address-group':
-            key = ('address', 'address')
+            key = ('members', 'address')
         elif type == 'network-group':
-            key = ('address', 'network')
+            key = ('members', 'network')
         return key
 
     def map_regex(self, attrib, type=None):

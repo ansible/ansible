@@ -324,7 +324,7 @@ class Firewall_global(ConfigBase):
                                 continue
                             elif not (h and self._in_target(h, key)) and not self._is_grp_del(h, want, key):
                                 commands.append(cmd + ' ' + want['name'] + ' ' + key)
-                        elif key == 'address' or key == 'port':
+                        elif key == 'members':
                             commands.extend(self._render_ports_addrs(key, want, h, opr, cmd, want['name'], attr))
         return commands
 
@@ -349,14 +349,25 @@ class Firewall_global(ConfigBase):
 
         if want:
             if opr:
-                addrs = list_diff_want_only(want, have)
-                for addr in addrs:
-                    commands.append(cmd + ' ' + name + ' ' + self._grp_type(type) + ' ' + addr)
+                members = list_diff_want_only(want, have)
+                for member in members:
+                    commands.append(
+                        cmd + ' ' + name + ' ' + self._grp_type(type) + ' ' + member[self._get_mem_type(type)]
+                    )
             elif not opr and have:
-                addrs = list_diff_want_only(want, have)
-                for addr in addrs:
-                    commands.append(cmd + ' ' + name + ' ' + self._grp_type(type) + ' ' + addr)
+                members = list_diff_want_only(want, have)
+                for member in members:
+                    commands.append(
+                        cmd + ' ' + name + ' ' + self._grp_type(type) + ' ' + member[self._get_mem_type(type)]
+                    )
         return commands
+
+    def _get_mem_type(self, group):
+        """
+        This function returns the member type
+        based on the type of group.
+        """
+        return 'port' if group == 'port_group' else 'address'
 
     def _render_state_policy(self, attr, w, h, opr):
         """

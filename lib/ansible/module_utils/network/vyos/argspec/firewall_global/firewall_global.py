@@ -46,11 +46,17 @@ class Firewall_globalArgs(object):  # pylint: disable=R0903
                         'address_group': {
                             'elements': 'dict',
                             'options': {
-                                'address': {
-                                    'type': 'list'
-                                },
                                 'description': {
                                     'type': 'str'
+                                },
+                                'members': {
+                                    'elements': 'dict',
+                                    'options': {
+                                        'address': {
+                                            'type': 'str'
+                                        }
+                                    },
+                                    'type': 'list'
                                 },
                                 'name': {
                                     'required': True,
@@ -62,11 +68,17 @@ class Firewall_globalArgs(object):  # pylint: disable=R0903
                         'network_group': {
                             'elements': 'dict',
                             'options': {
-                                'address': {
-                                    'type': 'list'
-                                },
                                 'description': {
                                     'type': 'str'
+                                },
+                                'members': {
+                                    'elements': 'dict',
+                                    'options': {
+                                        'address': {
+                                            'type': 'str'
+                                        }
+                                    },
+                                    'type': 'list'
                                 },
                                 'name': {
                                     'required': True,
@@ -81,12 +93,18 @@ class Firewall_globalArgs(object):  # pylint: disable=R0903
                                 'description': {
                                     'type': 'str'
                                 },
+                                'members': {
+                                    'elements': 'dict',
+                                    'options': {
+                                        'port': {
+                                            'type': 'str'
+                                        }
+                                    },
+                                    'type': 'list'
+                                },
                                 'name': {
                                     'required': True,
                                     'type': 'str'
-                                },
-                                'port_member': {
-                                    'type': 'list'
                                 }
                             },
                             'type': 'list'

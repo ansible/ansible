@@ -32,15 +32,15 @@
             address_group: 
               - name: 'MGMT-HOSTS'
                 description: 'This group has the Management hosts address list'
-                address:
-                  - 192.0.1.1
-                  - 192.0.1.3
-                  - 192.0.1.5
+                members:
+                  - address: 192.0.1.1
+                  - address: 192.0.1.3
+                  - address: 192.0.1.5
             network_group: 
               - name: 'MGMT'
                 description: 'This group has the Management network addresses'
-                address:
-                  - 192.0.1.0/24
+                members:
+                  - address: 192.0.1.0/24
         state: merged
       register: result
 

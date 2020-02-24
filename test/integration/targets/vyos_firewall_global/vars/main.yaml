@@ -30,15 +30,15 @@ merged:
     config_trap: true
     group:
       address_group:
-      - address:
-        - 192.0.1.1
-        - 192.0.1.3
-        - 192.0.1.5
+      - members:
+        - address: 192.0.1.1
+        - address: 192.0.1.3
+        - address: 192.0.1.5
         description: This group has the Management hosts address list
         name: MGMT-HOSTS
       network_group:
-      - address:
-        - 192.0.1.0/24
+      - members:
+        - address: 192.0.1.0/24
         description: This group has the Management network addresses
         name: MGMT
     log_martians: true
@@ -86,15 +86,15 @@ populate:
     address_group:
       - name: 'MGMT-HOSTS'
         description: 'This group has the Management hosts address list'
-        address:
-          - 192.0.1.1
-          - 192.0.1.3
-          - 192.0.1.5
+        members:
+          - address: 192.0.1.1
+          - address: 192.0.1.3
+          - address: 192.0.1.5
     network_group:
       - name: 'MGMT'
         description: 'This group has the Management network addresses'
-        address:
-          - 192.0.1.0/24
+        members:
+          - address: 192.0.1.0/24
 
 replaced:
   commands:
@@ -113,20 +113,20 @@ replaced:
     config_trap: true
     group:
       address_group:
-      - address:
-        - 192.0.3.1
-        - 192.0.3.2
+      - members:
+        - address: 192.0.3.1
+        - address: 192.0.3.2
         description: 'Sales office hosts address list'
         name: 'ENG-HOSTS'
-      - address:
-        - 192.0.2.1
-        - 192.0.2.2
-        - 192.0.2.3
+      - members:
+        - address: 192.0.2.1
+        - address: 192.0.2.2
+        - address: 192.0.2.3
         description: 'Sales office hosts address list'
         name: 'SALES-HOSTS'
       network_group:
-      - address:
-        - 192.0.1.0/24
+      - members:
+        - address: 192.0.1.0/24
         description: 'This group has the Management network addresses'
         name: 'MGMT'
     log_martians: true
@@ -207,12 +207,12 @@ round_trip:
       address_group:
         - name: 'MGMT-HOSTS'
           description: 'This group has the Management hosts address list'
-          address:
-            - 192.0.1.1
-            - 192.0.1.3
-            - 192.0.1.5
+          members:
+            - address: 192.0.1.1
+            - address: 192.0.1.3
+            - address: 192.0.1.5
       network_group:
         - name: 'MGMT'
           description: 'This group has the Management network addresses'
-          address:
-            - 192.0.1.0/24
+          members:
+            - address: 192.0.1.0/24

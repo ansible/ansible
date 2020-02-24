@@ -128,12 +128,17 @@ options:
                  description:
                    - Allows you to specify a brief description for the address group.
                  type: str
-               address:
+               members:
                  description:
                    - Address-group members.
                    - IPv4 address to match.
                    - IPv4 range to match.
                  type: list
+                 elements: dict
+                 suboptions:
+                   address:
+                     description: IP address.
+                     type: str
            network_group:
              description:
                - Defines a group of networks for referencing in firewall rules.
@@ -149,11 +154,16 @@ options:
                  description:
                    - Allows you to specify a brief description for the network group.
                  type: str
-               address:
+               members:
                  description:
                    - Adds an IPv4 network to the specified network group.
                    - The format is ip-address/prefix.
                  type: list
+                 elements: dict
+                 suboptions:
+                   address:
+                     description: IP address.
+                     type: str
            port_group:
              description:
                - Defines a group of ports for referencing in firewall rules.
@@ -169,10 +179,15 @@ options:
                  description:
                    - Allows you to specify a brief description for the port group.
                  type: str
-               port_member:
+               members:
                  description:
                    - Port-group member.
                  type: list
+                 elements: dict
+                 suboptions:
+                   port:
+                     description: IP address.
+                     type: str
 
       log_martians:
         description:
@@ -270,15 +285,15 @@ EXAMPLES = """
         address_group:
           - name: 'MGMT-HOSTS'
             description: 'This group has the Management hosts address list'
-            address:
-              - 192.0.1.1
-              - 192.0.1.3
-              - 192.0.1.5
+            members:
+              - address: 192.0.1.1
+              - address: 192.0.1.3
+              - address: 192.0.1.5
         network_group:
           - name: 'MGMT'
             description: 'This group has the Management network addresses'
-            address:
-            - 192.0.1.0/24
+            members:
+              - address: 192.0.1.0/24
     state: merged
 #
 #
@@ -317,21 +332,29 @@ EXAMPLES = """
 #        "group": {
 #            "address_group": [
 #                {
-#                    "address": [
-#                        "192.0.1.1",
-#                        "192.0.1.3",
-#                        "192.0.1.5"
-#                    ],
 #                    "description": "This group has the Management hosts address list",
+#                    "members": [
+#                        {
+#                            "address": "192.0.1.1"
+#                        },
+#                        {
+#                            "address": "192.0.1.3"
+#                        },
+#                        {
+#                            "address": "192.0.1.5"
+#                        }
+#                    ],
 #                    "name": "MGMT-HOSTS"
 #                }
 #            ],
 #            "network_group": [
 #                {
-#                    "address": [
-#                        "192.0.1.0/24"
-#                    ],
 #                    "description": "This group has the Management network addresses",
+#                    "members": [
+#                        {
+#                            "address": "192.0.1.0/24"
+#                        }
+#                    ],
 #                    "name": "MGMT"
 #                }
 #            ]
@@ -433,29 +456,41 @@ EXAMPLES = """
 #        "group": {
 #            "address_group": [
 #                {
-#                    "address": [
-#                        "192.0.3.1",
-#                        "192.0.3.2"
-#                    ],
 #                    "description": "Sales office hosts address list",
+#                    "members": [
+#                        {
+#                            "address": "192.0.3.1"
+#                        },
+#                        {
+#                            "address": "192.0.3.2"
+#                        }
+#                    ],
 #                    "name": "ENG-HOSTS"
 #                },
 #                {
-#                    "address": [
-#                        "192.0.2.1",
-#                        "192.0.2.2",
-#                        "192.0.2.3"
-#                    ],
 #                    "description": "Sales office hosts address list",
+#                    "members": [
+#                        {
+#                            "address": "192.0.2.1"
+#                        },
+#                        {
+#                            "address": "192.0.2.2"
+#                        },
+#                        {
+#                            "address": "192.0.2.3"
+#                        }
+#                    ],
 #                    "name": "SALES-HOSTS"
 #                }
 #            ],
 #            "network_group": [
 #                {
-#                    "address": [
-#                        "192.0.1.0/24"
-#                    ],
 #                    "description": "This group has the Management network addresses",
+#                    "members": [
+#                        {
+#                            "address": "192.0.1.0/24"
+#                        }
+#                    ],
 #                    "name": "MGMT"
 #                }
 #            ]
@@ -541,21 +576,29 @@ EXAMPLES = """
 #        "group": {
 #            "address_group": [
 #                {
-#                    "address": [
-#                        "192.0.1.1",
-#                        "192.0.1.3",
-#                        "192.0.1.5"
-#                    ],
 #                    "description": "This group has the Management hosts address list",
+#                    "members": [
+#                        {
+#                            "address": "192.0.1.1"
+#                        },
+#                        {
+#                            "address": "192.0.1.3"
+#                        },
+#                        {
+#                            "address": "192.0.1.5"
+#                        }
+#                    ],
 #                    "name": "MGMT-HOSTS"
 #                }
 #            ],
 #            "network_group": [
 #                {
-#                    "address": [
-#                        "192.0.1.0/24"
-#                    ],
 #                    "description": "This group has the Management network addresses",
+#                    "members": [
+#                        {
+#                            "address": "192.0.1.0/24"
+#                        }
+#                    ],
 #                    "name": "MGMT"
 #                }
 #            ]
@@ -665,20 +708,20 @@ EXAMPLES = """
         address_group:
           - name: 'SALES-HOSTS'
             description: 'Sales office hosts address list'
-            address:
-              - 192.0.2.1
-              - 192.0.2.2
-              - 192.0.2.3
+            members:
+              - address: 192.0.2.1
+              - address: 192.0.2.2
+              - address: 192.0.2.3
           - name: 'ENG-HOSTS'
             description: 'Sales office hosts address list'
-            address:
-              - 192.0.3.1
-              - 192.0.3.2
+            members:
+              - address: 192.0.3.1
+              - address: 192.0.3.2
         network_group:
           - name: 'MGMT'
             description: 'This group has the Management network addresses'
-            address:
-              - 192.0.1.0/24
+            members:
+              - address: 192.0.1.0/24
     state: replaced
 #
 #
@@ -691,21 +734,29 @@ EXAMPLES = """
 #        "group": {
 #            "address_group": [
 #                {
-#                    "address": [
-#                        "192.0.1.1",
-#                        "192.0.1.3",
-#                        "192.0.1.5"
-#                    ],
 #                    "description": "This group has the Management hosts address list",
+#                    "members": [
+#                        {
+#                            "address": "192.0.1.1"
+#                        },
+#                        {
+#                            "address": "192.0.1.3"
+#                        },
+#                        {
+#                            "address": "192.0.1.5"
+#                        }
+#                    ],
 #                    "name": "MGMT-HOSTS"
 #                }
 #            ],
 #            "network_group": [
 #                {
-#                    "address": [
-#                        "192.0.1.0/24"
-#                    ],
 #                    "description": "This group has the Management network addresses",
+#                    "members": [
+#                        {
+#                            "address": "192.0.1.0/24"
+#                        }
+#                    ],
 #                    "name": "MGMT"
 #                }
 #            ]
@@ -759,29 +810,41 @@ EXAMPLES = """
 #        "group": {
 #            "address_group": [
 #                {
-#                    "address": [
-#                        "192.0.3.1",
-#                        "192.0.3.2"
-#                    ],
 #                    "description": "Sales office hosts address list",
+#                    "members": [
+#                        {
+#                            "address": "192.0.3.1"
+#                        },
+#                        {
+#                            "address": "192.0.3.2"
+#                        }
+#                    ],
 #                    "name": "ENG-HOSTS"
 #                },
 #                {
-#                    "address": [
-#                        "192.0.2.1",
-#                        "192.0.2.2",
-#                        "192.0.2.3"
-#                    ],
 #                    "description": "Sales office hosts address list",
+#                    "members": [
+#                        {
+#                            "address": "192.0.2.1"
+#                        },
+#                        {
+#                            "address": "192.0.2.2"
+#                        },
+#                        {
+#                            "address": "192.0.2.3"
+#                        }
+#                    ],
 #                   "name": "SALES-HOSTS"
 #                }
 #            ],
 #            "network_group": [
 #                {
-#                    "address": [
-#                        "192.0.1.0/24"
-#                    ],
 #                    "description": "This group has the Management network addresses",
+#                    "members": [
+#                        {
+#                            "address": "192.0.1.0/24"
+#                        }
+#                    ],
 #                    "name": "MGMT"
 #                }
 #            ]
@@ -890,29 +953,41 @@ EXAMPLES = """
 #        "group": {
 #            "address_group": [
 #                {
-#                    "address": [
-#                        "192.0.3.1",
-#                        "192.0.3.2"
-#                    ],
 #                    "description": "Sales office hosts address list",
+#                    "members": [
+#                        {
+#                            "address": "192.0.3.1"
+#                        },
+#                        {
+#                            "address": "192.0.3.2"
+#                        }
+#                    ],
 #                    "name": "ENG-HOSTS"
 #                },
 #                {
-#                    "address": [
-#                        "192.0.2.1",
-#                        "192.0.2.2",
-#                        "192.0.2.3"
-#                    ],
 #                    "description": "Sales office hosts address list",
+#                    "members": [
+#                        {
+#                            "address": "192.0.2.1"
+#                        },
+#                        {
+#                            "address": "192.0.2.2"
+#                        },
+#                        {
+#                            "address": "192.0.2.3"
+#                        }
+#                    ],
 #                    "name": "SALES-HOSTS"
 #                }
 #            ],
 #            "network_group": [
 #                {
-#                    "address": [
-#                        "192.0.1.0/24"
-#                    ],
 #                    "description": "This group has the Management network addresses",
+#                    "members": [
+#                        {
+#                            "address": "192.0.1.0/24"
+#                        }
+#                    ],
 #                    "name": "MGMT"
 #                }
 #            ]
@@ -1006,20 +1081,20 @@ EXAMPLES = """
         address_group:
           - name: 'SALES-HOSTS'
             description: 'Sales office hosts address list'
-            address:
-              - 192.0.2.1
-              - 192.0.2.2
-              - 192.0.2.3
+            members:
+              - address: 192.0.2.1
+              - address: 192.0.2.2
+              - address: 192.0.2.3
           - name: 'ENG-HOSTS'
             description: 'Sales office hosts address list'
-            address:
-              - 192.0.3.1
-              - 192.0.3.2
+            members:
+              - address: 192.0.3.1
+              - address: 192.0.3.2
         network_group:
           - name: 'MGMT'
             description: 'This group has the Management network addresses'
-            address:
-              - 192.0.1.0/24
+            members:
+             - address: 192.0.1.0/24
     state: rendered
 #
 #
