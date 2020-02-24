@@ -186,20 +186,20 @@ options:
                  elements: dict
                  suboptions:
                    port:
-                     description: IP address.
+                     description: Defines the number.
                      type: str
 
       log_martians:
         description:
           - Specifies whether or not to record packets with invalid addresses in the log.
-          - (enable) Logs packets with invalid addresses.
-          - (disable) Does not log packets with invalid addresses.
+          - (True) Logs packets with invalid addresses.
+          - (False) Does not log packets with invalid addresses.
         type: bool
       syn_cookies:
         description:
           - Specifies policy for using TCP SYN cookies with IPv4.
-          - (enable) Enables TCP SYN cookies with IPv4.
-          - (disable) Disables TCP SYN cookies with IPv4.
+          - (True) Enables TCP SYN cookies with IPv4.
+          - (False) Disables TCP SYN cookies with IPv4.
         type: bool
       twa_hazards_protection:
         description:
