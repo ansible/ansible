@@ -331,19 +331,20 @@ class Static_Routes(ConfigBase):
                         for route_want in addr_want.get('routes'):
                             check = False
                             for h in have:
-                                for addr_have in h.get('address_families'):
-                                    for route_have in addr_have.get('routes'):
-                                        if route_want.get('dest') == route_have.get('dest') \
-                                                and addr_want['afi'] == addr_have['afi']:
-                                            check = True
-                                            if route_want.get('next_hops'):
-                                                commands.extend(self._clear_config({}, w, {}, addr_want, {}, route_want))
-                                            else:
-                                                commands.extend(self._clear_config({}, h, {}, addr_have, {}, route_have))
+                                if h.get('address_families'):
+                                    for addr_have in h.get('address_families'):
+                                        for route_have in addr_have.get('routes'):
+                                            if route_want.get('dest') == route_have.get('dest') \
+                                                    and addr_want['afi'] == addr_have['afi']:
+                                                check = True
+                                                if route_want.get('next_hops'):
+                                                    commands.extend(self._clear_config({}, w, {}, addr_want, {}, route_want))
+                                                else:
+                                                    commands.extend(self._clear_config({}, h, {}, addr_have, {}, route_have))
+                                        if check:
+                                            break
                                     if check:
                                         break
-                                if check:
-                                    break
                 else:
                     for h in have:
                         for addr_have in h.get('address_families'):

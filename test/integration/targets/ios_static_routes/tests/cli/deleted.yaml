@@ -58,6 +58,7 @@
     - name: Assert that the previous task was idempotent
       assert:
         that:
+          - "result.commands|length == 0"
           - "result.changed == false"
 
   always:
