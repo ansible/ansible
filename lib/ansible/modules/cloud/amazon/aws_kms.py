@@ -40,7 +40,7 @@ options:
     type: str
   enable_key_rotation:
     description:
-    - Automatically rotate this key every year.
+    - Whether the key should be automatically rotated every year.
     required: false
     default: false
     type: bool
