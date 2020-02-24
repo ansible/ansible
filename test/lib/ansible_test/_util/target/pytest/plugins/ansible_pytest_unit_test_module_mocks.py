@@ -31,12 +31,10 @@ def patch_ansible_module(request, mocker):
 
 
 @pytest.fixture
-def stdin(mocker, request):
+def stdin(mocker, monkeypatch, request):
     """Patch and return stdin buffer with module args."""
-    old_args = ansible.module_utils.basic._ANSIBLE_ARGS
-    ansible.module_utils.basic._ANSIBLE_ARGS = None
-    old_argv = sys.argv
-    sys.argv = ['ansible_unittest']
+    monkeypatch.setattr(ansible.module_utils.basic, '_ANSIBLE_ARGS', None)
+    monkeypatch.setattr(sys, 'argv', ['ansible_unittest'])
 
     if isinstance(request.param, str):
         args = request.param
@@ -56,10 +54,7 @@ def stdin(mocker, request):
     mocker.patch('ansible.module_utils.basic.sys.stdin', mocker.MagicMock())
     mocker.patch('ansible.module_utils.basic.sys.stdin.buffer', fake_stdin)
 
-    yield fake_stdin
-
-    ansible.module_utils.basic._ANSIBLE_ARGS = old_args
-    sys.argv = old_argv
+    return fake_stdin
 
 
 # pylint: disable=invalid-name,redefined-outer-name,unused-argument
