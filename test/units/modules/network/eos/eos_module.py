@@ -23,7 +23,6 @@ import json
 import os
 
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
-from ansible.module_utils.network.common.utils import dict_diff, param_list_to_dict
 
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
