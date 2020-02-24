@@ -1334,11 +1334,12 @@ def get_action_args_with_defaults(action, args, defaults, templar, collection_li
     if module_defaults:
         module_defaults = templar.template(module_defaults)
 
-        # deal with collection-specific group defaults
+        # FIXME: This will become more efficient with nitzmahone's PluginLoadContext
         name, action_path = module_loader.find_plugin_with_name(action, collection_list=collection_list, check_aliases=True)
         if len(name.split('.')) == 6:
             collections_dir, collection_namespace, collection_name, section, subsection, shortname = name.split('.')
             name = '%s.%s.%s' % (collection_namespace, collection_name, shortname)
+        # deal with collection-specific group defaults
         if name in module_defaults:
             tmp_args.update((module_defaults[name]).copy())
 

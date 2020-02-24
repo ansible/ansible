@@ -281,9 +281,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         if not isinstance(value, list):
             value = [value]
 
-        module_defaults = []
+        module_defaults = {}
         action_groups = {}
 
+        # FIXME: this will be much more efficient with nitzmahone's tweaks to make collection_loader utils aware of /meta
         for path in C.COLLECTIONS_PATHS:
             if os.path.split(path)[-1] != 'ansible_collections':
                 path = os.path.join(path, 'ansible_collections')
@@ -308,7 +309,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                         if not len(module.split('.')) == 3:
                             # Looks like FQ was not provided: assume the default should only be applied to the module within the collection
                             module = '%s.%s.%s' % (action_group.split('.')[0], action_group.split('.')[1], module)
-                        module_defaults.append({module: module_default['group/%s' % action_group]})
+                        module_defaults[module] = module_default['group/%s' % action_group]
+                else:
+                    module_defaults.update(module_default)
+            if not action_groups:
+                module_defaults.update(module_default)
 
         setattr(self, name, module_defaults)
 
