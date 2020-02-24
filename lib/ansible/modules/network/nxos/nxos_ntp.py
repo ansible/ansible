@@ -250,7 +250,7 @@ def set_ntp_server_peer(peer_type, address, prefer, key_id, vrf_name):
 
 
 def config_ntp(delta, existing):
-    if (delta.get('address') or delta.get('peer_type') or delta.get('vrf_name') or
+    if (delta.get('address') or delta.get('peer_type') or 'vrf_name' in delta or
             delta.get('key_id') or delta.get('prefer')):
         address = delta.get('address', existing.get('address'))
         peer_type = delta.get('peer_type', existing.get('peer_type'))
@@ -359,6 +359,9 @@ def main():
                 source=source)
 
     proposed = dict((k, v) for k, v in args.items() if v is not None)
+
+    if "address" in proposed:
+        proposed.setdefault('vrf_name', None)
 
     existing, peer_server_list = get_ntp_existing(address, peer_type, module)
 
