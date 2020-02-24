@@ -1,0 +1,2 @@
+bugfixes:
+  - edgeos_config - fixed issue of handling single quotation marks. Now fails when unmatched (odd numbers)

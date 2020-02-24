@@ -92,3 +92,14 @@ class TestEdgeosConfigModule(TestEdgeosModule):
                  'set system interfaces ethernet eth0 description Outside']
         set_module_args(dict(lines=lines, match='none'))
         self.execute_module(changed=True, commands=lines, sort=False)
+
+    def test_edgeos_config_single_quote_wrapped_values(self):
+        lines = ["set system interfaces ethernet eth0 description 'tests single quotes'"]
+        set_module_args(dict(lines=lines))
+        commands = ["set system interfaces ethernet eth0 description 'tests single quotes'"]
+        self.execute_module(changed=True, commands=commands)
+
+    def test_edgeos_config_single_quote_wrapped_values_failure(self):
+        lines = ["set system interfaces ethernet eth0 description 'test's single quotes'"]
+        set_module_args(dict(lines=lines))
+        self.execute_module(failed=True)
