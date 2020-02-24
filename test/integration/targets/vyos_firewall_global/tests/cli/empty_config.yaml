@@ -1,0 +1,47 @@
+---
+- debug:
+    msg: "START vyos_firewall_global empty_config integration tests on connection={{ ansible_connection }}"
+
+- name: Merged with empty config should give appropriate error message
+  vyos_firewall_global:
+    config:
+    state: merged
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result.msg == 'value of config parameter must not be empty for state merged'
+
+- name: Replaced with empty config should give appropriate error message
+  vyos_firewall_global:
+    config:
+    state: replaced
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result.msg == 'value of config parameter must not be empty for state replaced'
+
+- name: Parsed with empty running_config should give appropriate error message
+  vyos_firewall_global:
+    running_config:
+    state: parsed
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result.msg == 'value of running_config parameter must not be empty for state parsed'
+
+- name: Rendered with empty config should give appropriate error message
+  vyos_firewall_global:
+    config:
+    state: rendered
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result.msg == 'value of config parameter must not be empty for state rendered'

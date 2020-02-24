@@ -1,0 +1,84 @@
+---
+- debug:
+      msg: "START vyos_firewall_global replaced integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate.yaml
+
+- block:
+  - name: Replace device configurations of listed firewall with provided configurations
+    vyos_firewall_global: &replaced
+        config:
+          validation: strict
+          config_trap: True
+          log_martians: True
+          syn_cookies: True
+          twa_hazards_protection: True
+          ping:
+           all: True
+           broadcast: True
+          state_policy:
+            - connection_type: 'established'
+              action: 'accept'
+              log: True
+            - connection_type: 'invalid'
+              action: 'reject'
+          route_redirects:
+            - afi: 'ipv4'
+              ip_src_route: True
+              icmp_redirects:
+                send: True
+                receive: False  
+          group:
+            address_group: 
+              - name: 'SALES-HOSTS'
+                description: 'Sales office hosts address list'
+                members:
+                  - address: 192.0.2.1
+                  - address: 192.0.2.2
+                  - address: 192.0.2.3
+              - name: 'ENG-HOSTS'
+                description: 'Sales office hosts address list'
+                members:
+                  - address: 192.0.3.1
+                  - address: 192.0.3.2
+            network_group: 
+              - name: 'MGMT'
+                description: 'This group has the Management network addresses'
+                members:
+                  - address: 192.0.1.0/24
+        state: replaced
+    register: result
+
+  - name: Assert that correct set of commands were generated
+    assert:
+        that:
+            - "{{ replaced['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+  - name: Assert that before dicts are correctly generated
+    assert:
+        that:
+            - "{{ populate == result['before'] }}"
+
+  - name: Assert that after dict is correctly generated
+    assert:
+        that:
+          - "{{ replaced['after'] == result['after'] }}"
+
+  - name: Replace device configurations of listed firewall  with provided configurarions (IDEMPOTENT)
+    vyos_firewall_global: *replaced
+    register: result
+
+  - name: Assert that task was idempotent
+    assert:
+        that:
+            - "result['changed'] == false"
+
+  - name: Assert that before dict is correctly generated
+    assert:
+        that:
+            - "{{ replaced['after'] == result['before'] }}"
+
+  always:
+  - include_tasks: _remove_config.yaml
