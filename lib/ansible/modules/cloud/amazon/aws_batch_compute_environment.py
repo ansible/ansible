@@ -231,18 +231,14 @@ output:
   type: dict
 '''
 
-from ansible.module_utils._text import to_native
-from ansible.module_utils.aws.batch import AWSConnection
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, HAS_BOTO3
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, camel_dict_to_snake_dict
 import re
-import traceback
 
 try:
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass  # Handled by HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -263,12 +259,11 @@ def set_api_params(module, module_params):
     return snake_dict_to_camel_dict(api_params)
 
 
-def validate_params(module, aws):
+def validate_params(module):
     """
     Performs basic parameter validation.
 
     :param module:
-    :param aws:
     :return:
     """
 
@@ -294,9 +289,9 @@ def validate_params(module, aws):
 #
 # ---------------------------------------------------------------------------------------------------
 
-def get_current_compute_environment(module, connection):
+def get_current_compute_environment(module, client):
     try:
-        environments = connection.client().describe_compute_environments(
+        environments = client.describe_compute_environments(
             computeEnvironments=[module.params['compute_environment_name']]
         )
         if len(environments['computeEnvironments']) > 0:
@@ -307,16 +302,15 @@ def get_current_compute_environment(module, connection):
         return None
 
 
-def create_compute_environment(module, aws):
+def create_compute_environment(module, client):
     """
         Adds a Batch compute environment
 
         :param module:
-        :param aws:
+        :param client:
         :return:
         """
 
-    client = aws.client('batch')
     changed = False
 
     # set API parameters
@@ -344,23 +338,21 @@ def create_compute_environment(module, aws):
         if not module.check_mode:
             client.create_compute_environment(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error creating compute environment: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg='Error creating compute environment')
 
     return changed
 
 
-def remove_compute_environment(module, aws):
+def remove_compute_environment(module, client):
     """
     Remove a Batch compute environment
 
     :param module:
-    :param aws:
+    :param client:
     :return:
     """
 
-    client = aws.client('batch')
     changed = False
 
     # set API parameters
@@ -370,13 +362,12 @@ def remove_compute_environment(module, aws):
         if not module.check_mode:
             client.delete_compute_environment(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error removing compute environment: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg='Error removing compute environment')
     return changed
 
 
-def manage_state(module, aws):
+def manage_state(module, client):
     changed = False
     current_state = 'absent'
     state = module.params['state']
@@ -392,7 +383,7 @@ def manage_state(module, aws):
     check_mode = module.check_mode
 
     # check if the compute environment exists
-    current_compute_environment = get_current_compute_environment(module, aws)
+    current_compute_environment = get_current_compute_environment(module, client)
     response = current_compute_environment
     if current_compute_environment:
         current_state = 'present'
@@ -423,27 +414,26 @@ def manage_state(module, aws):
             if updates:
                 try:
                     if not check_mode:
-                        update_env_response = aws.client().update_compute_environment(**compute_kwargs)
+                        update_env_response = client.update_compute_environment(**compute_kwargs)
                     if not update_env_response:
                         module.fail_json(msg='Unable to get compute environment information after creating')
                     changed = True
                     action_taken = "updated"
-                except (ParamValidationError, ClientError) as e:
-                    module.fail_json(msg="Unable to update environment: {0}".format(to_native(e)),
-                                     exception=traceback.format_exc())
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Unable to update environment.")
 
         else:
             # Create Batch Compute Environment
-            changed = create_compute_environment(module, aws)
+            changed = create_compute_environment(module, client)
             # Describe compute environment
             action_taken = 'added'
-        response = get_current_compute_environment(module, aws)
+        response = get_current_compute_environment(module, client)
         if not response:
             module.fail_json(msg='Unable to get compute environment information after creating')
     else:
         if current_state == 'present':
             # remove the compute environment
-            changed = remove_compute_environment(module, aws)
+            changed = remove_compute_environment(module, client)
             action_taken = 'deleted'
     return dict(changed=changed, batch_compute_environment_action=action_taken, response=response)
 
@@ -461,45 +451,37 @@ def main():
     :return dict: changed, batch_compute_environment_action, response
     """
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            state=dict(default='present', choices=['present', 'absent']),
-            compute_environment_name=dict(required=True),
-            type=dict(required=True, choices=['MANAGED', 'UNMANAGED']),
-            compute_environment_state=dict(required=False, default='ENABLED', choices=['ENABLED', 'DISABLED']),
-            service_role=dict(required=True),
-            compute_resource_type=dict(required=True, choices=['EC2', 'SPOT']),
-            minv_cpus=dict(type='int', required=True),
-            maxv_cpus=dict(type='int', required=True),
-            desiredv_cpus=dict(type='int'),
-            instance_types=dict(type='list', required=True),
-            image_id=dict(),
-            subnets=dict(type='list', required=True),
-            security_group_ids=dict(type='list', required=True),
-            ec2_key_pair=dict(),
-            instance_role=dict(required=True),
-            tags=dict(type='dict'),
-            bid_percentage=dict(type='int'),
-            spot_iam_fleet_role=dict(),
-            region=dict(aliases=['aws_region', 'ec2_region'])
-        )
+    argument_spec = dict(
+        state=dict(default='present', choices=['present', 'absent']),
+        compute_environment_name=dict(required=True),
+        type=dict(required=True, choices=['MANAGED', 'UNMANAGED']),
+        compute_environment_state=dict(required=False, default='ENABLED', choices=['ENABLED', 'DISABLED']),
+        service_role=dict(required=True),
+        compute_resource_type=dict(required=True, choices=['EC2', 'SPOT']),
+        minv_cpus=dict(type='int', required=True),
+        maxv_cpus=dict(type='int', required=True),
+        desiredv_cpus=dict(type='int'),
+        instance_types=dict(type='list', required=True),
+        image_id=dict(),
+        subnets=dict(type='list', required=True),
+        security_group_ids=dict(type='list', required=True),
+        ec2_key_pair=dict(),
+        instance_role=dict(required=True),
+        tags=dict(type='dict'),
+        bid_percentage=dict(type='int'),
+        spot_iam_fleet_role=dict(),
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
 
-    # validate dependencies
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required for this module.')
+    client = module.client('batch')
 
-    aws = AWSConnection(module, ['batch'])
+    validate_params(module)
 
-    validate_params(module, aws)
-
-    results = manage_state(module, aws)
+    results = manage_state(module, client)
 
     module.exit_json(**camel_dict_to_snake_dict(results, ignore_list=['Tags']))
 
