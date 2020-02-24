@@ -355,6 +355,44 @@
       - gitlab_project_variable_state.project_variable.updated|length == 0
       - gitlab_project_variable_state.project_variable.untouched[0] == "some"
 
+- name: test integer values
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      some: 42
+    purge: False
+  register: gitlab_project_variable_state
+
+- name: only one variable is left state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 0
+      - gitlab_project_variable_state.project_variable.untouched|length == 0
+      - gitlab_project_variable_state.project_variable.removed|length == 0
+      - gitlab_project_variable_state.project_variable.updated|length == 1
+
+- name: test float values
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      some: 42.23
+    purge: False
+  register: gitlab_project_variable_state
+
+- name: only one variable is left state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 0
+      - gitlab_project_variable_state.project_variable.untouched|length == 0
+      - gitlab_project_variable_state.project_variable.removed|length == 0
+      - gitlab_project_variable_state.project_variable.updated|length == 1
+
 - name: delete the last left variable
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"

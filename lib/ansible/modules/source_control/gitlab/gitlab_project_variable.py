@@ -197,7 +197,7 @@ def native_python_main(this_gitlab, purge, var_list, state, module):
 
     for key in var_list:
 
-        if isinstance(var_list[key], string_types) or isinstance(var_list[key], integer_types):
+        if isinstance(var_list[key], string_types) or isinstance(var_list[key], (integer_types, float)):
             value = var_list[key]
             masked = False
             protected = False
