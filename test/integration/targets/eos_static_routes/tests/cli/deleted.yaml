@@ -123,9 +123,6 @@
 
 
 - name: Delete attributes of given static routes - dest specific.
-=======
-- name: Delete attributes of given static routes.
->>>>>>> Added Integration tests
   eos_static_routes: &deleted
     config:
       - vrf: "testvrf"
