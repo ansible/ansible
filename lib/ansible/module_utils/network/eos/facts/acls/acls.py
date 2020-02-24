@@ -101,10 +101,8 @@ class AclsFacts(object):
         :returns: The generated config
         """
         config = deepcopy(spec)
-        afi_toplevel_list = []
         afi_list = []
         acls_list = []
-        afi_dict = {}
         name_dict = {}
         standard = 0
         operator = ['eq', 'lt', 'neq', 'range', 'gt']
@@ -241,7 +239,7 @@ class AclsFacts(object):
                         # acls_list.append(name_dict)
                         continue
                     if protocol == "tcp" or "6":
-                        ptotocol = "tcp"
+                        protocol = "tcp"
                         flags_dict = {}
                         if dev_config_remainder[0] in flags:
                             flaglist = dev_config_remainder.copy()

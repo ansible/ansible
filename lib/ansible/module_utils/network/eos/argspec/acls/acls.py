@@ -85,7 +85,8 @@ class AclsArgs(object):  # pylint: disable=R0903
                                     'type': 'str'
                                 },
                                 'line': {
-                                    'type': 'str'
+                                    'type': 'str',
+                                    'aliases': ['ace']
                                 },
                                 'hop_limit': {
                                     'type': 'dict'

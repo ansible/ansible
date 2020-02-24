@@ -87,7 +87,7 @@ class TestEosAclsModule(TestEosModule):
                      ])
             ], state="merged"))
         commands = ['ipv6 access-list standard test2', '10 permit ospf 30.2.0.0/8 any log']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acls_merged_idempotent(self):
         set_module_args(
@@ -109,7 +109,7 @@ class TestEosAclsModule(TestEosModule):
                               ])
                      ])
             ], state="merged"))
-        result = self.execute_module(changed=False, commands=[])
+        self.execute_module(changed=False, commands=[])
 
     def test_eos_acls_replaced(self):
         set_module_args(
@@ -128,7 +128,7 @@ class TestEosAclsModule(TestEosModule):
                      ])
             ], state="replaced"))
         commands = ['ip access-list test1', 'no 35', 'no 45', '10 permit ospf 30.2.0.0/8 any log']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acls_replaced_idempotent(self):
         set_module_args(
@@ -151,7 +151,7 @@ class TestEosAclsModule(TestEosModule):
                               ])
                      ])
             ], state="replaced"))
-        result = self.execute_module(changed=False, commands=[])
+        self.execute_module(changed=False, commands=[])
 
     def test_eos_acls_overridden(self):
         set_module_args(
@@ -170,7 +170,7 @@ class TestEosAclsModule(TestEosModule):
                      ])
             ], state="overridden"))
         commands = ['ip access-list test1', 'no 35', 'no 45', 'ip access-list test1', '10 permit ospf 30.2.0.0/8 any log']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acls_overridden_idempotent(self):
         set_module_args(
@@ -193,7 +193,7 @@ class TestEosAclsModule(TestEosModule):
                               ])
                      ])
             ], state="overridden"))
-        result = self.execute_module(changed=False, commands=[])
+        self.execute_module(changed=False, commands=[])
 
     def test_eos_acls_deletedaces(self):
         set_module_args(
@@ -211,7 +211,7 @@ class TestEosAclsModule(TestEosModule):
                      ])
             ], state="deleted"))
         commands = ['ip access-list test1', 'no 45']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acls_deletedacls(self):
         set_module_args(
@@ -222,7 +222,7 @@ class TestEosAclsModule(TestEosModule):
                      ])
             ], state="deleted"))
         commands = ['no ip access-list test1']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acls_deletedafis(self):
         set_module_args(
@@ -230,7 +230,7 @@ class TestEosAclsModule(TestEosModule):
                 dict(afi="ipv4")
             ], state="deleted"))
         commands = ['no ip access-list test1']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acls_gathered(self):
         set_module_args(

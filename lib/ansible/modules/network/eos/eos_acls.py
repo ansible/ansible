@@ -89,6 +89,7 @@ options:
               line:
                 description: For fact gathering, any ACE that is not fully parsed, while show up as a value of this attribute.
                 type: str
+                aliases: ['ace']
               protocol:
                 description:
                       - Specify the protocol to match.
@@ -785,6 +786,83 @@ EXAMPLES = """
 #    40 permit vlan 55 0xE2 icmpv6 any any log
 
 
+# Using Parsed
+
+# parsed_acls.cfg
+
+# ipv6 access-list standard test2
+#    10 permit any log
+# !
+# ip access-list test1
+#    35 deny ospf 20.0.0.0/8 any
+#    45 remark Run by ansible
+#    55 permit tcp any any
+# !
+
+- name: parse configs
+  eos_acls:
+    running_config: "{{ lookup('file', './parsed_acls.cfg') }}"
+    state: parsed
+
+# returns
+# "parsed": [
+#         {
+#             "acls": [
+#                 {
+#                     "aces": [
+#                         {
+#                             "destination": {
+#                                 "any": true
+#                             },
+#                             "grant": "deny",
+#                             "protocol": "ospf",
+#                             "sequence": 35,
+#                             "source": {
+#                                 "subnet_address": "20.0.0.0/8"
+#                             }
+#                         },
+#                         {
+#                             "remark": "Run by ansible",
+#                             "sequence": 45
+#                         },
+#                         {
+#                             "destination": {
+#                                 "any": true
+#                             },
+#                             "grant": "permit",
+#                             "protocol": "tcp",
+#                             "sequence": 55,
+#                             "source": {
+#                                 "any": true
+#                             }
+#                         }
+#                     ],
+#                     "name": "test1"
+#                 }
+#             ],
+#             "afi": "ipv4"
+#         },
+#         {
+#             "acls": [
+#                 {
+#                     "aces": [
+#                         {
+#                             "grant": "permit",
+#                             "log": true,
+#                             "sequence": 10,
+#                             "source": {
+#                                 "any": true
+#                             }
+#                         }
+#                     ],
+#                     "name": "test2",
+#                     "standard": true
+#                 }
+#             ],
+#             "afi": "ipv6"
+#         }
+#     ]
+
 """
 RETURN = """
 before:
@@ -805,7 +883,13 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample:
+    - ipv6 access-list standard test2
+    - 10 permit any log
+    - ip access-list test1
+    - 35 deny ospf 20.0.0.0/8 any
+    - 45 remark Run by ansible
+    - 55 permit tcp any any
 """
 
 
@@ -824,6 +908,7 @@ def main():
     required_if = [('state', 'merged', ('config',)),
                    ('state', 'replaced', ('config',)),
                    ('state', 'overridden', ('config',)),
+                   ('state', 'rendered', ('config',)),
                    ('state', 'parsed', ('running_config',))]
     mutually_exclusive = [('config', 'running_config')]
 

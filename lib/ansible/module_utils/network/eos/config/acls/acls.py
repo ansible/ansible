@@ -338,6 +338,7 @@ def set_commands(want, have):
 
 
 def get_updated_ace(w, h):
+    # gives the ace to be updated in case of merge update.
     w_updated = w.copy()
     for hkey in h.keys():
         if hkey not in w.keys():
@@ -474,6 +475,7 @@ def del_commands(want, have):
 
 
 def get_ace_diff(want_ace, have_ace):
+    # gives the diff of the aces passed.
     for h_a in have_ace:
         d = dict_diff(want_ace, h_a)
         if not d:
