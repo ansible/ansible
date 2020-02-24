@@ -211,6 +211,9 @@ matrix:
 
     - env: T=hcloud/2.7/1
     - env: T=hcloud/3.6/1
+
+    - env: T=hcloud/2.7/2
+    - env: T=hcloud/3.6/2
 branches:
   except:
     - "*-patch-*"
