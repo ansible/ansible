@@ -97,18 +97,23 @@ def compile_cli_command(cmd, store, domain, xml):
     # domain = credential domain
     # xml = string with XML contents or string with XML file location
 
+    # IF xml_type is code, we must stream it to remote file.
+    # IF xml_type is local file, we must copy local file to remote file.
+    # IF xml_type is remote file, just import the fucker.
+
     if 'credential' in cmd:
-        command = create-credentials-by-xml + store + domain + '<' + xml
-        # create-credentials-by-xml {{ store }} {{ domain }}  < {{ xml }}
+        command = 'create-credentials-by-xml' + store + domain + '<' + xml
         return('credential')
     elif 'node' in cmd:
-        # create-node < {{ xml }}
+        command = 'create-node < ' + xml
         return('node')
     elif 'job' in cmd:
-        # create-job < {{ xml }}
+        command = 'create-job < ' + xml
         return('job')
-    
-    # result = ssh_command
+
+    result = command
+    return result
+
 
 def flatten_xml(xml):
     test = 1234
@@ -128,7 +133,7 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
     port = info['x-ssh-endpoint'].split(':')[1]
 
     return(port)
-    #### GETTING PORT SHIT IS FINISHED
+    # GETTING PORT SHIT IS FINISHED
 
     # if 'code' in xml_type:
     #     return()
@@ -169,7 +174,7 @@ def main():
         result = "Exception: specify either 'xml_code_input' or 'xml_file_input' arguments."
 
     if result is not None:
-        if 'Exception:' in result :
+        if 'Exception:' in result:
             module.fail_json(msg="script failed with message:\n " + result, output='')
     elif result is None:
         result = process_command(module, ssh_user, ssh_host, ssh_port, object_type, cred_store, cred_domain, object_xml_type, object_xml)
