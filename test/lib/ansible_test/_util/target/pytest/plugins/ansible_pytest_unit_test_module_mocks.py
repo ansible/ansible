@@ -58,14 +58,19 @@ def stdin(mocker, monkeypatch, request):
     else:
         raise Exception('Malformed data to the stdin pytest fixture')
 
-    fake_stdin = BytesIO(to_bytes(args, errors='surrogate_or_strict'))
-    if PY3:
-        mocker.patch('ansible.module_utils.basic.sys.stdin', mocker.MagicMock())
-        mocker.patch('ansible.module_utils.basic.sys.stdin.buffer', fake_stdin)
-    else:
-        mocker.patch('ansible.module_utils.basic.sys.stdin', fake_stdin)
+    fake_stdin_buffer = BytesIO(to_bytes(args, errors='surrogate_or_strict'))
 
-    return fake_stdin
+    monkeypatch.setattr(
+        ansible.module_utils.basic.sys, 'stdin',
+        mocker.MagicMock() if PY3 else fake_stdin_buffer,
+    )
+    if PY3:
+        monkeypatch.setattr(
+            ansible.module_utils.basic.sys.stdin, 'buffer',
+            fake_stdin_buffer,
+        )
+
+    return fake_stdin_buffer
 
 
 # pylint: disable=invalid-name,redefined-outer-name,unused-argument
