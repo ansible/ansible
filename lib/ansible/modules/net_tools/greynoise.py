@@ -14,7 +14,7 @@ module: greynoise
 short_description: Communicate with the GreyNoise API
 description:
     - The GreyNoise module queries the GreyNoise API.
-version_added: "2.10"
+version_added: "2.8"
 author: "Whitney Champion (@shortstack)"
 options:
   action:
@@ -90,7 +90,7 @@ from ansible.module_utils.urls import fetch_url, to_text
 
 def list_tags(module, base_url, headers):
 
-    url = "/".join([base_url, "experimental/gnql/?query=tags"])
+    url = "/".join([base_url, "experimental/gnql?query=tags"])
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='GET')
 
@@ -107,7 +107,7 @@ def list_tags(module, base_url, headers):
 
 def query_ip(module, base_url, ip, headers):
 
-    url = "/".join([base_url, "experimental/gnql/?query=ip:%s" % ip])
+    url = "/".join([base_url, "experimental/gnql?query=ip:%s" % ip])
 
     response, info = fetch_url(module=module, headers=json.loads(headers), url=url, method='GET')
 
@@ -124,7 +124,7 @@ def query_ip(module, base_url, ip, headers):
 
 def query_tag(module, base_url, tag, headers):
 
-    url = "/".join([base_url, "experimental/gnql/?query=tags:%s" % tag])
+    url = "/".join([base_url, "experimental/gnql?query=tags:%s" % tag])
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='GET')
 
