@@ -56,7 +56,7 @@ options:
               File/results format can be JSON or INI-format. The default C(fact_path) can be
               specified in C(ansible.cfg) for when setup is automatically called as part of
               C(gather_facts).
-              NOTE: For windows clients, the results will be added to a variable named after the 
+              NOTE - For windows clients, the results will be added to a variable named after the 
               local file (without extension suffix), rather than C(ansible_local).
         required: false
         default: /etc/ansible/facts.d
