@@ -41,6 +41,7 @@ def patch_ansible_module(request, mocker):
 
 @pytest.fixture
 def stdin(mocker, request):
+    """Patch and return stdin buffer with module args."""
     old_args = ansible.module_utils.basic._ANSIBLE_ARGS
     ansible.module_utils.basic._ANSIBLE_ARGS = None
     old_argv = sys.argv
@@ -75,6 +76,7 @@ def stdin(mocker, request):
 # pylint: disable=invalid-name,redefined-outer-name,unused-argument
 @pytest.fixture
 def am(stdin, request):
+    """Return a patched Ansible module instance."""
     old_args = ansible.module_utils.basic._ANSIBLE_ARGS
     ansible.module_utils.basic._ANSIBLE_ARGS = None
     old_argv = sys.argv
