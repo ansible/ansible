@@ -1331,6 +1331,10 @@ def get_action_args_with_defaults(action, args, defaults, templar):
     if module_defaults:
         module_defaults = templar.template(module_defaults)
 
+        # deal with collection-specific group defaults
+        if action in module_defaults:
+            tmp_args.update((module_defaults[action]).copy())
+
         # deal with configured group defaults first
         if action in C.config.module_defaults_groups:
             for group in C.config.module_defaults_groups.get(action, []):

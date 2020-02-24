@@ -7,6 +7,7 @@ __metaclass__ = type
 
 import itertools
 import operator
+import os
 
 from copy import copy as shallowcopy
 from functools import partial
@@ -271,6 +272,42 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         for key in ds:
             if key not in valid_attrs:
                 raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
+
+    def _validate_module_defaults(self, attr, name, value):
+        if not value:
+            setattr(self, name, [])
+            return
+
+        if not isinstance(value, list):
+            value = [value]
+
+        module_defaults = []
+        action_groups = {}
+
+        for path in C.COLLECTIONS_PATHS:
+            if os.path.split(path)[-1] != 'ansible_collections':
+                path = os.path.join(path, 'ansible_collections')
+            if not os.path.isdir(path):
+                continue
+            for collection_namespace in os.listdir(path):
+                if not os.path.isdir(os.path.join(path, collection_namespace)):
+                    continue
+                for collection_name in os.listdir(os.path.join(path, collection_namespace)):
+                    action_groups_path = os.path.join(path, collection_namespace, collection_name, 'meta', 'action_groups.yml')
+                    if not os.path.isfile(action_groups_path):
+                        continue
+                    with open(action_groups_path, 'r') as config_def:
+                        action_group_config = DataLoader().load(config_def)
+                        for action_group in action_group_config:
+                            action_groups['%s.%s.%s' % (collection_namespace, collection_name, action_group)] = action_group_config[action_group]
+
+        for module_default in value:
+            for action_group in action_groups:
+                if 'group/%s' % action_group in module_default:
+                    for module in action_groups[action_group]:
+                        module_defaults.append({module: module_default['group/%s' % action_group]})
+
+        setattr(self, name, module_defaults)
 
     def validate(self, all_vars=None):
         ''' validation that is done at parse time, not load time '''
