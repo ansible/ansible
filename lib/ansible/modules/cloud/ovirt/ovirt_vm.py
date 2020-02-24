@@ -1258,6 +1258,21 @@ EXAMPLES = '''
       name: myvm
       url: ova:///path/myvm.ova
       storage_domain: mystorage
+
+- name: Cpu pinning of 0#12_1#13_2#14_3#15
+  ovirt_vm:
+    state: present
+    cluster: mycluster
+    name: myvm
+    cpu_pinning:
+      - cpu: 12
+        vcpu: 0
+      - cpu: 13
+        vcpu: 1
+      - cpu: 14
+        vcpu: 2
+      - cpu: 15
+        vcpu: 3
 '''
 
 
