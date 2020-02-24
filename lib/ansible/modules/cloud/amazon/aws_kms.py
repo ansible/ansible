@@ -765,6 +765,8 @@ def update_policy(connection, module, key, policy):
 
 
 def update_key_rotation(connection, module, key, enable_key_rotation):
+    if enable_key_rotation is None:
+        return False
     key_id = key['key_arn']
     current_rotation_status = connection.get_key_rotation_status(KeyId=key_id)
     if current_rotation_status.get('KeyRotationEnabled') == enable_key_rotation:
