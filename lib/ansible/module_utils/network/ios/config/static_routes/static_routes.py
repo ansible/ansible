@@ -154,48 +154,49 @@ class Static_Routes(ConfigBase):
                 for route_want in addr_want.get('routes'):
                     check = False
                     for h in have:
-                        for addr_have in h.get('address_families'):
-                            for route_have in addr_have.get('routes'):
-                                if route_want.get('dest') == route_have.get('dest')\
-                                        and addr_want['afi'] == addr_have['afi']:
-                                    check = True
-                                    have_set = set()
-                                    new_hops = []
-                                    for each in route_want.get('next_hops'):
-                                        want_set = set()
-                                        new_dict_to_set(each, [], want_set, 0)
-                                        new_hops.append(want_set)
-                                    new_dict_to_set(addr_have, [], have_set, 0)
-                                    # Check if the have dict next_hops value is diff from want dict next_hops
-                                    have_dict = filter_dict_having_none_value(route_want.get('next_hops')[0],
-                                                                              route_have.get('next_hops')[0])
-                                    # update the have_dict with forward_router_address
-                                    have_dict.update({'forward_router_address': route_have.get('next_hops')[0].
-                                                     get('forward_router_address')})
-                                    # updating the have_dict with next_hops val that's not None
-                                    new_have_dict = {}
-                                    for k, v in have_dict.items():
-                                        if v is not None:
-                                            new_have_dict.update({k: v})
+                        if h.get('address_families'):
+                            for addr_have in h.get('address_families'):
+                                for route_have in addr_have.get('routes'):
+                                    if route_want.get('dest') == route_have.get('dest')\
+                                            and addr_want['afi'] == addr_have['afi']:
+                                        check = True
+                                        have_set = set()
+                                        new_hops = []
+                                        for each in route_want.get('next_hops'):
+                                            want_set = set()
+                                            new_dict_to_set(each, [], want_set, 0)
+                                            new_hops.append(want_set)
+                                        new_dict_to_set(addr_have, [], have_set, 0)
+                                        # Check if the have dict next_hops value is diff from want dict next_hops
+                                        have_dict = filter_dict_having_none_value(route_want.get('next_hops')[0],
+                                                                                  route_have.get('next_hops')[0])
+                                        # update the have_dict with forward_router_address
+                                        have_dict.update({'forward_router_address': route_have.get('next_hops')[0].
+                                                         get('forward_router_address')})
+                                        # updating the have_dict with next_hops val that's not None
+                                        new_have_dict = {}
+                                        for k, v in have_dict.items():
+                                            if v is not None:
+                                                new_have_dict.update({k: v})
 
-                                    # Set the new config from the user provided want config
-                                    cmd = self._set_config(w, h, addr_want, route_want, route_have, new_hops, have_set)
+                                        # Set the new config from the user provided want config
+                                        cmd = self._set_config(w, h, addr_want, route_want, route_have, new_hops, have_set)
 
-                                    if cmd:
-                                        # since inplace update isn't allowed for static routes, preconfigured
-                                        # static routes needs to be deleted before the new want static routes changes
-                                        # are applied
-                                        clear_route_have = copy.deepcopy(route_have)
-                                        # inplace update is allowed in case of ipv6 static routes, so not deleting it
-                                        # before applying the want changes
-                                        if ':' not in route_want.get('dest'):
-                                            commands.extend(self._clear_config({}, h, {}, addr_have,
-                                                                               {}, clear_route_have))
-                                    commands.extend(cmd)
+                                        if cmd:
+                                            # since inplace update isn't allowed for static routes, preconfigured
+                                            # static routes needs to be deleted before the new want static routes changes
+                                            # are applied
+                                            clear_route_have = copy.deepcopy(route_have)
+                                            # inplace update is allowed in case of ipv6 static routes, so not deleting it
+                                            # before applying the want changes
+                                            if ':' not in route_want.get('dest'):
+                                                commands.extend(self._clear_config({}, h, {}, addr_have,
+                                                                                   {}, clear_route_have))
+                                        commands.extend(cmd)
+                                if check:
+                                    break
                             if check:
                                 break
-                        if check:
-                            break
                     if not check:
                         # For configuring any non-existing want config
                         new_hops = []
@@ -224,35 +225,36 @@ class Static_Routes(ConfigBase):
 
         # Drill each iteration of want n have and then based on dest and afi tyoe comparison take config call
         for h in have:
-            for addr_have in h.get('address_families'):
-                for route_have in addr_have.get('routes'):
-                    check = False
-                    for w in temp_want:
-                        for addr_want in w.get('address_families'):
-                            count = 0
-                            for route_want in addr_want.get('routes'):
-                                if route_want.get('dest') == route_have.get('dest') \
-                                        and addr_want['afi'] == addr_have['afi']:
-                                    check = True
-                                    have_set = set()
-                                    new_hops = []
-                                    for each in route_want.get('next_hops'):
-                                        want_set = set()
-                                        new_dict_to_set(each, [], want_set, 0)
-                                        new_hops.append(want_set)
-                                    new_dict_to_set(addr_have, [], have_set, 0)
-                                    commands.extend(self._clear_config(w, h, addr_want, addr_have,
-                                                                       route_want, route_have))
-                                    commands.extend(self._set_config(w, h, addr_want,
-                                                                     route_want, route_have, new_hops, have_set))
-                                    del addr_want.get('routes')[count]
-                                count += 1
+            if h.get('address_families'):
+                for addr_have in h.get('address_families'):
+                    for route_have in addr_have.get('routes'):
+                        check = False
+                        for w in temp_want:
+                            for addr_want in w.get('address_families'):
+                                count = 0
+                                for route_want in addr_want.get('routes'):
+                                    if route_want.get('dest') == route_have.get('dest') \
+                                            and addr_want['afi'] == addr_have['afi']:
+                                        check = True
+                                        have_set = set()
+                                        new_hops = []
+                                        for each in route_want.get('next_hops'):
+                                            want_set = set()
+                                            new_dict_to_set(each, [], want_set, 0)
+                                            new_hops.append(want_set)
+                                        new_dict_to_set(addr_have, [], have_set, 0)
+                                        commands.extend(self._clear_config(w, h, addr_want, addr_have,
+                                                                           route_want, route_have))
+                                        commands.extend(self._set_config(w, h, addr_want,
+                                                                         route_want, route_have, new_hops, have_set))
+                                        del addr_want.get('routes')[count]
+                                    count += 1
+                                if check:
+                                    break
                             if check:
                                 break
-                        if check:
-                            break
-                    if not check:
-                        commands.extend(self._clear_config({}, h, {}, addr_have, {}, route_have))
+                        if not check:
+                            commands.extend(self._clear_config({}, h, {}, addr_have, {}, route_have))
         # For configuring any non-existing want config
         for w in temp_want:
             for addr_want in w.get('address_families'):
@@ -285,24 +287,25 @@ class Static_Routes(ConfigBase):
                 for route_want in addr_want.get('routes'):
                     check = False
                     for h in have:
-                        for addr_have in h.get('address_families'):
-                            for route_have in addr_have.get('routes'):
-                                if route_want.get('dest') == route_have.get('dest')\
-                                        and addr_want['afi'] == addr_have['afi']:
-                                    check = True
-                                    have_set = set()
-                                    new_hops = []
-                                    for each in route_want.get('next_hops'):
-                                        want_set = set()
-                                        new_dict_to_set(each, [], want_set, 0)
-                                        new_hops.append(want_set)
-                                    new_dict_to_set(addr_have, [], have_set, 0)
-                                    commands.extend(self._set_config(w, h, addr_want,
-                                                                     route_want, route_have, new_hops, have_set))
+                        if h.get('address_families'):
+                            for addr_have in h.get('address_families'):
+                                for route_have in addr_have.get('routes'):
+                                    if route_want.get('dest') == route_have.get('dest')\
+                                            and addr_want['afi'] == addr_have['afi']:
+                                        check = True
+                                        have_set = set()
+                                        new_hops = []
+                                        for each in route_want.get('next_hops'):
+                                            want_set = set()
+                                            new_dict_to_set(each, [], want_set, 0)
+                                            new_hops.append(want_set)
+                                        new_dict_to_set(addr_have, [], have_set, 0)
+                                        commands.extend(self._set_config(w, h, addr_want,
+                                                                         route_want, route_have, new_hops, have_set))
+                                if check:
+                                    break
                             if check:
                                 break
-                        if check:
-                            break
                     if not check:
                         # For configuring any non-existing want config
                         new_hops = []
