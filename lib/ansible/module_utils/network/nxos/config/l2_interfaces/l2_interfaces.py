@@ -267,7 +267,7 @@ class L2_interfaces(ConfigBase):
 
     def set_commands(self, w, have, replace=False):
         commands = []
-        vlan_tobe_added = []
+
         obj_in_have = flatten_dict(search_obj_in_list(w['name'], have, 'name'))
         if not obj_in_have:
             commands = self.add_commands(w)
@@ -277,13 +277,19 @@ class L2_interfaces(ConfigBase):
                 if "allowed_vlans" in diff.keys() and diff["allowed_vlans"]:
                     vlan_tobe_added = diff["allowed_vlans"].split(',')
                     vlan_list = vlan_tobe_added[:]
-                    have_vlans = obj_in_have["allowed_vlans"].split(',')
+                    if obj_in_have.get("allowed_vlans"):
+                        have_vlans = obj_in_have["allowed_vlans"].split(',')
+                    else:
+                        have_vlans = []
                     for w_vlans in vlan_list:
                         if w_vlans in have_vlans:
                             vlan_tobe_added.pop(vlan_tobe_added.index(w_vlans))
                     if vlan_tobe_added:
                         diff.update({"allowed_vlans": ','.join(vlan_tobe_added)})
-                        commands = self.add_commands(diff, True)
+                        if have_vlans:
+                            commands = self.add_commands(diff, True)
+                        else:
+                            commands = self.add_commands(diff)
                     return commands
             commands = self.add_commands(diff)
         return commands
