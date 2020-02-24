@@ -42,7 +42,6 @@ options:
     description:
     - Whether the key should be automatically rotated every year.
     required: false
-    default: None
     type: bool
     version_added: '2.10'
   policy_mode:
