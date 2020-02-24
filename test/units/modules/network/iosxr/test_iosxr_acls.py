@@ -10,7 +10,6 @@ from units.compat.mock import patch
 from ansible.modules.network.iosxr import iosxr_acls
 from units.modules.utils import set_module_args
 from .iosxr_module import TestIosxrModule, load_fixture
-import itertools
 
 
 class TestIosxrAclsModule(TestIosxrModule):
@@ -79,7 +78,7 @@ class TestIosxrAclsModule(TestIosxrModule):
             'ipv4 access-list acl_1',
             '10 permit ospf 192.168.1.0 0.0.0.255 any log'
         ]
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_iosxr_acls_merged_idempotent(self):
         set_module_args(
@@ -97,7 +96,7 @@ class TestIosxrAclsModule(TestIosxrModule):
                      ])
             ],
                 state="merged"))
-        result = self.execute_module(changed=False, commands=[])
+        self.execute_module(changed=False, commands=[])
 
     def test_iosxr_acls_replaced(self):
         set_module_args(
@@ -120,7 +119,7 @@ class TestIosxrAclsModule(TestIosxrModule):
             'ipv4 access-list acl_2', 'no 10', 'no 20',
             '30 permit ospf 10.0.0.0 0.255.255.255 any log'
         ]
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_iosxr_acls_replaced_idempotent(self):
         set_module_args(
@@ -143,7 +142,7 @@ class TestIosxrAclsModule(TestIosxrModule):
                      ])
             ],
                 state="replaced"))
-        result = self.execute_module(changed=False, commands=[])
+        self.execute_module(changed=False, commands=[])
 
     def test_iosxr_acls_overridden(self):
         set_module_args(
@@ -166,7 +165,7 @@ class TestIosxrAclsModule(TestIosxrModule):
             'no ipv6 access-list acl6_1', 'ipv4 access-list acl_2', 'no 10',
             'no 20', '40 permit ospf any any log'
         ]
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_iosxr_acls_overridden_idempotent(self):
         set_module_args(
@@ -202,7 +201,7 @@ class TestIosxrAclsModule(TestIosxrModule):
                      ])
             ],
                 state="overridden"))
-        result = self.execute_module(changed=False, commands=[])
+        self.execute_module(changed=False, commands=[])
 
     def test_iosxr_acls_deletedaces(self):
         set_module_args(
@@ -212,19 +211,19 @@ class TestIosxrAclsModule(TestIosxrModule):
             ],
                 state="deleted"))
         commands = ['ipv4 access-list acl_2', 'no 20']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_iosxr_acls_deletedacls(self):
         set_module_args(
             dict(config=[dict(afi="ipv6", acls=[dict(name="acl6_1")])],
                  state="deleted"))
         commands = ['no ipv6 access-list acl6_1']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_iosxr_acls_deletedafis(self):
         set_module_args(dict(config=[dict(afi="ipv4")], state="deleted"))
         commands = ['no ipv4 access-list acl_2']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acls_rendered(self):
         set_module_args(
