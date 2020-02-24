@@ -23,6 +23,7 @@ import json
 import os
 
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
+from ansible.module_utils.network.common.utils import dict_diff, param_list_to_dict
 
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -37,7 +38,6 @@ def load_fixture(name):
 
     with open(path) as f:
         data = f.read()
-
     try:
         data = json.loads(data)
     except Exception:
@@ -62,7 +62,6 @@ class TestEosModule(ModuleTestCase):
         else:
             result = self.changed(changed)
             self.assertEqual(result['changed'], changed, result)
-
         if commands is not None:
             if transport == 'eapi':
                 cmd = []
