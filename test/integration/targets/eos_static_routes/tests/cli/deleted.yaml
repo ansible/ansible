@@ -123,6 +123,9 @@
 
 
 - name: Delete attributes of given static routes - dest specific.
+=======
+- name: Delete attributes of given static routes.
+>>>>>>> Added Integration tests
   eos_static_routes: &deleted
     config:
       - vrf: "testvrf"
@@ -145,6 +148,8 @@
 - assert:
     that:
       - "ansible_facts.network_resources.static_routes|symmetric_difference(config) == []"
+      - '"no ip route vrf testvrf 120.1.1.0/24 Ethernet1 23" in result.commands'
+      - '"no ipv6 route 1000:10::/64 Ethernet1 67 tag 98" in result.commands'
   become: yes
 
 - name: Idempotency check
@@ -175,6 +180,7 @@
 - assert:
     that:
       - "ansible_facts.network_resources.static_routes|symmetric_difference(config1) == []"
+      - '"no ipv6 route 1000:10::/64 Ethernet1 67 tag 98" in result.commands'
   become: yes
 
 - name: Delete attributes of given static routes - vrf specific.
@@ -192,6 +198,7 @@
 - assert:
     that:
       - "ansible_facts.network_resources.static_routes|symmetric_difference(config2) == []"
+      - '"no ip route vrf vrftest1 77.77.1.0/24 33.1.1.1" in result.commands'
   become: yes
 
 - name: Delete attributes of given static routes - nexthop specific.
@@ -214,7 +221,7 @@
 - assert:
     that:
       - "ansible_facts.network_resources.static_routes|symmetric_difference(config3) == []"
+      - '"no ip route 10.1.1.0/24 Management1" in result.commands'
   become: yes
-
 
 - include_tasks: _remove_config.yaml

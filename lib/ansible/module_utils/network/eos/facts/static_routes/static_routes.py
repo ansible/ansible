@@ -112,7 +112,6 @@ class Static_routesFacts(object):
         afi_list = []
         vrf_list = []
         routes = []
-        vrf_config_list = []
         config["address_families"] = []
         next_hops = {}
         interface_list = ["Ethernet", "Loopback", "Management",

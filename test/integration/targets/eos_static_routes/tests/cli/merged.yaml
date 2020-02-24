@@ -85,6 +85,8 @@
 - assert:
     that:
       - "ansible_facts.network_resources.static_routes|symmetric_difference(config) == []"
+      - '"ipv6 route vrf testvrf 1120:10::/64 Ethernet1 55" in result.commands'
+      - '"ip route 155.55.1.0/24 Nexthop-Group testgrp tag 100" in result.commands'
   become: yes
 
 - name: Idempotency check
