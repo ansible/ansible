@@ -37,7 +37,7 @@ options:
     - If not provided, or empty then the '(Default)' property for the key will
       be used.
     type: str
-    aliases: [ entry ]
+    aliases: [ entry, value ]
   data:
     description:
     - Value of the registry entry C(name) in C(path).
