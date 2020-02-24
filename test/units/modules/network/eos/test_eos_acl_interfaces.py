@@ -8,10 +8,8 @@ __metaclass__ = type
 
 from units.compat.mock import patch
 from ansible.modules.network.eos import eos_acl_interfaces
-from ansible.module_utils.network.eos.config.acl_interfaces.acl_interfaces import add_commands
 from units.modules.utils import set_module_args
 from .eos_module import TestEosModule, load_fixture
-import itertools
 
 
 class TestEosAclInterfacesModule(TestEosModule):
@@ -99,7 +97,7 @@ class TestEosAclInterfacesModule(TestEosModule):
         commands = ['interface GigabitEthernet0/0', 'ip access-group aclv401 in',
                     'ip access-group aclv402 out', 'ipv6 access-group aclv601 in', 'interface GigabitEthernet0/1',
                     'ip access-group aclv401 in']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acl_interfaces_merged_idempotent(self):
         set_module_args(
@@ -120,7 +118,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                               acls=[dict(name="aclv601", direction="in")])
                      ])
             ], state="merged"))
-        result = self.execute_module(changed=False, commands=[])
+        self.execute_module(changed=False, commands=[])
 
     def test_eos_acl_interfaces_replaced(self):
         set_module_args(
@@ -139,7 +137,7 @@ class TestEosAclInterfacesModule(TestEosModule):
         commands = ['interface GigabitEthernet0/0', 'no ip access-group aclv404 in',
                     'no ipv6 access-group aclv601 out', 'ip access-group aclv402 out',
                     'ip access-group aclv401 in']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acl_interfaces_replaced_idempotent(self):
         set_module_args(
@@ -155,7 +153,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                               acls=[dict(name="aclv601", direction="out")])
                      ]),
             ], state="replaced"))
-        result = self.execute_module(changed=False, commands=[])
+        self.execute_module(changed=False, commands=[])
 
     def test_eos_acl_interfaces_overridden(self):
         set_module_args(
@@ -175,7 +173,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                     'no ipv6 access-group aclv601 out', 'ip access-group aclv402 out',
                     'ip access-group aclv401 in', 'interface GigabitEthernet0/1',
                     'no ipv6 access-group aclv601 in']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acl_interfaces_overridden_idempotent(self):
         set_module_args(
@@ -199,7 +197,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                               ])
                      ])
             ], state="overridden"))
-        result = self.execute_module(changed=False, commands=[])
+        self.execute_module(changed=False, commands=[])
 
     def test_eos_acl_interfaces_deletedafi(self):
         set_module_args(
@@ -209,7 +207,7 @@ class TestEosAclInterfacesModule(TestEosModule):
                          dict(afi="ipv6")])
             ], state="deleted"))
         commands = ['interface GigabitEthernet0/0', 'no ipv6 access-group aclv601 out']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acl_interfaces_deletedint(self):
         set_module_args(
@@ -218,7 +216,7 @@ class TestEosAclInterfacesModule(TestEosModule):
             ], state="deleted"))
         commands = ['interface GigabitEthernet0/0', 'no ipv6 access-group aclv601 out',
                     'no ip access-group aclv404 in']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acl_interfaces_deletedacl(self):
         set_module_args(
@@ -233,13 +231,12 @@ class TestEosAclInterfacesModule(TestEosModule):
                      ])
             ], state="deleted"))
         commands = ['interface GigabitEthernet0/0', 'no ip access-group aclv404 in']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_acl_interfaces_gathered(self):
         set_module_args(
             dict(state="gathered"))
         result = self.execute_module(changed=False, filename='eos_acl_interfaces_config.cfg')
-        commands = []
         gathered_list = [{'access_groups': [{'acls': [{'direction': 'in', 'name': 'aclv404'}], 'afi': 'ipv4'},
                                             {'acls': [{'direction': 'out', 'name': 'aclv601'}], 'afi': 'ipv6'}],
                           'name': 'GigabitEthernet0/0'},
