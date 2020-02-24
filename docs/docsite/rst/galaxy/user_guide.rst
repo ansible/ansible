@@ -78,6 +78,12 @@ Install multiple collections with a requirements file
 
 .. include:: ../shared_snippets/installing_multiple_collections.txt
 
+Downloading a collection for offline use
+-----------------------------------------
+
+.. include:: ../shared_snippets/download_tarball_collections.txt
+
+
 Listing installed collections
 -----------------------------
 
