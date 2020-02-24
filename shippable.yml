@@ -68,6 +68,11 @@ matrix:
     - env: T=vyos/1.1.8/2.7/1
     - env: T=vyos/1.1.8/3.6/1
 
+    - env: T=i/ios/csr1000v//1
+
+    - env: T=i/vyos/1.1.8/2.7/1
+    - env: T=i/vyos/1.1.8/3.6/1
+
     - env: T=aix/7.2/1
     - env: T=osx/10.11/1
     - env: T=rhel/7.6/1
