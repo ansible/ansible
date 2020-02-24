@@ -21,7 +21,7 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 
 @pytest.fixture
-def patch_ansible_module(request, mocker):
+def patch_ansible_module(monkeypatch, request):
     """Monkey-patch given Ansible module."""
     if isinstance(request.param, string_types):
         args = request.param
@@ -36,7 +36,10 @@ def patch_ansible_module(request, mocker):
     else:
         raise Exception('Malformed data to the patch_ansible_module pytest fixture')
 
-    mocker.patch('ansible.module_utils.basic._ANSIBLE_ARGS', to_bytes(args))
+    monkeypatch.setattr(
+        ansible.module_utils.basic, '_ANSIBLE_ARGS',
+        to_bytes(args),
+    )
 
 
 @pytest.fixture
