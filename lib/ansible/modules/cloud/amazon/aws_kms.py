@@ -1028,7 +1028,7 @@ def main():
         policy=dict(),
         purge_grants=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent']),
-        enable_key_rotation=(dict(type='bool', default=None))
+        enable_key_rotation=(dict(type='bool'))
     )
 
     module = AnsibleAWSModule(
