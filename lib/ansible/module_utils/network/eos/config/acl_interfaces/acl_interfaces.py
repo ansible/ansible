@@ -14,12 +14,10 @@ created
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
 import itertools
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list, dict_diff, search_obj_in_list
-from ansible.module_utils.network.common.utils import remove_empties
+from ansible.module_utils.network.common.utils import to_list, search_obj_in_list
 from ansible.module_utils.network.eos.facts.facts import Facts
 
 

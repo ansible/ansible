@@ -404,12 +404,6 @@ def main():
 
     :returns: the result form module invocation
     """
-    required_if = [('state', 'merged', ('config',)),
-                   ('state', 'replaced', ('config',)),
-                   ('state', 'overridden', ('config',)),
-                   ('state', 'rendered', ('config',)),
-                   ('state', 'parsed', ('running_config',))]
-
     module = AnsibleModule(argument_spec=Acl_interfacesArgs.argument_spec,
                            supports_check_mode=True)
 
