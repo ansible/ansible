@@ -331,7 +331,7 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
             raise AnsibleAuthenticationFailure(msg)
 
         # sshpass returns codes are 1-6. We handle 5 previously, so this catches other scenarios.
-        # No exception is raised, so the connection is retried.
+        # Raise exception to prevent retries, given that these failures will not resolve with a simple retry.
         elif return_tuple[0] in [1, 2, 3, 4, 6]:
             if return_tuple[0] == 1:
                 msg = 'sshpass error: Invalid command line argument. Command given: {1}'
