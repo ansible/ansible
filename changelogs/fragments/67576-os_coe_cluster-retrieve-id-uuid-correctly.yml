@@ -1,0 +1,2 @@
+bugfixes:
+- Retrieve the correct id/uuid depending on whether it is a create/get request.

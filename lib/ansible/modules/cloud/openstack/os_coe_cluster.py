@@ -186,7 +186,7 @@ cluster:
             - The time in UTC at which the cluster is updated
           type: str
           sample: '2018-08-16T10:39:25+00:00'
-      uuid:
+      id:
           description:
             - Unique UUID for this cluster
           type: str
@@ -267,7 +267,12 @@ def main():
             else:
                 changed = False
 
-            module.exit_json(changed=changed, cluster=cluster, id=cluster['uuid'])
+            # NOTE (brtknr): At present, create_coe_cluster request returns
+            # cluster_id as `uuid` whereas get_coe_cluster request returns the
+            # same field as `id`. This behaviour may change in the future
+            # therefore try `id` first then `uuid`.
+            cluster_id = cluster.get('id', cluster.get('uuid'))
+            module.exit_json(changed=changed, cluster=cluster, id=cluster_id)
         elif state == 'absent':
             if not cluster:
                 module.exit_json(changed=False)
