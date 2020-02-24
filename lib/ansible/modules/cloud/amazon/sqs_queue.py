@@ -253,9 +253,9 @@ def get_queue_url(client, name):
     try:
         return client.get_queue_url(QueueName=name)['QueueUrl']
     except ClientError as e:
-        if e.response['Error']['Code'] != 'AWS.SimpleQueueService.NonExistentQueue':
-            raise
-        return None
+        if e.response['Error']['Code'] == 'AWS.SimpleQueueService.NonExistentQueue':
+            return None
+        raise
 
 
 def describe_queue(client, queue_url):
