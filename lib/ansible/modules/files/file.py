@@ -294,25 +294,23 @@ def additional_parameter_handling(params):
 def get_state(path):
     ''' Find out current state '''
 
-    b_path = to_bytes(path, errors='surrogate_or_strict')
-    try:
-        if os.lstat(b_path):
-            if os.path.islink(b_path):
-                return 'link'
-            elif os.path.isdir(b_path):
-                return 'directory'
-            elif os.stat(b_path).st_nlink > 1:
-                return 'hard'
-
-            # could be many other things, but defaulting to file
-            return 'file'
-
+    b_path = os.path.abspath(to_bytes(path, errors='surrogate_or_strict'))
+    if not os.access(b_path, os.F_OK, follow_symlinks=False):
+        head, tail = os.path.split(b_path)
+        while tail != '' and not os.access(head, os.F_OK):
+            head, tail = os.path.split(head)
+        if not os.access(head, os.X_OK):
+            module.warn('Cannot access %s. Treating path as absent.' % (to_native(b_path)))
         return 'absent'
-    except OSError as e:
-        if e.errno == errno.ENOENT:  # It may already have been removed
-            return 'absent'
-        else:
-            raise
+    if os.path.islink(b_path):
+        return 'link'
+    elif os.path.isdir(b_path):
+        return 'directory'
+    elif os.stat(b_path).st_nlink > 1:
+        return 'hard'
+
+    # could be many other things, but defaulting to file
+    return 'file'
 
 
 # This should be moved into the common file utilities
