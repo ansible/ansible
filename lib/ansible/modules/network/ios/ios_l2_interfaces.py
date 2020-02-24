@@ -161,11 +161,8 @@ EXAMPLES = """
 # interface GigabitEthernet0/1
 #  description Configured by Ansible
 #  switchport access vlan 10
-<<<<<<< HEAD
 #  switchport access vlan 40
-=======
 #  switchport mode access
->>>>>>> fixes 65032
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test

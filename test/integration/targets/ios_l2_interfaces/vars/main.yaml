@@ -37,7 +37,6 @@ merged:
 
 replaced:
   before:
-<<<<<<< HEAD
     - name: GigabitEthernet0/0
     - access:
         vlan: 10
@@ -54,7 +53,6 @@ replaced:
         pruning_vlans:
           - "10"
           - "20"
-=======
   - name: GigabitEthernet0/0
   - access:
       vlan: 10
@@ -70,7 +68,6 @@ replaced:
       pruning_vlans:
       - '10'
       - '20'
->>>>>>> fixes 65032
 
   commands:
     - "interface GigabitEthernet0/1"

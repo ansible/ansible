@@ -209,7 +209,7 @@ def set_interface(want, have):
     commands = []
 
     want_mode = want.get("mode")
-    if want_mode:
+    if want_mode and want_mode != have.get("mode"):
         commands.append("switchport mode {0}".format(want_mode))
 
     wants_access = want.get("access")
@@ -235,7 +235,7 @@ def set_interface(want, have):
 def clear_interface(want, have):
     commands = []
 
-    if 'mode' in have or want.get('mode'):
+    if 'mode' in have and want.get('mode') is None:
         commands.append("no switchport mode")
 
     if "access" in have and not want.get('access'):
