@@ -1,2 +1,2 @@
-ios/csr1000v connection=local
+ios/csr1000v connection=network_cli
 vyos/1.1.8 connection=local
