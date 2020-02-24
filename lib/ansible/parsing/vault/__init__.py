@@ -1041,7 +1041,7 @@ class VaultEditor:
         return data
 
     # TODO: add docstrings for arg types since this code is picky about that
-    def write_data(self, data, filename, shred=True):
+    def write_data(self, data, filename, shred=True, mode=0o600):
         """Write the data bytes to given path
 
         This is used to write a byte string to a file or stdout. It is used for
@@ -1078,8 +1078,29 @@ class VaultEditor:
                     self._shred_file(filename)
                 else:
                     os.remove(filename)
-            with open(filename, "wb") as fh:
-                fh.write(b_file_data)
+
+            # Ensure we create the file and it is opened with specified mode
+            #
+            # Set umask to ensure the file will be created with the correct permissions
+            current_umask = os.umask(0o077)
+
+            # Create a file with default permissions
+            try:
+                fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_RDWR, mode)
+            except FileExistsError:
+                os.unlink(filename)
+                fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_RDWR, mode)
+
+            try:
+                os.write(fd, b_file_data)
+            except Exception:
+                # Make sure the file descriptor is closed in case something goes wrong
+                os.close(fd)
+
+            os.close(fd)
+
+            # Reset umask
+            os.umask(current_umask)
 
     def shuffle_files(self, src, dest):
         prev = None
