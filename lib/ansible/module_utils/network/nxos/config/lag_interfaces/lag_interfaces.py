@@ -149,8 +149,10 @@ class Lag_interfaces(ConfigBase):
         commands = []
         for h in have:
             obj_in_want = search_obj_in_list(h['name'], want, 'name')
-            if h == obj_in_want:
-                continue
+            if obj_in_want:
+                diff = self.diff_list_of_dicts(h['members'], obj_in_want['members'])
+                if not diff:
+                    continue
             commands.extend(self.del_all_commands(h))
         for w in want:
             commands.extend(self.set_commands(w, have))
@@ -196,6 +198,10 @@ class Lag_interfaces(ConfigBase):
             h_item = search_obj_in_list(w_item['member'], have, key='member') or {}
             delta = dict_diff(h_item, w_item)
             if delta:
+                if h_item:
+                    if 'mode' in delta.keys() and delta['mode'] == 'on' and 'mode' not in h_item.keys():
+                        # mode = on will not be displayed in running-config
+                        continue
                 if 'member' not in delta.keys():
                     delta['member'] = w_item['member']
                 diff.append(delta)
