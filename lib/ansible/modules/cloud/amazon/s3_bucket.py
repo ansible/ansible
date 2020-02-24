@@ -24,9 +24,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: s3_bucket
-short_description: Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
+short_description: Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus, FakeS3 and StorageGRID
 description:
-    - Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
+    - Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus, FakeS3 and StorageGRID
 version_added: "2.0"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
@@ -247,7 +247,7 @@ def create_or_update_bucket(s3_client, module, location):
     except BotoCoreError as exp:
         module.fail_json_aws(exp, msg="Failed to get bucket request payment")
     except ClientError as exp:
-        if exp.response['Error']['Code'] != 'NotImplemented' or requester_pays:
+        if exp.response['Error']['Code'] not in ('NotImplemented', 'XNotImplemented') or requester_pays:
             module.fail_json_aws(exp, msg="Failed to get bucket request payment")
     else:
         if requester_pays:
@@ -305,7 +305,7 @@ def create_or_update_bucket(s3_client, module, location):
     except BotoCoreError as exp:
         module.fail_json_aws(exp, msg="Failed to get bucket tags")
     except ClientError as exp:
-        if exp.response['Error']['Code'] != 'NotImplemented' or tags is not None:
+        if exp.response['Error']['Code'] not in ('NotImplemented', 'XNotImplemented') or tags is not None:
             module.fail_json_aws(exp, msg="Failed to get bucket tags")
     else:
         if tags is not None:
