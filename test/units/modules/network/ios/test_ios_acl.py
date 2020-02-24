@@ -54,19 +54,395 @@ class TestIosAclModule(TestIosModule):
         self.execute_show_command.side_effect = load_from_file
 
     def test_ios_acl_merged(self):
-        pass
+        set_module_args(
+            dict(config=[
+                dict(afi="ipv4",
+                     acls=[
+                         dict(name="std_acl",
+                              acl_type="standard",
+                              aces=[
+                                  dict(
+                                      grant="deny",
+                                      source=dict(
+                                          address="192.0.2.0",
+                                          wildcard_bits="0.0.0.255"
+                                      )
+                                  )
+                              ])
+                     ]),
+                dict(afi="ipv6",
+                     acls=[
+                         dict(name="merge_v6_acl",
+                              aces=[
+                                  dict(
+                                       grant="deny",
+                                       protocol_options=dict(
+                                           tcp=dict(
+                                               ack="true"
+                                           )
+                                       ),
+                                       source=dict(
+                                           any="true",
+                                           port_protocol=dict(
+                                               eq="www"
+                                           )
+                                       ),
+                                       destination=dict(
+                                           any="true",
+                                           port_protocol=dict(
+                                               eq="telnet"
+                                           )
+                                       ),
+                                       dscp="af11"
+                                  )
+                              ])
+                     ])
+            ], state="merged"
+            )
+        )
+        result = self.execute_module(changed=True)
+        commands = [
+            'ip access-list standard std_acl',
+            'deny 192.0.2.0 0.0.0.255',
+            'ipv6 access-list merge_v6_acl',
+            'deny tcp any eq www any eq telnet ack dscp af11'
+        ]
+        self.assertEqual(result['commands'], commands)
 
     def test_ios_acl_merged_idempotent(self):
-        pass
+        set_module_args(
+            dict(config=[
+                dict(afi="ipv4",
+                     acls=[
+                         dict(name="110",
+                              aces=[
+                                  dict(
+                                      grant="deny",
+                                      protocol_options=dict(
+                                          icmp=dict(echo="true")
+                                      ),
+                                      source=dict(
+                                          address="192.0.2.0",
+                                          wildcard_bits="0.0.0.255"
+                                      ),
+                                      destination=dict(
+                                          address="192.0.3.0",
+                                          wildcard_bits="0.0.0.255"
+                                      ),
+                                      dscp="ef",
+                                      ttl=dict(eq=10)
+                                  )
+                              ])
+                     ]),
+                dict(afi="ipv6",
+                     acls=[
+                         dict(name="R1_TRAFFIC",
+                              aces=[
+                                  dict(
+                                      grant="deny",
+                                      protocol_options=dict(tcp=dict(ack="true")),
+                                      source=dict(
+                                          any="true",
+                                          port_protocol=dict(eq="www")
+                                      ),
+                                      destination=dict(
+                                          any="true",
+                                          port_protocol=dict(eq="telnet")
+                                      ),
+                                      dscp="af11"
+                                  )
+                              ])
+                     ])
+            ], state="merged"
+            ))
+        self.execute_module(changed=False, commands=[], sort=True)
 
     def test_ios_acl_replaced(self):
-        pass
+        set_module_args(
+            dict(config=[
+                dict(afi="ipv4",
+                     acls=[
+                         dict(name="replace_acl",
+                              acl_type="extended",
+                              aces=[
+                                  dict(
+                                      grant="deny",
+                                      protocol_options=dict(
+                                          tcp=dict(ack="true")
+                                      ),
+                                      source=dict(
+                                          address="198.51.100.0",
+                                          wildcard_bits="0.0.0.255"
+                                      ),
+                                      destination=dict(
+                                          address="198.51.101.0",
+                                          wildcard_bits="0.0.0.255",
+                                          port_protocol=dict(eq="telnet")
+                                      ),
+                                      tos=dict(service_value=12)
+                                  )
+                              ])
+                     ])
+            ], state="replaced"
+            ))
+        result = self.execute_module(changed=True)
+        commands = [
+            'ip access-list extended replace_acl',
+            'deny tcp 198.51.100.0 0.0.0.255 198.51.101.0 0.0.0.255 eq telnet ack tos 12'
+        ]
+        self.assertEqual(result['commands'], commands)
 
     def test_ios_acl_replaced_idempotent(self):
-        pass
+        set_module_args(
+            dict(config=[
+                dict(afi="ipv4",
+                     acls=[
+                         dict(name="110",
+                              aces=[
+                                  dict(
+                                      grant="deny",
+                                      protocol_options=dict(
+                                          icmp=dict(echo="true")
+                                      ),
+                                      source=dict(
+                                          address="192.0.2.0",
+                                          wildcard_bits="0.0.0.255"
+                                      ),
+                                      destination=dict(
+                                          address="192.0.3.0",
+                                          wildcard_bits="0.0.0.255"
+                                      ),
+                                      dscp="ef",
+                                      ttl=dict(eq=10)
+                                  )
+                              ])
+                     ])
+            ], state="replaced"
+            ))
+        self.execute_module(changed=False, commands=[], sort=True)
 
     def test_ios_acl_overridden(self):
-        pass
+        set_module_args(
+            dict(config=[
+                dict(afi="ipv4",
+                     acls=[
+                         dict(name="150",
+                              aces=[
+                                  dict(
+                                      grant="deny",
+                                      protocol_options=dict(
+                                          tcp=dict(syn="true")
+                                      ),
+                                      source=dict(
+                                          address="198.51.100.0",
+                                          wildcard_bits="0.0.0.255",
+                                          port_protocol=dict(eq="telnet")
+                                      ),
+                                      destination=dict(
+                                          address="198.51.110.0",
+                                          wildcard_bits="0.0.0.255",
+                                          port_protocol=dict(eq="telnet")
+                                      ),
+                                      dscp="ef",
+                                      ttl=dict(eq=10)
+                                  )
+                              ])
+                     ])
+            ], state="overridden"
+            ))
+        result = self.execute_module(changed=True)
+        commands = [
+            'no ip access-list extended 110',
+            'no ipv6 access-list R1_TRAFFIC',
+            'ip access-list extended 150',
+            'deny tcp 198.51.100.0 0.0.0.255 eq telnet 198.51.110.0 0.0.0.255 eq telnet syn dscp ef ttl eq 10'
+        ]
+        self.assertEqual(result['commands'], commands)
 
     def test_ios_acl_overridden_idempotent(self):
-        pass
+        set_module_args(
+            dict(config=[
+                dict(afi="ipv4",
+                     acls=[
+                         dict(name="110",
+                              aces=[
+                                  dict(
+                                      grant="deny",
+                                      protocol_options=dict(
+                                          icmp=dict(echo="true")
+                                      ),
+                                      source=dict(
+                                          address="192.0.2.0",
+                                          wildcard_bits="0.0.0.255"
+                                      ),
+                                      destination=dict(
+                                          address="192.0.3.0",
+                                          wildcard_bits="0.0.0.255"
+                                      ),
+                                      dscp="ef",
+                                      ttl=dict(eq=10)
+                                  )
+                              ])
+                     ]),
+                dict(afi="ipv6",
+                     acls=[
+                         dict(name="R1_TRAFFIC",
+                              aces=[
+                                  dict(
+                                      grant="deny",
+                                      protocol_options=dict(tcp=dict(ack="true")),
+                                      source=dict(
+                                          any="true",
+                                          port_protocol=dict(eq="www")
+                                      ),
+                                      destination=dict(
+                                          any="true",
+                                          port_protocol=dict(eq="telnet")
+                                      ),
+                                      dscp="af11"
+                                  )
+                              ])
+                     ])
+            ], state="overridden"
+            ))
+        self.execute_module(changed=False, commands=[], sort=True)
+
+    def test_ios_acl_deleted_afi_based(self):
+        set_module_args(
+            dict(config=[
+                dict(afi="ipv4")
+            ], state="deleted"
+            ))
+        result = self.execute_module(changed=True)
+        commands = [
+            'no ip access-list extended 110'
+        ]
+        self.assertEqual(result['commands'], commands)
+
+    def test_ios_acl_deleted_acl_based(self):
+        set_module_args(
+            dict(config=[
+                dict(afi="ipv4",
+                     acls=[
+                         dict(name="110",
+                              aces=[
+                                  dict(
+                                      grant="deny",
+                                      protocol_options=dict(
+                                          icmp=dict(echo="true")
+                                      ),
+                                      source=dict(
+                                          address="192.0.2.0",
+                                          wildcard_bits="0.0.0.255"
+                                      ),
+                                      destination=dict(
+                                          address="192.0.3.0",
+                                          wildcard_bits="0.0.0.255"
+                                      ),
+                                      dscp="ef",
+                                      ttl=dict(eq=10)
+                                  )
+                              ])
+                     ]),
+                dict(afi="ipv6",
+                     acls=[
+                         dict(name="R1_TRAFFIC",
+                              aces=[
+                                  dict(
+                                      grant="deny",
+                                      protocol_options=dict(tcp=dict(ack="true")),
+                                      source=dict(
+                                          any="true",
+                                          port_protocol=dict(eq="www")
+                                      ),
+                                      destination=dict(
+                                          any="true",
+                                          port_protocol=dict(eq="telnet")
+                                      ),
+                                      dscp="af11"
+                                  )
+                              ])
+                     ])
+            ], state="deleted"
+            ))
+        result = self.execute_module(changed=True)
+        commands = [
+            'no ip access-list extended 110',
+            'no ipv6 access-list R1_TRAFFIC',
+        ]
+        self.assertEqual(result['commands'], commands)
+
+    def test_ios_acl_rendered(self):
+        set_module_args(
+            dict(config=[
+                dict(afi="ipv4",
+                     acls=[
+                         dict(name="110",
+                              aces=[
+                                  dict(
+                                      grant="deny",
+                                      sequence="10",
+                                      protocol_options=dict(
+                                          tcp=dict(syn="true")
+                                      ),
+                                      source=dict(
+                                          address="192.0.2.0",
+                                          wildcard_bits="0.0.0.255"
+                                      ),
+                                      destination=dict(
+                                          address="192.0.3.0",
+                                          wildcard_bits="0.0.0.255",
+                                          port_protocol=dict(eq="www")
+                                      ),
+                                      dscp="ef",
+                                      ttl=dict(eq=10)
+                                  )
+                              ])
+                     ])
+            ], state="rendered"))
+        commands = [
+            'ip access-list extended 110',
+            '10 deny tcp 192.0.2.0 0.0.0.255 192.0.3.0 0.0.0.255 eq www syn dscp ef ttl eq 10'
+        ]
+        result = self.execute_module(changed=False)
+        self.assertEqual(result['rendered'], commands)
+
+    def test_ios_acl_parsed(self):
+        set_module_args(
+            dict(running_config="ipv6 access-list R1_TRAFFIC\ndeny tcp any eq www any eq telnet ack dscp af11",
+                 state="parsed"))
+        result = self.execute_module(changed=False)
+        parsed_list = [
+            {
+                "acls": [
+                    {
+                        "aces": [
+                            {
+                                "destination": {
+                                    "any": True,
+                                    "port_protocol": {
+                                        "eq": "telnet"
+                                    }
+                                },
+                                "dscp": "af11",
+                                "grant": "deny",
+                                "protocol_options": {
+                                    "tcp": {
+                                        "ack": True
+                                    }
+                                },
+                                "source": {
+                                    "any": True,
+                                    "port_protocol": {
+                                        "eq": "www"
+                                    }
+                                }
+                            }
+                        ],
+                        "name": "R1_TRAFFIC"
+                    }
+                ],
+                "afi": "ipv6"
+            }
+        ]
+        self.assertEqual(parsed_list, result['parsed'])

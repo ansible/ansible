@@ -56,7 +56,7 @@ class AclFacts(object):
             data = self.get_acl_data(connection)
         # operate on a collection of resource x
         config = data.split('\n')
-        spec = {'acls': None, 'afi': None}
+        spec = {'acls': list(), 'afi': None}
         if config:
             objs = self.render_config(spec, config)
         # check if rendered config list has only empty dict
@@ -251,6 +251,39 @@ class AclFacts(object):
                     source['address'] = temp_ipv6[0]
                     destination['address'] = temp_ipv6[1]
 
+    def parsed_config_facts(self, have_config):
+        """
+        For parsed config have_config is string of commands which
+        need to be splitted before passing it through render_config
+        from spec for null values
+        :param have_config: The configuration
+        :rtype: list of have config
+        :returns: The splitted generated config
+        """
+        split_config = re.split('ip|ipv6 access-list', have_config[0])
+        temp_config = []
+
+        # common piece of code for populating the temp_config list
+        def common_config_code(each, grant, temp_config):
+            temp = re.split(grant, each)
+            temp_config.append(temp[0])
+            temp_config.extend([grant + item for item in temp if 'access-list' not in item])
+
+        for each in split_config:
+            if 'v6' in each:
+                each = 'ipv6 ' + each.split('v6 ')[1]
+                if 'permit' in each:
+                    common_config_code(each, 'permit', temp_config)
+                elif 'deny' in each:
+                    common_config_code(each, 'deny', temp_config)
+            else:
+                each = 'ip' + each
+                if 'permit' in each:
+                    common_config_code(each, 'permit', temp_config)
+                if 'deny' in each:
+                    common_config_code(each, 'deny', temp_config)
+        return temp_config
+
     def render_config(self, spec, have_config):
         """
         Render config as dictionary structure and delete keys
@@ -260,28 +293,37 @@ class AclFacts(object):
         :rtype: dictionary
         :returns: The generated config
         """
+
+        # for parsed scnenario where commands are passed to generate the acl facts
+        if len(have_config) == 1:
+            have_config = self.parsed_config_facts(have_config)
+
         config = deepcopy(spec)
         render_config = list()
-        config['acls'] = list()
         acls = dict()
         aces = list()
         temp_name = ''
         for each in have_config:
             each_list = [val for val in each.split(' ') if val != '']
-            if 'IPv6' in each:
+            if 'IPv6' in each or 'ipv6' in each:
                 if aces:
                     config['acls'].append(acls)
-                ipv4 = config
-                render_config.append(ipv4)
-                config = deepcopy(spec)
+                ip_config = config
+                if ip_config.get('acls'):
+                    render_config.append(ip_config)
+                if not config['afi'] or config['afi'] == 'ipv4':
+                    config = deepcopy(spec)
+                    config['afi'] = 'ipv6'
                 acls = dict()
                 aces = list()
-                config['afi'] = 'ipv6'
-            elif not config['afi'] and 'IP' in each:
+            elif not config['afi'] and ('IP' in each or 'ip' in each):
                 config['afi'] = 'ipv4'
-            if 'access list' in each:
-                temp_index = each_list.index('list')
-                name = (each_list[temp_index + 1])
+            if 'access list' in each or 'access-list' in each:
+                try:
+                    temp_index = each_list.index('list')
+                    name = (each_list[temp_index + 1])
+                except ValueError:
+                    name = each_list[-1]
                 if temp_name != name:
                     if aces:
                         config['acls'].append(acls)
@@ -304,7 +346,7 @@ class AclFacts(object):
                     if 'sequence' in each_list:
                         ace_options['sequence'] = int(each_list[each_list.index('sequence') + 1])
             except ValueError:
-                self._module.fail_json(msg="Sequence rendered is STR, cannot convert to INT!")
+                pass
             if utils.parse_conf_arg(each, 'permit'):
                 ace_options['grant'] = 'permit'
                 each_list.remove('permit')
@@ -332,7 +374,7 @@ class AclFacts(object):
 
             temp_option = ''
             for option in protocol_option:
-                if option in each_list:
+                if option in each_list and 'access' not in each_list[each_list.index(option)+1]:
                     temp_option = option
                     each_list.remove(temp_option)
                     if temp_option == 'tcp':
@@ -443,11 +485,12 @@ class AclFacts(object):
                 acls['aces'] = aces
         if acls:
             if not config.get('acls'):
-                config['acls'] = []
+                config['acls'] = list()
             config['acls'].append(acls)
 
-        render_config.append(utils.remove_empties(config))
-        # delete the populated connfig
+        if config not in render_config:
+            render_config.append(utils.remove_empties(config))
+        # delete the populated config
         del config
 
         return render_config

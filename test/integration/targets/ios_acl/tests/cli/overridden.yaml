@@ -13,7 +13,7 @@
           - afi: ipv4
             acls:
               - name: 110
-                ace:
+                aces:
                   - grant: deny
                     protocol_options:
                       tcp:
@@ -32,7 +32,7 @@
                     ttl:
                       eq: 10
               - name: 150
-                ace:
+                aces:
                   - grant: deny
                     protocol_options:
                       tcp:
@@ -53,20 +53,11 @@
         state: overridden
       register: result
 
-    - name: Assert that correct set of commands were generated
-      assert:
+    - assert:
         that:
-          - "{{ overridden['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
-
-    - name: Assert that before dicts are correctly generated
-      assert:
-        that:
-          - "{{ overridden['before'] | symmetric_difference(result['before']) | length == 0 }}"
-
-    - name: Assert that after dict is correctly generated
-      assert:
-        that:
-          - "{{ overridden['after'] | symmetric_difference(result['after']) | length == 0 }}"
+          - "result.commands|length == 8"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(overridden.commands) == []"
 
     - name: Override device configuration of all interfaces with provided configuration (IDEMPOTENT)
       ios_acl: *overridden
@@ -74,8 +65,9 @@
 
     - name: Assert that task was idempotent
       assert:
-       that:
-         - "result['changed'] == false"
+        that:
+          - "result.commands|length == 0"
+          - "result['changed'] == false"
 
   always:
     - include_tasks: _remove_config.yaml

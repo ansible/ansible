@@ -10,9 +10,16 @@
         config:
           - afi: ipv4
             acls:
+              - name: std_acl
+                acl_type: standard
+                aces:
+                  - grant: deny
+                    source:
+                      address: 192.0.2.0
+                      wildcard_bits: 0.0.0.255
               - name: test_acl
                 acl_type: extended
-                ace:
+                aces:
                   - grant: deny
                     protocol_options:
                       tcp:
@@ -30,8 +37,9 @@
                     ttl:
                       eq: 10
               - name: 110
-                ace:
+                aces:
                   - grant: deny
+                    sequence: 10
                     protocol_options:
                       icmp:
                         echo: true
@@ -45,7 +53,7 @@
                     ttl:
                       eq: 10
               - name: 123
-                ace:
+                aces:
                   - grant: deny
                     protocol_options:
                       tcp:
@@ -78,7 +86,7 @@
           - afi: ipv6
             acls:
               - name: R1_TRAFFIC
-                ace:
+                aces:
                   - grant: deny
                     protocol_options:
                       tcp:
@@ -95,20 +103,11 @@
         state: merged
       register: result
 
-    - name: Assert that correct set of commands were generated
-      assert:
+    - assert:
         that:
-          - "{{ merged['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
-
-    - name: Assert that before dicts are correctly generated
-      assert:
-        that:
-          - "{{ merged['before'] | symmetric_difference(result['before']) | length == 0 }}"
-
-    - name: Assert that after dict is correctly generated
-      assert:
-        that:
-          - "{{ merged['after'] | symmetric_difference(result['after']) | length == 0 }}"
+          - "result.commands|length == 11"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(merged.commands) == []"
 
     - name: Merge provided configuration with device configuration (IDEMPOTENT)
       ios_acl: *merged
@@ -117,6 +116,7 @@
     - name: Assert that the previous task was idempotent
       assert:
         that:
+          - "result.commands|length == 0"
           - "result['changed'] == false"
 
   always:

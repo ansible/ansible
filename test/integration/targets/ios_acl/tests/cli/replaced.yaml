@@ -13,7 +13,7 @@
           - afi: ipv4
             acls:
               - name: 110
-                ace:
+                aces:
                   - grant: deny
                     protocol_options:
                       tcp:
@@ -30,8 +30,9 @@
                     ttl:
                       eq: 10
               - name: 150
-                ace:
+                aces:
                   - grant: deny
+                    sequence: 20
                     protocol_options:
                       tcp:
                         syn: true
@@ -51,20 +52,11 @@
         state: replaced
       register: result
 
-    - name: Assert that correct set of commands were generated
-      assert:
+    - assert:
         that:
-          - "{{ replaced['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
-
-    - name: Assert that before dicts are correctly generated
-      assert:
-        that:
-          - "{{ replaced['before'] | symmetric_difference(result['before']) | length == 0 }}"
-
-    - name: Assert that after dict is correctly generated
-      assert:
-        that:
-          - "{{ replaced['after'] | symmetric_difference(result['after']) | length == 0 }}"
+          - "result.commands|length == 5"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(replaced.commands) == []"
 
     - name: Replaces device configuration of listed interfaces with provided configuration (IDEMPOTENT)
       ios_acl: *replaced
@@ -72,8 +64,9 @@
 
     - name: Assert that task was idempotent
       assert:
-       that:
-         - "result['changed'] == false"
+        that:
+          - "result.commands|length == 0"
+          - "result['changed'] == false"
 
   always:
     - include_tasks: _remove_config.yaml

@@ -39,13 +39,13 @@ class Acl(ConfigBase):
     def __init__(self, module):
         super(Acl, self).__init__(module)
 
-    def get_acl_facts(self):
+    def get_acl_facts(self, data=None):
         """ Get the 'facts' (the current configuration)
 
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
+        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources, data=data)
         acl_facts = facts['ansible_network_resources'].get('acl')
         if not acl_facts:
             return []
@@ -85,7 +85,7 @@ class Acl(ConfigBase):
         elif self.state == 'parsed':
             running_config = self._module.params['running_config']
             if not running_config:
-                self._module.fail_json(msg="Value of running_config parameter must not be empty for state parsed")
+                self._module.fail_json(msg="value of running_config parameter must not be empty for state parsed")
             result['parsed'] = self.get_acl_facts(data=running_config)
         else:
             changed_acl_facts = []
@@ -126,14 +126,14 @@ class Acl(ConfigBase):
         commands = []
 
         state = self._module.params['state']
-        if state in ('overridden', 'merged', 'replaced') and not want:
+        if state in ('overridden', 'merged', 'replaced', 'rendered') and not want:
             self._module.fail_json(msg='value of config parameter must not be empty for state {0}'.format(state))
 
         if state == 'overridden':
             commands = self._state_overridden(want, have)
         elif state == 'deleted':
             commands = self._state_deleted(want, have)
-        elif state == 'merged':
+        elif state == 'merged' or state == 'rendered':
             commands = self._state_merged(want, have)
         elif state == 'replaced':
             commands = self._state_replaced(want, have)
@@ -335,25 +335,32 @@ class Acl(ConfigBase):
         commands = []
         if want:
             for config_want in want:
-                for acls_want in config_want.get('acls'):
-                    if acls_want.get('aces'):
-                        for ace_want in acls_want.get('aces'):
+                if config_want.get('acls'):
+                    for acls_want in config_want.get('acls'):
+                        if acls_want.get('aces'):
+                            for ace_want in acls_want.get('aces'):
+                                for config_have in have:
+                                    for acls_have in config_have.get('acls'):
+                                        if acls_want.get('name') == acls_have.get('name'):
+                                            if ace_want.get('sequence'):
+                                                commands.extend(self._clear_config(acls_want,
+                                                                                   config_want,
+                                                                                   ace_want.get('sequence')))
+                                            else:
+                                                commands.extend(self._clear_config(acls_want,
+                                                                                   config_want))
+                        else:
                             for config_have in have:
                                 for acls_have in config_have.get('acls'):
                                     if acls_want.get('name') == acls_have.get('name'):
-                                        if ace_want.get('sequence'):
-                                            commands.extend(self._clear_config(acls_want,
-                                                                               config_want,
-                                                                               ace_want.get('sequence')))
-                                        else:
-                                            commands.extend(self._clear_config(acls_want,
-                                                                               config_want))
-                    else:
-                        for config_have in have:
+                                        commands.extend(self._clear_config(acls_want,
+                                                                           config_want))
+                else:
+                    afi_want = config_want.get('afi')
+                    for config_have in have:
+                        if config_have.get('afi') == afi_want:
                             for acls_have in config_have.get('acls'):
-                                if acls_want.get('name') == acls_have.get('name'):
-                                    commands.extend(self._clear_config(acls_want,
-                                                                       config_want))
+                                commands.extend(self._clear_config(acls_have, config_want))
             # Split and arrange the config commands
             commands = self.split_set_cmd(commands)
         else:

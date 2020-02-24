@@ -12,30 +12,21 @@
         config:
           - afi: ipv4
             acls:
-              - name: 110
-              - name: 123
               - name: test_acl
                 acl_type: extended
+              - name: 110
+              - name: 123
           - afi: ipv6
             acls:
             - name: R1_TRAFFIC
         state: deleted
       register: result
 
-    - name: Assert that correct set of commands were generated
-      assert:
+    - assert:
         that:
-          - "{{ deleted['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
-
-    - name: Assert that before dicts are correctly generated
-      assert:
-        that:
-          - "{{ deleted['before'] | symmetric_difference(result['before']) | length == 0 }}"
-
-    - name: Assert that after dict is correctly generated
-      assert:
-        that:
-          - "{{ deleted['after'] | symmetric_difference(result['after']) | length == 0 }}"
+          - "result.commands|length == 4"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(deleted.commands) == []"
 
     - name: Delete attributes of all configured interfaces (IDEMPOTENT)
       ios_acl: *deleted
@@ -44,6 +35,33 @@
     - name: Assert that the previous task was idempotent
       assert:
         that:
+          - "result.commands|length == 0"
+          - "result.changed == false"
+
+    - include_tasks: _remove_config.yaml
+    - include_tasks: _populate_config.yaml
+
+    - name: Delete ACL attributes of provided configured interfaces based on AFI
+      ios_acl: &deleted_afi
+        config:
+          - afi: ipv4
+        state: deleted
+      register: result
+
+    - assert:
+        that:
+          - "result.commands|length == 3"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(deleted_afi.commands) == []"
+
+    - name: Delete ACL attributes of provided configured interfaces based on AFI (IDEMPOTENT)
+      ios_acl: *deleted_afi
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result.commands|length == 0"
           - "result.changed == false"
 
   always:

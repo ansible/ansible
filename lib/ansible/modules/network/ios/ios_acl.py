@@ -1012,6 +1012,45 @@ EXAMPLES = """
 # Extended IP access list 123
 #    20 deny tcp 192.0.3.0 0.0.0.255 192.0.4.0 0.0.0.255 eq www ack dscp ef ttl lt 20
 
+# Before state:
+# -------------
+#
+# vios#sh access-lists
+# Standard IP access list std_acl
+#    10 deny   192.168.1.200
+#    20 deny   192.168.2.0, wildcard bits 0.0.0.255
+# Extended IP access list 110
+#    10 deny icmp 192.0.2.0 0.0.0.255 192.0.3.0 0.0.0.255 traceroute dscp ef ttl eq 10
+#    20 deny tcp host 198.51.100.0 host 198.51.110.0 eq telnet ack
+# Extended IP access list 123
+#    10 deny tcp 198.51.100.0 0.0.0.255 198.51.101.0 0.0.0.255 eq telnet ack tos 12
+#    20 deny tcp 192.0.3.0 0.0.0.255 192.0.4.0 0.0.0.255 eq www ack dscp ef ttl lt 20
+# Extended IP access list test
+#    10 deny tcp 192.0.2.0 0.0.0.255 192.0.3.0 0.0.0.255 eq www fin option traceroute ttl eq 10
+# IPv6 access list R1_TRAFFIC
+#    deny tcp any eq www any eq telnet ack dscp af11 sequence 10
+
+- name: "Delete module attributes of given ACL based on AFI (Note: This won't delete the interface itself)"
+  ios_acl:
+    config:
+      - afi: ipv4
+    state: deleted
+
+# Commands fired:
+# ---------------
+#
+# - no ip access-list standard std_acl
+# - no ip access-list extended test
+# - no ip access-list extended 110
+# - no ip access-list extended 123
+
+# After state:
+# -------------
+#
+# vios#sh access-lists
+# IPv6 access list R1_TRAFFIC
+#    deny tcp any eq www any eq telnet ack dscp af11 sequence 10
+
 # Using Deleted without any config passed
 #"(NOTE: This will delete all of configured resource module attributes from each configured interface)"
 
@@ -1051,6 +1090,288 @@ EXAMPLES = """
 #
 # vios#sh access-lists
 
+# Using Gathered
+
+# Before state:
+# -------------
+#
+# vios#sh access-lists
+# Standard IP access list std_acl
+#    10 deny   192.168.1.200
+#    20 deny   192.168.2.0, wildcard bits 0.0.0.255
+# Extended IP access list 110
+#    10 deny icmp 192.0.2.0 0.0.0.255 192.0.3.0 0.0.0.255 traceroute dscp ef ttl eq 10
+#    20 deny tcp host 198.51.100.0 host 198.51.110.0 eq telnet ack
+# Extended IP access list 123
+#    10 deny tcp 198.51.100.0 0.0.0.255 198.51.101.0 0.0.0.255 eq telnet ack tos 12
+#    20 deny tcp 192.0.3.0 0.0.0.255 192.0.4.0 0.0.0.255 eq www ack dscp ef ttl lt 20
+# Extended IP access list test
+#    10 deny tcp 192.0.2.0 0.0.0.255 192.0.3.0 0.0.0.255 eq www fin option traceroute ttl eq 10
+# IPv6 access list R1_TRAFFIC
+#    deny tcp any eq www any eq telnet ack dscp af11 sequence 10
+
+- name: Gather listed acl interfaces with provided configurations
+  ios_acl_interfaces:
+    config:
+    state: gathered
+
+# Module Execution Result:
+# ------------------------
+#
+# "gathered": [
+#         {
+#             "acls": [
+#                 {
+#                     "aces": [
+#                         {
+#                             "destination": {
+#                                 "address": "192.0.3.0",
+#                                 "wildcard_bits": "0.0.0.255"
+#                             },
+#                             "dscp": "ef",
+#                             "grant": "deny",
+#                             "protocol_options": {
+#                                 "icmp": {
+#                                     "echo": true
+#                                 }
+#                             },
+#                             "sequence": 10,
+#                             "source": {
+#                                 "address": "192.0.2.0",
+#                                 "wildcard_bits": "0.0.0.255"
+#                             },
+#                             "ttl": {
+#                                 "eq": 10
+#                             }
+#                         }
+#                     ],
+#                     "acl_type": "extended",
+#                     "name": "110"
+#                 },
+#                 {
+#                     "aces": [
+#                         {
+#                             "destination": {
+#                                 "address": "198.51.101.0",
+#                                 "port_protocol": {
+#                                     "eq": "telnet"
+#                                 },
+#                                 "wildcard_bits": "0.0.0.255"
+#                             },
+#                             "grant": "deny",
+#                             "protocol_options": {
+#                                 "tcp": {
+#                                     "ack": true
+#                                 }
+#                             },
+#                             "sequence": 10,
+#                             "source": {
+#                                 "address": "198.51.100.0",
+#                                 "wildcard_bits": "0.0.0.255"
+#                             },
+#                             "tos": {
+#                                 "service_value": 12
+#                             }
+#                         },
+#                         {
+#                             "destination": {
+#                                 "address": "192.0.4.0",
+#                                 "port_protocol": {
+#                                     "eq": "www"
+#                                 },
+#                                 "wildcard_bits": "0.0.0.255"
+#                             },
+#                             "dscp": "ef",
+#                             "grant": "deny",
+#                             "protocol_options": {
+#                                 "tcp": {
+#                                     "ack": true
+#                                 }
+#                             },
+#                             "sequence": 20,
+#                             "source": {
+#                                 "address": "192.0.3.0",
+#                                 "wildcard_bits": "0.0.0.255"
+#                             },
+#                             "ttl": {
+#                                 "lt": 20
+#                             }
+#                         }
+#                     ],
+#                     "acl_type": "extended",
+#                     "name": "123"
+#                 },
+#                 {
+#                     "aces": [
+#                         {
+#                             "destination": {
+#                                 "address": "192.0.3.0",
+#                                 "port_protocol": {
+#                                     "eq": "www"
+#                                 },
+#                                 "wildcard_bits": "0.0.0.255"
+#                             },
+#                             "grant": "deny",
+#                             "option": {
+#                                 "traceroute": true
+#                             },
+#                             "protocol_options": {
+#                                 "tcp": {
+#                                     "fin": true
+#                                 }
+#                             },
+#                             "sequence": 10,
+#                             "source": {
+#                                 "address": "192.0.2.0",
+#                                 "wildcard_bits": "0.0.0.255"
+#                             },
+#                             "ttl": {
+#                                 "eq": 10
+#                             }
+#                         }
+#                     ],
+#                     "acl_type": "extended",
+#                     "name": "test_acl"
+#                 }
+#             ],
+#             "afi": "ipv4"
+#         },
+#         {
+#             "acls": [
+#                 {
+#                     "aces": [
+#                         {
+#                             "destination": {
+#                                 "any": true,
+#                                 "port_protocol": {
+#                                     "eq": "telnet"
+#                                 }
+#                             },
+#                             "dscp": "af11",
+#                             "grant": "deny",
+#                             "protocol_options": {
+#                                 "tcp": {
+#                                     "ack": true
+#                                 }
+#                             },
+#                             "sequence": 10,
+#                             "source": {
+#                                 "any": true,
+#                                 "port_protocol": {
+#                                     "eq": "www"
+#                                 }
+#                             }
+#                         }
+#                     ],
+#                     "name": "R1_TRAFFIC"
+#                 }
+#             ],
+#             "afi": "ipv6"
+#         }
+#     ]
+
+# Using Rendered
+
+- name: Rendered the provided configuration with the exisiting running configuration
+  ios_acl:
+    config:
+      - afi: ipv4
+        acls:
+          - name: 110
+            aces:
+              - grant: deny
+                sequence: 10
+                protocol_options:
+                  tcp:
+                    syn: true
+                source:
+                  address: 192.0.2.0
+                  wildcard_bits: 0.0.0.255
+                destination:
+                  address: 192.0.3.0
+                  wildcard_bits: 0.0.0.255
+                  port_protocol:
+                    eq: www
+                dscp: ef
+                ttl:
+                  eq: 10
+          - name: 150
+            aces:
+              - grant: deny
+                protocol_options:
+                  tcp:
+                    syn: true
+                source:
+                  address: 198.51.100.0
+                  wildcard_bits: 0.0.0.255
+                  port_protocol:
+                    eq: telnet
+                destination:
+                  address: 198.51.110.0
+                  wildcard_bits: 0.0.0.255
+                  port_protocol:
+                    eq: telnet
+                dscp: ef
+                ttl:
+                  eq: 10
+    state: rendered
+
+# Module Execution Result:
+# ------------------------
+#
+# "rendered": [
+#         "ip access-list extended 110",
+#         "10 deny tcp 192.0.2.0 0.0.0.255 192.0.3.0 0.0.0.255 eq www syn dscp ef ttl eq 10",
+#         "ip access-list extended 150",
+#         "deny tcp 198.51.100.0 0.0.0.255 eq telnet 198.51.110.0 0.0.0.255 eq telnet syn dscp ef ttl eq 10"
+#     ]
+
+# Using Parsed
+
+- name: Parse the commands for provided configuration
+  ios_acl:
+    running_config:
+      "ipv6 access-list R1_TRAFFIC
+       deny tcp any eq www any eq telnet ack dscp af11"
+    state: parsed
+
+# Module Execution Result:
+# ------------------------
+#
+# "parsed": [
+#         {
+#             "acls": [
+#                 {
+#                     "aces": [
+#                         {
+#                             "destination": {
+#                                 "any": true,
+#                                 "port_protocol": {
+#                                     "eq": "telnet"
+#                                 }
+#                             },
+#                             "dscp": "af11",
+#                             "grant": "deny",
+#                             "protocol_options": {
+#                                 "tcp": {
+#                                     "ack": true
+#                                 }
+#                             },
+#                             "source": {
+#                                 "any": true,
+#                                 "port_protocol": {
+#                                     "eq": "www"
+#                                 }
+#                             }
+#                         }
+#                     ],
+#                     "name": "R1_TRAFFIC"
+#                 }
+#             ],
+#             "afi": "ipv6"
+#         }
+#     ]
+
 """
 
 RETURN = """
@@ -1084,7 +1405,10 @@ def main():
     """
     required_if = [('state', 'merged', ('config',)),
                    ('state', 'replaced', ('config',)),
-                   ('state', 'overridden', ('config',))]
+                   ('state', 'overridden', ('config',)),
+                   ('state', 'rendered', ('config',)),
+                   ('state', 'parsed', ('running_config',))]
+
     mutually_exclusive = [('config', 'running_config')]
 
     module = AnsibleModule(argument_spec=AclArgs.argument_spec,

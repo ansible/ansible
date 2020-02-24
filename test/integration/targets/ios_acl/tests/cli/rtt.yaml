@@ -12,12 +12,13 @@
         config:
           - afi: ipv4
             acls:
-              - name: 110
-                ace:
+              - name: test_acl
+                acl_type: extended
+                aces:
                   - grant: deny
                     protocol_options:
                       tcp:
-                        syn: true
+                        fin: true
                     source:
                       address: 192.0.2.0
                       wildcard_bits: 0.0.0.255
@@ -26,11 +27,110 @@
                       wildcard_bits: 0.0.0.255
                       port_protocol:
                         eq: www
+                    option:
+                      traceroute: true
+                    ttl:
+                      eq: 10
+              - name: 110
+                aces:
+                  - grant: deny
+                    protocol_options:
+                      icmp:
+                        echo: true
+                    source:
+                      address: 192.0.2.0
+                      wildcard_bits: 0.0.0.255
+                    destination:
+                      address: 192.0.3.0
+                      wildcard_bits: 0.0.0.255
+                    dscp: ef
+                    ttl:
+                      eq: 10
+              - name: 123
+                aces:
+                  - grant: deny
+                    protocol_options:
+                      tcp:
+                        ack: true
+                    source:
+                      address: 198.51.100.0
+                      wildcard_bits: 0.0.0.255
+                    destination:
+                      address: 198.51.101.0
+                      wildcard_bits: 0.0.0.255
+                      port_protocol:
+                        eq: telnet
+                    tos:
+                      service_value: 12
+                  - grant: deny
+                    protocol_options:
+                      tcp:
+                        ack: true
+                    source:
+                      address: 192.0.3.0
+                      wildcard_bits: 0.0.0.255
+                    destination:
+                      address: 192.0.4.0
+                      wildcard_bits: 0.0.0.255
+                      port_protocol:
+                        eq: www
+                    dscp: ef
+                    ttl:
+                      lt: 20
+          - afi: ipv6
+            acls:
+              - name: R1_TRAFFIC
+                aces:
+                  - grant: deny
+                    protocol_options:
+                      tcp:
+                        ack: true
+                    source:
+                      any: true
+                      port_protocol:
+                        eq: www
+                    destination:
+                      any: true
+                      port_protocol:
+                        eq: telnet
+                    dscp: af11
+        state: merged
+      register: base_config
+
+    - name: Gather static routes facts
+      ios_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources:
+          - acl
+
+    - name: Apply the configuration which need to be reverted
+      ios_acl:
+        config:
+          - afi: ipv4
+            acls:
+              - name: 110
+                aces:
+                  - grant: deny
+                    protocol_options:
+                      tcp:
+                        ack: true
+                    source:
+                      address: 198.51.100.0
+                      wildcard_bits: 0.0.0.255
+                      port_protocol:
+                        eq: telnet
+                    destination:
+                      address: 198.51.110.0
+                      wildcard_bits: 0.0.0.255
+                      port_protocol:
+                        eq: www
                     dscp: ef
                     ttl:
                       eq: 10
               - name: 150
-                ace:
+                aces:
                   - grant: deny
                     protocol_options:
                       tcp:
@@ -48,43 +148,14 @@
                     dscp: ef
                     ttl:
                       eq: 10
-        state: merged
-      register: base_config
-
-    - name: Gather static routes facts
-      ios_facts:
-        gather_subset:
-          - "!all"
-          - "!min"
-        gather_network_resources:
-          - acl
-
-    - name: Apply the configuration which need to be reverted
-      ios_acl:
-        config:
-          - afi: ipv6
-            acls:
-              - name: R1_TRAFFIC
-                ace:
-                  - grant: deny
-                    protocol_options:
-                      tcp:
-                        ack: true
-                    source:
-                      any: true
-                      port_protocol:
-                        eq: www
-                    destination:
-                      any: true
-                      port_protocol:
-                        eq: telnet
-                    dscp: af11
         state: overridden
       register: result
 
-    - name: Assert that changes were applied
-      assert:
-        that: "{{ round_trip['after'] | symmetric_difference(result['after']) | length == 0  }}"
+    - assert:
+        that:
+          - "result.commands|length == 8"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(overridden.commands) == []"
 
     - name: Revert back to base config using facts round trip
       ios_acl:
@@ -92,9 +163,11 @@
         state: overridden
       register: revert
 
-    - name: Assert that config was reverted
-      assert:
-        that: "{{ base_config['after'] | symmetric_difference(revert['after']) | length == 0 }}"
+    - assert:
+        that:
+          - "revert.commands|length == 11"
+          - "revert.changed == true"
+          - "revert.commands|symmetric_difference(rtt.commands) == []"
 
   always:
     - include_tasks: _remove_config.yaml
