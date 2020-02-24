@@ -8,6 +8,8 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from ansible.module_utils._text import to_text
+from ansible.module_utils.compat import ipaddress
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.utils import dict_diff, is_masklen, to_netmask, search_obj_in_list
 
@@ -303,3 +305,51 @@ def get_interface_type(interface):
         return 'preconfigure'
     else:
         return 'unknown'
+
+
+def isipaddress(data):
+    """
+        Checks if the passed string is
+        a valid IPv4 or IPv6 address
+    """
+    isipaddress = True
+
+    try:
+        ipaddress.ip_address(data)
+    except ValueError:
+        isipaddress = False
+
+    return isipaddress
+
+
+def is_ipv4_address(data):
+    """
+        Checks if the passed string is
+        a valid IPv4 address
+    """
+    if '/' in data:
+        data = data.split('/')[0]
+
+    if not isipaddress(to_text(data)):
+        raise ValueError('{0} is not a valid IP address'.format(data))
+
+    return (ipaddress.ip_address(to_text(data)).version == 4)
+
+
+def prefix_to_address_wildcard(prefix):
+    """ Converts a IPv4 prefix into address and
+        wildcard mask
+
+    :returns: IPv4 address and wildcard mask
+    """
+    wildcard = []
+
+    subnet = to_text(ipaddress.IPv4Network(to_text(prefix)).netmask)
+
+    for x in subnet.split('.'):
+        component = 255 - int(x)
+        wildcard.append(str(component))
+
+    wildcard = '.'.join(wildcard)
+
+    return prefix.split('/')[0], wildcard

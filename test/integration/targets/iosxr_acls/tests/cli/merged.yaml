@@ -1,0 +1,168 @@
+---
+- debug:
+      msg: "START iosxr_acls merged integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Merge the provided configuration with the exisiting running configuration
+      iosxr_acls: &merged
+        config:
+          - afi: ipv6
+            acls:
+              - name: acl6_1
+                aces:
+                  - sequence: 10
+                    grant: deny
+                    protocol: tcp
+                    source:
+                      prefix: 2001:db8:1234::/48
+                      port_protocol:
+                        range: 
+                          start: ftp
+                          end: telnet
+                    destination:
+                      any: True
+                    protocol_options:
+                      tcp:
+                        syn: True
+                    ttl:
+                      range:
+                        start: 180
+                        end: 250
+                    routing: True
+                    authen: True
+                    log: True
+                  
+                  - sequence: 20
+                    grant: permit
+                    protocol: icmpv6
+                    source:
+                      any: True
+                    destination:
+                      any: True
+                    protocol_options:
+                      icmpv6:
+                        router_advertisement: True
+                    precedence: network
+                    destopts: True
+
+          - afi: ipv4
+            acls:
+              - name: acl_1
+                aces:
+                  - sequence: 16
+                    remark: TEST_ACL_1_REMARK
+                 
+                  - sequence: 21
+                    grant: permit
+                    protocol: tcp
+                    source:
+                      host: 192.0.2.10
+                      port_protocol:
+                        range:
+                          start: pop3
+                          end: 121
+                    destination:
+                      address: 198.51.100.0
+                      wildcard_bits: 0.0.0.15
+                    protocol_options:
+                      tcp:
+                        rst: True
+                  
+                  - sequence: 23
+                    grant: deny
+                    protocol: icmp
+                    source:
+                      any: True
+                    destination:
+                      prefix: 198.51.100.0/28
+                    protocol_options:
+                      icmp:
+                        reassembly_timeout: True
+                    dscp:
+                      lt: af12
+              
+              - name: acl_2
+                aces:
+                  - sequence: 10
+                    remark: TEST_ACL_2_REMARK
+        state: merged
+      register: result
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that: "{{ merged['before'] | symmetric_difference(result['before']) |length == 0 }}"
+  
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+  
+    - name: Assert that after dicts was correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['after']) |length == 0 }}"
+  
+    - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+      iosxr_acls: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+          - "result.commands|length == 0"
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
+      
+    - name: Update existing ACEs
+      iosxr_acls: &update
+        config:
+          - afi: ipv4
+            acls:
+              - name: acl_1
+                aces:
+                  - sequence: 21
+                    source:
+                      prefix: 198.51.100.32/28
+                      port_protocol:
+                        range:
+                          start: pop3
+                          end: 121
+                    protocol_options:
+                      tcp:
+                        syn: True
+
+                  - sequence: 23
+                    protocol_options:
+                      icmp:
+                        router_advertisement: True
+                    dscp:
+                      eq: af23
+        state: merged
+      register: result
+    
+    - name: Assert that the correct set of commands were generated
+      assert:
+        that:
+          - '"ipv4 access-list acl_1" in result.commands'
+          - '"21 permit tcp 198.51.100.32 0.0.0.15 range pop3 121 198.51.100.0 0.0.0.15 syn" in result.commands'
+          - '"23 deny icmp any 198.51.100.0 0.0.0.15 router-advertisement dscp eq af23" in result.commands'
+          - "result.commands|length == 3"
+    
+    - name: Update existing ACEs (IDEMPOTENT)
+      iosxr_acls: *update
+      register: result
+    
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+          - "result.commands|length == 0"
+
+  always:
+    - include_tasks: _remove_config.yaml

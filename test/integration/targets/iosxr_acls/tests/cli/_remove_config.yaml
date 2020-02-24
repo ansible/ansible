@@ -1,0 +1,14 @@
+---
+- name: Remove ACLs
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      no ipv4 access-list acl_1
+      no ipv4 access-list acl_2
+      no ipv4 access-list acl_3
+      no ipv4 access-list acl_3
+      no ipv6 access-list acl6_1
+      no ipv6 access-list acl6_2
+      no ipv6 access-list acl6_3
+  ignore_errors: yes

@@ -1,0 +1,20 @@
+---
+- debug:
+      msg: "START iosxr_acls gathered integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Gather ACL interfaces facts using gathered state
+      iosxr_acls:
+        state: gathered
+      register: result
+
+    - name: Assert that facts were correctly generated
+      assert:
+        that: "{{ merged['after'] | symmetric_difference(result['gathered']) |length == 0 }}"
+
+  always:
+    - include_tasks: _remove_config.yaml

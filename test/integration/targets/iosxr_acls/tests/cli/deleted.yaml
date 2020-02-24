@@ -1,0 +1,116 @@
+---
+- debug:
+    msg: "Start iosxr_lag_interfaces deleted integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Delete a single ACE
+      iosxr_acls: &deleted_1
+        config:
+          - afi: ipv4
+            acls:
+              - name: acl_1
+                aces:
+                  - sequence: 23
+        state: deleted
+      register: result
+    
+    - assert:
+        that:
+          - '"ipv4 access-list acl_1" in result.commands'
+          - '"no 23" in result.commands'
+          - "result.commands|length == 2"
+    
+    - name: Delete a single ACE (IDEMPOTENT)
+      iosxr_acls: *deleted_1
+      register: result
+    
+    - name: Assert that the previous task was idempotent
+      assert: &unchanged
+        that:
+          - "result.changed == false"
+          - "result.commands|length == 0"
+    
+    - name: Delete a single ACL
+      iosxr_acls: &deleted_2
+        config:
+          - afi: ipv6
+            acls:
+              - name: acl6_1
+        state: deleted
+      register: result
+    
+    - assert:
+        that:
+          - '"no ipv6 access-list acl6_1" in result.commands'
+          - "result.commands|length == 1"
+    
+    - name: Delete a single ACL (IDEMPOTENT)
+      iosxr_acls: *deleted_2
+      register: result
+    
+    - name: Assert that the previous task was idempotent
+      assert: *unchanged
+    
+    - name: Delete all ACLs under one AFI
+      iosxr_acls: &deleted_3
+        config:
+          - afi: ipv4
+        state: deleted
+      register: result
+    
+    - assert:
+        that:
+          - '"no ipv4 access-list acl_1" in result.commands'
+          - '"no ipv4 access-list acl_2" in result.commands'
+          - "result.commands|length == 2"
+    
+    - name: Delete all ACLs under one AFI (IDEMPOTENT)
+      iosxr_acls: *deleted_3
+      register: result
+    
+    - name: Assert that the previous task was idempotent
+      assert: *unchanged
+    
+    - include_tasks: _populate_config.yaml
+
+    - name: Delete all ACLs from the device
+      iosxr_acls: &deleted_4
+        state: deleted
+      register: result
+    
+    - name: Assert that the before dicts were correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that the correct set of commands were generated
+      assert:
+        that:
+          - "{{ deleted['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that the after dicts were correctly generated
+      assert:
+        that:
+          - "{{ deleted['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Delete all ACLs from the device (IDEMPOTENT)
+      iosxr_lag_interfaces: *deleted_4
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result.changed == false"
+          - "result.commands|length == 0"
+
+    - name: Assert that the before dicts were correctly generated
+      assert:
+        that:
+          - "{{ deleted['after'] | symmetric_difference(result['before']) |length == 0 }}"
+  
+  always:
+    - include_tasks: _remove_config.yaml
