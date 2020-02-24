@@ -1,0 +1,2 @@
+bugfixes:
+  - "ovirt_vm: correct numa nodes and update documentation"
