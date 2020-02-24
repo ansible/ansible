@@ -10,7 +10,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
-module: cloudformation_exports
+module: cloudformation_exports_info
 short_description: Read a value from CloudFormation Exports
 description:
   - Module retrieves a value from CloudFormation Exports
@@ -25,7 +25,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: Get Exports
-  cloudformation_exports:
+  cloudformation_exports_info:
     profile: 'my_aws_profile'
     region: 'my_region'
   register: cf_exports
