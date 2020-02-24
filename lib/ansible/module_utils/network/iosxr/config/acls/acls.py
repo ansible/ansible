@@ -22,14 +22,12 @@ from ansible.module_utils.network.iosxr.utils.utils \
         prefix_to_address_wildcard,
         is_ipv4_address
     )
-from ansible.module_utils.network.iosxr.argspec.acls.acls import AclsArgs
 from ansible.module_utils.network.common.utils \
     import (
         to_list,
         search_obj_in_list,
         dict_diff,
         remove_empties,
-        dict_merge,
     )
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.iosxr.facts.facts import Facts
