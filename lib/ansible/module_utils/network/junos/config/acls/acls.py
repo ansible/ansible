@@ -173,24 +173,37 @@ class Acls(ConfigBase):
         """
         acls_xml = []
         family_node = build_root_xml_node('family')
-        inet_node = build_child_xml_node(family_node, 'inet')
         for config in want:
-            for acl in config['acls']:
+            family = "inet6" if config.pop("afi") == "ipv6" else "inet"
+            inet_node = build_child_xml_node(family_node, family)
+
+            if delete:
+                inet_node.attrib.update(delete)
+            if not config["acls"]:
+                continue
+            for acl in config["acls"]:
                 filter_node = build_child_xml_node(inet_node, 'filter')
                 build_child_xml_node(filter_node, 'name', acl['name'])
-                if delete:
-                    filter_node.attrib.update(delete)
-                elif acl.get('aces'):
+                if acl.get('aces'):
                     for ace in acl['aces']:
                         term_node = build_child_xml_node(filter_node, 'term')
                         build_child_xml_node(term_node, 'name', ace['name'])
-                        if ace.get('protocol') or ace.get('port'):
+                        if ace.get("source") or ace.get('protocol') or ace.get('port'):
                             from_node = build_child_xml_node(term_node, 'from')
-                            if ace['protocol']:
-                                if 'range' not in ace['protocol'].keys():
-                                    protocol = list(ace['protocol'].keys())[0]
+                            if ace.get("source"):
+                                if ace["source"].get("address"):
+                                    build_child_xml_node(from_node, 'source-address', ace["source"]['address'])
+                                if ace["source"].get("prefix_list"):
+                                    build_child_xml_node(from_node, 'prefix-list', ace["source"]['prefix_list'])
+                            if ace.get('protocol'):
+                                protocol = [proto for proto in ace["protocol"] if ace["protocol"][proto]][0]
+                                if protocol != 'range':
                                     build_child_xml_node(from_node, 'protocol', protocol)
-                            if ace['port']:
-                                build_child_xml_node(from_node, 'port', ace['port']['range'])
+                            if ace.get('port'):
+                                port = [port for port in ace["port"] if ace["port"][port]][0]
+                                if port == "range":
+                                    build_child_xml_node(from_node, 'port', ace['port'][port])
+                                else:
+                                    build_child_xml_node(from_node, 'port', port)
         acls_xml.append(family_node)
         return acls_xml
