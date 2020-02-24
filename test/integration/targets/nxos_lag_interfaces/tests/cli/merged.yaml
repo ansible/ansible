@@ -27,6 +27,7 @@
           members:
             - member: "{{ test_int1 }}"
             - member: "{{ test_int2 }}"
+              mode: yes
       state: merged
     register: result
 
