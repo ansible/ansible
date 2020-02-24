@@ -49,6 +49,17 @@
     - assert:
         that:
           - output is not changed
+          - output.name == '{{ bucket_name }}'
+          - output.requester_pays
+          - output.versioning.MfaDelete == 'Disabled'
+          - output.versioning.Versioning == 'Enabled'
+          - output.tags.example == 'tag1'
+          - output.tags.another == 'tag2'
+          - output.policy.Statement[0].Action == 's3:GetObject'
+          - output.policy.Statement[0].Effect == 'Allow'
+          - output.policy.Statement[0].Principal == '*'
+          - output.policy.Statement[0].Resource == 'arn:aws:s3:::{{ bucket_name }}/*'
+          - output.policy.Statement[0].Sid == 'AddPerm'
 
     # ============================================================
     - name: 'Update bucket policy on complex bucket'

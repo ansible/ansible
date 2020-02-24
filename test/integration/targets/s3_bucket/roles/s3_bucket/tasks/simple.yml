@@ -44,7 +44,7 @@
           - output is changed
 
     # ============================================================
-    - name: 'Re-delete the simple s3_bucket'
+    - name: 'Re-delete the simple s3_bucket (idemoptency)'
       s3_bucket:
         name: '{{ bucket_name }}'
         state: absent
