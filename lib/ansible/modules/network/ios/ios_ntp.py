@@ -20,6 +20,10 @@ options:
     server:
         description:
             - Network address of NTP server.
+    vrf_name:
+        description:
+            - Name of the VRF instance used to communicate to the NTP server
+        version_added: "2.10"
     source_int:
         description:
             - Source interface for NTP packets.
@@ -63,6 +67,12 @@ EXAMPLES = '''
     logging: true
     state: absent
 
+# Configure a NTP server that uses VRF 'management'
+- ios_ntp:
+    server: 10.0.255.10
+    vrf_name: management
+    state: present
+
 # Set NTP authentication
 - ios_ntp:
     key_id: 10
@@ -98,10 +108,11 @@ from ansible.module_utils.network.ios.ios import ios_argument_spec
 
 def parse_server(line, dest):
     if dest == 'server':
-        match = re.search(r'(ntp server )(\d+\.\d+\.\d+\.\d+)', line, re.M)
+        match = re.search(r'(ntp server )(?:vrf (\S+) )?(\d+\.\d+\.\d+\.\d+)', line, re.M)
         if match:
-            server = match.group(2)
-            return server
+            server = match.group(3)
+            vrf = match.group(2)
+            return (vrf, server)
 
 
 def parse_source_int(line, dest):
@@ -193,7 +204,7 @@ def map_params_to_obj(module):
     obj = []
     obj.append({
         'state': module.params['state'],
-        'server': module.params['server'],
+        'server': (module.params['vrf_name'], module.params['server']),
         'source_int': module.params['source_int'],
         'logging': module.params['logging'],
         'acl': module.params['acl'],
@@ -229,7 +240,10 @@ def map_obj_to_commands(want, have, module):
 
         if state == 'absent':
             if server_have and server in server_have:
-                commands.append('no ntp server {0}'.format(server))
+                if server[0]:
+                    commands.append('no ntp server vrf {0} {1}'.format(*server))
+                else:
+                    commands.append('no ntp server {1}'.format(*server))
             if source_int and source_int_have:
                 commands.append('no ntp source {0}'.format(source_int))
             if acl and acl_have:
@@ -245,8 +259,11 @@ def map_obj_to_commands(want, have, module):
                     commands.append('no ntp authentication-key {0} md5 {1} 7'.format(key_id, auth_key))
 
         elif state == 'present':
-            if server is not None and server not in server_have:
-                commands.append('ntp server {0}'.format(server))
+            if server[1] is not None and server not in server_have:
+                if server[0]:
+                    commands.append('ntp server vrf {0} {1}'.format(*server))
+                else:
+                    commands.append('ntp server {1}'.format(*server))
             if source_int is not None and source_int != source_int_have:
                 commands.append('ntp source {0}'.format(source_int))
             if acl is not None and acl != acl_have:
@@ -268,6 +285,7 @@ def main():
 
     argument_spec = dict(
         server=dict(),
+        vrf_name=dict(),
         source_int=dict(),
         acl=dict(),
         logging=dict(type='bool', default=False),

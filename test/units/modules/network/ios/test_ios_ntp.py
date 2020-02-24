@@ -59,6 +59,21 @@ class TestIosNtpModule(TestIosModule):
         commands = []
         self.execute_module(changed=False, commands=commands)
 
+    def test_ios_ntp_vrf_idempotent(self):
+        set_module_args(dict(
+            server='10.70.33.199',
+            vrf_name='mgmt-vrf',
+            source_int='Loopback0',
+            acl='NTP_ACL',
+            logging=True,
+            auth=True,
+            auth_key='15435A030726242723273C21181319000A',
+            key_id='10',
+            state='present'
+        ))
+        commands = []
+        self.execute_module(changed=False, commands=commands)
+
     def test_ios_ntp_config(self):
         set_module_args(dict(
             server='10.75.33.5',
@@ -95,5 +110,27 @@ class TestIosNtpModule(TestIosModule):
             'no ntp authenticate',
             'no ntp trusted-key 10',
             'no ntp authentication-key 10 md5 15435A030726242723273C21181319000A 7'
+        ]
+        self.execute_module(changed=True, commands=commands)
+
+    def test_ios_ntp_with_vrf(self):
+        set_module_args(dict(
+            server='10.75.33.5',
+            vrf_name='management-vrf',
+            state='present'
+        ))
+        commands = [
+            'ntp server vrf management-vrf 10.75.33.5'
+        ]
+        self.execute_module(changed=True, commands=commands)
+
+    def test_ios_ntp_with_vrf_remove(self):
+        set_module_args(dict(
+            server='10.70.33.199',
+            vrf_name='mgmt-vrf',
+            state='absent'
+        ))
+        commands = [
+            'no ntp server vrf mgmt-vrf 10.70.33.199'
         ]
         self.execute_module(changed=True, commands=commands)
