@@ -21,8 +21,8 @@
       - name: Ethernet1
         access:
           vlan: 20
-      - name: Ethernet2
-        mode: trunk
+      - mode: trunk
+        name: Ethernet2
         trunk:
           native_vlan: 20
       - name: Management1
