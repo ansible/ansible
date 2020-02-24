@@ -1,0 +1,168 @@
+---
+- debug:
+    msg: "Start eos_acls deleted integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _populate.yaml
+
+- set_fact:
+    config1:
+      - afi: "ipv4"
+        acls:
+         - name: test1
+           aces:
+             - sequence: 55
+               grant: "permit"
+               protocol: "tcp"
+               source:
+                 any: true
+               destination:
+                 any: true
+             - remark: "Run by ansible"
+               sequence: 45
+         - name: test4
+           aces:
+             - grant: "permit"
+               sequence: 10
+               source:
+                 any: true
+                 port_protocol:
+                  eq: "smtp"
+               destination:
+                 any: true
+                 port_protocol:
+                  eq: "www"
+               protocol: "tcp"
+               ttl:
+                 eq: "55"
+      - afi: "ipv6"
+        acls:
+          - name: test2
+            standard: true
+            aces:
+              - grant: "permit"
+                sequence: 10
+                log: "true"
+                source:
+                  any: true
+
+- set_fact:
+    config2:
+      - afi: "ipv4"
+        acls:
+         - name: test1
+           aces:
+             - sequence: 35
+               grant: "deny"
+               protocol: "tcp"
+               source:
+                 subnet_address: 20.0.0.0/8
+               destination:
+                 any: true
+               log: true
+             - remark: "Run by ansible"
+               sequence: 45
+         - name: test4
+           aces:
+             - grant: "permit"
+               sequence: 10
+               source:
+                 any: true
+                 port_protocol:
+                  eq: "smtp"
+               destination:
+                 any: true
+                 port_protocol:
+                  eq: "www"
+               protocol: "tcp"
+               ttl:
+                 eq: "55"
+- set_fact:
+    config3:
+      - afi: "ipv4"
+        acls:
+         - name: test1
+           aces:
+             - sequence: 35
+               grant: "deny"
+               protocol: "tcp"
+               source:
+                 subnet_address: 20.0.0.0/8
+               destination:
+                 any: true
+               log: true
+             - remark: "Run by ansible"
+               sequence: 45
+
+- block:
+  - name: Delete attributes of given acls.
+    eos_acls:
+      config:
+        - afi: "ipv4"
+          acls:
+           - name: test1
+             aces:
+               - sequence: 35
+                 grant: "deny"
+                 protocol: "tcp"
+                 source:
+                   subnet_address: 20.0.0.0/8
+                 destination:
+                   any: true
+                 log: true
+      state: deleted
+    become: yes
+    register: result
+  
+  - eos_facts:
+      gather_network_resources: acls
+    become: yes
+  
+  - assert:
+      that:
+        - "result.commands|length == 2"
+        - "result.changed == true"
+        - "ansible_facts.network_resources.acls|symmetric_difference(result.after) == [] "
+    become: yes
+  
+  - name: Delete afi of given acls.
+    eos_acls:
+      config:
+        - afi: "ipv6"
+      state: deleted
+    become: yes
+    register: result
+
+  - eos_facts:
+      gather_network_resources: acls
+    become: yes
+
+  - assert:
+      that:
+        - "result.commands|length == 1"
+        - "result.changed == true"
+        - "ansible_facts.network_resources.acls|symmetric_difference(result.after) == [] "
+    become: yes  
+
+  - name: Delete attributes of given named acl.
+    eos_acls:
+      config:
+        - afi: "ipv4"
+          acls:
+           - name: test4
+      state: deleted
+    become: yes
+    register: result
+
+  - eos_facts:
+      gather_network_resources: acls
+    become: yes
+
+  - assert:
+      that:
+        - "result.commands|length == 1"
+        - "result.changed == true"
+        - "ansible_facts.network_resources.acls|symmetric_difference(result.after) == [] "
+    become: yes
+
+  always:
+    - include_tasks: _remove_config.yaml

@@ -1,0 +1,29 @@
+---
+- debug:
+    msg: "START eos_acls parsed integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _parsed_cfg.yaml
+
+- name: Gather acls facts
+  eos_facts:
+    gather_subset:
+      - default
+    gather_network_resources:
+      - acls
+  become: yes
+  register: acls_facts
+
+- name: Provide the running configuration for parsing (config to be parsed)
+  eos_acls: &parsed
+    running_config: 
+       "{{ lookup('file', '_parsed.cfg') }}"
+    state: parsed
+  become: yes
+  register: result
+
+- assert:
+    that: 
+      - "result.changed == false"
+      - "ansible_facts.network_resources.acls|symmetric_difference(result.parsed) == []"
+
+- include_tasks: _remove_config.yaml

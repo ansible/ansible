@@ -1,0 +1,71 @@
+---
+- debug:
+    msg: "Start eos_acls merged integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _populate.yaml
+
+- set_fact:
+    config:
+      - afi: "ipv4"
+        acls:
+         - name: test1
+           aces:
+             - sequence: 10
+               grant: "permit"
+               protocol: "ospf"
+               source:
+                 any: true
+               destination:
+                 any: true
+               log: true
+
+- block:
+  - name: overriden attributes with given acls.
+    eos_acls: &overridden
+      config:
+        - afi: "ipv4"
+          acls:
+           - name: test1
+             aces:
+              - grant: "permit"
+                sequence: 10
+                protocol: "ospf"
+                source:
+                  any: true
+                destination:
+                  any: true
+                log: true
+      state: overridden
+    become: yes
+    register: result
+  
+  - eos_facts:
+      gather_network_resources: acls
+    become: yes
+  
+  - assert:
+      that:
+        - "result.commands|length == 8"
+        - "result.changed == true"
+        - "'ip access-list test1' in result.commands"
+        - "'10 permit ospf any any log' in result.commands"
+        - "ansible_facts.network_resources.acls|symmetric_difference(result.after) == []"
+    become: yes
+  
+  - name: Idempotency check
+    eos_acls: *overridden
+    become: yes
+    register: result
+
+  - eos_facts:
+      gather_network_resources: acls
+    become: yes
+  
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+        - "ansible_facts.network_resources.acls|symmetric_difference(result.before) == []"
+  
+  always:
+    - include_tasks: _remove_config.yaml

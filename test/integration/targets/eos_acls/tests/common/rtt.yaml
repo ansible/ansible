@@ -1,0 +1,101 @@
+---
+- debug:
+    msg: "Start eos_acls round trip integration tests ansible_connection={{ ansible_connection }}"
+
+
+- block:
+  - name: merge attributes of given acls(apply base config).
+    eos_acls: &merged
+      config:
+        - afi: "ipv4"
+          acls:
+           - name: test1
+             aces:
+               - sequence: 35
+                 grant: "deny"
+                 protocol: "tcp"
+                 source:
+                   subnet_address: 20.0.0.0/8
+                 destination:
+                   any: true
+                 log: true
+               - remark: "Run by ansible"
+               - grant: "permit"
+                 protocol: "6"
+                 source:
+                  any: true
+                 destination:
+                  any: true
+           - name: test4
+             aces:
+               - grant: "permit"
+                 source:
+                   any: true
+                   port_protocol:
+                    eq: "25"
+                 destination:
+                   any: true
+                   port_protocol:
+                    eq: "www"
+                 protocol: "tcp"
+                 ttl:
+                   eq: "55"
+        - afi: "ipv6"
+          acls:
+            - name: test2
+              standard: true
+              aces:
+                - grant: "permit"
+                  log: "true"
+                  source:
+                    any: true
+      state: merged
+    become: yes
+    register: base_config
+  
+  - eos_facts:
+      gather_network_resources: acls
+    become: yes
+  
+  - assert:
+      that:
+        - "base_config.commands|length == 8"
+        - "base_config.changed == true"
+        - "ansible_facts.network_resources.acls|symmetric_difference(base_config.after) == []"
+
+  - name: Apply the provided configuration (config to be reverted)
+    eos_acls:
+      config:
+        - afi: "ipv4"
+          acls:
+           - name: test3
+             aces:
+               - sequence: 100
+                 grant: "permit"
+                 protocol: "icmp"
+                 source:
+                   any: true 
+                 destination:
+                   any: true
+                 log: true
+    become: yes
+    register: result
+
+  - name: Assert that changes were applied
+    assert:
+      that:
+        - "{{ round_trip['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+  - name: Revert back to base config using facts round trip
+    eos_acls:
+      config: "{{ ansible_facts['network_resources']['acls'] }}"
+      state: overridden
+    become: yes
+    register: revert
+
+  - name: Assert that config was reverted
+    assert:
+      that: "{{ base_config['after'] | symmetric_difference(revert['after']) |length == 0 }}"
+  
+  always:
+    - include_tasks: _remove_config.yaml

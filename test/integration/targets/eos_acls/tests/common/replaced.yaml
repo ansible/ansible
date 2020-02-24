@@ -1,0 +1,94 @@
+---
+- debug:
+    msg: "Start eos_acls replaced integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _populate.yaml
+
+- set_fact:
+    config:
+      - afi: "ipv4"
+        acls:
+         - name: test1
+           aces:
+             - sequence: 10
+               grant: "permit"
+               protocol: "ospf"
+               source:
+                 any: true
+               destination:
+                 any: true
+               log: true
+         - name: test4
+           aces:
+             - grant: "permit"
+               sequence: 10
+               source:
+                 any: true
+                 port_protocol:
+                  eq: "smtp"
+               destination:
+                 any: true
+                 port_protocol:
+                  eq: "www"
+               protocol: "tcp"
+               ttl:
+                 eq: "55"
+      - afi: "ipv6"
+        acls:
+          - name: test2
+            standard: true
+            aces:
+              - grant: "permit"
+                sequence: 10
+                log: "true"
+                source:
+                  any: true
+
+- block:
+  - name: replace attributes with given acls.
+    eos_acls: &replaced
+      config:
+        - afi: "ipv4"
+          acls:
+           - name: test1
+             aces:
+              - grant: "permit"
+                sequence: 10
+                protocol: "ospf"
+                source:
+                  any: true
+                destination:
+                  any: true
+                log: true
+      state: replaced
+    become: yes
+    register: result
+  
+  - eos_facts:
+      gather_network_resources: acls
+    become: yes
+  
+  - assert:
+      that:
+        - "result.commands|length == 5"
+        - "result.changed == true"
+        - "ansible_facts.network_resources.acls|symmetric_difference(result.after) == []"
+    become: yes
+  
+  - name: Idempotency check
+    eos_acls: *replaced
+    become: yes
+    register: result
+
+  - eos_facts:
+      gather_network_resources: acls
+    become: yes
+  
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+        - "ansible_facts.network_resources.acls|symmetric_difference(result.before) == []"
+  
+  always:
+    - include_tasks: _remove_config.yaml

@@ -50,7 +50,7 @@ options:
         not be collected.
         Valid subsets are 'all', 'interfaces', 'l2_interfaces', 'l3_interfaces',
         'lacp', 'lacp_interfaces', 'lag_interfaces', 'lldp_global', 'lldp_interfaces',
-        'vlans'.
+        'vlans', 'acls'.
     required: false
     type: list
     version_added: "2.9"

@@ -1,0 +1,80 @@
+---
+- debug:
+      msg: "START eos_acls rendered integration tests on connection={{ ansible_connection }}"
+
+
+- block:
+  - name:  Structure provided configuration into device specific commands
+    eos_acls: &rendered
+      config:
+        - afi: "ipv4"
+          acls:
+           - name: test1
+             aces:
+               - sequence: 35
+                 grant: "deny"
+                 protocol: "tcp"
+                 source:
+                   subnet_address: 20.0.0.0/8
+                 destination:
+                   any: true
+                 log: true
+               - remark: "Run by ansible"
+               - grant: "permit"
+                 protocol: "6"
+                 source:
+                  any: true
+                 destination:
+                  any: true
+           - name: test4
+             aces:
+               - grant: "permit"
+                 source:
+                   any: true
+                   port_protocol:
+                    eq: "25"
+                 destination:
+                   any: true
+                   port_protocol:
+                    eq: "www"
+                 protocol: "tcp"
+                 ttl:
+                   eq: "55"
+        - afi: "ipv6"
+          acls:
+            - name: test2
+              standard: true
+              aces:
+                - grant: "permit"
+                  log: "true"
+                  source:
+                    any: true
+      state: rendered
+    become: yes
+    register: result
+
+
+  - name: Assert that correct set of commands were generated
+    vars:
+      lines: 
+        - ip access-list test1
+        - 35 deny tcp 20.0.0.0/8 any log
+        - remark Run by ansible
+        - permit tcp any any
+        - ip access-list test4
+        - permit tcp any eq smtp any eq www ttl eq 55
+        - ipv6 access-list standard test2
+        - permit any log
+
+    assert:
+        that:
+            - "{{ lines | symmetric_difference(result['rendered']) |length == 0 }}"
+
+  - name: Structure provided configuration into device specific commands (IDEMPOTENT)
+    eos_acls: *rendered
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+        that:
+            - "result['changed'] == false"
