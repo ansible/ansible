@@ -240,6 +240,8 @@ def test_execute_list_collection_no_valid_paths(mocker, capsys):
 
     mocker.patch('os.path.exists', return_value=True)
     mocker.patch('os.path.isdir', return_value=False)
+    mocker.patch('ansible.utils.color.ANSIBLE_COLOR', False)
+    mocker.patch('ansible.cli.galaxy.display.columns', 79)
     gc = GalaxyCLI(['ansible-galaxy', 'collection', 'list'])
 
     with pytest.raises(AnsibleOptionsError, match=r'None of the provided paths were usable.'):
@@ -248,7 +250,7 @@ def test_execute_list_collection_no_valid_paths(mocker, capsys):
     out, err = capsys.readouterr()
 
     assert '[WARNING]: - the configured path' in err
-    assert 'exists, but it is not a directory.' in err
+    assert 'exists, but it\nis not a directory.' in err
 
 
 def test_execute_list_collection_one_invalid_path(mocker, capsys, mock_collection_objects):
