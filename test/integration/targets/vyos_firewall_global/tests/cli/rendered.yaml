@@ -1,0 +1,69 @@
+---
+- debug:
+      msg: "START vyos_firewall_global rendered integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate.yaml
+
+- block:
+  - name:  Structure provided configuration into device specific commands
+    vyos_firewall_global: &rendered
+      config:
+        validation: strict
+        config_trap: True
+        log_martians: True
+        syn_cookies: True
+        twa_hazards_protection: True
+        ping:
+          all: True
+          broadcast: True
+        state_policy:
+          - connection_type: 'established'
+            action: 'accept'
+            log: True
+          - connection_type: 'invalid'
+            action: 'reject'
+        route_redirects:
+          - afi: 'ipv4'
+            ip_src_route: True
+            icmp_redirects:
+              send: True
+              receive: False
+        group:
+          address_group:
+            - name: 'SALES-HOSTS'
+              description: 'Sales office hosts address list'
+              members:
+                - address: 192.0.2.1
+                - address: 192.0.2.2
+                - address: 192.0.2.3
+            - name: 'ENG-HOSTS'
+              description: 'Sales office hosts address list'
+              members:
+                - address: 192.0.3.1
+                - address: 192.0.3.2
+          network_group:
+            - name: 'MGMT'
+              description: 'This group has the Management network addresses'
+              members:
+                - address: 192.0.1.0/24
+      state: rendered
+    register: result
+
+  - name: Assert that correct set of commands were generated
+    assert:
+        that:
+            - "{{ rendered['commands'] | symmetric_difference(result['rendered']) |length == 0 }}"
+
+  - name: Structure provided configuration into device specific commands (IDEMPOTENT)
+    vyos_firewall_global: *rendered
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+        that:
+            - "result['changed'] == false"
+
+  always:
+  - include_tasks: _remove_config.yaml

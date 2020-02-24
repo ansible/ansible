@@ -1,0 +1,83 @@
+---
+- debug:
+    msg: "START vyos_firewall_global round trip integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+  - name: Apply the provided configuration (base config)
+    vyos_firewall_global:
+      config:
+        validation: strict
+        config_trap: True
+        log_martians: True
+        syn_cookies: True
+        twa_hazards_protection: True
+        ping:
+          all: True
+          broadcast: True
+        state_policy:
+          - connection_type: 'established'
+            action: 'accept'
+            log: True
+          - connection_type: 'invalid'
+            action: 'reject'
+        route_redirects:
+          - afi: 'ipv4'
+            ip_src_route: True
+            icmp_redirects:
+              send: True
+              receive: False  
+        group:
+          address_group: 
+            - name: 'MGMT-HOSTS'
+              description: 'This group has the Management hosts address list'
+              members:
+                - address: 192.0.1.1
+                - address: 192.0.1.3
+                - address: 192.0.1.5
+          network_group: 
+            - name: 'MGMT'
+              description: 'This group has the Management network addresses'
+              members:
+                - address: 192.0.1.0/24
+      state: merged
+    register: base_config
+
+  - name: Gather firewall_global facts
+    vyos_facts:
+      gather_subset:
+        - default
+      gather_network_resources:
+        - firewall_global
+
+  - name: Apply the provided configuration (config to be reverted)
+    vyos_firewall_global:
+      config:
+        validation: strict
+        config_trap: False
+        log_martians: False
+        syn_cookies: False
+        twa_hazards_protection: False
+        ping:
+          all: False
+          broadcast: False
+      state: merged
+    register: result
+
+  - name: Assert that changes were applied
+    assert:
+      that: "{{ round_trip['after'] == result['after'] }}"
+
+  - name: Revert back to base config using facts round trip
+    vyos_firewall_global:
+      config: "{{ ansible_facts['network_resources']['firewall_global'] }}"
+      state: replaced
+    register: revert
+
+  - name: Assert that config was reverted
+    assert:
+      that: "{{ base_config['after'] == revert['after']}}"
+
+  always:
+  - include_tasks: _remove_config.yaml
