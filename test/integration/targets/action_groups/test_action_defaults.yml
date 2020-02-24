@@ -1,0 +1,49 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+
+  - name: test the module's default value
+    collection_namespace.collection_name.example_module:
+    register: result
+  - assert:
+      that: "result.option == 'default_value'"
+
+  - name: test module_defaults with action groups defined in collections
+
+    module_defaults:
+      group/collection_namespace.collection_name.test_group:
+        option: value
+
+    collections:
+      - collection_namespace.collection_name
+
+    block:
+      - example_module:
+        register: result
+      - assert:
+          that: "result.option == 'value'"
+
+      - example_module:
+          option: updated_value
+        register: result
+      - assert:
+          that: "result.option == 'updated_value'"
+
+  - name: test module_defaults with action groups defined in collections using FQCN
+
+    module_defaults:
+      group/collection_namespace.collection_name.test_group:
+        option: value
+
+    block:
+      - collection_namespace.collection_name.example_module:
+        register: result
+      - assert:
+          that: "result.option == 'value'"
+
+      - collection_namespace.collection_name.example_module:
+          option: updated_value
+        register: result
+      - assert:
+          that: "result.option == 'updated_value'"
