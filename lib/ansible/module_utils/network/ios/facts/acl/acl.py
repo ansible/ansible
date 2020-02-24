@@ -374,7 +374,7 @@ class AclFacts(object):
 
             temp_option = ''
             for option in protocol_option:
-                if option in each_list and 'access' not in each_list[each_list.index(option)+1]:
+                if option in each_list and 'access' not in each_list[each_list.index(option) + 1]:
                     temp_option = option
                     each_list.remove(temp_option)
                     if temp_option == 'tcp':

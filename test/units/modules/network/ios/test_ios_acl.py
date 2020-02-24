@@ -75,25 +75,18 @@ class TestIosAclModule(TestIosModule):
                          dict(name="merge_v6_acl",
                               aces=[
                                   dict(
-                                       grant="deny",
-                                       protocol_options=dict(
-                                           tcp=dict(
-                                               ack="true"
-                                           )
-                                       ),
-                                       source=dict(
-                                           any="true",
-                                           port_protocol=dict(
-                                               eq="www"
-                                           )
-                                       ),
-                                       destination=dict(
-                                           any="true",
-                                           port_protocol=dict(
-                                               eq="telnet"
-                                           )
-                                       ),
-                                       dscp="af11"
+                                      grant="deny",
+                                      protocol_options=dict(
+                                          tcp=dict(ack="true")
+                                      ),
+                                      source=dict(
+                                          any="true",
+                                          port_protocol=dict(eq="www")
+                                      ),
+                                      destination=dict(
+                                          any="true",
+                                          port_protocol=dict(eq="telnet")),
+                                      dscp="af11"
                                   )
                               ])
                      ])

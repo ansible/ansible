@@ -45,13 +45,6 @@ overridden:
     - "ip access-list extended 150"
     - "deny tcp 198.51.100.0 0.0.0.255 eq telnet 198.51.110.0 0.0.0.255 eq telnet syn dscp ef ttl eq 10"
 
-deleted:
-  commands:
-    - "no ip access-list extended 123"
-    - "no ip access-list extended test_acl"
-    - "no ip access-list extended 110"
-    - "no ipv6 access-list R1_TRAFFIC"
-
 gathered:
   config:
   - acls:
