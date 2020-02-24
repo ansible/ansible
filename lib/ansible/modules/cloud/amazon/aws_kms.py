@@ -42,7 +42,7 @@ options:
     description:
     - Whether the key should be automatically rotated every year.
     required: false
-    default: false
+    default: None
     type: bool
     version_added: '2.10'
   policy_mode:
@@ -1028,7 +1028,7 @@ def main():
         policy=dict(),
         purge_grants=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent']),
-        enable_key_rotation=(dict(type='bool', default=False))
+        enable_key_rotation=(dict(type='bool', default=None))
     )
 
     module = AnsibleAWSModule(
