@@ -1,3 +1,17 @@
 ---
-- pause:
-    seconds: 60
+- name: create scratch dir used for testing
+  file:
+    path: '{{ galaxy_dir }}/scratch'
+    state: directory
+
+- name: run ansible-galaxy collection init tests
+  import_tasks: init.yml
+
+- name: run ansible-galaxy collection build tests
+  import_tasks: build.yml
+
+- name: run ansible-galaxy collection publish tests
+  import_tasks: publish.yml
+
+- name: run ansible-galaxy collection install tests
+  import_tasks: install.yml

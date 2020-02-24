@@ -153,62 +153,6 @@ rm -rf "${role_testdir}"
 #################################
 
 f_ansible_galaxy_status \
-    "collection init tests to make sure the relative dir logic works"
-galaxy_testdir=$(mktemp -d)
-pushd "${galaxy_testdir}"
-
-    ansible-galaxy collection init ansible_test.my_collection "$@"
-
-    # Test that the collection skeleton was created in the expected directory
-    for galaxy_collection_dir in "docs" "plugins" "roles"
-    do
-        [[ -d "${galaxy_testdir}/ansible_test/my_collection/${galaxy_collection_dir}" ]]
-    done
-
-popd # ${galaxy_testdir}
-rm -fr "${galaxy_testdir}"
-
-f_ansible_galaxy_status \
-    "collection init tests to make sure the --init-path logic works"
-galaxy_testdir=$(mktemp -d)
-pushd "${galaxy_testdir}"
-
-    ansible-galaxy collection init ansible_test.my_collection --init-path "${galaxy_testdir}/test" "$@"
-
-    # Test that the collection skeleton was created in the expected directory
-    for galaxy_collection_dir in "docs" "plugins" "roles"
-    do
-        [[ -d "${galaxy_testdir}/test/ansible_test/my_collection/${galaxy_collection_dir}" ]]
-    done
-
-popd # ${galaxy_testdir}
-
-f_ansible_galaxy_status \
-    "collection build test creating artifact in current directory"
-
-pushd "${galaxy_testdir}/test/ansible_test/my_collection"
-
-    ansible-galaxy collection build "$@"
-
-    [[ -f "${galaxy_testdir}/test/ansible_test/my_collection/ansible_test-my_collection-1.0.0.tar.gz" ]]
-
-popd # ${galaxy_testdir}/ansible_test/my_collection
-
-f_ansible_galaxy_status \
-    "collection build test to make sure we can specify a relative path"
-
-pushd "${galaxy_testdir}"
-
-    ansible-galaxy collection build "test/ansible_test/my_collection" "$@"
-
-    [[ -f "${galaxy_testdir}/ansible_test-my_collection-1.0.0.tar.gz" ]]
-
-    # Make sure --force works
-    ansible-galaxy collection build "test/ansible_test/my_collection" --force "$@"
-
-    [[ -f "${galaxy_testdir}/ansible_test-my_collection-1.0.0.tar.gz" ]]
-
-f_ansible_galaxy_status \
     "collection install from local tarball test"
 
     ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install "$@" | tee out.txt
