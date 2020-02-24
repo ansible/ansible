@@ -5,14 +5,14 @@
 # implementation module and module run is successful.
 
 - name: delete static route - setup
-  net_static_route:
+  ansible.netcommon.net_static_route:
     prefix: 172.24.0.0/24
     next_hop: 192.168.42.64
     state: absent
   register: result
 
 - name: create static route using platform agnostic module
-  net_static_route:
+  ansible.netcommon.net_static_route:
     prefix: 172.24.0.0/24
     next_hop: 192.168.42.64
     state: present
@@ -24,7 +24,7 @@
       - '"set protocols static route 172.24.0.0/24 next-hop 192.168.42.64" in result.commands'
 
 - name: delete static route - teardown
-  net_static_route:
+  ansible.netcommon.net_static_route:
     prefix: 172.24.0.0/24
     next_hop: 192.168.42.64
     state: absent

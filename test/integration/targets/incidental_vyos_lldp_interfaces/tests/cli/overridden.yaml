@@ -8,7 +8,7 @@
 
 - block:
     - name: Overrides all device configuration with provided configuration
-      vyos_lldp_interfaces: &overridden
+      vyos.vyos.vyos_lldp_interfaces: &overridden
         config:
           - name: 'eth2'
             location:
@@ -32,7 +32,7 @@
           - "{{ overridden['after'] | symmetric_difference(result['after']) |length == 0 }}"
 
     - name: Overrides all device configuration with provided configurations (IDEMPOTENT)
-      vyos_lldp_interfaces: *overridden
+      vyos.vyos.vyos_lldp_interfaces: *overridden
       register: result
 
     - name: Assert that the previous task was idempotent

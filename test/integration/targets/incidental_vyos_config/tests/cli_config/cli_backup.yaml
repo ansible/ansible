@@ -23,7 +23,7 @@
   with_items: "{{backup_files.files|default([])}}"
 
 - name: take config backup
-  cli_config:
+  ansible.netcommon.cli_config:
     backup: true
   become: true
   register: result
@@ -44,7 +44,7 @@
       - "backup_files.files is defined"
 
 - name: take configuration backup in custom filename and directory path
-  cli_config:
+  ansible.netcommon.cli_config:
     backup: true
     backup_options:
       filename: backup.cfg
@@ -67,7 +67,7 @@
       - "backup_file.files is defined"
 
 - name: take configuration backup in custom filename
-  cli_config:
+  ansible.netcommon.cli_config:
     backup: true
     backup_options:
       filename: backup.cfg
@@ -89,7 +89,7 @@
       - "backup_file.files is defined"
 
 - name: take configuration backup in custom path and default filename
-  cli_config:
+  ansible.netcommon.cli_config:
     backup: true
     backup_options:
       dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"

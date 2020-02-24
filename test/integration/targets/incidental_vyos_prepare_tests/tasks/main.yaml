@@ -1,6 +1,6 @@
 ---
 - name: Ensure required interfaces are present in running-config
-  cli_config:
+  ansible.netcommon.cli_config:
     config: "{{ lines }}"
   vars:
     lines: |

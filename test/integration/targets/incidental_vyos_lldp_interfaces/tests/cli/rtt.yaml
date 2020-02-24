@@ -6,7 +6,7 @@
 
 - block:
     - name: Apply the provided configuration (base config)
-      vyos_lldp_interfaces:
+      vyos.vyos.vyos_lldp_interfaces:
         config:
           - name: 'eth1'
             location:
@@ -20,14 +20,14 @@
       register: base_config
 
     - name: Gather lldp_interfaces facts
-      vyos_facts:
+      vyos.vyos.vyos_facts:
         gather_subset:
           - default
         gather_network_resources:
           - lldp_interfaces
 
     - name: Apply the provided configuration (config to be reverted)
-      vyos_lldp_interfaces:
+      vyos.vyos.vyos_lldp_interfaces:
         config:
           - name: 'eth2'
             location:
@@ -44,7 +44,7 @@
         that: "{{ round_trip['after'] | symmetric_difference(result['after']) |length == 0 }}"
 
     - name: Revert back to base config using facts round trip
-      vyos_lldp_interfaces:
+      vyos.vyos.vyos_lldp_interfaces:
         config: "{{ ansible_facts['network_resources']['lldp_interfaces'] }}"
         state: overridden
       register: revert

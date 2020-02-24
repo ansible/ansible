@@ -8,7 +8,7 @@
 
 - block:
     - name: Replace device configurations of listed LLDP interfaces with provided configurations
-      vyos_lldp_interfaces: &replaced
+      vyos.vyos.vyos_lldp_interfaces: &replaced
         config:
           - name: 'eth2'
             enable: false
@@ -46,7 +46,7 @@
           - "{{ replaced['after'] | symmetric_difference(result['after']) |length == 0 }}"
 
     - name: Replace device configurations of listed LLDP interfaces with provided configurarions (IDEMPOTENT)
-      vyos_lldp_interfaces: *replaced
+      vyos.vyos.vyos_lldp_interfaces: *replaced
       register: result
 
     - name: Assert that task was idempotent

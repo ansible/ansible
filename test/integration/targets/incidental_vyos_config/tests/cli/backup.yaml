@@ -15,7 +15,7 @@
   with_items: "{{backup_files.files|default([])}}"
 
 - name: take configure backup
-  vyos_config:
+  vyos.vyos.vyos_config:
     backup: true
   register: result
 
@@ -43,7 +43,7 @@
     - "{{ role_path }}/backup/backup.cfg"
 
 - name: take configuration backup in custom filename and directory path
-  vyos_config:
+  vyos.vyos.vyos_config:
     backup: true
     backup_options:
       filename: backup.cfg
@@ -66,7 +66,7 @@
       - "backup_file.files is defined"
 
 - name: take configuration backup in custom filename
-  vyos_config:
+  vyos.vyos.vyos_config:
     backup: true
     backup_options:
       filename: backup.cfg
@@ -88,7 +88,7 @@
       - "backup_file.files is defined"
 
 - name: take configuration backup in custom path and default filename
-  vyos_config:
+  vyos.vyos.vyos_config:
     backup: true
     backup_options:
       dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"

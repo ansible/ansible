@@ -6,7 +6,7 @@
 
 - block:
     - name: Delete attributes of given LLDP interfaces.
-      vyos_lldp_interfaces: &deleted
+      vyos.vyos.vyos_lldp_interfaces: &deleted
         config:
           - name: 'eth1'
           - name: 'eth2'
@@ -29,7 +29,7 @@
           - "{{ deleted['after'] | symmetric_difference(result['after']) |length == 0 }}"
 
     - name: Delete attributes of given interfaces (IDEMPOTENT)
-      vyos_lldp_interfaces: *deleted
+      vyos.vyos.vyos_lldp_interfaces: *deleted
       register: result
 
     - name: Assert that the previous task was idempotent

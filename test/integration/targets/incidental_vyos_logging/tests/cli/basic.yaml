@@ -2,7 +2,7 @@
 - debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
 
 - name: set-up logging
-  vyos_logging:
+  vyos.vyos.vyos_logging:
     dest: console
     facility: all
     level: info
@@ -15,7 +15,7 @@
       - '"set system syslog console facility all level info" in result.commands'
 
 - name: set-up logging again (idempotent)
-  vyos_logging:
+  vyos.vyos.vyos_logging:
     dest: console
     facility: all
     level: info
@@ -27,7 +27,7 @@
       - 'result.changed == false'
 
 - name: file logging
-  vyos_logging:
+  vyos.vyos.vyos_logging:
     dest: file
     name: test
     facility: all
@@ -41,7 +41,7 @@
       - '"set system syslog file test facility all level notice" in result.commands'
 
 - name: file logging again (idempotent)
-  vyos_logging:
+  vyos.vyos.vyos_logging:
     dest: file
     name: test
     facility: all
@@ -54,7 +54,7 @@
       - 'result.changed == false'
 
 - name: delete logging
-  vyos_logging:
+  vyos.vyos.vyos_logging:
     dest: file
     name: test
     facility: all
@@ -68,7 +68,7 @@
       - '"delete system syslog file test facility all level notice" in result.commands'
 
 - name: delete logging again (idempotent)
-  vyos_logging:
+  vyos.vyos.vyos_logging:
     dest: file
     name: test
     facility: all
@@ -81,7 +81,7 @@
       - 'result.changed == false'
 
 - name: Add logging collections
-  vyos_logging:
+  vyos.vyos.vyos_logging:
     aggregate:
       - {dest: file, name: test1, facility: all, level: info}
       - {dest: file, name: test2, facility: news, level: debug}
@@ -95,7 +95,7 @@
       - '"set system syslog file test2 facility news level debug" in result.commands'
 
 - name: Add and remove logging collections with overrides
-  vyos_logging:
+  vyos.vyos.vyos_logging:
     aggregate:
       - {dest: console, facility: all, level: info}
       - {dest: file, name: test1, facility: all, level: info, state: absent}
@@ -110,7 +110,7 @@
       - '"set system syslog console facility daemon level warning" in result.commands'
 
 - name: Remove logging collections
-  vyos_logging:
+  vyos.vyos.vyos_logging:
     aggregate:
       - {dest: console, facility: all, level: info}
       - {dest: console, facility: daemon, level: warning}

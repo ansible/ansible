@@ -5,7 +5,7 @@
 # implementation module and module run is successful.
 
 - name: delete logging - setup
-  net_logging:
+  ansible.netcommon.net_logging:
     dest: file
     name: test
     facility: all
@@ -14,7 +14,7 @@
   register: result
 
 - name: file logging using platform agnostic module
-  net_logging:
+  ansible.netcommon.net_logging:
     dest: file
     name: test
     facility: all
@@ -28,7 +28,7 @@
       - '"set system syslog file test facility all level notice" in result.commands'
 
 - name: delete logging - teardown
-  net_logging:
+  ansible.netcommon.net_logging:
     dest: file
     name: test
     facility: all

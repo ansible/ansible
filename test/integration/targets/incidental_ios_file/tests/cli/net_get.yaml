@@ -5,7 +5,7 @@
 # implementation module and module run is successful.
 
 - name: setup
-  ios_config:
+  cisco.ios.ios_config:
     lines:
       - ip ssh version 2
       - ip scp server enable
@@ -13,7 +13,7 @@
     match: none
 
 - name: setup (copy file to be fetched from device)
-  net_put:
+  ansible.netcommon.net_put:
     src: ios1.cfg
   register: result
 
@@ -24,7 +24,7 @@
   delegate_to: localhost
 
 - name: get the file from device with relative destination
-  net_get:
+  ansible.netcommon.net_get:
     src: ios1.cfg
     dest: 'ios_{{ inventory_hostname }}.cfg'
   register: result
@@ -34,7 +34,7 @@
       - result.changed == true
 
 - name: Idempotency check
-  net_get:
+  ansible.netcommon.net_get:
     src: ios1.cfg
     dest: 'ios_{{ inventory_hostname }}.cfg'
   register: result

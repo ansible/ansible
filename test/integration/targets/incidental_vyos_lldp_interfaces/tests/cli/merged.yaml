@@ -6,7 +6,7 @@
 
 - block:
     - name: Merge the provided configuration with the exisiting running configuration
-      vyos_lldp_interfaces: &merged
+      vyos.vyos.vyos_lldp_interfaces: &merged
         config:
           - name: 'eth1'
             location:
@@ -41,7 +41,7 @@
           - "{{ merged['after'] | symmetric_difference(result['after']) |length == 0 }}"
 
     - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
-      vyos_lldp_interfaces: *merged
+      vyos.vyos.vyos_lldp_interfaces: *merged
       register: result
 
     - name: Assert that the previous task was idempotent
