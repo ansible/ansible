@@ -270,6 +270,14 @@
     with_items:
       - 0
       - 1
+    # There is the chance that we're running as the deletion is in progress,
+    # this could trigger ResourceNotFoundException allow a single retry to cope
+    # with this.
+    retries: 2
+    until:
+    - check_del_one is not failed
+    - check_del_one.certificates | length == 0
+    delay: 10
 
   - name: check certs 1 and 2 were already deleted
     with_items: "{{ check_del_one.results }}"
