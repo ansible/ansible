@@ -124,4 +124,5 @@ class AwsCloudEnvironment(CloudEnvironment):
         """
         if not tries and self.managed:
             display.notice('If %s failed due to permissions, the IAM test policy may need to be updated. '
-                           'For help, consult @mattclay or @gundalow on GitHub or #ansible-devel on IRC.' % target.name)
+                           'https://docs.ansible.com/ansible/devel/dev_guide/platforms/aws_guidelines.html#aws-permissions-for-integration-tests.'
+                           % target.name)
