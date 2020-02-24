@@ -19,7 +19,7 @@ from collections.abc import MutableMapping
 
 
 @pytest.fixture
-def patch_ansible_module(request, mocker):
+def patch_ansible_module(monkeypatch, request):
     """Monkey-patch given Ansible module."""
     request.param = {'ANSIBLE_MODULE_ARGS': request.param}
     request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
@@ -27,7 +27,10 @@ def patch_ansible_module(request, mocker):
 
     args = json.dumps(request.param)
 
-    mocker.patch('ansible.module_utils.basic._ANSIBLE_ARGS', to_bytes(args))
+    monkeypatch.setattr(
+        ansible.module_utils.basic, '_ANSIBLE_ARGS',
+        to_bytes(args),
+    )
 
 
 @pytest.fixture
