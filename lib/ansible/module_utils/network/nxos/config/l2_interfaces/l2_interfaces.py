@@ -279,7 +279,7 @@ class L2_interfaces(ConfigBase):
             diff = self.diff_of_dicts(w, obj_in_have)
             if diff and not replace:
                 if 'mode' in diff.keys() and diff['mode']:
-                    commands = self.add_commands(diff, True)
+                    commands = self.add_commands(diff)
                 if "allowed_vlans" in diff.keys() and diff["allowed_vlans"]:
                     vlan_tobe_added = diff["allowed_vlans"].split(',')
                     vlan_list = vlan_tobe_added[:]

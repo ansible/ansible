@@ -147,6 +147,4 @@ class TestEosL2InterfacesModule(TestEosModule):
         ))
         commands = ['interface Ethernet2', 'no switchport mode', 'no switchport trunk native vlan',
                     'interface Ethernet1', 'no switchport access vlan']
-        # result = self.execute_module(changed=True)
-        # self.assertEqual(result['deleted'], commands)
         self.execute_module(changed=True, commands=commands)
