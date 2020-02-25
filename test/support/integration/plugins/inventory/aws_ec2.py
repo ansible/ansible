@@ -14,7 +14,6 @@ DOCUMENTATION = '''
     extends_documentation_fragment:
         - inventory_cache
         - constructed
-        - aws_credentials
     description:
         - Get inventory hosts from Amazon Web Services EC2.
         - Uses a YAML configuration file that ends with C(aws_ec2.(yml|yaml)).
@@ -24,6 +23,36 @@ DOCUMENTATION = '''
     author:
         - Sloane Hertel (@s-hertel)
     options:
+        aws_profile:
+          description: The AWS profile
+          type: str
+          aliases: [ boto_profile ]
+          env:
+            - name: AWS_DEFAULT_PROFILE
+            - name: AWS_PROFILE
+        aws_access_key:
+          description: The AWS access key to use.
+          type: str
+          aliases: [ aws_access_key_id ]
+          env:
+            - name: EC2_ACCESS_KEY
+            - name: AWS_ACCESS_KEY
+            - name: AWS_ACCESS_KEY_ID
+        aws_secret_key:
+          description: The AWS secret key that corresponds to the access key.
+          type: str
+          aliases: [ aws_secret_access_key ]
+          env:
+            - name: EC2_SECRET_KEY
+            - name: AWS_SECRET_KEY
+            - name: AWS_SECRET_ACCESS_KEY
+        aws_security_token:
+          description: The AWS security token if using temporary access and secret keys.
+          type: str
+          env:
+            - name: EC2_SECURITY_TOKEN
+            - name: AWS_SESSION_TOKEN
+            - name: AWS_SECURITY_TOKEN
         plugin:
             description: Token that ensures this is a source file for the plugin.
             required: True
@@ -153,10 +182,10 @@ import re
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.utils.display import Display
+from ansible.module_utils.six import string_types
 
 try:
     import boto3
@@ -657,3 +686,75 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         regex = re.compile(r"[^A-Za-z0-9\_\-]")
 
         return regex.sub('_', name)
+
+
+def ansible_dict_to_boto3_filter_list(filters_dict):
+
+    """ Convert an Ansible dict of filters to list of dicts that boto3 can use
+    Args:
+        filters_dict (dict): Dict of AWS filters.
+    Basic Usage:
+        >>> filters = {'some-aws-id': 'i-01234567'}
+        >>> ansible_dict_to_boto3_filter_list(filters)
+        {
+            'some-aws-id': 'i-01234567'
+        }
+    Returns:
+        List: List of AWS filters and their values
+        [
+            {
+                'Name': 'some-aws-id',
+                'Values': [
+                    'i-01234567',
+                ]
+            }
+        ]
+    """
+
+    filters_list = []
+    for k, v in filters_dict.items():
+        filter_dict = {'Name': k}
+        if isinstance(v, string_types):
+            filter_dict['Values'] = [v]
+        else:
+            filter_dict['Values'] = v
+
+        filters_list.append(filter_dict)
+
+    return filters_list
+
+
+def boto3_tag_list_to_ansible_dict(tags_list, tag_name_key_name=None, tag_value_key_name=None):
+
+    """ Convert a boto3 list of resource tags to a flat dict of key:value pairs
+    Args:
+        tags_list (list): List of dicts representing AWS tags.
+        tag_name_key_name (str): Value to use as the key for all tag keys (useful because boto3 doesn't always use "Key")
+        tag_value_key_name (str): Value to use as the key for all tag values (useful because boto3 doesn't always use "Value")
+    Basic Usage:
+        >>> tags_list = [{'Key': 'MyTagKey', 'Value': 'MyTagValue'}]
+        >>> boto3_tag_list_to_ansible_dict(tags_list)
+        [
+            {
+                'Key': 'MyTagKey',
+                'Value': 'MyTagValue'
+            }
+        ]
+    Returns:
+        Dict: Dict of key:value pairs representing AWS tags
+         {
+            'MyTagKey': 'MyTagValue',
+        }
+    """
+
+    if tag_name_key_name and tag_value_key_name:
+        tag_candidates = {tag_name_key_name: tag_value_key_name}
+    else:
+        tag_candidates = {'key': 'value', 'Key': 'Value'}
+
+    if not tags_list:
+        return {}
+    for k, v in tag_candidates.items():
+        if k in tags_list[0] and v in tags_list[0]:
+            return dict((tag[k], tag[v]) for tag in tags_list)
+    raise ValueError("Couldn't find tag key (candidates %s) in tag list %s" % (str(tag_candidates), str(tags_list)))
