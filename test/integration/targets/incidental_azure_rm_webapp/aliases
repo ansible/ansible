@@ -1,5 +1,3 @@
 cloud/azure
-shippable/azure/group3
+shippable/azure/incidental
 destructive
-azure_rm_webapp_facts
-azure_rm_webappslot

@@ -1,4 +1,3 @@
-shippable/vcenter/group1
+shippable/vcenter/incidental
 cloud/vcenter
 needs/target/prepare_vmware_tests
-zuul/vmware/vcenter_1esxi
