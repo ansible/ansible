@@ -10,10 +10,10 @@ import pytest
 from ansible.modules import pip
 
 
-pytestmark = pytest.mark.usefixtures('patch_ansible_module')
+pytestmark = pytest.mark.usefixtures('stdin')
 
 
-@pytest.mark.parametrize('patch_ansible_module', [{'name': 'six'}], indirect=['patch_ansible_module'])
+@pytest.mark.parametrize('stdin', [{'name': 'six'}], indirect=['stdin'])
 def test_failure_when_pip_absent(mocker, capfd):
     mocker.patch('ansible.modules.pip._have_pip_module').return_value = False
 
@@ -29,7 +29,7 @@ def test_failure_when_pip_absent(mocker, capfd):
     assert 'pip needs to be installed' in results['msg']
 
 
-@pytest.mark.parametrize('patch_ansible_module, test_input, expected', [
+@pytest.mark.parametrize('stdin, test_input, expected', [
     [None, ['django>1.11.1', '<1.11.2', 'ipaddress', 'simpleproject<2.0.0', '>1.1.0'],
         ['django>1.11.1,<1.11.2', 'ipaddress', 'simpleproject<2.0.0,>1.1.0']],
     [None, ['django>1.11.1,<1.11.2,ipaddress', 'simpleproject<2.0.0,>1.1.0'],

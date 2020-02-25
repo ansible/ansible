@@ -21,33 +21,6 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 
 @pytest.fixture
-def patch_ansible_module(monkeypatch, request):
-    """Monkey-patch given Ansible module."""
-    inp_args = request.param
-
-    module_args_defaults = {
-        '_ansible_keep_remote_files': False,
-        '_ansible_remote_tmp': '/tmp',
-    }
-
-    if isinstance(inp_args, string_types):
-        args = inp_args
-    elif isinstance(inp_args, MutableMapping):
-        mod_args = inp_args.get('ANSIBLE_MODULE_ARGS', inp_args)
-        mod_args = dict(module_args_defaults, **mod_args)
-        args = json.dumps({'ANSIBLE_MODULE_ARGS': mod_args})
-    else:
-        raise Exception(
-            'Malformed data to the `patch_ansible_module` '
-            'pytest fixture',
-        )
-
-    args = to_bytes(args, errors='surrogate_or_strict')
-
-    monkeypatch.setattr(ansible.module_utils.basic, '_ANSIBLE_ARGS', args)
-
-
-@pytest.fixture
 def stdin(mocker, monkeypatch, request):
     """Patch and return stdin buffer with module args."""
     monkeypatch.setattr(ansible.module_utils.basic, '_ANSIBLE_ARGS', None)
