@@ -1011,9 +1011,6 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
 
 
 def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
-    bufsize = 65536
-    digest = sha256()
-
     urlsplit = os.path.splitext(to_text(url.rsplit('/', 1)[1]))
     b_file_name = to_bytes(urlsplit[0], errors='surrogate_or_strict')
     b_file_ext = to_bytes(urlsplit[1], errors='surrogate_or_strict')
