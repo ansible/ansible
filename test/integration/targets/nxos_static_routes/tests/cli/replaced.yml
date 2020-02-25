@@ -1,67 +1,65 @@
 ---
-    - debug:
-        msg: "Start nxos_static_routes replaced integration tests connection = {{ansible_connection}}"
+- debug:
+    msg: "Start nxos_static_routes replaced integration tests connection = {{ansible_connection}}"
 
-    - include_tasks: populate_config.yaml
+- include_tasks: populate_config.yaml
 
-    - block:
-        - name: Gather static_routes post facts
-           nxos_facts:
-                gather_subset:
-                    - '!all'
-                    - '!min'
-                gather_network_resources: static_routes
+- block:
+    - name: Gather static_routes post facts
+      nxos_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: static_routes
 
-        - debug:
-            var: ansible_facts.network_resources.static_routes
+    - name: Replaced
+      nxos_static_routes: &replaced
+        config:
+          - vrf: trial_vrf
+            address_families:
+              - afi: ipv4
+                routes:
+                  - dest: 192.0.2.16/28
+                    next_hops:
+                      - forward_router_address: 192.0.2.23
+                        route_name: replaced_route1
+                        admin_distance: 3
 
-        - name: Replaced
-            nxos_static_routes: & replaced
-               config:
-                    - vrf: trial_vrf
-                       address_families:
-                            - afi: ipv6
-                               routes:
-                                    - dest: 2001: db8:12::/32
-                                       next_hops:
-                                            - forward_router_address: 2001: db8::1001
-                                               route_name: replaced_vrf_route
-                                                admin_distance: 3
-                state: replaced
-            register: result
+                      - forward_router_address: 192.0.2.45
+                        route_name: replaced_route2
+                        dest_vrf: destinationVRF
+                        interface: Ethernet1/2
+        state: replaced
+      register: result
 
-        - assert:
-            that:
-                - "result.changed == true"
-                - "'vrf context trial_vrf' in result.commands"
-                - "'no ip route 192.0.2.64/28 192.0.2.22 tag 4' in result.commands"
-                - "'no ip route 192.0.2.64/28 192.0.2.23 name merged_route 1' in result.commands"
-                - "'ipv6 route 2001:db8:12::/32 2001:db8::1001 name replaced_vrf_route 3' in result.commands"
+    - assert:
+        that:
+          - "result.changed == true"
+          - "'vrf context trial_vrf' in result.commands"
+          - "'no ip route 192.0.2.64/28 192.0.2.22 tag 4' in result.commands"
+          - "'no ip route 192.0.2.64/28 192.0.2.23 name merged_route 1' in result.commands"
+          - "'ip route 192.0.2.16/28 192.0.2.23 name replaced_route1 3' in result.commands"
+          - "'ip route 192.0.2.16/28 Ethernet1/2 192.0.2.45 vrf destinationVRF name replaced_route2' in result.commands"
+          - "result.commands | length == 5"
 
-        - name: Gather static_routes post facts
-           nxos_facts:
-                gather_subset:
-                    - '!all'
-                    - '!min'
-                gather_network_resources: static_routes
+    - name: Gather static_routes post facts
+      nxos_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: static_routes
 
-        - debug:
-            var: ansible_facts.network_resources.static_routes
+    - assert:
+        that:
+          - "ansible_facts.network_resources.static_routes == result.after"
 
-        - assert:
-            that:
-                - "ansible_facts.network_resources.static_routes == result.after"
+    - name: Idempotence - Replaced
+      nxos_static_routes: *replaced
+      register: result
 
-        - name: Idempotence - Replaced
-           nxos_static_routes: *replaced
-            register: result
+    - assert:
+        that:
+          - "result.changed == false"
 
-        - debug:
-            var: result
-
-        - assert:
-            that:
-                - "result.changed == false"
-
-        always:
-        - include_tasks: remove_config.yaml
+  always:
+    - include_tasks: remove_config.yaml

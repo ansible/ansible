@@ -223,6 +223,23 @@ class Static_routes(ConfigBase):
                                         }
                                         delete_commands.extend(
                                             self.del_commands([delete_dict]))
+                                else:
+                                    q(ro)
+                                    delete_dict = {
+                                        'vrf':
+                                        obj_in_have['vrf'],
+                                        'address_families': [{
+                                            'afi':
+                                            h['afi'],
+                                            'routes': [{
+                                                'dest': ro['dest'],
+                                                'next_hops': ro['next_hops']
+                                            }]
+                                        }]
+                                    }
+                                    delete_commands.extend(
+                                        self.del_commands([delete_dict]))
+
                         else:
                             # want has no 'routes' key, so delete all routes under that afi
                             if 'routes' in h.keys():

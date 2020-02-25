@@ -1,64 +1,66 @@
 ---
-  - debug:
-      msg: "Start nxos_static_routes overridden tests connection={{ ansible_connection }}"
+- debug:
+    msg: "Start nxos_static_routes overridden tests connection={{ ansible_connection }}"
 
-  - include_tasks: populate_config.yaml
+- include_tasks: populate_config.yaml
 
-  - block:
-      - name: Gather static_routes facts
-        nxos_facts: &facts
-          gather_subset:
-            - '!all'
-            - '!min'
-          gather_network_resources: static_routes
+- block:
+    - name: Gather static_routes facts
+      nxos_facts: &facts
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: static_routes
 
-      - name: Overridden
-        nxos_static_routes: &overridden
-          config:
-              - vrf: trial_vrf
-                address_families:
-                  - afi: ipv6
-                    routes:
-                      - dest: 2001: db8: 12: : / 32
-                        next_hops:
-                          - forward_router_address: 2001: db8: : 1001
-                            route_name: overridden_route
-                            admin_distance: 3
-          state: overridden
-        register: result
+    - name: Overridden
+      nxos_static_routes: &overridden
+        config:
+          - vrf: trial_vrf
+            address_families:
+              - afi: ipv4
+                routes:
+                  - dest: 192.0.2.16/28
+                    next_hops:
+                      - forward_router_address: 192.0.2.23
+                        route_name: overridden_route1
+                        admin_distance: 3
 
-      - debug:
-          var: result
+                      - forward_router_address: 192.0.2.45
+                        route_name: overridden_route2
+                        dest_vrf: destinationVRF
+                        interface: Ethernet1/2
 
-      - assert:
-          that:
-            - "ansible_facts.network_resources.static_routes == result.before"
-            - "'vrf context trial_vrf' in result.commands"
-            - "'no ip route 192.0.2.64/28 192.0.2.22 tag 4' in result.commands"
-            - "'no ip route 192.0.2.64/28 192.0.2.23 name merged_route 1' in result.commands"
-            - "'ipv6 route 2001:db8:12::/32 2001:db8::1001 name overridden_route 3' in result.commands"
-            - "'vrf context default' in result.commands"
-            - "'no ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.commands"
-            - "'no ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.commands"
-            - "result.commands | length == 8"
+        state: overridden
+      register: result
 
-      - name: Gather static_routes post facts
-        nxos_facts: *facts
+    - assert:
+        that:
+          - "result.changed == true"
+          - "ansible_facts.network_resources.static_routes == result.before"
+          - "'vrf context trial_vrf' in result.commands"
+          - "'no ip route 192.0.2.64/28 192.0.2.22 tag 4' in result.commands"
+          - "'no ip route 192.0.2.64/28 192.0.2.23 name merged_route 1' in result.commands"
+          - "'ip route 192.0.2.16/28 192.0.2.23 name overridden_route1 3' in result.commands"
+          - "'ip route 192.0.2.16/28 Ethernet1/2 192.0.2.45 vrf destinationVRF name overridden_route2' in result.commands"
+          - "'vrf context default' in result.commands"
+          - "'no ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.commands"
+          - "'no ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.commands"
+          - "result.commands | length == 8"
 
-      - assert:
-          that:
-            - "ansible_facts.network_resources.static_routes == result.after"
+    - name: Gather static_routes post facts
+      nxos_facts: *facts
 
-      - name: Idempotence - overridden
-        nxos_static_routes: *overridden
-        register: result
+    - assert:
+        that:
+          - "ansible_facts.network_resources.static_routes == result.after"
 
-      - debug:
-          var: result
+    - name: Idempotence - overridden
+      nxos_static_routes: *overridden
+      register: result
 
-      - assert:
-          that:
-            - "result.changed == false"
+    - assert:
+        that:
+          - "result.changed == false"
 
-    always:
+  always:
     - include_tasks: remove_config.yaml

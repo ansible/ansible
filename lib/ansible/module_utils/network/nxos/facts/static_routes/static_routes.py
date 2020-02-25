@@ -13,6 +13,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import re
+import q
 from copy import deepcopy
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.nxos.argspec.static_routes.static_routes import Static_routesArgs
@@ -110,19 +111,24 @@ class Static_routesFacts(object):
         conf = re.sub('\s*ip(v6)? route', '', conf)
         # strip 'ip route'
         inner_dict['dest'] = re.match(r'^\s*(\S+\/\d+) .*', conf).group(1)
+        q(inner_dict['dest'])
         # ethernet1/2/23
         iface = re.match(
-            r'.* (Ethernet|loopback|mgmt|port\-channel)(.*) .*', conf)
+            r'.* (Ethernet|loopback|mgmt|port\-channel)(\S*) .*', conf)
         i = ['Ethernet', 'loopback', 'mgmt', 'port-channel']
+        q(conf)
         if iface and iface.group(1) in i:
             inner_dict['interface'] = (iface.group(1)) + (iface.group(2))
             conf = re.sub(inner_dict['interface'], '', conf)
+            q(inner_dict['interface'])
 
         if '.' in inner_dict['dest']:
+            q(conf)
             conf = re.sub(inner_dict['dest'], '', conf)
             inner_dict['afi'] = 'ipv4'
             ipv4 = re.match(r'.* (\d+\.\d+\.\d+\.\d+\/?\d*).*',
                             conf)  # gets next hop ip
+            q(conf)
             inner_dict['forward_router_address'] = ipv4.group(1)
 
         else:

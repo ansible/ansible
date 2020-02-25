@@ -1,39 +1,39 @@
 ---
-    - debug:
-        msg: "Start nxos_static_routes parsed tests connection={{ ansible_connection }}"
+- debug:
+    msg: "Start nxos_static_routes parsed tests connection={{ ansible_connection }}"
 
-    - include_tasks: populate_config.yaml
+- include_tasks: populate_config.yaml
 
-    - block:
-        - name: Gather static_routes facts
-            nxos_facts: &facts
-               gather_subset:
-                    - '!all'
-                    - '!min'
-                gather_network_resources: static_routes
-  
-        - name: Parsed
-            nxos_static_routes: &parsed
-               running_config: |
-                   ip route 192.0.2.16/28 192.0.2.24 name new_route
-                    ip route 192.0.2.80/28 192.0.2.26 tag 12
-                    vrf context trial_vrf
-                    ip route 192.0.2.64/28 192.0.2.22 tag 4
-                    ip route 192.0.2.64/28 192.0.2.23 name merged_route 1
-                state: parsed
-            register: result
+- block:
+    - name: Gather static_routes facts
+      nxos_facts: &facts
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: static_routes
 
-        - assert:
-            that:
-            - "result.changed == false"
-            - "ansible_facts.network_resources.static_routes == result.parsed"
+    - name: Parsed
+      nxos_static_routes: &parsed
+        running_config: |
+          ip route 192.0.2.16/28 192.0.2.24 name new_route
+          ip route 192.0.2.80/28 192.0.2.26 tag 12
+          vrf context trial_vrf
+          ip route 192.0.2.64/28 192.0.2.22 tag 4
+          ip route 192.0.2.64/28 192.0.2.23 name merged_route 1
+        state: parsed
+      register: result
 
-        - name: Idempotence - Parsed
-           nxos_static_routes: *parsed
-            register: result
+    - assert:
+        that:
+          - "result.changed == false"
+          - "ansible_facts.network_resources.static_routes == result.parsed"
 
-        - assert:
-            that: "result.changed == false"
+    - name: Idempotence - Parsed
+      nxos_static_routes: *parsed
+      register: result
 
-        always:
-        - include_tasks: remove_config.yaml
+    - assert:
+        that: "result.changed == false"
+
+  always:
+    - include_tasks: remove_config.yaml
