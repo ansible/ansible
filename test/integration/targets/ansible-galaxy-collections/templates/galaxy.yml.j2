@@ -1,0 +1,12 @@
+namespace: '{{ namespace }}'
+name: '{{ name }}'
+version: '{{ version }}'
+readme: README.md
+authors:
+- Collection author <name@email.com>
+{% if dependencies %}
+dependencies:
+{% for dep_name, dep_version in dependencies.items() %}
+  {{ dep_name }}: '{{ dep_version }}'
+{% endfor %}
+{% endif %}

@@ -4,6 +4,9 @@
 # Copyright: (c) 2020, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import configparser
 import datetime
 import errno
@@ -20,6 +23,7 @@ import uuid
 
 from flask import (
     Flask,
+    redirect,
     request,
     send_file,
 )
@@ -35,6 +39,7 @@ from functools import (
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 
 config_path = os.path.abspath(os.path.expanduser(os.path.expandvars(
@@ -299,7 +304,7 @@ class ImportTask(object):
         return getattr(self, '_get_api_info_%s' % api_version)(base_info)
 
     def _get_api_info_v2(self, base_info):
-        base_info['messages'] = json.loads(self.messages) if self.messages else [],
+        base_info['messages'] = self.messages
 
         if self.error_code or self.error_msg:
             base_info['error'] = {
@@ -357,9 +362,9 @@ def insert_collection(manifest, filename, collection_size, collection_hash):
         db.session.add(Namespace(name=manifest['namespace']))
     namespace = Namespace.query.filter_by(name=manifest['namespace']).first()
 
-    if not Collection.query.filter_by(name=manifest['name']).first():
+    if not Collection.query.with_parent(namespace).filter_by(name=manifest['name']).first():
         db.session.add(Collection(name=manifest['name'], namespace=namespace))
-    collection = Collection.query.filter_by(name=manifest['name']).first()
+    collection = Collection.query.with_parent(namespace).filter_by(name=manifest['name']).first()
 
     version_kwargs = {}
 
@@ -437,7 +442,7 @@ def json_pagination_response(results, api_version, full_link=True):
             'results': result_subset,
         })
     else:
-        base_url = '/api/automation-hub/v3/%s' % request.path.replace('/api/v3/', '')
+        base_url = request.path
 
         limit = PAGINATION_COUNT
         offset = 0
@@ -517,6 +522,16 @@ def login_optional(f):
 
         return f(*args, **kwargs)
     return decorated
+
+
+def login_reject(f):
+    @wraps(f)
+    def decorate(*args, **kwargs):
+        if 'Authorization' in request.headers:
+            return 'Unknown error', 500
+
+        return f(*args, **kwargs)
+    return decorate
 
 
 def login_required(f):
@@ -652,7 +667,7 @@ def api():
         return json_response({
             'description': 'FALAXY REST API',
             'current_version': 'v1',
-            'available_versions': {'v1': 'v1/', 'v2': 'v3/'},
+            'available_versions': {'v1': 'v1/', 'v2': 'v2/'},
             'server_version': '6.6.6',
             'version_name': "That's not amoosing",
             'team_members': [
@@ -662,7 +677,16 @@ def api():
 
 
 @app.route('/api/custom/collections/<filename>')
+@app.route('/api/automation-hub/custom/collections/<filename>')
 @login_optional
+def get_collection_download_redirect(filename):
+    # Both Galaxy and AH redirect the URL to S3 which rejects the request if Authorization is set. This replicates that
+    # behaviour by redirecting to /api/custom/collections-download/<filename>.
+    return redirect("%sapi/custom/collections-download/%s" % (request.url_root, filename))
+
+
+@app.route('/api/custom/collections-download/<filename>')
+@login_reject
 def get_collection_download(filename):
     file_path = os.path.join(COLLECTIONS_DIR, filename)
     if not os.path.exists(file_path):
@@ -678,7 +702,8 @@ def get_collection_download(filename):
 @app.route('/api/custom/reset/', methods=['POST'])
 @app.route('/api/automation-hub/custom/reset/', methods=['POST'])
 def reset_cache():
-    start_up(clear=True)
+    clear = not request.is_json or request.get_json().get('clear', True)
+    start_up(clear=clear)
     return "", 200
 
 
@@ -805,7 +830,7 @@ def collections_post(api_version):
             import_uri = '/api/automation-hub/v3/imports/collections/%s/' % import_id
 
         import_task = ImportTask(import_id)
-        IMPORT_TABLE[import_id] = import_task
+        IMPORT_TABLE[str(import_id)] = import_task
 
     import_thread = threading.Thread(target=process_import, args=(import_task, import_path))
     import_thread.daemon = True
@@ -871,4 +896,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

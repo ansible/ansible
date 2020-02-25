@@ -549,10 +549,12 @@ class GalaxyAPI:
         :param name: The collection name.
         :return: A list of versions that are available.
         """
+        relative_link = False
         if 'v3' in self.available_api_versions:
             api_path = self.available_api_versions['v3']
             results_key = 'data'
             pagination_path = ['links', 'next']
+            relative_link = True  # AH pagination results are relative an not an absolute URI.
         else:
             api_path = self.available_api_versions['v2']
             results_key = 'results'
@@ -574,6 +576,10 @@ class GalaxyAPI:
 
             if not next_link:
                 break
+            elif relative_link:
+                # TODO: This assumes the pagination result is relative to the root server. Will need to be verified
+                # with someone who knows the AH API.
+                next_link = n_url.replace(urlparse(n_url).path, next_link)
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
                                      error_context_msg=error_context_msg)

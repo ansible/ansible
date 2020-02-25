@@ -153,31 +153,6 @@ rm -rf "${role_testdir}"
 #################################
 
 f_ansible_galaxy_status \
-    "collection install from local tarball test"
-
-    ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install "$@" | tee out.txt
-
-    [[ -f "${galaxy_testdir}/install/ansible_collections/ansible_test/my_collection/MANIFEST.json" ]]
-    grep "Installing 'ansible_test.my_collection:1.0.0' to .*" out.txt
-
-
-f_ansible_galaxy_status \
-    "collection install with existing collection and without --force"
-
-    ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install "$@" | tee out.txt
-
-    [[ -f "${galaxy_testdir}/install/ansible_collections/ansible_test/my_collection/MANIFEST.json" ]]
-    grep "Skipping 'ansible_test.my_collection' as it is already installed" out.txt
-
-f_ansible_galaxy_status \
-    "collection install with existing collection and with --force"
-
-    ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install --force "$@" | tee out.txt
-
-    [[ -f "${galaxy_testdir}/install/ansible_collections/ansible_test/my_collection/MANIFEST.json" ]]
-    grep "Installing 'ansible_test.my_collection:1.0.0' to .*" out.txt
-
-f_ansible_galaxy_status \
     "ansible-galaxy with a sever list with an undefined URL"
 
     ANSIBLE_GALAXY_SERVER_LIST=undefined  ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install --force "$@" 2>&1 | tee out.txt || echo "expected failure"

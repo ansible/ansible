@@ -28,7 +28,7 @@
   args:
     chdir: '{{ galaxy_dir }}'
   notify: stop falaxy server
-  async: 120
+  async: 600
   poll: 0
 
 - name: wait for falaxy to come online
