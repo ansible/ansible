@@ -235,6 +235,15 @@ databases:
               returned: always
               type: str
               sample: postgres
+        publications:
+          description:
+          - Information about logical replication publications (available for PostgreSQL 10 and higher)
+            U(https://www.postgresql.org/docs/current/logical-replication-publication.html).
+          - Content depends on PostgreSQL server version.
+          returned: if configured
+          type: dict
+          version_added: "2.10"
+          sample: { "mydb": { "pub1": { "ownername": "postgres", "puballtables": true, "pubinsert": true, "pubupdate": true } } }
 repl_slots:
   description:
   - Replication slots (available in 9.4 and later)
@@ -460,6 +469,7 @@ subscriptions:
   - Content depends on PostgreSQL server version.
   returned: if configured
   type: dict
+  version_added: "2.10"
   sample:
   - {"acme_db": {"my_subscription": {"ownername": "postgres", "subenabled": true, "subpublications": ["first_publication"]}}}
 '''
@@ -600,9 +610,35 @@ class PgClusterInfo(object):
 
         return self.pg_info
 
+    def get_pub_info(self):
+        """Get publication statistics."""
+        query = ("SELECT p.*, r.rolname AS ownername "
+                 "FROM pg_catalog.pg_publication AS p "
+                 "JOIN pg_catalog.pg_roles AS r "
+                 "ON p.pubowner = r.oid")
+
+        result = self.__exec_sql(query)
+
+        if result:
+            result = [dict(row) for row in result]
+        else:
+            return {}
+
+        publications = {}
+
+        for elem in result:
+            if not publications.get(elem['pubname']):
+                publications[elem['pubname']] = {}
+
+            for key, val in iteritems(elem):
+                if key != 'pubname':
+                    publications[elem['pubname']][key] = val
+
+        return publications
+
     def get_subscr_info(self):
         """Get subscription statistics and fill out self.pg_info dictionary."""
-        if self.cursor.connection.server_version < 10000:
+        if self.cursor.connection.server_version < 100000:
             return
 
         query = ("SELECT s.*, r.rolname AS ownername, d.datname AS dbname "
@@ -920,6 +956,8 @@ class PgClusterInfo(object):
             db_dict[datname]['namespaces'] = self.get_namespaces()
             db_dict[datname]['extensions'] = self.get_ext_info()
             db_dict[datname]['languages'] = self.get_lang_info()
+            if self.cursor.connection.server_version >= 100000:
+                db_dict[datname]['publications'] = self.get_pub_info()
 
         self.pg_info["databases"] = db_dict
 

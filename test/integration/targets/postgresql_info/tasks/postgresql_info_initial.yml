@@ -135,3 +135,23 @@
       - result.version == {}
       - result.roles == {}
       - result.databases
+
+  - name: postgresql_info - test return publication info
+    <<: *task_parameters
+    postgresql_info:
+      <<: *pg_parameters
+      login_db: '{{ test_db }}'
+      login_port: '{{ master_port }}'
+
+  - assert:
+      that:
+      - result.version != {}
+      - result.databases.{{ db_default }}.collate
+      - result.databases.{{ db_default }}.languages
+      - result.databases.{{ db_default }}.namespaces
+      - result.databases.{{ db_default }}.extensions
+      - result.databases.{{ test_db }}.publications.{{ test_pub }}.ownername == '{{ pg_user }}'
+      - result.databases.{{ test_db }}.publications.{{ test_pub2 }}.puballtables == true
+      - result.settings
+      - result.tablespaces
+      - result.roles
