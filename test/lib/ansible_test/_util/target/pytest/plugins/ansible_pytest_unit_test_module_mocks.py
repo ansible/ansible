@@ -40,7 +40,7 @@ def patch_ansible_module(monkeypatch, request):
             'pytest fixture',
         )
 
-    args = to_bytes(args)
+    args = to_bytes(args, errors='surrogate_or_strict')
 
     monkeypatch.setattr(ansible.module_utils.basic, '_ANSIBLE_ARGS', args)
 
@@ -70,7 +70,9 @@ def stdin(mocker, monkeypatch, request):
             'pytest fixture',
         )
 
-    fake_stdin_buffer = BytesIO(to_bytes(args, errors='surrogate_or_strict'))
+    args = to_bytes(args, errors='surrogate_or_strict')
+
+    fake_stdin_buffer = BytesIO(args)
 
     fake_stdin = mocker.MagicMock()
     fake_stdin.buffer = fake_stdin_buffer
