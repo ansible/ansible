@@ -40,9 +40,13 @@ Function Extract-Zip($src, $dest) {
         $entry_target_path = [System.IO.Path]::Combine($dest, $archive_name)
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
-        # Ensure directory ends with path separator to prevent path traversal
-        if (-not $entry_dir.EndsWith([System.IO.Path]::DirectorySeparatorChar.ToString())) {
-            $entry_dir += [System.IO.Path]::DirectorySeparatorChar.ToString()
+        # Normalize paths for further evaluation
+        $full_target_path = [System.IO.Path]::GetFullPath($entry_target_path)
+        $full_dest_path = [System.IO.Path]::GetFullPath($dest + [System.IO.Path]::DirectorySeparatorChar)
+
+        # Ensure file in the archive does not escape the extraction path
+        if (-not $full_target_path.StartsWith($full_dest_path)) {
+            Fail-Json -obj $result -message "Failed to extract archive. Filename contains relative paths: $entry_target_path"
         }
 
         if (-not (Test-Path -LiteralPath $entry_dir)) {
