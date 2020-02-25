@@ -3,6 +3,11 @@
 
 # Copyright: (c) 2013, Romeo Theriault <romeot () hawaii.edu>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# CHANGELOG:
+#
+# Version     Date            Author          Notes
+# 1.15        25-Mar-2020     snevs           Fixed unused but documented `use_proxy` parameter
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -145,7 +150,6 @@ EXAMPLES = r'''
 - name: Check that you can connect (GET) to a page and it returns a status 200
   uri:
     url: http://www.example.com
-
 # Check that a page returns a status 200 and fail if the word AWESOME is not
 # in the page contents.
 - uri:
@@ -153,7 +157,6 @@ EXAMPLES = r'''
     return_content: yes
   register: this
   failed_when: "'AWESOME' not in this.content"
-
 - name: Create a JIRA issue
   uri:
     url: https://your.jira.example.com/rest/api/2/issue/
@@ -164,10 +167,8 @@ EXAMPLES = r'''
     force_basic_auth: yes
     status_code: 201
     body_format: json
-
 # Login to a form based webpage, then use the returned cookie to
 # access the app in later tasks
-
 - uri:
     url: https://your.form.based.auth.example.com/index.php
     method: POST
@@ -178,7 +179,6 @@ EXAMPLES = r'''
       enter: Sign in
     status_code: 302
   register: login
-
 # Same, but now using a list of tuples
 - uri:
     url: https://your.form.based.auth.example.com/index.php
@@ -190,14 +190,12 @@ EXAMPLES = r'''
     - [ enter, Sign in ]
     status_code: 302
   register: login
-
 - uri:
     url: https://your.form.based.auth.example.com/dashboard.php
     method: GET
     return_content: yes
     headers:
       Cookie: "{{ login.set_cookie }}"
-
 - name: Queue build of a project in Jenkins
   uri:
     url: http://{{ jenkins.host }}/job/{{ jenkins.job }}/build?token={{ jenkins.token }}
@@ -361,7 +359,7 @@ def form_urlencoded(body):
     return body
 
 
-def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
+def uri(module, url, dest, use_proxy, body, body_format, method, headers, socket_timeout):
     # is dest is set and is a directory, let's check if we get redirected and
     # set the filename from that url
     redirected = False
@@ -393,7 +391,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
         # Reset follow_redirects back to the stashed value
         module.params['follow_redirects'] = follow_redirects
 
-    resp, info = fetch_url(module, url, data=body, headers=headers,
+    resp, info = fetch_url(module, url, use_proxy=use_proxy, data=body, headers=headers,
                            method=method, timeout=socket_timeout)
 
     try:
@@ -445,7 +443,7 @@ def main():
     removes = module.params['removes']
     status_code = [int(x) for x in list(module.params['status_code'])]
     socket_timeout = module.params['timeout']
-
+    use_proxy = module.params['use_proxy']
     dict_headers = module.params['headers']
 
     if body_format == 'json':
@@ -489,7 +487,7 @@ def main():
             module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False, rc=0)
 
     # Make the request
-    resp, content, dest = uri(module, url, dest, body, body_format, method,
+    resp, content, dest = uri(module, url, dest, use_proxy, body, body_format, method,
                               dict_headers, socket_timeout)
     resp['status'] = int(resp['status'])
 
