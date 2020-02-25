@@ -53,18 +53,24 @@ def stdin(mocker, monkeypatch, request):
     monkeypatch.setattr(ansible.module_utils.basic, '_ANSIBLE_ARGS', None)
     monkeypatch.setattr(sys, 'argv', ['ansible_unittest'])
 
-    if isinstance(request.param, string_types):
-        args = request.param
-    elif isinstance(request.param, MutableMapping):
-        if 'ANSIBLE_MODULE_ARGS' not in request.param:
-            request.param = {'ANSIBLE_MODULE_ARGS': request.param}
-        if '_ansible_remote_tmp' not in request.param['ANSIBLE_MODULE_ARGS']:
-            request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
-        if '_ansible_keep_remote_files' not in request.param['ANSIBLE_MODULE_ARGS']:
-            request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
-        args = json.dumps(request.param)
+    inp_args = request.param
+
+    module_args_defaults = {
+        '_ansible_keep_remote_files': False,
+        '_ansible_remote_tmp': '/tmp',
+    }
+
+    if isinstance(inp_args, string_types):
+        args = inp_args
+    elif isinstance(inp_args, MutableMapping):
+        mod_args = inp_args.get('ANSIBLE_MODULE_ARGS', inp_args)
+        mod_args = dict(module_args_defaults, **mod_args)
+        args = json.dumps({'ANSIBLE_MODULE_ARGS': mod_args})
     else:
-        raise Exception('Malformed data to the stdin pytest fixture')
+        raise Exception(
+            'Malformed data to the `stdin` '
+            'pytest fixture',
+        )
 
     fake_stdin_buffer = BytesIO(to_bytes(args, errors='surrogate_or_strict'))
 
