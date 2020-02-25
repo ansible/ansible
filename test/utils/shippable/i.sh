@@ -11,4 +11,4 @@ script="${args[1]}"
 
 IFS='/' test="${args[*]:1}"
 
-echo "test/utils/shippable/incidental/${script}.sh" "${test}"
+"test/utils/shippable/incidental/${script}.sh" "${test}"
