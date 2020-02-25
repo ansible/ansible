@@ -115,6 +115,7 @@ class Acls(ConfigBase):
         """
         root = build_root_xml_node('firewall')
         state = self._module.params['state']
+        config_xmls = []
         if state == 'overridden':
             config_xmls = self._state_overridden(want, have)
         elif state == 'deleted':
@@ -174,7 +175,10 @@ class Acls(ConfigBase):
         acls_xml = []
         family_node = build_root_xml_node('family')
         for config in want:
-            family = "inet6" if config.pop("afi") == "ipv6" else "inet"
+            try:
+                family = "inet6" if config.pop("afi") == "ipv6" else "inet"
+            except KeyError:
+                family = "inet"
             inet_node = build_child_xml_node(family_node, family)
 
             if not config["acls"]:
