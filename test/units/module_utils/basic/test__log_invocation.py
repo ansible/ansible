@@ -20,15 +20,15 @@ ARGUMENT_SPEC = dict(
 )
 
 
-@pytest.mark.parametrize('am, ansible_module_args', [(ARGUMENT_SPEC, ARGS)], indirect=['am', 'ansible_module_args'])
-def test_module_utils_basic__log_invocation(am, mocker):
+@pytest.mark.parametrize('ansible_module, ansible_module_args', [(ARGUMENT_SPEC, ARGS)], indirect=['ansible_module', 'ansible_module_args'])
+def test_module_utils_basic__log_invocation(ansible_module, mocker):
 
-    am.log = mocker.MagicMock()
-    am._log_invocation()
+    ansible_module.log = mocker.MagicMock()
+    ansible_module._log_invocation()
 
     # Message is generated from a dict so it will be in an unknown order.
     # have to check this manually rather than with assert_called_with()
-    args = am.log.call_args[0]
+    args = ansible_module.log.call_args[0]
     assert len(args) == 1
     message = args[0]
 
@@ -43,7 +43,7 @@ def test_module_utils_basic__log_invocation(am, mocker):
     assert ' no_log=NOT_LOGGING_PARAMETER' in message
     assert ' password=NOT_LOGGING_PASSWORD' in message
 
-    kwargs = am.log.call_args[1]
+    kwargs = ansible_module.log.call_args[1]
     assert kwargs == \
         dict(log_args={
             'foo': 'False',

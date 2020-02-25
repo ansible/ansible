@@ -635,21 +635,21 @@ class TestComplexOptions:
 
 class TestLoadFileCommonArguments:
     @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
-    def test_smoketest_load_file_common_args(self, am):
+    def test_smoketest_load_file_common_args(self, ansible_module):
         """With no file arguments, an empty dict is returned"""
-        am.selinux_mls_enabled = MagicMock()
-        am.selinux_mls_enabled.return_value = True
-        am.selinux_default_context = MagicMock()
-        am.selinux_default_context.return_value = 'unconfined_u:object_r:default_t:s0'.split(':', 3)
+        ansible_module.selinux_mls_enabled = MagicMock()
+        ansible_module.selinux_mls_enabled.return_value = True
+        ansible_module.selinux_default_context = MagicMock()
+        ansible_module.selinux_default_context.return_value = 'unconfined_u:object_r:default_t:s0'.split(':', 3)
 
-        assert am.load_file_common_arguments(params={}) == {}
+        assert ansible_module.load_file_common_arguments(params={}) == {}
 
     @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
-    def test_load_file_common_args(self, am, mocker):
-        am.selinux_mls_enabled = MagicMock()
-        am.selinux_mls_enabled.return_value = True
-        am.selinux_default_context = MagicMock()
-        am.selinux_default_context.return_value = 'unconfined_u:object_r:default_t:s0'.split(':', 3)
+    def test_load_file_common_args(self, ansible_module, mocker):
+        ansible_module.selinux_mls_enabled = MagicMock()
+        ansible_module.selinux_mls_enabled.return_value = True
+        ansible_module.selinux_default_context = MagicMock()
+        ansible_module.selinux_default_context.return_value = 'unconfined_u:object_r:default_t:s0'.split(':', 3)
 
         base_params = dict(
             path='/path/to/file',
@@ -682,7 +682,7 @@ class TestLoadFileCommonArguments:
         mocker.patch('os.path.islink', return_value=True)
         mocker.patch('os.path.realpath', return_value='/path/to/real_file')
 
-        res = am.load_file_common_arguments(params=extended_params)
+        res = ansible_module.load_file_common_arguments(params=extended_params)
 
         assert res == final_params
 

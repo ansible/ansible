@@ -60,7 +60,7 @@ def ansible_module_args(mocker, monkeypatch, request):
 
 # pylint: disable=invalid-name,redefined-outer-name,unused-argument
 @pytest.fixture
-def am(ansible_module_args, request):
+def ansible_module(ansible_module_args, request):
     """Return a patched Ansible module instance."""
     argspec = {}
     if isinstance(getattr(request, 'param', None), dict):

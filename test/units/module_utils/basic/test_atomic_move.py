@@ -18,14 +18,14 @@ from ansible.module_utils import basic
 
 
 @pytest.fixture
-def atomic_am(am, mocker):
-    am.selinux_enabled = mocker.MagicMock()
-    am.selinux_context = mocker.MagicMock()
-    am.selinux_default_context = mocker.MagicMock()
-    am.set_context_if_different = mocker.MagicMock()
-    am._unsafe_writes = mocker.MagicMock()
+def atomic_am(ansible_module, mocker):
+    ansible_module.selinux_enabled = mocker.MagicMock()
+    ansible_module.selinux_context = mocker.MagicMock()
+    ansible_module.selinux_default_context = mocker.MagicMock()
+    ansible_module.set_context_if_different = mocker.MagicMock()
+    ansible_module._unsafe_writes = mocker.MagicMock()
 
-    yield am
+    yield ansible_module
 
 
 @pytest.fixture
