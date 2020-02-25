@@ -1,0 +1,3 @@
+bugfixes:
+- Update the warning message for ``CONDITIONAL_BARE_VARS`` to list the original conditional
+  not the value of the original conditional (https://github.com/ansible/ansible/issues/67735)
