@@ -177,16 +177,27 @@ class Acls(ConfigBase):
             family = "inet6" if config.pop("afi") == "ipv6" else "inet"
             inet_node = build_child_xml_node(family_node, family)
 
-            if delete:
-                inet_node.attrib.update(delete)
             if not config["acls"]:
+                if delete:
+                    inet_node.attrib.update(delete)
                 continue
+
+            needs_delete = False
+            if delete:
+                # This should ensure that the delete attr gets attached to the deepest level necessary.
+                needs_delete = True
+
             for acl in config["acls"]:
                 filter_node = build_child_xml_node(inet_node, 'filter')
                 build_child_xml_node(filter_node, 'name', acl['name'])
                 if acl.get('aces'):
                     for ace in acl['aces']:
                         term_node = build_child_xml_node(filter_node, 'term')
+                        if delete:
+                            term_node.attrib.update(delete)
+                            needs_delete = False
+                            continue
+
                         build_child_xml_node(term_node, 'name', ace['name'])
                         if ace.get("source") or ace.get('protocol') or ace.get('port'):
                             from_node = build_child_xml_node(term_node, 'from')
@@ -205,5 +216,9 @@ class Acls(ConfigBase):
                                     build_child_xml_node(from_node, 'port', ace['port'][port])
                                 else:
                                     build_child_xml_node(from_node, 'port', port)
+            if needs_delete:
+                filter_node.attrib.update(delete)
+                needs_delete = False
+
         acls_xml.append(family_node)
         return acls_xml
