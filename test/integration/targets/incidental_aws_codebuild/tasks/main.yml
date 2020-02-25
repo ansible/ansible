@@ -1,0 +1,119 @@
+---
+# tasks file for aws_codebuild
+
+- name: Run aws_codebuild integration tests.
+
+  block:
+
+    # ==================== preparations ========================================
+
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    - name: create IAM role needed for CodeBuild
+      iam_role:
+        name: "{{ iam_role_name }}"
+        description: Role with permissions for CodeBuild actions.
+        assume_role_policy_document: "{{ lookup('file', 'codebuild_iam_trust_policy.json') }}"
+        state: present
+        <<: *aws_connection_info
+      register: codebuild_iam_role
+
+    - name: Set variable with aws account id
+      set_fact:
+        aws_account_id: "{{ codebuild_iam_role.iam_role.arn.split(':')[4] }}"
+
+    # ================== integration test ==========================================
+
+    - name: create CodeBuild project
+      aws_codebuild:
+        name: "{{ resource_prefix }}-test-ansible-codebuild"
+        description: Build project for testing the Ansible aws_codebuild module
+        service_role: "{{ codebuild_iam_role.iam_role.arn }}"
+        timeout_in_minutes: 30
+        source:
+          type: CODEPIPELINE
+          buildspec: ''
+        artifacts:
+          namespace_type: NONE
+          packaging: NONE
+          type: CODEPIPELINE
+          name: test
+        environment:
+          compute_type: BUILD_GENERAL1_SMALL
+          privileged_mode: true
+          image: 'aws/codebuild/docker:17.09.0'
+          type: LINUX_CONTAINER
+          environment_variables:
+            - { name: 'FOO_ENV', value: 'other' }
+        tags:
+          - { key: 'purpose', value: 'ansible-test' }
+        state: present
+        <<: *aws_connection_info
+      register: output
+      retries: 10
+      delay: 5
+      until: output is success
+
+    - assert:
+        that:
+          - "output.project.description == 'Build project for testing the Ansible aws_codebuild module'"
+
+    - name: idempotence check rerunning same Codebuild task
+      aws_codebuild:
+        name: "{{ resource_prefix }}-test-ansible-codebuild"
+        description: Build project for testing the Ansible aws_codebuild module
+        service_role: "{{ codebuild_iam_role.iam_role.arn }}"
+        timeout_in_minutes: 30
+        source:
+          type: CODEPIPELINE
+          buildspec: ''
+        artifacts:
+          namespace_type: NONE
+          packaging: NONE
+          type: CODEPIPELINE
+          name: test
+        encryption_key: 'arn:aws:kms:{{ aws_region }}:{{ aws_account_id }}:alias/aws/s3'
+        environment:
+          compute_type: BUILD_GENERAL1_SMALL
+          privileged_mode: true
+          image: 'aws/codebuild/docker:17.09.0'
+          type: LINUX_CONTAINER
+          environment_variables:
+            - { name: 'FOO_ENV', value: 'other' }
+        tags:
+          - { key: 'purpose', value: 'ansible-test' }
+        state: present
+        <<: *aws_connection_info
+      register: rerun_test_output
+
+    - assert:
+        that:
+          - "rerun_test_output.project.created == output.project.created"
+
+    - name: delete CodeBuild project
+      aws_codebuild:
+        name: "{{ output.project.name }}"
+        source:
+          type: CODEPIPELINE
+          buildspec: ''
+        artifacts: {}
+        state: absent
+        <<: *aws_connection_info
+      async: 300
+
+  # ============================== cleanup ======================================
+
+  always:
+
+    - name: cleanup IAM role created for CodeBuild test
+      iam_role:
+        name: "{{ iam_role_name }}"
+        state: absent
+        <<: *aws_connection_info

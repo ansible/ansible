@@ -1,0 +1,92 @@
+# Test code for the vmware_host_hyperthreading module.
+# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Hyperthreading optimization is not available for hosts in vcsim
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+
+
+- name: Enable Hyperthreading everywhere
+  vmware_host_hyperthreading:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    state: disabled
+  register: enable_hyperthreading_everywhere
+  ignore_errors: true
+
+- when: enable_hyperthreading_everywhere is succeeded
+  block:
+
+  - name: Disable Hyperthreading for a given host
+    vmware_host_hyperthreading:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      esxi_hostname: '{{ esxi1 }}'
+      validate_certs: no
+      state: disabled
+    register: host_hyperthreading_info
+
+  - debug: var=host_hyperthreading_info
+
+  - assert:
+      that:
+        - host_hyperthreading_info is defined
+        - host_hyperthreading_info.changed
+
+  - name: Disable Hyperthreading for a given host in check mode
+    vmware_host_hyperthreading:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      esxi_hostname: '{{ esxi1 }}'
+      validate_certs: no
+      state: disabled
+    register: host_hyperthreading_info_check_mode
+    check_mode: yes
+
+  - debug: var=host_hyperthreading_info_check_mode
+
+  - assert:
+      that:
+        - host_hyperthreading_info_check_mode is defined
+
+  - name: Disable Hyperthreading for all hosts in given cluster
+    vmware_host_hyperthreading:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      cluster_name: "{{ ccr1 }}"
+      validate_certs: no
+      state: disabled
+    register: host_hyperthreading_info
+
+  - debug: var=host_hyperthreading_info
+
+  - assert:
+      that:
+        - host_hyperthreading_info is defined
+        - host_hyperthreading_info is changed
+
+  - name: Enable Hyperthreading for all hosts in given cluster in check mode
+    vmware_host_hyperthreading:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      cluster_name: "{{ ccr1 }}"
+      validate_certs: no
+      state: enabled
+    register: host_hyperthreading_info_check_mode
+    check_mode: yes
+
+  - debug: var=host_hyperthreading_info_check_mode
+
+  - assert:
+      that:
+        - host_hyperthreading_info_check_mode is defined
+        - host_hyperthreading_info_check_mode.changed

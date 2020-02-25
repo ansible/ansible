@@ -1,0 +1,24 @@
+---
+- name: Delete a datastore cluster to datacenter
+  vmware_datastore_cluster:
+    datacenter_name: "{{ dc1 }}"
+    datastore_cluster_name: '{{ item }}'
+    state: absent
+  with_items:
+    - DSC1
+    - DSC2
+  ignore_errors: yes
+
+- name: Remove the datacenter
+  vmware_datacenter:
+    datacenter_name: '{{ item }}'
+    state: absent
+  when: vcsim is not defined
+  with_items:
+    - '{{ dc1 }}'
+    - datacenter_0001
+
+- name: kill vcsim
+  uri:
+    url: "http://{{ vcsim }}:5000/killall"
+  when: vcsim is defined

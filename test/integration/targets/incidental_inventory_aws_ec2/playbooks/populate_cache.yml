@@ -1,0 +1,64 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  environment: "{{ ansible_test.environment }}"
+  tasks:
+
+    - block:
+
+        # Create VPC, subnet, security group, and find image_id to create instance
+
+        - include_tasks: setup.yml
+
+        - name: assert group was populated with inventory but is empty
+          assert:
+            that:
+              - "'aws_ec2' in groups"
+              - "not groups.aws_ec2"
+
+        # Create new host, add it to inventory and then terminate it without updating the cache
+
+        - name: set connection information for all tasks
+          set_fact:
+            aws_connection_info: &aws_connection_info
+              aws_access_key: '{{ aws_access_key }}'
+              aws_secret_key: '{{ aws_secret_key }}'
+              security_token: '{{ security_token }}'
+              region: '{{ aws_region }}'
+          no_log: yes
+
+        - name: create a new host
+          ec2:
+            image: '{{ image_id }}'
+            exact_count: 1
+            count_tag:
+              Name: '{{ resource_prefix }}'
+            instance_tags:
+              Name: '{{ resource_prefix }}'
+            instance_type: t2.micro
+            wait: yes
+            group_id: '{{ sg_id }}'
+            vpc_subnet_id: '{{ subnet_id }}'
+            <<: *aws_connection_info
+          register: setup_instance
+
+        - meta: refresh_inventory
+
+      always:
+
+        - name: remove setup ec2 instance
+          ec2:
+            instance_type: t2.micro
+            instance_ids: '{{ setup_instance.instance_ids }}'
+            state: absent
+            wait: yes
+            instance_tags:
+              Name: '{{ resource_prefix }}'
+            group_id: '{{ sg_id }}'
+            vpc_subnet_id: '{{ subnet_id }}'
+            <<: *aws_connection_info
+          ignore_errors: yes
+          when: setup_instance is defined
+
+        - include_tasks: tear_down.yml

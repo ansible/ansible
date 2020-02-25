@@ -1,0 +1,4 @@
+shippable/vcenter/group1
+cloud/vcenter
+needs/target/prepare_vmware_tests
+zuul/vmware/vcenter_1esxi
