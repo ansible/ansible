@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 DOCUMENTATION = """
@@ -21,6 +21,10 @@ short_description: Manage static IP routes on Arista EOS network devices
 description:
   - This module provides declarative management of static
     IP routes on Arista EOS network devices.
+deprecated:
+  removed_in: '2.13'
+  alternative: eos_static_routes
+  why: Updated modules with more functionality
 notes:
   - Tested against EOS 4.15
 options:

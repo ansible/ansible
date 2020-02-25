@@ -1,0 +1,177 @@
+---
+- debug:
+    msg: "Start eos_static_routes merged integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _populate.yaml
+
+- set_fact:
+    config:
+      - address_families:
+        - afi: ipv4
+          routes:
+          - dest: 10.1.1.0/24
+            next_hops:
+            - interface: Management1
+            - admin_distance: 200
+              forward_router_address: 20.1.1.3
+              interface: Ethernet1
+              track: bfd
+          - dest: 10.50.0.0/16
+            next_hops:
+            - interface: Management1
+          - dest: 23.1.0.0/16
+            next_hops:
+            - nexthop_grp: testgrp
+              tag: 42
+          - dest: 155.55.1.0/24
+            next_hops:
+            - nexthop_grp: testgrp
+              tag: 100
+        - afi: ipv6
+          routes:
+          - dest: 1000:10::/64
+            next_hops:
+            - admin_distance: 67
+              interface: Ethernet1
+              tag: 98
+      - address_families:
+        - afi: ipv4
+          routes:
+          - dest: 77.77.1.0/24
+            next_hops:
+            - interface: 33.1.1.1
+        vrf: vrftest1
+      - address_families:
+        - afi: ipv4
+          routes:
+          - dest: 120.1.1.0/24
+            next_hops:
+            - admin_distance: 23
+              interface: Ethernet1
+        - afi: ipv6
+          routes:
+          - dest: 1120:10::/64
+            next_hops:
+            - admin_distance: 55
+              interface: Ethernet1
+        vrf: testvrf
+
+
+    revert_config:
+      - address_families:
+        - afi: ipv4
+          routes:
+          - dest: 10.1.1.0/24
+            next_hops:
+            - interface: Management1
+            - admin_distance: 200
+              forward_router_address: 20.1.1.3
+              interface: Ethernet1
+              track: bfd
+          - dest: 10.50.0.0/16
+            next_hops:
+            - interface: Management1
+          - dest: 23.1.0.0/16
+            next_hops:
+            - nexthop_grp: testgrp
+              tag: 42
+          - dest: 122.1.19.0/24
+            next_hops:
+            - admin_distance: 21
+              nexthop_grp: testgrp
+          - dest: 155.55.1.0/24
+            next_hops:
+            - nexthop_grp: testgrp
+              tag: 100
+        - afi: ipv6
+          routes:
+          - dest: 1000:10::/64
+            next_hops:
+            - admin_distance: 67
+              interface: Ethernet1
+              tag: 98
+      - address_families:
+        - afi: ipv4
+          routes:
+          - dest: 77.77.1.0/24
+            next_hops:
+            - interface: 33.1.1.1
+        vrf: vrftest1
+      - address_families:
+        - afi: ipv4
+          routes:
+          - dest: 120.1.1.0/24
+            next_hops:
+            - admin_distance: 23
+              interface: Ethernet1
+        - afi: ipv6
+          routes:
+          - dest: 1120:10::/64
+            next_hops:
+            - admin_distance: 55
+              interface: Ethernet1
+        vrf: testvrf
+
+- block:
+  - name: merge attributes of given static routes.
+    eos_static_routes:
+      config:
+        - vrf: "testvrf"
+          address_families:
+          - afi: 'ipv6'
+            routes:
+            - dest: '1120:10::/64'      
+              next_hops:
+              - interface:  Ethernet1
+                admin_distance: 55
+        - address_families:
+          - afi: 'ipv4'
+            routes:
+            - dest: '155.55.1.0/24'
+              next_hops:
+              - nexthop_grp: testgrp
+                tag: 100 
+      state: merged
+    become: yes
+    register: base_config
+  
+  - eos_facts:
+      gather_network_resources: static_routes
+    become: yes
+  
+  - assert:
+      that:
+        - "ansible_facts.network_resources.static_routes|symmetric_difference(config) == []"
+  
+  - name: Apply the provided configuration (config to be reverted)
+    eos_static_routes:
+      config:
+        - address_families:
+          - afi: 'ipv4'
+            routes:
+            - dest: '122.1.19.0/24'
+              next_hops:
+              - nexthop_grp: testgrp
+                admin_distance: 21
+      state: merged
+    become: yes
+    register: result
+  
+  - assert:
+      that:
+        - "result.after|symmetric_difference(revert_config) == []"
+  
+  - name: Revert back to base config using facts round trip
+    eos_static_routes:
+      config: "{{ ansible_facts['network_resources']['static_routes'] }}"
+      state: overridden
+    become: yes
+    register: revert
+  
+  - name: Assert that config was reverted
+    assert:
+      that:
+        - "ansible_facts.network_resources.static_routes | symmetric_difference(revert.after) == []"
+  
+  always:
+    - include_tasks: _remove_config.yaml

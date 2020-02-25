@@ -23,6 +23,7 @@ from ansible.module_utils.network.eos.facts.vlans.vlans import VlansFacts
 from ansible.module_utils.network.eos.facts.legacy.base import Default, Hardware, Config, Interfaces
 from ansible.module_utils.network.eos.facts.acl_interfaces.acl_interfaces import Acl_interfacesFacts
 from ansible.module_utils.network.eos.facts.acls.acls import AclsFacts
+from ansible.module_utils.network.eos.facts.static_routes.static_routes import Static_routesFacts
 
 
 FACT_LEGACY_SUBSETS = dict(
@@ -43,6 +44,7 @@ FACT_RESOURCE_SUBSETS = dict(
     vlans=VlansFacts,
     acl_interfaces=Acl_interfacesFacts,
     acls=AclsFacts,
+    static_routes=Static_routesFacts,
 )
 
 
