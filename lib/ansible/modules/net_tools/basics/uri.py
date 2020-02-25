@@ -176,6 +176,7 @@ options:
     description:
       - "SOCKS5 configuration in the following format: ip_address:port."
     type: str
+    version_added: "2.10"
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
