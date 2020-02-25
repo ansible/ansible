@@ -73,7 +73,7 @@ def fake_stat(mocker):
     yield stat1
 
 
-@pytest.mark.parametrize('stdin, selinux', product([{}], (True, False)), indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args, selinux', product([{}], (True, False)), indirect=['ansible_module_args'])
 def test_new_file(atomic_am, atomic_mocks, mocker, selinux):
     # test destination does not exist, login name = 'root', no environment, os.rename() succeeds
     mock_context = atomic_am.selinux_default_context.return_value
@@ -93,7 +93,7 @@ def test_new_file(atomic_am, atomic_mocks, mocker, selinux):
         assert not atomic_am.set_context_if_different.called
 
 
-@pytest.mark.parametrize('stdin, selinux', product([{}], (True, False)), indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args, selinux', product([{}], (True, False)), indirect=['ansible_module_args'])
 def test_existing_file(atomic_am, atomic_mocks, fake_stat, mocker, selinux):
     # Test destination already present
     mock_context = atomic_am.selinux_context.return_value
@@ -114,7 +114,7 @@ def test_existing_file(atomic_am, atomic_mocks, fake_stat, mocker, selinux):
         assert not atomic_am.set_context_if_different.called
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
 def test_no_tty_fallback(atomic_am, atomic_mocks, fake_stat, mocker):
     """Raise OSError when using getlogin() to simulate no tty cornercase"""
     mock_context = atomic_am.selinux_context.return_value
@@ -134,7 +134,7 @@ def test_no_tty_fallback(atomic_am, atomic_mocks, fake_stat, mocker):
     assert atomic_am.selinux_context.call_args_list == [mocker.call('/path/to/dest')]
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
 def test_existing_file_stat_failure(atomic_am, atomic_mocks, mocker):
     """Failure to stat an existing file in order to copy permissions propogates the error (unless EPERM)"""
     atomic_mocks['copystat'].side_effect = FileNotFoundError('testing os copystat with non EPERM error')
@@ -144,7 +144,7 @@ def test_existing_file_stat_failure(atomic_am, atomic_mocks, mocker):
         atomic_am.atomic_move('/path/to/src', '/path/to/dest')
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
 def test_existing_file_stat_perms_failure(atomic_am, atomic_mocks, mocker):
     """Failure to stat an existing file to copy the permissions due to permissions passes fine"""
     # and now have os.copystat return EPERM, which should not fail
@@ -163,7 +163,7 @@ def test_existing_file_stat_perms_failure(atomic_am, atomic_mocks, mocker):
     assert atomic_am.selinux_context.call_args_list == [mocker.call('/path/to/dest')]
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
 def test_rename_failure(atomic_am, atomic_mocks, mocker, capfd):
     """Test os.rename fails with EIO, causing it to bail out"""
     atomic_mocks['path_exists'].side_effect = [False, False]
@@ -180,7 +180,7 @@ def test_rename_failure(atomic_am, atomic_mocks, mocker, capfd):
     assert results['failed']
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
 def test_rename_perms_fail_temp_creation_fails(atomic_am, atomic_mocks, mocker, capfd):
     """Test os.rename fails with EPERM working but failure in mkstemp"""
     atomic_mocks['path_exists'].return_value = False
@@ -200,7 +200,7 @@ def test_rename_perms_fail_temp_creation_fails(atomic_am, atomic_mocks, mocker, 
     assert results['failed']
 
 
-@pytest.mark.parametrize('stdin, selinux', product([{}], (True, False)), indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args, selinux', product([{}], (True, False)), indirect=['ansible_module_args'])
 def test_rename_perms_fail_temp_succeeds(atomic_am, atomic_mocks, fake_stat, mocker, selinux):
     """Test os.rename raising an error but fallback to using mkstemp works"""
     mock_context = atomic_am.selinux_default_context.return_value

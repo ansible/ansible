@@ -140,7 +140,7 @@ def test_timeout_raises_timeout():
         function_times_out()
 
 
-@pytest.mark.parametrize('stdin', ({},), indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args', ({},), indirect=['ansible_module_args'])
 def test_timeout_raises_timeout_integration_test(am):
     with pytest.raises(timeout.TimeoutError, match=r"^Timer expired after"):
         function_times_out_in_run_command(am)

@@ -12,7 +12,7 @@ import pytest
 from ansible.module_utils.common import warnings
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
 def test_warn(am, capfd):
 
     am.warn('warning1')
@@ -23,7 +23,7 @@ def test_warn(am, capfd):
     assert json.loads(out)['warnings'] == ['warning1', 'warning2']
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
 def test_deprecate(am, capfd, monkeypatch):
     monkeypatch.setattr(warnings, '_global_deprecations', [])
 
@@ -56,7 +56,7 @@ def test_deprecate(am, capfd, monkeypatch):
     ]
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
 def test_deprecate_without_list(am, capfd):
     with pytest.raises(SystemExit):
         am.exit_json(deprecations='Simple deprecation warning')
@@ -69,7 +69,7 @@ def test_deprecate_without_list(am, capfd):
     ]
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
 def test_deprecate_without_list_version_date_not_set(am, capfd):
     with pytest.raises(AssertionError) as ctx:
         am.deprecate('Simple deprecation warning', date='', version='')  # pylint: disable=ansible-deprecated-no-version

@@ -16,7 +16,8 @@ class TestAnsibleModuleLogSmokeTest:
     DATA = DATA + [d.encode('utf-8') for d in DATA]
     DATA += [b'non-utf8 :\xff: test']
 
-    @pytest.mark.parametrize('msg, stdin', ((m, {}) for m in DATA), indirect=['stdin'])
+    # pylint bug: https://github.com/PyCQA/pylint/issues/511
+    @pytest.mark.parametrize(('msg', 'ansible_module_args'), ((m, {}) for m in DATA), indirect=['ansible_module_args'])  # pylint: disable=undefined-variable
     def test_smoketest_syslog(self, am, mocker, msg):
         # These talk to the live daemons on the system.  Need to do this to
         # show that what we send doesn't cause an issue once it gets to the
@@ -42,7 +43,7 @@ class TestAnsibleModuleLogSyslog:
         (b'non-utf8 :\xff: test', b'non-utf8 :\xff: test'.decode('utf-8', 'replace')),
     ]
 
-    @pytest.mark.parametrize('no_log, stdin', (product((True, False), [{}])), indirect=['stdin'])
+    @pytest.mark.parametrize(('no_log', 'ansible_module_args'), (product((True, False), [{}])), indirect=['ansible_module_args'])
     def test_no_log(self, am, mocker, no_log):
         """Test that when no_log is set, logging does not occur"""
         mock_syslog = mocker.patch('syslog.syslog', autospec=True)
@@ -54,9 +55,10 @@ class TestAnsibleModuleLogSyslog:
         else:
             mock_syslog.assert_called_once_with(syslog.LOG_INFO, 'unittest no_log')
 
-    @pytest.mark.parametrize('msg, param, stdin',
-                             ((m, p, {}) for m, p in OUTPUT_DATA),
-                             indirect=['stdin'])
+    # pylint bug: https://github.com/PyCQA/pylint/issues/511
+    @pytest.mark.parametrize(('msg', 'param', 'ansible_module_args'),
+                             ((m, p, {}) for m, p in OUTPUT_DATA),  # pylint: disable=undefined-variable
+                             indirect=['ansible_module_args'])
     def test_output_matches(self, am, mocker, msg, param):
         """Check that log messages are sent correctly"""
         mocker.patch('ansible.module_utils.basic.has_journal', False)
