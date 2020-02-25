@@ -38,6 +38,12 @@ options:
     aliases:
       - key_arn
     type: str
+  enable_key_rotation:
+    description:
+    - Whether the key should be automatically rotated every year.
+    required: false
+    type: bool
+    version_added: '2.10'
   policy_mode:
     description:
     - (deprecated) Grant or deny access.
@@ -527,6 +533,8 @@ def get_key_details(connection, module, key_id):
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Failed to obtain aliases")
 
+    current_rotation_status = connection.get_key_rotation_status(KeyId=key_id)
+    result['enable_key_rotation'] = current_rotation_status.get('KeyRotationEnabled')
     result['aliases'] = aliases.get(result['KeyId'], [])
 
     result = camel_dict_to_snake_dict(result)
@@ -755,6 +763,21 @@ def update_policy(connection, module, key, policy):
     return True
 
 
+def update_key_rotation(connection, module, key, enable_key_rotation):
+    if enable_key_rotation is None:
+        return False
+    key_id = key['key_arn']
+    current_rotation_status = connection.get_key_rotation_status(KeyId=key_id)
+    if current_rotation_status.get('KeyRotationEnabled') == enable_key_rotation:
+        return False
+
+    if enable_key_rotation:
+        connection.enable_key_rotation(KeyId=key_id)
+    else:
+        connection.disable_key_rotation(KeyId=key_id)
+    return True
+
+
 def update_grants(connection, module, key, desired_grants, purge_grants):
     existing_grants = key['grants']
 
@@ -789,6 +812,7 @@ def update_key(connection, module, key):
     changed |= update_tags(connection, module, key, module.params['tags'], module.params.get('purge_tags'))
     changed |= update_policy(connection, module, key, module.params.get('policy'))
     changed |= update_grants(connection, module, key, module.params.get('grants'), module.params.get('purge_grants'))
+    changed |= update_key_rotation(connection, module, key, module.params.get('enable_key_rotation'))
 
     # make results consistent with kms_facts before returning
     result = get_key_details(connection, module, key['key_arn'])
@@ -813,6 +837,7 @@ def create_key(connection, module):
     key = get_key_details(connection, module, result['KeyId'])
 
     update_alias(connection, module, key, module.params['alias'])
+    update_key_rotation(connection, module, key, module.params.get('enable_key_rotation'))
 
     ensure_enabled_disabled(connection, module, key, module.params.get('enabled'))
     update_grants(connection, module, key, module.params.get('grants'), False)
@@ -1004,6 +1029,7 @@ def main():
         policy=dict(),
         purge_grants=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent']),
+        enable_key_rotation=(dict(type='bool'))
     )
 
     module = AnsibleAWSModule(
