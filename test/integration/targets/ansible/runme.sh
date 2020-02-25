@@ -27,6 +27,9 @@ ansible localhost -m debug -a var=playbook_dir --playbook-dir=/tmp | grep '"play
 # test setting playbook dir via ansible.cfg
 env -u ANSIBLE_PLAYBOOK_DIR ANSIBLE_CONFIG=./playbookdir_cfg.ini ansible localhost -m debug -a var=playbook_dir | grep '"playbook_dir": "/tmp"'
 
+# test adhoc callback triggers
+ANSIBLE_STDOUT_CALLBACK=callback_debug ANSIBLE_LOAD_CALLBACK_PLUGINS=1 ansible --playbook-dir . testhost -i ../../inventory -m ping | grep -E '^v2_' | diff -u adhoc-callback.stdout -
+
 # Test that no tmp dirs are left behind when running ansible-config
 TMP_DIR=~/.ansible/tmptest
 if [[ -d "$TMP_DIR" ]]; then

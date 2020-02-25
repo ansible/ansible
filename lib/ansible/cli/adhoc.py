@@ -160,6 +160,7 @@ class AdHocCLI(CLI):
                 forks=context.CLIARGS['forks'],
             )
 
+            self._tqm.load_callbacks()
             self._tqm.send_callback('v2_playbook_on_start', playbook)
 
             result = self._tqm.run(play)
