@@ -221,7 +221,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                         'vrrp': {'type': 'bool'},
                                     },
                                 },
-                                'grant': {'type': 'bool'},
+                                'grant': {'type': 'str', "choice": ["permit", "deny"]},
                             },
                         },
                     },

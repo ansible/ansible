@@ -220,6 +220,12 @@ class Acls(ConfigBase):
                                     build_child_xml_node(from_node, 'port', ace['port'][port])
                                 else:
                                     build_child_xml_node(from_node, 'port', port)
+                        if ace.get("grant"):
+                            then_node = build_child_xml_node(term_node, "then")
+                            if ace["grant"] == "permit":
+                                build_child_xml_node(then_node, "accept")
+                            if ace["grant"] == "deny":
+                                build_child_xml_node(then_node, "discard")
             if needs_delete:
                 filter_node.attrib.update(delete)
                 needs_delete = False

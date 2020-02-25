@@ -149,6 +149,11 @@ class AclsFacts(object):
                             ace['protocol'] = {}
                             protocol = term['from']['protocol']
                             ace['protocol'][protocol] = True
+                    if term.get("then"):
+                        if "accept" in term["then"]:
+                            ace["grant"] = "permit"
+                        if "discard" in term["then"]:
+                            ace["grant"] = "deny"
                     acl_dict['aces'].append(ace)
             config['acls'].append(acl_dict)
         return utils.remove_empties(config)
