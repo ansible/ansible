@@ -31,6 +31,7 @@ __metaclass__ = type
 class Lldp_interfacesArgs(object):  # pylint: disable=R0903
     """The arg spec for the nxos_lldp_interfaces module
     """
+
     def __init__(self, **kwargs):
         pass
 
@@ -62,8 +63,12 @@ class Lldp_interfacesArgs(object):  # pylint: disable=R0903
             },
             'type': 'list'
         },
+        'running_config': {
+            'type': 'str'
+        },
         'state': {
-            'choices': ['merged', 'replaced', 'overridden', 'deleted'],
+            'choices': ['deleted', 'gathered', 'merged', 'overridden', 'rendered',
+                        'replaced', 'parsed'],
             'default': 'merged',
             'type': 'str'
         }

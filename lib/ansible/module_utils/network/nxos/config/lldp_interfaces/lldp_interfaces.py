@@ -12,6 +12,7 @@ created
 """
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+import q
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties, dict_diff
@@ -36,19 +37,26 @@ class Lldp_interfaces(ConfigBase):
     def __init__(self, module):
         super(Lldp_interfaces, self).__init__(module)
 
-    def get_lldp_interfaces_facts(self):
+    def get_lldp_interfaces_facts(self, data=None):
         """ Get the 'facts' (the current configuration)
 
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
+        q(data)
         facts, _warnings = Facts(self._module).get_facts(
-            self.gather_subset, self.gather_network_resources)
+            self.gather_subset, self.gather_network_resources, data=data)
         lldp_interfaces_facts = facts['ansible_network_resources'].get(
             'lldp_interfaces')
         if not lldp_interfaces_facts:
             return []
         return lldp_interfaces_facts
+
+    def edit_config(self, commands):
+        """Wrapper method for `_connection.edit_config()`
+        This exists solely to allow the unit test framework to mock device connection calls.
+        """
+        return self._connection.edit_config(commands)
 
     def execute_module(self):
         """ Execute the module
@@ -59,20 +67,30 @@ class Lldp_interfaces(ConfigBase):
         result = {'changed': False}
         commands = list()
         warnings = list()
+        state = self._module.params['state']
+        action_states = ['merged', 'replaced', 'deleted', 'overridden']
 
-        existing_lldp_interfaces_facts = self.get_lldp_interfaces_facts()
-        commands.extend(self.set_config(existing_lldp_interfaces_facts))
-        if commands:
-            if not self._module.check_mode:
-                self._connection.edit_config(commands)
-            result['changed'] = True
-        result['commands'] = commands
+        if state == 'gathered':
+            result['gathered'] = self.get_lldp_interfaces_facts()
+        elif state == 'rendered':
+            result['rendered'] = self.set_config({})
+        elif state == 'parsed':
+            result['parsed'] = self.set_config({})
+        else:
+            existing_lldp_interfaces_facts = self.get_lldp_interfaces_facts()
+            commands.extend(self.set_config(existing_lldp_interfaces_facts))
+            if commands and state in action_states:
+                if not self._module.check_mode:
+                    self._connection.edit_config(commands)
+                result['changed'] = True
+                result['before'] = existing_lldp_interfaces_facts
+                result['commands'] = commands
+            result['commands'] = commands
 
-        changed_lldp_interfaces_facts = self.get_lldp_interfaces_facts()
+            changed_lldp_interfaces_facts = self.get_lldp_interfaces_facts()
 
-        result['before'] = existing_lldp_interfaces_facts
-        if result['changed']:
-            result['after'] = changed_lldp_interfaces_facts
+            if result['changed']:
+                result['after'] = changed_lldp_interfaces_facts
 
         result['warnings'] = warnings
         return result
@@ -114,8 +132,12 @@ class Lldp_interfaces(ConfigBase):
             commands = self._state_overridden(want, have)
         elif state == 'deleted':
             commands = self._state_deleted(want, have)
-        elif state == 'gathered':
-            commands = self._state_gathered(have)
+        elif state == 'rendered':
+            q(state)
+            commands = self._state_rendered(want)
+        elif state == 'parsed':
+            want = self._module.params['running_config']
+            commands = self._state_parsed(want)
         else:
             for w in want:
                 if state == 'merged':
@@ -123,6 +145,15 @@ class Lldp_interfaces(ConfigBase):
                 elif state == 'replaced':
                     commands.extend(self._state_replaced(
                         flatten_dict(w), have))
+        return commands
+
+    def _state_parsed(self, want):
+        return self.get_lldp_interfaces_facts(want)
+
+    def _state_rendered(self, want):
+        commands = []
+        for w in want:
+            commands.extend(self.set_commands(w, {}))
         return commands
 
     def _state_gathered(self, have):
@@ -133,18 +164,6 @@ class Lldp_interfaces(ConfigBase):
         """
         commands = []
         want = {}
-        commands.append(self.set_commands(want, have))
-        return commands
-
-    def _state_rendered(self, want, have):
-        """ The command generator when state is replaced
-
-        :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
-                  to the desired configuration
-        """
-        commands = []
-        have = {}
         commands.append(self.set_commands(want, have))
         return commands
 
@@ -240,7 +259,7 @@ class Lldp_interfaces(ConfigBase):
         obj_in_have = flatten_dict(
             search_obj_in_list(want['name'], have, 'name'))
         if not obj_in_have:
-            commands = self.add_commands(want)
+            commands = self.add_commands(flatten_dict(want))
         else:
             diff = dict_diff(obj_in_have, want)
             if diff:
@@ -253,7 +272,7 @@ class Lldp_interfaces(ConfigBase):
         if not d:
             return commands
         commands.append('interface ' + d['name'])
-
+        q(d)
         if 'transmit' in d:
             if (d['transmit']):
                 commands.append('lldp transmit')

@@ -13,6 +13,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import re
+import q
 from copy import deepcopy
 
 from ansible.module_utils.network.common import utils
@@ -52,9 +53,9 @@ class Lldp_interfacesFacts(object):
         objs = []
 
         resources = data.split('interface')
+        q(resources)
         for resource in resources:
             if resource and re.search(r'lldp', resource):
-
                 obj = self.render_config(self.generated_spec, resource)
                 if obj and len(obj.keys()) > 1:
                     objs.append(obj)
@@ -84,20 +85,27 @@ class Lldp_interfacesFacts(object):
         """
         config = deepcopy(spec)
 
-        match = re.search(r'^ (\S+)', conf)
-
+        match = re.search(r'^ (\S+)\n', conf)
         if match is None:
             return {}
+        q(conf)
         intf = match.group(1)
         if get_interface_type(intf) == 'unknown':
             return {}
         config['name'] = intf
-        config['receive'] = utils.parse_conf_cmd_arg(
-            conf, 'no lldp receive', False, True)
-        config['transmit'] = utils.parse_conf_cmd_arg(
-            conf, 'no lldp transmit', False, True)
+        if 'lldp receive' in conf:  # for parsed state only
+            config['receive'] = True
+        if 'no lldp receive' in conf:
+            config['receive'] = False
+
+        if 'lldp transmit' in conf:  # for parsed state only
+            config['transmit'] = True
+        if 'no lldp transmit' in conf:
+            config['transmit'] = False
+
         config['tlv_set']['management_address'] = utils.parse_conf_arg(
             conf, 'lldp tlv-set management-address')
         config['tlv_set']['vlan'] = utils.parse_conf_arg(
             conf, 'lldp tlv-set vlan')
+        q(config)
         return utils.remove_empties(config)
