@@ -5,7 +5,7 @@
 # TODO: Current pinned version of vcsim does not support custom fields
 # commenting testcase below
 - import_role:
-    name: prepare_vmware_tests
+    name: incidental_vmware_prepare_tests
   vars:
     setup_attach_host: true
     setup_datastore: true

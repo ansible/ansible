@@ -1,2 +1,2 @@
 dependencies:
-  - prepare_nios_tests
+  - incidental_nios_prepare_tests

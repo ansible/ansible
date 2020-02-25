@@ -4,7 +4,7 @@
 
 # Hyperthreading optimization is not available for hosts in vcsim
 - import_role:
-    name: prepare_vmware_tests
+    name: incidental_vmware_prepare_tests
   vars:
     setup_attach_host: true
 
