@@ -131,3 +131,15 @@ class TestConfigManager:
         actual_value, actual_origin = self.manager._loop_entries({'name': vault_var}, [{'name': 'name'}])
         assert actual_value == "vault text"
         assert actual_origin == "name"
+
+    @pytest.mark.parametrize("value_type", ("str", "string", None))
+    def test_ensure_type_with_vaulted_str(self, value_type):
+        class MockVault:
+            def decrypt(self, value):
+                return value
+
+        vault_var = AnsibleVaultEncryptedUnicode(b"vault text")
+        vault_var.vault = MockVault()
+
+        actual_value = ensure_type(vault_var, value_type)
+        assert actual_value == "vault text"
