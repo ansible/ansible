@@ -57,7 +57,7 @@
 
     - assert:
         that:
-          - "result.commands|length == 3"
+          - "result.commands|length == 2"
           - "result.changed == true"
           - "result.commands|symmetric_difference(rtt.override_commands) == []"
 
