@@ -1,0 +1,53 @@
+---
+- debug:
+      msg: "START eos_static_routes rendered integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate.yaml
+
+- block:
+  - name:  Structure provided configuration into device specific commands
+    eos_static_routes: &rendered
+      config:
+        - vrf: "testvrf"
+          address_families:
+          - afi: 'ipv6'
+            routes:
+            - dest: '1120:10::/64'
+              next_hops:
+              - interface:  Ethernet1
+                admin_distance: 55
+        - address_families:
+          - afi: 'ipv4'
+            routes:
+            - dest: '155.55.1.0/24'
+              next_hops:
+              - nexthop_grp: testgrp
+                tag: 100
+      state: rendered
+    become: yes
+    register: result
+
+
+  - name: Assert that correct set of commands were generated
+    vars:
+      lines: 
+        - ipv6 route vrf testvrf 1120:10::/64 Ethernet1 55
+        - ip route 155.55.1.0/24 Nexthop-Group testgrp tag 100
+
+    assert:
+        that:
+            - "{{ lines | symmetric_difference(result['rendered']) |length == 0 }}"
+
+  - name: Structure provided configuration into device specific commands (IDEMPOTENT)
+    eos_static_routes: *rendered
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+        that:
+            - "result['changed'] == false"
+
+  always:
+  - include_tasks: _remove_config.yaml
