@@ -2476,8 +2476,7 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         data = response['data']
-        controller_list = [a.get('@odata.id') for a in data.get('Members', []) if
-                a.get('@odata.id')]
+        controller_list = [a.get('@odata.id') for a in data.get('Members', []) if a.get('@odata.id')]
 
         # Find matched Storage Controller
         volumes_uri = None
@@ -2521,14 +2520,17 @@ class RedfishUtils(object):
                     break
 
         if (controller == 'null' or len(controller) == 0) and len(controller_list) > 1:
-            return {'ret': False, 'msg': "There are multi-storage which can be configured. Need controller to be specified, controller list:%s" %(str(controller_name_list))}
+            return {'ret': False, 'msg': "There are multi-storage which can be configured. Need controller to be specified, controller list: %s"
+                                         % (str(controller_name_list))}
         if volumes_uri is None:
-            return {'ret': False, 'msg': "Specified controller not in controller list:%s" %(str(controller_name_list))}
+            return {'ret': False, 'msg': "Specified controller not in controller list: %s"
+                                         % (str(controller_name_list))}
 
         # Convert input to payload and check validity
         payload = {}
         if supported_raid_list and raidtype not in supported_raid_list:
-            return {'ret': False, 'msg': "Specified raid type %s not in SupportedRAIDTypes:%s" %(raidtype, str(supported_raid_list))}
+            return {'ret': False, 'msg': "Specified raid type %s not in SupportedRAIDTypes: %s"
+                                         % (raidtype, str(supported_raid_list))}
         payload["RAIDType"] = raidtype
         payload["CapacityBytes"] = capacityGB * 1024 * 1024 * 1024
         if volumename != 'null' and len(volumename) > 0:
@@ -2560,8 +2562,7 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         data = response['data']
-        controller_list = [a.get('@odata.id') for a in data.get('Members', []) if
-                a.get('@odata.id')]
+        controller_list = [a.get('@odata.id') for a in data.get('Members', []) if a.get('@odata.id')]
 
         # Find matched Storage Controller
         volumes_uri = None
@@ -2600,9 +2601,11 @@ class RedfishUtils(object):
                     break
 
         if (controller == 'null' or len(controller) == 0) and len(controller_list) > 1:
-            return {'ret': False, 'msg': "There are multi-storage which can be configured. Need controller to be specified, controller list:%s" %(str(controller_name_list))}
+            return {'ret': False, 'msg': "There are multi-storage which can be configured. Need controller to be specified, controller list: %s"
+                                         % (str(controller_name_list))}
         if volumes_uri is None:
-            return {'ret': False, 'msg': "Specified controller not in controller list:%s" %(str(controller_name_list))}
+            return {'ret': False, 'msg': "Specified controller not in controller list: %s"
+                                         % (str(controller_name_list))}
 
         # Find matched Volume
         matched_volume_uri = None
@@ -2625,9 +2628,10 @@ class RedfishUtils(object):
                     matched_volume_uri = v
                     break
                 volume_name_list.append(volume_name)
-        
+
         if matched_volume_uri is None:
-            return {'ret': False, 'msg': "Can not find volumename %s. volumename should be in volume name list: %s" %(volumename, str(volume_name_list))}
+            return {'ret': False, 'msg': "Can not find volumename %s. volumename should be in volume name list: %s"
+                                         % (volumename, str(volume_name_list))}
 
         response = self.delete_request(self.root_uri + matched_volume_uri)
         if response['ret'] is False:

@@ -248,9 +248,9 @@ EXAMPLES = '''
       command: CreateRaidVolume
       raidtype: RAID0
       capacityGB: 100
-      baseuri: "{{ baseuri }}" 
-      username: "{{ username }}" 
-      password: "{{ password }}" 
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
 
   - name: Create Raid Volume on specified controller with specified volume name
     redfish_config:
@@ -368,7 +368,7 @@ def main():
     capacityGB = module.params['capacityGB']
     volumename = module.params['volumename']
     volumeproperties = module.params['volumeproperties']
-    
+
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
     rf_utils = RedfishUtils(creds, root_uri, timeout, module,
@@ -404,7 +404,6 @@ def main():
                 result = rf_utils.create_raid_volume(controller, raidtype, capacityGB, volumename, volumeproperties)
             elif command == "DeleteRaidVolume":
                 result = rf_utils.delete_raid_volume(controller, volumename)
-
 
     elif category == "Manager":
         # execute only if we find a Manager service resource
