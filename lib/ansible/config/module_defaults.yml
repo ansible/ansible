@@ -13,6 +13,8 @@ groupings:
   - acme
   acme_inspect:
   - acme
+  aws_acm:
+  - aws
   aws_acm_facts:
   - aws
   aws_acm_info:

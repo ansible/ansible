@@ -295,21 +295,17 @@ def main():
         private_key=dict(no_log=True),
         state=dict(default='present', choices=['present', 'absent'])
     )
-    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
+    required_if = [
+        ['state', 'present', ['certificate', 'name_tag', 'private_key']],
+    ]
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True, required_if=required_if)
     acm = ACMServiceManager(module)
 
     # Check argument requirements
     if module.params['state'] == 'present':
-        if not module.params['certificate']:
-            module.fail_json(msg="Parameter 'certificate' must be specified if 'state' is specified as 'present'")
-        elif module.params['certificate_arn']:
+        if module.params['certificate_arn']:
             module.fail_json(msg="Parameter 'certificate_arn' is only valid if parameter 'state' is specified as 'absent'")
-        elif not module.params['name_tag']:
-            module.fail_json(msg="Parameter 'name_tag' must be specified if parameter 'state' is specified as 'present'")
-        elif not module.params['private_key']:
-            module.fail_json(msg="Parameter 'private_key' must be specified if 'state' is specified as 'present'")
     else:  # absent
-
         # exactly one of these should be specified
         absent_args = ['certificate_arn', 'domain_name', 'name_tag']
         if sum([(module.params[a] is not None) for a in absent_args]) != 1:

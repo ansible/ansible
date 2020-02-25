@@ -3,19 +3,19 @@
   - set_fact:
       virtualenv: "{{ remote_tmp_dir }}/virtualenv"
       virtualenv_command: "{{ ansible_python_interpreter }} -m virtualenv"
-  
+
   - set_fact:
       virtualenv_interpreter: "{{ virtualenv }}/bin/python"
-  
+
   # The CI runs many of these tests in parallel
   # Use this random ID to differentiate which resources
   # are from which test
   - set_fact:
       aws_acm_test_uuid: "{{ (10**9) | random }}"
-  
+
   - pip:
       name: virtualenv
-  
+
   - pip:
       name:
         - 'botocore<1.13.0,>=1.12.211'
@@ -28,11 +28,11 @@
       virtualenv: "{{ virtualenv }}"
       virtualenv_command: "{{ virtualenv_command }}"
       virtualenv_site_packages: no
-  
+
   - include_tasks: full_acm_test.yml
     vars:
       ansible_python_interpreter: "{{ virtualenv_interpreter }}"
-  
+
   always:
   - file:
       path: "{{ virtualenv }}"
