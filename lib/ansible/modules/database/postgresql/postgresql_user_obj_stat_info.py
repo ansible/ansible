@@ -275,7 +275,7 @@ class PgUserObjStatInfo():
                                           query_params=(relname,),
                                           add_to_executed=False)
 
-                        self.info[info_key][elem[schema_key]][elem[name_key]]['total_size'] = result[0][0]
+                    self.info[info_key][elem[schema_key]][elem[name_key]]['total_size'] = result[0][0]
 
     def set_schema(self, schema):
         """If schema exists, sets self.schema, otherwise fails."""
