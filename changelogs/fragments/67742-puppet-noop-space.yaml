@@ -1,0 +1,2 @@
+bugfixes:
+  - puppet - add a missing space between the `--noop` option and the manifest file (https://github.com/ansible/ansible/pull/67742)
