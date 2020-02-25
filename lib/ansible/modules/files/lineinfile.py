@@ -203,16 +203,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-changed:
-  description: True if the file was changed during a task execution.
-  returned: always
-  type: bool
-  sample: False
-msg:
-  description: Descriptive status of a task result.
-  returned: When changed a status message otherwise an empty string.
-  type: str
-  sample: line added
 backup:
   description: The full name of the backup file created.
   returned: When backup parameter is set to True, otherwise it returns an empty string.
@@ -221,11 +211,12 @@ backup:
 diff:
   description: The differences made by the task execution.
   returned: on success
-  type: complex
+  type: list
+  elements: dict
   contains:
     - after:
         description: The content of the changed file after a change. The content is converted to string.
-        returned: When the parameter `--diff` is used otherwise empty string is returned.
+        returned: When the parameter ``--diff`` is used otherwise empty string is returned.
         type: str
       after_header:
         description: Designation of purpose of the diff section.
@@ -234,7 +225,7 @@ diff:
         sample: /etc/services (content)
       before:
         description: The content of the changed file before a change. The content is converted to string.
-        returned: When the parameter `--diff` is used otherwise empty string is returned.
+        returned: When the parameter ``--diff`` is used otherwise empty string is returned.
         type: str
       before_header:
        description: Designation of purpose of the diff section.
