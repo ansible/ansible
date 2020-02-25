@@ -787,34 +787,34 @@ def test_get_collection_versions(api_version, token_type, token_ins, response, m
         {
             'count': 6,
             'links': {
-                'next': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/?page=2',
+                'next': '/api/v3/collections/namespace/collection/versions/?page=2',
                 'previous': None,
             },
             'data': [
                 {
                     'version': '1.0.0',
-                    'href': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/1.0.0',
+                    'href': '/api/v3/collections/namespace/collection/versions/1.0.0',
                 },
                 {
                     'version': '1.0.1',
-                    'href': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/1.0.1',
+                    'href': '/api/v3/collections/namespace/collection/versions/1.0.1',
                 },
             ],
         },
         {
             'count': 6,
             'links': {
-                'next': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/?page=3',
-                'previous': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions',
+                'next': '/api/v3/collections/namespace/collection/versions/?page=3',
+                'previous': '/api/v3/collections/namespace/collection/versions',
             },
             'data': [
                 {
                     'version': '1.0.2',
-                    'href': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/1.0.2',
+                    'href': '/api/v3/collections/namespace/collection/versions/1.0.2',
                 },
                 {
                     'version': '1.0.3',
-                    'href': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/1.0.3',
+                    'href': '/api/v3/collections/namespace/collection/versions/1.0.3',
                 },
             ],
         },
@@ -822,16 +822,16 @@ def test_get_collection_versions(api_version, token_type, token_ins, response, m
             'count': 6,
             'links': {
                 'next': None,
-                'previous': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/?page=2',
+                'previous': '/api/v3/collections/namespace/collection/versions/?page=2',
             },
             'data': [
                 {
                     'version': '1.0.4',
-                    'href': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/1.0.4',
+                    'href': '/api/v3/collections/namespace/collection/versions/1.0.4',
                 },
                 {
                     'version': '1.0.5',
-                    'href': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/1.0.5',
+                    'href': '/api/v3/collections/namespace/collection/versions/1.0.5',
                 },
             ],
         },

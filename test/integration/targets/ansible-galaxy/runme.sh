@@ -151,22 +151,10 @@ rm -rf "${role_testdir}"
 #################################
 # ansible-galaxy collection tests
 #################################
+# TODO: Move these to ansible-galaxy-collections
 
-f_ansible_galaxy_status \
-    "ansible-galaxy with a sever list with an undefined URL"
-
-    ANSIBLE_GALAXY_SERVER_LIST=undefined  ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install --force "$@" 2>&1 | tee out.txt || echo "expected failure"
-
-    grep "No setting was provided for required configuration plugin_type: galaxy_server plugin: undefined setting: url" out.txt
-
-f_ansible_galaxy_status \
-    "ansible-galaxy with an empty server list"
-
-    ANSIBLE_GALAXY_SERVER_LIST='' ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install --force "$@" | tee out.txt
-
-    [[ -f "${galaxy_testdir}/install/ansible_collections/ansible_test/my_collection/MANIFEST.json" ]]
-    grep "Installing 'ansible_test.my_collection:1.0.0' to .*" out.txt
-
+galaxy_testdir=$(mktemp -d)
+pushd "${galaxy_testdir}"
 
 ## ansible-galaxy collection list tests
 
