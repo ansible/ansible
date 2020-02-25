@@ -122,6 +122,7 @@ EXAMPLES = """
 # interface GigabitEthernet0/0
 # interface GigabitEthernet0/1
 # interface GigabitEthernet0/2
+#  ip access-group 123 out
 
 - name: "Merge module attributes of given access-groups"
   ios_acl_interfaces:
@@ -146,21 +147,19 @@ EXAMPLES = """
             acls:
               - name: 100
                 direction: in
-              - name: 123
-                direction: out
     state: merged
 
 # Commands Fired:
 # ---------------
 #
 # interface GigabitEthernet0/1
-# ip access-group 110 in
-# ip access-group 123 out
-# ipv6 traffic-filter test_v6 out
-# ipv6 traffic-filter temp_v6 in
+#  ip access-group 110 in
+#  ip access-group 123 out
+#  ipv6 traffic-filter test_v6 out
+#  ipv6 traffic-filter temp_v6 in
 # interface GigabitEthernet0/2
-# ip access-group 110 in
-# ip access-group 123 out
+#  ip access-group 100 in
+#  ip access-group 123 out
 
 
 # After state:
