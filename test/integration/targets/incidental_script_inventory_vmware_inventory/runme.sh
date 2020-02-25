@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-contrib_dir=../../../../contrib/inventory
+contrib_dir=$(pwd)
 
 echo "DEBUG: using ${contrib_dir}"
 

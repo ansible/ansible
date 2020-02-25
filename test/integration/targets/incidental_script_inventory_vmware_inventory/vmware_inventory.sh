@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-python.py "../../../../contrib/inventory/vmware_inventory.py" "$@"
+python.py "./vmware_inventory.py" "$@"
