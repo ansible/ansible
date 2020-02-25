@@ -4,7 +4,7 @@
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
-The ios_acl fact class
+The ios_acls fact class
 It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
@@ -18,17 +18,17 @@ from copy import deepcopy
 import re
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.ios.utils.utils import check_n_return_valid_ipv6_addr
-from ansible.module_utils.network.ios.argspec.acl.acl import AclArgs
+from ansible.module_utils.network.ios.argspec.acls.acls import AclsArgs
 
 
-class AclFacts(object):
-    """ The ios_acl fact class
+class AclsFacts(object):
+    """ The ios_acls fact class
     """
 
     def __init__(self, module, subspec='config', options='options'):
 
         self._module = module
-        self.argument_spec = AclArgs.argument_spec
+        self.argument_spec = AclsArgs.argument_spec
         spec = deepcopy(self.argument_spec)
         if subspec:
             if options:
@@ -41,10 +41,11 @@ class AclFacts(object):
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
     def get_acl_data(self, connection):
+        # Get the access-lists from the ios router
         return connection.get('sh access-list')
 
     def populate_facts(self, connection, ansible_facts, data=None):
-        """ Populate the facts for acl
+        """ Populate the facts for acls
         :param connection: the device connection
         :param ansible_facts: Facts dictionary
         :param data: previously collected conf
@@ -65,16 +66,16 @@ class AclFacts(object):
         facts = {}
 
         if objs:
-            facts['acl'] = []
+            facts['acls'] = []
             params = utils.validate_config(self.argument_spec, {'config': objs})
             for cfg in params['config']:
-                facts['acl'].append(utils.remove_empties(cfg))
+                facts['acls'].append(utils.remove_empties(cfg))
         ansible_facts['ansible_network_resources'].update(facts)
 
         return ansible_facts
 
     def create_config_dict(self, config):
-        """ Function that parse the acl config and convert to module usable config
+        """ Function that parse the acls config and convert to module usable config
         :param config: config
         :rtype: A dict
         :returns: the config generated based on have config params
@@ -113,7 +114,7 @@ class AclFacts(object):
 
     def populate_port_protocol(self, source, destination, each_list):
         """ Function Populates port portocol wrt to source and destination
-        :param acl: source config
+        :param acls: source config
         :param config: destination config
         :param each_list: config
         :rtype: A list
@@ -294,7 +295,7 @@ class AclFacts(object):
         :returns: The generated config
         """
 
-        # for parsed scnenario where commands are passed to generate the acl facts
+        # for parsed scnenario where commands are passed to generate the acls facts
         if len(have_config) == 1:
             have_config = self.parsed_config_facts(have_config)
 

@@ -1,10 +1,10 @@
 ---
 - debug:
-    msg: "Start ios_acl_interfaces rendered integration tests ansible_connection={{ ansible_connection }}"
+    msg: "Start ios_acls rendered integration tests ansible_connection={{ ansible_connection }}"
 
 - block:
    - name: Rendered the provided configuration with the exisiting running configuration
-     ios_acl:
+     ios_acls:
        config:
          - afi: ipv4
            acls:

@@ -1,14 +1,14 @@
 ---
 - debug:
-      msg: "START Replaced ios_acl state for integration tests on connection={{ ansible_connection }}"
+      msg: "START Overridden ios_acls state for integration tests on connection={{ ansible_connection }}"
 
 - include_tasks: _remove_config.yaml
 
 - include_tasks: _populate_config.yaml
 
 - block:
-    - name: Replaces device configuration of listed interfaces with provided configuration
-      ios_acl: &replaced
+    - name: Override device configuration of all interfaces with provided configuration
+      ios_acls: &overridden
         config:
           - afi: ipv4
             acls:
@@ -17,12 +17,14 @@
                   - grant: deny
                     protocol_options:
                       tcp:
-                        syn: true
+                        ack: true
                     source:
-                      address: 192.0.2.0
+                      address: 198.51.100.0
                       wildcard_bits: 0.0.0.255
+                      port_protocol:
+                        eq: telnet
                     destination:
-                      address: 192.0.3.0
+                      address: 198.51.110.0
                       wildcard_bits: 0.0.0.255
                       port_protocol:
                         eq: www
@@ -32,7 +34,6 @@
               - name: 150
                 aces:
                   - grant: deny
-                    sequence: 20
                     protocol_options:
                       tcp:
                         syn: true
@@ -49,17 +50,17 @@
                     dscp: ef
                     ttl:
                       eq: 10
-        state: replaced
+        state: overridden
       register: result
 
     - assert:
         that:
-          - "result.commands|length == 5"
+          - "result.commands|length == 8"
           - "result.changed == true"
-          - "result.commands|symmetric_difference(replaced.commands) == []"
+          - "result.commands|symmetric_difference(overridden.commands) == []"
 
-    - name: Replaces device configuration of listed interfaces with provided configuration (IDEMPOTENT)
-      ios_acl: *replaced
+    - name: Override device configuration of all interfaces with provided configuration (IDEMPOTENT)
+      ios_acls: *overridden
       register: result
 
     - name: Assert that task was idempotent

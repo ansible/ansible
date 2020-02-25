@@ -3,7 +3,7 @@
 # Copyright 2019 Red Hat Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
-The ios_acl class
+The ios_acls class
 It is in this file where the current configuration (as dict)
 is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
@@ -22,9 +22,9 @@ from ansible.module_utils.network.common.utils import remove_empties
 from ansible.module_utils.network.ios.utils.utils import new_dict_to_set
 
 
-class Acl(ConfigBase):
+class Acls(ConfigBase):
     """
-    The ios_acl class
+    The ios_acls class
     """
 
     gather_subset = [
@@ -33,11 +33,11 @@ class Acl(ConfigBase):
     ]
 
     gather_network_resources = [
-        'acl',
+        'acls',
     ]
 
     def __init__(self, module):
-        super(Acl, self).__init__(module)
+        super(Acls, self).__init__(module)
 
     def get_acl_facts(self, data=None):
         """ Get the 'facts' (the current configuration)
@@ -46,7 +46,7 @@ class Acl(ConfigBase):
         :returns: The current configuration as a dictionary
         """
         facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources, data=data)
-        acl_facts = facts['ansible_network_resources'].get('acl')
+        acl_facts = facts['ansible_network_resources'].get('acls')
         if not acl_facts:
             return []
 
@@ -374,9 +374,9 @@ class Acl(ConfigBase):
         """ The command formatter from the generated command
         :param want: want config
         :param have: have config
-        :param acls_want: acl want config
+        :param acls_want: acls want config
         :param config_want: want config list
-        :param check: for same acl in want and have config, check=True
+        :param check: for same acls in want and have config, check=True
         :param state: operation state
         :rtype: A list
         :returns: commands generated from want n have config diff
@@ -559,8 +559,8 @@ class Acl(ConfigBase):
         """ Function that sets the acls config based on the want and have config
         :param want: want config
         :param have: have config
-        :param acl_want: want acl config
-        :param afi: acl afi type
+        :param acl_want: want acls config
+        :param afi: acls afi type
         :rtype: A list
         :returns: the commands generated based on input want/have params
         """
@@ -579,13 +579,13 @@ class Acl(ConfigBase):
             if afi == 'ipv4':
                 try:
                     name = int(name)
-                    # If name is numbered acl
+                    # If name is numbered acls
                     if name <= 99:
                         cmd = 'ip access-list standard {0}'.format(name)
                     elif name >= 100:
                         cmd = 'ip access-list extended {0}'.format(name)
                 except ValueError:
-                    # If name is named acl
+                    # If name is named acls
                     acl_type = acl_want.get('acl_type')
                     if acl_type:
                         cmd = 'ip access-list {0} {1}'.format(acl_type, name)
@@ -668,16 +668,16 @@ class Acl(ConfigBase):
 
         return commands, change
 
-    def _clear_config(self, acl, config, sequence=''):
-        """ Function that deletes the acl config based on the want and have config
-        :param acl: acl config
+    def _clear_config(self, acls, config, sequence=''):
+        """ Function that deletes the acls config based on the want and have config
+        :param acls: acls config
         :param config: config
         :rtype: A list
-        :returns: the commands generated based on input acl/config params
+        :returns: the commands generated based on input acls/config params
         """
         commands = []
         afi = config.get('afi')
-        name = acl.get('name')
+        name = acls.get('name')
         if afi == 'ipv4' and name:
             try:
                 name = int(name)
@@ -692,7 +692,7 @@ class Acl(ConfigBase):
                         cmd = 'ip access-list extended {0} '.format(name)
                     cmd += 'no {0}'.format(sequence)
             except ValueError:
-                acl_type = acl.get('acl_type')
+                acl_type = acls.get('acl_type')
                 if acl_type == 'extended' and not sequence:
                     cmd = 'no ip access-list extended {0}'.format(name)
                 elif acl_type == 'standard' and not sequence:

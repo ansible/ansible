@@ -23,7 +23,7 @@
 #############################################
 
 """
-The module file for ios_acl
+The module file for ios_acls
 """
 
 from __future__ import absolute_import, division, print_function
@@ -36,7 +36,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: ios_acl
+module: ios_acls
 version_added: '2.10'
 short_description: Manages named or numbered ACLs on IOS devices.
 description: This module configures and manages the named or numbered ACLs on IOS platforms.
@@ -94,6 +94,11 @@ options:
                 - Sequence Number for the Access Control Entry(ACE).
                 - Refer to vendor documentation for valid values.
                 type: int
+              protocol:
+                description:
+                  - Specify the protocol to match.
+                  - Refer to vendor documentation for valid values.
+                type: str
               protocol_options:
                 description: protocol type.
                 type: dict
@@ -801,7 +806,7 @@ EXAMPLES = """
 #    deny tcp any eq www any eq telnet ack dscp af11 sequence 10
 
 
-- name: Replaces device configuration of listed acl with provided configuration
+- name: Replaces device configuration of listed acls with provided configuration
   ios_acl:
     config:
       - afi: ipv4
@@ -893,7 +898,7 @@ EXAMPLES = """
 # IPv6 access list R1_TRAFFIC
 #    deny tcp any eq www any eq telnet ack dscp af11 sequence 10
 
-- name: Override device configuration of all acl with provided configuration
+- name: Override device configuration of all acls with provided configuration
   ios_acl:
     config:
       - afi: ipv4
@@ -983,7 +988,7 @@ EXAMPLES = """
 # IPv6 access list R1_TRAFFIC
 #    deny tcp any eq www any eq telnet ack dscp af11 sequence 10
 
-- name: "Delete module attributes of given acl (Note: This won't delete the interface itself)"
+- name: "Delete module attributes of given acls (Note: This won't delete the interface itself)"
   ios_acl:
     config:
       - afi: ipv4
@@ -1078,7 +1083,7 @@ EXAMPLES = """
 # IPv6 access list R1_TRAFFIC
 #    deny tcp any eq www any eq telnet ack dscp af11 sequence 10
 
-- name: "Delete module attributes of all acl (Note: This won't delete the interface itself)"
+- name: "Delete module attributes of all acls (Note: This won't delete the interface itself)"
   ios_acl:
     state: deleted
 
@@ -1116,7 +1121,7 @@ EXAMPLES = """
 # IPv6 access list R1_TRAFFIC
 #    deny tcp any eq www any eq telnet ack dscp af11 sequence 10
 
-- name: Gather listed acl interfaces with provided configurations
+- name: Gather listed acls interfaces with provided configurations
   ios_acl_interfaces:
     config:
     state: gathered
@@ -1399,8 +1404,8 @@ commands:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.ios.argspec.acl.acl import AclArgs
-from ansible.module_utils.network.ios.config.acl.acl import Acl
+from ansible.module_utils.network.ios.argspec.acls.acls import AclsArgs
+from ansible.module_utils.network.ios.config.acls.acls import Acls
 
 
 def main():
@@ -1417,12 +1422,12 @@ def main():
 
     mutually_exclusive = [('config', 'running_config')]
 
-    module = AnsibleModule(argument_spec=AclArgs.argument_spec,
+    module = AnsibleModule(argument_spec=AclsArgs.argument_spec,
                            required_if=required_if,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    result = Acl(module).execute_module()
+    result = Acls(module).execute_module()
     module.exit_json(**result)
 
 

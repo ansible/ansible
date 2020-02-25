@@ -1,6 +1,6 @@
 ---
 - debug:
-    msg: "Start Deleted integration state for ios_acl ansible_connection={{ ansible_connection }}"
+    msg: "Start Deleted integration state for ios_acls ansible_connection={{ ansible_connection }}"
 
 - include_tasks: _remove_config.yaml
 
@@ -8,7 +8,7 @@
 
 - block:
     - name: Delete attributes of provided configured interfaces
-      ios_acl: &deleted
+      ios_acls: &deleted
         config:
           - afi: ipv4
             acls:
@@ -29,7 +29,7 @@
           - "result.commands|symmetric_difference(deleted.commands) == []"
 
     - name: Delete attributes of all configured interfaces (IDEMPOTENT)
-      ios_acl: *deleted
+      ios_acls: *deleted
       register: result
 
     - name: Assert that the previous task was idempotent
@@ -42,7 +42,7 @@
     - include_tasks: _populate_config.yaml
 
     - name: Delete ACL attributes of provided configured interfaces based on AFI
-      ios_acl: &deleted_afi
+      ios_acls: &deleted_afi
         config:
           - afi: ipv4
         state: deleted
@@ -55,7 +55,7 @@
           - "result.commands|symmetric_difference(deleted_afi.commands) == []"
 
     - name: Delete ACL attributes of provided configured interfaces based on AFI (IDEMPOTENT)
-      ios_acl: *deleted_afi
+      ios_acls: *deleted_afi
       register: result
 
     - name: Assert that the previous task was idempotent

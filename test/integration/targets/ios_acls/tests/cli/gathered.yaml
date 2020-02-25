@@ -1,13 +1,13 @@
 ---
 - debug:
-      msg: "START ios_acl gathered integration tests on connection={{ ansible_connection }}"
+      msg: "START ios_acls gathered integration tests on connection={{ ansible_connection }}"
 
 - include_tasks: _remove_config.yaml
 - include_tasks: _populate_config.yaml
 
 - block:
   - name: Gather the provided configuration with the exisiting running configuration
-    ios_acl: &gathered
+    ios_acls: &gathered
       config:
       state: gathered
     register: result

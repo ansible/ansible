@@ -1,17 +1,22 @@
 ---
 - debug:
-    msg: "START ios_acl round trip integration tests on connection={{ ansible_connection }}"
+      msg: "START Merged ios_acls state for integration tests on connection={{ ansible_connection }}"
 
 - include_tasks: _remove_config.yaml
 
-- include_tasks: _populate_config.yaml
-
 - block:
-    - name: Apply the provided configuration (base config)
-      ios_acl:
+    - name: Merge provided configuration with device configuration
+      ios_acls: &merged
         config:
           - afi: ipv4
             acls:
+              - name: std_acl
+                acl_type: standard
+                aces:
+                  - grant: deny
+                    source:
+                      address: 192.0.2.0
+                      wildcard_bits: 0.0.0.255
               - name: test_acl
                 acl_type: extended
                 aces:
@@ -34,6 +39,7 @@
               - name: 110
                 aces:
                   - grant: deny
+                    sequence: 10
                     protocol_options:
                       icmp:
                         echo: true
@@ -95,79 +101,23 @@
                         eq: telnet
                     dscp: af11
         state: merged
-      register: base_config
-
-    - name: Gather static routes facts
-      ios_facts:
-        gather_subset:
-          - "!all"
-          - "!min"
-        gather_network_resources:
-          - acl
-
-    - name: Apply the configuration which need to be reverted
-      ios_acl:
-        config:
-          - afi: ipv4
-            acls:
-              - name: 110
-                aces:
-                  - grant: deny
-                    protocol_options:
-                      tcp:
-                        ack: true
-                    source:
-                      address: 198.51.100.0
-                      wildcard_bits: 0.0.0.255
-                      port_protocol:
-                        eq: telnet
-                    destination:
-                      address: 198.51.110.0
-                      wildcard_bits: 0.0.0.255
-                      port_protocol:
-                        eq: www
-                    dscp: ef
-                    ttl:
-                      eq: 10
-              - name: 150
-                aces:
-                  - grant: deny
-                    protocol_options:
-                      tcp:
-                        syn: true
-                    source:
-                      address: 198.51.100.0
-                      wildcard_bits: 0.0.0.255
-                      port_protocol:
-                        eq: telnet
-                    destination:
-                      address: 198.51.110.0
-                      wildcard_bits: 0.0.0.255
-                      port_protocol:
-                        eq: telnet
-                    dscp: ef
-                    ttl:
-                      eq: 10
-        state: overridden
       register: result
 
     - assert:
         that:
-          - "result.commands|length == 8"
+          - "result.commands|length == 11"
           - "result.changed == true"
-          - "result.commands|symmetric_difference(overridden.commands) == []"
+          - "result.commands|symmetric_difference(merged.commands) == []"
 
-    - name: Revert back to base config using facts round trip
-      ios_acl:
-        config: "{{ ansible_facts['network_resources']['acl'] }}"
-        state: overridden
-      register: revert
+    - name: Merge provided configuration with device configuration (IDEMPOTENT)
+      ios_acls: *merged
+      register: result
 
-    - assert:
+    - name: Assert that the previous task was idempotent
+      assert:
         that:
-          - "revert.commands|length == 11"
-          - "revert.changed == true"
-          - "revert.commands|symmetric_difference(rtt.commands) == []"
+          - "result.commands|length == 0"
+          - "result['changed'] == false"
 
   always:
     - include_tasks: _remove_config.yaml

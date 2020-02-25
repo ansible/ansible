@@ -23,15 +23,15 @@
 #############################################
 
 """
-The arg spec for the ios_acl module
+The arg spec for the ios_acls module
 """
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-class AclArgs(object):
-    """The arg spec for the ios_acl module
+class AclsArgs(object):
+    """The arg spec for the ios_acls module
     """
 
     def __init__(self, **kwargs):

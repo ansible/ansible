@@ -7,16 +7,16 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat.mock import patch
-from ansible.modules.network.ios import ios_acl
+from ansible.modules.network.ios import ios_acls
 from units.modules.utils import set_module_args
 from .ios_module import TestIosModule, load_fixture
 
 
-class TestIosAclModule(TestIosModule):
-    module = ios_acl
+class TestIosAclsModule(TestIosModule):
+    module = ios_acls
 
     def setUp(self):
-        super(TestIosAclModule, self).setUp()
+        super(TestIosAclsModule, self).setUp()
 
         self.mock_get_config = patch('ansible.module_utils.network.common.network.Config.get_config')
         self.get_config = self.mock_get_config.start()
@@ -35,12 +35,12 @@ class TestIosAclModule(TestIosModule):
         self.mock_edit_config = patch('ansible.module_utils.network.ios.providers.providers.CliProvider.edit_config')
         self.edit_config = self.mock_edit_config.start()
 
-        self.mock_execute_show_command = patch('ansible.module_utils.network.ios.facts.acl.acl.'
-                                               'AclFacts.get_acl_data')
+        self.mock_execute_show_command = patch('ansible.module_utils.network.ios.facts.acls.acls.'
+                                               'AclsFacts.get_acl_data')
         self.execute_show_command = self.mock_execute_show_command.start()
 
     def tearDown(self):
-        super(TestIosAclModule, self).tearDown()
+        super(TestIosAclsModule, self).tearDown()
         self.mock_get_resource_connection_config.stop()
         self.mock_get_resource_connection_facts.stop()
         self.mock_edit_config.stop()
@@ -50,10 +50,10 @@ class TestIosAclModule(TestIosModule):
 
     def load_fixtures(self, commands=None, transport='cli'):
         def load_from_file(*args, **kwargs):
-            return load_fixture('ios_acl_config.cfg')
+            return load_fixture('ios_acls_config.cfg')
         self.execute_show_command.side_effect = load_from_file
 
-    def test_ios_acl_merged(self):
+    def test_ios_acls_merged(self):
         set_module_args(
             dict(config=[
                 dict(afi="ipv4",
@@ -102,7 +102,7 @@ class TestIosAclModule(TestIosModule):
         ]
         self.assertEqual(result['commands'], commands)
 
-    def test_ios_acl_merged_idempotent(self):
+    def test_ios_acls_merged_idempotent(self):
         set_module_args(
             dict(config=[
                 dict(afi="ipv4",
@@ -150,7 +150,7 @@ class TestIosAclModule(TestIosModule):
             ))
         self.execute_module(changed=False, commands=[], sort=True)
 
-    def test_ios_acl_replaced(self):
+    def test_ios_acls_replaced(self):
         set_module_args(
             dict(config=[
                 dict(afi="ipv4",
@@ -185,7 +185,7 @@ class TestIosAclModule(TestIosModule):
         ]
         self.assertEqual(result['commands'], commands)
 
-    def test_ios_acl_replaced_idempotent(self):
+    def test_ios_acls_replaced_idempotent(self):
         set_module_args(
             dict(config=[
                 dict(afi="ipv4",
@@ -214,7 +214,7 @@ class TestIosAclModule(TestIosModule):
             ))
         self.execute_module(changed=False, commands=[], sort=True)
 
-    def test_ios_acl_overridden(self):
+    def test_ios_acls_overridden(self):
         set_module_args(
             dict(config=[
                 dict(afi="ipv4",
@@ -252,7 +252,7 @@ class TestIosAclModule(TestIosModule):
         ]
         self.assertEqual(result['commands'], commands)
 
-    def test_ios_acl_overridden_idempotent(self):
+    def test_ios_acls_overridden_idempotent(self):
         set_module_args(
             dict(config=[
                 dict(afi="ipv4",
@@ -300,7 +300,7 @@ class TestIosAclModule(TestIosModule):
             ))
         self.execute_module(changed=False, commands=[], sort=True)
 
-    def test_ios_acl_deleted_afi_based(self):
+    def test_ios_acls_deleted_afi_based(self):
         set_module_args(
             dict(config=[
                 dict(afi="ipv4")
@@ -312,7 +312,7 @@ class TestIosAclModule(TestIosModule):
         ]
         self.assertEqual(result['commands'], commands)
 
-    def test_ios_acl_deleted_acl_based(self):
+    def test_ios_acls_deleted_acl_based(self):
         set_module_args(
             dict(config=[
                 dict(afi="ipv4",
@@ -365,7 +365,7 @@ class TestIosAclModule(TestIosModule):
         ]
         self.assertEqual(result['commands'], commands)
 
-    def test_ios_acl_rendered(self):
+    def test_ios_acls_rendered(self):
         set_module_args(
             dict(config=[
                 dict(afi="ipv4",
@@ -400,7 +400,7 @@ class TestIosAclModule(TestIosModule):
         result = self.execute_module(changed=False)
         self.assertEqual(result['rendered'], commands)
 
-    def test_ios_acl_parsed(self):
+    def test_ios_acls_parsed(self):
         set_module_args(
             dict(running_config="ipv6 access-list R1_TRAFFIC\ndeny tcp any eq www any eq telnet ack dscp af11",
                  state="parsed"))
