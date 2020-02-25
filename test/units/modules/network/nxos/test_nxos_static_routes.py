@@ -62,7 +62,7 @@ class TestNxosStaticRoutesModule(TestNxosModule):
             non_vrf_data = [
                 'ip route 192.0.2.16/28 192.0.2.24 name initial_route']
             vrf_data = [
-                'vrf context test\n  ip route 192.0.2.96/28 192.0.2.122 vrf dest_vrf']
+                'vrf context test\n  ip route 192.0.2.96/28 192.0.2.122 vrf dest_vrf\n  ipv6 route 2001:db8:12::/32 2001:db8::1001 name ipv6_route 3\n']
 
             output = non_vrf_data + vrf_data
             return output
@@ -161,6 +161,7 @@ class TestNxosStaticRoutesModule(TestNxosModule):
             'no ip route 192.0.2.16/28 192.0.2.24 name initial_route',
             'ip route 192.0.2.112/28 192.0.2.68 vrf end_vrf name overridden_route',
             'vrf context test',
+            'no ipv6 route 2001:db8:12::/32 2001:db8::1001 name ipv6_route 3',
             'no ip route 192.0.2.96/28 192.0.2.122 vrf dest_vrf'
         ]
         self.execute_module(changed=True, commands=commands)
@@ -195,10 +196,20 @@ class TestNxosStaticRoutesModule(TestNxosModule):
     def test_nxos_static_routes_deletedvrf(self):
         set_module_args(dict(config=[dict(vrf="test", )], state="deleted"))
         commands = ['vrf context test',
-                    'no ip route 192.0.2.96/28 192.0.2.122 vrf dest_vrf']
+                    'no ip route 192.0.2.96/28 192.0.2.122 vrf dest_vrf',
+                    'no ipv6 route 2001:db8:12::/32 2001:db8::1001 name ipv6_route 3']
         self.execute_module(changed=True, commands=commands)
 
-    def test_nxos_static_routes_deletedroute(self):
+    def test_nxos_static_routes_deletedafi(self):
+        set_module_args(
+            dict(config=[
+                dict(address_families=[dict(afi="ipv4")])
+            ], state="deleted"))
+        commands = ['vrf context default',
+                    'no ip route 192.0.2.16/28 192.0.2.24 name initial_route']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_nxos_static_routes_deleteddest(self):
         set_module_args(
             dict(config=[
                 dict(vrf="test",
@@ -210,13 +221,21 @@ class TestNxosStaticRoutesModule(TestNxosModule):
                     'no ip route 192.0.2.96/28 192.0.2.122 vrf dest_vrf']
         self.execute_module(changed=True, commands=commands)
 
-    def test_nxos_static_routes_deletedafi(self):
+    def test_nxos_static_routes_deletedroute(self):
         set_module_args(
             dict(config=[
-                dict(address_families=[dict(afi="ipv4")])
+                dict(vrf="test",
+                     address_families=[
+                         dict(afi="ipv6", routes=[
+                              dict(dest="2001:db8:12::/32", next_hops=[dict(
+                                  forward_router_address="2001:db8::1001",
+                                  route_name="ipv6_route",
+                                  admin_distance=3
+                              )])])
+                     ])
             ], state="deleted"))
-        commands = ['vrf context default',
-                    'no ip route 192.0.2.16/28 192.0.2.24 name initial_route']
+        commands = ['vrf context test',
+                    'no ipv6 route 2001:db8:12::/32 2001:db8::1001 name ipv6_route 3']
         self.execute_module(changed=True, commands=commands)
 
     def test_nxos_static_routes_rendered(self):
@@ -229,14 +248,14 @@ class TestNxosStaticRoutesModule(TestNxosModule):
                                   dict(dest="1200:10::/64",
                                        next_hops=[
                                            dict(forward_router_address="2048:ae12::/64",
-                                                interface="Ethernet1",
+                                                interface="Eth1/4",
                                                 admin_distance=5)
                                        ])
                               ])
                      ])
             ], state="rendered"))
         commands = ['vrf context testvrf',
-                    'ipv6 route 1200:10::/64 Ethernet1 2048:ae12::/64 5']
+                    'ipv6 route 1200:10::/64 Ethernet1/4 2048:ae12::/64 5']
         result = self.execute_module(changed=False)
         self.assertEqual(sorted(result['rendered']), sorted(
             commands), result['rendered'])
@@ -244,18 +263,37 @@ class TestNxosStaticRoutesModule(TestNxosModule):
     def test_nxos_static_routes_parsed(self):
         set_module_args(dict(running_config='''ip route 192.0.2.16/28 192.0.2.24 name initial_route
         vrf context test
-          ip route 192.0.2.96/28 192.0.2.122 vrf dest_vrf''',
+          ip route 192.0.2.96/28 192.0.2.122 vrf dest_vrf
+          ipv6 route 2001:db8:12::/32 2001:db8::1001 name ipv6_route 3''',
                              state="parsed"))
         result = self.execute_module(changed=False)
-        compare_list = [{'vrf': 'test', 'address_families': [{'routes': [{'dest': '192.0.2.96/28', 'next_hops': [{'dest_vrf': 'dest_vrf', 'forward_router_address': '192.0.2.122'}]}], 'afi': 'ipv4'}]},
-                        {'address_families': [{'routes': [{'dest': '192.0.2.16/28', 'next_hops': [{'route_name': 'initial_route', 'forward_router_address': '192.0.2.24'}]}], 'afi': 'ipv4'}]}]
+        compare_list = [{'vrf': 'test', 'address_families': [{'routes': [{'dest': '192.0.2.96/28',
+                                                                          'next_hops': [{'dest_vrf': 'dest_vrf', 'forward_router_address': '192.0.2.122'}]}],
+                                                              'afi': 'ipv4'},
+                                                             {'routes': [{'dest': '2001:db8:12::/32',
+                                                                          'next_hops':
+                                                                          [{'route_name': 'ipv6_route',
+                                                                            'forward_router_address': '2001:db8::1001', 'admin_distance': 3}]}],
+                                                              'afi': 'ipv6'}]},
+                        {'address_families': [{'routes': [{'dest': '192.0.2.16/28',
+                                                           'next_hops': [{'route_name': 'initial_route', 'forward_router_address': '192.0.2.24'}]}],
+                                               'afi': 'ipv4'}]}]
         self.assertEqual(result['parsed'],
                          compare_list, result['parsed'])
 
     def test_nxos_static_routes_gathered(self):
         set_module_args(dict(config=[], state="gathered"))
         result = self.execute_module(changed=False)
-        compare_list = [{'vrf': 'test', 'address_families': [{'routes': [{'dest': '192.0.2.96/28', 'next_hops': [{'dest_vrf': 'dest_vrf', 'forward_router_address': '192.0.2.122'}]}], 'afi': 'ipv4'}]},
-                        {'address_families': [{'routes': [{'dest': '192.0.2.16/28', 'next_hops': [{'route_name': 'initial_route', 'forward_router_address': '192.0.2.24'}]}], 'afi': 'ipv4'}]}]
+        compare_list = [{'vrf': 'test', 'address_families': [{'routes': [{'dest': '192.0.2.96/28',
+                                                                          'next_hops': [{'dest_vrf': 'dest_vrf', 'forward_router_address': '192.0.2.122'}]}],
+                                                              'afi': 'ipv4'},
+                                                             {'routes': [{'dest': '2001:db8:12::/32',
+                                                                          'next_hops':
+                                                                          [{'route_name': 'ipv6_route',
+                                                                            'forward_router_address': '2001:db8::1001', 'admin_distance': 3}]}],
+                                                              'afi': 'ipv6'}]},
+                        {'address_families': [{'routes': [{'dest': '192.0.2.16/28',
+                                                           'next_hops': [{'route_name': 'initial_route', 'forward_router_address': '192.0.2.24'}]}],
+                                               'afi': 'ipv4'}]}]
         self.assertEqual(result['gathered'],
                          compare_list, result['gathered'])

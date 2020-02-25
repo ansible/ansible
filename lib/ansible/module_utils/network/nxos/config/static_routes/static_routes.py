@@ -14,7 +14,6 @@ created
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import q
 from copy import deepcopy
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties, dict_diff
@@ -168,7 +167,6 @@ class Static_routes(ConfigBase):
             want_afi_list = []
             if 'address_families' in want.keys():
                 want_afi_list = [w['afi'] for w in want['address_families']]
-            q(want_afi_list)
             if len(want_afi_list) > 0:
                 for h in obj_in_have['address_families']:
                     if h['afi'] in want_afi_list:
@@ -224,7 +222,6 @@ class Static_routes(ConfigBase):
                                         delete_commands.extend(
                                             self.del_commands([delete_dict]))
                                 else:
-                                    q(ro)
                                     delete_dict = {
                                         'vrf':
                                         obj_in_have['vrf'],
@@ -260,7 +257,6 @@ class Static_routes(ConfigBase):
                         'address_families': [h for h in obj_in_have['address_families']],
                         'vrf': obj_in_have['vrf']
                     }]))
-                q(delete_commands)
         final_delete_commands = []
         for d in delete_commands:
             if d not in final_delete_commands:
@@ -276,7 +272,6 @@ class Static_routes(ConfigBase):
         # set_commands adds a 'vrf context..' line.  The above code removes the redundant 'vrf context ..'
         commands.extend(final_delete_commands)
         commands.extend(merged_commands)
-        q(commands)
         return commands
 
     def _state_overridden(self, want, have):

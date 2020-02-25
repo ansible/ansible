@@ -8,6 +8,3 @@
       ip route 192.0.2.64/28 192.0.2.22 tag 4
       ip route 192.0.2.64/28 192.0.2.23 name merged_route 1
     diff_match: strict
-  register: result
-- debug:
-    var: result
