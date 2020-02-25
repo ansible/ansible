@@ -65,7 +65,7 @@ def g_connect(versions):
                     try:
                         data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg)
                     except GalaxyError as new_err:
-                        if err.http_code == 404:
+                        if new_err.http_code == 404:
                             raise err
                         raise
 
@@ -469,7 +469,6 @@ class GalaxyAPI:
             value for GalaxyAPI.publish_collection.
         :param timeout: The timeout in seconds, 0 is no timeout.
         """
-        # TODO: actually verify that v3 returns the same structure as v2, right now this is just an assumption.
         state = 'waiting'
         data = None
 

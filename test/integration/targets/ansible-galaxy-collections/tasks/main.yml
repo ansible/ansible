@@ -10,8 +10,24 @@
 - name: run ansible-galaxy collection build tests
   import_tasks: build.yml
 
-- name: run ansible-galaxy collection publish tests
-  import_tasks: publish.yml
+- name: run ansible-galaxy collection publish tests for {{ test_name }}
+  include_tasks: publish.yml
+  vars:
+    test_name: '{{ item.name }}'
+    test_server: '{{ item.server }}'
+  with_items:
+  - name: Galaxy
+    server: '{{ galaxy_server }}'
+  - name: Automation Hub
+    server: '{{ ah_server }}'
 
-- name: run ansible-galaxy collection install tests
-  import_tasks: install.yml
+- name: run ansible-galaxy collection install tests for {{ test_name }}
+  include_tasks: install.yml
+  vars:
+    test_name: '{{ item.name }}'
+    test_server: '{{ item.server }}'
+  with_items:
+  - name: Galaxy
+    server: '{{ galaxy_server }}'
+  - name: Automation Hub
+    server: '{{ ah_server }}'
