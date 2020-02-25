@@ -1,0 +1,4 @@
+bugfixes:
+  - >
+    **security issue** win_unzip - ensure extract path ends with path separator
+    to prevent path traversal (CVE-2020-1737)

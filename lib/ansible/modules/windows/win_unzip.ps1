@@ -40,6 +40,11 @@ Function Extract-Zip($src, $dest) {
         $entry_target_path = [System.IO.Path]::Combine($dest, $archive_name)
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
+        # Ensure directory ends with path separator to prevent path traversal
+        if (-not $entry_dir.EndsWith([System.IO.Path]::DirectorySeparatorChar.ToString())) {
+            $entry_dir += [System.IO.Path]::DirectorySeparatorChar.ToString()
+        }
+
         if (-not (Test-Path -LiteralPath $entry_dir)) {
             New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
             $result.changed = $true
