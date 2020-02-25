@@ -23,7 +23,8 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes
+* Fixed a bug on boolean keywords that made random strings return 'False', now they should return an error if they are not a proper boolean
+  Example: `diff: yes-` was returning `False`.
 
 
 Command Line
