@@ -2456,3 +2456,180 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified Manager NIC"}
+
+    def create_raid_volume(self, controller, raidtype, capacityGB, volumename, volumeproperties):
+        # Check input validity
+        if not raidtype or raidtype == 'null' or (len(raidtype) == 0) or not capacityGB or (capacityGB == 0):
+            return {'ret': False, 'msg': "Invalid parameter. Please specify raidtype and capacityGB"}
+
+        # Find Storage service
+        response = self.get_request(self.root_uri + self.systems_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'Storage' not in data:
+            return {'ret': False, 'msg': "Storage resource not found"}
+        storage_uri = data["Storage"]["@odata.id"]
+
+        # Get a list of all storage controllers
+        response = self.get_request(self.root_uri + storage_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        controller_list = [a.get('@odata.id') for a in data.get('Members', []) if
+                a.get('@odata.id')]
+
+        # Find matched Storage Controller
+        volumes_uri = None
+        controller_name_list = list()
+        supported_raid_list = None
+        if len(controller_list) == 0:
+            return {'ret': False, 'msg': "Controller not found in Storage resource"}
+        elif (controller == 'null' or len(controller) == 0) and len(controller_list) == 1:
+            response = self.get_request(self.root_uri + controller_list[0])
+            if response['ret'] is False:
+                return response
+            data = response['data']
+            if 'Volumes' not in data:
+                return {'ret': False, 'msg': "Volumes resource not found"}
+            if 'StorageControllers' in data and 'SupportedRAIDTypes' in data['StorageControllers'][0]:
+                supported_raid_list = data['StorageControllers'][0]['SupportedRAIDTypes']
+            volumes_uri = data["Volumes"]["@odata.id"]
+        if volumes_uri is None:
+            for c in controller_list:
+                uri = self.root_uri + c
+                response = self.get_request(uri)
+                if response['ret'] is False:
+                    return response
+                data = response['data']
+                controller_name = 'Controller 1'
+                if 'StorageControllers' in data:
+                    sc = data['StorageControllers']
+                    if sc:
+                        if 'Name' in sc[0]:
+                            controller_name = sc[0]['Name']
+                        else:
+                            sc_id = sc[0].get('Id', '1')
+                            controller_name = 'Controller %s' % sc_id
+                controller_name_list.append(controller_name)
+                if controller_name == controller:
+                    if 'Volumes' not in data:
+                        return {'ret': False, 'msg': "Volumes resource not found"}
+                    if 'StorageControllers' in data and 'SupportedRAIDTypes' in data['StorageControllers'][0]:
+                        supported_raid_list = data['StorageControllers'][0]['SupportedRAIDTypes']
+                    volumes_uri = data["Volumes"]["@odata.id"]
+                    break
+
+        if (controller == 'null' or len(controller) == 0) and len(controller_list) > 1:
+            return {'ret': False, 'msg': "There are multi-storage which can be configured. Need controller to be specified, controller list:%s" %(str(controller_name_list))}
+        if volumes_uri is None:
+            return {'ret': False, 'msg': "Specified controller not in controller list:%s" %(str(controller_name_list))}
+
+        # Convert input to payload and check validity
+        payload = {}
+        if supported_raid_list and raidtype not in supported_raid_list:
+            return {'ret': False, 'msg': "Specified raid type %s not in SupportedRAIDTypes:%s" %(raidtype, str(supported_raid_list))}
+        payload["RAIDType"] = raidtype
+        payload["CapacityBytes"] = capacityGB * 1024 * 1024 * 1024
+        if volumename != 'null' and len(volumename) > 0:
+            payload["Name"] = volumename
+        for property in volumeproperties.items():
+            payload[property[0]] = property[1]
+
+        response = self.post_request(self.root_uri + volumes_uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True, 'msg': "Raid volume created"}
+
+    def delete_raid_volume(self, controller, volumename):
+        # Check input validity
+        if not volumename or volumename == 'null' or (len(volumename) == 0):
+            return {'ret': False, 'msg': "Invalid parameter. Please specify volumename"}
+
+        # Find Storage service
+        response = self.get_request(self.root_uri + self.systems_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'Storage' not in data:
+            return {'ret': False, 'msg': "Storage resource not found"}
+        storage_uri = data["Storage"]["@odata.id"]
+
+        # Get a list of all storage controllers
+        response = self.get_request(self.root_uri + storage_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        controller_list = [a.get('@odata.id') for a in data.get('Members', []) if
+                a.get('@odata.id')]
+
+        # Find matched Storage Controller
+        volumes_uri = None
+        controller_name_list = list()
+        if len(controller_list) == 0:
+            return {'ret': False, 'msg': "Controller not found in Storage resource"}
+        elif (controller == 'null' or len(controller) == 0) and len(controller_list) == 1:
+            response = self.get_request(self.root_uri + controller_list[0])
+            if response['ret'] is False:
+                return response
+            data = response['data']
+            if 'Volumes' not in data:
+                return {'ret': False, 'msg': "Volumes resource not found"}
+            volumes_uri = data["Volumes"]["@odata.id"]
+        if volumes_uri is None:
+            for c in controller_list:
+                uri = self.root_uri + c
+                response = self.get_request(uri)
+                if response['ret'] is False:
+                    return response
+                data = response['data']
+                controller_name = 'Controller 1'
+                if 'StorageControllers' in data:
+                    sc = data['StorageControllers']
+                    if sc:
+                        if 'Name' in sc[0]:
+                            controller_name = sc[0]['Name']
+                        else:
+                            sc_id = sc[0].get('Id', '1')
+                            controller_name = 'Controller %s' % sc_id
+                controller_name_list.append(controller_name)
+                if controller_name == controller:
+                    if 'Volumes' not in data:
+                        return {'ret': False, 'msg': "Volumes resource not found"}
+                    volumes_uri = data["Volumes"]["@odata.id"]
+                    break
+
+        if (controller == 'null' or len(controller) == 0) and len(controller_list) > 1:
+            return {'ret': False, 'msg': "There are multi-storage which can be configured. Need controller to be specified, controller list:%s" %(str(controller_name_list))}
+        if volumes_uri is None:
+            return {'ret': False, 'msg': "Specified controller not in controller list:%s" %(str(controller_name_list))}
+
+        # Find matched Volume
+        matched_volume_uri = None
+        volume_name_list = list()
+        uri = self.root_uri + volumes_uri
+        response = self.get_request(uri)
+        data = response['data']
+        if data.get('Members'):
+            volume_list = list()
+            for volume in data['Members']:
+                volume_list.append(volume['@odata.id'])
+            for v in volume_list:
+                uri = self.root_uri + v
+                response = self.get_request(uri)
+                if response['ret'] is False:
+                    return response
+                data = response['data']
+                volume_name = data['Name']
+                if volume_name == volumename:
+                    matched_volume_uri = v
+                    break
+                volume_name_list.append(volume_name)
+        
+        if matched_volume_uri is None:
+            return {'ret': False, 'msg': "Can not find volumename %s. volumename should be in volume name list: %s" %(volumename, str(volume_name_list))}
+
+        response = self.delete_request(self.root_uri + matched_volume_uri)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True, 'msg': "Raid volume deleted"}

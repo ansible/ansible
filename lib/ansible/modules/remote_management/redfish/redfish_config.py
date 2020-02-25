@@ -107,6 +107,39 @@ options:
       - setting dict of EthernetInterface on OOB controller
     type: dict
     version_added: '2.10'
+  controller:
+    required: false
+    description:
+      - The name of the Controller on which to create or delete raid volume
+    default: 'null'
+    type: str
+    version_added: '2.10'
+  raidtype:
+    required: false
+    description:
+      - The raid type for new raid volume to create
+    type: str
+    version_added: '2.10'
+  capacityGB:
+    required: false
+    description:
+      - The capacity size (GigaByte) for new raid volume to create
+    type: int
+    version_added: '2.10'
+  volumename:
+    required: false
+    description:
+      - The raid volume name to create or delete
+    default: 'null'
+    type: str
+    version_added: '2.10'
+  volumeproperties:
+    required: false
+    description:
+      - The properties dict for new raid volume
+    default: {}
+    type: dict
+    version_added: '2.10'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -208,6 +241,39 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+
+  - name: Create Raid Volume on default controller
+    redfish_config:
+      category: Systems
+      command: CreateRaidVolume
+      raidtype: RAID0
+      capacityGB: 100
+      baseuri: "{{ baseuri }}" 
+      username: "{{ username }}" 
+      password: "{{ password }}" 
+
+  - name: Create Raid Volume on specified controller with specified volume name
+    redfish_config:
+      category: Systems
+      command: CreateRaidVolume
+      controller: "RAID 530-8i PCIe 12Gb Adapter"
+      raidtype: RAID0
+      capacityGB: 100
+      volumename: volume1
+      volumeproperties:
+        Encrypted: false
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Delete Raid Volume on default controller
+    redfish_config:
+      category: Systems
+      command: DeleteRaidVolume
+      volumename: volume1
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
 '''
 
 RETURN = '''
@@ -226,7 +292,7 @@ from ansible.module_utils._text import to_native
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes", "SetBootOrder",
-                "SetDefaultBootOrder"],
+                "SetDefaultBootOrder", "CreateRaidVolume", "DeleteRaidVolume"],
     "Manager": ["SetNetworkProtocols", "SetManagerNic"]
 }
 
@@ -252,6 +318,14 @@ def main():
             resource_id=dict(),
             nic_addr=dict(default='null'),
             nic_config=dict(
+                type='dict',
+                default={}
+            ),
+            controller=dict(default='null'),
+            raidtype=dict(),
+            capacityGB=dict(type='int'),
+            volumename=dict(default='null'),
+            volumeproperties=dict(
                 type='dict',
                 default={}
             )
@@ -288,6 +362,13 @@ def main():
     nic_addr = module.params['nic_addr']
     nic_config = module.params['nic_config']
 
+    # raid volume create/delete
+    controller = module.params['controller']
+    raidtype = module.params['raidtype']
+    capacityGB = module.params['capacityGB']
+    volumename = module.params['volumename']
+    volumeproperties = module.params['volumeproperties']
+    
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
     rf_utils = RedfishUtils(creds, root_uri, timeout, module,
@@ -319,6 +400,11 @@ def main():
                 result = rf_utils.set_boot_order(boot_order)
             elif command == "SetDefaultBootOrder":
                 result = rf_utils.set_default_boot_order()
+            elif command == "CreateRaidVolume":
+                result = rf_utils.create_raid_volume(controller, raidtype, capacityGB, volumename, volumeproperties)
+            elif command == "DeleteRaidVolume":
+                result = rf_utils.delete_raid_volume(controller, volumename)
+
 
     elif category == "Manager":
         # execute only if we find a Manager service resource
