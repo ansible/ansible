@@ -484,8 +484,6 @@ def main():
         return_empty_dbs=dict(type='bool', default=False),
     )
 
-    # The module doesn't support check_mode
-    # because of it doesn't change anything
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
