@@ -1,4 +1,4 @@
 ---
 bugfixes:
-  - synchronize - ansible_password or ansible_ssh_pass trigger an SSH connection for rsync even when both source and dest are local paths and the connection is local
+  - synchronize - ansible_password or ansible_ssh_pass trigger the use of sshpass for rsync even when both source and dest are local paths and the connection is local
 ...
