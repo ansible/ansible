@@ -67,13 +67,14 @@
     force: yes
     master_data: 1
     skip_lock_tables: yes
+    dump_extra_args: --skip-triggers
   register: result
 
 - name: assert successful completion of dump operation
   assert:
     that:
     - result is changed
-    - result.executed_commands[0] is search("mysqldump --force --socket={{ mysql_socket }} --databases {{ db_name }} --skip-lock-tables --quick --ignore-table={{ db_name }}.department --master-data=1")
+    - result.executed_commands[0] is search("mysqldump --force --socket={{ mysql_socket }} --databases {{ db_name }} --skip-lock-tables --quick --ignore-table={{ db_name }}.department --master-data=1 --skip-triggers")
 
 - name: state dump/import - file name should exist
   file: name={{ db_file_name }} state=file

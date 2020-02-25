@@ -111,6 +111,13 @@ options:
     type: bool
     default: no
     version_added: '2.10'
+  dump_extra_args:
+    description:
+      - Provide additional arguments for mysqldump.
+        Used when I(state=dump) only, ignored otherwise.
+    required: no
+    type: str
+    version_added: '2.10'
 seealso:
 - module: mysql_info
 - module: mysql_variables
@@ -229,6 +236,15 @@ EXAMPLES = r'''
       - foo
       - bar
     state: absent
+
+# Dump database with argument not directly supported by this module
+# using dump_extra_args parameter
+- name: Dump databases without including triggers
+  mysql_db:
+    state: dump
+    name: foo
+    target: /tmp/dump.sql
+    dump_extra_args: --skip-triggers
 '''
 
 RETURN = r'''
@@ -288,7 +304,7 @@ def db_delete(cursor, db):
 def db_dump(module, host, user, password, db_name, target, all_databases, port,
             config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
             single_transaction=None, quick=None, ignore_tables=None, hex_blob=None,
-            encoding=None, force=False, master_data=0, skip_lock_tables=False):
+            encoding=None, force=False, master_data=0, skip_lock_tables=False, dump_extra_args=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -328,6 +344,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port,
         cmd += " --hex-blob"
     if master_data:
         cmd += " --master-data=%s" % master_data
+    if dump_extra_args is not None:
+        cmd += " " + dump_extra_args
 
     path = None
     if os.path.splitext(target)[-1] == '.gz':
@@ -459,6 +477,7 @@ def main():
             force=dict(type='bool', default=False),
             master_data=dict(type='int', default=0, choices=[0, 1, 2]),
             skip_lock_tables=dict(type='bool', default=False),
+            dump_extra_args=dict(type='str'),
         ),
         supports_check_mode=True,
     )
@@ -497,6 +516,7 @@ def main():
     force = module.params["force"]
     master_data = module.params["master_data"]
     skip_lock_tables = module.params["skip_lock_tables"]
+    dump_extra_args = module.params["dump_extra_args"]
 
     if len(db) > 1 and state == 'import':
         module.fail_json(msg="Multiple databases are not supported with state=import")
@@ -563,7 +583,8 @@ def main():
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
                                      ssl_ca, single_transaction, quick, ignore_tables,
-                                     hex_blob, encoding, force, master_data, skip_lock_tables)
+                                     hex_blob, encoding, force, master_data, skip_lock_tables,
+                                     dump_extra_args)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout,
