@@ -110,7 +110,7 @@ class TestNxosStaticRoutesModule(TestNxosModule):
                 dict(address_families=[
                     dict(afi="ipv4",
                          routes=[
-                             dict(dest="192.0.2.48/28",
+                             dict(dest="192.0.2.16/28",
                                   next_hops=[
                                       dict(forward_router_address="192.0.2.50",
                                            tag=12,
@@ -121,7 +121,7 @@ class TestNxosStaticRoutesModule(TestNxosModule):
             ], state="replaced"))
         commands = ['vrf context default',
                     'no ip route 192.0.2.16/28 192.0.2.24 name initial_route',
-                    'ip route 192.0.2.48/28 192.0.2.50 name replaced_route tag 12'
+                    'ip route 192.0.2.16/28 192.0.2.50 name replaced_route tag 12'
                     ]
         self.execute_module(changed=True, commands=commands)
 

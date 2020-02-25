@@ -76,6 +76,9 @@
         state: deleted
       register: result
 
+    - debug:
+        var: result
+
     - assert:
         that:
           - "result.changed == true"

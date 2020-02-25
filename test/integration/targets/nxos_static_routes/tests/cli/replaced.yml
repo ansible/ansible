@@ -15,8 +15,7 @@
     - name: Replaced
       nxos_static_routes: &replaced
         config:
-          - vrf: trial_vrf
-            address_families:
+          - address_families:
               - afi: ipv4
                 routes:
                   - dest: 192.0.2.16/28
@@ -35,12 +34,11 @@
     - assert:
         that:
           - "result.changed == true"
-          - "'vrf context trial_vrf' in result.commands"
-          - "'no ip route 192.0.2.64/28 192.0.2.22 tag 4' in result.commands"
-          - "'no ip route 192.0.2.64/28 192.0.2.23 name merged_route 1' in result.commands"
+          - "'vrf context default' in result.commands"
+          - "'no ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.commands"
           - "'ip route 192.0.2.16/28 192.0.2.23 name replaced_route1 3' in result.commands"
           - "'ip route 192.0.2.16/28 Ethernet1/2 192.0.2.45 vrf destinationVRF name replaced_route2' in result.commands"
-          - "result.commands | length == 5"
+          - "result.commands | length == 4"
 
     - name: Gather static_routes post facts
       nxos_facts:

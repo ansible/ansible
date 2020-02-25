@@ -69,7 +69,7 @@ class Static_routesFacts(object):
 
         new_vrf_data = []
         for v in vrf_data:
-            if re.search('\n\s*ip(v6)? route', v):
+            if re.search(r'\n\s*ip(v6)? route', v):
                 new_vrf_data.append(v)
                 # dont consider vrf if it does not have routes
         for i in range(len(new_vrf_data)):
@@ -107,7 +107,7 @@ class Static_routesFacts(object):
         '''
         This method parses the command to create the innermost dictionary of the config
         '''
-        conf = re.sub('\s*ip(v6)? route', '', conf)
+        conf = re.sub(r'\s*ip(v6)? route', '', conf)
         # strip 'ip route'
         inner_dict['dest'] = re.match(r'^\s*(\S+\/\d+) .*', conf).group(1)
 
@@ -133,7 +133,7 @@ class Static_routesFacts(object):
             inner_dict['forward_router_address'] = ipv6.group(1)
         conf = re.sub(inner_dict['forward_router_address'], '', conf)
 
-        nullif = re.search('null0', conf, re.IGNORECASE)
+        nullif = re.search(r'null0', conf, re.IGNORECASE)
         if nullif:
             inner_dict['interface'] = 'Null0'
             inner_dict['forward_router_address'] = None
@@ -141,7 +141,7 @@ class Static_routesFacts(object):
 
         keywords = ['vrf', 'name', 'tag', 'track']
         for key in keywords:
-            pattern = re.match('.* (?:%s) (\S+).*' % key, conf)
+            pattern = re.match(r'.* (?:%s) (\S+).*' % key, conf)
             if pattern:
                 if key == 'vrf':
                     key = 'dest_vrf'
@@ -150,7 +150,7 @@ class Static_routesFacts(object):
                 inner_dict[key] = pattern.group(1).strip()
                 conf = re.sub(key + ' ' + inner_dict[key], '', conf)
 
-        pref = re.match('(?:.*) (\d+)$', conf)
+        pref = re.match(r'(?:.*) (\d+)$', conf)
         if pref:
             # if something is left at the end without any key, it is the pref
             inner_dict['admin_distance'] = pref.group(1)
@@ -203,7 +203,7 @@ class Static_routesFacts(object):
         if con:
             for conf in con:
                 if conf.startswith('vrf context'):
-                    svrf = re.match('vrf context (\S+)\n', conf).group(1)
+                    svrf = re.match(r'vrf context (\S+)\n', conf).group(1)
                     afi_list = []
                     af = []
                     dest_list = []

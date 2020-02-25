@@ -201,63 +201,72 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# ip route 192.0.2.16/24 192.0.2.24 name new_route
-# ipv6 route 2001:db8::/64 Ethernet1/3 2001:db8::12
-#
+# ip route 192.0.2.16/28 192.0.2.24 name new_route
+# ip route 192.0.2.80/28 192.0.2.26 tag 12
 # vrf context trial_vrf
-#   ip route 192.0.2.0/24 192.0.2.22 tag 4 2
+# ip route 192.0.2.64/28 192.0.2.22 tag 4
+# ip route 192.0.2.64/28 192.0.2.23 name merged_route 1
 
 - name: Overriden existing static route configuration with new configuration
-  nxos_static_routes:
+  nxos_static_routes: &overridden
     config:
-      - address_families:
+      - vrf: trial_vrf
+        address_families:
           - afi: ipv4
             routes:
-              - dest: 192.0.2.44/30
+              - dest: 192.0.2.16/28
                 next_hops:
-                  - forward_router_address: 192.0.2.55
-                    tag: 1
-                    admin_distance: 1
-    state: overridden
+                  - forward_router_address: 192.0.2.23
+                    route_name: overridden_route1
+                    admin_distance: 3
 
+                  - forward_router_address: 192.0.2.45
+                    route_name: overridden_route2
+                    dest_vrf: destinationVRF
+                    interface: Ethernet1/2
+    state: overridden
 # After state:
 # ------------
 #
-# ip route 192.0.2.44/30 192.0.2.55 tag 1 1
-# vrf context trial_vrf
+# ip route 192.0.2.16/28 192.0.2.23 name replaced_route1 3
+# ip route 192.0.2.16/28 Ethernet1/2 192.0.2.45 vrf destinationVRF name replaced_route2
 
 
 # Using replaced:
 
 # Before state:
 #
-# ip route 192.0.2.16/24 192.0.2.24 name new_route
-# ipv6 route 2001:db8::/64 Ethernet1/3 2001:db8::12
-#
+# ip route 192.0.2.16/28 192.0.2.24 name new_route
+# ip route 192.0.2.80/28 192.0.2.26 tag 12
 # vrf context trial_vrf
-#   ip route 192.0.2.0/24 192.0.2.22 tag 4 2
+# ip route 192.0.2.64/28 192.0.2.22 tag 4
+# ip route 192.0.2.64/28 192.0.2.23 name merged_route 1
 
 - name: Replaced the existing static configuration of a prefix with new configuration
   nxos_static_routes:
     config:
-      - vrf: trial_vrf
-        address_families:
-          - afi: ipv6
+      - address_families:
+          - afi: ipv4
             routes:
-              - dest: 2001:db8::/32
+              - dest: 192.0.2.16/28
                 next_hops:
-                  - forward_router_address: 2001:db8:125::12
-                    route_name: replaced_route
-    state:
-        - replaced
+                  - forward_router_address: 192.0.2.23
+                    route_name: replaced_route1
+                    admin_distance: 3
 
+                  - forward_router_address: 192.0.2.45
+                    route_name: replaced_route2
+                    dest_vrf: destinationVRF
+                    interface: Ethernet1/2
+    state: replaced
 # After state:
 #
-# ip route 192.0.2.16/24 192.0.2.24 name new_route
-# ipv6 route 2001:db8::/64 Ethernet1/3 2001:db8::12
-#
+# ip route 192.0.2.16/28 192.0.2.23 name replaced_route1 3
+# ip route 192.0.2.16/28 Ethernet1/2 192.0.2.45 vrf destinationVRF name replaced_route2
+# ip route 192.0.2.80/28 192.0.2.26 tag 12
 # vrf context trial_vrf
-#   ipv6 route 2001:db8::/32 2001:db8:125::12 name replaced_route
+# ip route 192.0.2.64/28 192.0.2.22 tag 4
+# ip route 192.0.2.64/28 192.0.2.23 name merged_route 1
 
 
 # Using gathered:
@@ -384,12 +393,14 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: str
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: str
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
@@ -397,7 +408,8 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['ip route 192.0.2.48/28 192.0.2.12 Ethernet1/2 name sample_route', 'ipv6 route 2001:db8:3000::/36 2001:db8:200:2::2', 'vrf context test','ip route 192.0.2.48/28 192.0.2.121']
+  sample: ['ip route 192.0.2.48/28 192.0.2.12 Ethernet1/2 name sample_route',
+  'ipv6 route 2001:db8:3000::/36 2001:db8:200:2::2', 'vrf context test','ip route 192.0.2.48/28 192.0.2.121']
 """
 
 from ansible.module_utils.basic import AnsibleModule

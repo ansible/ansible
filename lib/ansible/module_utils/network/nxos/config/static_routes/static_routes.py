@@ -160,6 +160,7 @@ class Static_routes(ConfigBase):
         """
         commands = []
         delete_commands = []
+        state = self._module.params['state']
         merged_commands = []
         obj_in_have = search_obj_in_list(want['vrf'], have, 'vrf')
         # in replaced, we check if whatever in have is in want, unlike merged. This is because we need to apply deleted on have config
@@ -170,7 +171,6 @@ class Static_routes(ConfigBase):
             if len(want_afi_list) > 0:
                 for h in obj_in_have['address_families']:
                     if h['afi'] in want_afi_list:
-                      # if afi key is given, it is the scope
                         want_afi = search_obj_in_list(h['afi'],
                                                       want['address_families'],
                                                       'afi')
@@ -206,7 +206,24 @@ class Static_routes(ConfigBase):
                                                 delete_commands.extend(
                                                     self.del_commands([delete_dict]))
                                     else:
-                                      # want has no next_hops, so delete all next_hops under that dest
+                                        # want has no next_hops, so delete all next_hops under that dest
+                                        if state == 'overridden':
+                                            delete_dict = {
+                                                'vrf':
+                                                obj_in_have['vrf'],
+                                                'address_families': [{
+                                                    'afi':
+                                                    h['afi'],
+                                                    'routes': [{
+                                                        'dest': ro['dest'],
+                                                        'next_hops': ro['next_hops']
+                                                    }]
+                                                }]
+                                            }
+                                            delete_commands.extend(
+                                                self.del_commands([delete_dict]))
+                                else:
+                                    if state == 'overridden':
                                         delete_dict = {
                                             'vrf':
                                             obj_in_have['vrf'],
@@ -221,42 +238,27 @@ class Static_routes(ConfigBase):
                                         }
                                         delete_commands.extend(
                                             self.del_commands([delete_dict]))
-                                else:
+
+                        else:
+                            if state == 'overridden':  # want has no 'routes' key, so delete all routes under that afi
+                                if 'routes' in h.keys():
                                     delete_dict = {
                                         'vrf':
                                         obj_in_have['vrf'],
                                         'address_families': [{
-                                            'afi':
-                                            h['afi'],
-                                            'routes': [{
-                                                'dest': ro['dest'],
-                                                'next_hops': ro['next_hops']
-                                            }]
+                                            'afi': h['afi'],
+                                            'routes': h['routes']
                                         }]
                                     }
                                     delete_commands.extend(
                                         self.del_commands([delete_dict]))
-
-                        else:
-                            # want has no 'routes' key, so delete all routes under that afi
-                            if 'routes' in h.keys():
-                                delete_dict = {
-                                    'vrf':
-                                    obj_in_have['vrf'],
-                                    'address_families': [{
-                                        'afi': h['afi'],
-                                        'routes': h['routes']
-                                    }]
-                                }
-                                delete_commands.extend(
-                                    self.del_commands([delete_dict]))
             else:
-                # want has 'vrf' key only. So delete all address families in it
-                delete_commands.extend(
-                    self.del_commands([{
-                        'address_families': [h for h in obj_in_have['address_families']],
-                        'vrf': obj_in_have['vrf']
-                    }]))
+                if state == 'overridden':  # want has 'vrf' key only. So delete all address families in it
+                    delete_commands.extend(
+                        self.del_commands([{
+                            'address_families': [h for h in obj_in_have['address_families']],
+                            'vrf': obj_in_have['vrf']
+                        }]))
         final_delete_commands = []
         for d in delete_commands:
             if d not in final_delete_commands:
@@ -322,25 +324,24 @@ class Static_routes(ConfigBase):
                                     for w2 in w1['routes']:
                                         o3 = search_obj_in_list(
                                             w2['dest'], o2['routes'], 'dest')
-                                        if o3:
-                                            delete_dict = {
-                                                'vrf':
-                                                obj_in_have['vrf'],
-                                                'address_families': [{
-                                                    'afi':
-                                                    w1['afi'],
-                                                    'routes': [{
-                                                        'dest':
-                                                        w2['dest'],
-                                                        'next_hops':
-                                                        o3['next_hops']
-                                                    }]
-                                                }]
-                                            }
-                                            commands.extend(
-                                                self.del_commands(
-                                                    [delete_dict]))
-                                        # else, dest's route does not exist in device, ignore
+                                        hops = []
+                                        if 'next_hops' in w2.keys():
+                                            for nh in w2['next_hops']:
+                                                if nh in o3['next_hops']:
+                                                    hops.append(nh)
+                                        else:
+                                            # if next hops not given
+                                            hops = o3['next_hops']
+
+                                        delete_dict = {'vrf': obj_in_have['vrf'],
+                                                       'address_families': [{'afi': w1['afi'],
+                                                                             'routes': [{
+                                                                                 'dest': w2['dest'],
+                                                                                 'next_hops': hops
+                                                                             }]}]}
+                                        commands.extend(
+                                            self.del_commands(
+                                                [delete_dict]))
                                 else:
                                     # case when only afi given for delete
                                     delete_dict = {
