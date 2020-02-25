@@ -273,6 +273,10 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       src: https://github.com/bennojoy/nginx
       version: master
 
+    # from GitHub, specifying a specific commit hash
+    - src: https://github.com/bennojoy/nginx
+      version: "ee8aa41"
+
     # from a webserver, where the role is packaged in a tar.gz
     - name: http-role-gz
       src: https://some.webserver.example.com/files/master.tar.gz
