@@ -155,7 +155,7 @@ def test_timeout_raises_timeout():
         assert function_times_out() == '(Not expected to succeed)'
 
 
-@pytest.mark.parametrize('stdin', ({},), indirect=['stdin'])
+@pytest.mark.parametrize('ansible_module_args', ({},), indirect=['ansible_module_args'])
 def test_timeout_raises_timeout_integration_test(am):
     with pytest.raises(timeout.TimeoutError):
         assert function_times_out_in_run_command(am) == '(Not expected to succeed)'

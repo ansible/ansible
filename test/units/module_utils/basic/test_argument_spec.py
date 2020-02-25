@@ -207,9 +207,9 @@ def options_argspec_dict(options_argspec_list):
 # Tests for one aspect of arg_spec
 #
 
-@pytest.mark.parametrize('argspec, expected, stdin', [(s[0], s[2], s[1]) for s in VALID_SPECS],
-                         indirect=['stdin'])
-def test_validator_basic_types(argspec, expected, stdin):
+@pytest.mark.parametrize('argspec, expected, ansible_module_args', [(s[0], s[2], s[1]) for s in VALID_SPECS],
+                         indirect=['ansible_module_args'])
+def test_validator_basic_types(argspec, expected, ansible_module_args):
 
     am = basic.AnsibleModule(argspec)
 
@@ -225,8 +225,8 @@ def test_validator_basic_types(argspec, expected, stdin):
     assert am.params['arg'] == expected
 
 
-@pytest.mark.parametrize('stdin', [{'arg': 42}, {'arg': 18765432109876543210}], indirect=['stdin'])
-def test_validator_function(mocker, stdin):
+@pytest.mark.parametrize('ansible_module_args', [{'arg': 42}, {'arg': 18765432109876543210}], indirect=['ansible_module_args'])
+def test_validator_function(mocker, ansible_module_args):
     # Type is a callable
     MOCK_VALIDATOR_SUCCESS = mocker.MagicMock(return_value=27)
     argspec = {'arg': {'type': MOCK_VALIDATOR_SUCCESS}}
@@ -236,8 +236,8 @@ def test_validator_function(mocker, stdin):
     assert am.params['arg'] == 27
 
 
-@pytest.mark.parametrize('stdin', BASIC_AUTH_VALID_ARGS, indirect=['stdin'])
-def test_validate_basic_auth_arg(mocker, stdin):
+@pytest.mark.parametrize('ansible_module_args', BASIC_AUTH_VALID_ARGS, indirect=['ansible_module_args'])
+def test_validate_basic_auth_arg(mocker, ansible_module_args):
     kwargs = dict(
         argument_spec=basic_auth_argument_spec()
     )
@@ -248,8 +248,8 @@ def test_validate_basic_auth_arg(mocker, stdin):
     assert isinstance(am.params['validate_certs'], bool)
 
 
-@pytest.mark.parametrize('stdin', RATE_LIMIT_VALID_ARGS, indirect=['stdin'])
-def test_validate_rate_limit_argument_spec(mocker, stdin):
+@pytest.mark.parametrize('ansible_module_args', RATE_LIMIT_VALID_ARGS, indirect=['ansible_module_args'])
+def test_validate_rate_limit_argument_spec(mocker, ansible_module_args):
     kwargs = dict(
         argument_spec=rate_limit_argument_spec()
     )
@@ -258,8 +258,8 @@ def test_validate_rate_limit_argument_spec(mocker, stdin):
     assert isinstance(am.params['rate_limit'], integer_types)
 
 
-@pytest.mark.parametrize('stdin', RETRY_VALID_ARGS, indirect=['stdin'])
-def test_validate_retry_argument_spec(mocker, stdin):
+@pytest.mark.parametrize('ansible_module_args', RETRY_VALID_ARGS, indirect=['ansible_module_args'])
+def test_validate_retry_argument_spec(mocker, ansible_module_args):
     kwargs = dict(
         argument_spec=retry_argument_spec()
     )
@@ -268,8 +268,8 @@ def test_validate_retry_argument_spec(mocker, stdin):
     assert isinstance(am.params['retry_pause'], float)
 
 
-@pytest.mark.parametrize('stdin', [{'arg': '123'}, {'arg': 123}], indirect=['stdin'])
-def test_validator_string_type(mocker, stdin):
+@pytest.mark.parametrize('ansible_module_args', [{'arg': '123'}, {'arg': 123}], indirect=['ansible_module_args'])
+def test_validator_string_type(mocker, ansible_module_args):
     # Custom callable that is 'str'
     argspec = {'arg': {'type': str}}
     am = basic.AnsibleModule(argspec)
@@ -278,9 +278,9 @@ def test_validator_string_type(mocker, stdin):
     assert am.params['arg'] == '123'
 
 
-@pytest.mark.parametrize('argspec, expected, stdin', [(s[0], s[2], s[1]) for s in INVALID_SPECS],
-                         indirect=['stdin'])
-def test_validator_fail(stdin, capfd, argspec, expected):
+@pytest.mark.parametrize('argspec, expected, ansible_module_args', [(s[0], s[2], s[1]) for s in INVALID_SPECS],
+                         indirect=['ansible_module_args'])
+def test_validator_fail(ansible_module_args, capfd, argspec, expected):
     with pytest.raises(SystemExit):
         basic.AnsibleModule(argument_spec=argspec)
 
@@ -293,23 +293,23 @@ def test_validator_fail(stdin, capfd, argspec, expected):
 class TestComplexArgSpecs:
     """Test with a more complex arg_spec"""
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello'}, {'dup': 'hello'}], indirect=['stdin'])
-    def test_complex_required(self, stdin, complex_argspec):
+    @pytest.mark.parametrize('ansible_module_args', [{'foo': 'hello'}, {'dup': 'hello'}], indirect=['ansible_module_args'])
+    def test_complex_required(self, ansible_module_args, complex_argspec):
         """Test that the complex argspec works if we give it its required param as either the canonical or aliased name"""
         am = basic.AnsibleModule(**complex_argspec)
         assert isinstance(am.params['foo'], str)
         assert am.params['foo'] == 'hello'
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello1', 'dup': 'hello2'}], indirect=['stdin'])
-    def test_complex_duplicate_warning(self, stdin, complex_argspec):
+    @pytest.mark.parametrize('ansible_module_args', [{'foo': 'hello1', 'dup': 'hello2'}], indirect=['ansible_module_args'])
+    def test_complex_duplicate_warning(self, ansible_module_args, complex_argspec):
         """Test that the complex argspec issues a warning if we specify an option both with its canonical name and its alias"""
         am = basic.AnsibleModule(**complex_argspec)
         assert isinstance(am.params['foo'], str)
         assert 'Both option foo and its alias dup are set.' in get_warning_messages()
         assert am.params['foo'] == 'hello2'
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bam': 'test'}], indirect=['stdin'])
-    def test_complex_type_fallback(self, mocker, stdin, complex_argspec):
+    @pytest.mark.parametrize('ansible_module_args', [{'foo': 'hello', 'bam': 'test'}], indirect=['ansible_module_args'])
+    def test_complex_type_fallback(self, mocker, ansible_module_args, complex_argspec):
         """Test that the complex argspec works if we get a required parameter via fallback"""
         environ = os.environ.copy()
         environ['BAZ'] = 'test data'
@@ -320,8 +320,21 @@ class TestComplexArgSpecs:
         assert isinstance(am.params['baz'], str)
         assert am.params['baz'] == 'test data'
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar': 'bad', 'bam': 'bad2', 'bing': 'a', 'bang': 'b', 'bong': 'c'}], indirect=['stdin'])
-    def test_fail_mutually_exclusive(self, capfd, stdin, complex_argspec):
+    @pytest.mark.parametrize(
+        'ansible_module_args',
+        (
+            {
+                'foo': 'hello',
+                'bar': 'bad',
+                'bam': 'bad2',
+                'bing': 'a',
+                'bang': 'b',
+                'bong': 'c',
+            },
+        ),
+        indirect=['ansible_module_args'],
+    )
+    def test_fail_mutually_exclusive(self, capfd, ansible_module_args, complex_argspec):
         """Fail because of mutually exclusive parameters"""
         with pytest.raises(SystemExit):
             am = basic.AnsibleModule(**complex_argspec)
@@ -332,8 +345,8 @@ class TestComplexArgSpecs:
         assert results['failed']
         assert results['msg'] == "parameters are mutually exclusive: bar|bam, bing|bang|bong"
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bam': 'bad2'}], indirect=['stdin'])
-    def test_fail_required_together(self, capfd, stdin, complex_argspec):
+    @pytest.mark.parametrize('ansible_module_args', [{'foo': 'hello', 'bam': 'bad2'}], indirect=['ansible_module_args'])
+    def test_fail_required_together(self, capfd, ansible_module_args, complex_argspec):
         """Fail because only one of a required_together pair of parameters was specified"""
         with pytest.raises(SystemExit):
             am = basic.AnsibleModule(**complex_argspec)
@@ -344,8 +357,8 @@ class TestComplexArgSpecs:
         assert results['failed']
         assert results['msg'] == "parameters are required together: bam, baz"
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar': 'hi'}], indirect=['stdin'])
-    def test_fail_required_together_and_default(self, capfd, stdin, complex_argspec):
+    @pytest.mark.parametrize('ansible_module_args', [{'foo': 'hello', 'bar': 'hi'}], indirect=['ansible_module_args'])
+    def test_fail_required_together_and_default(self, capfd, ansible_module_args, complex_argspec):
         """Fail because one of a required_together pair of parameters has a default and the other was not specified"""
         complex_argspec['argument_spec']['baz'] = {'default': 42}
         with pytest.raises(SystemExit):
@@ -357,8 +370,8 @@ class TestComplexArgSpecs:
         assert results['failed']
         assert results['msg'] == "parameters are required together: bam, baz"
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello'}], indirect=['stdin'])
-    def test_fail_required_together_and_fallback(self, capfd, mocker, stdin, complex_argspec):
+    @pytest.mark.parametrize('ansible_module_args', [{'foo': 'hello'}], indirect=['ansible_module_args'])
+    def test_fail_required_together_and_fallback(self, capfd, mocker, ansible_module_args, complex_argspec):
         """Fail because one of a required_together pair of parameters has a fallback and the other was not specified"""
         environ = os.environ.copy()
         environ['BAZ'] = 'test data'
@@ -373,8 +386,8 @@ class TestComplexArgSpecs:
         assert results['failed']
         assert results['msg'] == "parameters are required together: bam, baz"
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zardoz2': ['one', 'four', 'five']}], indirect=['stdin'])
-    def test_fail_list_with_choices(self, capfd, mocker, stdin, complex_argspec):
+    @pytest.mark.parametrize('ansible_module_args', [{'foo': 'hello', 'zardoz2': ['one', 'four', 'five']}], indirect=['ansible_module_args'])
+    def test_fail_list_with_choices(self, capfd, mocker, ansible_module_args, complex_argspec):
         """Fail because one of the items is not in the choice"""
         with pytest.raises(SystemExit):
             basic.AnsibleModule(**complex_argspec)
@@ -385,23 +398,23 @@ class TestComplexArgSpecs:
         assert results['failed']
         assert results['msg'] == "value of zardoz2 must be one or more of: one, two, three. Got no match for: four, five"
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zardoz2': ['one', 'three']}], indirect=['stdin'])
-    def test_list_with_choices(self, capfd, mocker, stdin, complex_argspec):
+    @pytest.mark.parametrize('ansible_module_args', [{'foo': 'hello', 'zardoz2': ['one', 'three']}], indirect=['ansible_module_args'])
+    def test_list_with_choices(self, capfd, mocker, ansible_module_args, complex_argspec):
         """Test choices with list"""
         am = basic.AnsibleModule(**complex_argspec)
         assert isinstance(am.params['zardoz2'], list)
         assert am.params['zardoz2'] == ['one', 'three']
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar3': ['~/test', 'test/']}], indirect=['stdin'])
-    def test_list_with_elements_path(self, capfd, mocker, stdin, complex_argspec):
+    @pytest.mark.parametrize('ansible_module_args', [{'foo': 'hello', 'bar3': ['~/test', 'test/']}], indirect=['ansible_module_args'])
+    def test_list_with_elements_path(self, capfd, mocker, ansible_module_args, complex_argspec):
         """Test choices with list"""
         am = basic.AnsibleModule(**complex_argspec)
         assert isinstance(am.params['bar3'], list)
         assert am.params['bar3'][0].startswith('/')
         assert am.params['bar3'][1] == 'test/'
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zodraz': 'one'}], indirect=['stdin'])
-    def test_deprecated_alias(self, capfd, mocker, stdin, complex_argspec, monkeypatch):
+    @pytest.mark.parametrize('ansible_module_args', [{'foo': 'hello', 'zodraz': 'one'}], indirect=['ansible_module_args'])
+    def test_deprecated_alias(self, capfd, mocker, ansible_module_args, complex_argspec, monkeypatch):
         """Test a deprecated alias"""
         monkeypatch.setattr(warnings, '_global_deprecations', [])
 
@@ -410,8 +423,8 @@ class TestComplexArgSpecs:
         assert "Alias 'zodraz' is deprecated." in get_deprecation_messages()[0]['msg']
         assert get_deprecation_messages()[0]['version'] == '9.99'
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar_str': [867, '5309']}], indirect=['stdin'])
-    def test_list_with_elements_callable_str(self, capfd, mocker, stdin, complex_argspec):
+    @pytest.mark.parametrize('ansible_module_args', [{'foo': 'hello', 'bar_str': [867, '5309']}], indirect=['ansible_module_args'])
+    def test_list_with_elements_callable_str(self, capfd, mocker, ansible_module_args, complex_argspec):
         """Test choices with list"""
         am = basic.AnsibleModule(**complex_argspec)
         assert isinstance(am.params['bar_str'], list)
@@ -541,8 +554,8 @@ class TestComplexOptions:
          "missing parameter(s) required by 'bam4': bam1, bam3"),
     )
 
-    @pytest.mark.parametrize('stdin, expected', OPTIONS_PARAMS_DICT, indirect=['stdin'])
-    def test_options_type_dict(self, stdin, options_argspec_dict, expected):
+    @pytest.mark.parametrize('ansible_module_args, expected', OPTIONS_PARAMS_DICT, indirect=['ansible_module_args'])
+    def test_options_type_dict(self, ansible_module_args, options_argspec_dict, expected):
         """Test that a basic creation with required and required_if works"""
         # should test ok, tests basic foo requirement and required_if
         am = basic.AnsibleModule(**options_argspec_dict)
@@ -550,8 +563,8 @@ class TestComplexOptions:
         assert isinstance(am.params['foobar'], dict)
         assert am.params['foobar'] == expected
 
-    @pytest.mark.parametrize('stdin, expected', OPTIONS_PARAMS_LIST, indirect=['stdin'])
-    def test_options_type_list(self, stdin, options_argspec_list, expected):
+    @pytest.mark.parametrize('ansible_module_args, expected', OPTIONS_PARAMS_LIST, indirect=['ansible_module_args'])
+    def test_options_type_list(self, ansible_module_args, options_argspec_list, expected):
         """Test that a basic creation with required and required_if works"""
         # should test ok, tests basic foo requirement and required_if
         am = basic.AnsibleModule(**options_argspec_list)
@@ -559,8 +572,8 @@ class TestComplexOptions:
         assert isinstance(am.params['foobar'], list)
         assert am.params['foobar'] == expected
 
-    @pytest.mark.parametrize('stdin, expected', FAILING_PARAMS_DICT, indirect=['stdin'])
-    def test_fail_validate_options_dict(self, capfd, stdin, options_argspec_dict, expected):
+    @pytest.mark.parametrize('ansible_module_args, expected', FAILING_PARAMS_DICT, indirect=['ansible_module_args'])
+    def test_fail_validate_options_dict(self, capfd, ansible_module_args, options_argspec_dict, expected):
         """Fail because one of a required_together pair of parameters has a default and the other was not specified"""
         with pytest.raises(SystemExit):
             am = basic.AnsibleModule(**options_argspec_dict)
@@ -571,8 +584,8 @@ class TestComplexOptions:
         assert results['failed']
         assert expected in results['msg']
 
-    @pytest.mark.parametrize('stdin, expected', FAILING_PARAMS_LIST, indirect=['stdin'])
-    def test_fail_validate_options_list(self, capfd, stdin, options_argspec_list, expected):
+    @pytest.mark.parametrize('ansible_module_args, expected', FAILING_PARAMS_LIST, indirect=['ansible_module_args'])
+    def test_fail_validate_options_list(self, capfd, ansible_module_args, options_argspec_list, expected):
         """Fail because one of a required_together pair of parameters has a default and the other was not specified"""
         with pytest.raises(SystemExit):
             am = basic.AnsibleModule(**options_argspec_list)
@@ -583,8 +596,8 @@ class TestComplexOptions:
         assert results['failed']
         assert expected in results['msg']
 
-    @pytest.mark.parametrize('stdin', [{'foobar': {'foo': 'required', 'bam1': 'test', 'bar': 'case'}}], indirect=['stdin'])
-    def test_fallback_in_option(self, mocker, stdin, options_argspec_dict):
+    @pytest.mark.parametrize('ansible_module_args', [{'foobar': {'foo': 'required', 'bam1': 'test', 'bar': 'case'}}], indirect=['ansible_module_args'])
+    def test_fallback_in_option(self, mocker, ansible_module_args, options_argspec_dict):
         """Test that the complex argspec works if we get a required parameter via fallback"""
         environ = os.environ.copy()
         environ['BAZ'] = 'test data'
@@ -595,10 +608,10 @@ class TestComplexOptions:
         assert isinstance(am.params['foobar']['baz'], str)
         assert am.params['foobar']['baz'] == 'test data'
 
-    @pytest.mark.parametrize('stdin',
+    @pytest.mark.parametrize('ansible_module_args',
                              [{'foobar': {'foo': 'required', 'bam1': 'test', 'baz': 'data', 'bar': 'case', 'bar4': '~/test'}}],
-                             indirect=['stdin'])
-    def test_elements_path_in_option(self, mocker, stdin, options_argspec_dict):
+                             indirect=['ansible_module_args'])
+    def test_elements_path_in_option(self, mocker, ansible_module_args, options_argspec_dict):
         """Test that the complex argspec works with elements path type"""
 
         am = basic.AnsibleModule(**options_argspec_dict)
@@ -606,22 +619,22 @@ class TestComplexOptions:
         assert isinstance(am.params['foobar']['bar4'][0], str)
         assert am.params['foobar']['bar4'][0].startswith('/')
 
-    @pytest.mark.parametrize('stdin,spec,expected', [
+    @pytest.mark.parametrize('ansible_module_args,spec,expected', [
         ({},
          {'one': {'type': 'dict', 'apply_defaults': True, 'options': {'two': {'default': True, 'type': 'bool'}}}},
          {'two': True}),
         ({},
          {'one': {'type': 'dict', 'options': {'two': {'default': True, 'type': 'bool'}}}},
          None),
-    ], indirect=['stdin'])
-    def test_subspec_not_required_defaults(self, stdin, spec, expected):
+    ], indirect=['ansible_module_args'])
+    def test_subspec_not_required_defaults(self, ansible_module_args, spec, expected):
         # Check that top level not required, processed subspec defaults
         am = basic.AnsibleModule(spec)
         assert am.params['one'] == expected
 
 
 class TestLoadFileCommonArguments:
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_smoketest_load_file_common_args(self, am):
         """With no file arguments, an empty dict is returned"""
         am.selinux_mls_enabled = MagicMock()
@@ -631,7 +644,7 @@ class TestLoadFileCommonArguments:
 
         assert am.load_file_common_arguments(params={}) == {}
 
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', [{}], indirect=['ansible_module_args'])
     def test_load_file_common_args(self, am, mocker):
         am.selinux_mls_enabled = MagicMock()
         am.selinux_mls_enabled.return_value = True
@@ -674,8 +687,8 @@ class TestLoadFileCommonArguments:
         assert res == final_params
 
 
-@pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
-def test_no_log_true(stdin, capfd):
+@pytest.mark.parametrize("ansible_module_args", [{"arg_pass": "testing"}], indirect=["ansible_module_args"])
+def test_no_log_true(ansible_module_args, capfd):
     """Explicitly mask an argument (no_log=True)."""
     arg_spec = {
         "arg_pass": {"no_log": True}
@@ -687,8 +700,8 @@ def test_no_log_true(stdin, capfd):
     assert "testing" in am.no_log_values
 
 
-@pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
-def test_no_log_false(stdin, capfd):
+@pytest.mark.parametrize("ansible_module_args", [{"arg_pass": "testing"}], indirect=["ansible_module_args"])
+def test_no_log_false(ansible_module_args, capfd):
     """Explicitly log and display an argument (no_log=False)."""
     arg_spec = {
         "arg_pass": {"no_log": False}
@@ -697,8 +710,8 @@ def test_no_log_false(stdin, capfd):
     assert "testing" not in am.no_log_values and not get_warning_messages()
 
 
-@pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
-def test_no_log_none(stdin, capfd):
+@pytest.mark.parametrize("ansible_module_args", [{"arg_pass": "testing"}], indirect=["ansible_module_args"])
+def test_no_log_none(ansible_module_args, capfd):
     """Allow Ansible to make the decision by matching the argument name
     against PASSWORD_MATCH."""
     arg_spec = {
@@ -711,8 +724,9 @@ def test_no_log_none(stdin, capfd):
     assert len(get_warning_messages()) > 0
 
 
-@pytest.mark.parametrize("stdin", [{"pass": "testing"}], indirect=["stdin"])
-def test_no_log_alias(stdin, capfd):
+@pytest.mark.parametrize("ansible_module_args", [{"pass": "testing"}], indirect=["ansible_module_args"])
+@pytest.mark.usefixtures('ansible_module_args')
+def test_no_log_alias(capfd):
     """Given module parameters that use an alias for a parameter that matches
     PASSWORD_MATCH and has no_log=True set, a warning should not be issued.
     """

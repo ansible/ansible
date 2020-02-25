@@ -20,7 +20,7 @@ ARGUMENT_SPEC = dict(
 )
 
 
-@pytest.mark.parametrize('am, stdin', [(ARGUMENT_SPEC, ARGS)], indirect=['am', 'stdin'])
+@pytest.mark.parametrize('am, ansible_module_args', [(ARGUMENT_SPEC, ARGS)], indirect=['am', 'ansible_module_args'])
 def test_module_utils_basic__log_invocation(am, mocker):
 
     am.log = mocker.MagicMock()

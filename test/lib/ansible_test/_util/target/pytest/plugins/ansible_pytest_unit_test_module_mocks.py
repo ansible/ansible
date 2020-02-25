@@ -21,7 +21,7 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 
 @pytest.fixture
-def stdin(mocker, monkeypatch, request):
+def ansible_module_args(mocker, monkeypatch, request):
     """Patch and return stdin buffer with module args."""
     monkeypatch.setattr(ansible.module_utils.basic, '_ANSIBLE_ARGS', None)
     monkeypatch.setattr(sys, 'argv', ['ansible_unittest'])
@@ -60,7 +60,7 @@ def stdin(mocker, monkeypatch, request):
 
 # pylint: disable=invalid-name,redefined-outer-name,unused-argument
 @pytest.fixture
-def am(stdin, request):
+def am(ansible_module_args, request):
     """Return a patched Ansible module instance."""
     argspec = {}
     if isinstance(getattr(request, 'param', None), dict):

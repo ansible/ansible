@@ -35,32 +35,32 @@ INVALID_STRINGS = (
 )
 
 
-@pytest.mark.parametrize('code, expected, stdin',
+@pytest.mark.parametrize('code, expected, ansible_module_args',
                          ((c, e, {}) for c, e in chain(VALID_STRINGS, NONSTRINGS)),
-                         indirect=['stdin'])
+                         indirect=['ansible_module_args'])
 def test_simple_types(am, code, expected):
     # test some basic usage for various types
     assert am.safe_eval(code) == expected
 
 
-@pytest.mark.parametrize('code, expected, stdin',
+@pytest.mark.parametrize('code, expected, ansible_module_args',
                          ((c, e, {}) for c, e in chain(VALID_STRINGS, NONSTRINGS)),
-                         indirect=['stdin'])
+                         indirect=['ansible_module_args'])
 def test_simple_types_with_exceptions(am, code, expected):
     # Test simple types with exceptions requested
     assert am.safe_eval(code, include_exceptions=True), (expected, None)
 
 
-@pytest.mark.parametrize('code, expected, stdin',
+@pytest.mark.parametrize('code, expected, ansible_module_args',
                          ((c, e, {}) for c, e, dummy in INVALID_STRINGS),
-                         indirect=['stdin'])
+                         indirect=['ansible_module_args'])
 def test_invalid_strings(am, code, expected):
     assert am.safe_eval(code) == expected
 
 
-@pytest.mark.parametrize('code, expected, exception, stdin',
+@pytest.mark.parametrize('code, expected, exception, ansible_module_args',
                          ((c, e, ex, {}) for c, e, ex in INVALID_STRINGS),
-                         indirect=['stdin'])
+                         indirect=['ansible_module_args'])
 def test_invalid_strings_with_exceptions(am, code, expected, exception):
     res = am.safe_eval(code, include_exceptions=True)
     assert res[0] == expected

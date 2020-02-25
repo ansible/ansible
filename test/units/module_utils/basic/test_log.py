@@ -21,7 +21,7 @@ class TestAnsibleModuleLogSmokeTest:
     DATA += [b'non-utf8 :\xff: test']
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    @pytest.mark.parametrize('msg, stdin', ((m, {}) for m in DATA), indirect=['stdin'])  # pylint: disable=undefined-variable
+    @pytest.mark.parametrize('msg, ansible_module_args', ((m, {}) for m in DATA), indirect=['ansible_module_args'])  # pylint: disable=undefined-variable
     def test_smoketest_syslog(self, am, mocker, msg):
         # These talk to the live daemons on the system.  Need to do this to
         # show that what we send doesn't cause an issue once it gets to the
@@ -37,7 +37,7 @@ class TestAnsibleModuleLogSmokeTest:
 
     @pytest.mark.skipif(not ansible.module_utils.basic.has_journal, reason='python systemd bindings not installed')
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    @pytest.mark.parametrize('msg, stdin', ((m, {}) for m in DATA), indirect=['stdin'])  # pylint: disable=undefined-variable
+    @pytest.mark.parametrize('msg, ansible_module_args', ((m, {}) for m in DATA), indirect=['ansible_module_args'])  # pylint: disable=undefined-variable
     def test_smoketest_journal(self, am, mocker, msg):
         # These talk to the live daemons on the system.  Need to do this to
         # show that what we send doesn't cause an issue once it gets to the
@@ -73,7 +73,7 @@ class TestAnsibleModuleLogSyslog:
 
     OUTPUT_DATA = PY3_OUTPUT_DATA if PY3 else PY2_OUTPUT_DATA
 
-    @pytest.mark.parametrize('no_log, stdin', (product((True, False), [{}])), indirect=['stdin'])
+    @pytest.mark.parametrize('no_log, ansible_module_args', (product((True, False), [{}])), indirect=['ansible_module_args'])
     def test_no_log(self, am, mocker, no_log):
         """Test that when no_log is set, logging does not occur"""
         mock_syslog = mocker.patch('syslog.syslog', autospec=True)
@@ -86,9 +86,9 @@ class TestAnsibleModuleLogSyslog:
             mock_syslog.assert_called_once_with(syslog.LOG_INFO, 'unittest no_log')
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    @pytest.mark.parametrize('msg, param, stdin',
+    @pytest.mark.parametrize('msg, param, ansible_module_args',
                              ((m, p, {}) for m, p in OUTPUT_DATA),  # pylint: disable=undefined-variable
-                             indirect=['stdin'])
+                             indirect=['ansible_module_args'])
     def test_output_matches(self, am, mocker, msg, param):
         """Check that log messages are sent correctly"""
         mocker.patch('ansible.module_utils.basic.has_journal', False)
@@ -110,7 +110,7 @@ class TestAnsibleModuleLogJournal:
         (b'non-utf8 :\xff: test', b'non-utf8 :\xff: test'.decode('utf-8', 'replace')),
     ]
 
-    @pytest.mark.parametrize('no_log, stdin', (product((True, False), [{}])), indirect=['stdin'])
+    @pytest.mark.parametrize('no_log, ansible_module_args', (product((True, False), [{}])), indirect=['ansible_module_args'])
     def test_no_log(self, am, mocker, no_log):
         journal_send = mocker.patch('systemd.journal.send')
         am.no_log = no_log
@@ -127,16 +127,16 @@ class TestAnsibleModuleLogJournal:
             assert 'basic.py' in journal_send.call_args[1]['MODULE']
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    @pytest.mark.parametrize('msg, param, stdin',
+    @pytest.mark.parametrize('msg, param, ansible_module_args',
                              ((m, p, {}) for m, p in OUTPUT_DATA),  # pylint: disable=undefined-variable
-                             indirect=['stdin'])
+                             indirect=['ansible_module_args'])
     def test_output_matches(self, am, mocker, msg, param):
         journal_send = mocker.patch('systemd.journal.send')
         am.log(msg)
         assert journal_send.call_count == 1, 'journal.send not called exactly once'
         assert journal_send.call_args[1]['MESSAGE'].endswith(param)
 
-    @pytest.mark.parametrize('stdin', ({},), indirect=['stdin'])
+    @pytest.mark.parametrize('ansible_module_args', ({},), indirect=['ansible_module_args'])
     def test_log_args(self, am, mocker):
         journal_send = mocker.patch('systemd.journal.send')
         am.log('unittest log_args', log_args=dict(TEST='log unittest'))
