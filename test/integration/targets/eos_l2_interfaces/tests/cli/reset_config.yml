@@ -4,6 +4,7 @@
     config: |
       interface Ethernet1
          switchport access vlan 20
+         no switchport mode
          no switchport trunk native vlan
          no switchport trunk allowed vlan
       interface Ethernet2
