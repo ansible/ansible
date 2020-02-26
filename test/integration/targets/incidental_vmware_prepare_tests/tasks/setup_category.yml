@@ -1,0 +1,5 @@
+- name: Create a category for cluster
+  vmware_category:
+    category_name: '{{ cluster_category }}'
+    category_description: '{{ cluster_category }} description'
+    state: present

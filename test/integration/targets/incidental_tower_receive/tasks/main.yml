@@ -1,0 +1,17 @@
+- name: Export all Tower assets
+  tower_receive:
+    all: True
+  register: result
+
+- assert:
+    that:
+      - "result is successful"
+
+- name: Extract names from output
+  set_fact:
+    object_names: "{{ result.assets | map(attribute='name') | list }}"
+
+- assert:
+    that:
+      - "result is successful"
+      - "'Default' in object_names"

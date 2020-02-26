@@ -1,0 +1,30 @@
+- fail:
+    msg: "No ESXi hosts defined. esxi_hosts is empty."
+  when: "esxi_hosts|length == 0"
+
+- name: Add ESXi Hosts to vCenter
+  vmware_host:
+    datacenter_name: '{{ dc1 }}'
+    cluster_name: '{{ ccr1 }}'
+    esxi_hostname: '{{ item }}'
+    esxi_username: '{{ esxi_user }}'
+    esxi_password: '{{ esxi_password }}'
+    state: add_or_reconnect
+  with_items: "{{ esxi_hosts }}"
+
+- name: Disable the Maintenance Mode
+  vmware_maintenancemode:
+    esxi_hostname: '{{ item }}'
+    state: absent
+  with_items: "{{ esxi_hosts }}"
+
+- name: Add Management Network VM Portgroup
+  vmware_portgroup:
+    hostname: '{{ item }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    esxi_hostname: 'item'
+    switch: "vSwitch0"
+    portgroup: VM Network
+    validate_certs: no
+  with_items: "{{ esxi_hosts }}"

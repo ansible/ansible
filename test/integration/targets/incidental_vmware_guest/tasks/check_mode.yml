@@ -1,0 +1,60 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Perform all operation in check mode
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ virtual_machines[0].name }}"
+    datacenter: "{{ dc1 }}"
+    state: "{{ item }}"
+  with_items:
+    - absent
+    - present
+    - poweredoff
+    - poweredon
+    - restarted
+    - suspended
+    - shutdownguest
+    - rebootguest
+  register: check_mode_state
+  check_mode: yes
+
+- debug:
+    var: check_mode_state
+
+- name: assert that changes were made
+  assert:
+    that:
+      - "check_mode_state.results|map(attribute='changed')|unique|list == [true]"
+      - "check_mode_state.results|map(attribute='vm_name')|unique|list == [ virtual_machines[0].name ]"
+
+- name: Perform all operation on non-existent VM in check mode
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: non_existent_vm
+    datacenter: "{{ dc1 }}"
+    state: "{{ item }}"
+  with_items:
+    - present
+    - poweredoff
+    - poweredon
+    - restarted
+    - suspended
+  register: check_mode_state
+  check_mode: yes
+
+- debug:
+    var: check_mode_state
+
+- name: assert that changes were made
+  assert:
+    that:
+      - "check_mode_state.results|map(attribute='changed')|unique|list == [true]"
+      - "check_mode_state.results|map(attribute='desired_operation')|unique|list == ['deploy_vm']"

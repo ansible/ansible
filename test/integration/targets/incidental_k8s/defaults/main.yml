@@ -1,0 +1,32 @@
+recreate_crd_default_merge_expectation: recreate_crd is not failed
+
+k8s_pod_metadata:
+  labels:
+    app: "{{ k8s_pod_name }}"
+
+k8s_pod_spec:
+  containers:
+    - image: "{{ k8s_pod_image }}"
+      imagePullPolicy: Always
+      name: "{{ k8s_pod_name }}"
+      command: "{{ k8s_pod_command }}"
+      readinessProbe:
+        initialDelaySeconds: 15
+        exec:
+          command:
+            - /bin/true
+      resources:
+        limits:
+          cpu: "100m"
+          memory: "100Mi"
+      ports: "{{ k8s_pod_ports }}"
+
+k8s_pod_command: []
+
+k8s_pod_ports: []
+
+k8s_pod_template:
+  metadata: "{{ k8s_pod_metadata }}"
+  spec: "{{ k8s_pod_spec }}"
+
+k8s_openshift: yes

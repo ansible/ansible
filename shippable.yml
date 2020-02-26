@@ -165,6 +165,9 @@ matrix:
     - env: T=aws/2.7/4
     - env: T=aws/3.6/4
 
+    - env: T=i/aws/2.7/1
+    - env: T=i/aws/3.6/1
+
     - env: T=azure/2.7/1
     - env: T=azure/3.6/1
 
@@ -198,11 +201,16 @@ matrix:
     - env: T=azure/2.7/11
     - env: T=azure/3.6/11
 
+    - env: T=i/azure/2.7/1
+    - env: T=i/azure/3.6/1
+
     - env: T=vcenter/2.7/1
     - env: T=vcenter/3.6/1
 
     - env: T=vcenter/2.7/2
     - env: T=vcenter/3.6/2
+
+    - env: T=i/vcenter//1
 
     - env: T=cs/2.7/1
     - env: T=cs/3.6/1
@@ -210,17 +218,25 @@ matrix:
     - env: T=cs/2.7/2
     - env: T=cs/3.6/2
 
+    - env: T=i/cs//1
+
     - env: T=tower/2.7/1
     - env: T=tower/3.6/1
 
+    - env: T=i/tower//1
+
     - env: T=cloud/2.7/1
     - env: T=cloud/3.6/1
+
+    - env: T=i/cloud//1
 
     - env: T=hcloud/2.7/1
     - env: T=hcloud/3.6/1
 
     - env: T=hcloud/2.7/2
     - env: T=hcloud/3.6/2
+
+    - env: T=i/hcloud//1
 branches:
   except:
     - "*-patch-*"
