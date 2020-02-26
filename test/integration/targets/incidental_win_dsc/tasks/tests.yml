@@ -1,0 +1,544 @@
+---
+- name: fail with incorrect DSC resource name
+  win_dsc:
+    resource_name: FakeResource
+  register: fail_invalid_resource
+  failed_when: fail_invalid_resource.msg != "Resource 'FakeResource' not found."
+
+- name: fail with invalid DSC version
+  win_dsc:
+    resource_name: xTestResource
+    module_version: 0.0.1
+  register: fail_invalid_version
+  failed_when: 'fail_invalid_version.msg != "Resource ''xTestResource'' with version ''0.0.1'' not found. Versions installed: ''1.0.0'', ''1.0.1''."'
+
+- name: fail with mandatory option not set
+  win_dsc:
+    resource_name: xSetReboot
+    Value: yes
+  register: fail_man_key
+  failed_when: 'fail_man_key.msg != "missing required arguments: KeyParam"'
+
+- name: fail with mandatory option not set in sub dict
+  win_dsc:
+    resource_name: xTestResource
+    Path: C:\path
+    Ensure: Present
+    CimInstanceParam:  # Missing KeyValue in dict
+      Choice: Choice1
+  register: fail_man_key_sub_dict
+  failed_when: 'fail_man_key_sub_dict.msg != "missing required arguments: KeyValue found in CimInstanceParam"'
+
+- name: fail invalid option
+  win_dsc:
+    resource_name: xSetReboot
+    KeyParam: key
+    OtherParam: invalid
+  register: fail_invalid_option
+  failed_when: 'fail_invalid_option.msg != "Unsupported parameters for (win_dsc) module: OtherParam. Supported parameters include: KeyParam, PsDscRunAsCredential_username, module_version, Value, PsDscRunAsCredential_password, resource_name, DependsOn"'
+
+- name: fail invalid option in sub dict
+  win_dsc:
+    resource_name: xTestResource
+    Path: C:\path
+    Ensure: Present
+    NestedCimInstanceParam:
+      KeyValue: key
+      CimValue:
+        KeyValue: other key
+        InvalidKey: invalid
+  register: fail_invalid_option_sub_dict
+  failed_when: 'fail_invalid_option_sub_dict.msg != "Unsupported parameters for (win_dsc) module: InvalidKey found in NestedCimInstanceParam -> CimValue. Supported parameters include: IntValue, KeyValue, StringArrayValue, Choice, StringValue"'
+
+- name: fail invalid read only option
+  win_dsc:
+    resource_name: xTestResource
+    Path: C:\path
+    Ensure: Present
+    ReadParam: abc
+  register: fail_invalid_option_read_only
+  failed_when: '"Unsupported parameters for (win_dsc) module: ReadParam" not in fail_invalid_option_read_only.msg'
+
+- name: fail invalid choice
+  win_dsc:
+    resource_name: xTestResource
+    Path: C:\path
+    Ensure: invalid
+  register: fail_invalid_choice
+  failed_when: 'fail_invalid_choice.msg != "value of Ensure must be one of: Present, Absent. Got no match for: invalid"'
+
+- name: fail invalid choice in sub dict
+  win_dsc:
+    resource_name: xTestResource
+    Path: C:\path
+    Ensure: Present
+    CimInstanceArrayParam:
+    - KeyValue: key
+    - KeyValue: key2
+      Choice: Choice3
+  register: fail_invalid_choice_sub_dict
+  failed_when: 'fail_invalid_choice_sub_dict.msg != "value of Choice must be one of: Choice1, Choice2. Got no match for: Choice3 found in CimInstanceArrayParam"'
+
+- name: fail old version missing new option
+  win_dsc:
+    resource_name: xTestResource
+    module_version: 1.0.0
+    Path: C:\path
+    Ensure: Present
+    CimInstanceParam:  # CimInstanceParam does not exist in the 1.0.0 version
+      Key: key
+  register: fail_invalid_option_old
+  failed_when: '"Unsupported parameters for (win_dsc) module: CimInstanceParam" not in fail_invalid_option_old.msg'
+
+- name: fail old version missing new option sub dict
+  win_dsc:
+    resource_name: xTestResource
+    module_version: 1.0.0
+    Path: C:\path
+    Ensure: Present
+    CimInstanceArrayParam:
+    - Key: key
+      Choice: Choice1
+  register: fail_invalid_option_old_sub_dict
+  failed_when: 'fail_invalid_option_old_sub_dict.msg != "Unsupported parameters for (win_dsc) module: Choice found in CimInstanceArrayParam. Supported parameters include: Key, IntValue, StringArrayValue, StringValue"'
+
+- name: create test file (check mode)
+  win_dsc:
+    resource_name: File
+    DestinationPath: '{{ remote_tmp_dir }}\dsc-file'
+    Contents: file contents
+    Attributes:
+    - Hidden
+    - ReadOnly
+    Ensure: Present
+    Type: File
+  register: create_file_check
+  check_mode: yes
+
+- name: get result of create test file (check mode)
+  win_stat:
+    path: '{{ remote_tmp_dir }}\dsc-file'
+  register: create_file_actual_check
+
+- name: assert create test file (check mode)
+  assert:
+    that:
+    - create_file_check is changed
+    - create_file_check.module_version == None  # Some built in modules don't have a version set
+    - not create_file_check.reboot_required
+    - not create_file_actual_check.stat.exists
+
+- name: assert create test file verbosity (check mode)
+  assert:
+    that:
+    - create_file_check.verbose_test is defined
+    - not create_file_check.verbose_set is defined
+  when: ansible_verbosity >= 3
+
+- name: create test file
+  win_dsc:
+    resource_name: File
+    DestinationPath: '{{ remote_tmp_dir }}\dsc-file'
+    Contents: file contents
+    Attributes:
+    - Hidden
+    - ReadOnly
+    Ensure: Present
+    Type: File
+  register: create_file
+
+- name: get result of create test file
+  win_stat:
+    path: '{{ remote_tmp_dir }}\dsc-file'
+  register: create_file_actual
+
+- name: assert create test file verbosity
+  assert:
+    that:
+    - create_file.verbose_test is defined
+    - create_file.verbose_set is defined
+  when: ansible_verbosity >= 3
+
+- name: assert create test file
+  assert:
+    that:
+    - create_file is changed
+    - create_file.module_version == None
+    - not create_file.reboot_required
+    - create_file_actual.stat.exists
+    - create_file_actual.stat.attributes == "ReadOnly, Hidden, Archive"
+    - create_file_actual.stat.checksum == 'd48daab51112b49ecabd917adc345b8ba257055e'
+
+- name: create test file (idempotent)
+  win_dsc:
+    resource_name: File
+    DestinationPath: '{{ remote_tmp_dir }}\dsc-file'
+    Contents: file contents
+    Attributes:
+    - Hidden
+    - ReadOnly
+    Ensure: Present
+    Type: File
+  register: create_file_again
+
+- name: assert create test file (idempotent)
+  assert:
+    that:
+    - not create_file_again is changed
+    - create_file.module_version == None
+    - not create_file.reboot_required
+
+- name: get SID of the current Ansible user
+  win_shell: |
+    Add-Type -AssemblyName System.DirectoryServices.AccountManagement
+    [System.DirectoryServices.AccountManagement.UserPrincipal]::Current.Sid.Value
+  register: actual_sid
+
+- name: run DSC process as another user
+  win_dsc:
+    resource_name: Script
+    GetScript: '@{ Result= "" }'
+    SetScript: |
+      Add-Type -AssemblyName System.DirectoryServices.AccountManagement
+      $sid = [System.DirectoryServices.AccountManagement.UserPrincipal]::Current.Sid.Value
+      Set-Content -Path "{{ remote_tmp_dir }}\runas.txt" -Value $sid
+    TestScript: $false
+    PsDscRunAsCredential_username: '{{ ansible_user }}'
+    PsDscRunAsCredential_password: '{{ ansible_password }}'
+  register: runas_user
+
+- name: get result of run DSC process as another user
+  slurp:
+    path: '{{ remote_tmp_dir }}\runas.txt'
+  register: runas_user_result
+
+- name: assert run DSC process as another user
+  assert:
+    that:
+    - runas_user is changed
+    - runas_user.module_version != None  # Can't reliably set the version but we can test it is set
+    - not runas_user.reboot_required
+    - runas_user_result.content|b64decode == actual_sid.stdout
+
+- name: run DSC that sets reboot_required with defaults
+  win_dsc:
+    resource_name: xSetReboot
+    KeyParam: value  # Just to satisfy the Resource with key validation
+  register: set_reboot_defaults
+
+- name: assert run DSC that sets reboot_required with defaults
+  assert:
+    that:
+    - set_reboot_defaults.reboot_required
+
+- name: run DSC that sets reboot_required with False
+  win_dsc:
+    resource_name: xSetReboot
+    KeyParam: value
+    Value: no
+  register: set_reboot_false
+
+- name: assert run DSC that sets reboot_required with False
+  assert:
+    that:
+    - not set_reboot_false.reboot_required
+
+- name: run DSC that sets reboot_required with True
+  win_dsc:
+    resource_name: xSetReboot
+    KeyParam: value
+    Value: yes
+  register: set_reboot_true
+
+- name: assert run DSC that sets reboot_required with True
+  assert:
+    that:
+    - set_reboot_true.reboot_required
+
+- name: test DSC with all types
+  win_dsc:
+    resource_name: xTestResource
+    Path: '{{ remote_tmp_dir }}\test-types.json'
+    Ensure: Present
+    StringParam: string param
+    StringArrayParam:
+    - string 1
+    - string 2
+    Int8Param: 127  # [SByte]::MaxValue
+    Int8ArrayParam:
+    - 127
+    - '127'
+    UInt8Param: 255  # [Byte]::MaxValue
+    UInt8ArrayParam:
+    - 255
+    - '255'
+    Int16Param: 32767  # [Int16]::MaxValue
+    Int16ArrayParam: 32767, 32767
+    UInt16Param: '65535'  # [UInt16]::MaxValue
+    UInt16ArrayParam: 65535
+    Int32Param: 2147483647  # [Int32]::MaxValue
+    Int32ArrayParam: '2147483647'
+    UInt32Param: '4294967295'  # [UInt32]::MaxValue
+    UInt32ArrayParam:
+    - '4294967295'
+    - 4294967295
+    Int64Param: 9223372036854775807  # [Int64]::MaxValue
+    Int64ArrayParam:
+    - -9223372036854775808  # [Int64]::MinValue
+    - 9223372036854775807
+    UInt64Param: 18446744073709551615  # [UInt64]::MaxValue
+    UInt64ArrayParam:
+    - 0  # [UInt64]::MinValue
+    - 18446744073709551615
+    BooleanParam: True
+    BooleanArrayParam:
+    - True
+    - 'True'
+    - 'true'
+    - 'y'
+    - 'yes'
+    - 1
+    - False
+    - 'False'
+    - 'false'
+    - 'n'
+    - 'no'
+    - 0
+    CharParam: c
+    CharArrayParam:
+    - c
+    - h
+    - a
+    - r
+    SingleParam: 3.402823E+38
+    SingleArrayParam:
+    - '3.402823E+38'
+    - 1.2393494
+    DoubleParam: 1.79769313486232E+300
+    DoubleArrayParam:
+    - '1.79769313486232E+300'
+    - 3.56821831681516
+    DateTimeParam: '2019-02-22T13:57:31.2311892-04:00'
+    DateTimeArrayParam:
+    - '2019-02-22T13:57:31.2311892+00:00'
+    - '2019-02-22T13:57:31.2311892+04:00'
+    PSCredentialParam_username: username1
+    PSCredentialParam_password: password1
+    HashtableParam:
+      key1: string 1
+      key2: ''
+      key3: 1
+    CimInstanceParam:
+      KeyValue: a
+    CimInstanceArrayParam:
+    - KeyValue: b
+      Choice: Choice1
+      StringValue: string 1
+      IntValue: 1
+      StringArrayValue:
+      - abc
+      - def
+    - KeyValue: c
+      Choice: Choice2
+      StringValue: string 2
+      IntValue: '2'
+      StringArrayValue:
+      - ghi
+      - jkl
+    NestedCimInstanceParam:
+      KeyValue: key value
+      CimValue:
+        KeyValue: d
+      CimArrayValue:
+      - KeyValue: e
+        Choice: Choice2
+      HashValue:
+        a: a
+      IntValue: '300'
+  register: dsc_types
+
+- name: get result of test DSC with all types
+  slurp:
+    path: '{{ remote_tmp_dir }}\test-types.json'
+  register: dsc_types_raw
+
+- name: convert result of test DSC with all types to dict
+  set_fact:
+    dsc_types_actual: '{{ dsc_types_raw.content | b64decode | from_json }}'
+
+- name: assert test DSC with all types
+  assert:
+    that:
+    - dsc_types is changed
+    - dsc_types.module_version == '1.0.1'
+    - not dsc_types.reboot_required
+    - dsc_types_actual.Version == '1.0.1'
+    - dsc_types_actual.Verbose.Value.IsPresent
+    - dsc_types_actual.DefaultParam.Value == 'Default'  # ensures that the default is set in the engine if we don't set it outselves
+    - dsc_types_actual.Ensure.Value == 'Present'
+    - dsc_types_actual.Path.Value == remote_tmp_dir + "\\test-types.json"
+    - dsc_types_actual.StringParam.Type == 'System.String'
+    - dsc_types_actual.StringParam.Value == 'string param'
+    - dsc_types_actual.StringArrayParam.Type == 'System.String[]'
+    - dsc_types_actual.StringArrayParam.Value == ['string 1', 'string 2']
+    - dsc_types_actual.Int8Param.Type == 'System.SByte'
+    - dsc_types_actual.Int8Param.Value == 127
+    - dsc_types_actual.Int8ArrayParam.Type == 'System.SByte[]'
+    - dsc_types_actual.Int8ArrayParam.Value == [127, 127]
+    - dsc_types_actual.UInt8Param.Type == 'System.Byte'
+    - dsc_types_actual.UInt8Param.Value == 255
+    - dsc_types_actual.UInt8ArrayParam.Type == 'System.Byte[]'
+    - dsc_types_actual.UInt8ArrayParam.Value == [255, 255]
+    - dsc_types_actual.Int16Param.Type == 'System.Int16'
+    - dsc_types_actual.Int16Param.Value == 32767
+    - dsc_types_actual.Int16ArrayParam.Type == 'System.Int16[]'
+    - dsc_types_actual.Int16ArrayParam.Value == [32767, 32767]
+    - dsc_types_actual.UInt16Param.Type == 'System.UInt16'
+    - dsc_types_actual.UInt16Param.Value == 65535
+    - dsc_types_actual.UInt16ArrayParam.Type == 'System.UInt16[]'
+    - dsc_types_actual.UInt16ArrayParam.Value == [65535]
+    - dsc_types_actual.Int32Param.Type == 'System.Int32'
+    - dsc_types_actual.Int32Param.Value == 2147483647
+    - dsc_types_actual.Int32ArrayParam.Type == 'System.Int32[]'
+    - dsc_types_actual.Int32ArrayParam.Value == [2147483647]
+    - dsc_types_actual.UInt32Param.Type == 'System.UInt32'
+    - dsc_types_actual.UInt32Param.Value == 4294967295
+    - dsc_types_actual.UInt32ArrayParam.Type == 'System.UInt32[]'
+    - dsc_types_actual.UInt32ArrayParam.Value == [4294967295, 4294967295]
+    - dsc_types_actual.Int64Param.Type == 'System.Int64'
+    - dsc_types_actual.Int64Param.Value == 9223372036854775807
+    - dsc_types_actual.Int64ArrayParam.Type == 'System.Int64[]'
+    - dsc_types_actual.Int64ArrayParam.Value == [-9223372036854775808, 9223372036854775807]
+    - dsc_types_actual.UInt64Param.Type == 'System.UInt64'
+    - dsc_types_actual.UInt64Param.Value == 18446744073709551615
+    - dsc_types_actual.UInt64ArrayParam.Type == 'System.UInt64[]'
+    - dsc_types_actual.UInt64ArrayParam.Value == [0, 18446744073709551615]
+    - dsc_types_actual.BooleanParam.Type == 'System.Boolean'
+    - dsc_types_actual.BooleanParam.Value == True
+    - dsc_types_actual.BooleanArrayParam.Type == 'System.Boolean[]'
+    - dsc_types_actual.BooleanArrayParam.Value == [True, True, True, True, True, True, False, False, False, False, False, False]
+    - dsc_types_actual.CharParam.Type == 'System.Char'
+    - dsc_types_actual.CharParam.Value == 'c'
+    - dsc_types_actual.CharArrayParam.Type == 'System.Char[]'
+    - dsc_types_actual.CharArrayParam.Value == ['c', 'h', 'a', 'r']
+    - dsc_types_actual.SingleParam.Type == 'System.Single'
+    - dsc_types_actual.SingleParam.Value|string == '3.402823e+38'
+    - dsc_types_actual.SingleArrayParam.Type == 'System.Single[]'
+    - dsc_types_actual.SingleArrayParam.Value|length == 2
+    - dsc_types_actual.SingleArrayParam.Value[0]|string == '3.402823e+38'
+    - dsc_types_actual.SingleArrayParam.Value[1]|string == '1.23934937'
+    - dsc_types_actual.DoubleParam.Type == 'System.Double'
+    - dsc_types_actual.DoubleParam.Value == '1.79769313486232E+300'
+    - dsc_types_actual.DoubleArrayParam.Type == 'System.Double[]'
+    - dsc_types_actual.DoubleArrayParam.Value|length == 2
+    - dsc_types_actual.DoubleArrayParam.Value[0] == '1.79769313486232E+300'
+    - dsc_types_actual.DoubleArrayParam.Value[1] == '3.56821831681516'
+    - dsc_types_actual.DateTimeParam.Type == 'System.DateTime'
+    - dsc_types_actual.DateTimeParam.Value == '2019-02-22T17:57:31.2311890+00:00'
+    - dsc_types_actual.DateTimeArrayParam.Type == 'System.DateTime[]'
+    - dsc_types_actual.DateTimeArrayParam.Value == ['2019-02-22T13:57:31.2311890+00:00', '2019-02-22T09:57:31.2311890+00:00']
+    - dsc_types_actual.PSCredentialParam.Type == 'System.Management.Automation.PSCredential'
+    - dsc_types_actual.PSCredentialParam.Value.username == 'username1'
+    - dsc_types_actual.PSCredentialParam.Value.password == 'password1'
+    # Hashtable is actually a CimInstance[] of MSFT_KeyValuePairs
+    - dsc_types_actual.HashtableParam.Type == 'Microsoft.Management.Infrastructure.CimInstance[]'
+    - dsc_types_actual.HashtableParam.Value|length == 3
+    # Can't guarantee the order of the keys so just check they are the values they could be
+    - dsc_types_actual.HashtableParam.Value[0].Key in ["key1", "key2", "key3"]
+    - dsc_types_actual.HashtableParam.Value[0].Value in ["string 1", "1", ""]
+    - dsc_types_actual.HashtableParam.Value[0]._cim_instance == 'MSFT_KeyValuePair'
+    - dsc_types_actual.HashtableParam.Value[1].Key in ["key1", "key2", "key3"]
+    - dsc_types_actual.HashtableParam.Value[1].Value in ["string 1", "1", ""]
+    - dsc_types_actual.HashtableParam.Value[1]._cim_instance == 'MSFT_KeyValuePair'
+    - dsc_types_actual.HashtableParam.Value[2].Key in ["key1", "key2", "key3"]
+    - dsc_types_actual.HashtableParam.Value[2].Value in ["string 1", "1", ""]
+    - dsc_types_actual.HashtableParam.Value[2]._cim_instance == 'MSFT_KeyValuePair'
+    - dsc_types_actual.CimInstanceParam.Type == 'Microsoft.Management.Infrastructure.CimInstance'
+    - dsc_types_actual.CimInstanceParam.Value.Choice == None
+    - dsc_types_actual.CimInstanceParam.Value.IntValue == None
+    - dsc_types_actual.CimInstanceParam.Value.KeyValue == 'a'
+    - dsc_types_actual.CimInstanceParam.Value.StringArrayValue == None
+    - dsc_types_actual.CimInstanceParam.Value.StringValue == None
+    - dsc_types_actual.CimInstanceParam.Value._cim_instance == "ANSIBLE_xTestClass"
+    - dsc_types_actual.CimInstanceArrayParam.Type == 'Microsoft.Management.Infrastructure.CimInstance[]'
+    - dsc_types_actual.CimInstanceArrayParam.Value|length == 2
+    - dsc_types_actual.CimInstanceArrayParam.Value[0].Choice == 'Choice1'
+    - dsc_types_actual.CimInstanceArrayParam.Value[0].IntValue == 1
+    - dsc_types_actual.CimInstanceArrayParam.Value[0].KeyValue == 'b'
+    - dsc_types_actual.CimInstanceArrayParam.Value[0].StringArrayValue == ['abc', 'def']
+    - dsc_types_actual.CimInstanceArrayParam.Value[0].StringValue == 'string 1'
+    - dsc_types_actual.CimInstanceArrayParam.Value[0]._cim_instance == 'ANSIBLE_xTestClass'
+    - dsc_types_actual.CimInstanceArrayParam.Value[1].Choice == 'Choice2'
+    - dsc_types_actual.CimInstanceArrayParam.Value[1].IntValue == 2
+    - dsc_types_actual.CimInstanceArrayParam.Value[1].KeyValue == 'c'
+    - dsc_types_actual.CimInstanceArrayParam.Value[1].StringArrayValue == ['ghi', 'jkl']
+    - dsc_types_actual.CimInstanceArrayParam.Value[1].StringValue == 'string 2'
+    - dsc_types_actual.CimInstanceArrayParam.Value[1]._cim_instance == 'ANSIBLE_xTestClass'
+    - dsc_types_actual.NestedCimInstanceParam.Type == 'Microsoft.Management.Infrastructure.CimInstance'
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimArrayValue|length == 1
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimArrayValue[0].Choice == 'Choice2'
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimArrayValue[0].IntValue == None
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimArrayValue[0].KeyValue == 'e'
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimArrayValue[0].StringArrayValue == None
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimArrayValue[0].StringValue == None
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimArrayValue[0]._cim_instance == 'ANSIBLE_xTestClass'
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimValue.Choice == None
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimValue.IntValue == None
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimValue.KeyValue == 'd'
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimValue.StringArrayValue == None
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimValue.StringValue == None
+    - dsc_types_actual.NestedCimInstanceParam.Value.CimValue._cim_instance == 'ANSIBLE_xTestClass'
+    - dsc_types_actual.NestedCimInstanceParam.Value.HashValue|length == 1
+    - dsc_types_actual.NestedCimInstanceParam.Value.HashValue[0].Key == 'a'
+    - dsc_types_actual.NestedCimInstanceParam.Value.HashValue[0].Value == 'a'
+    - dsc_types_actual.NestedCimInstanceParam.Value.HashValue[0]._cim_instance == 'MSFT_KeyValuePair'
+    - dsc_types_actual.NestedCimInstanceParam.Value.IntValue == 300
+    - dsc_types_actual.NestedCimInstanceParam.Value.KeyValue == 'key value'
+    - dsc_types_actual.NestedCimInstanceParam.Value._cim_instance == 'ANSIBLE_xNestedClass'
+
+- name: test DSC with all types older version
+  win_dsc:
+    resource_name: xTestResource
+    module_version: 1.0.0
+    Path: '{{ remote_tmp_dir }}\test-types.json'
+    Ensure: Absent
+    StringParam: string param old
+    CimInstanceArrayParam:
+    - Key: old key
+      StringValue: string old 1
+      IntValue: 0
+      StringArrayValue:
+      - zyx
+      - wvu
+  register: dsc_types_old
+
+- name: get result of test DSC with all types older version
+  slurp:
+    path: '{{ remote_tmp_dir }}\test-types.json'
+  register: dsc_types_old_raw
+
+- name: convert result of test DSC with all types to dict
+  set_fact:
+    dsc_types_old_actual: '{{ dsc_types_old_raw.content | b64decode | from_json }}'
+
+- name: assert test DSC with all types older version
+  assert:
+    that:
+    - dsc_types_old is changed
+    - dsc_types_old.module_version == '1.0.0'
+    - not dsc_types_old.reboot_required
+    - dsc_types_old_actual.Version == '1.0.0'
+    - dsc_types_old_actual.Verbose.Value.IsPresent
+    - dsc_types_old_actual.DefaultParam.Value == 'Default'
+    - dsc_types_old_actual.Ensure.Value == 'Absent'
+    - dsc_types_old_actual.Path.Value == remote_tmp_dir + "\\test-types.json"
+    - dsc_types_old_actual.StringParam.Type == 'System.String'
+    - dsc_types_old_actual.StringParam.Value == 'string param old'
+    - dsc_types_old_actual.CimInstanceArrayParam.Type == 'Microsoft.Management.Infrastructure.CimInstance[]'
+    - dsc_types_old_actual.CimInstanceArrayParam.Value|length == 1
+    - not dsc_types_old_actual.CimInstanceArrayParam.Value[0].Choice is defined  # 1.0.0 does not have a Choice option
+    - dsc_types_old_actual.CimInstanceArrayParam.Value[0].IntValue == 0
+    - dsc_types_old_actual.CimInstanceArrayParam.Value[0].Key == 'old key'
+    - dsc_types_old_actual.CimInstanceArrayParam.Value[0].StringArrayValue == ['zyx', 'wvu']
+    - dsc_types_old_actual.CimInstanceArrayParam.Value[0].StringValue == 'string old 1'
+    - dsc_types_old_actual.CimInstanceArrayParam.Value[0]._cim_instance == 'ANSIBLE_xTestClass'

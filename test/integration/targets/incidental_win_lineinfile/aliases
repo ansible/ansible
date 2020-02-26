@@ -1,0 +1,2 @@
+shippable/windows/group2
+skip/windows/2016  # Host takes a while to run and module isn't OS dependent
