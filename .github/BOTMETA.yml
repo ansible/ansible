@@ -4097,8 +4097,6 @@ files:
   test/integration/targets/zabbix_: $team_zabbix
   test/integration/targets/ucs_: *ucs
   test/integration/targets/vultr: *vultr
-  test/legacy/:
-    notified: mattclay
   test/lib/:
     notified: mattclay
   test/lib/ansible_test/_internal/cloud/acme.py: *crypto
