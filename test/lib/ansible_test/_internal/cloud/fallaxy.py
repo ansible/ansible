@@ -68,6 +68,31 @@ class FallaxyProvider(CloudProvider):
         """Setup cloud resource before delegation and reg cleanup callback."""
         super(FallaxyProvider, self).setup()
 
+        if self._use_static_config():
+            self._setup_static()
+        else:
+            self._setup_dynamic()
+
+    def get_docker_run_options(self):
+        """Get additional options needed when delegating tests to a container.
+
+        :rtype: list[str]
+        """
+        return ['--link', self.DOCKER_SIMULATOR_NAME] if self.managed else []
+
+    def cleanup(self):
+        """Clean up the resource and temporary configs files after tests."""
+        if self.container_name:
+            docker_rm(self.args, self.container_name)
+
+        super(FallaxyProvider, self).cleanup()
+
+    def _get_simulator_address(self):
+        results = docker_inspect(self.args, self.container_name)
+        ipaddress = results[0]['NetworkSettings']['IPAddress']
+        return ipaddress
+
+    def _setup_dynamic(self):
         container_id = get_docker_container_id()
 
         if container_id:
@@ -81,7 +106,7 @@ class FallaxyProvider(CloudProvider):
             docker_rm(self.args, self.container_name)
             results = []
 
-        display.info('%s Foreman simulator docker container.'
+        display.info('%s Fallaxy simulator docker container.'
                      % ('Using the existing' if results else 'Starting a new'),
                      verbosity=1)
 
@@ -94,7 +119,7 @@ class FallaxyProvider(CloudProvider):
             else:
                 # publish the simulator ports when not running inside docker
                 publish_ports = [
-                    '-p', ':'.join((str(fallaxy_port), ) * 2),
+                    '-p', ':'.join((str(fallaxy_port),) * 2),
                 ]
 
             if not os.environ.get('ANSIBLE_FXYSIM_CONTAINER'):
@@ -118,24 +143,8 @@ class FallaxyProvider(CloudProvider):
         self._set_cloud_config('FALLAXY_PORT', str(fallaxy_port))
         self._set_cloud_config('FALLAXY_TOKEN', fallaxy_token)
 
-    def get_docker_run_options(self):
-        """Get additional options needed when delegating tests to a container.
-
-        :rtype: list[str]
-        """
-        return ['--link', self.DOCKER_SIMULATOR_NAME] if self.managed else []
-
-    def cleanup(self):
-        """Clean up the resource and temporary configs files after tests."""
-        if self.container_name:
-            docker_rm(self.args, self.container_name)
-
-        super(FallaxyProvider, self).cleanup()
-
-    def _get_simulator_address(self):
-        results = docker_inspect(self.args, self.container_name)
-        ipaddress = results[0]['NetworkSettings']['IPAddress']
-        return ipaddress
+    def _setup_static(self):
+        raise NotImplementedError()
 
 
 class FallaxyEnvironment(CloudEnvironment):
