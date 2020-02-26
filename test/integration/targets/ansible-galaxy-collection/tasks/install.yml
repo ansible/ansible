@@ -109,8 +109,13 @@
   register: fail_dep_mismatch
   failed_when: '"Cannot meet dependency requirement ''fail_dep2.name:<0.0.5'' for collection fail_namespace.fail_collection" not in fail_dep_mismatch.stderr'
 
+- name: download a collection for an offline install - {{ test_name }}
+  get_url:
+    url: '{{ test_server }}custom/collections/namespace3-name-1.0.0.tar.gz'
+    dest: '{{ galaxy_dir }}/namespace3.tar.gz'
+
 - name: install a collection from a tarball - {{ test_name }}
-  command: ansible-galaxy collection install '{{ galaxy_dir }}/collections/namespace3-name-1.0.0.tar.gz'
+  command: ansible-galaxy collection install '{{ galaxy_dir }}/namespace3.tar.gz'
   register: install_tarball
   environment:
     ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'

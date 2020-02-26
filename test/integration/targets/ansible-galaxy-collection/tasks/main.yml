@@ -1,4 +1,8 @@
 ---
+- name: set some facts for tests
+  set_fact:
+    galaxy_dir: "{{ remote_tmp_dir }}/galaxy"
+
 - name: create scratch dir used for testing
   file:
     path: '{{ galaxy_dir }}/scratch'
@@ -22,14 +26,15 @@
     test_server: '{{ item.server }}'
   with_items:
   - name: galaxy
-    server: '{{ galaxy_server }}'
+    server: '{{ fallaxy_galaxy_server }}'
   - name: automation_hub
-    server: '{{ ah_server }}'
+    server: '{{ fallaxy_ah_server }}'
 
 # We use a module for this so we can speed up the test time.
 - name: setup test collections for install test
   setup_collections:
-    path: '{{ galaxy_dir }}/collections'
+    server: '{{ fallaxy_galaxy_server }}'
+    token: '{{ fallaxy_token }}'
     collections:
     # Scenario to test out pre-release being ignored unless explicitly set and version pagination.
     - namespace: namespace1
@@ -135,7 +140,7 @@
 
 - name: reset published collections
   uri:
-    url: '{{ galaxy_server }}custom/reset/'
+    url: '{{ fallaxy_galaxy_server }}custom/reset/'
     method: POST
     body:
       clear: false
@@ -148,6 +153,6 @@
     test_server: '{{ item.server }}'
   with_items:
   - name: galaxy
-    server: '{{ galaxy_server }}'
+    server: '{{ fallaxy_galaxy_server }}'
   - name: automation_hub
-    server: '{{ ah_server }}'
+    server: '{{ fallaxy_ah_server }}'

@@ -1,5 +1,0 @@
----
-galaxy_port: 41645
-galaxy_server: http://0.0.0.0:{{ galaxy_port }}/api/
-ah_server: http://0.0.0.0:{{ galaxy_port }}/api/automation-hub/
-galaxy_token: my_galaxy_token

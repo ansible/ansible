@@ -14,7 +14,7 @@
   failed_when: '"HTTP Code: 401" not in fail_invalid_token.stderr'
 
 - name: publish collection - {{ test_name }}
-  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token {{ galaxy_token }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token {{ fallaxy_token }}
   args:
     chdir: '{{ galaxy_dir }}'
   register: publish_collection
@@ -34,7 +34,7 @@
     - publish_collection_actual.json.metadata.version == '1.0.0'
 
 - name: fail to publish existing collection version - {{ test_name }}
-  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token {{ galaxy_token }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token {{ fallaxy_token }}
   args:
     chdir: '{{ galaxy_dir }}'
   register: fail_publish_existing

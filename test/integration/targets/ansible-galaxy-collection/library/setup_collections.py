@@ -19,11 +19,16 @@ short_description: Set up test collections based on the input
 description:
 - Builds and publishes a whole bunch of collections used for testing in bulk.
 options:
-  path:
+  server:
     description:
-    - The path to build the collections to
+    - The Galaxy server to upload the collections to.
     required: yes
-    type: path
+    type: str
+  token:
+    description:
+    - The token used to authenticate with the Galaxy server.
+    required: yes
+    type: str
   collections:
     description:
     - A list of collection details to use for the build.
@@ -81,7 +86,8 @@ from ansible.module_utils._text import to_bytes
 
 def run_module():
     module_args = dict(
-        path=dict(type='path', required=True),
+        server=dict(type='str', required=True),
+        token=dict(type='str', required=True),
         collections=dict(
             type='list',
             elements='dict',
@@ -102,8 +108,7 @@ def run_module():
 
     result = dict(changed=True)
 
-    b_output_path = to_bytes(module.params['path'], errors='surrogate_or_strict')
-    for collection in module.params['collections']:
+    for idx, collection in enumerate(module.params['collections']):
         collection_dir = os.path.join(module.tmpdir, "%s-%s-%s" % (collection['namespace'], collection['name'],
                                                                    collection['version']))
         b_collection_dir = to_bytes(collection_dir, errors='surrogate_or_strict')
@@ -123,11 +128,16 @@ def run_module():
         with open(os.path.join(b_collection_dir, b'galaxy.yml'), mode='wb') as fd:
             fd.write(to_bytes(yaml.safe_dump(galaxy_meta), errors='surrogate_or_strict'))
 
+        release_filename = '%s-%s-%s.tar.gz' % (collection['namespace'], collection['name'], collection['version'])
+        collection_path = os.path.join(collection_dir, release_filename)
         module.run_command(['ansible-galaxy', 'collection', 'build'], cwd=collection_dir)
 
-        b_filename = to_bytes("%s-%s-%s.tar.gz" % (collection['namespace'], collection['name'], collection['version']),
-                              errors='surrogate_or_strict')
-        module.atomic_move(os.path.join(b_collection_dir, b_filename), os.path.join(b_output_path, b_filename))
+        # To save on time, skip the import wait until the last collection is being uploaded.
+        publish_args = ['ansible-galaxy', 'collection', 'publish', collection_path, '--server',
+                        module.params['server'], '--token', module.params['token']]
+        if idx != (len(module.params['collections']) - 1):
+            publish_args.append('--no-wait')
+        module.run_command(publish_args)
 
     module.exit_json(**result)
 
