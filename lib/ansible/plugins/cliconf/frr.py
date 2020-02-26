@@ -38,7 +38,6 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
-from ansible.module_utils.basic import get_timestamp
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
 
