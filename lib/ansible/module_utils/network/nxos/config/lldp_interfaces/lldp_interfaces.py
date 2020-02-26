@@ -12,7 +12,6 @@ created
 """
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-import q
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties, dict_diff
@@ -43,7 +42,6 @@ class Lldp_interfaces(ConfigBase):
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        q(data)
         facts, _warnings = Facts(self._module).get_facts(
             self.gather_subset, self.gather_network_resources, data=data)
         lldp_interfaces_facts = facts['ansible_network_resources'].get(
@@ -133,7 +131,6 @@ class Lldp_interfaces(ConfigBase):
         elif state == 'deleted':
             commands = self._state_deleted(want, have)
         elif state == 'rendered':
-            q(state)
             commands = self._state_rendered(want)
         elif state == 'parsed':
             want = self._module.params['running_config']
@@ -220,7 +217,6 @@ class Lldp_interfaces(ConfigBase):
             else:
                 delete_dict.update(h)
             commands.extend(self.del_commands(delete_dict))
-
         for w in want:
             commands.extend(self.set_commands(flatten_dict(w), have))
         return commands
@@ -272,7 +268,6 @@ class Lldp_interfaces(ConfigBase):
         if not d:
             return commands
         commands.append('interface ' + d['name'])
-        q(d)
         if 'transmit' in d:
             if (d['transmit']):
                 commands.append('lldp transmit')
@@ -295,7 +290,6 @@ class Lldp_interfaces(ConfigBase):
         commands = []
         if not obj or len(obj.keys()) == 1:
             return commands
-
         commands.append('interface ' + obj['name'])
         if 'transmit' in obj:
             commands.append('lldp transmit')

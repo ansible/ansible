@@ -38,6 +38,9 @@ class Lldp_interfacesFacts(object):
 
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
+    def get_device_data(self, connection):
+        return connection.get('show running-config | section ^interface')
+
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for lldp_interfaces
         :param connection: the device connection
@@ -47,7 +50,7 @@ class Lldp_interfacesFacts(object):
         :returns: facts
         """
         if not data:
-            data = connection.get('show running-config | section ^interface')
+            data = self.get_device_data(connection)
 
         objs = []
 
@@ -109,9 +112,10 @@ class Lldp_interfacesFacts(object):
             config['transmit'] = True
         if 'no lldp transmit' in conf:
             config['transmit'] = False
-
-        config['tlv_set']['management_address'] = utils.parse_conf_arg(
-            conf, 'lldp tlv-set management-address')
-        config['tlv_set']['vlan'] = utils.parse_conf_arg(
-            conf, 'lldp tlv-set vlan')
+        if 'management-address' in conf:
+            config['tlv_set']['management_address'] = re.search(
+                'management-address (\S*)', conf).group(1)
+        if 'vlan' in conf:
+            config['tlv_set']['vlan'] = re.search(
+                'vlan (\S*)', conf).group(1)
         return utils.remove_empties(config)

@@ -17,6 +17,23 @@
           interface Ethernet1/2
             no lldp receive
             lldp tlv-set vlan 12
+          interface Ethernet1/3
+            lldp tlv-set management-address 192.0.2.12
+
+    - name: Delete on single interface
+      nxos_lldp_interfaces:
+        config:
+          - name: Ethernet1/2
+        state: deleted
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == true"
+          - "'interface Ethernet1/2' in result.commands"
+          - "'lldp receive' in result.commands"
+          - "'no lldp tlv-set vlan 12' in result.commands"
+          - "result.commands | length == 3"
 
     - name: Gather lldp_interfaces facts
       nxos_facts: &facts
@@ -35,18 +52,10 @@
           - "ansible_facts.network_resources.lldp_interfaces == result.before"
           - "'interface Ethernet1/1' in result.commands"
           - "'lldp transmit' in result.commands"
-          - "'interface Ethernet1/2' in result.commands"
-          - "'lldp receive' in result.commands"
-          - "'no lldp tlv-set vlan 12' in result.commands"
+          - "'interface Ethernet1/3' in result.commands"
+          - "'no lldp tlv-set management-address 192.0.2.12' in result.commands"
           - "result.changed == true "
-          - "result.after | length == 0"
-
-    - name: Gather lldp_interfaces post facts
-      nxos_facts: *facts
-
-    - assert:
-        that:
-          - "ansible_facts.network_resources == {} "
+          - "result.commands | length == 4"
 
     - name: Idempotence - deleted
       nxos_lldp_interfaces: *deleted
