@@ -1,0 +1,2 @@
+bugfixes:
+  - zabbix_mediatype - Fixed to support zabbix 4.4 or more and python3 (https://github.com/ansible/ansible/pull/67693)
