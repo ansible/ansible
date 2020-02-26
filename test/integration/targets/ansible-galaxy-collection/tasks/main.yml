@@ -138,14 +138,6 @@
     - namespace: fail_dep2
       name: name
 
-- name: reset published collections
-  uri:
-    url: '{{ fallaxy_galaxy_server }}custom/reset/'
-    method: POST
-    body:
-      clear: false
-    body_format: json
-
 - name: run ansible-galaxy collection install tests for {{ test_name }}
   include_tasks: install.yml
   vars:
