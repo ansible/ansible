@@ -38,7 +38,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: junos_acls
-version_added: 2.10
+version_added: "2.10"
 short_description: Manage acls on Juniper JUNOS devices
 description: This module provides declarative management of acls/filters on Juniper JUNOS devices
 author: Daniel Mellado (@dmellado)
@@ -63,8 +63,9 @@ options:
         choices:
           - ipv4
           - ipv6
-        default: ipv4
-      acl:
+      acls:
+        description:
+          - List of Access Control Lists (ACLs).
         type: list
         elements: dict
         suboptions:
@@ -73,7 +74,9 @@ options:
               - Name to use for the acl filter
             type: str
             required: true
-          ace:
+          aces:
+            description:
+              - List of Access Control Entries (ACEs) for this Access Control List (ACL).
             type: list
             elements: dict
             suboptions:
@@ -83,36 +86,201 @@ options:
                 type: str
                 required: true
               grant:
-                desctiption:
+                description:
                   - Action to take after matching condition (allow, discard/reject)
-                type: bool
+                type: str
+                choices: ['permit', 'deny']
               source:
-                type: list
-                elements: dict
+                type: dict
                 description:
                   - Specifies the source for the filter
                 suboptions:
-                  source-address:
+                  address:
                     description:
-                      - Ip source address to use for the filter
+                      - IP source address to use for the filter
                     type: str
-                  source-prefix-list:
+                  prefix_list:
                     description:
-                      - Ip source prefix list to use for the filter
+                      - IP source prefix list to use for the filter
                     type: str
+                  port_protocol:
+                    description:
+                      - Specify the source port or protocol.
+                    type: dict
+                    suboptions:
+                      eq:
+                        description:
+                          - Match only packets on a given port number.
+                        type: str
+                      range:
+                        description:
+                          - Match only packets in the range of port numbers
+                        type: dict
+                        suboptions:
+                          start:
+                            description:
+                              - Specify the start of the port range
+                            type: int
+                          end:
+                            description:
+                              - Specify the end of the port range
+                            type: int
               destination:
-                type: list
-                elements: dict
+                type: dict
                 description:
                   - Specifies the destination for the filter
                 suboptions:
-                  destination-address:
+                  address:
                     description:
                       - Match IP destination address
-                  destination-prefix-list:
+                    type: str
+                  prefix_list:
                     description:
                       - Match IP destination prefixes in named list
                     type: str
+                  port_protocol:
+                    description:
+                      - Specify the destination port or protocol.
+                    type: dict
+                    suboptions:
+                      eq:
+                        description:
+                          - Match only packets on a given port number.
+                        type: str
+                      range:
+                        description:
+                          - Match only packets in the range of port numbers
+                        type: dict
+                        suboptions:
+                          start:
+                            description:
+                              - Specify the start of the port range
+                            type: int
+                          end:
+                            description:
+                              - Specify the end of the port range
+                            type: int
+              protocol:
+                description:
+                  - Specify the protocol to match.
+                  - Refer to vendor documentation for valid values.
+                type: str
+              protocol_options:
+                description: All possible suboptions for the protocol chosen.
+                type: dict
+                suboptions:
+                  icmp:
+                    description: ICMP protocol options.
+                    type: dict
+                    suboptions:
+                      dod_host_prohibited:
+                        description: Host prohibited
+                        type: bool
+                      dod_net_prohibited:
+                        description: Net prohibited
+                        type: bool
+                      echo:
+                        description: Echo (ping)
+                        type: bool
+                      echo_reply:
+                        description: Echo reply
+                        type: bool
+                      general_parameter_problem:
+                        description: Parameter problem
+                        type: bool
+                      host_isolated:
+                        description: Host isolated
+                        type: bool
+                      host_precedence_unreachable:
+                        description: Host unreachable for precedence
+                        type: bool
+                      host_redirect:
+                        description: Host redirect
+                        type: bool
+                      host_tos_redirect:
+                        description: Host redirect for TOS
+                        type: bool
+                      host_tos_unreachable:
+                        description: Host unreachable for TOS
+                        type: bool
+                      host_unknown:
+                        description: Host unknown
+                        type: bool
+                      host_unreachable:
+                        description: Host unreachable
+                        type: bool
+                      information_reply:
+                        description: Information replies
+                        type: bool
+                      information_request:
+                        description: Information requests
+                        type: bool
+                      mask_reply:
+                        description: Mask replies
+                        type: bool
+                      mask_request:
+                        description: Mask requests
+                        type: bool
+                      net_redirect:
+                        description: Network redirect
+                        type: bool
+                      net_tos_redirect:
+                        description: Net redirect for TOS
+                        type: bool
+                      net_tos_unreachable:
+                        description: Network unreachable for TOS
+                        type: bool
+                      net_unreachable:
+                        description: Net unreachable
+                        type: bool
+                      network_unknown:
+                        description: Network unknown
+                        type: bool
+                      option_missing:
+                        description: Parameter required but not present
+                        type: bool
+                      port_unreachable:
+                        description: Port unreachable
+                        type: bool
+                      precedence_unreachable:
+                        description: Precedence cutoff
+                        type: bool
+                      protocol_unreachable:
+                        description: Protocol unreachable
+                        type: bool
+                      reassembly_timeout:
+                        description: Reassembly timeout
+                        type: bool
+                      redirect:
+                        description: All redirects
+                        type: bool
+                      router_advertisement:
+                        description: Router discovery advertisements
+                        type: bool
+                      router_solicitation:
+                        description: Router discovery solicitations
+                        type: bool
+                      source_quench:
+                        description: Source quenches
+                        type: bool
+                      source_route_failed:
+                        description: Source route failed
+                        type: bool
+                      time_exceeded:
+                        description: All time exceeded.
+                        type: bool
+                      timestamp_reply:
+                        description: Timestamp replies
+                        type: bool
+                      timestamp_request:
+                        description: Timestamp requests
+                        type: bool
+                      ttl_exceeded:
+                        description: TTL exceeded
+                        type: bool
+                      unreachable:
+                        description: All unreachables
+                        type: bool
   state:
     description:
     - The state the configuration should be left in
@@ -143,12 +311,14 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
