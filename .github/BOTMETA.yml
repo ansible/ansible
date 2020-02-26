@@ -686,8 +686,6 @@ files:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_user_info.py:
     migrated_to: ovirt.ovirt_collection
-  $modules/cloud/ovirt/.idea:
-    migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_template_info.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_storage_vm_facts.py:
