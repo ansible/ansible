@@ -1,0 +1,4 @@
+bugfixes:
+  - >
+    **security issue** fetch - normalize and compare paths used by fetch
+    module to prevent path traversal (CVE-2020-1735)

@@ -129,9 +129,20 @@ class ActionModule(ActionBase):
                     target_name = task_vars['inventory_hostname']
                 else:
                     target_name = self._play_context.remote_addr
-                dest = "%s/%s/%s" % (self._loader.path_dwim(dest), target_name, source_local)
 
-            dest = dest.replace("//", "/")
+                # Strip leading character if path is absolute so it will join properly
+                if os.path.isabs(source_local):
+                    source_local = source_local[1:]
+
+                # Normalize paths to resolve '..' and remove any '//' so we can compare the prefix
+                normalized_dest = os.path.normpath(os.path.join(self._loader.path_dwim(dest), target_name))
+                normalized_dest_with_source = os.path.normpath(os.path.join(normalized_dest, source_local))
+
+                # If 'source_local' contains relative paths, such as '../', then fail to prevent path traversal
+                if os.path.commonprefix([normalized_dest, normalized_dest_with_source]) != normalized_dest:
+                    raise AnsibleError('Source path would result in incorrect destination: {0}'.format(source_local))
+
+                dest = normalized_dest_with_source
 
             if remote_checksum in ('0', '1', '2', '3', '4', '5'):
                 result['changed'] = False
