@@ -41,7 +41,10 @@ class FallaxyProvider(CloudProvider):
         """
         super(FallaxyProvider, self).__init__(args)
 
-        self.image = os.environ.get('ANSIBLE_FXYSIM_CONTAINER', 'quay.io/ansible/fallaxy-test-container:1.0.0')
+        if os.environ.get('ANSIBLE_FALLAXY_CONTAINER'):
+            self.image = os.environ.get('ANSIBLE_FALLAXY_CONTAINER')
+        else:
+            self.image = 'quay.io/ansible/fallaxy-test-container:1.0.0'
         self.container_name = ''
 
     def filter(self, targets, exclude):
@@ -87,11 +90,6 @@ class FallaxyProvider(CloudProvider):
 
         super(FallaxyProvider, self).cleanup()
 
-    def _get_simulator_address(self):
-        results = docker_inspect(self.args, self.container_name)
-        ipaddress = results[0]['NetworkSettings']['IPAddress']
-        return ipaddress
-
     def _setup_dynamic(self):
         container_id = get_docker_container_id()
 
@@ -122,7 +120,7 @@ class FallaxyProvider(CloudProvider):
                     '-p', ':'.join((str(fallaxy_port),) * 2),
                 ]
 
-            if not os.environ.get('ANSIBLE_FXYSIM_CONTAINER'):
+            if not os.environ.get('ANSIBLE_FALLAXY_CONTAINER'):
                 docker_pull(self.args, self.image)
 
             docker_run(
@@ -142,6 +140,11 @@ class FallaxyProvider(CloudProvider):
         self._set_cloud_config('FALLAXY_HOST', fallaxy_host)
         self._set_cloud_config('FALLAXY_PORT', str(fallaxy_port))
         self._set_cloud_config('FALLAXY_TOKEN', fallaxy_token)
+
+    def _get_simulator_address(self):
+        results = docker_inspect(self.args, self.container_name)
+        ipaddress = results[0]['NetworkSettings']['IPAddress']
+        return ipaddress
 
     def _setup_static(self):
         raise NotImplementedError()
