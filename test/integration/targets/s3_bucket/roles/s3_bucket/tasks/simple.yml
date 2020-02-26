@@ -1,0 +1,64 @@
+---
+- name: 'Run simple tests'
+  block:
+    # Note: s3_bucket doesn't support check_mode
+
+    # ============================================================
+    - name: 'Create a simple s3_bucket'
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: present
+      register: output
+
+    - assert:
+        that:
+          - output is success
+          - output is changed
+          - output.name == '{{ bucket_name }}'
+          - not output.requester_pays
+
+    # ============================================================
+    - name: 'Try to update the simple bucket with the same values'
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: present
+      register: output
+
+    - assert:
+        that:
+          - output is success
+          - output is not changed
+          - output.name == '{{ bucket_name }}'
+          - not output.requester_pays
+
+    # ============================================================
+    - name: 'Delete the simple s3_bucket'
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: absent
+      register: output
+
+    - assert:
+        that:
+          - output is success
+          - output is changed
+
+    # ============================================================
+    - name: 'Re-delete the simple s3_bucket (idemoptency)'
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: absent
+      register: output
+
+    - assert:
+        that:
+          - output is success
+          - output is not changed
+
+  # ============================================================
+  always:
+    - name: 'Ensure all buckets are deleted'
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: absent
+      ignore_errors: yes
