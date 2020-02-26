@@ -168,6 +168,8 @@ class Firewall_interfaces(ConfigBase):
                     key = 'direction'
                     if w_ar:
                         w_rules = w_ar.get('access_rules') or []
+                        if not w_rules and h_rules:
+                            commands.append(self._compute_command(name=h_ar['name'], opr=False))
                     if h_rules:
                         for h_rule in h_rules:
                             w_rule = search_obj_in_list(h_rule['afi'], w_rules, key='afi')
@@ -175,10 +177,14 @@ class Firewall_interfaces(ConfigBase):
                             if w_rule:
                                 want_rules = w_rule.get('rules') or []
                             for h in have_rules:
-                                w = search_obj_in_list(h[key], want_rules, key=key)
                                 if key in h:
+                                    w = search_obj_in_list(h[key], want_rules, key=key)
                                     if not w or key not in w or ('name' in h and w and 'name' not in w):
-                                        commands.append(self._compute_command(name=h_ar['name'], attrib=h[key], opr=False))
+                                        commands.append(
+                                            self._compute_command(
+                                                afi=h_rule['afi'], name=h_ar['name'], attrib=h[key], opr=False
+                                            )
+                                        )
 
         commands.extend(self._state_merged(want, have))
         return commands

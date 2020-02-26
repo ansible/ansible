@@ -4,6 +4,8 @@
 
 - include_tasks: _remove_config.yaml
 
+- include_tasks: _remove_firewall_config.yaml
+
 - include_tasks: _populate_rule_sets.yaml
 
 - block:
@@ -24,7 +26,6 @@
               rules:
                 - name: 'V6-LOCAL'
                   direction: 'local'
-        
       state: merged
     register: base_config
 

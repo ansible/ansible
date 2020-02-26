@@ -112,20 +112,25 @@ class Firewall_interfacesFacts(object):
         v4_ar = findall(r'^.*(in|out|local) name .*$', conf, M)
         v6_ar = findall(r'^.*(in|out|local) ipv6-name .*$', conf, M)
         if v4_ar:
-            config = self.parse_int_rules(conf, v4_ar, 'ipv4')
-            ar_lst.append(config)
+            v4_conf = "\n".join(findall(r"(^.*?%s.*?$)" % ' name', conf, M))
+            config = self.parse_int_rules(v4_conf, 'ipv4')
+            if config:
+                ar_lst.append(config)
         if v6_ar:
-            config = self.parse_int_rules(conf, v6_ar, 'ipv6')
-            ar_lst.append(config)
+            v6_conf = "\n".join(findall(r"(^.*?%s.*?$)" % ' ipv6-name', conf, M))
+            config = self.parse_int_rules(v6_conf, 'ipv6')
+            if config:
+                ar_lst.append(config)
         if ar_lst:
             ar_lst = sorted(ar_lst, key=lambda i: i['afi'])
         else:
             empty_rules = findall(r'^.*(in|out|local).*', conf, M)
             if empty_rules:
                 ar_lst.append({'afi': 'ipv4', 'rules': []})
+                ar_lst.append({'afi': 'ipv6', 'rules': []})
         return ar_lst
 
-    def parse_int_rules(self, conf, rules, afi):
+    def parse_int_rules(self, conf, afi):
         """
         This function forms the regex to fetch the 'access-rules'
         for specific interface based on ip-type.
@@ -138,6 +143,7 @@ class Firewall_interfacesFacts(object):
         config = {}
         rules = ['in', 'out', 'local']
         for r in set(rules):
+            fr = {}
             r_regex = r' %s .+$' % r
             cfg = '\n'.join(findall(r_regex, conf, M))
             if cfg:
@@ -172,5 +178,6 @@ class Firewall_interfacesFacts(object):
                     cfg['name'] = str(out[0]).strip("'")
             else:
                 out = findall(r'[^\s]+ name (?:\'*)(\S+)(?:\'*)', conf, M)
-                cfg['name'] = out[-1].strip("'")
+                if out:
+                    cfg['name'] = out[-1].strip("'")
         return cfg

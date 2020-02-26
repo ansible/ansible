@@ -584,7 +584,7 @@ EXAMPLES = """
 # set interfaces ethernet eth3 firewall out name 'INBOUND'
 
 
-# Using deleted
+# Using deleted per interface name
 #
 # Before state
 # -------------
@@ -603,7 +603,7 @@ EXAMPLES = """
 # set interfaces ethernet eth3 firewall local name 'LOCAL'
 # set interfaces ethernet eth3 firewall out name 'OUTBOUND'
 #
-- name: Delete firewall interfaces.
+- name: Delete firewall interfaces based on interface name.
   vyos_firewall_interfaces:
     config:
       - name: 'eth1'
@@ -704,6 +704,98 @@ EXAMPLES = """
 #            "name": "eth3"
 #        }
 #    ]
+# After state
+# ------------
+# vyos@vyos# run show configuration commands | grep firewall
+# set firewall ipv6-name 'V6-LOCAL'
+# set firewall name 'INBOUND'
+# set firewall name 'LOCAL'
+# set firewall name 'OUTBOUND'
+
+
+# Using deleted per afi
+#
+# Before state
+# -------------
+#
+# vyos@vyos:~$ show configuration commands| grep firewall
+# set firewall ipv6-name 'V6-LOCAL'
+# set firewall name 'INBOUND'
+# set firewall name 'LOCAL'
+# set firewall name 'OUTBOUND'
+# set interfaces ethernet eth1 firewall in name 'INBOUND'
+# set interfaces ethernet eth1 firewall local ipv6-name 'V6-LOCAL'
+# set interfaces ethernet eth1 firewall local name 'LOCAL'
+# set interfaces ethernet eth1 firewall out name 'OUTBOUND'
+# set interfaces ethernet eth3 firewall in name 'INBOUND'
+# set interfaces ethernet eth3 firewall local ipv6-name 'V6-LOCAL'
+# set interfaces ethernet eth3 firewall local name 'LOCAL'
+# set interfaces ethernet eth3 firewall out name 'OUTBOUND'
+#
+- name: Delete firewall interfaces config per afi.
+  vyos_firewall_interfaces:
+    config:
+      - name: 'eth1'
+        access_rules:
+          - afi: 'ipv4'
+          - afi: 'ipv6'
+    state: deleted
+#
+#
+# ------------------------
+# Module Execution Results
+# ------------------------
+#
+#    "commands": [
+#        "delete interfaces ethernet eth1 firewall in name",
+#        "delete interfaces ethernet eth1 firewall out name",
+#        "delete interfaces ethernet eth1 firewall local name",
+#        "delete interfaces ethernet eth1 firewall local ipv6-name"
+#    ]
+#
+# After state
+# ------------
+# vyos@vyos# run show configuration commands | grep firewall
+# set firewall ipv6-name 'V6-LOCAL'
+# set firewall name 'INBOUND'
+# set firewall name 'LOCAL'
+# set firewall name 'OUTBOUND'
+
+
+# Using deleted without config
+#
+# Before state
+# -------------
+#
+# vyos@vyos:~$ show configuration commands| grep firewall
+# set firewall ipv6-name 'V6-LOCAL'
+# set firewall name 'INBOUND'
+# set firewall name 'LOCAL'
+# set firewall name 'OUTBOUND'
+# set interfaces ethernet eth1 firewall in name 'INBOUND'
+# set interfaces ethernet eth1 firewall local ipv6-name 'V6-LOCAL'
+# set interfaces ethernet eth1 firewall local name 'LOCAL'
+# set interfaces ethernet eth1 firewall out name 'OUTBOUND'
+# set interfaces ethernet eth3 firewall in name 'INBOUND'
+# set interfaces ethernet eth3 firewall local ipv6-name 'V6-LOCAL'
+# set interfaces ethernet eth3 firewall local name 'LOCAL'
+# set interfaces ethernet eth3 firewall out name 'OUTBOUND'
+#
+- name: Delete firewall interfaces config when empty config provided.
+  vyos_firewall_interfaces:
+    config:
+    state: deleted
+#
+#
+# ------------------------
+# Module Execution Results
+# ------------------------
+#
+#    "commands": [
+#        "delete interfaces ethernet eth1 firewall",
+#        "delete interfaces ethernet eth1 firewall"
+#    ]
+#
 # After state
 # ------------
 # vyos@vyos# run show configuration commands | grep firewall
