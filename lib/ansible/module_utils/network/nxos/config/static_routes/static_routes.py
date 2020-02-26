@@ -286,7 +286,7 @@ class Static_routes(ConfigBase):
         commands = []
         want_vrfs = [w['vrf'] for w in want]
         for h in have:
-            if h['vrf'] not in want_vrfs:
+            if h['vrf'] not in want_vrfs and h['vrf'] != 'management':
                 commands.extend(self._state_deleted([h], have))
         for w in want:
             commands.extend(self._state_replaced(w, have))
