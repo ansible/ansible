@@ -234,7 +234,6 @@ class Host(object):
     def get_triggers_by_host_id_in_problem_state(self, host_id, trigger_severity):
         """ Get triggers in problem state from a hostid"""
         # https://www.zabbix.com/documentation/3.4/manual/api/reference/trigger/get
-        output = ['triggerids', 'description', 'priority']
         output = 'extend'
         triggers_list = self._zapi.trigger.get({'output': output, 'hostids': host_id,
                                                 'min_severity': trigger_severity})
