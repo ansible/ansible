@@ -11,6 +11,7 @@ iam_instance_role
 termination_protection
 tags_and_vpc_settings
 checkmode_tests
+security_group
 
 [all:vars]
 ansible_connection=local
