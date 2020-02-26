@@ -113,7 +113,7 @@ def compile_cli_command(cmd, store, domain, xml):
 
 def write_xml(xml):
     jenkins_object_file = '/tmp/jenkins_object.xml'
-    f = open(jenkins_object_file)
+    f = open(jenkins_object_file,'w')
     f.write(xml)
     f.close()
     return(jenkins_object_file)
