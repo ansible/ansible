@@ -851,6 +851,7 @@ def get_options_with_changing_values(client, module, parameters):
     port = module.params['port']
     apply_immediately = parameters.pop('ApplyImmediately', None)
     cloudwatch_logs_enabled = module.params['enable_cloudwatch_logs_exports']
+    allow_major_version_upgrade = parameters.pop('AllowMajorVersionUpgrade', None)
 
     if port:
         parameters['DBPortNumber'] = port
@@ -870,10 +871,14 @@ def get_options_with_changing_values(client, module, parameters):
         if parameters['NewDBInstanceIdentifier'] == instance['PendingModifiedValues']['DBInstanceIdentifier'] and not apply_immediately:
             parameters.pop('NewDBInstanceIdentifier')
 
+    # Only apply some runtime parameters when there's a change
     if parameters:
         parameters['DBInstanceIdentifier'] = instance_id
         if apply_immediately is not None:
             parameters['ApplyImmediately'] = apply_immediately
+        if allow_major_version_upgrade is not None:
+            parameters['AllowMajorVersionUpgrade'] = allow_major_version_upgrade
+
 
     return parameters
 
