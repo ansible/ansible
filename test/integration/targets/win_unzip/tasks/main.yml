@@ -115,9 +115,13 @@
     - not unzip_delete_actual.stat.exists
 
 # Path traversal tests (CVE-2020-1737)
-- name: Download test files
-  win_get_url:
-    url: https://ansible-ci-files.s3.us-east-1.amazonaws.com/test/integration/targets/win_unzip/{{ item }}.zip
+- name: Create zip files
+  script: create_crafty_zip_files.py {{ output_dir }}
+  delegate_to: localhost
+
+- name: Copy zip files to Windows host
+  win_copy:
+    src: "{{ output_dir }}/{{ item }}.zip"
     dest: "{{ win_unzip_dir }}"
   loop:
     - hat1
