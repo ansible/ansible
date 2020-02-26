@@ -132,17 +132,17 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
 
     port = info['x-ssh-endpoint'].split(':')[1]
 
-    return(port)
-    # GETTING PORT SHIT IS FINISHED
-
     # if 'code' in xml_type:
     #     return()
     # elif 'file' in xml_type:
     #     return()
 
+    ssh_command = compile_cli_command(cmd_type, store, domain, xml)
+
     # subprocess.Popen("ssh -l {user} -p {port} {host} {cmd}".format(user=user, port=port, host=host, cmd='ls -l'),
     #                  shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-
+    # return(port)
+    return(ssh_command)
 
 def main():
     module = AnsibleModule(
