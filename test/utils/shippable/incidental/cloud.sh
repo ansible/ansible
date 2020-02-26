@@ -33,7 +33,7 @@ for python_version in "${python_versions[@]}"; do
     fi
 
     # shellcheck disable=SC2086
-    echo ansible-test integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
+    ansible-test integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
         --remote-terminate "${terminate}" \
         --remote-stage "${stage}" \
         --enable-test-support \
