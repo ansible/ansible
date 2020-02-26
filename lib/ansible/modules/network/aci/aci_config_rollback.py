@@ -64,6 +64,12 @@ options:
     - The C(aci_snapshot) module can be used to query the list of available snapshots.
     type: str
     required: yes
+  pause:
+    description:
+    - Add a pause of seconds before comparing 2 snapshots.
+    - 'This parameter should be used with state: preview.'
+    type: int
+    version_added: '2.10'
   state:
     description:
     - Use C(preview) for previewing the diff between two snapshots.
@@ -185,11 +191,12 @@ url:
   type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
+import time
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_bytes
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 # Optional, only used for rollback preview
 try:
@@ -212,7 +219,9 @@ def main():
         import_policy=dict(type='str'),
         import_type=dict(type='str', choices=['merge', 'replace']),
         snapshot=dict(type='str', required=True),
-        state=dict(type='str', default='rollback', choices=['preview', 'rollback']),
+        state=dict(type='str', default='rollback',
+                   choices=['preview', 'rollback']),
+        pause=dict(type='int'),
     )
 
     module = AnsibleModule(
@@ -234,6 +243,7 @@ def main():
     import_type = module.params.get('import_type')
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
+    pause = module.params.get('pause')
 
     if state == 'rollback':
         if snapshot.startswith('run-'):
@@ -274,6 +284,9 @@ def main():
         aci.post_config()
 
     elif state == 'preview':
+        if pause:
+            time.sleep(pause)
+
         aci.url = '%(protocol)s://%(host)s/mqapi2/snapshots.diff.xml' % module.params
         aci.filter_string = (
             '?s1dn=uni/backupst/snapshots-[uni/fabric/configexp-%(export_policy)s]/snapshot-%(snapshot)s&'
@@ -302,7 +315,8 @@ def get_preview(aci):
         xml_to_json(aci, resp.read())
     else:
         aci.result['raw'] = resp.read()
-        aci.fail_json(msg="Request failed: %(code)s %(text)s (see 'raw' output)" % aci.error)
+        aci.fail_json(
+            msg="Request failed: %(code)s %(text)s (see 'raw' output)" % aci.error)
 
 
 def xml_to_json(aci, response_data):
