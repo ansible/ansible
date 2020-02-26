@@ -78,14 +78,9 @@ class AclsFacts(object):
         for resource in resources:
             if resource:
                 xml = self._get_xml_dict(resource)
-                addl_ipv4 = []
-                if "filter" in xml["firewall"]:
-                    addl_ipv4.extend(utils.to_list(xml["firewall"].pop("filter")))
-
                 for family, sub_dict in xml["firewall"]["family"].items():
-                    if family == "inet" and addl_ipv4:
-                        sub_dict["filter"] = utils.to_list(sub_dict["filter"]) + addl_ipv4
-                    obj = self.render_config(self.generated_spec, dict(firewall={"family": family, **sub_dict}))
+                    sub_dict["family"] = family
+                    obj = self.render_config(self.generated_spec, dict(firewall=sub_dict))
                     if obj:
                         objs.append(obj)
 
