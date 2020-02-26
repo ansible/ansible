@@ -46,7 +46,7 @@ Function Extract-Zip($src, $dest) {
 
         # Ensure file in the archive does not escape the extraction path
         if (-not $full_target_path.StartsWith($full_dest_path)) {
-            Fail-Json -obj $result -message "Failed to extract archive. Filename contains relative paths: $entry_target_path"
+            Fail-Json -obj $result -message "Error unzipping '$src' to '$dest'! Filename contains relative paths which would extract outside the destination: $entry_target_path"
         }
 
         if (-not (Test-Path -LiteralPath $entry_dir)) {
