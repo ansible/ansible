@@ -1,6 +1,3 @@
-# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_image_info
-
-
 - name: Get image informations and register it in a variable
   scaleway_image_info:
     region: par1

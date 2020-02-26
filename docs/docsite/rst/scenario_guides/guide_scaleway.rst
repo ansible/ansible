@@ -68,8 +68,6 @@ The ``ssh_pub_key`` parameter contains your ssh public key as a string. Here is 
 
 .. code-block:: yaml
 
-    # SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway_ssh_playbook.yml
-
     - name: Test SSH key lifecycle on a Scaleway account
       hosts: localhost
       gather_facts: no
@@ -119,8 +117,6 @@ Here are the parameter details for the example shown above:
 Take a look at this short playbook to see a working example using ``scaleway_compute``:
 
 .. code-block:: yaml
-
-    # SCW_TOKEN='XXX' ansible-playbook ./test/legacy/scaleway_compute.yml
 
     - name: Test compute instance lifecycle on a Scaleway account
       hosts: localhost

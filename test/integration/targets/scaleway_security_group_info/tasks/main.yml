@@ -1,5 +1,3 @@
-# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_security_group_info
-
 - name: Get security group informations and register it in a variable
   scaleway_security_group_info:
     region: par1
