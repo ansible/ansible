@@ -41,6 +41,7 @@ class L2_interfacesArgs(object):
             'options': {
                 'access': {'options': {'vlan': {'type': 'int'}},
                            'type': 'dict'},
+                'mode': {'type': 'str', 'choices': ['access', 'trunk']},
                 'name': {'required': True, 'type': 'str'},
                 'trunk': {'options': {'native_vlan': {'type': 'int'}, 'trunk_allowed_vlans': {'type': 'list'}},
                           'type': 'dict'}},

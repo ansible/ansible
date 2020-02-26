@@ -154,7 +154,7 @@ class L2_interfaces(ConfigBase):
         merged_commands = self.set_commands(w, have, True)
         if 'name' not in diff:
             diff['name'] = w['name']
-        wkeys = w.keys()
+
         dkeys = diff.keys()
         for k in w.copy():
             if k in self.exclude_params and k in dkeys:
@@ -231,6 +231,8 @@ class L2_interfaces(ConfigBase):
         cmd = 'no switchport '
         if 'vlan' in obj:
             commands.append(cmd + 'access vlan')
+        if 'mode' in obj:
+            commands.append(cmd + 'mode')
         if 'allowed_vlans' in obj:
             commands.append(cmd + 'trunk allowed vlan')
         if 'native_vlan' in obj:
@@ -252,6 +254,8 @@ class L2_interfaces(ConfigBase):
             return commands
 
         cmd = 'switchport '
+        if 'mode' in d:
+            commands.append(cmd + 'mode {0}'.format(d['mode']))
         if 'vlan' in d:
             commands.append(cmd + 'access vlan ' + str(d['vlan']))
         if 'allowed_vlans' in d:
@@ -274,6 +278,8 @@ class L2_interfaces(ConfigBase):
         else:
             diff = self.diff_of_dicts(w, obj_in_have)
             if diff and not replace:
+                if 'mode' in diff.keys() and diff['mode']:
+                    commands = self.add_commands(diff)
                 if "allowed_vlans" in diff.keys() and diff["allowed_vlans"]:
                     vlan_tobe_added = diff["allowed_vlans"].split(',')
                     vlan_list = vlan_tobe_added[:]

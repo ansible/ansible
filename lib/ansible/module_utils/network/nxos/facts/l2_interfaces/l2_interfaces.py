@@ -85,6 +85,7 @@ class L2_interfacesFacts(object):
             return {}
 
         config['name'] = intf
+        config['mode'] = utils.parse_conf_arg(conf, 'switchport mode')
         config['ip_forward'] = utils.parse_conf_arg(conf, 'ip forward')
         config['access']['vlan'] = utils.parse_conf_arg(conf, 'switchport access vlan')
         config['trunk']['allowed_vlans'] = utils.parse_conf_arg(conf, 'switchport trunk allowed vlan')

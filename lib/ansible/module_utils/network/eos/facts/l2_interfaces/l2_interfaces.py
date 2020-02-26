@@ -81,6 +81,9 @@ class L2_interfacesFacts(object):
 
         # populate the facts from the configuration
         config['name'] = re.match(r'(\S+)', conf).group(1).replace('"', '')
+        has_mode = re.search(r"switchport mode (\S+)", conf)
+        if has_mode:
+            config["mode"] = has_mode.group(1)
 
         has_access = re.search(r"switchport access vlan (\d+)", conf)
         if has_access:

@@ -80,6 +80,15 @@ options:
               - List of allowed VLANs in a given trunk port. These are the only
                 VLANs that will be configured on the trunk.
             type: str
+      mode:
+        description:
+        - Mode in which interface needs to be configured.
+        - Access mode is not shown in interface facts, so idempotency will not be
+          maintained for switchport mode access and every time the output will come
+          as changed=True.
+        version_added: '2.10'
+        type: str
+        choices: ['access', 'trunk']
 
   state:
     description:

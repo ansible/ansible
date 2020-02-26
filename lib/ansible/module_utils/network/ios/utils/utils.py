@@ -82,7 +82,8 @@ def filter_dict_having_none_value(want, have):
                     # then apply the new change
                     dict_val = have.get(k)[0].get(key)
                     test_key_dict.update({key: dict_val})
-                test_dict.update({k: test_key_dict})
+                if test_key_dict:
+                    test_dict.update({k: test_key_dict})
         if isinstance(v, list):
             for key, value in iteritems(v[0]):
                 test_key_dict = dict()
@@ -92,7 +93,8 @@ def filter_dict_having_none_value(want, have):
                 elif k == 'ipv6' and value.lower() != have.get(k)[0].get(key).lower():
                     dict_val = have.get(k)[0].get(key)
                     test_key_dict.update({key: dict_val})
-                test_dict.update({k: test_key_dict})
+                if test_key_dict:
+                    test_dict.update({k: test_key_dict})
             # below conditions checks are added to check if
             # secondary IP is configured, if yes then delete
             # the already configured IP if want and have IP
