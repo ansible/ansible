@@ -304,8 +304,7 @@ def db_delete(cursor, db):
 def db_dump(module, host, user, password, db_name, target, all_databases, port,
             config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
             single_transaction=None, quick=None, ignore_tables=None, hex_blob=None,
-            encoding=None, force=False, master_data=0, skip_lock_tables=False,
-            dump_extra_args=None, db_num=None):
+            encoding=None, force=False, master_data=0, skip_lock_tables=False, dump_extra_args=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -329,7 +328,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port,
 
     if all_databases:
         cmd += " --all-databases"
-    elif db_num > 1:
+    elif len(db_name) > 1:
         cmd += " --databases {0}".format(' '.join(db_name))
     else:
         cmd += " %s" % shlex_quote(' '.join(db_name))
@@ -523,8 +522,7 @@ def main():
     skip_lock_tables = module.params["skip_lock_tables"]
     dump_extra_args = module.params["dump_extra_args"]
 
-    db_num = len(db)
-    if db_num > 1 and state == 'import':
+    if len(db) > 1 and state == 'import':
         module.fail_json(msg="Multiple databases are not supported with state=import")
     db_name = ' '.join(db)
 
@@ -590,7 +588,7 @@ def main():
                                      login_port, config_file, socket, ssl_cert, ssl_key,
                                      ssl_ca, single_transaction, quick, ignore_tables,
                                      hex_blob, encoding, force, master_data, skip_lock_tables,
-                                     dump_extra_args, db_num)
+                                     dump_extra_args)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout,
