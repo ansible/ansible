@@ -1,5 +1,3 @@
-# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_volume_info
-
 - name: Get volume informations and register it in a variable
   scaleway_volume_info:
     region: par1

@@ -1,5 +1,3 @@
-# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_user_data
-
 - name: Create a server
   scaleway_compute:
     name: foobar

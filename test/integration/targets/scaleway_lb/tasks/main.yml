@@ -1,5 +1,3 @@
-# SCW_API_KEY='XXX' SCW_ORG='YYY' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_lb
-
 - name: Create a load-balancer (Check)
   check_mode: yes
   scaleway_lb:
