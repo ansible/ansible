@@ -99,6 +99,13 @@ options:
             description:
             - Pruning VLAN to be configured in trunk port. It's used as the trunk pruning VLAN ID.
             type: list
+      mode:
+        description:
+        - Mode in which interface needs to be configured.
+        - An interface whose trunk encapsulation is "Auto" can not be configured to "trunk" mode.
+        version_added: '2.10'
+        type: str
+        choices: ['access', 'trunk']
   state:
     choices:
     - merged
@@ -133,11 +140,13 @@ EXAMPLES = """
   ios_l2_interfaces:
     config:
       - name: GigabitEthernet0/1
+        mode: access
         access:
           vlan: 10
         voice:
           vlan: 40
       - name: GigabitEthernet0/2
+        mode: trunk
         trunk:
           allowed_vlans: 10-20,40
           native_vlan: 20
@@ -153,6 +162,7 @@ EXAMPLES = """
 #  description Configured by Ansible
 #  switchport access vlan 10
 #  switchport access vlan 40
+#  switchport mode access
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test
@@ -160,6 +170,7 @@ EXAMPLES = """
 #  switchport trunk encapsulation dot1q
 #  switchport trunk native vlan 20
 #  switchport trunk pruning vlan 10,20
+#  switchport mode trunk
 #  media-type rj45
 #  negotiation auto
 

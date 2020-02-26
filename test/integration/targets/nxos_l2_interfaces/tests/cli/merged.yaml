@@ -60,6 +60,7 @@
     nxos_l2_interfaces: &vlanadd
       config:
         - name: "{{ test_int1 }}"
+          mode: trunk
           trunk:
             allowed_vlans: "10-12"
       state:  merged
@@ -69,6 +70,7 @@
       that:
         - "result.changed == true"
         - "'interface {{ test_int1 }}' in result.commands"
+        - "'switchport mode trunk' in result.commands"
         - "'switchport trunk allowed vlan add 10,11,12' in result.commands"
         - "result.commands|length == 2"
 

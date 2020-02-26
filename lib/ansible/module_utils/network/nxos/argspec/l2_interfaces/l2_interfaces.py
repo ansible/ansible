@@ -47,6 +47,10 @@ class L2_interfacesArgs(object):  # pylint: disable=R0903
                     },
                     'type': 'dict'
                 },
+                'mode': {
+                    'type': 'str',
+                    'choices': ['access', 'trunk']
+                },
                 'name': {
                     'required': True,
                     'type': 'str'
