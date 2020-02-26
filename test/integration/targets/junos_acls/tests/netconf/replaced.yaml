@@ -1,0 +1,91 @@
+---
+- debug:
+    msg: "START junos_acls replaced integration tests on connection={{ ansible_connection }}"
+
+- block:
+  - include_tasks: _reset_config.yaml
+
+  - set_fact:
+      config:
+        - acls:
+            - aces:
+                - name: ten_dot
+                  port:
+                    bgp: true
+                  source:
+                    address: 10.0.0.0/8
+                  protocol:
+                    tcp: true
+                - name: eleven_dot
+                  port:
+                    bgp: true
+                  source:
+                    address: 11.0.0.0/8
+                  protocol:
+                    tcp: true
+              name: initial_acl
+            - aces:
+                - name: ace_20
+                  grant: permit
+                  protocol:
+                    igmp: true
+                  source:
+                    address: 192.168.1.100
+                - name: ace_21
+                  grant: permit
+                  protocol:
+                    tcp: true
+              name: second_acl
+          afi: ipv4
+        - acls:
+            - aces:
+                - name: colon_eleven
+                  port:
+                    range: 631
+                  source:
+                    address: ::11/128
+              name: initial_acl6
+          afi: ipv6
+
+
+  - name: Replace the specified ACL with given config
+    junos_acls: &replaced
+      config:
+        - afi: ipv4
+          acls:
+            - name: second_acl
+              aces:
+                - name: ace_20
+                  grant: permit
+                  protocol:
+                    igmp: true
+                  source:
+                    address: 192.168.1.100
+                - name: ace_21
+                  grant: permit
+                  protocol:
+                    tcp: true
+      state: replaced
+    register: result
+
+  - name: Assert the configuration is reflected on host
+    assert:
+      that:
+        - result.changed == True
+        - "{{ config|symmetric_difference(result.after) == [] }}"
+
+  - name: Replace the specified ACL with given config (IDEMPOTENT)
+    junos_acls: *replaced
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+      that:
+        - result.changed == False
+
+  tags: replaced
+  always:
+    - include_tasks: _reset_config.yaml
+
+- debug:
+    msg: "END junos_acls replaced integration tests on connection={{ ansible_connection }}"

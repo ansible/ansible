@@ -1,0 +1,88 @@
+---
+- debug:
+    msg: "START junos_acls merged integration tests on connection={{ ansible_connection }}"
+
+- block:
+  - include_tasks: _reset_config.yaml
+
+  - set_fact:
+      config:
+        - acls:
+            - aces:
+                - name: ten_dot
+                  port:
+                    bgp: true
+                  source:
+                    address: 10.0.0.0/8
+                  protocol:
+                    tcp: true
+                - name: eleven_dot
+                  port:
+                    bgp: true
+                  source:
+                    address: 11.0.0.0/8
+                  protocol:
+                    tcp: true
+              name: initial_acl
+            - aces:
+                - name: twelve_dot
+                  port:
+                    bgp: true
+                  source:
+                    address: 12.0.0.0/8
+                  protocol:
+                    tcp: true
+              name: second_acl
+            - aces:
+                - name: ssh_rule
+                  port:
+                    range: 22
+                  protocol:
+                    tcp: True
+              name: allow_ssh_rule
+          afi: ipv4
+        - acls:
+            - aces:
+                - name: colon_eleven
+                  port:
+                    range: 631
+                  source:
+                    address: ::11/128
+              name: initial_acl6
+          afi: ipv6
+
+  - name: Merge the provided configuration with the exisiting running configuration
+    junos_acls: &merged
+      config:
+        - acls:
+          - name: allow_ssh_acl
+            aces:
+            - name: ssh_rule
+              port:
+                range: 22
+              protocol:
+                tcp: True
+      state: merged
+    register: result
+
+  - name: Assert the configuration is reflected on host
+    assert:
+      that:
+        - result.changed == True
+        - "{{ config|symmetric_difference(result.after) == [] }}"
+
+  - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+    junos_acls: *merged
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+      that:
+        - result.changed == False
+
+  tags: merged
+  always:
+    - include_tasks: _reset_config.yaml
+
+- debug:
+    msg: "END junos_acls merged integration tests on connection={{ ansible_connection }}"

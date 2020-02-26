@@ -1,0 +1,72 @@
+---
+- debug:
+    msg: "START junos_acls idempotence integration tests on connection={{ ansible_connection }}"
+
+- block:
+  - include_tasks: _reset_config.yaml
+
+  - set_fact:
+      config:
+        - acls:
+            - aces:
+                - name: ten_dot
+                  port:
+                    bgp: true
+                  source:
+                    address: 10.0.0.0/8
+                  protocol:
+                    tcp: true
+                - name: eleven_dot
+                  port:
+                    bgp: true
+                  source:
+                    address: 11.0.0.0/8
+                  protocol:
+                    tcp: true
+              name: initial_acl
+            - aces:
+                - name: twelve_dot
+                  port:
+                    bgp: true
+                  source:
+                    address: 12.0.0.0/8
+                  protocol:
+                    tcp: true
+              name: second_acl
+          afi: ipv4
+        - acls:
+            - aces:
+                - name: colon_eleven
+                  port:
+                    range: 631
+                  source:
+                    address: ::11/128
+              name: initial_acl6
+          afi: ipv6
+
+  - name: Test equivalence
+    junos_acls:
+      config: "{{ config }}"
+      state: merged
+    register: result
+
+  - assert:
+      that:
+        - result.changed == False
+
+  - name: Test idempotence
+    junos_acls:
+      config: "{{ config }}"
+      state: overridden
+    register: result
+
+  - assert:
+      that:
+        - result.changed == False
+
+  tags: idempotence
+  always:
+    - include_tasks: _reset_config.yaml
+
+- debug:
+    msg: "END junos_acls idempotence integration tests on connection={{ ansible_connection }}"
