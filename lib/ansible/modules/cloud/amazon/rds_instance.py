@@ -881,7 +881,6 @@ def get_options_with_changing_values(client, module, parameters):
         if allow_major_version_upgrade is not None:
             parameters['AllowMajorVersionUpgrade'] = allow_major_version_upgrade
 
-
     return parameters
 
 
@@ -1237,7 +1236,7 @@ def main():
         'after': _global_changed,
     }
 
-    module.exit_json(changed=changed,diff=diff, **instance)
+    module.exit_json(changed=changed, diff=diff, **instance)
 
 
 if __name__ == '__main__':
