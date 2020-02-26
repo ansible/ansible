@@ -72,6 +72,7 @@
       assert:
         that:
           - new_key["keys"]|length == 1
+          - new_key["keys"][0]["enable_key_rotation"] == true
 
     - name: Update Policy on key to match AWS Console generate policy
       aws_kms:
