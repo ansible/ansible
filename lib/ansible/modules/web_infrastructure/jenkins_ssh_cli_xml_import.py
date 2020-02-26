@@ -92,15 +92,6 @@ from ansible.module_utils._text import to_native
 
 
 def compile_cli_command(cmd, store, domain, xml):
-    # command = [credential, node, job]
-    # store = credential store
-    # domain = credential domain
-    # xml = string with XML contents or string with XML file location
-
-    # IF xml_type is code, we must stream it to remote file.
-    # IF xml_type is local file, we must copy local file to remote file.
-    # IF xml_type is remote file, just import the fucker.
-
     if 'credential' in cmd:
         command = 'create-credentials-by-xml ' + store + ' ' + domain + ' < ' + xml
     elif 'node' in cmd:
@@ -116,6 +107,7 @@ def write_xml(xml):
     f = open(jenkins_object_file,'w')
     f.write(xml)
     f.close()
+
     return(jenkins_object_file)
 
 
@@ -136,10 +128,12 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
 
     ssh_command = compile_cli_command(cmd_type, store, domain, xml_input)
 
+    temp_open = "ssh -l {user} -p {port} {host} {cmd}".format(user=user, port=port, host=host, cmd=ssh_command
+
     # subprocess.Popen("ssh -l {user} -p {port} {host} {cmd}".format(user=user, port=port, host=host, cmd='ls -l'),
     #                  shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     # return(port)
-    return(ssh_command)
+    return(temp_open)
 
 def main():
     module = AnsibleModule(
