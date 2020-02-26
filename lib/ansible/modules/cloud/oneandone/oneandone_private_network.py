@@ -47,7 +47,7 @@ options:
   api_url:
     description:
       - Custom API URL. Overrides the
-        ONEANDONE_API_URL environement variable.
+        ONEANDONE_API_URL environment variable.
     required: false
   name:
     description:

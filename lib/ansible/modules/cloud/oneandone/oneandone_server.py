@@ -39,12 +39,12 @@ options:
   auth_token:
     description:
       - Authenticating API token provided by 1&1. Overrides the
-        ONEANDONE_AUTH_TOKEN environement variable.
+        ONEANDONE_AUTH_TOKEN environment variable.
     required: true
   api_url:
     description:
       - Custom API URL. Overrides the
-        ONEANDONE_API_URL environement variable.
+        ONEANDONE_API_URL environment variable.
   datacenter:
     description:
       - The datacenter location.
