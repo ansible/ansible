@@ -13,7 +13,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import re
-import q
 from copy import deepcopy
 
 from ansible.module_utils.network.common import utils
@@ -52,12 +51,22 @@ class Lldp_interfacesFacts(object):
 
         objs = []
 
-        resources = data.split('interface')
-        q(resources)
+        data = data.split('interface')
+        resources = []
+
+        for i in range(len(data)):
+            intf = data[i].split('\n')
+            for l in range(1, len(intf)):
+                if not re.search('lldp', intf[l]):
+                    intf[l] = ''
+            intf = list(filter(None, intf))
+            intf = ''.join(i for i in intf)
+            resources.append(intf)
+
         for resource in resources:
-            if resource and re.search(r'lldp', resource):
+            if resource:  # and re.search(r'lldp', resource):
                 obj = self.render_config(self.generated_spec, resource)
-                if obj and len(obj.keys()) > 1:
+                if obj and len(obj.keys()) >= 1:
                     objs.append(obj)
 
         ansible_facts['ansible_network_resources'].pop('lldp_interfaces', None)
@@ -84,11 +93,9 @@ class Lldp_interfacesFacts(object):
         :returns: The generated config
         """
         config = deepcopy(spec)
-
-        match = re.search(r'^ (\S+)\n', conf)
+        match = re.search(r'^ (\S+)', conf)
         if match is None:
             return {}
-        q(conf)
         intf = match.group(1)
         if get_interface_type(intf) == 'unknown':
             return {}
@@ -107,5 +114,4 @@ class Lldp_interfacesFacts(object):
             conf, 'lldp tlv-set management-address')
         config['tlv_set']['vlan'] = utils.parse_conf_arg(
             conf, 'lldp tlv-set vlan')
-        q(config)
         return utils.remove_empties(config)
