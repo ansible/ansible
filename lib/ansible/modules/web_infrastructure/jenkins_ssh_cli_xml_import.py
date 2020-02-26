@@ -103,16 +103,12 @@ def compile_cli_command(cmd, store, domain, xml):
 
     if 'credential' in cmd:
         command = 'create-credentials-by-xml' + store + domain + '<' + xml
-        return('credential')
     elif 'node' in cmd:
         command = 'create-node < ' + xml
-        return('node')
     elif 'job' in cmd:
         command = 'create-job < ' + xml
-        return('job')
 
-    result = command
-    return result
+    return command
 
 
 def flatten_xml(xml):
