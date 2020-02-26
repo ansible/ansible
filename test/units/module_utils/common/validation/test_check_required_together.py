@@ -40,6 +40,7 @@ def test_check_required_together_missing(together_terms):
 
     assert str(e.value) == expected
 
+
 def test_check_required_together_missing_none():
     terms = None
     params = {
@@ -47,6 +48,7 @@ def test_check_required_together_missing_none():
         'baz': 'buzz',
     }
     assert check_required_together(terms, params) == []
+
 
 def test_check_required_together_no_params(together_terms):
     with pytest.raises(TypeError) as te:
