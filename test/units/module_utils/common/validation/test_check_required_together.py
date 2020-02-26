@@ -38,7 +38,7 @@ def test_check_required_together_missing(together_terms):
     with pytest.raises(TypeError) as e:
         check_required_together(together_terms, params)
 
-    assert str(e.value) == expected
+    assert to_native(e.value) == expected
 
 
 def test_check_required_together_missing_none():
