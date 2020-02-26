@@ -665,7 +665,7 @@ def api():
         return json_response({'available_versions': {'v3': 'v3/'}})
     else:
         return json_response({
-            'description': 'FALAXY REST API',
+            'description': 'FALLAXY REST API',
             'current_version': 'v1',
             'available_versions': {'v1': 'v1/', 'v2': 'v2/'},
             'server_version': '6.6.6',

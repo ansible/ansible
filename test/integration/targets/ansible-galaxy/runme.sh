@@ -151,7 +151,7 @@ rm -rf "${role_testdir}"
 #################################
 # ansible-galaxy collection tests
 #################################
-# TODO: Move these to ansible-galaxy-collections
+# TODO: Move these to ansible-galaxy-collection
 
 galaxy_testdir=$(mktemp -d)
 pushd "${galaxy_testdir}"

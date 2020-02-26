@@ -143,6 +143,31 @@
     - '"Installing ''namespace4.name:1.0.0'' to" in install_uri.stdout'
     - (install_uri_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
 
+- name: fail to install a collection with an undefined URL - {{ test_name }}
+  command: ansible-galaxy collection install namespace5.name
+  register: fail_undefined_server
+  failed_when: '"No setting was provided for required configuration plugin_type: galaxy_server plugin: undefined" not in fail_undefined_server.stderr'
+  environment:
+    ANSIBLE_GALAXY_SERVER_LIST: undefined
+
+- name: install a collection with an empty server list - {{ test_name }}
+  command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}'
+  register: install_empty_server_list
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_GALAXY_SERVER_LIST: ''
+
+- name: get result of a collection with an empty server list - {{ test_name }}
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace5/name/MANIFEST.json'
+  register: install_empty_server_list_actual
+
+- name: assert install a collection with an empty server list - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''namespace5.name:1.0.0'' to" in install_empty_server_list.stdout'
+    - (install_empty_server_list_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
+
 - name: remove test collection install directory - {{ test_name }}
   file:
     path: '{{ galaxy_dir }}/ansible_collections'
