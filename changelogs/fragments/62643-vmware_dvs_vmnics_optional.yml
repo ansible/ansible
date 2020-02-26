@@ -1,0 +1,2 @@
+bugfixes:
+  - Made vmnics attributes optional when creating DVS as they are optional on the API and GUI as well.
