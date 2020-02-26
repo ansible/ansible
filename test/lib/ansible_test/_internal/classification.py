@@ -728,9 +728,6 @@ class PathMapper:
         if path.startswith('test/ansible_test/'):
             return minimal  # these tests are not invoked from ansible-test
 
-        if path.startswith('test/legacy/'):
-            return minimal
-
         if path.startswith('test/lib/ansible_test/config/'):
             if name.startswith('cloud-config-'):
                 # noinspection PyTypeChecker
