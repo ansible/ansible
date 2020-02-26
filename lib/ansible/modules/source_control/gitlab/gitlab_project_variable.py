@@ -59,6 +59,7 @@ options:
       - Support for masked values requires GitLab >= 11.10.
       - A I(value) must be a string or a number.
       - When a value is masked, it must be in Base64 and have a length of at least 8 characters.
+        See gitlab documentation on acceptable values for a masked variable (https://docs.gitlab.com/ce/ci/variables/#masked-variables).
     default: {}
     type: dict
 '''
