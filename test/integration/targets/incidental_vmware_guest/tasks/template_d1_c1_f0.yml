@@ -1,0 +1,105 @@
+- name: Create VMs with the poweredoff state
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    validate_certs: no
+    folder: '{{ f0 }}'
+    name: 'test_vm1'
+    state: poweredoff
+    guest_id: debian8_64Guest
+    disk:
+    - size_gb: 1
+      type: thin
+      datastore: '{{ rw_datastore }}'
+    hardware:
+      memory_mb: 128
+      num_cpus: 1
+      scsi: paravirtual
+    cdrom:
+      type: iso
+      iso_path: "[{{ ro_datastore }}] fedora.iso"
+    networks:
+    - name: VM Network
+
+- name: ensure that VM1 are not flagged as templates
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    folder: "{{ virtual_machines[1].folder }}"
+    name: "{{ virtual_machines[1].name }}"
+    state: present
+    is_template: False
+  register: no_template_initial
+
+- debug: var=no_template_initial
+
+- name: ensure no changes were made
+  assert:
+    that:
+        - not (no_template_initial is changed)
+
+- name: convert VM1 to template
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    folder: "{{ virtual_machines[1].folder }}"
+    name: "{{ virtual_machines[1].name }}"
+    state: present
+    is_template: True
+  register: convert_to_template
+
+- debug: var=convert_to_template
+
+- name: ensure that changes were made
+  assert:
+    that:
+        - convert_to_template is changed
+
+- name: make double sure that VM1 is template
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    folder: "{{ virtual_machines[1].folder }}"
+    name: "{{ virtual_machines[1].name }}"
+    state: present
+    is_template: True
+  register: still_templates
+
+- debug: var=still_templates
+
+- name: ensure that no changes were made
+  assert:
+    that:
+        - not (still_templates is changed)
+
+# To avoid the follow error of vcsim: VirtualMachine:vm-67 does not implement: MarkAsVirtualMachine
+- when: vcsim is not defined
+  block:
+    - name: convert template back to VMs
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter: "{{ dc1 }}"
+        folder: "{{ virtual_machines[1].folder }}"
+        name: "{{ virtual_machines[1].name }}"
+        state: present
+        is_template: False
+      register: revert_to_vm
+    - debug: var=revert_to_vm
+    - name: ensure that changes were made
+      assert:
+        that:
+            - revert_to_vm is changed

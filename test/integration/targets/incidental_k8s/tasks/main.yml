@@ -1,0 +1,92 @@
+- set_fact:
+    virtualenv: "{{ remote_tmp_dir }}/virtualenv"
+    virtualenv_command: "{{ ansible_python_interpreter }} -m virtualenv"
+
+- set_fact:
+    virtualenv_interpreter: "{{ virtualenv }}/bin/python"
+
+- pip:
+    name: virtualenv
+
+# Test graceful failure for missing kubernetes-validate
+
+- pip:
+    name:
+      - openshift>=0.9.2
+      - coverage
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: validate_not_installed.yml
+  vars:
+    ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+
+- file:
+    path: "{{ virtualenv }}"
+    state: absent
+  no_log: yes
+
+# Test validate with kubernetes-validate
+
+- pip:
+    name:
+      - kubernetes-validate==1.12.0
+      - openshift>=0.9.2
+      - coverage
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: validate_installed.yml
+  vars:
+    ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+    playbook_namespace: ansible-test-k8s-validate
+
+- file:
+    path: "{{ virtualenv }}"
+    state: absent
+  no_log: yes
+
+# Test graceful failure for older versions of openshift
+
+- pip:
+    name:
+      - openshift==0.6.0
+      - kubernetes==6.0.0
+      - coverage
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: older_openshift_fail.yml
+  vars:
+    ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+    recreate_crd_default_merge_expectation: recreate_crd is failed
+    playbook_namespace: ansible-test-k8s-older-openshift
+
+- file:
+    path: "{{ virtualenv }}"
+    state: absent
+  no_log: yes
+
+# Run full test suite
+
+- pip:
+    name:
+      - openshift>=0.9.2
+      - coverage
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: full_test.yml
+  vars:
+    ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+    create_crd_with_apply: no
+    playbook_namespace: ansible-test-k8s-full
+
+- file:
+    path: "{{ virtualenv }}"
+    state: absent
+  no_log: yes

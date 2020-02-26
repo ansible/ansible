@@ -1,0 +1,27 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: create a VM with the poweroff status
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ item.name }}"
+    state: poweredoff
+  with_items: "{{ virtual_machines }}"
+  register: poweroff_d1_c1_f0
+
+- debug:
+    var: poweroff_d1_c1_f0
+
+- name: make sure changes were made
+  assert:
+    that:
+      - poweroff_d1_c1_f0.results[0].instance.hw_power_status == "poweredOff"
+
+- name: make sure no changes were made (the VMs are already off)
+  assert:
+    that:
+      - poweroff_d1_c1_f0.results[0].changed|bool == false

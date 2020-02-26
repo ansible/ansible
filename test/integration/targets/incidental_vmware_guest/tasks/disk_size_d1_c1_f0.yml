@@ -1,0 +1,31 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: create new VMs with invalid disk size
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 128
+    disk:
+        - size: 0gb
+          type: eagerzeroedthick
+          datastore: "{{ rw_datastore }}"
+    state: poweredoff
+    folder: "{{ f0 }}"
+  register: disk_size_d1_c1_f0
+  ignore_errors: True
+
+- debug: var=disk_size_d1_c1_f0
+
+- name: assert that changes were made
+  assert:
+    that:
+        - not (disk_size_d1_c1_f0 is changed)

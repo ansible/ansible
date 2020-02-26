@@ -227,6 +227,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
             messages += self.check_ci_group(
                 targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], include=True, directories=False, errors=False)),
                 find=self.format_shippable_group_alias(cloud, 'cloud'),
+                find_incidental=['shippable/%s/incidental/' % cloud, 'shippable/cloud/incidental/'],
             )
 
         return messages
@@ -246,17 +247,23 @@ class IntegrationAliasesTest(SanityVersionNeutral):
 
         return messages
 
-    def check_ci_group(self, targets, find):
+    def check_ci_group(self, targets, find, find_incidental=None):
         """
         :type targets: tuple[CompletionTarget]
         :type find: str
+        :type find_incidental: list[str] | None
         :rtype: list[SanityMessage]
         """
         all_paths = set(target.path for target in targets)
         supported_paths = set(target.path for target in filter_targets(targets, [find], include=True, directories=False, errors=False))
         unsupported_paths = set(target.path for target in filter_targets(targets, [self.UNSUPPORTED], include=True, directories=False, errors=False))
 
-        unassigned_paths = all_paths - supported_paths - unsupported_paths
+        if find_incidental:
+            incidental_paths = set(target.path for target in filter_targets(targets, find_incidental, include=True, directories=False, errors=False))
+        else:
+            incidental_paths = set()
+
+        unassigned_paths = all_paths - supported_paths - unsupported_paths - incidental_paths
         conflicting_paths = supported_paths & unsupported_paths
 
         unassigned_message = 'missing alias `%s` or `%s`' % (find.strip('/'), self.UNSUPPORTED.strip('/'))

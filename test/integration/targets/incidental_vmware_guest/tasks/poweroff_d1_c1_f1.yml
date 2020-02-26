@@ -1,0 +1,22 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# https://github.com/ansible/ansible/issues/25011
+# Sending "-folders 1" to vcsim nests the datacenter under
+# the folder so that the path prefix is no longer /vm
+#
+# /F0/DC0/vm/F0/DC0_H0_VM0
+
+- name: set state to poweredoff on all VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ item.name }}"
+    state: poweredoff
+    folder: "{{ item.folder }}"
+  with_items: "{{ virtual_machines }}"
+  register: poweroff_d1_c1_f1
+- debug: var=poweroff_d1_c1_f1

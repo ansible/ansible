@@ -1,0 +1,164 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: create new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    #template: "{{ item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    hardware:
+        num_cpus: 1
+        num_cpu_cores_per_socket: 1
+        memory_mb: 128
+        hotadd_memory: true
+        hotadd_cpu: false
+        # vcsim does not support these settings, so commenting
+        # till the time.
+        # memory_reservation: 128
+        # memory_reservation_lock: False
+        # nested_virt: True
+        # hotremove_cpu: True
+        # mem_limit: 8096
+        # mem_reservation: 4096
+        # cpu_limit: 8096
+        # cpu_reservation: 4096
+        max_connections: 10
+    disk:
+        - size: 1gb
+          type: thin
+          datastore: "{{ rw_datastore }}"
+    state: poweredoff
+    folder: '{{ f0 }}'
+  register: clone_d1_c1_f0
+
+- debug: var=clone_d1_c1_f0
+
+- name: assert that changes were made
+  assert:
+    that:
+        - clone_d1_c1_f0 is changed
+
+- name: create the VM again
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    #template: "{{ item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    hardware:
+        num_cpus: 1
+        num_cpu_cores_per_socket: 1
+        memory_mb: 128
+    disk:
+        - size: 1gb
+          type: thin
+          datastore: "{{ rw_datastore }}"
+    state: poweredoff
+    folder: '{{ f0 }}'
+  register: clone_d1_c1_f0_recreate
+
+- debug: var=clone_d1_c1_f0_recreate
+
+- name: assert that no changes were made after re-creating
+  assert:
+    that:
+        - not (clone_d1_c1_f0_recreate is changed)
+
+- name: modify the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    #template: "{{ item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    hardware:
+        num_cpus: 2
+        memory_mb: 128
+    state: present
+    folder: '{{ f0 }}'
+  register: clone_d1_c1_f0_modify
+
+- debug: var=clone_d1_c1_f0_modify
+
+- name: assert that changes were made with modification
+  assert:
+    that:
+        - clone_d1_c1_f0_modify is changed
+
+- name: re-modify the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    #template: "{{ item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    hardware:
+        num_cpus: 2
+        memory_mb: 128
+    state: present
+    folder: '{{ f0 }}'
+  register: clone_d1_c1_f0_remodify
+
+- debug: var=clone_d1_c1_f0_remodify
+
+- name: assert that no changes were made when re-modified
+  assert:
+    that:
+        - not (clone_d1_c1_f0_remodify is changed)
+
+- name: delete the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    #template: "{{ item|basename }}"
+    #guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    state: absent
+    folder: '{{ f0 }}'
+  register: clone_d1_c1_f0_delete
+
+- debug: var=clone_d1_c1_f0_delete
+
+- name: assert that changes were made with deletion
+  assert:
+    that:
+        - clone_d1_c1_f0_delete is changed
+
+- name: re-delete the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    #template: "{{ item|basename }}"
+    #guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    state: absent
+    folder: '{{ f0 }}'
+  register: clone_d1_c1_f0_redelete
+
+- debug: var=clone_d1_c1_f0_redelete
+
+- name: assert that no changes were made with redeletion
+  assert:
+    that:
+        - not (clone_d1_c1_f0_redelete is changed)

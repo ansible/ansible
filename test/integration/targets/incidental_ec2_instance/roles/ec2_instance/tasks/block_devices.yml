@@ -1,0 +1,82 @@
+- block:
+  - name: "New instance with an extra block device"
+    ec2_instance:
+      state: present
+      name: "{{ resource_prefix }}-test-ebs-vols"
+      image_id: "{{ ec2_ami_image }}"
+      vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      volumes:
+      - device_name: /dev/sdb
+        ebs:
+          volume_size: 20
+          delete_on_termination: true
+          volume_type: standard
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+      instance_type: "{{ ec2_instance_type }}"
+      wait: true
+    register: block_device_instances
+
+  - name: "Gather instance info"
+    ec2_instance_info:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-ebs-vols"
+    register: block_device_instances_info
+
+  - assert:
+      that:
+      - block_device_instances is not failed
+      - block_device_instances is changed
+      - block_device_instances_info.instances[0].block_device_mappings[0]
+      - block_device_instances_info.instances[0].block_device_mappings[1]
+      - block_device_instances_info.instances[0].block_device_mappings[1].device_name == '/dev/sdb'
+
+  - name: "New instance with an extra block device (check mode)"
+    ec2_instance:
+      state: present
+      name: "{{ resource_prefix }}-test-ebs-vols-checkmode"
+      image_id: "{{ ec2_ami_image }}"
+      vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      volumes:
+      - device_name: /dev/sdb
+        ebs:
+          volume_size: 20
+          delete_on_termination: true
+          volume_type: standard
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+      instance_type: "{{ ec2_instance_type }}"
+    check_mode: yes
+
+  - name: "fact presented ec2 instance"
+    ec2_instance_info:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-ebs-vols"
+        "instance-state-name": "running"
+    register: presented_instance_fact
+
+  - name: "fact checkmode ec2 instance"
+    ec2_instance_info:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-ebs-vols-checkmode"
+    register: checkmode_instance_fact
+
+  - name: "Confirm whether the check mode is working normally."
+    assert:
+      that:
+        - "{{ presented_instance_fact.instances | length }} > 0"
+        - "{{ checkmode_instance_fact.instances | length }} == 0"
+
+  - name: "Terminate instances"
+    ec2_instance:
+      state: absent
+      instance_ids: "{{ block_device_instances.instance_ids }}"
+
+  always:
+  - name: "Terminate block_devices instances"
+    ec2_instance:
+      state: absent
+      filters:
+        "tag:TestId": "{{ ec2_instance_tag_TestId }}"
+      wait: yes
+    ignore_errors: yes

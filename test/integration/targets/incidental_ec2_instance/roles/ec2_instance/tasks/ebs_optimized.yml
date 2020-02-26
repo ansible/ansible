@@ -1,0 +1,41 @@
+- block:
+  - name: "Make EBS optimized instance in the testing subnet of the test VPC"
+    ec2_instance:
+      state: present
+      name: "{{ resource_prefix }}-test-ebs-optimized-instance-in-vpc"
+      image_id: "{{ ec2_ami_image }}"
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+      security_groups: "{{ sg.group_id }}"
+      vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      ebs_optimized: true
+      instance_type: t3.nano
+      wait: false
+    register: ebs_opt_in_vpc
+
+  - name: "Get ec2 instance info"
+    ec2_instance_info:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-ebs-optimized-instance-in-vpc"
+    register: ebs_opt_instance_info
+
+  - name: "Assert instance is ebs_optimized"
+    assert:
+      that:
+        - "{{ ebs_opt_instance_info.instances.0.ebs_optimized }}"
+
+  - name: "Terminate instances"
+    ec2_instance:
+      state: absent
+      instance_ids: "{{ ebs_opt_in_vpc.instance_ids }}"
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+
+  always:
+  - name: "Terminate ebs_optimzed instances"
+    ec2_instance:
+      state: absent
+      filters:
+        "tag:TestId": "{{ ec2_instance_tag_TestId }}"
+      wait: yes
+    ignore_errors: yes

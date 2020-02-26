@@ -1,0 +1,375 @@
+# TODO: This is the only way I could get the kubeconfig, I don't know why. Running the lookup outside of debug seems to return an empty string
+#- debug: msg={{ lookup('env', 'K8S_AUTH_KUBECONFIG') }}
+#  register: kubeconfig
+
+# Kubernetes resources
+
+- include_tasks: delete.yml
+- include_tasks: apply.yml
+- include_tasks: waiter.yml
+
+- block:
+    - name: Create a namespace
+      k8s:
+        name: testing
+        kind: Namespace
+      register: output
+
+    - name: show output
+      debug:
+        var: output
+
+    - name: Setting validate_certs to true causes a failure
+      k8s:
+        name: testing
+        kind: Namespace
+        validate_certs: yes
+      ignore_errors: yes
+      register: output
+
+    - name: assert that validate_certs caused a failure (and therefore was correctly translated to verify_ssl)
+      assert:
+        that:
+          - output is failed
+
+    - name: k8s_info works with empty resources
+      k8s_info:
+        kind: Deployment
+        namespace: testing
+        api_version: extensions/v1beta1
+      register: k8s_info
+
+    - name: assert that k8s_info is in correct format
+      assert:
+        that:
+          - "'resources' in k8s_info"
+          - not k8s_info.resources
+
+    - name: Create a service
+      k8s:
+        state: present
+        resource_definition: &svc
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: web
+            namespace: testing
+            labels:
+              app: galaxy
+              service: web
+          spec:
+            selector:
+              app: galaxy
+              service: web
+            ports:
+            - protocol: TCP
+              targetPort: 8000
+              name: port-8000-tcp
+              port: 8000
+      register: output
+
+    - name: show output
+      debug:
+        var: output
+
+    - name: Create the service again
+      k8s:
+        state: present
+        resource_definition: *svc
+      register: output
+
+    - name: Service creation should be idempotent
+      assert:
+        that: not output.changed
+
+    - name: Create a ConfigMap
+      k8s:
+        kind: ConfigMap
+        name: test-force-update
+        namespace: testing
+        definition:
+          data:
+            key: value
+
+    - name: Force update ConfigMap
+      k8s:
+        kind: ConfigMap
+        name: test-force-update
+        namespace: testing
+        definition:
+          data:
+            key: newvalue
+        force: yes
+
+    - name: Create PVC
+      k8s:
+        state: present
+        inline: &pvc
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: elastic-volume
+            namespace: testing
+          spec:
+            resources:
+              requests:
+                storage: 5Gi
+            accessModes:
+            - ReadWriteOnce
+
+    - name: Show output
+      debug:
+        var: output
+
+    - name: Create the PVC again
+      k8s:
+        state: present
+        inline: *pvc
+
+    - name: PVC creation should be idempotent
+      assert:
+        that: not output.changed
+
+    - name: Create deployment
+      k8s:
+        state: present
+        inline: &deployment
+          apiVersion: extensions/v1beta1
+          kind: Deployment
+          metadata:
+            name: elastic
+            labels:
+              app: galaxy
+              service: elastic
+            namespace: testing
+          spec:
+            template:
+              metadata:
+                labels:
+                  app: galaxy
+                  service: elastic
+              spec:
+                containers:
+                  - name: elastic
+                    volumeMounts:
+                    - mountPath: /usr/share/elasticsearch/data
+                      name: elastic-volume
+                    command: ['elasticsearch']
+                    image: 'ansible/galaxy-elasticsearch:2.4.6'
+                volumes:
+                - name: elastic-volume
+                  persistentVolumeClaim:
+                    claimName: elastic-volume
+            replicas: 1
+            strategy:
+              type: RollingUpdate
+      register: output
+
+    - name: Show output
+      debug:
+        var: output
+
+    - name: Create deployment again
+      k8s:
+        state: present
+        inline: *deployment
+      register: output
+
+    - name: Deployment creation should be idempotent
+      assert:
+        that: not output.changed
+
+    - debug:
+        var: k8s_openshift
+
+    - include: openshift.yml
+      when: k8s_openshift | bool
+
+    ### Type tests
+    - name: Create a namespace from a string
+      k8s:
+        definition: |+
+          ---
+          kind: Namespace
+          apiVersion: v1
+          metadata:
+            name: testing1
+
+    - name: Namespace should exist
+      k8s_info:
+        kind: Namespace
+        api_version: v1
+        name: testing1
+      register: k8s_info_testing1
+      failed_when: not k8s_info_testing1.resources or k8s_info_testing1.resources[0].status.phase != "Active"
+
+    - name: Create resources from a multidocument yaml string
+      k8s:
+        definition: |+
+          ---
+          kind: Namespace
+          apiVersion: v1
+          metadata:
+            name: testing2
+          ---
+          kind: Namespace
+          apiVersion: v1
+          metadata:
+            name: testing3
+
+    - name: Lookup namespaces
+      k8s_info:
+        api_version: v1
+        kind: Namespace
+        name: "{{ item }}"
+      loop:
+        - testing2
+        - testing3
+      register: k8s_namespaces
+
+    - name: Resources should exist
+      assert:
+        that: item.resources[0].status.phase == 'Active'
+      loop: "{{ k8s_namespaces.results }}"
+
+    - name: Delete resources from a multidocument yaml string
+      k8s:
+        state: absent
+        definition: |+
+          ---
+          kind: Namespace
+          apiVersion: v1
+          metadata:
+            name: testing2
+          ---
+          kind: Namespace
+          apiVersion: v1
+          metadata:
+            name: testing3
+
+    - name: Lookup namespaces
+      k8s_info:
+        api_version: v1
+        kind: Namespace
+        name: "{{ item }}"
+      loop:
+        - testing2
+        - testing3
+      register: k8s_namespaces
+
+    - name: Resources should not exist
+      assert:
+        that:
+          - not item.resources or item.resources[0].status.phase == "Terminating"
+      loop: "{{ k8s_namespaces.results }}"
+
+    - name: Create resources from a list
+      k8s:
+        definition:
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing4
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing5
+
+    - name: Lookup namespaces
+      k8s_info:
+        api_version: v1
+        kind: Namespace
+        name: "{{ item }}"
+      loop:
+        - testing4
+        - testing5
+      register: k8s_namespaces
+
+    - name: Resources should exist
+      assert:
+        that: item.resources[0].status.phase == 'Active'
+      loop: "{{ k8s_namespaces.results }}"
+
+    - name: Delete resources from a list
+      k8s:
+        state: absent
+        definition:
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing4
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing5
+
+    - k8s_info:
+        api_version: v1
+        kind: Namespace
+        name: "{{ item }}"
+      loop:
+        - testing4
+        - testing5
+      register: k8s_info
+
+    - name: Resources are terminating if still in results
+      assert:
+        that: not item.resources or item.resources[0].status.phase == "Terminating"
+      loop: "{{ k8s_info.results }}"
+
+    - name: Create resources from a yaml string ending with ---
+      k8s:
+        definition: |+
+          ---
+          kind: Namespace
+          apiVersion: v1
+          metadata:
+            name: testing6
+          ---
+
+    - name: Namespace should exist
+      k8s_info:
+        kind: Namespace
+        api_version: v1
+        name: testing6
+      register: k8s_info_testing6
+      failed_when: not k8s_info_testing6.resources or k8s_info_testing6.resources[0].status.phase != "Active"
+
+    - include_tasks: crd.yml
+    - include_tasks: lists.yml
+    - include_tasks: append_hash.yml
+
+  always:
+    - name: Delete all namespaces
+      k8s:
+        state: absent
+        definition:
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing1
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing2
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing3
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing4
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing5
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing6
+      ignore_errors: yes

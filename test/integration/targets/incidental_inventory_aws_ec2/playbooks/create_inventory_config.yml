@@ -1,0 +1,11 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  vars:
+    template_name: "../templates/{{ template | default('inventory.yml') }}"
+  tasks:
+    - name: write inventory config file
+      copy:
+        dest: ../test.aws_ec2.yml
+        content: "{{ lookup('template', template_name) }}"

@@ -1,0 +1,131 @@
+- name: Fix resource prefix
+  set_fact:
+    fixed_resource_prefix: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+
+- name: Fix resource prefix
+  set_fact:
+    funcapp_name_basic: "fa{{ fixed_resource_prefix }}basic"
+    funcapp_name_container: "fa{{ fixed_resource_prefix }}container"
+    funcapp_name_params: "fa{{ fixed_resource_prefix }}params"
+    storage_account_name: "sa{{ fixed_resource_prefix }}"
+    plan_name: "ap{{ fixed_resource_prefix }}"
+
+- name: create storage account for function apps
+  azure_rm_storageaccount:
+    resource_group: '{{ resource_group }}'
+    name: "{{ storage_account_name }}"
+    account_type: Standard_LRS
+
+- name: create basic function app
+  azure_rm_functionapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ funcapp_name_basic }}"
+    storage_account: "{{ storage_account_name }}"
+  register: output
+
+- name: assert the function was created
+  assert:
+    that: output.changed
+
+- name: list facts for function
+  azure_rm_functionapp_info:
+    resource_group: '{{ resource_group }}'
+    name: "{{ funcapp_name_basic }}"
+  register: results
+
+- name: assert the facts were retrieved
+  assert:
+    that:
+    - results.ansible_info.azure_functionapps|length == 1
+    - results.ansible_info.azure_functionapps[0].name == "{{ funcapp_name_basic }}"
+
+- name: delete basic function app
+  azure_rm_functionapp:
+    resource_group: '{{ resource_group }}'
+    name: "{{ funcapp_name_basic }}"
+    state: absent
+  register: output
+
+- name: assert the function was deleted
+  assert:
+    that: output.changed
+
+- name: create a function with app settings
+  azure_rm_functionapp:
+    resource_group: '{{ resource_group }}'
+    name: "{{ funcapp_name_params }}"
+    storage_account: "{{ storage_account_name }}"
+    app_settings:
+      hello: world
+      things: more stuff
+      FUNCTIONS_EXTENSION_VERSION: "~2"
+  register: output
+
+- name: assert the function with app settings was created
+  assert:
+    that: output.changed
+
+- name: change app settings
+  azure_rm_functionapp:
+    resource_group: '{{ resource_group }}'
+    name: "{{ funcapp_name_params }}"
+    storage_account: "{{ storage_account_name }}"
+    app_settings:
+      hello: world
+      things: more stuff
+      FUNCTIONS_EXTENSION_VERSION: "~2"
+      another: one
+  register: output
+
+- name: assert the function was changed
+  assert:
+    that: output.changed
+
+- name: delete the function app
+  azure_rm_functionapp:
+    resource_group: '{{ resource_group }}'
+    name: "{{ funcapp_name_params }}"
+    state: absent
+  register: output
+
+- name: assert the function was deleted
+  assert:
+    that: output.changed
+
+- name: Create a linux app service plan
+  azure_rm_appserviceplan:
+    resource_group: "{{ resource_group }}"
+    name: "{{ plan_name }}"
+    sku: S1
+    is_linux: true
+    number_of_workers: 1
+
+- name: "Create azure function app {{ function_app }}"
+  azure_rm_functionapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ funcapp_name_container }}"
+    storage_account: "{{ storage_account_name }}"
+    plan:
+        resource_group: "{{ resource_group }}"
+        name: "{{ plan_name }}"
+    container_settings:
+        name: httpd
+    app_settings:
+        FUNCTIONS_EXTENSION_VERSION: "~2"
+  register: output
+
+- name: assert the function was changed
+  assert:
+    that: output.changed
+
+- name: delete the function app
+  azure_rm_functionapp:
+    resource_group: '{{ resource_group }}'
+    name: "{{ funcapp_name_container }}"
+    state: absent
+
+- name: delete storage account
+  azure_rm_storageaccount:
+    resource_group: '{{ resource_group }}'
+    name: "{{ storage_account_name }}"
+    state: absent

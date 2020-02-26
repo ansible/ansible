@@ -1,0 +1,23 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Perform operation on non-existent VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "non_existent_vm"
+    datacenter: "{{ dc1 }}"
+    folder: "{{ f0 }}"
+    state: poweredoff
+  register: non_existent_vm_ops
+  ignore_errors: yes
+- debug: var=non_existent_vm_ops
+- name: assert that changes were not made
+  assert:
+    that:
+      - not (non_existent_vm_ops is changed)
+      - "'msg' in non_existent_vm_ops"
+      - "'Unable to find the datastore with given parameters.' in non_existent_vm_ops.msg"

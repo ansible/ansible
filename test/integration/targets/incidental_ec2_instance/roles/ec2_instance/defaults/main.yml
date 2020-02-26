@@ -1,0 +1,14 @@
+---
+# defaults file for ec2_instance
+ec2_instance_owner: 'integration-run-{{ resource_prefix }}'
+ec2_instance_type: 't3.micro'
+ec2_instance_tag_TestId: '{{ resource_prefix }}-{{ inventory_hostname }}'
+ec2_ami_name: 'amzn2-ami-hvm-2.*-x86_64-gp2'
+
+vpc_name: '{{ resource_prefix }}-vpc'
+vpc_seed: '{{ resource_prefix }}'
+vpc_cidr: '10.{{ 256 | random(seed=vpc_seed) }}.0.0/16'
+subnet_a_cidr: '10.{{ 256 | random(seed=vpc_seed) }}.32.0/24'
+subnet_a_startswith: '10.{{ 256 | random(seed=vpc_seed) }}.32.'
+subnet_b_cidr: '10.{{ 256 | random(seed=vpc_seed) }}.33.0/24'
+subnet_b_startswith: '10.{{ 256 | random(seed=vpc_seed) }}.33.'
