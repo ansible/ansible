@@ -128,7 +128,7 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
 
     ssh_command = compile_cli_command(cmd_type, store, domain, xml_input)
 
-    temp_open = "ssh -l {user} -p {port} {host} {cmd}".format(user=user, port=port, host=host, cmd=ssh_command
+    temp_open = "ssh -l " + user + " -p " + port + " " + host + " " + ssh_command
 
     # subprocess.Popen("ssh -l {user} -p {port} {host} {cmd}".format(user=user, port=port, host=host, cmd='ls -l'),
     #                  shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
