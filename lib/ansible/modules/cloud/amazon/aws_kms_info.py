@@ -107,6 +107,11 @@ keys:
       type: str
       returned: always
       sample: false
+    enable_key_rotation:
+      description: Whether the automatically key rotation every year is enabled.
+      type: bool
+      returned: always
+      sample: false
     aliases:
       description: list of aliases associated with the key
       type: list
@@ -360,6 +365,8 @@ def get_key_details(connection, module, key_id, tokens=None):
                          exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
     result['aliases'] = aliases.get(result['KeyId'], [])
+    current_rotation_status = connection.get_key_rotation_status(KeyId=key_id)
+    result['enable_key_rotation'] = current_rotation_status.get('KeyRotationEnabled')
 
     if module.params.get('pending_deletion'):
         return camel_dict_to_snake_dict(result)
