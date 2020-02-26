@@ -756,6 +756,8 @@ from ansible.module_utils.six import string_types
 
 from time import sleep
 
+_global_changed = dict()
+
 try:
     from botocore.exceptions import ClientError, BotoCoreError, WaiterError
 except ImportError:
@@ -956,6 +958,9 @@ def get_changing_options_with_inconsistent_keys(modify_params, instance, purge_c
         else:
             changing_params[option] = desired_option
 
+    if changing_params:
+        _global_changed['changing_params_with_inconsistent_keys'] = changing_params
+
     return changing_params
 
 
@@ -969,6 +974,9 @@ def get_changing_options_with_consistent_keys(modify_params, instance):
             current_option = instance[param]
         if modify_params[param] != current_option:
             changing_params[param] = modify_params[param]
+
+    if changing_params:
+        _global_changed['changing_params_with_consistent_keys'] = changing_params
 
     return changing_params
 
@@ -1224,7 +1232,12 @@ def main():
     if pending_processor_features is not None:
         instance['pending_modified_values']['processor_features'] = pending_processor_features
 
-    module.exit_json(changed=changed, **instance)
+    diff = {
+        'before': 'TODO',
+        'after': _global_changed,
+    }
+
+    module.exit_json(changed=changed,diff=diff, **instance)
 
 
 if __name__ == '__main__':
