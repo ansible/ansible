@@ -229,8 +229,7 @@ class Acls(ConfigBase):
                                         if key != 'range':
                                             val = ace[end]['port_protocol'][
                                                 key]
-                                            if val.isdigit() and int(
-                                                    val) in port_protocol.keys(
+                                            if val.isdigit() and int(val) in port_protocol.keys(
                                             ):
                                                 ace[end]['port_protocol'][
                                                     key] = port_protocol[int(

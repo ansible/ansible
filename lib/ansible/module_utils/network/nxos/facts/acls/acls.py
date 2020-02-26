@@ -73,7 +73,6 @@ class AclsFacts(object):
 
         ansible_facts['ansible_network_resources'].pop('acls', None)
         facts = {}
-
         if objs:
             params = utils.validate_config(self.argument_spec,
                                            {'config': objs})

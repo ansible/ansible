@@ -70,34 +70,32 @@ class AclsArgs(object):  # pylint: disable=R0903
                                             ]],
                                             'options': {
                                                 'eq': {
-                                                    'type': 'int'
+                                                    'type': 'str'
                                                 },
                                                 'gt': {
-                                                    'type': 'int'
+                                                    'type': 'str'
                                                 },
                                                 'lt': {
-                                                    'type': 'int'
+                                                    'type': 'str'
                                                 },
                                                 'neq': {
-                                                    'type': 'int'
+                                                    'type': 'str'
                                                 },
                                                 'range': {
                                                     'options': {
                                                         'end': {
-                                                            'type': 'int'
+                                                            'type': 'str'
                                                         },
                                                         'start': {
-                                                            'type': 'int'
+                                                            'type': 'str'
                                                         }
                                                     },
                                                     'required_together':
                                                     [['start', 'end']],
-                                                    'type':
-                                                    'dict'
+                                                    'type': 'dict'
                                                 }
                                             },
-                                            'type':
-                                            'dict'
+                                            'type': 'dict'
                                         },
                                         'prefix': {
                                             'type': 'str'
@@ -108,8 +106,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                     },
                                     'required_together':
                                     [['address', 'wildcard_bits']],
-                                    'type':
-                                    'dict'
+                                    'type': 'dict'
                                 },
                                 'dscp': {
                                     'type': 'str'
@@ -356,24 +353,24 @@ class AclsArgs(object):  # pylint: disable=R0903
                                              ['eq', 'gt', 'neq', 'range']],
                                             'options': {
                                                 'eq': {
-                                                    'type': 'int'
+                                                    'type': 'str'
                                                 },
                                                 'gt': {
-                                                    'type': 'int'
+                                                    'type': 'str'
                                                 },
                                                 'lt': {
-                                                    'type': 'int'
+                                                    'type': 'str'
                                                 },
                                                 'neq': {
-                                                    'type': 'int'
+                                                    'type': 'str'
                                                 },
                                                 'range': {
                                                     'options': {
                                                         'end': {
-                                                            'type': 'int'
+                                                            'type': 'str'
                                                         },
                                                         'start': {
-                                                            'type': 'int'
+                                                            'type': 'str'
                                                         }
                                                     },
                                                     'type': 'dict'
