@@ -288,6 +288,10 @@ def list_key_policies_with_backoff(connection, key_id):
 def get_key_policy_with_backoff(connection, key_id, policy_name):
     return connection.get_key_policy(KeyId=key_id, PolicyName=policy_name)
 
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def get_enable_key_rotation_with_backoff(connection, key_id):
+    current_rotation_status = connection.get_key_rotation_status(KeyId=key_id)
+    return current_rotation_status.get('KeyRotationEnabled')
 
 def get_kms_tags(connection, module, key_id):
     # Handle pagination here as list_resource_tags does not have
@@ -365,8 +369,7 @@ def get_key_details(connection, module, key_id, tokens=None):
                          exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
     result['aliases'] = aliases.get(result['KeyId'], [])
-    current_rotation_status = connection.get_key_rotation_status(KeyId=key_id)
-    result['enable_key_rotation'] = current_rotation_status.get('KeyRotationEnabled')
+    result['enable_key_rotation'] = get_enable_key_rotation_with_backoff(connection, key_id)
 
     if module.params.get('pending_deletion'):
         return camel_dict_to_snake_dict(result)
