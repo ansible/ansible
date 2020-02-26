@@ -3907,6 +3907,8 @@ files:
     migrated_to: google.cloud
   test/integration/targets/hwc_:
     maintainers: $team_huawei
+  test/integration/targets/incidental_:
+    notified: mattclay
   test/integration/targets/inventory_docker: *docker
   test/integration/targets/inventory_docker_swarm:
     <<: *docker
@@ -3943,6 +3945,8 @@ files:
     notified: mattclay
   test/sanity/ignore.txt:
     notified: tremble
+  test/support/:
+    notified: mattclay
   test/units/module_utils/docker/:
     <<: *docker
     support: community
@@ -4043,6 +4047,8 @@ files:
   hacking/aws_config/:
     maintainers: $team_aws
   hacking/report.py:
+    notified: mattclay
+  hacking/shippable/:
     notified: mattclay
   shippable.yml:
     notified: mattclay
