@@ -67,11 +67,11 @@
       - result.databases.{{ db_default }}.languages
       - result.databases.{{ db_default }}.namespaces
       - result.databases.{{ db_default }}.extensions
+      - result.databases.{{ test_db }}.subscriptions.{{ test_subscription }}
+      - result.databases.{{ test_db }}.subscriptions.{{ test_subscription2 }}
       - result.settings
       - result.tablespaces
       - result.roles
-      - result.subscriptions.{{ test_db }}.{{ test_subscription }}
-      - result.subscriptions.{{ test_db }}.{{ test_subscription2 }}
 
   - name: postgresql_info - check filter param passed by list
     <<: *task_parameters
@@ -81,14 +81,11 @@
       filter:
         - ver*
         - rol*
-        - subscr*
 
   - assert:
       that:
       - result.version != {}
       - result.roles
-      - result.subscriptions.{{ test_db }}.{{ test_subscription }} != {}
-      - result.subscriptions.{{ test_db }}.{{ test_subscription2 }} != {}
       - result.databases == {}
       - result.repl_slots == {}
       - result.replications == {}

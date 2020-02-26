@@ -26,7 +26,7 @@ options:
     - Limit the collected information by comma separated string or YAML list.
     - Allowable values are C(version),
       C(databases), C(settings), C(tablespaces), C(roles),
-      C(replications), C(repl_slots), C(subscriptions) (since 2.10).
+      C(replications), C(repl_slots).
     - By default, collects all subsets.
     - You can use shell-style (fnmatch) wildcard to pass groups of values (see Examples).
     - You can use '!' before value (for example, C(!settings)) to exclude it from the information.
@@ -243,7 +243,17 @@ databases:
           returned: if configured
           type: dict
           version_added: "2.10"
-          sample: { "mydb": { "pub1": { "ownername": "postgres", "puballtables": true, "pubinsert": true, "pubupdate": true } } }
+          sample: { "pub1": { "ownername": "postgres", "puballtables": true, "pubinsert": true, "pubupdate": true } }
+        subscriptions:
+          description:
+          - Information about replication subscriptions (available for PostgreSQL 10 and higher)
+            U(https://www.postgresql.org/docs/current/logical-replication-subscription.html).
+          - Content depends on PostgreSQL server version.
+          returned: if configured
+          type: dict
+          version_added: "2.10"
+          sample:
+          - { "my_subscription": {"ownername": "postgres", "subenabled": true, "subpublications": ["first_publication"] } }
 repl_slots:
   description:
   - Replication slots (available in 9.4 and later)
@@ -462,16 +472,6 @@ settings:
       returned: always
       type: bool
       sample: false
-subscriptions:
-  description:
-  - Information about replication subscriptions (available for PostgreSQL 10 and higher)
-    U(https://www.postgresql.org/docs/current/logical-replication-subscription.html).
-  - Content depends on PostgreSQL server version.
-  returned: if configured
-  type: dict
-  version_added: "2.10"
-  sample:
-  - {"acme_db": {"my_subscription": {"ownername": "postgres", "subenabled": true, "subpublications": ["first_publication"]}}}
 '''
 
 from fnmatch import fnmatch
@@ -553,7 +553,6 @@ class PgClusterInfo(object):
             "repl_slots": {},
             "settings": {},
             "roles": {},
-            "subscriptions": {},
             "pending_restart_settings": [],
         }
 
@@ -567,7 +566,6 @@ class PgClusterInfo(object):
             "repl_slots": self.get_rslot_info,
             "settings": self.get_settings,
             "roles": self.get_role_info,
-            "subscriptions": self.get_subscr_info,
         }
 
         incl_list = []
@@ -637,10 +635,7 @@ class PgClusterInfo(object):
         return publications
 
     def get_subscr_info(self):
-        """Get subscription statistics and fill out self.pg_info dictionary."""
-        if self.cursor.connection.server_version < 100000:
-            return
-
+        """Get subscription statistics."""
         query = ("SELECT s.*, r.rolname AS ownername, d.datname AS dbname "
                  "FROM pg_catalog.pg_subscription s "
                  "JOIN pg_catalog.pg_database d "
@@ -653,18 +648,22 @@ class PgClusterInfo(object):
         if result:
             result = [dict(row) for row in result]
         else:
-            return
+            return {}
+
+        subscr_info = {}
 
         for elem in result:
-            if not self.pg_info['subscriptions'].get(elem['dbname']):
-                self.pg_info['subscriptions'][elem['dbname']] = {}
+            if not subscr_info.get(elem['dbname']):
+                subscr_info[elem['dbname']] = {}
 
-            if not self.pg_info['subscriptions'][elem['dbname']].get(elem['subname']):
-                self.pg_info['subscriptions'][elem['dbname']][elem['subname']] = {}
+            if not subscr_info[elem['dbname']].get(elem['subname']):
+                subscr_info[elem['dbname']][elem['subname']] = {}
 
                 for key, val in iteritems(elem):
                     if key not in ('subname', 'dbname'):
-                        self.pg_info['subscriptions'][elem['dbname']][elem['subname']][key] = val
+                        subscr_info[elem['dbname']][elem['subname']][key] = val
+
+        return subscr_info
 
     def get_tablespaces(self):
         """Get information about tablespaces."""
@@ -951,6 +950,9 @@ class PgClusterInfo(object):
                 size=i[6],
             )
 
+        if self.cursor.connection.server_version >= 100000:
+            subscr_info = self.get_subscr_info()
+
         for datname in db_dict:
             self.cursor = self.db_obj.reconnect(datname)
             db_dict[datname]['namespaces'] = self.get_namespaces()
@@ -958,6 +960,7 @@ class PgClusterInfo(object):
             db_dict[datname]['languages'] = self.get_lang_info()
             if self.cursor.connection.server_version >= 100000:
                 db_dict[datname]['publications'] = self.get_pub_info()
+                db_dict[datname]['subscriptions'] = subscr_info.get(datname, {})
 
         self.pg_info["databases"] = db_dict
 
