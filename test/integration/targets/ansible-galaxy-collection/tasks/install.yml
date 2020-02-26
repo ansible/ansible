@@ -34,7 +34,7 @@
 - name: install existing without --force - {{ test_name }}
   command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}'
   environment:
-    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
   register: install_existing_no_force
 
 - name: assert install existing without --force - {{ test_name }}
@@ -84,9 +84,11 @@
 
 - name: get result of install multiple collections with dependencies - {{ test_name }}
   slurp:
-    path: '{{ galaxy_dir }}/ansible_collections/{{ item.namespace }}/{{ item.name }}/MANIFEST.json'
+    path: '{{ galaxy_dir }}/ansible_collections/{{ collection.namespace }}/{{ collection.name }}/MANIFEST.json'
   register: install_multiple_with_dep_actual
-  with_items:
+  loop_control:
+    loop_var: collection
+  loop:
   - namespace: namespace2
     name: name
   - namespace: parent_dep

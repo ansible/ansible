@@ -41,7 +41,7 @@ class FallaxyProvider(CloudProvider):
         """
         super(FallaxyProvider, self).__init__(args)
 
-        self.image = os.environ.get('ANSIBLE_FXYSIM_CONTAINER', 'quay.io/ansible/fallaxy-test-container:latest')
+        self.image = os.environ.get('ANSIBLE_FXYSIM_CONTAINER', 'quay.io/ansible/fallaxy-test-container:1.0.0')
         self.container_name = ''
 
     def filter(self, targets, exclude):
@@ -135,7 +135,7 @@ class FallaxyProvider(CloudProvider):
             fallaxy_host = self.DOCKER_SIMULATOR_NAME
         elif container_id:
             fallaxy_host = self._get_simulator_address()
-            display.info('Found Foreman simulator container address: %s' % fallaxy_host, verbosity=1)
+            display.info('Found Fallaxy simulator container address: %s' % fallaxy_host, verbosity=1)
         else:
             fallaxy_host = 'localhost'
 
