@@ -1,0 +1,54 @@
+---
+- block:
+    - name: 'Ensure bucket_name contains a .'
+      set_fact:
+        bucket_name: '{{ bucket_name }}.something'
+
+    # ============================================================
+    #
+    - name: 'Create bucket with dot in name'
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: present
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+          - output.name == '{{ bucket_name }}'
+
+
+    # ============================================================
+
+    - name: 'Pause to help with s3 bucket eventual consistency'
+      wait_for:
+        timeout: 10
+      delegate_to: localhost
+
+    - name: 'Delete s3_bucket with dot in name'
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: absent
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+
+    - name: 'Re-delete s3_bucket with dot in name'
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: absent
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+
+  # ============================================================
+  always:
+    - name: 'Ensure all buckets are deleted'
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: absent
+      ignore_errors: yes

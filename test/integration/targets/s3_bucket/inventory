@@ -1,0 +1,12 @@
+[tests]
+missing
+simple
+complex
+dotted
+tags
+encryption_kms
+encryption_sse
+
+[all:vars]
+ansible_connection=local
+ansible_python_interpreter="{{ ansible_playbook_python }}"

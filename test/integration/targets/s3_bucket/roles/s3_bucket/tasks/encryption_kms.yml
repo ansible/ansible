@@ -1,0 +1,88 @@
+---
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
+
+    # ============================================================
+
+    - name: 'Create a simple bucket'
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: present
+      register: output
+
+    - name: 'Enable aws:kms encryption with KMS master key'
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: present
+        encryption: "aws:kms"
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - output.encryption
+          - output.encryption.SSEAlgorithm == 'aws:kms'
+
+    - name: 'Re-enable aws:kms encryption with KMS master key (idempotent)'
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: present
+        encryption: "aws:kms"
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
+          - output.encryption
+          - output.encryption.SSEAlgorithm == 'aws:kms'
+
+    # ============================================================
+
+    - name: Disable encryption from bucket
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: present
+        encryption: "none"
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - not output.encryption
+
+    - name: Disable encryption from bucket
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: present
+        encryption: "none"
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+          - not output.encryption
+
+    # ============================================================
+
+    - name: Delete encryption test s3 bucket
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: absent
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+
+  # ============================================================
+  always:
+    - name: Ensure all buckets are deleted
+      s3_bucket:
+        name: '{{ bucket_name }}'
+        state: absent
+      ignore_errors: yes
