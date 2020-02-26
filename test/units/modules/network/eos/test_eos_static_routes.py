@@ -85,7 +85,7 @@ class TestEosStaticRoutesModule(TestEosModule):
                      ])
             ], state="merged"))
         commands = ['ipv6 route vrf testvrf 1200:10::/64 Ethernet1 55']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_static_routes_merged_idempotent(self):
         set_module_args(
