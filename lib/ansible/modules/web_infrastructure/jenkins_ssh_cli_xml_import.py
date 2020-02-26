@@ -102,7 +102,7 @@ def compile_cli_command(cmd, store, domain, xml):
     # IF xml_type is remote file, just import the fucker.
 
     if 'credential' in cmd:
-        command = 'create-credentials-by-xml' + store + domain + '<' + xml
+        command = 'create-credentials-by-xml ' + store + ' ' + domain + ' < ' + xml
     elif 'node' in cmd:
         command = 'create-node < ' + xml
     elif 'job' in cmd:
@@ -111,11 +111,12 @@ def compile_cli_command(cmd, store, domain, xml):
     return command
 
 
-def flatten_xml(xml):
-    test = 1234
-    # gets string or multiline
-    # result is flattened string
-    return()
+def write_xml(xml):
+    jenkins_object_file = '/tmp/jenkins_object.xml'
+    f = open(jenkins_object_file)
+    f.write(xml)
+    f.close()
+    return(jenkins_object_file)
 
 
 def process_command(module, user, host, port, cmd_type, store, domain, xml_type, xml):
@@ -128,12 +129,12 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
 
     port = info['x-ssh-endpoint'].split(':')[1]
 
-    # if 'code' in xml_type:
-    #     return()
-    # elif 'file' in xml_type:
-    #     return()
+    if 'code' in xml_type:
+      xml_input = write_xml(xml)
+    elif 'file' in xml_type:
+      xml_input = xml
 
-    ssh_command = compile_cli_command(cmd_type, store, domain, xml)
+    ssh_command = compile_cli_command(cmd_type, store, domain, xml_input)
 
     # subprocess.Popen("ssh -l {user} -p {port} {host} {cmd}".format(user=user, port=port, host=host, cmd='ls -l'),
     #                  shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
