@@ -10,6 +10,8 @@
         vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
         termination_protection: true
         instance_type: "{{ ec2_instance_type }}"
+        state: running
+        wait: yes
       check_mode: yes
       register: create_instance_check_mode_results
 
@@ -37,7 +39,7 @@
       assert:
         that:
           - "{{ create_instance_results.instances | length }} > 0"
-          - "'{{ create_instance_results.instances.0.state.name }}' in ['running', 'pending']"
+          - "'{{ create_instance_results.instances.0.state.name }}' == 'running'"
           - "'{{ create_instance_results.spec.DisableApiTermination }}'"
 
     - name: Create instance with termination protection (check mode) (idempotent)
@@ -50,6 +52,8 @@
         vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
         termination_protection: true
         instance_type: "{{ ec2_instance_type }}"
+        state: running
+        wait: yes
       check_mode: yes
       register: create_instance_check_mode_results
 
