@@ -1,0 +1,15 @@
+---
+- debug:
+      msg: "START iosxr_static_routes parsed integration tests on connection={{ ansible_connection }}"
+  
+- block:
+    - name: Use parsed state to convert externally supplied device specific static routes commands to structured format
+      iosxr_static_routes:
+        running_config: "{{ lookup('file', '../../fixtures/parsed.cfg') }}"
+        state: parsed
+      register: result
+    
+    - assert:
+        that: "{{ merged['after'] | symmetric_difference(result['parsed']) |length==0 }}"
+
+ 
