@@ -446,7 +446,7 @@ def main():
 
     argument_spec = dict(
         state=dict(type='str', default='present', choices=['present', 'absent']),
-        name=dict(required=True, type='str'),
+        name=dict(type='str', required=True),
         queue_type=dict(type='str', default='standard', choices=['standard', 'fifo']),
         delay_seconds=dict(type='int', aliases=['delivery_delay']),
         maximum_message_size=dict(type='int'),
