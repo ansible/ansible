@@ -139,7 +139,7 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
     retVal = 0
     for line in execution.stdout.readlines():
         execution.wait()
-        print line           
+        print(line)
     retVal= execution.returncode
 
 
