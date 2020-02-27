@@ -1,0 +1,6 @@
+---
+all:
+  hosts:
+    appv042.ux.resource.tld:
+      ansible_host: 172.19.86.42
+...

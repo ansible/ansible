@@ -12,13 +12,13 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: jenkins_ssh_cli_import_xml
+module: jenkins_ssh_cli_xml_import
 author:
   - Paul Wetering (@cusux)
 short_description: Import XML Jenkins objects using the SSH CLI
 version_added: "2.9"
 description:
-  - The C(jenkins_ssh_cli_import_xml) module imports XML files utilizing the Jenkins SSH CLI to create Jenkins objects.
+  - The C(jenkins_ssh_cli_xml_import) module imports XML files utilizing the Jenkins SSH CLI to create Jenkins objects.
 options:
   user:
     description:
@@ -58,7 +58,7 @@ notes:
 EXAMPLES = r'''
 # Create a new Jenkins credential using a variable containing the Jenkins credential XML code
 - name: Create Jenkins credential by XML code input
-  jenkins_ssh_cli_import_xml:
+  jenkins_ssh_cli_xml_import:
     user: '{{ ansible_user }}'
     host: jenkins.example.com
     port: 8181
@@ -69,7 +69,7 @@ EXAMPLES = r'''
 
 # Create a new Jenkins node using a variable containing the remote Jenkins node XML file
 - name: Create Jenkins node by XML file input
-  jenkins_ssh_cli_import_xml:
+  jenkins_ssh_cli_xml_import:
     user: '{{ ansible_user }}'
     type: node
     xml_file_input: '{{ jenkins_credential_xml_file }}'
