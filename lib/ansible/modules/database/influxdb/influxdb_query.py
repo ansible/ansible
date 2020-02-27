@@ -12,10 +12,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: influxdb_query
-short_description: Query data points from InfluxDB.
+short_description: Query data points from InfluxDB
 description:
   - Query data points from InfluxDB.
 version_added: 2.5
@@ -28,10 +28,12 @@ options:
     description:
       - Query to be executed.
     required: true
+    type: str
   database_name:
     description:
       - Name of the database.
     required: true
+    type: str
 extends_documentation_fragment: influxdb
 '''
 
@@ -55,7 +57,7 @@ EXAMPLES = r'''
     var: connection.query_results
 '''
 
-RETURN = '''
+RETURN = r'''
 query_results:
   description: Result from the query
   returned: success

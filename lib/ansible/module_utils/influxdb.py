@@ -62,7 +62,7 @@ class InfluxDb():
             retries=dict(type='int', default=3),
             proxies=dict(type='dict', default={}),
             use_udp=dict(type='bool', default=False),
-            udp_port=dict(type='int'),
+            udp_port=dict(type='int', default=4444),
         )
 
     def connect_to_influxdb(self):
