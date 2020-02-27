@@ -1,0 +1,26 @@
+# This file is part of Ansible
+
+# Copyright: (c) 2020, Brian Scholer <@briantist>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Tests against a single repository ({{ default_repository_name }})
+  block:
+    - name: Get repository info {{ suffix }}
+      win_psrepository_info:
+        name: "{{ default_repository_name }}"
+      register: repo_info
+
+    - name: Assert that the correct structure is returned {{ suffix }}
+      assert:
+        that:
+          - repo_info.repositories is defined
+          - repo_info.repositories is sequence()
+          - repo_info.repositories | length == 1
+          - repo_info.repositories[0].name == default_repository_name
+
+    - include_tasks: contains_all_fields.yml
+      vars:
+        dict_to_check: "{{ repo_info.repositories[0] }}"
+
+  # block
+  check_mode: "{{ run_check_mode }}"
