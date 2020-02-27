@@ -1,0 +1,10 @@
+---
+run_check_mode: False
+suffix: "{{ '(check mode)' if run_check_mode else '' }}"
+default_repository_name: PSGallery
+
+second_repository_name: PowerShellGetDemo
+second_repository_source_location: https://www.myget.org/F/powershellgetdemo/api/v2
+
+third_repository_name: OtherRepo
+third_repository_source_location: http://httpbin.org/get

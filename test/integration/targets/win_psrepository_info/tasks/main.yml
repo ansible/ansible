@@ -1,0 +1,51 @@
+# This file is part of Ansible
+
+# Copyright: (c) 2020, Brian Scholer <@briantist>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Unregister all repositories
+  win_shell: |
+    Get-PSRepository | Unregister-PSRepository
+
+- block:
+    - name: Run Empty Tests
+      import_tasks: empty.yml
+
+    - name: Run Empty Tests (check mode)
+      import_tasks: empty.yml
+      vars:
+        run_check_mode: True
+
+    - name: Add the default repository
+      win_shell: |
+        Register-PSRepository -Default
+
+    - name: Single Repository Tests
+      import_tasks: single.yml
+
+    - name: Single Repository Tests (check mode)
+      import_tasks: single.yml
+      vars:
+        run_check_mode: True
+
+    - name: Add two more repositories
+      win_shell: |
+        Register-PSRepository -Name '{{ second_repository_name }}' -SourceLocation '{{ second_repository_source_location }}'
+        Register-PSRepository -Name '{{ third_repository_name }}' -SourceLocation '{{ third_repository_source_location }}'
+
+    - name: Multi Repository Tests
+      import_tasks: multiple.yml
+
+    - name: Multi Repository Tests (check mode)
+      import_tasks: multiple.yml
+      vars:
+        run_check_mode: True
+
+  always:
+    - name: Unregister all repositories
+      win_shell: |
+        Get-PSRepository | Unregister-PSRepository
+
+    - name: Ensure only the default repository remains
+      win_shell: |
+        Register-PSRepository -Default

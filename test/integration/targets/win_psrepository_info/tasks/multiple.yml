@@ -1,0 +1,37 @@
+# This file is part of Ansible
+
+# Copyright: (c) 2020, Brian Scholer <@briantist>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Tests against mutiple repositories
+  block:
+    - name: Get all repository info {{ suffix }}
+      win_psrepository_info:
+      register: repo_info
+
+    - name: Assert that the correct structure is returned {{ suffix }}
+      assert:
+        that:
+          - repo_info.repositories is defined
+          - repo_info.repositories is sequence()
+          - repo_info.repositories | length == 3
+
+    - include_tasks: contains_all_fields.yml
+      vars:
+        dict_to_check: "{{ item }}"
+      loop: "{{ repo_info.repositories }}"
+
+    - name: Get two repositories with a filter {{ suffix }}
+      win_psrepository_info:
+        name: P*
+      register: repo_info
+
+    - name: Assert that the correct two repositories were returned {{ suffix }}
+      assert:
+        that:
+          - repo_info.repositories | length == 2
+          - default_repository_name in (repo_info.repositories | map(attribute='name') | list)
+          - second_repository_name in  (repo_info.repositories | map(attribute='name') | list)
+
+  # block
+  check_mode: "{{ run_check_mode }}"
