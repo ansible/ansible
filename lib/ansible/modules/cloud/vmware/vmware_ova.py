@@ -20,7 +20,7 @@ description:
     - This module can be used to add and delete datastore cluster in given VMware environment.
     - All parameters and VMware object values are case sensitive.
 author:
--  Anton Bayandin (anton.bayandin@megafon.ru)
+-  Anton Bayandin (@aneroid13)
 -  Module based on community pyvmomi samples (https://github.com/vmware/pyvmomi-community-samples/tree/master/samples)
 notes:
     - Tested on vSphere 6.0, 6.7
