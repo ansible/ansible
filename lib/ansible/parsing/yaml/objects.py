@@ -118,7 +118,7 @@ class AnsibleVaultEncryptedUnicode(UserString, AnsibleBaseYAMLObject):
     @property
     def data(self):
         if not self.vault:
-            return self._ciphertext
+            return to_text(self._ciphertext)
         return to_text(self.vault.decrypt(self._ciphertext))
 
     @data.setter
