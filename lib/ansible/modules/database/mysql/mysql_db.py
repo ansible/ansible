@@ -203,10 +203,14 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --socket=%s" % shlex_quote(socket)
     else:
         cmd += " --host=%s --port=%i" % (shlex_quote(host), port)
+
     if all_databases:
         cmd += " --all-databases"
-    else:
+    elif len(db_name) > 1:
         cmd += " --databases {0} --skip-lock-tables".format(' '.join(db_name))
+    else:
+        cmd += " %s" % shlex_quote(' '.join(db_name))
+
     if single_transaction:
         cmd += " --single-transaction=true"
     if quick:
