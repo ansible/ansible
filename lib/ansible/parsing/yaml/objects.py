@@ -125,6 +125,16 @@ class AnsibleVaultEncryptedUnicode(UserString, AnsibleBaseYAMLObject):
     def data(self, value):
         self._ciphertext = to_bytes(value)
 
+    def __eq__(self, other):
+        if self.vault:
+            return other == self.data
+        return False
+
+    def __ne__(self, other):
+        if self.vault:
+            return other != self.data
+        return True
+
     def __reversed__(self):
         return to_text(self[::-1], errors='surrogate_or_strict')
 
