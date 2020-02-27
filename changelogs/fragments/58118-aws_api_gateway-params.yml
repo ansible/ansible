@@ -1,0 +1,2 @@
+minor_changes:
+  - Allow all params that boto support in aws_api_gateway module
