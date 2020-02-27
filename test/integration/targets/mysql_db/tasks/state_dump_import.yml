@@ -74,7 +74,7 @@
   assert:
     that:
     - result is changed
-    - result.executed_commands[0] is search("mysqldump --force --socket={{ mysql_socket }} --databases {{ db_name }} --skip-lock-tables --quick --ignore-table={{ db_name }}.department --master-data=1 --skip-triggers")
+    - result.executed_commands[0] is search("mysqldump --force --socket={{ mysql_socket }} {{ db_name }} --skip-lock-tables --quick --ignore-table={{ db_name }}.department --master-data=1 --skip-triggers")
 
 - name: state dump/import - file name should exist
   file: name={{ db_file_name }} state=file
