@@ -47,7 +47,6 @@ for name, files in zip_files.items():
 
     # Create the zip archive with the files
     filename = '%s.zip' % name
-    print(filename)
     if os.path.isfile(filename):
         os.unlink(filename)
 

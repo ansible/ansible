@@ -122,7 +122,7 @@
 - name: Copy zip files to Windows host
   win_copy:
     src: "{{ output_dir }}/{{ item }}.zip"
-    dest: "{{ win_unzip_dir }}"
+    dest: "{{ win_unzip_dir }}/"
   loop:
     - hat1
     - hat2
