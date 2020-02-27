@@ -132,7 +132,8 @@ class AnsibleVaultEncryptedUnicode(UserString, AnsibleBaseYAMLObject):
         return to_text(self.data[index], errors='surrogate_or_strict')
 
     def __getslice__(self, start, end):
-        start = max(start, 0); end = max(end, 0)
+        start = max(start, 0)
+        end = max(end, 0)
         return to_text(self.data[start:end], errors='surrogate_or_strict')
 
     def __str__(self):
