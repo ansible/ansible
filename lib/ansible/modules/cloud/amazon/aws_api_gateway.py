@@ -70,7 +70,7 @@ options:
     type: str
   cache_enabled:
     description:
-      - Enable API GW caching of backend responses. Defaults to false
+      - Enable API GW caching of backend responses. Defaults to false.
     type: bool
     default: false
     version_added: '2.10'
@@ -88,7 +88,13 @@ options:
     version_added: '2.10'
   stage_canary_settings:
     description:
-      - Canary settings for the deployment of the stage
+      - Canary settings for the deployment of the stage.
+      - Dict with following settings:
+      - percentTraffic: The percent (0-100) of traffic diverted to a canary deployment.
+      - deploymentId: The ID of the canary deployment.
+      - stageVariableOverrides: Stage variables overridden for a canary release deployment.
+      - useStageCache: A Boolean flag to indicate whether the canary deployment uses the stage cache or not.
+      - See docs U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/apigateway.html#APIGateway.Client.create_stage)
     type: dict
     version_added: '2.10'
   tracing_enabled:
@@ -98,8 +104,8 @@ options:
     version_added: '2.10'
   endpoint_type:
     description:
-      - Type of endpoint configuration, use EDGE for an edge optomized API endpoint,
-      - REGIONAL for just a regional deploy or PRIVATE for a private API.
+      - Type of endpoint configuration, use C(EDGE) for an edge optimized API endpoint,
+      - C(REGIONAL) for just a regional deploy or PRIVATE for a private API.
       - This will flag will only be used when creating a new API Gateway setup, not for updates.
     choices: ['EDGE', 'REGIONAL', 'PRIVATE']
     type: str
@@ -119,24 +125,34 @@ notes:
 '''
 
 EXAMPLES = '''
-# Update API resources for development
-- name: update API
+- name: Setup AWS API Gateway setup on AWS and deploy API definition
   aws_api_gateway:
-    api_id: 'abc123321cba'
-    state: present
-    swagger_file: my_api.yml
-
-# update definitions and deploy API to production
-- name: deploy API
-  aws_api_gateway:
-    api_id: 'abc123321cba'
-    state: present
     swagger_file: my_api.yml
     stage: production
-    deploy_desc: Make auth fix available.
     cache_enabled: true
     cache_size: '1.6'
     tracing_enabled: true
+    endpoint_type: EDGE
+    state: present
+
+- name: Update API definition to deploy new version
+  aws_api_gateway:
+    api_id: 'abc123321cba'
+    swagger_file: my_api.yml
+    deploy_desc: Make auth fix available.
+    cache_enabled: true
+    cache_size: '1.6'
+    endpoint_type: EDGE
+    state: present
+
+- name: Update API definitions and settings and deploy as canary
+  aws_api_gateway:
+    api_id: 'abc123321cba'
+    swagger_file: my_api.yml
+    cache_enabled: true
+    cache_size: '6.1'
+    canary_settings: { percentTraffic: 50.0, deploymentId: '123', useStageCache: True }
+    state: present
 '''
 
 RETURN = '''
@@ -151,7 +167,7 @@ configure_response:
     type: dict
     sample: { api_key_source: "HEADER", created_at: "2020-01-01T11:37:59+00:00", id: "0ln4zq7p86" }
 deploy_response:
-    description: AWS responce from the API deploy call
+    description: AWS response from the API deploy call
     returned: success
     type: dict
     sample: { created_date: "2020-01-01T11:36:59+00:00", id: "rptv4b", description: "Automatic deployment by Ansible." }
