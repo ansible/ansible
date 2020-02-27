@@ -436,6 +436,10 @@ files:
     keywords: [ ovirt, RHEV, RHV ]
     labels: [ cloud, ovirt ]
     maintainers: $team_ovirt
+    deprecated:
+      removed_in: "2.10"
+      why: Compatible only with deprecated version of ovirt. Was not migrated to ovirt.ovirt_collection.
+      alternative: Use M(ovirt_vm) instead
   $modules/cloud/misc/proxmox.py: &virt
     ignored: skvidal
     keywords: [ kvm, libvirt, proxmox, qemu ]
@@ -569,19 +573,31 @@ files:
   $modules/cloud/ovirt/ovirt_job.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_affinity_label_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_affinity_label_info) instead
   $modules/cloud/ovirt/ovirt_host.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_quota_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_quota_info) instead
   $modules/cloud/ovirt/_ovirt_tag_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_tag_info) instead
   $modules/cloud/ovirt/ovirt_network.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/__init__.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_vmpool_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_vmpool_info) instead
   $modules/cloud/ovirt/ovirt_event.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_storage_domain_info.py:
@@ -589,13 +605,22 @@ files:
   $modules/cloud/ovirt/ovirt_affinity_label_info.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_network_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_network_info) instead
   $modules/cloud/ovirt/ovirt_external_provider.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_scheduling_policy_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_scheduling_policy_info) instead
   $modules/cloud/ovirt/_ovirt_datacenter_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_datacenter_info) instead
   $modules/cloud/ovirt/ovirt_cluster.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_datacenter.py:
@@ -609,21 +634,36 @@ files:
   $modules/cloud/ovirt/ovirt_disk_info.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_group_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_group_info) instead
   $modules/cloud/ovirt/_ovirt_snapshot_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_snapshot_info) instead
   $modules/cloud/ovirt/ovirt_quota.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_storage_domain_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_storage_domain_info) instead
   $modules/cloud/ovirt/ovirt_host_pm.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_template_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_template_info) instead
   $modules/cloud/ovirt/ovirt_cluster_info.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_host_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_host_info) instead
   $modules/cloud/ovirt/ovirt_host_storage_info.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_snapshot.py:
@@ -631,7 +671,10 @@ files:
   $modules/cloud/ovirt/ovirt_storage_template_info.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_disk_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_disk_info) instead
   $modules/cloud/ovirt/ovirt_vmpool.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_datacenter_info.py:
@@ -647,9 +690,15 @@ files:
   $modules/cloud/ovirt/ovirt_vm.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_cluster_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_cluster_info) instead
   $modules/cloud/ovirt/_ovirt_user_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_user_info) instead
   $modules/cloud/ovirt/ovirt_quota_info.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_snapshot_info.py:
@@ -667,7 +716,10 @@ files:
   $modules/cloud/ovirt/ovirt_vmpool_info.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_nic_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_nic_info) instead
   $modules/cloud/ovirt/ovirt_host_network.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_group.py:
@@ -675,11 +727,20 @@ files:
   $modules/cloud/ovirt/ovirt_role.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_permission_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_permission_info) instead
   $modules/cloud/ovirt/_ovirt_external_provider_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_external_provider_info) instead
   $modules/cloud/ovirt/_ovirt_event_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_event_info) instead
   $modules/cloud/ovirt/ovirt_auth.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_vnic_profile.py:
@@ -689,7 +750,10 @@ files:
   $modules/cloud/ovirt/ovirt_template_info.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_storage_vm_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_storage_vm_info) instead
   $modules/cloud/ovirt/ovirt_storage_connection.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_nic_info.py:
@@ -697,11 +761,20 @@ files:
   $modules/cloud/ovirt/ovirt_nic.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_api_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_api_info) instead
   $modules/cloud/ovirt/_ovirt_host_storage_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_host_storage_info) instead
   $modules/cloud/ovirt/_ovirt_storage_template_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_storage_template_info) instead
   $modules/cloud/ovirt/ovirt_template.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_external_provider_info.py:
@@ -717,7 +790,10 @@ files:
   $modules/cloud/ovirt/ovirt_network_info.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/_ovirt_vm_facts.py:
-    migrated_to: ovirt.ovirt_collection
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_vm_info) instead
   $modules/cloud/ovirt/ovirt_instance_type.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_affinity_label.py:
@@ -3697,6 +3773,11 @@ files:
     migrated_to: ovirt.ovirt_collection
   $plugins/doc_fragments/ovirt_info.py:
     migrated_to: ovirt.ovirt_collection
+  $plugins/doc_fragments/ovirt_facts.py:
+    deprecated:
+      removed_in: "2.10"
+      why: When migrating to collection we decided to use only _info modules.
+      alternative: Use M(ovirt_info) instead
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
