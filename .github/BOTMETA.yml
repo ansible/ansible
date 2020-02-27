@@ -694,7 +694,19 @@ files:
     labels:
       - networking
       - infoblox
-  $modules/net_tools/netbox/:
+  $modules/net_tools/netbox/netbox_device.py
+    maintainers: FragmentedPacket
+    migrated_to: netbox_community.ansible_modules
+  $modules/net_tools/netbox/netbox_interface.py
+    maintainers: FragmentedPacket
+    migrated_to: netbox_community.ansible_modules
+  $modules/net_tools/netbox/netbox_ip_address.py
+    maintainers: FragmentedPacket
+    migrated_to: netbox_community.ansible_modules
+  $modules/net_tools/netbox/netbox_prefix.py
+    maintainers: FragmentedPacket
+    migrated_to: netbox_community.ansible_modules
+  $modules/net_tools/netbox/netbox_site.py
     maintainers: FragmentedPacket
     migrated_to: netbox_community.ansible_modules
   $modules/network/a10/: ericchou1 mischapeters
