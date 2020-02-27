@@ -45,6 +45,10 @@ notes:
   - Tested against NXOS 7.3.(0)D1(1) on VIRL
   - The LLDP feature needs to be enabled before using this module
 options:
+  running_config:
+    description:
+      - Used to parse given commands into structured format, only in parsed state
+    type: str
   config:
     description:
       - A list of link layer discovery configurations for interfaces.
@@ -88,6 +92,7 @@ options:
       - deleted
       - gathered
       - rendered
+      - parsed
     default: merged
 """
 EXAMPLES = """

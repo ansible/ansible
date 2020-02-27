@@ -114,8 +114,8 @@ class Lldp_interfacesFacts(object):
             config['transmit'] = False
         if 'management-address' in conf:
             config['tlv_set']['management_address'] = re.search(
-                'management-address (\S*)', conf).group(1)
+                r'management-address (\S*)', conf).group(1)
         if 'vlan' in conf:
             config['tlv_set']['vlan'] = re.search(
-                'vlan (\S*)', conf).group(1)
+                r'vlan (\S*)', conf).group(1)
         return utils.remove_empties(config)
