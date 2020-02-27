@@ -1,0 +1,3 @@
+bugfixes:
+  - zabbix_host - The Zabbix API changed the way to get the current "inventory_mode" of the host between [4.0.0, 4.4.1). 
+ This fix makes the module take that into consideration.
