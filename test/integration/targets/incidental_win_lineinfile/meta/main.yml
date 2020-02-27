@@ -1,2 +1,2 @@
 dependencies:
-  - prepare_win_tests
+  - incidental_win_prepare_tests
