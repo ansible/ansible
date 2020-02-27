@@ -231,7 +231,7 @@ def list_route_tables(route_table, module):
 
 def main():
     argument_spec = dict(
-        route_table_ids=dict(default=[], type='list'),
+        route_table_ids=dict(default=[], type='list', elements='str'),
         filters=dict(default={}, type='dict')
     )
 
