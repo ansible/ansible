@@ -1190,6 +1190,10 @@ def main():
     if module.params['processor_features'] is not None:
         module.params['processor_features'] = dict((k, to_text(v)) for k, v in module.params['processor_features'].items())
 
+    # ignore db_name if we've specified a snapshot
+    if module.params['db_snapshot_identifier']:
+        del module.params['db_name']
+
     client = module.client('rds')
     changed = False
     state = module.params['state']
