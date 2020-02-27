@@ -57,6 +57,86 @@
     until: single_sg_instance_facts.instances | length > 0
     retries: 10
 
+  - name: "Add secondary security group to instance"
+    ec2_instance:
+      name: "{{ resource_prefix }}-test-security-groups"
+      image_id: "{{ ec2_ami_image }}"
+      vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+      tags:
+        TestId: "{{ resource_prefix }}"
+      instance_type: t2.micro
+      security_groups:
+        - "{{ sg.group_id }}"
+        - "{{ sg2.group_id }}"
+    register: add_secondary_security_group
+
+  - name: "Remove secondary security group and stop instance"
+    ec2_instance:
+      name: "{{ resource_prefix }}-test-security-groups"
+      image_id: "{{ ec2_ami_image }}"
+      vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+      tags:
+        TestId: "{{ resource_prefix }}"
+      instance_type: t2.micro
+      security_groups:
+        - "{{ sg.group_id }}"
+      state: stopped
+    register: state_remove_secondary_sg
+
+  - name: "Gather ec2 facts to check seconday SG has been removed and instance stopped"
+    ec2_instance_facts:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-security-groups"
+        "instance-state-name": "stopped"
+    register: stopping_sg_change
+    until: stopping_sg_change.instances | length > 0
+    retries: 10
+
+  - name: "Add secondary security group and stop instance"
+    ec2_instance:
+      name: "{{ resource_prefix }}-test-security-groups"
+      image_id: "{{ ec2_ami_image }}"
+      vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+      tags:
+        TestId: "{{ resource_prefix }}"
+      instance_type: t2.micro
+      security_groups:
+        - "{{ sg.group_id }}"
+        - "{{ sg2.group_id }}"
+      state: stopped
+    register: state_add_secondary_sg
+
+  - name: "Gather ec2 facts to check seconday SG has been added and instance started"
+    ec2_instance_facts:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-security-groups"
+        "instance-state-name": "stopped"
+    register: stopped_sg_change
+    until: stopped_sg_change.instances | length > 0
+    retries: 10
+
+  - name: "Add secondary security group and start instance"
+    ec2_instance:
+      name: "{{ resource_prefix }}-test-security-groups"
+      image_id: "{{ ec2_ami_image }}"
+      vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+      tags:
+        TestId: "{{ resource_prefix }}"
+      instance_type: t2.micro
+      security_groups:
+        - "{{ sg.group_id }}"
+      state: running
+    register: starting_rem_secondary_sg
+
+  - name: "Gather ec2 facts to check seconday SG has been added and instance started"
+    ec2_instance_facts:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-security-groups"
+        "instance-state-name": "running"
+    register: starting_sg_change
+    until: starting_sg_change.instances | length > 0
+    retries: 10
+
   - assert:
       that:
       - security_groups_test is not failed
@@ -65,3 +145,10 @@
       - remove_secondary_security_group is changed
       - single_sg_instance_facts.instances.0.security_groups | length == 1
       - dual_sg_instance_facts.instances.0.security_groups | length == 2
+      - add_secondary_security_group is changed
+      - stopping_sg_change.instances.0.security_groups | length == 1
+      - stopping_sg_change.instances.0.state.name == "stopped"
+      - stopped_sg_change.instances.0.security_groups | length == 2
+      - stopped_sg_change.instances.0.state.name == "stopped"
+      - starting_sg_change.instances.0.security_groups | length == 1
+      - starting_sg_change.instances.0.state.name == "running"
