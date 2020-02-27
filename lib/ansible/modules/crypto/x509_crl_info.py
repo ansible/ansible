@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2019, Felix Fontein <felix@fontein.de>
+# Copyright: (c) 2020, Felix Fontein <felix@fontein.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -158,6 +158,7 @@ class CRLError(crypto_utils.OpenSSLObjectError):
 
 
 class CRLInfo(crypto_utils.OpenSSLObject):
+    """The main module implementation."""
 
     def __init__(self, module):
         super(CRLInfo, self).__init__(
@@ -272,8 +273,8 @@ def main():
         crl = CRLInfo(module)
         result = crl.get_info()
         module.exit_json(**result)
-    except crypto_utils.OpenSSLObjectError as exc:
-        module.fail_json(msg=to_native(exc))
+    except crypto_utils.OpenSSLObjectError as e:
+        module.fail_json(msg=to_native(e))
 
 
 if __name__ == "__main__":
