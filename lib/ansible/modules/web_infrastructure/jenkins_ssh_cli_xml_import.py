@@ -142,7 +142,6 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
         print(line)
     retVal= execution.returncode
 
-
     if os.path.exists('/tmp/jenkins_object.xml'):
       os.remove('/tmp/jenkins_object.xml')
 
