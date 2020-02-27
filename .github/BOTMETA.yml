@@ -3649,11 +3649,6 @@ files:
     migrated_to: ovirt.ovirt_collection
   $plugins/doc_fragments/ovirt_info.py:
     migrated_to: ovirt.ovirt_collection
-  $plugins/doc_fragments/ovirt_facts.py:
-    deprecated:
-      removed_in: "2.10"
-      why: When migrating to collection we decided to use only _info modules.
-      alternative: Use M(ovirt_info) instead
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par

@@ -19,10 +19,6 @@ deprecated:
     why: When migrating to collection we decided to use only _info modules.
     alternative: Use M(ovirt_datacenter_info) instead
 version_added: "2.3"
-deprecated:
-    removed_in: "2.10"
-    why: When migrating to collection we decided to use only _info modules.
-    alternative: Use M(ovirt_datacenter_info) instead
 description:
     - "Retrieve information about one or more oVirt/RHV datacenters."
     - This module was called C(ovirt_datacenter_facts) before Ansible 2.9, returning C(ansible_facts).
