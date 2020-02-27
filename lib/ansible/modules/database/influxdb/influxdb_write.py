@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: influxdb_write
-short_description: Write data points into InfluxDB.
+short_description: Write data points into InfluxDB
 description:
   - Write data points into InfluxDB.
 version_added: 2.5
@@ -28,10 +28,13 @@ options:
     description:
       - Data points as dict to write into the database.
     required: true
+    type: list
+    elements: dict
   database_name:
     description:
       - Name of the database.
     required: true
+    type: str
 extends_documentation_fragment: influxdb
 '''
 
@@ -81,7 +84,7 @@ class AnsibleInfluxDBWrite(InfluxDb):
 def main():
     argument_spec = InfluxDb.influxdb_argument_spec()
     argument_spec.update(
-        data_points=dict(required=True, type='list'),
+        data_points=dict(required=True, type='list', elements='dict'),
         database_name=dict(required=True, type='str'),
     )
     module = AnsibleModule(

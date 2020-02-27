@@ -2175,16 +2175,6 @@ lib/ansible/modules/commands/command.py validate-modules:undocumented-parameter
 lib/ansible/modules/commands/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/commands/command.py validate-modules:doc-missing-type
 lib/ansible/modules/commands/expect.py validate-modules:doc-missing-type
-lib/ansible/modules/database/influxdb/influxdb_database.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/database/influxdb/influxdb_database.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/database/influxdb/influxdb_query.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/database/influxdb/influxdb_query.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/database/influxdb/influxdb_retention_policy.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/database/influxdb/influxdb_retention_policy.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/database/influxdb/influxdb_user.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/database/influxdb/influxdb_user.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/database/influxdb/influxdb_write.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/database/influxdb/influxdb_write.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/database/misc/elasticsearch_plugin.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/database/misc/elasticsearch_plugin.py validate-modules:doc-missing-type
 lib/ansible/modules/database/misc/kibana_plugin.py validate-modules:parameter-type-not-in-doc
