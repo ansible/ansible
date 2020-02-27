@@ -1,13 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: (c) 2019, Anton Bayandin (@aneroid13)
 # Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0.html)
 
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
-
 ANSIBLE_METADATA = {
-    'metadata_version': '0.1',
+    'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -126,9 +123,9 @@ EXAMPLES = '''
         path: '/data/tmp/'
 '''
 
-RETURN = '''
-'''
+RETURN = ''' # '''
 
+from __future__ import absolute_import, division, print_function
 try:
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
