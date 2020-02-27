@@ -22,6 +22,12 @@ try:
 except ImportError:
     import_module = __import__
 
+# if we're on a Python that doesn't have FNFError, redefine it as IOError (since that's what we'll see)
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
+
 _SYNTHETIC_PACKAGES = {
     # these provide fallback package definitions when there are no on-disk paths
     'ansible_collections': dict(type='pkg_only', allow_external_subpackages=True),
@@ -269,6 +275,11 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         return os.path.join(path, ns_path_add)
 
     def get_data(self, filename):
+        # HACK: To check if file actual exit for case insensitive file system
+        files = [f for f in os.listdir(os.path.dirname(filename)) if os.path.isfile(os.path.join(os.path.dirname(filename), f))]
+        if os.path.split(filename)[1] not in files:
+            raise FileNotFoundError
+
         with open(filename, 'rb') as fd:
             return fd.read()
 
