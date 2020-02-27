@@ -325,10 +325,14 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port,
         cmd += " --socket=%s" % shlex_quote(socket)
     else:
         cmd += " --host=%s --port=%i" % (shlex_quote(host), port)
+
     if all_databases:
         cmd += " --all-databases"
-    else:
+    elif len(db_name) > 1:
         cmd += " --databases {0}".format(' '.join(db_name))
+    else:
+        cmd += " %s" % shlex_quote(' '.join(db_name))
+
     if skip_lock_tables:
         cmd += " --skip-lock-tables"
     if (encoding is not None) and (encoding != ""):
