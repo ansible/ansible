@@ -1,0 +1,78 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    vaulted_valued: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          35323961353038346165643738646465376139363061353835303739663538343266303232326635
+          3365353662646236356665323135633630656238316530640a663362363763633436373439663031
+          33663433383037396438656464636433653837376361313638366362333037323961316364363363
+          3835616438623261650a636164376534376661393134326662326362323131373964313961623365
+          3833
+  tasks:
+    - debug:
+        msg: "{{ vaulted_valued }}"
+
+    - debug:
+        msg: "{{ vaulted_valued|type_debug }}"
+
+    - assert:
+        that:
+          - vaulted_valued == 'foo bar'
+          - vaulted_valued|string == 'foo bar'
+          - vaulted_valued|quote == "'foo bar'"
+          - vaulted_valued|capitalize == 'Foo bar'
+          - vaulted_valued|center(width=9) == ' foo bar '
+          - vaulted_valued|default('monkey') == 'foo bar'
+          - vaulted_valued|escape == 'foo bar'
+          - vaulted_valued|forceescape == 'foo bar'
+          - vaulted_valued|first == 'f'
+          - "'%s'|format(vaulted_valued) == 'foo bar'"
+          - vaulted_valued|indent(indentfirst=True) == '    foo bar'
+          - vaulted_valued.split() == ['foo', 'bar']
+          - vaulted_valued.split()|first|int(base=36) == 20328
+          - vaulted_valued|join('-') == 'f-o-o- -b-a-r'
+          - vaulted_valued|last == 'r'
+          - vaulted_valued|length == 7
+          - vaulted_valued|list == ['f', 'o', 'o', ' ', 'b', 'a', 'r']
+          - vaulted_valued|lower == 'foo bar'
+          - vaulted_valued|map('upper')|list == ['F', 'O', 'O', ' ', 'B', 'A', 'R']
+          - vaulted_valued|pprint == "'foo bar'"
+          - vaulted_valued|replace('foo', 'baz') == 'baz bar'
+          - vaulted_valued|reverse|string == 'rab oof'
+          - vaulted_valued|safe == 'foo bar'
+          - vaulted_valued|select('equalto', 'o')|list == ['o', 'o']
+          - vaulted_valued|slice(2)|list == [['f', 'o', 'o', ' '], ['b', 'a', 'r']]
+          - vaulted_valued|sort|list == [" ", "a", "b", "f", "o", "o", "r"]
+          - vaulted_valued|title == 'Foo Bar'
+          - vaulted_valued|string|tojson == '"foo bar"'
+          - vaulted_valued|trim == 'foo bar'
+          - vaulted_valued|truncate(4) == 'foo bar'
+          - vaulted_valued|upper == 'FOO BAR'
+          # jinja2.filters.do_urlencode uses an isinstance against string_types
+          # - vaulted_valued|urlencode == 'foo%20bar'
+          - vaulted_valued|urlize == 'foo bar'
+          # Requires unreleases jinja2==2.11.2
+          # - vaulted_valued|wordcount == 2
+          - vaulted_valued|wordwrap(4) == 'foo\nbar'
+          - vaulted_valued is not callable
+          - vaulted_valued is equalto('foo bar')
+          - vaulted_valued is iterable
+          - vaulted_valued is lower
+          - vaulted_valued is not none
+          # This is not exactly a string, and UserString doesn't fulfil this
+          # - vaulted_valued is string
+          - vaulted_valued is not upper
+
+          - vaulted_valued|b64encode == 'Zm9vIGJhcg=='
+          - vaulted_valued|to_uuid == '0271fe51-bb26-560f-b118-5d6513850860'
+          - vaulted_valued|string|to_json == '"foo bar"'
+          - vaulted_valued|md5 == '327b6f07435811239bc47e1544353273'
+          - vaulted_valued|sha1 == '3773dea65156909838fa6c22825cafe090ff8030'
+          - vaulted_valued|hash == '3773dea65156909838fa6c22825cafe090ff8030'
+          - vaulted_valued|regex_replace('foo', 'baz') == 'baz bar'
+          - vaulted_valued|regex_escape == 'foo\ bar'
+          - vaulted_valued|regex_search('foo') == 'foo'
+          - vaulted_valued|regex_findall('foo') == ['foo']
+          - vaulted_valued|random(seed='foo') == ' '
+          - vaulted_valued|shuffle(seed='foo') == ["o", "f", "r", "b", "o", "a", " "]
+          - vaulted_valued|comment == '#\n# foo bar\n#'
