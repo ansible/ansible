@@ -838,6 +838,8 @@ def get_parameters(client, module, parameters, method_name):
     if parameters.get('ProcessorFeatures') == [] and not method_name == 'modify_db_instance':
         parameters.pop('ProcessorFeatures')
 
+    if module.params['tags'] and module.params['creation_source'] and method_name != 'modify_db_instance':
+        parameters['Tags'] = ansible_dict_to_boto3_tag_list(module.params['tags'])
     if method_name == 'create_db_instance' and parameters.get('Tags'):
         parameters['Tags'] = ansible_dict_to_boto3_tag_list(parameters['Tags'])
     if method_name == 'modify_db_instance':
