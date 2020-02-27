@@ -12,9 +12,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: vmware_ova
-short_description: Upload and download ova templates from VMware vSphere
+short_description: Export/import ova/ovf templates
 description:
-    - This module can be used to add and delete datastore cluster in given VMware environment.
+    - This module upload and download ova/ofv templates from VMware vSphere
     - All parameters and VMware object values are case sensitive.
 author:
 -  Anton Bayandin (@aneroid13)
@@ -28,7 +28,7 @@ options:
     action:
       description:
       - Performed Action - download or upload ova/ovf file
-      - Script check existence of vm on upload. For existing vm it count vm uploaded already. 
+      - Script check existence of vm on upload. VM uploaded already counts as existing.
       choices: [ download, upload ]
       required: True
     path:
@@ -37,7 +37,7 @@ options:
       required: True
     name:
       description:
-      - On donload: Name of vm or template to download like ova file.
+      - On donload: Name of vm or template to export in .ova/ovf file.
       - On upload: Name of the file (ova/ovf) without extension.
       required: True
     type:
@@ -73,9 +73,9 @@ options:
       aliases: [new_network]
     nvram:
       description:
-      - Forms and download ovf/ova file with nvram file.
-      - Vmware changed .ovf format in VSphere 6.7 version. New version contains .nvram file with EFI firmware.
-      - VMware community discussion here https://communities.vmware.com/thread/596814
+      - Create and download ovf/ova file with nvram file.
+      - Vmware changed .ovf format in VSphere 6.7 version. Ovf new version format contains .nvram file with EFI firmware.
+      - VMware community discussion here - https://communities.vmware.com/thread/596814
       - .ovf files exported by any vmware tool from vcenter 6.7, compatible with vCenter 6.7 and newer versions only !! 
       default: False
 extends_documentation_fragment: vmware.documentation
