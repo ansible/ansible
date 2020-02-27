@@ -89,11 +89,11 @@ options:
   stage_canary_settings:
     description:
       - Canary settings for the deployment of the stage.
-      - Dict with following settings:
-      - percentTraffic: The percent (0-100) of traffic diverted to a canary deployment.
-      - deploymentId: The ID of the canary deployment.
-      - stageVariableOverrides: Stage variables overridden for a canary release deployment.
-      - useStageCache: A Boolean flag to indicate whether the canary deployment uses the stage cache or not.
+      - 'Dict with following settings:'
+      - 'percentTraffic: The percent (0-100) of traffic diverted to a canary deployment.'
+      - 'deploymentId: The ID of the canary deployment.'
+      - 'stageVariableOverrides: Stage variables overridden for a canary release deployment.'
+      - 'useStageCache: A Boolean flag to indicate whether the canary deployment uses the stage cache or not.'
       - See docs U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/apigateway.html#APIGateway.Client.create_stage)
     type: dict
     version_added: '2.10'
