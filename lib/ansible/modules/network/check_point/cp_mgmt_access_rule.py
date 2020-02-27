@@ -277,7 +277,6 @@ cp_mgmt_access_rule:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec_for_objects, api_call, api_call_for_rule
 
 
