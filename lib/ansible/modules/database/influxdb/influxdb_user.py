@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2017, Vitaliy Zhhuta <zhhuta () gmail.com>
+# Copyright: (c) 2017, Vitaliy Zhhuta <zhhuta () gmail.com>
 # insipred by Kamil Szczygiel <kamil.szczygiel () intel.com> influxdb_database module
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -12,12 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: influxdb_user
 short_description: Manage InfluxDB users
 description:
-  - Manage InfluxDB users
+  - Manage InfluxDB users.
 version_added: 2.5
 author: "Vitaliy Zhhuta (@zhhuta)"
 requirements:
@@ -28,10 +28,12 @@ options:
     description:
       - Name of the user.
     required: True
+    type: str
   user_password:
     description:
       - Password to be set for the user.
     required: false
+    type: str
   admin:
     description:
       - Whether the user should be in the admin role or not.
@@ -41,19 +43,22 @@ options:
   state:
     description:
       - State of the user.
-    choices: [ present, absent ]
+    choices: [ absent, present ]
     default: present
+    type: str
   grants:
     description:
-      - Privileges to grant to this user. Takes a list of dicts containing the
-        "database" and "privilege" keys.
+      - Privileges to grant to this user.
+      - Takes a list of dicts containing the "database" and "privilege" keys.
       - If this argument is not provided, the current grants will be left alone.
-        If an empty list is provided, all grants for the user will be removed.
+      - If an empty list is provided, all grants for the user will be removed.
     version_added: 2.8
+    type: list
+    elements: dict
 extends_documentation_fragment: influxdb
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a user on localhost using default login credentials
   influxdb_user:
     user_name: john
@@ -95,7 +100,7 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 #only defaults
 '''
 
@@ -204,7 +209,7 @@ def main():
         user_name=dict(required=True, type='str'),
         user_password=dict(required=False, type='str', no_log=True),
         admin=dict(default='False', type='bool'),
-        grants=dict(type='list')
+        grants=dict(type='list', elements='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
