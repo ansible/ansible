@@ -273,6 +273,208 @@ EXAMPLES = """
 # set interfaces ethernet eth3 firewall out name 'OUTBOUND'
 
 
+# Using merged
+#
+# Before state:
+# -------------
+#
+# vyos@vyos:~$ show configuration commands| grep firewall
+# set firewall ipv6-name 'V6-LOCAL'
+# set firewall name 'INBOUND'
+# set firewall name 'LOCAL'
+# set firewall name 'OUTBOUND'
+# set interfaces ethernet eth1 firewall in name 'INBOUND'
+# set interfaces ethernet eth1 firewall local ipv6-name 'V6-LOCAL'
+# set interfaces ethernet eth1 firewall local name 'LOCAL'
+# set interfaces ethernet eth1 firewall out name 'OUTBOUND'
+# set interfaces ethernet eth3 firewall in name 'INBOUND'
+# set interfaces ethernet eth3 firewall local ipv6-name 'V6-LOCAL'
+# set interfaces ethernet eth3 firewall local name 'LOCAL'
+# set interfaces ethernet eth3 firewall out name 'OUTBOUND'
+#
+- name: Merge the provided configuration with the existing running configuration
+  vyos_firewall_interfaces:
+    config:
+      - access_rules:
+          - afi: 'ipv4'
+            rules:
+              - name: 'OUTBOUND'
+                direction: 'in'
+              - name: 'INBOUND'
+                direction: 'out'
+        name: 'eth1'
+    state: merged
+#
+#
+# -------------------------
+# Module Execution Result
+# -------------------------
+#
+#    "before": [
+#        {
+#            "name": "eth0"
+#        },
+#        {
+#            "access_rules": [
+#                {
+#                    "afi": "ipv4",
+#                    "rules": [
+#                        {
+#                            "direction": "in",
+#                            "name": "INBOUND"
+#                        },
+#                        {
+#                            "direction": "local",
+#                            "name": "LOCAL"
+#                        },
+#                        {
+#                            "direction": "out",
+#                            "name": "OUTBOUND"
+#                        }
+#                    ]
+#                },
+#                {
+#                    "afi": "ipv6",
+#                    "rules": [
+#                        {
+#                            "direction": "local",
+#                            "name": "V6-LOCAL"
+#                        }
+#                    ]
+#                }
+#            ],
+#            "name": "eth1"
+#        },
+#        {
+#            "name": "eth2"
+#        },
+#        {
+#            "access_rules": [
+#                {
+#                    "afi": "ipv4",
+#                    "rules": [
+#                        {
+#                            "direction": "in",
+#                            "name": "INBOUND"
+#                        },
+#                        {
+#                            "direction": "local",
+#                            "name": "LOCAL"
+#                        },
+#                        {
+#                            "direction": "out",
+#                            "name": "OUTBOUND"
+#                        }
+#                    ]
+#                },
+#                {
+#                    "afi": "ipv6",
+#                    "rules": [
+#                        {
+#                            "direction": "local",
+#                            "name": "V6-LOCAL"
+#                        }
+#                    ]
+#                }
+#            ],
+#            "name": "eth3"
+#        }
+#    ]
+#
+#    "commands": [
+#       "set interfaces ethernet eth1 firewall in name 'OUTBOUND'",
+#       "set interfaces ethernet eth1 firewall out name 'INBOUND'"
+#    ]
+#
+#    "after": [
+#        {
+#            "name": "eth0"
+#        },
+#        {
+#            "access_rules": [
+#                {
+#                    "afi": "ipv4",
+#                    "rules": [
+#                        {
+#                            "direction": "in",
+#                            "name": "OUTBOUND"
+#                        },
+#                        {
+#                            "direction": "local",
+#                            "name": "LOCAL"
+#                        },
+#                        {
+#                            "direction": "out",
+#                            "name": "INBOUND"
+#                        }
+#                    ]
+#                },
+#                {
+#                    "afi": "ipv6",
+#                    "rules": [
+#                        {
+#                            "direction": "local",
+#                            "name": "V6-LOCAL"
+#                        }
+#                    ]
+#                }
+#            ],
+#            "name": "eth1"
+#        },
+#        {
+#            "name": "eth2"
+#        },
+#        {
+#            "access_rules": [
+#                {
+#                    "afi": "ipv4",
+#                    "rules": [
+#                        {
+#                            "direction": "in",
+#                            "name": "INBOUND"
+#                        },
+#                        {
+#                            "direction": "local",
+#                            "name": "LOCAL"
+#                        },
+#                        {
+#                            "direction": "out",
+#                            "name": "OUTBOUND"
+#                        }
+#                    ]
+#                },
+#                {
+#                    "afi": "ipv6",
+#                    "rules": [
+#                        {
+#                            "direction": "local",
+#                            "name": "V6-LOCAL"
+#                        }
+#                    ]
+#                }
+#            ],
+#            "name": "eth3"
+#        }
+#    ]
+#
+# After state:
+# -------------
+#
+# vyos@vyos:~$ show configuration commands| grep firewall
+# set firewall ipv6-name 'V6-LOCAL'
+# set firewall name 'INBOUND'
+# set firewall name 'LOCAL'
+# set firewall name 'OUTBOUND'
+# set interfaces ethernet eth1 firewall in name 'OUTBOUND'
+# set interfaces ethernet eth1 firewall local ipv6-name 'V6-LOCAL'
+# set interfaces ethernet eth1 firewall local name 'LOCAL'
+# set interfaces ethernet eth1 firewall out name 'INBOUND'
+# set interfaces ethernet eth3 firewall in name 'INBOUND'
+# set interfaces ethernet eth3 firewall local ipv6-name 'V6-LOCAL'
+# set interfaces ethernet eth3 firewall local name 'LOCAL'
+# set interfaces ethernet eth3 firewall out name 'OUTBOUND'
+
+
 # Using replaced
 #
 # Before state:

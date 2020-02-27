@@ -77,6 +77,41 @@ populate:
         name: V6-LOCAL
     name: eth2
 
+merged_edit:
+  commands:
+    - "set interfaces ethernet eth1 firewall in name 'OUTBOUND'"
+    - "set interfaces ethernet eth1 firewall out name 'INBOUND'"
+
+  after:
+    - name: eth0
+    - access_rules:
+      - afi: ipv4
+        rules:
+        - direction: in
+          name: OUTBOUND
+        - direction: local
+          name: LOCAL
+        - direction: out
+          name: INBOUND
+      - afi: ipv6
+        rules:
+        - direction: local
+          name: V6-LOCAL
+      name: eth1
+    - access_rules:
+        - afi: ipv4
+          rules:
+          - direction: in
+            name: INBOUND
+          - direction: local
+            name: LOCAL
+          - direction: out
+            name: OUTBOUND
+        - afi: ipv6
+          rules:
+          - direction: local
+            name: V6-LOCAL
+      name: eth2
 replaced:
   commands:
     - "delete interfaces ethernet eth2 firewall out name"

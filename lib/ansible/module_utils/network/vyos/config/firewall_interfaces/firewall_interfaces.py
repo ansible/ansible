@@ -15,9 +15,8 @@ __metaclass__ = type
 
 from copy import deepcopy
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list, dict_diff, remove_empties
+from ansible.module_utils.network.common.utils import to_list, dict_diff, remove_empties, search_obj_in_list
 from ansible.module_utils.network.vyos.facts.facts import Facts
-from ansible.module_utils.network. vyos.utils.utils import search_obj_in_list
 
 
 class Firewall_interfaces(ConfigBase):

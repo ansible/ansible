@@ -138,7 +138,7 @@ class TestVyosFirewallInterfacesModule(TestVyosModule):
                 state="merged"))
         self.execute_module(changed=False, commands=[])
 
-    def test_vyos_firewall_rule_set_01_deleted(self):
+    def test_vyos_firewall_rule_set_01_deleted_per_afi(self):
         set_module_args(
             dict(config=[
                 dict(name='eth0',
@@ -154,7 +154,7 @@ class TestVyosFirewallInterfacesModule(TestVyosModule):
         ]
         self.execute_module(changed=True, commands=commands)
 
-    def test_vyos_firewall_rule_set_03_deleted(self):
+    def test_vyos_firewall_rule_set_03_deleted_per_interface(self):
         set_module_args(
             dict(config=[dict(name='eth0'),
                          dict(name='eth2')],
@@ -165,7 +165,7 @@ class TestVyosFirewallInterfacesModule(TestVyosModule):
         ]
         self.execute_module(changed=True, commands=commands)
 
-    def test_vyos_firewall_rule_set_03_deleted(self):
+    def test_vyos_firewall_rule_set_03_deleted_all(self):
         set_module_args(dict(config=[], state="deleted"))
         commands = [
             "delete interfaces ethernet eth0 firewall",
@@ -184,7 +184,7 @@ class TestVyosFirewallInterfacesModule(TestVyosModule):
         ]
         self.execute_module(changed=True, commands=commands)
 
-    def test_vyos_firewall_rule_set_04_deleted_idem(self):
+    def test_vyos_firewall_rule_set_04_deleted_interface_idem(self):
         set_module_args(
             dict(config=[dict(name='eth1'),
                          dict(name='eth3')],
@@ -238,6 +238,13 @@ class TestVyosFirewallInterfacesModule(TestVyosModule):
                               rules=[dict(name='LOCAL', direction='local')]),
                          dict(afi='ipv6',
                               rules=[dict(name='V6-LOCAL', direction='local')])
+                     ]),
+                dict(name='eth3',
+                     access_rules=[
+                         dict(afi='ipv4',
+                              rules=[dict(name='LOCAL', direction='local')]),
+                         dict(afi='ipv6',
+                              rules=[dict(name='V6-LOCAL', direction='local')])
                      ])
             ],
                 state="replaced"))
@@ -246,6 +253,8 @@ class TestVyosFirewallInterfacesModule(TestVyosModule):
             "delete interfaces ethernet eth0 firewall local name",
             "delete interfaces ethernet eth2 firewall in name",
             "delete interfaces ethernet eth2 firewall out name",
+            "set interfaces ethernet eth3 firewall local name 'LOCAL'",
+            "set interfaces ethernet eth3 firewall local ipv6-name 'V6-LOCAL'"
         ]
         self.execute_module(changed=True, commands=commands)
 
