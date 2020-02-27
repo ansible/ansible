@@ -19,6 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+try:
+    from collections import UserString
+except ImportError:
+    from UserString import UserString
+
 import sys
 import yaml
 
@@ -81,7 +86,7 @@ class AnsibleSequence(AnsibleBaseYAMLObject, list):
 
 # Unicode like object that is not evaluated (decrypted) until it needs to be
 # TODO: is there a reason these objects are subclasses for YAMLObject?
-class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
+class AnsibleVaultEncryptedUnicode(UserString, AnsibleBaseYAMLObject):
     __UNSAFE__ = True
     __ENCRYPTED__ = True
     yaml_tag = u'!vault'
@@ -104,11 +109,12 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
         The .data attribute is a property that returns the decrypted plaintext
         of the ciphertext as a PY2 unicode or PY3 string object.
         '''
-        super(AnsibleVaultEncryptedUnicode, self).__init__()
+
+        super(AnsibleVaultEncryptedUnicode, self).__init__('')
 
         # after construction, calling code has to set the .vault attribute to a vaultlib object
         self.vault = None
-        self._ciphertext = to_bytes(ciphertext)
+        self._ciphertext = ciphertext
 
     @property
     def data(self):
@@ -120,22 +126,15 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
     def data(self, value):
         self._ciphertext = value
 
-    def __repr__(self):
-        return repr(self.data)
+    def __reversed__(self):
+        return self[::-1]
 
-    # Compare a regular str/text_type with the decrypted hypertext
-    def __eq__(self, other):
-        if self.vault:
-            return other == self.data
-        return False
+    def __getitem__(self, index):
+        return self.data[index]
 
-    def __hash__(self):
-        return id(self)
-
-    def __ne__(self, other):
-        if self.vault:
-            return other != self.data
-        return True
+    def __getslice__(self, start, end):
+        start = max(start, 0); end = max(end, 0)
+        return self.data[start:end]
 
     def __str__(self):
         return to_native(self.data, errors='surrogate_or_strict')
@@ -144,4 +143,4 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
         return to_text(self.data, errors='surrogate_or_strict')
 
     def encode(self, encoding=None, errors=None):
-        return self.data.encode(encoding, errors)
+        return to_bytes(self.data, encoding=encoding, errors=errors)

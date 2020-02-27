@@ -134,6 +134,9 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False, multil
 
 def regex_findall(value, regex, multiline=False, ignorecase=False):
     ''' Perform re.findall and return the list of matches '''
+
+    value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
+
     flags = 0
     if ignorecase:
         flags |= re.I
@@ -144,6 +147,8 @@ def regex_findall(value, regex, multiline=False, ignorecase=False):
 
 def regex_search(value, regex, *args, **kwargs):
     ''' Perform re.search and return the list of matches or a backref '''
+
+    value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
 
     groups = list()
     for arg in args:
@@ -184,6 +189,7 @@ def ternary(value, true_val, false_val, none_val=None):
 
 
 def regex_escape(string, re_type='python'):
+    string = to_text(string, errors='surrogate_or_strict', nonstring='simplerepr')
     '''Escape all regular expressions special characters from STRING.'''
     if re_type == 'python':
         return re.escape(string)
