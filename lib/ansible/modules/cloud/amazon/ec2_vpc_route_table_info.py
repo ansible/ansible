@@ -144,8 +144,8 @@ route_tables:
               returned: when NAT instance is available
               type: str
             instance_owner_id:
-              description: The ID of a NAT instance in your VPC.
-              returned: when NAT instance is available
+              description: The ID of a NAT instance owner in your VPC.
+              returned: when NAT instance owner is available
               type: str
             nat_gateway_id:
               description: The ID of a NAT gateway.
