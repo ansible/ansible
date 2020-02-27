@@ -129,17 +129,24 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
 
     ssh_command = compile_cli_command(cmd_type, store, domain, xml_input)
 
-    # temp_open = "ssh -l " + user + " -p " + cli_port + " " + host + " " + ssh_command
+    temp_open = "ssh -l " + user + " -p " + cli_port + " " + host + " " + ssh_command
 
     host = 'localhost'
 
-    subprocess.Popen("ssh -l {user} -p {port} {host} {cmd}".format(user=user, port=cli_port, host=host, cmd=ssh_command),
-                     shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    execution = subprocess.Popen("ssh -l {user} -p {port} {host} {cmd}".format(user=user, port=cli_port, host=host, cmd=ssh_command),
+                                 shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    retVal = 0
+    for line in execution.stdout.readlines():
+        execution.wait()
+        print line           
+    retVal= execution.returncode
+
 
     if os.path.exists('/tmp/jenkins_object.xml'):
       os.remove('/tmp/jenkins_object.xml')
 
-    return(temp_open)
+    return(retVal)
 
 def main():
     module = AnsibleModule(
