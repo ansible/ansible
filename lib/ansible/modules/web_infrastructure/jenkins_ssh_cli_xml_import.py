@@ -105,7 +105,7 @@ def compile_cli_command(cmd, store, domain, xml):
 
 def write_xml(xml):
     jenkins_object_file = '/tmp/jenkins_object.xml'
-    f = open(jenkins_object_file,'w')
+    f = open(jenkins_object_file, 'w')
     f.write(xml)
     f.close()
 
@@ -123,9 +123,9 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
     cli_port = info['x-ssh-endpoint'].split(':')[1]
 
     if 'code' in xml_type:
-      xml_input = write_xml(xml)
+        xml_input = write_xml(xml)
     elif 'file' in xml_type:
-      xml_input = xml
+        xml_input = xml
 
     ssh_command = compile_cli_command(cmd_type, store, domain, xml_input)
 
@@ -140,12 +140,13 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
     for line in execution.stdout.readlines():
         execution.wait()
         print(line)
-    retVal= execution.returncode
+    retVal = execution.returncode
 
     if os.path.exists('/tmp/jenkins_object.xml'):
-      os.remove('/tmp/jenkins_object.xml')
+        os.remove('/tmp/jenkins_object.xml')
 
     return(retVal)
+
 
 def main():
     module = AnsibleModule(
