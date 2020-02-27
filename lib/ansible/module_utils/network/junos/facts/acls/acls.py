@@ -128,18 +128,23 @@ class AclsFacts(object):
                     ace = {'name': term.get('name')}
                     if term.get('from'):
                         if term['from'].get('source-address'):
-                            ace['source'] = {}
+                            ace['source'] = ace.get('source', {})
                             ace['source']['address'] = term['from']['source-address']['name']
-                        if term['from'].get('prefix-list'):
-                            ace['source'] = {}
-                            ace['source']['prefix'] = term['from']['prefix-list']['name']
-                        if term['from'].get('port'):
-                            ace['port'] = {}
-                            specified_port = term['from']['port']
-                            try:
-                                ace['port']['range'] = int(specified_port)
-                            except ValueError:
-                                ace["port"][specified_port] = True
+                        if term['from'].get('source-prefix-list'):
+                            ace['source'] = ace.get('source', {})
+                            ace['source']['prefix_list'] = term['from']['source-prefix-list']['name']
+                        if term['from'].get('source-port'):
+                            ace['source'] = ace.get('source', {})
+                            ace['source']['port']['eq'] = term['from']['source-port']
+                        if term['from'].get('destination-address'):
+                            ace['destination'] = ace.get('destination', {})
+                            ace['destination']['address'] = term['from']['destination-address']['name']
+                        if term['from'].get('destination-prefix-list'):
+                            ace['destination'] = ace.get('destination', {})
+                            ace['destination']['prefix_list'] = term['from']['destination-prefix-list']['name']
+                        if term['from'].get('destination-port'):
+                            ace['destination'] = ace.get('destination', {})
+                            ace['destination']['port']['eq'] = term['from']['destination-port']
                         if term['from'].get('protocol'):
                             ace['protocol'] = {}
                             protocol = term['from']['protocol']

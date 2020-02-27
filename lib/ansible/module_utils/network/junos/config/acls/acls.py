@@ -205,21 +205,22 @@ class Acls(ConfigBase):
                         build_child_xml_node(term_node, 'name', ace['name'])
                         if ace.get("source") or ace.get('protocol') or ace.get('port'):
                             from_node = build_child_xml_node(term_node, 'from')
-                            if ace.get("source"):
-                                if ace["source"].get("address"):
-                                    build_child_xml_node(from_node, 'source-address', ace["source"]['address'])
-                                if ace["source"].get("prefix_list"):
-                                    build_child_xml_node(from_node, 'prefix-list', ace["source"]['prefix_list'])
+                            for direction in ('source', 'destination'):
+                                if ace.get(direction):
+                                    if ace[direction].get("address"):
+                                        build_child_xml_node(from_node, '{0}-address'.format(direction), ace[direction]['address'])
+                                    if ace[direction].get("prefix_list"):
+                                        build_child_xml_node(from_node, '{0}-prefix-list'.format(direction), ace[direction]['prefix_list'])
+                                    if ace[direction].get('port_protocol'):
+                                        if "eq" in ace[direction]["port_protocol"]:
+                                            build_child_xml_node(from_node, '{0}-port'.format(direction), ace[direction]['port_protocol']['eq'])
+                                        elif "range" in ace[direction]["port_protocol"]:
+                                            ports = "{0}-{1}".format(ace[direction]["port_protocol"]["start"], ace[direction]["port_protocol"]["end"])
+                                            build_child_xml_node(from_node, '{0}-port'.format(direction), ports)
                             if ace.get('protocol'):
                                 protocol = [proto for proto in ace["protocol"] if ace["protocol"][proto]][0]
                                 if protocol != 'range':
                                     build_child_xml_node(from_node, 'protocol', protocol)
-                            if ace.get('port'):
-                                port = [port for port in ace["port"] if ace["port"][port]][0]
-                                if port == "range":
-                                    build_child_xml_node(from_node, 'port', ace['port'][port])
-                                else:
-                                    build_child_xml_node(from_node, 'port', port)
                         if ace.get("grant"):
                             then_node = build_child_xml_node(term_node, "then")
                             if ace["grant"] == "permit":
