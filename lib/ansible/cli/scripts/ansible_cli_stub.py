@@ -137,7 +137,6 @@ if __name__ == '__main__':
 #        display.error(str(e))
 #        exit_code = 2
     except AnsibleError as e:
-        raise
         display.error(to_text(e), wrap_text=False)
         exit_code = 1
     except KeyboardInterrupt:
