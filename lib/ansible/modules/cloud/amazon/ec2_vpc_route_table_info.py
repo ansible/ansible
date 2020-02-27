@@ -33,6 +33,7 @@ options:
     type: list
     default: []
     version_added: "2.10"
+    elements: str
 extends_documentation_fragment:
     - aws
     - ec2
