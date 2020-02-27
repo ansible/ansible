@@ -1,0 +1,141 @@
+---
+- debug:
+      msg: "START iosxr_static_routes merged integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Merge the provided configuration with the exisiting running configuration
+      iosxr_static_routes: &merged
+        config:
+          - address_families:
+              - afi: ipv4
+                safi: unicast
+                routes:
+                  - dest: 192.0.2.16/28
+                    next_hops:
+                      - forward_router_address: 192.0.2.10
+                        interface: FastEthernet0/0/0/1
+                        description: "LAB"
+                        metric: 120
+                        tag: 10
+                      
+                      - interface: FastEthernet0/0/0/5
+                        track: ip_sla_1
+                  
+                  - dest: 192.0.2.32/28
+                    next_hops:
+                      - forward_router_address: 192.0.2.11
+                        admin_distance: 100
+              
+              - afi: ipv6
+                safi: unicast
+                routes:
+                  - dest: 2001:db8:1000::/36
+                    next_hops:
+                      - interface: FastEthernet0/0/0/7
+                        description: "DC"
+                      
+                      - interface: FastEthernet0/0/0/8
+                        forward_router_address: 2001:db8:2000:2::1
+          
+          - vrf: DEV_SITE
+            address_families:
+              - afi: ipv4
+                safi: unicast
+                routes:
+                  - dest: 192.0.2.48/28
+                    next_hops:
+                      - forward_router_address: 192.0.2.12
+                        description: "DEV"
+                        dest_vrf: test_1
+                  
+                  - dest: 192.0.2.80/28
+                    next_hops:
+                      - interface: FastEthernet0/0/0/2
+                        forward_router_address: 192.0.2.14
+                        dest_vrf: test_1
+                        track: ip_sla_2
+                        vrflabel: 124
+        state: merged
+      register: result
+  
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that: "{{ merged['before'] | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - set_fact:
+        diff: "{{ merged['after'] | symmetric_difference(result['after'])  }}"
+
+    - name: Assert that after dicts was correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+      iosxr_static_routes: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+          - "result.commands|length == 0"
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
+    
+    - name: Update existing configuration using merged
+      iosxr_static_routes: &merged_update
+        config:
+          - vrf: DEV_SITE
+            address_families:
+              - afi: ipv4
+                safi: unicast
+                routes:
+                  - dest: 192.0.2.48/28
+                    next_hops:
+                      - forward_router_address: 192.0.2.12
+                        vrflabel: 2301
+                        dest_vrf: test_1
+                  
+                  - dest: 192.0.2.80/28
+                    next_hops:
+                      - interface: FastEthernet0/0/0/2
+                        forward_router_address: 192.0.2.14
+                        dest_vrf: test_1
+                        description: "rt_test_1"
+      register: result
+    
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that: "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['update_commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+    
+    - name: Assert that after dicts were correctly generated
+      assert:
+        that: "{{ merged['update_after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Update existing static_routes configuration using merged (IDEMPOTENT)
+      iosxr_static_routes: *merged_update
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+          - "result.commands|length == 0"
+
+  always:
+    - include_tasks: _remove_config.yaml

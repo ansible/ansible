@@ -1,0 +1,58 @@
+---
+- debug:
+      msg: "START iosxr_static_routes replaced integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Replace device configurations of static routes with provided configurations
+      iosxr_static_routes: &replaced
+        config:
+          - vrf: DEV_SITE
+            address_families:
+              - afi: ipv4
+                safi: unicast
+                routes:
+                  - dest: 192.0.2.48/28
+                    next_hops:
+                      - forward_router_address: 192.0.2.15
+                        interface: FastEthernet0/0/0/3
+                        description: "DEV_NEW"
+                        dest_vrf: dev_test_2
+        state: replaced 
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ replaced['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ replaced['before'] | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ replaced['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Replace device configurations of listed vrfs/global entry with provided configuration (IDEMPOTENT)
+      iosxr_static_routes: *replaced
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+         - "result.commands|length == 0"
+
+    - name: Assert that before dict is correctly generated
+      assert:
+        that:
+          - "{{ replaced['after'] | symmetric_difference(result['before']) |length == 0 }}"
+  
+  always:
+    - include_tasks: _remove_config.yaml

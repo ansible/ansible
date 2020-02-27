@@ -1,0 +1,66 @@
+---
+- debug:
+      msg: "START iosxr_static_routes overridden integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Overridde all static routes configuration with provided configuration
+      iosxr_static_routes: &overridden
+        config:
+          - vrf: DEV_NEW
+            address_families:
+              - afi: ipv4
+                safi: unicast
+                routes:
+                  - dest: 192.0.2.48/28
+                    next_hops:
+                      - forward_router_address: 192.0.2.15
+                        interface: FastEthernet0/0/0/3
+                        description: "DEV1"
+              - afi: ipv6
+                safi: unicast
+                routes:
+                  - dest: 2001:db8:3000::/36
+                    next_hops:
+                      - interface: FastEthernet0/0/0/4
+                        forward_router_address: 2001:db8:2000:2::2
+                        description: "PROD1"
+                        track: ip_sla_1
+        state: overridden
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ overridden['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ replaced['before'] | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Overridde all static routes configuration with given configuration (IDEMPOTENT)
+      iosxr_static_routes: *overridden
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+         - "result.commands|length == 0"
+
+    - name: Assert that before dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] | symmetric_difference(result['before']) |length == 0 }}"
+  
+  always:
+    - include_tasks: _remove_config.yaml
