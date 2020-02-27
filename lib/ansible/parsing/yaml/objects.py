@@ -109,7 +109,6 @@ class AnsibleVaultEncryptedUnicode(UserString, AnsibleBaseYAMLObject):
         The .data attribute is a property that returns the decrypted plaintext
         of the ciphertext as a PY2 unicode or PY3 string object.
         '''
-
         super(AnsibleVaultEncryptedUnicode, self).__init__('')
 
         # after construction, calling code has to set the .vault attribute to a vaultlib object
