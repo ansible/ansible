@@ -13,43 +13,49 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: mongodb_shard
-short_description: Add and remove shards from a MongoDB Cluster.
+short_description: Add or remove shards from a MongoDB Cluster
 description:
-    -  Add and remove shards from a MongoDB Cluster.
+    -  Add or remove shards from a MongoDB Cluster.
 author: Rhys Campbell (@rhysmeister)
 version_added: "2.8"
 options:
     login_user:
         description:
-            - The user to login with.
+            - The MongoDB user to login with.
         required: false
+        type: str
     login_password:
         description:
-            - The password used to authenticate with.
+            - The login user's password used to authenticate with.
         required: false
+        type: str
     login_database:
         description:
             - The database where login credentials are stored.
         required: false
-        default: "admin"
+        type: str
+        default: admin
     login_host:
         description:
             - The host to login to.
             - This must be a mongos.
         required: false
+        type: str
         default: localhost
     login_port:
         description:
-            - The port to login to.
+            - The MongoDB port to login to.
         required: false
+        type: int
         default: 27017
     shard:
         description:
             - The shard connection string.
-            - Should be supplied in the form <replicaset>/host:port as detailed in U(https://docs.mongodb.com/manual/tutorial/add-shards-to-shard-cluster/).
+            - Should be supplied in the form <replicaset>/host:port as detailed
+              in U(https://docs.mongodb.com/manual/tutorial/add-shards-to-shard-cluster/).
             - For example rs0/example1.mongodb.com:27017.
         required: true
-        default: null
+        type: str
     ssl:
         description:
             - Whether to use an SSL connection when connecting to the database.
@@ -57,40 +63,43 @@ options:
         type: bool
     ssl_cert_reqs:
         description:
-            - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
+            - Specifies whether a certificate is required from the other side of the connection,
+              and whether it will be validated if provided.
         required: false
-        default: "CERT_REQUIRED"
-        choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
+        type: str
+        default: CERT_REQUIRED
+        choices: [CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED]
     state:
         description:
             - Whether the shard should be present or absent from the Cluster.
         required: false
+        type: str
         default: present
-        choices: ["present", "absent"]
+        choices: [absent, present]
 
 notes:
     - Requires the pymongo Python package on the remote host, version 2.4.2+.
-    - This can be installed using pip or the OS package manager. @see U(http://api.mongodb.org/python/current/installation.html).
-requirements: [ "pymongo" ]
+
+requirements: [ pymongo ]
 '''
 
 EXAMPLES = '''
-# add a replicaset shard named rs1 with a member running on port 27018 on mongodb0.example.net
-- mongodb_shard:
+- name: Add a replicaset shard named rs1 with a member running on port 27018 on mongodb0.example.net
+  mongodb_shard:
     login_user: admin
     login_password: admin
     shard: "rs1/mongodb0.example.net:27018"
     state: present
 
-# add a standalone mongod shard running on port 27018 of mongodb0.example.net
-- mongodb_shard:
+- name: Add a standalone mongod shard running on port 27018 of mongodb0.example.net
+  mongodb_shard:
     login_user: admin
     login_password: admin
     shard: "mongodb0.example.net:27018"
     state: present
 
-# To remove a shard called 'rs1'
-- mongodb_shard:
+- name: To remove a shard called 'rs1'
+  mongodb_shard:
     login_user: admin
     login_password: admin
     shard: rs1
@@ -231,15 +240,16 @@ def load_mongocnf():
 
 
 def main():
-    module = AnsibleModule(argument_spec=dict(login_user=dict(default=None),
-                                              login_password=dict(default=None, no_log=True),
-                                              login_database=dict(default="admin"),
-                                              login_host=dict(default="localhost", required=False),
-                                              login_port=dict(default=27017, type='int', required=False),
-                                              ssl=dict(default=False, type='bool'),
-                                              ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
-                                              shard=dict(default=None),
-                                              state=dict(required=False, default="present", choices=["present", "absent"])),
+    module = AnsibleModule(argument_spec=dict(login_user=dict(type='str', required=False),
+                                              login_password=dict(type='str', required=False, no_log=True),
+                                              login_database=dict(type='str', required=False, default='admin'),
+                                              login_host=dict(type='str', required=False, default='localhost'),
+                                              login_port=dict(type='int', default=27017, required=False),
+                                              ssl=dict(type='bool', default=False, required=False),
+                                              ssl_cert_reqs=dict(type='str', required=False, default='CERT_REQUIRED',
+                                                                 choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
+                                              shard=dict(type='str', required=True),
+                                              state=dict(type='str', required=False, default='present', choices=['absent', 'present'])),
                            supports_check_mode=True)
 
     if not pymongo_found:
