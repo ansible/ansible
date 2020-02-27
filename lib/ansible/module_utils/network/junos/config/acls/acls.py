@@ -203,7 +203,7 @@ class Acls(ConfigBase):
                             continue
 
                         build_child_xml_node(term_node, 'name', ace['name'])
-                        if ace.get("source") or ace.get('protocol') or ace.get('port'):
+                        if ace.get("source") or ace.get('destination') or ace.get('protocol'):
                             from_node = build_child_xml_node(term_node, 'from')
                             for direction in ('source', 'destination'):
                                 if ace.get(direction):
@@ -221,6 +221,83 @@ class Acls(ConfigBase):
                                 protocol = [proto for proto in ace["protocol"] if ace["protocol"][proto]][0]
                                 if protocol != 'range':
                                     build_child_xml_node(from_node, 'protocol', protocol)
+                            if ace.get("protocol_options"):
+                                if ace["protocol_options"].get("icmp"):
+                                    icmp_code = build_child_xml_node(from_node, "icmp-code")
+                                    icmp_type = build_child_xml_node(from_node, "icmp-type")
+                                    icmp = ace["protocol_options"]["icmp"]
+                                    if "dod_host_prohibited" in icmp:
+                                        build_child_xml_node(icmp_code, "destination-host-prohibited")
+                                    if "dod_net_prohibited" in icmp:
+                                        build_child_xml_node(icmp_code, "destination-network-prohibited")
+                                    if "echo" in icmp:
+                                        build_child_xml_node(icmp_type, "echo-request")
+                                    if "echo_reply" in icmp:
+                                        build_child_xml_node(icmp_type, "echo-reply")
+                                    if "general_parameter_reply" in icmp:
+                                        pass #TODO
+                                    if "host_tos_unreachable" in icmp:
+                                        build_child_xml_node(icmp_code, "host-unreachable-for-tos")
+                                    if "host_isolated" in icmp:
+                                        pass #TODO
+                                    if "host_precedence_unreachable" in icmp:
+                                        pass #TODO
+                                    if "host_redirect" in icmp:
+                                        build_child_xml_node(icmp_code, "redirect-for-host")
+                                    if "host_tos_redirect" in icmp:
+                                        build_child_xml_node(icmp_code, "redirect-for-host-and-tos")
+                                    if "host_unknown" in icmp:
+                                        build_child_xml_node(icmp_code, "destination-host-unknown")
+                                    if "host_unreachable" in icmp:
+                                        build_child_xml_node(icmp_code, "host-unreachable")
+                                    if "information_reply" in icmp:
+                                        pass #TODO
+                                    if "information_request" in icmp:
+                                        pass #TODO
+                                    if "mask_reply" in icmp:
+                                        pass #TODO
+                                    if "mask_request" in icmp:
+                                        pass #TODO
+                                    if "net_tos_unreachable" in icmp:
+                                        pass #TODO
+                                    if "net_redirect" in icmp:
+                                        build_child_xml_node(icmp_code, "redirect-for-network")
+                                    if "net_tos_redirect" in icmp:
+                                        build_child_xml_node(icmp_code, "redirect-for-tos-and-net")
+                                    if "network_unknown" in icmp:
+                                        build_child_xml_node(icmp_code, "destination-network-unknown")
+                                    if "net_unreachable" in icmp:
+                                        pass #TODO
+                                    if "option_missing" in icmp:
+                                        pass #TODO
+                                    if "port_unreachable" in icmp:
+                                        build_child_xml_node(icmp_code, "port-unreachable")
+                                    if "precedence_unreachable" in icmp:
+                                        pass #TODO
+                                    if "protocol_unreachable" in icmp:
+                                        build_child_xml_node(icmp_code, "protocol-unreachable")
+                                    if "reassembly_timeout" in icmp:
+                                        build_child_xml_node(icmp_code, "ttl-eq-zero-during-reassembly")
+                                    if "redirect" in icmp:
+                                        build_child_xml_node(icmp_type, "redirect")
+                                    if "router_advertisement" in icmp:
+                                        build_child_xml_node(icmp_type, "router-advertisement")
+                                    if "router_solicitation" in icmp:
+                                        build_child_xml_node(icmp_type, "router-solicit")
+                                    if "source_quench" in icmp:
+                                        pass #TODO
+                                    if "source_route_failed" in icmp:
+                                        build_child_xml_node(icmp_code, "source-route-failed")
+                                    if "time_exceeded" in icmp:
+                                        build_child_xml_node(icmp_type, "time-exceeded")
+                                    if "timestamp_reply" in icmp:
+                                        pass #TODO
+                                    if "timestamp_request" in icmp:
+                                        pass #TODO
+                                    if "ttl_exceeded" in icmp:
+                                        build_child_xml_node(icmp_code, "ttl-eq-zero-during-transit")
+                                    if "unreachable" in icmp:
+                                        pass #TODO
                         if ace.get("grant"):
                             then_node = build_child_xml_node(term_node, "then")
                             if ace["grant"] == "permit":
