@@ -10,7 +10,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_host_storage_info
+module: ovirt_host_storage_facts
 short_description: Retrieve information about one or more oVirt/RHV HostStorages (applicable only for block storage)
 author: "Daniel Erez (@derez)"
 deprecated:
@@ -93,6 +93,7 @@ try:
 except ImportError:
     pass
 
+from ansible.module_utils.common.removed import removed_module
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     check_sdk,
@@ -183,4 +184,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    removed_module("2.10")

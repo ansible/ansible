@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_external_provider_info
+module: ovirt_external_provider_facts
 short_description: Retrieve information about one or more oVirt/RHV external providers
 author: "Ondra Machacek (@machacekondra)"
 deprecated:
@@ -162,4 +162,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    removed_module("2.10")

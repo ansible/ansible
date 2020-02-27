@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_vmpool_info
+module: ovirt_vmpool_facts
 short_description: Retrieve information about one or more oVirt/RHV vmpools
 author: "Ondra Machacek (@machacekondra)"
 deprecated:
@@ -119,4 +119,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    removed_module("2.10")

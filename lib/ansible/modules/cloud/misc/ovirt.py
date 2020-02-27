@@ -223,7 +223,7 @@ except ImportError:
     HAS_OVIRTSDK = False
 
 from ansible.module_utils.basic import AnsibleModule
-
+from ansible.module_utils.common.removed import removed_module
 
 # ------------------------------------------------------------------- #
 # create connection with API
@@ -479,4 +479,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    removed_module("2.10")

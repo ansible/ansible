@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_quota_info
+module: ovirt_quota_facts
 short_description: Retrieve information about one or more oVirt/RHV quotas
 version_added: "2.3"
 author: "Maor Lipchuk (@machacekondra)"
@@ -77,6 +77,7 @@ ovirt_quotas:
 import fnmatch
 import traceback
 
+from ansible.module_utils.common.removed import removed_module
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     check_sdk,
@@ -139,4 +140,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    removed_module("2.10")

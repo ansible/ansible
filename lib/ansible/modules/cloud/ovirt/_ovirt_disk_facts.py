@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_disk_info
+module: ovirt_disk_facts
 short_description: Retrieve information about one or more oVirt/RHV disks
 author: "Katerina Koukiou (@KKoukiou)"
 version_added: "2.5"
@@ -73,6 +73,7 @@ ovirt_disks:
 
 import traceback
 
+from ansible.module_utils.common.removed import removed_module
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     check_sdk,
@@ -121,4 +122,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    removed_module("2.10")

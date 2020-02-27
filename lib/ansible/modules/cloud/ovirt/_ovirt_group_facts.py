@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ovirt_group_info
+module: ovirt_group_facts
 short_description: Retrieve information about one or more oVirt/RHV groups
 author: "Ondra Machacek (@machacekondra)"
 deprecated:
@@ -72,6 +72,7 @@ ovirt_groups:
 
 import traceback
 
+from ansible.module_utils.common.removed import removed_module
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     check_sdk,
@@ -119,4 +120,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    removed_module("2.10")
