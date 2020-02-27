@@ -136,10 +136,17 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
     execution = subprocess.Popen("ssh -l {user} -p {port} {host} {cmd}".format(user=user, port=cli_port, host=host, cmd=ssh_command),
                                  shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
+    retVal = 0
+    for line in execution.stdout.readlines():
+        execution.wait()
+        print(line)
+    retVal= execution.returncode
+
+
     if os.path.exists('/tmp/jenkins_object.xml'):
       os.remove('/tmp/jenkins_object.xml')
 
-    return(execution.stdout)
+    return(retVal)
 
 def main():
     module = AnsibleModule(
