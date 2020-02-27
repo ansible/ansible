@@ -57,7 +57,7 @@ __all__ = ['StrategyBase']
 
 # This list can be an exact match, or start of string bound
 # does not accept regex
-ALWAYS_DELEGATE_FACTS = frozenset((
+ALWAYS_DELEGATE_FACT_PREFIXES = frozenset((
     'discovered_interpreter_',
 ))
 
@@ -395,7 +395,9 @@ class StrategyBase:
         """Sets host facts for ``delegate_to`` hosts for facts that should
         always be delegated
 
-        See ``ALWAYS_DELEGATE_FACTS``
+        This operation mutates ``result`` to remove the always delegated facts
+
+        See ``ALWAYS_DELEGATE_FACT_PREFIXES``
         """
         if task.delegate_to is None:
             return
@@ -404,7 +406,7 @@ class StrategyBase:
         always_keys = set()
         _add = always_keys.add
         for fact_key in facts:
-            for always_key in ALWAYS_DELEGATE_FACTS:
+            for always_key in ALWAYS_DELEGATE_FACT_PREFIXES:
                 if fact_key.startswith(always_key):
                     _add(fact_key)
         if always_keys:
@@ -634,13 +636,13 @@ class StrategyBase:
                         self._add_group(original_host, result_item)
 
                     if 'ansible_facts' in result_item:
-                        # Set facts that should always be on the delegated hosts
-                        self._set_always_delegated_facts(result_item, original_task)
-
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
                             host_list = self.get_delegated_hosts(result_item, original_task)
                         else:
+                            # Set facts that should always be on the delegated hosts
+                            self._set_always_delegated_facts(result_item, original_task)
+
                             host_list = self.get_task_hosts(iterator, original_host, original_task)
 
                         if original_task.action == 'include_vars':
