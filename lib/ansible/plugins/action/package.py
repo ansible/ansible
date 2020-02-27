@@ -56,6 +56,14 @@ class ActionModule(ActionBase):
                 module = facts.get('ansible_facts', {}).get('ansible_pkg_mgr', 'auto')
 
             if module != 'auto':
+                if module not in ['apk', 'apt_rpm', 'apt', 'dnf', 'homebrew_cask',
+                                  'homebrew_tap', 'homebrew', 'installp', 'macports', 'mas',
+                                  'openbsd_pkg', 'opkg', 'pacman', 'pkg5', 'pkgin',
+                                  'pkgng', 'pkgutil', 'portage', 'portinstall', 'slackpkg',
+                                  'snap', 'sorcery', 'svr4pkg', 'swdepot', 'swupd',
+                                  'urpmi', 'xbps', 'yum', 'zypper']:
+                    raise AnsibleActionFail('Could not find a module for package manager %s.'
+                                            'Try setting the "use" option.' % module)
 
                 if module not in self._shared_loader_obj.module_loader:
                     raise AnsibleActionFail('Could not find a module for %s.' % module)

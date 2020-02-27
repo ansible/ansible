@@ -1,0 +1,4 @@
+bugfixes:
+  - >
+    **security issue** Add a whitelist of modules for package and service module
+    when 'use' is not used and engine relies on pkg_mgr and service_mgr facts (CVE-2020-1738).

@@ -61,6 +61,11 @@ class ActionModule(ActionBase):
                 module = 'service'
 
             if module != 'auto':
+                # Check if auto detected module is valid module name or not
+                if module not in ['nosh', 'openwrt_init', 'runit',
+                                  'svc', 'systemd', 'sysvinit', 'service']:
+                    raise AnsibleActionFail('Could not find module for "%s" service manager. '
+                                            'Try setting the "use" option.' % module)
                 # run the 'service' module
                 new_module_args = self._task.args.copy()
                 if 'use' in new_module_args:
