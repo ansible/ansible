@@ -114,7 +114,7 @@ class AnsibleVaultEncryptedUnicode(UserString, AnsibleBaseYAMLObject):
 
         # after construction, calling code has to set the .vault attribute to a vaultlib object
         self.vault = None
-        self._ciphertext = ciphertext
+        self._ciphertext = to_bytes(ciphertext)
 
     @property
     def data(self):
@@ -124,17 +124,17 @@ class AnsibleVaultEncryptedUnicode(UserString, AnsibleBaseYAMLObject):
 
     @data.setter
     def data(self, value):
-        self._ciphertext = value
+        self._ciphertext = to_bytes(value)
 
     def __reversed__(self):
-        return self[::-1]
+        return to_text(self[::-1], errors='surrogate_or_strict')
 
     def __getitem__(self, index):
-        return self.data[index]
+        return to_text(self.data[index], errors='surrogate_or_strict')
 
     def __getslice__(self, start, end):
         start = max(start, 0); end = max(end, 0)
-        return self.data[start:end]
+        return to_text(self.data[start:end], errors='surrogate_or_strict')
 
     def __str__(self):
         return to_native(self.data, errors='surrogate_or_strict')
