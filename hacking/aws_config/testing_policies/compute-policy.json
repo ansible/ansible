@@ -263,6 +263,18 @@
               "lightsail:StopInstance"
             ],
             "Resource": "arn:aws:lightsail:*:*:*"
-        }
+        },
+        {
+            "Sid": "AllowSQS",
+            "Effect": "Allow",
+            "Action": [
+                "sqs:GetQueueURL",
+                "sqs:CreateQueue",
+                "sqs:GetQueueAttributes",
+                "sqs:DeleteQueue",
+                "sqs:SetQueueAttributes"
+            ],
+            "Resource": "arn:aws:sqs:*:*:*"
+        },
     ]
 }
