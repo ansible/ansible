@@ -199,7 +199,7 @@ def delete_retention_policy(client, log_group_name, module):
                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     except botocore.exceptions.BotoCoreError as e:
         module.fail_json(msg="Unable to delete retention policy for log group {0}: {1}".format(log_group_name, to_native(e)),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                         exception=traceback.format_exc())
 
 
 def delete_log_group(client, log_group_name, module):
