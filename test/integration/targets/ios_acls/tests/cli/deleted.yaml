@@ -1,0 +1,70 @@
+---
+- debug:
+    msg: "Start Deleted integration state for ios_acls ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Delete attributes of provided configured ACLs
+      ios_acls: &deleted
+        config:
+          - afi: ipv4
+            acls:
+              - name: test_acl
+                acl_type: extended
+              - name: 110
+                aces:
+                  - sequence: 10
+              - name: 123
+          - afi: ipv6
+            acls:
+            - name: R1_TRAFFIC
+        state: deleted
+      register: result
+
+    - assert:
+        that:
+          - "result.commands|length == 5"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(deleted.commands) == []"
+
+    - name: Delete attributes of all configured interfaces (IDEMPOTENT)
+      ios_acls: *deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result.commands|length == 0"
+          - "result.changed == false"
+
+    - include_tasks: _remove_config.yaml
+    - include_tasks: _populate_config.yaml
+
+    - name: Delete ACL attributes of provided configured interfaces based on AFI
+      ios_acls: &deleted_afi
+        config:
+          - afi: ipv4
+        state: deleted
+      register: result
+
+    - assert:
+        that:
+          - "result.commands|length == 3"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(deleted_afi.commands) == []"
+
+    - name: Delete ACL attributes of provided configured interfaces based on AFI (IDEMPOTENT)
+      ios_acls: *deleted_afi
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result.commands|length == 0"
+          - "result.changed == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
