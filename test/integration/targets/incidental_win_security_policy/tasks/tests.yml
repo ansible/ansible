@@ -1,0 +1,186 @@
+---
+- name: fail with invalid section name
+  win_security_policy:
+    section: This is not a valid section
+    key: KeyName
+    value: 0
+  register: fail_invalid_section
+  failed_when: fail_invalid_section.msg != "The section 'This is not a valid section' does not exist in SecEdit.exe output ini"
+
+- name: fail with invalid key name
+  win_security_policy:
+    section: System Access
+    key: InvalidKey
+    value: 0
+  register: fail_invalid_key
+  failed_when: fail_invalid_key.msg != "The key 'InvalidKey' in section 'System Access' is not a valid key, cannot set this value"
+
+- name: change existing key check
+  win_security_policy:
+    section: Event Audit
+    key: AuditSystemEvents
+    value: 1
+  register: change_existing_check
+  check_mode: yes
+
+- name: get actual change existing key check
+  test_win_security_policy:
+    section: Event Audit
+    key: AuditSystemEvents
+  register: change_existing_actual_check
+
+- name: assert change existing key check
+  assert:
+    that:
+    - change_existing_check is changed
+    - change_existing_actual_check.value == 0
+
+- name: change existing key
+  win_security_policy:
+    section: Event Audit
+    key: AuditSystemEvents
+    value: 1
+  register: change_existing
+
+- name: get actual change existing key
+  test_win_security_policy:
+    section: Event Audit
+    key: AuditSystemEvents
+  register: change_existing_actual
+
+- name: assert change existing key
+  assert:
+    that:
+    - change_existing is changed
+    - change_existing_actual.value == 1
+
+- name: change existing key again
+  win_security_policy:
+    section: Event Audit
+    key: AuditSystemEvents
+    value: 1
+  register: change_existing_again
+
+- name: assert change existing key again
+  assert:
+    that:
+    - change_existing_again is not changed
+    - change_existing_again.value == 1
+
+- name: change existing key with string type
+  win_security_policy:
+    section: Event Audit
+    key: AuditSystemEvents
+    value: "1"
+  register: change_existing_key_with_type
+
+- name: assert change existing key with string type
+  assert:
+    that:
+    - change_existing_key_with_type is not changed
+    - change_existing_key_with_type.value == "1"
+
+- name: change existing string key check
+  win_security_policy:
+    section: System Access
+    key: NewGuestName
+    value: New Guest
+  register: change_existing_string_check
+  check_mode: yes
+
+- name: get actual change existing string key check
+  test_win_security_policy:
+    section: System Access
+    key: NewGuestName
+  register: change_existing_string_actual_check
+
+- name: assert change existing string key check
+  assert:
+    that:
+    - change_existing_string_check is changed
+    - change_existing_string_actual_check.value == "Guest"
+
+- name: change existing string key
+  win_security_policy:
+    section: System Access
+    key: NewGuestName
+    value: New Guest
+  register: change_existing_string
+
+- name: get actual change existing string key
+  test_win_security_policy:
+    section: System Access
+    key: NewGuestName
+  register: change_existing_string_actual
+
+- name: assert change existing string key
+  assert:
+    that:
+    - change_existing_string is changed
+    - change_existing_string_actual.value == "New Guest"
+
+- name: change existing string key again
+  win_security_policy:
+    section: System Access
+    key: NewGuestName
+    value: New Guest
+  register: change_existing_string_again
+
+- name: assert change existing string key again
+  assert:
+    that:
+    - change_existing_string_again is not changed
+    - change_existing_string_again.value == "New Guest"
+
+- name: add policy setting
+  win_security_policy:
+    section: Privilege Rights
+    # following key is empty by default
+    key: SeCreateTokenPrivilege
+    # add Guests
+    value: '*S-1-5-32-546'
+    
+- name: get actual policy setting
+  test_win_security_policy:
+    section: Privilege Rights
+    key: SeCreateTokenPrivilege
+  register: add_policy_setting_actual
+  
+- name: assert add policy setting
+  assert:
+    that:
+    - add_policy_setting_actual.value == '*S-1-5-32-546'
+  
+- name: remove policy setting
+  win_security_policy:
+    section: Privilege Rights
+    key: SeCreateTokenPrivilege
+    value: ''
+  diff: yes
+  register: remove_policy_setting
+
+- name: get actual policy setting
+  test_win_security_policy:
+    section: Privilege Rights
+    key: SeCreateTokenPrivilege
+  register: remove_policy_setting_actual
+
+- name: assert remove policy setting
+  assert:
+    that:
+    - remove_policy_setting is changed
+    - remove_policy_setting.diff.prepared == "[Privilege Rights]\n-SeCreateTokenPrivilege = *S-1-5-32-546\n+SeCreateTokenPrivilege = "
+    - remove_policy_setting_actual.value is none
+    
+- name: remove policy setting again
+  win_security_policy:
+    section: Privilege Rights
+    key: SeCreateTokenPrivilege
+    value: ''
+  register: remove_policy_setting_again
+
+- name: assert remove policy setting again
+  assert:
+    that:
+    - remove_policy_setting_again is not changed
+    - remove_policy_setting_again.value == ''

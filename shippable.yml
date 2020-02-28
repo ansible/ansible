@@ -63,6 +63,11 @@ matrix:
     - env: T=windows/2016/7
     - env: T=windows/2019/7
 
+    - env: T=i/windows/2012
+    - env: T=i/windows/2012-R2
+    - env: T=i/windows/2016
+    - env: T=i/windows/2019
+
     - env: T=ios/csr1000v//1
 
     - env: T=vyos/1.1.8/2.7/1

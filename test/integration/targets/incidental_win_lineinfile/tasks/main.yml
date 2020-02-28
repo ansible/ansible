@@ -1,0 +1,708 @@
+# Test code for the win_lineinfile module, adapted from the standard lineinfile module tests
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+- name: deploy the test file for lineinfile
+  win_copy: src=test.txt dest={{win_output_dir}}/test.txt
+  register: result
+
+- name: assert that the test file was deployed
+  assert:
+    that:
+    - "result.changed == true"
+
+- name: stat the test file
+  win_stat: path={{win_output_dir}}/test.txt
+  register: result
+
+- name: check win_stat file result
+  assert:
+    that:
+      - "result.stat.exists"
+      - "not result.stat.isdir"
+      - "result.stat.checksum == '5feac65e442c91f557fc90069ce6efc4d346ab51'"
+      - "result is not failed"
+      - "result is not changed"
+
+
+- name: insert a line at the beginning of the file, and back it up
+  win_lineinfile: dest={{win_output_dir}}/test.txt state=present line="New line at the beginning" insertbefore="BOF" backup=yes
+  register: result
+
+- name: check backup_file
+  win_stat:
+    path: '{{ result.backup_file }}'
+  register: backup_file
+
+- name: assert that the line was inserted at the head of the file
+  assert:
+    that:
+    - result.changed == true
+    - result.msg == 'line added'
+    - backup_file.stat.exists == true
+
+- name: stat the backup file
+  win_stat: path={{result.backup}}
+  register: result
+
+- name: assert the backup file matches the previous hash
+  assert:
+    that:
+    - "result.stat.checksum == '5feac65e442c91f557fc90069ce6efc4d346ab51'"
+
+- name: stat the test after the insert at the head
+  win_stat: path={{win_output_dir}}/test.txt
+  register: result
+
+- name: assert test hash is what we expect for the file with the insert at the head
+  assert:
+    that:
+    - "result.stat.checksum == 'b526e2e044defc64dfb0fad2f56e105178f317d8'"
+
+- name: insert a line at the end of the file
+  win_lineinfile: dest={{win_output_dir}}/test.txt state=present line="New line at the end" insertafter="EOF"
+  register: result
+
+- name: assert that the line was inserted at the end of the file
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: stat the test after the insert at the end
+  win_stat: path={{win_output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after the insert at the end
+  assert:
+    that:
+    - "result.stat.checksum == 'dd5e207e28ce694ab18e41c2b16deb74fde93b14'"
+
+- name: insert a line after the first line
+  win_lineinfile: dest={{win_output_dir}}/test.txt state=present line="New line after line 1" insertafter="^This is line 1$"
+  register: result
+
+- name: assert that the line was inserted after the first line
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: stat the test after insert after the first line
+  win_stat: path={{win_output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after the insert after the first line
+  assert:
+    that:
+    - "result.stat.checksum == '604b17405f2088e6868af9680b7834087acdc8f4'"
+
+- name: insert a line before the last line
+  win_lineinfile: dest={{win_output_dir}}/test.txt state=present line="New line before line 5" insertbefore="^This is line 5$"
+  register: result
+
+- name: assert that the line was inserted before the last line
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: stat the test after the insert before the last line
+  win_stat: path={{win_output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after the insert before the last line
+  assert:
+    that:
+    - "result.stat.checksum == '8f5b30e8f01578043d782e5a68d4c327e75a6e34'"
+
+- name: replace a line with backrefs
+  win_lineinfile: dest={{win_output_dir}}/test.txt state=present line="This is line 3" backrefs=yes regexp="^(REF).*$"
+  register: result
+
+- name: assert that the line with backrefs was changed
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line replaced'"
+
+- name: stat the test after the backref line was replaced
+  win_stat: path={{win_output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after backref line was replaced
+  assert:
+    that:
+    - "result.stat.checksum == 'ef6b02645908511a2cfd2df29d50dd008897c580'"
+
+- name: remove the middle line
+  win_lineinfile: dest={{win_output_dir}}/test.txt state=absent regexp="^This is line 3$"
+  register: result
+
+- name: assert that the line was removed
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == '1 line(s) removed'"
+
+- name: stat the test after the middle line was removed
+  win_stat: path={{win_output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after the middle line was removed
+  assert:
+    that:
+    - "result.stat.checksum == '11695efa472be5c31c736bc43e055f8ac90eabdf'"
+
+- name: run a validation script that succeeds
+  win_lineinfile: dest={{win_output_dir}}/test.txt state=absent regexp="^This is line 5$" validate="sort.exe %s"
+  register: result
+
+- name: assert that the file validated after removing a line
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == '1 line(s) removed'"
+
+- name: stat the test after the validation succeeded
+  win_stat: path={{win_output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after the validation succeeded
+  assert:
+    that:
+    - "result.stat.checksum == '39c38a30aa6ac6af9ec41f54c7ed7683f1249347'"
+
+- name: run a validation script that fails
+  win_lineinfile: dest={{win_output_dir}}/test.txt state=absent regexp="^This is line 1$" validate="sort.exe %s.foo"
+  register: result
+  ignore_errors: yes
+
+- name: assert that the validate failed
+  assert:
+    that:
+    - "result.failed == true"
+
+- name: stat the test after the validation failed
+  win_stat: path={{win_output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches the previous after the validation failed
+  assert:
+    that:
+    - "result.stat.checksum == '39c38a30aa6ac6af9ec41f54c7ed7683f1249347'"
+
+- name: use create=yes
+  win_lineinfile: dest={{win_output_dir}}/new_test.txt create=yes insertbefore=BOF state=present line="This is a new file"
+  register: result
+
+- name: assert that the new file was created
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: validate that the newly created file exists
+  win_stat: path={{win_output_dir}}/new_test.txt
+  register: result
+  ignore_errors: yes
+
+- name: assert the newly created test checksum matches
+  assert:
+    that:
+    - "result.stat.checksum == '84faac1183841c57434693752fc3debc91b9195d'"
+
+# Test EOF in cases where file has no newline at EOF
+- name: testnoeof deploy the file for lineinfile
+  win_copy: src=testnoeof.txt dest={{win_output_dir}}/testnoeof.txt
+  register: result
+
+- name: testnoeof insert a line at the end of the file
+  win_lineinfile: dest={{win_output_dir}}/testnoeof.txt state=present line="New line at the end" insertafter="EOF"
+  register: result
+
+- name: testempty assert that the line was inserted at the end of the file
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: testnoeof stat the no newline EOF test after the insert at the end
+  win_stat: path={{win_output_dir}}/testnoeof.txt
+  register: result
+
+- name: testnoeof assert test checksum matches after the insert at the end
+  assert:
+    that:
+    - "result.stat.checksum == '229852b09f7e9921fbcbb0ee0166ba78f7f7f261'"
+
+- name: add multiple lines at the end of the file
+  win_lineinfile: dest={{win_output_dir}}/test.txt state=present line="This is a line\r\nwith newline character" insertafter="EOF"
+  register: result
+
+- name: assert that the multiple lines was inserted
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: stat file after adding multiple lines
+  win_stat: path={{win_output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after inserting multiple lines
+  assert:
+    that:
+    - "result.stat.checksum == '1401413cd4eac732be66cd6aceddd334c4240f86'"
+
+
+
+# Test EOF with empty file to make sure no unnecessary newline is added
+- name: testempty deploy the testempty file for lineinfile
+  win_copy: src=testempty.txt dest={{win_output_dir}}/testempty.txt
+  register: result
+
+- name: testempty insert a line at the end of the file
+  win_lineinfile: dest={{win_output_dir}}/testempty.txt state=present line="New line at the end" insertafter="EOF"
+  register: result
+
+- name: testempty assert that the line was inserted at the end of the file
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: testempty stat the test after the insert at the end
+  win_stat: path={{win_output_dir}}/testempty.txt
+  register: result
+
+- name: testempty assert test checksum matches after the insert at the end
+  assert:
+    that:
+    - "result.stat.checksum == 'd3d34f11edda51be7ca5dcb0757cf3e1257c0bfe'"
+
+
+
+- name: replace a line with backrefs included in the line
+  win_lineinfile: dest={{win_output_dir}}/test.txt state=present line="New $1 created with the backref" backrefs=yes regexp="^This is (line 4)$"
+  register: result
+
+- name: assert that the line with backrefs was changed
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line replaced'"
+
+- name: stat the test after the backref line was replaced
+  win_stat: path={{win_output_dir}}/test.txt
+  register: result
+
+- name: assert test checksum matches after backref line was replaced
+  assert:
+    that:
+    - "result.stat.checksum == 'e6ff42e926dac2274c93dff0b8a323e07ae09149'"
+
+###################################################################
+# issue 8535
+
+- name: create a new file for testing quoting issues
+  win_copy: src=test_quoting.txt dest={{win_output_dir}}/test_quoting.txt
+  register: result
+
+- name: assert the new file was created
+  assert:
+    that:
+    - result.changed
+
+- name: use with_items to add code-like strings to the quoting txt file
+  win_lineinfile: >
+    dest={{win_output_dir}}/test_quoting.txt
+    line="{{ item }}"
+    insertbefore="BOF"
+  with_items:
+    - "'foo'"
+    - "dotenv.load();"
+    - "var dotenv = require('dotenv');"
+  register: result
+
+- name: assert the quote test file was modified correctly
+  assert:
+    that:
+    - result.results|length == 3
+    - result.results[0].changed
+    - result.results[0].item == "'foo'"
+    - result.results[1].changed
+    - result.results[1].item == "dotenv.load();"
+    - result.results[2].changed
+    - result.results[2].item == "var dotenv = require('dotenv');"
+
+- name: stat the quote test file
+  win_stat: path={{win_output_dir}}/test_quoting.txt
+  register: result
+
+- name: assert test checksum matches for quote test file
+  assert:
+    that:
+    - "result.stat.checksum == 'f3bccdbdfa1d7176c497ef87d04957af40ab48d2'"
+
+- name: append a line into the quoted file with a single quote
+  win_lineinfile: dest={{win_output_dir}}/test_quoting.txt line="import g'"
+  register: result
+
+- name: assert that the quoted file was changed
+  assert:
+    that:
+    - result.changed
+
+- name: stat the quote test file
+  win_stat: path={{win_output_dir}}/test_quoting.txt
+  register: result
+
+- name: assert test checksum matches adding line with single quote
+  assert:
+    that:
+    - "result.stat.checksum == 'dabf4cbe471e1797d8dcfc773b6b638c524d5237'"
+
+- name: insert a line into the quoted file with many double quotation strings
+  win_lineinfile: dest={{win_output_dir}}/test_quoting.txt line='"quote" and "unquote"'
+  register: result
+
+- name: assert that the quoted file was changed
+  assert:
+    that:
+    - result.changed
+
+- name: stat the quote test file
+  win_stat: path={{win_output_dir}}/test_quoting.txt
+  register: result
+
+- name: assert test checksum matches quoted line added
+  assert:
+    that:
+    - "result.stat.checksum == '9dc1fc1ff19942e2936564102ad37134fa83b91d'"
+
+
+# Windows vs. Unix line separator test cases
+
+- name: Create windows test file with initial line
+  win_lineinfile: dest={{win_output_dir}}/test_windows_sep.txt create=yes insertbefore=BOF state=present line="This is a new file"
+  register: result
+
+- name: assert that the new file was created
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: validate that the newly created file exists
+  win_stat: path={{win_output_dir}}/test_windows_sep.txt
+  register: result
+
+- name: assert the newly created file checksum matches
+  assert:
+    that:
+    - "result.stat.checksum == '84faac1183841c57434693752fc3debc91b9195d'"
+
+- name: Test appending to the file using the default (windows) line separator
+  win_lineinfile: dest={{win_output_dir}}/test_windows_sep.txt insertbefore=EOF state=present line="This is the last line"
+  register: result
+
+- name: assert that the new line was added
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: stat the file
+  win_stat: path={{win_output_dir}}/test_windows_sep.txt
+  register: result
+
+- name: assert the file checksum matches expected checksum
+  assert:
+    that:
+    - "result.stat.checksum == '71a17ddd1d57ed7c7912e4fd11ecb2ead0b27033'"
+
+
+- name: Create unix test file with initial line
+  win_lineinfile: dest={{win_output_dir}}/test_unix_sep.txt create=yes insertbefore=BOF state=present line="This is a new file"
+  register: result
+
+- name: assert that the new file was created
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: validate that the newly created file exists
+  win_stat: path={{win_output_dir}}/test_unix_sep.txt
+  register: result
+
+- name: assert the newly created file checksum matches
+  assert:
+    that:
+    - "result.stat.checksum == '84faac1183841c57434693752fc3debc91b9195d'"
+
+- name: Test appending to the file using unix line separator
+  win_lineinfile: dest={{win_output_dir}}/test_unix_sep.txt insertbefore=EOF state=present line="This is the last line" newline="unix"
+  register: result
+
+- name: assert that the new line was added
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: stat the file
+  win_stat: path={{win_output_dir}}/test_unix_sep.txt
+  register: result
+
+- name: assert the file checksum matches expected checksum
+  assert:
+    that:
+    - "result.stat.checksum == 'f1f634a37ab1c73efb77a71a5ad2cc87b61b17ae'"
+
+
+# Encoding management test cases
+
+# Default (auto) encoding should use utf-8 with no BOM
+- name: Test create file without explicit encoding results in utf-8 without BOM
+  win_lineinfile: dest={{win_output_dir}}/test_auto_utf8.txt create=yes insertbefore=BOF state=present line="This is a new utf-8 file"
+  register: result
+
+- name: assert that the new file was created
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+    - "result.encoding == 'utf-8'"
+
+- name: validate that the newly created file exists
+  win_stat: path={{win_output_dir}}/test_auto_utf8.txt
+  register: result
+
+- name: assert the newly created file checksum matches
+  assert:
+    that:
+    - "result.stat.checksum == 'b69fcbacca8291a4668f57fba91d7c022f1c3dc7'"
+
+- name: Test appending to the utf-8 without BOM file - should autodetect UTF-8 no BOM
+  win_lineinfile: dest={{win_output_dir}}/test_auto_utf8.txt insertbefore=EOF state=present line="This is the last line"
+  register: result
+
+- name: assert that the new line was added and encoding did not change
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+    - "result.encoding == 'utf-8'"
+
+- name: stat the file
+  win_stat: path={{win_output_dir}}/test_auto_utf8.txt
+  register: result
+
+- name: assert the file checksum matches
+  assert:
+    that:
+    - "result.stat.checksum == '64d747f1ebf8c9d793dbfd27126e4152d39a3848'"
+
+
+# UTF-8 explicit (with BOM)
+- name: Test create file with explicit utf-8 encoding results in utf-8 with a BOM
+  win_lineinfile: dest={{win_output_dir}}/test_utf8.txt create=yes encoding="utf-8" insertbefore=BOF state=present line="This is a new utf-8 file"
+  register: result
+
+- name: assert that the new file was created
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+    - "result.encoding == 'utf-8'"
+
+- name: validate that the newly created file exists
+  win_stat: path={{win_output_dir}}/test_utf8.txt
+  register: result
+
+- name: assert the newly created file checksum matches
+  assert:
+    that:
+    - "result.stat.checksum == 'd45344b2b3bf1cf90eae851b40612f5f37a88bbb'"
+
+- name: Test appending to the utf-8 with BOM file - should autodetect utf-8 with BOM encoding
+  win_lineinfile: dest={{win_output_dir}}/test_utf8.txt insertbefore=EOF state=present line="This is the last line"
+  register: result
+
+- name: assert that the new line was added and encoding did not change
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+    - "result.encoding == 'utf-8'"
+
+- name: stat the file
+  win_stat: path={{win_output_dir}}/test_utf8.txt
+  register: result
+
+- name: assert the file checksum matches
+  assert:
+    that:
+    - "result.stat.checksum == '9b84254489f40f258871a4c6573cacc65895ee1a'"
+
+
+# UTF-16 explicit
+- name: Test create file with explicit utf-16 encoding
+  win_lineinfile: dest={{win_output_dir}}/test_utf16.txt create=yes encoding="utf-16" insertbefore=BOF state=present line="This is a new utf-16 file"
+  register: result
+
+- name: assert that the new file was created
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+    - "result.encoding == 'utf-16'"
+
+- name: validate that the newly created file exists
+  win_stat: path={{win_output_dir}}/test_utf16.txt
+  register: result
+
+- name: assert the newly created file checksum matches
+  assert:
+    that:
+    - "result.stat.checksum == '785b0693cec13b60e2c232782adeda2f8a967434'"
+
+- name: Test appending to the utf-16 file - should autodetect utf-16 encoding
+  win_lineinfile: dest={{win_output_dir}}/test_utf16.txt insertbefore=EOF state=present line="This is the last line"
+  register: result
+
+- name: assert that the new line was added and encoding did not change
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+    - "result.encoding == 'utf-16'"
+
+- name: stat the file
+  win_stat: path={{win_output_dir}}/test_utf16.txt
+  register: result
+
+- name: assert the file checksum matches
+  assert:
+    that:
+    - "result.stat.checksum == '70e4eb3ba795e1ba94d262db47e4fd17c64b2e73'"
+
+# UTF-32 explicit
+- name: Test create file with explicit utf-32 encoding
+  win_lineinfile: dest={{win_output_dir}}/test_utf32.txt create=yes encoding="utf-32" insertbefore=BOF state=present line="This is a new utf-32 file"
+  register: result
+
+- name: assert that the new file was created
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+    - "result.encoding == 'utf-32'"
+
+- name: validate that the newly created file exists
+  win_stat: path={{win_output_dir}}/test_utf32.txt
+  register: result
+
+- name: assert the newly created file checksum matches
+  assert:
+    that:
+    - "result.stat.checksum == '7a6e3f3604c0def431aaa813173a4ddaa10fd1fb'"
+
+- name: Test appending to the utf-32 file - should autodetect utf-32 encoding
+  win_lineinfile: dest={{win_output_dir}}/test_utf32.txt insertbefore=EOF state=present line="This is the last line"
+  register: result
+
+- name: assert that the new line was added and encoding did not change
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+    - "result.encoding == 'utf-32'"
+
+- name: stat the file
+  win_stat: path={{win_output_dir}}/test_utf32.txt
+  register: result
+
+- name: assert the file checksum matches
+  assert:
+    that:
+    - "result.stat.checksum == '66a72e71f42c4775f4326da95cfe82c8830e5022'"
+
+#########################################################################
+# issue #33858
+# \r\n causes line break instead of printing literally which breaks paths.
+
+- name: create testing file
+  win_copy:
+    src: test_linebreak.txt
+    dest: "{{win_output_dir}}/test_linebreak.txt"
+
+- name: stat the test file
+  win_stat:
+    path: "{{win_output_dir}}/test_linebreak.txt"
+  register: result
+
+# (Get-FileHash -path C:\ansible\test\integration\targets\win_lineinfile\files\test_linebreak.txt -Algorithm sha1).hash.tolower()
+- name: check win_stat file result
+  assert:
+    that:
+      - result.stat.exists
+      - not result.stat.isdir
+      - result.stat.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+      - result is not failed
+      - result is not changed
+
+- name: insert path c:\return\new to test file
+  win_lineinfile:
+    dest: "{{win_output_dir}}/test_linebreak.txt"
+    line: c:\return\new
+  register: result_literal
+
+- name: insert path "c:\return\new" to test file, will cause line breaks
+  win_lineinfile:
+    dest: "{{win_output_dir}}/test_linebreak.txt"
+    line: "c:\return\new"
+  register: result_expand
+
+- name: assert that the lines were inserted
+  assert:
+    that:
+    - result_literal.changed == true
+    - result_literal.msg == 'line added'
+    - result_expand.changed == true
+    - result_expand.msg == 'line added'
+
+- name: stat the test file
+  win_stat:
+    path: "{{win_output_dir}}/test_linebreak.txt"
+  register: result
+
+- debug:
+    var: result
+    verbosity: 1
+
+# expect that the file looks like this:
+# c:\return\new
+# c:
+# eturn
+# ew #or c:eturnew  on windows
+- name: assert that one line is literal and the other has breaks
+  assert:
+    that:
+    - result.stat.checksum == 'd2dfd11bc70526ff13a91153c76a7ae5595a845b'

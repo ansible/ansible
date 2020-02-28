@@ -243,6 +243,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         messages += self.check_ci_group(
             targets=windows_targets,
             find=self.format_shippable_group_alias('windows'),
+            find_incidental=['shippable/windows/incidental/'],
         )
 
         return messages
