@@ -64,6 +64,7 @@ options:
     overwrite:
       description:
         - Whether an existing log group should be overwritten on create.
+        - Mutually exclusive with I(purge_retention_policy).
       default: false
       required: false
       type: bool
