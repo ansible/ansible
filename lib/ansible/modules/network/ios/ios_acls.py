@@ -125,12 +125,6 @@ options:
                     description: Internet Control Message Protocol.
                     type: dict
                     suboptions:
-                      set:
-                        description:
-                          - When ICMP options are not specified and user want to set
-                            ICMP only as protocol option
-                          - Note, not required if ICMP options are set
-                        type: bool
                       administratively_prohibited:
                         description: Administratively prohibited
                         type: bool
@@ -267,12 +261,6 @@ options:
                     description: Internet Gateway Message Protocol.
                     type: dict
                     suboptions:
-                      set:
-                        description:
-                          - When IGMP options are not specified and user want to set
-                            IGMP only as protocol option
-                          - Note, not required if IGMP options are set
-                        type: bool
                       dvmrp:
                         description: Distance Vector Multicast Routing Protocol(2)
                         type: bool
@@ -334,12 +322,6 @@ options:
                     description: Match TCP packet flags
                     type: dict
                     suboptions:
-                      set:
-                        description:
-                          - When TCP flags are not specified and user want to set
-                            TCP only as protocol option.
-                          - Note, not required if flags options are set.
-                        type: bool
                       ack:
                         description: Match on the ACK bit
                         type: bool
@@ -376,6 +358,10 @@ options:
                     type: bool
                   host:
                     description: A single source host
+                    type: str
+                  prefix:
+                    description:
+                      - Source network prefix.
                     type: str
                   port_protocol:
                     description:
@@ -420,6 +406,10 @@ options:
                     type: bool
                   host:
                     description: A single destination host
+                    type: str
+                  prefix:
+                    description:
+                      - Source network prefix.
                     type: str
                   port_protocol:
                     description:

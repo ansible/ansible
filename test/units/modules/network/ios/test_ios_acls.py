@@ -419,6 +419,7 @@ class TestIosAclsModule(TestIosModule):
                                 },
                                 "dscp": "af11",
                                 "grant": "deny",
+                                "protocol": "tcp",
                                 "protocol_options": {
                                     "tcp": {
                                         "ack": True

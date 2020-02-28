@@ -7,7 +7,7 @@
 - include_tasks: _populate_config.yaml
 
 - block:
-    - name: Delete attributes of provided configured interfaces
+    - name: Delete attributes of provided configured ACLs
       ios_acls: &deleted
         config:
           - afi: ipv4
@@ -15,6 +15,8 @@
               - name: test_acl
                 acl_type: extended
               - name: 110
+                aces:
+                  - sequence: 10
               - name: 123
           - afi: ipv6
             acls:
@@ -24,7 +26,7 @@
 
     - assert:
         that:
-          - "result.commands|length == 4"
+          - "result.commands|length == 5"
           - "result.changed == true"
           - "result.commands|symmetric_difference(deleted.commands) == []"
 

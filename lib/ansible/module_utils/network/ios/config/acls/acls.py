@@ -161,20 +161,20 @@ class Acls(ConfigBase):
                                 if acls_want.get('name') == acls_have.get('name'):
                                     ace_want = remove_empties(ace_want)
                                     acls_want = remove_empties(acls_want)
-                                    cmd, check = self.common_condition_check(ace_want,
-                                                                             ace_have,
-                                                                             acls_want,
-                                                                             config_want,
-                                                                             check,
-                                                                             "replaced")
+                                    cmd, change = self._set_config(ace_want,
+                                                                   ace_have,
+                                                                   acls_want,
+                                                                   config_want['afi'])
                                     if cmd:
-                                        if cmd[0] not in commands:
-                                            commands.extend(cmd)
-                                        temp = self._clear_config(acls_want, config_want)
-                                        if temp:
-                                            if temp[0] not in commands:
-                                                commands.extend(temp)
-                                        check = True
+                                        for temp_acls_have in config_have.get('acls'):
+                                            for temp_ace_have in temp_acls_have.get('aces'):
+                                                if acls_want.get('name') == temp_acls_have.get('name'):
+                                                    commands.extend(
+                                                        self._clear_config(temp_acls_have,
+                                                                           config_have,
+                                                                           temp_ace_have.get('sequence')))
+                                        commands.extend(cmd)
+                                    check = True
                             if check:
                                 break
                         if check:
@@ -189,7 +189,6 @@ class Acls(ConfigBase):
                         commands.extend(cmd)
         # Split and arrange the config commands
         commands = self.split_set_cmd(commands)
-        commands = [each for each in commands if 'no' in each] + [each for each in commands if 'no' not in each]
 
         return commands
 
@@ -217,20 +216,17 @@ class Acls(ConfigBase):
                                 if acls_want.get('name') == acls_have.get('name'):
                                     ace_want = remove_empties(ace_want)
                                     acls_want = remove_empties(acls_want)
-                                    cmd, check = self.common_condition_check(ace_want,
-                                                                             ace_have,
-                                                                             acls_want,
-                                                                             config_want,
-                                                                             check,
-                                                                             "overridden")
+                                    cmd, change = self._set_config(ace_want, ace_have, acls_want, config_want['afi'])
                                     if cmd:
-                                        if cmd[0] not in commands:
-                                            commands.extend(cmd)
-                                        temp = self._clear_config(acls_want, config_want)
-                                        if temp:
-                                            if temp[0] not in commands:
-                                                commands.extend(temp)
-                                        check = True
+                                        for temp_acls_have in config_have.get('acls'):
+                                            for temp_ace_have in temp_acls_have.get('aces'):
+                                                if acls_want.get('name') == temp_acls_have.get('name'):
+                                                    commands.extend(
+                                                        self._clear_config(temp_acls_have,
+                                                                           config_have,
+                                                                           temp_ace_have.get('sequence')))
+                                        commands.extend(cmd)
+                                    check = True
                                     if check:
                                         del config_want.get('acls')[count]
                                 else:
@@ -257,7 +253,9 @@ class Acls(ConfigBase):
         # Split and arrange the config commands
         commands = self.split_set_cmd(commands)
         # Arranging the cmds suct that all delete cmds are fired before all set cmds
-        commands = [each for each in commands if 'no' in each] + [each for each in commands if 'no' not in each]
+        negate_commands = [each for each in commands if 'no' in each and 'access-list' in each]
+        negate_commands.extend([each for each in commands if each not in negate_commands])
+        commands = negate_commands
 
         return commands
 
@@ -482,10 +480,9 @@ class Acls(ConfigBase):
             cmd = join_list_to_str(temp_list).rstrip(' ')
             if cmd not in command:
                 command.append(cmd)
-            index = command.index(cmd) + 1
             temp_list = each_list[sequence_index:]
             cmd = join_list_to_str(temp_list).rstrip(' ')
-            command.insert(index + 1, cmd)
+            command.append(cmd)
 
         def grant_common_code(cmd_list, grant_type, command):
             index = cmd_list.index(grant_type)
@@ -601,6 +598,7 @@ class Acls(ConfigBase):
             source = want.get('source')
             destination = want.get('destination')
             po = want.get('protocol_options')
+            protocol = want.get('protocol')
             dscp = want.get('dscp')
             fragments = want.get('fragments')
             log = want.get('log')
@@ -620,6 +618,8 @@ class Acls(ConfigBase):
                 cmd = cmd + ' {0}'.format(grant)
             if po and isinstance(po, dict):
                 po_key = list(po)[0]
+                if protocol and protocol != po_key:
+                    self._module.fail_json(msg='Protocol value cannot be different from Protocol option protocol value!')
                 cmd = cmd + ' {0}'.format(po_key)
                 if po.get('icmp'):
                     po_val = po.get('icmp')
@@ -627,6 +627,8 @@ class Acls(ConfigBase):
                     po_val = po.get('igmp')
                 elif po.get('tcp'):
                     po_val = po.get('tcp')
+            elif protocol:
+                cmd = cmd + ' {0}'.format(protocol)
             if source:
                 cmd = self.source_dest_config(source, cmd, po)
             if destination:

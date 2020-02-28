@@ -457,6 +457,7 @@ class AclsFacts(object):
                 ace_options['destination'] = destination
             if temp_option:
                 protocol_options = {}
+                ace_options['protocol'] = temp_option
                 if temp_option == 'tcp':
                     tcp = {}
                     if temp_flag:
