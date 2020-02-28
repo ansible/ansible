@@ -52,7 +52,14 @@ options:
     type: bool
   vars:
     description:
-      - A list of key value pairs.
+      - When the list element is a simple key-value pair, masked and protected will be set to false.
+      - When the list element is a dict with the keys I(value), I(masked) and I(protected), the user can
+        have full control about whether a value should be masked, protected or both.
+      - Support for protected values requires GitLab >= 9.3.
+      - Support for masked values requires GitLab >= 11.10.
+      - A I(value) must be a string or a number.
+      - When a value is masked, it must be in Base64 and have a length of at least 8 characters.
+        See GitLab documentation on acceptable values for a masked variable (https://docs.gitlab.com/ce/ci/variables/#masked-variables).
     default: {}
     type: dict
 '''
@@ -68,6 +75,19 @@ EXAMPLES = '''
     vars:
       ACCESS_KEY_ID: abc123
       SECRET_ACCESS_KEY: 321cba
+
+- name: Set or update some CI/CD variables
+  gitlab_project_variable:
+    api_url: https://gitlab.com
+    api_token: secret_access_token
+    project: markuman/dotfiles
+    purge: false
+    vars:
+      ACCESS_KEY_ID: abc123
+      SECRET_ACCESS_KEY:
+        value: 3214cbad
+        masked: true
+        protected: true
 
 - name: Delete one variable
   gitlab_project_variable:
@@ -112,6 +132,8 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 from ansible.module_utils.api import basic_auth_argument_spec
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six import integer_types
 
 
 GITLAB_IMP_ERR = None
@@ -138,18 +160,26 @@ class GitlabProjectVariables(object):
     def list_all_project_variables(self):
         return self.project.variables.list()
 
-    def create_variable(self, key, value):
+    def create_variable(self, key, value, masked, protected):
         if self._module.check_mode:
             return
-        return self.project.variables.create({"key": key, "value": value})
+        return self.project.variables.create({"key": key, "value": value,
+                                              "masked": masked, "protected": protected})
 
-    def update_variable(self, var, value):
-        if var.value == value:
+    def update_variable(self, key, var, value, masked, protected):
+        if var.value == value and var.protected == protected and var.masked == masked:
             return False
+
         if self._module.check_mode:
             return True
-        var.value = value
-        var.save()
+
+        if var.protected == protected and var.masked == masked:
+            var.value = value
+            var.save()
+            return True
+
+        self.delete_variable(key)
+        self.create_variable(key, value, masked, protected)
         return True
 
     def delete_variable(self, key):
@@ -158,7 +188,7 @@ class GitlabProjectVariables(object):
         return self.project.variables.delete(key)
 
 
-def native_python_main(this_gitlab, purge, var_list, state):
+def native_python_main(this_gitlab, purge, var_list, state, module):
 
     change = False
     return_value = dict(added=list(), updated=list(), removed=list(), untouched=list())
@@ -167,13 +197,27 @@ def native_python_main(this_gitlab, purge, var_list, state):
     existing_variables = [x.get_id() for x in gitlab_keys]
 
     for key in var_list:
+
+        if isinstance(var_list[key], string_types) or isinstance(var_list[key], (integer_types, float)):
+            value = var_list[key]
+            masked = False
+            protected = False
+        elif isinstance(var_list[key], dict):
+            value = var_list[key].get('value')
+            masked = var_list[key].get('masked', False)
+            protected = var_list[key].get('protected', False)
+        else:
+            module.fail_json(msg="value must be of type string, integer or dict")
+
         if key in existing_variables:
             index = existing_variables.index(key)
             existing_variables[index] = None
 
             if state == 'present':
-                single_change = this_gitlab.update_variable(
-                    gitlab_keys[index], var_list[key])
+                single_change = this_gitlab.update_variable(key,
+                                                            gitlab_keys[index],
+                                                            value, masked,
+                                                            protected)
                 change = single_change or change
                 if single_change:
                     return_value['updated'].append(key)
@@ -186,7 +230,7 @@ def native_python_main(this_gitlab, purge, var_list, state):
                 return_value['removed'].append(key)
 
         elif key not in existing_variables and state == 'present':
-            this_gitlab.create_variable(key, var_list[key])
+            this_gitlab.create_variable(key, value, masked, protected)
             change = True
             return_value['added'].append(key)
 
@@ -238,7 +282,7 @@ def main():
 
     this_gitlab = GitlabProjectVariables(module=module, gitlab_instance=gitlab_instance)
 
-    change, return_value = native_python_main(this_gitlab, purge, var_list, state)
+    change, return_value = native_python_main(this_gitlab, purge, var_list, state, module)
 
     module.exit_json(changed=change, project_variable=return_value)
 
