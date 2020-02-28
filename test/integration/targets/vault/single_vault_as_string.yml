@@ -34,7 +34,6 @@
           - vaulted_valued|list == ['f', 'o', 'o', ' ', 'b', 'a', 'r']
           - vaulted_valued|lower == 'foo bar'
           - vaulted_valued|map('upper')|list == ['F', 'O', 'O', ' ', 'B', 'A', 'R']
-          - vaulted_valued|pprint == "u'foo bar'"
           - vaulted_valued|replace('foo', 'baz') == 'baz bar'
           - vaulted_valued|reverse|string == 'rab oof'
           - vaulted_valued|safe == 'foo bar'
@@ -69,12 +68,14 @@
         that:
           - vaulted_valued|random(seed='foo') == ' '
           - vaulted_valued|shuffle(seed='foo') == ["o", "f", "r", "b", "o", "a", " "]
+          - vaulted_valued|pprint == "'foo bar'"
       when: ansible_python.version.major == 3
 
     - assert:
         that:
           - vaulted_valued|random(seed='foo') == 'r'
           - vaulted_valued|shuffle(seed='foo') == ["b", "o", "a", " ", "o", "f", "r"]
+          - vaulted_valued|pprint == "u'foo bar'"
       when: ansible_python.version.major == 2
 
     - assert:
