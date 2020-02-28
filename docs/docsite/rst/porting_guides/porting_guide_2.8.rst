@@ -324,6 +324,11 @@ By default in Ansible 2.7, or with ``AGNOSTIC_BECOME_PROMPT=False`` in Ansible 2
 Deprecated
 ==========
 
+* The ``params`` module option in ``ldap_attr`` and ``ldap_entry`` are deprecated on a short cycle
+  (to be removed in Ansible-2.10) due to circumventing Ansible's normal option handling.  In
+  particular, if the ``bind_pw`` option is set with ``params``, the value of the option could end up
+  being placed in a logfile or displayed on stdout.
+
 * Setting the async directory using ``ANSIBLE_ASYNC_DIR`` as an task/play environment key is deprecated and will be
   removed in Ansible 2.12. You can achieve the same result by setting ``ansible_async_dir`` as a variable like::
 
@@ -406,6 +411,10 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 Noteworthy module changes
 -------------------------
 
+* **Security Issue** Setting ``bind_pw`` with the ``params`` option for the ``ldap_entry`` and
+  ``ldap_attr`` modules has been disallowed.  If ``bind_pw`` was set with ``params``, the value
+  could have ended up in a logfile or displayed on stdout.  Set ``bind_pw`` directly, with the
+  modules' options instead.
 * The ``foreman`` and ``katello`` modules have been deprecated in favor of a set of modules that are broken out per entity with better idempotency in mind.
 * The ``foreman`` and ``katello`` modules replacement is officially part of the Foreman Community and supported there.
 * The ``tower_credential`` module originally required the ``ssh_key_data`` to be the path to a ssh_key_file.
