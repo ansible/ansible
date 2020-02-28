@@ -18,76 +18,94 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: mongodb_user
-short_description: Adds or removes a user from a MongoDB database.
+short_description: Adds or removes a user from a MongoDB database
 description:
     - Adds or removes a user from a MongoDB database.
 version_added: "1.1"
 options:
     login_user:
         description:
-            - The username used to authenticate with
+            - The MongoDB username used to authenticate with.
+        type: str
     login_password:
         description:
-            - The password used to authenticate with
+            - The login user's password used to authenticate with.
+        type: str
     login_host:
         description:
-            - The host running the database
+            - The host running the database.
         default: localhost
+        type: str
     login_port:
         description:
-            - The port to connect to
-        default: 27017
+            - The MongoDB port to connect to.
+        default: '27017'
+        type: str
     login_database:
         version_added: "2.0"
         description:
-            - The database where login credentials are stored
+            - The database where login credentials are stored.
+        type: str
     replica_set:
         version_added: "1.6"
         description:
-            - Replica set to connect to (automatically connects to primary for writes)
+            - Replica set to connect to (automatically connects to primary for writes).
+        type: str
     database:
         description:
-            - The name of the database to add/remove the user from
+            - The name of the database to add/remove the user from.
         required: true
+        type: str
+        aliases: [db]
     name:
         description:
-            - The name of the user to add or remove
+            - The name of the user to add or remove.
         required: true
-        aliases: [ 'user' ]
+        aliases: [user]
+        type: str
     password:
         description:
-            - The password to use for the user
+            - The password to use for the user.
+        type: str
+        aliases: [pass]
     ssl:
         version_added: "1.8"
         description:
-            - Whether to use an SSL connection when connecting to the database
+            - Whether to use an SSL connection when connecting to the database.
         type: bool
     ssl_cert_reqs:
         version_added: "2.2"
         description:
-            - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
-        default: "CERT_REQUIRED"
-        choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
+            - Specifies whether a certificate is required from the other side of the connection,
+              and whether it will be validated if provided.
+        default: CERT_REQUIRED
+        choices: [CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED]
+        type: str
     roles:
         version_added: "1.3"
+        type: list
+        elements: raw
         description:
             - >
               The database user roles valid values could either be one or more of the following strings:
               'read', 'readWrite', 'dbAdmin', 'userAdmin', 'clusterAdmin', 'readAnyDatabase', 'readWriteAnyDatabase', 'userAdminAnyDatabase',
               'dbAdminAnyDatabase'
             - "Or the following dictionary '{ db: DATABASE_NAME, role: ROLE_NAME }'."
-            - "This param requires pymongo 2.5+. If it is a string, mongodb 2.4+ is also required. If it is a dictionary, mongo 2.6+  is required."
+            - "This param requires pymongo 2.5+. If it is a string, mongodb 2.4+ is also required. If it is a dictionary, mongo 2.6+ is required."
     state:
         description:
-            - The database user state
+            - The database user state.
         default: present
-        choices: [ "present", "absent" ]
+        choices: [absent, present]
+        type: str
     update_password:
         default: always
-        choices: ['always', 'on_create']
+        choices: [always, on_create]
         version_added: "2.1"
         description:
-          - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
+          - C(always) will update passwords if they differ.
+          - C(on_create) will only set the password for newly created users.
+        type: str
 
 notes:
     - Requires the pymongo Python package on the remote host, version 2.4.2+. This
@@ -99,49 +117,53 @@ author:
 '''
 
 EXAMPLES = '''
-# Create 'burgers' database user with name 'bob' and password '12345'.
-- mongodb_user:
+- name: Create 'burgers' database user with name 'bob' and password '12345'.
+  mongodb_user:
     database: burgers
     name: bob
     password: 12345
     state: present
 
-# Create a database user via SSL (MongoDB must be compiled with the SSL option and configured properly)
-- mongodb_user:
+- name: Create a database user via SSL (MongoDB must be compiled with the SSL option and configured properly)
+  mongodb_user:
     database: burgers
     name: bob
     password: 12345
     state: present
     ssl: True
 
-# Delete 'burgers' database user with name 'bob'.
-- mongodb_user:
+- name: Delete 'burgers' database user with name 'bob'.
+  mongodb_user:
     database: burgers
     name: bob
     state: absent
 
-# Define more users with various specific roles (if not defined, no roles is assigned, and the user will be added via pre mongo 2.2 style)
-- mongodb_user:
+- name: Define more users with various specific roles (if not defined, no roles is assigned, and the user will be added via pre mongo 2.2 style)
+  mongodb_user:
     database: burgers
     name: ben
     password: 12345
     roles: read
     state: present
-- mongodb_user:
+
+- name: Define roles
+  mongodb_user:
     database: burgers
     name: jim
     password: 12345
     roles: readWrite,dbAdmin,userAdmin
     state: present
-- mongodb_user:
+
+- name: Define roles
+  mongodb_user:
     database: burgers
     name: joe
     password: 12345
     roles: readWriteAnyDatabase
     state: present
 
-# add a user to database in a replica set, the primary server is automatically discovered and written to
-- mongodb_user:
+- name: Add a user to database in a replica set, the primary server is automatically discovered and written to
+  mongodb_user:
     database: burgers
     name: bob
     replica_set: belcher
@@ -153,7 +175,8 @@ EXAMPLES = '''
 # please notice the credentials must be added to the 'admin' database because the 'local' database is not synchronized and can't receive user credentials
 # To login with such user, the connection string should be MONGO_OPLOG_URL="mongodb://oplog_reader:oplog_reader_password@server1,server2/local?authSource=admin"
 # This syntax requires mongodb 2.6+ and pymongo 2.5+
-- mongodb_user:
+- name: Roles as a dictionary
+  mongodb_user:
     login_user: root
     login_password: root_password
     database: admin
@@ -342,7 +365,7 @@ def main():
             name=dict(required=True, aliases=['user']),
             password=dict(aliases=['pass'], no_log=True),
             ssl=dict(default=False, type='bool'),
-            roles=dict(default=None, type='list'),
+            roles=dict(default=None, type='list', elements='raw'),
             state=dict(default='present', choices=['absent', 'present']),
             update_password=dict(default="always", choices=["always", "on_create"]),
             ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),

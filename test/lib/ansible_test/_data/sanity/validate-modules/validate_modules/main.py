@@ -1625,7 +1625,7 @@ class ModuleValidator(Validator):
                     msg = "Argument '%s' in argument_spec" % arg
                     if context:
                         msg += " found in %s" % " -> ".join(context)
-                    msg += "implies type as 'str' but documentation defines as %r" % doc_type
+                    msg += " implies type as 'str' but documentation defines as %r" % doc_type
                     self.reporter.error(
                         path=self.object_path,
                         code='implied-parameter-type-mismatch',
