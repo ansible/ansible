@@ -431,7 +431,7 @@ files:
   $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: glitchcrab
-  $modules/cloud/misc/ovirt.py: &ovirt
+  $modules/cloud/misc/_ovirt.py: &ovirt
     ignored: vincentvdk
     keywords: [ ovirt, RHEV, RHV ]
     labels: [ cloud, ovirt ]
