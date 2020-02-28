@@ -75,11 +75,11 @@ class Connection(ConnectionBase):
         # error it probably means that docker on their system is only
         # configured to be connected to by root and they are not running as
         # root.
-        
+
         # Windows uses Powershell modules
         if getattr(self._shell, "_IS_WINDOWS", False):
             self.module_implementation_preferences = ('.ps1', '.exe', '')
-            
+
         if 'docker_command' in kwargs:
             self.docker_cmd = kwargs['docker_command']
         else:
