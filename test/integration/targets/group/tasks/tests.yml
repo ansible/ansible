@@ -314,3 +314,16 @@
         state: absent
   # only applicable to Linux, limit further to CentOS where 'lgroupadd' is installed
   when: ansible_distribution == 'CentOS'
+
+# create system group
+
+- name: remove group
+  group:
+    name: ansibullgroup
+    state: absent
+
+- name: create system group
+  group:
+    name: ansibullgroup
+    state: present
+    system: yes
