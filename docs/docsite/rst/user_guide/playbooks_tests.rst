@@ -83,7 +83,7 @@ You can test whether a variable is an inline single vault encrypted value using 
 
     tasks:
       - debug:
-          msg: (variable is vault_encrypted) | ternary("Vault encrypted", "Not vault encrypted")
+          msg: '{{ (variable is vault_encrypted) | ternary("Vault encrypted", "Not vault encrypted") }}'
 
 .. _testing_truthiness:
 
