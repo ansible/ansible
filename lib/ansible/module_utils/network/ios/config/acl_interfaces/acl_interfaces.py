@@ -107,6 +107,10 @@ class Acl_Interfaces(ConfigBase):
                   to the deisred configuration
         """
         want = self._module.params['config']
+        if want:
+            for item in want:
+                item['name'] = normalize_interface(item['name'])
+
         have = existing_acl_interfaces_facts
         resp = self.set_state(want, have)
         return to_list(resp)

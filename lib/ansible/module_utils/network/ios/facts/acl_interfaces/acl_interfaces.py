@@ -90,7 +90,7 @@ class Acl_InterfacesFacts(object):
 
         if get_interface_type(intf) == 'unknown':
             return {}
-        config['name'] = normalize_interface(intf)
+        config['name'] = intf
         config['access_groups'] = []
         acl_v4_config = {}
         acl_v6_config = {}
