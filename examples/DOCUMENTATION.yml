@@ -31,3 +31,19 @@ requirements:
     - list of required things.
     - like the factor package
     - zypper >= 1.0
+    
+    
+ansible.cfg:
+    - template for the ansible.cfg
+    
+    [defaults]
+    remote_user = <remote user name>
+    roles_path = <roles path>
+    ask_pass = true/false
+    
+    [privilege_escalation]
+    become = true
+    become_method = sudo
+    become_user = root
+    become_ask_pass = true/false
+    
