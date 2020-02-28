@@ -1,0 +1,81 @@
+---
+  - name: Copy expected results to remote
+    copy:
+      src: "results/{{ item }}"
+      dest: "/tmp/{{ item }}"
+    with_items:
+      - test-pretty-print.xml
+      - test-pretty-print-only.xml
+
+  # NOTE: Jinja2 templating eats trailing newlines
+  - name: Read from xmlstring (not using pretty_print)
+    xml:
+      xmlstring: "{{ lookup('file', '{{ role_path }}/fixtures/ansible-xml-beers.xml') }}"
+      xpath: .
+    register: xmlresponse
+
+  - name: Compare to expected result
+    copy:
+      content: "{{ xmlresponse.xmlstring }}\n"
+      dest: '/tmp/test-pretty-print-only.xml'
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - xmlresponse.changed == false
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/results/test-pretty-print-only.xml /tmp/ansible-xml-beers.xml
+
+
+  # NOTE: Jinja2 templating eats trailing newlines
+  - name: Read from xmlstring (using pretty_print)
+    xml:
+      xmlstring: "{{ lookup('file', '{{ role_path }}/fixtures/ansible-xml-beers.xml') }}"
+      pretty_print: yes
+    register: xmlresponse
+
+  - name: Compare to expected result
+    copy:
+      content: '{{ xmlresponse.xmlstring }}'
+      dest: '/tmp/test-pretty-print-only.xml'
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  # FIXME: This change is related to the newline added by pretty_print
+  - name: Test expected result
+    assert:
+      that:
+      - xmlresponse.changed == true
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/results/test-pretty-print-only.xml /tmp/ansible-xml-beers.xml
+
+
+  # NOTE: Jinja2 templating eats trailing newlines
+  - name: Read from xmlstring
+    xml:
+      xmlstring: "{{ lookup('file', '{{ role_path }}/fixtures/ansible-xml-beers.xml') }}"
+      xpath: /business/beers
+      pretty_print: yes
+      add_children:
+      - beer: Old Rasputin
+    register: xmlresponse_modification
+ 
+  - name: Compare to expected result
+    copy:
+      content: '{{ xmlresponse_modification.xmlstring }}'
+      dest: '/tmp/test-pretty-print.xml'
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  # FIXME: This change is related to the newline added by pretty_print
+  - name: Test expected result
+    assert:
+      that:
+      - xmlresponse_modification.changed == true
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/results/test-pretty-print.xml /tmp/ansible-xml-beers.xml

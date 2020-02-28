@@ -1,0 +1,13 @@
+---
+db_name: 'zabbix'
+db_user: 'zabbix'
+db_password: 'fLhijUs3PgekNhwJ'
+
+zabbix_version: 4.4
+zabbix_apt_repository: 'deb http://repo.zabbix.com/zabbix/{{ zabbix_version }}/{{ ansible_distribution.lower() }}/ {{ ansible_distribution_release }} main'
+zabbix_apt_repository_key: 'http://repo.zabbix.com/zabbix-official-repo.key'
+
+zabbix_packages:
+    - zabbix-server-mysql
+    - zabbix-frontend-php
+    - zabbix-apache-conf

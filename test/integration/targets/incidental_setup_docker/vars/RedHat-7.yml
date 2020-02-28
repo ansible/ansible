@@ -1,0 +1,8 @@
+docker_prereq_packages:
+  - yum-utils
+  - device-mapper-persistent-data
+  - lvm2
+  - libseccomp
+
+docker_pip_extra_packages:
+  - requests==2.6.0

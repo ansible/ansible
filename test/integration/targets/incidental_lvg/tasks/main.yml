@@ -1,0 +1,15 @@
+- name: Install required packages (Linux)
+  package:
+    name: lvm2
+    state: present
+  when: ansible_system == 'Linux'
+
+- name: Test lvg module
+  block:
+    - import_tasks: setup.yml
+
+    - import_tasks: test_indempotency.yml
+
+    - import_tasks: test_grow_reduce.yml
+  always:
+    - import_tasks: teardown.yml

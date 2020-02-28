@@ -1,0 +1,83 @@
+---
+- set_fact:
+    certificates:
+      - name: ca
+        subject:
+          commonName: Ansible
+        is_ca: yes
+      - name: ca-2
+        subject:
+          commonName: Ansible Other CA
+        is_ca: yes
+      - name: cert-1
+        subject_alt_name:
+          - DNS:ansible.com
+      - name: cert-2
+        subject_alt_name:
+          - DNS:example.com
+      - name: cert-3
+        subject_alt_name:
+          - DNS:example.org
+          - IP:1.2.3.4
+      - name: cert-4
+        subject_alt_name:
+          - DNS:test.ansible.com
+          - DNS:b64.ansible.com
+
+- name: Generate private keys
+  openssl_privatekey:
+    path: '{{ output_dir }}/{{ item.name }}.key'
+    type: ECC
+    curve: secp256r1
+  loop: "{{ certificates }}"
+
+- name: Generate CSRs
+  openssl_csr:
+    path: '{{ output_dir }}/{{ item.name }}.csr'
+    privatekey_path: '{{ output_dir }}/{{ item.name }}.key'
+    subject: "{{ item.subject | default(omit) }}"
+    subject_alt_name: "{{ item.subject_alt_name | default(omit) }}"
+    basic_constraints: "{{ 'CA:TRUE' if item.is_ca | default(false) else omit }}"
+    use_common_name_for_san: no
+  loop: "{{ certificates }}"
+
+- name: Generate CA certificates
+  openssl_certificate:
+    path: '{{ output_dir }}/{{ item.name }}.pem'
+    csr_path: '{{ output_dir }}/{{ item.name }}.csr'
+    privatekey_path: '{{ output_dir }}/{{ item.name }}.key'
+    provider: selfsigned
+  loop: "{{ certificates }}"
+  when: item.is_ca | default(false)
+
+- name: Generate other certificates
+  openssl_certificate:
+    path: '{{ output_dir }}/{{ item.name }}.pem'
+    csr_path: '{{ output_dir }}/{{ item.name }}.csr'
+    provider: ownca
+    ownca_path: '{{ output_dir }}/ca.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca.key'
+  loop: "{{ certificates }}"
+  when: not (item.is_ca | default(false))
+
+- name: Get certificate infos
+  openssl_certificate_info:
+    path: '{{ output_dir }}/{{ item }}.pem'
+  loop:
+  - cert-1
+  - cert-2
+  - cert-3
+  - cert-4
+  register: certificate_infos
+
+- block:
+  - name: Running tests with cryptography backend
+    include_tasks: impl.yml
+    vars:
+      select_crypto_backend: cryptography
+
+  - import_tasks: ../tests/validate.yml
+    vars:
+      select_crypto_backend: cryptography
+
+  when: cryptography_version.stdout is version('1.2', '>=')
