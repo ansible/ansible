@@ -14,7 +14,7 @@ module: greynoise
 short_description: Communicate with the GreyNoise API
 description:
     - The GreyNoise module queries the GreyNoise API.
-version_added: "2.8"
+version_added: "2.10"
 author: "Whitney Champion (@shortstack)"
 options:
   action:
