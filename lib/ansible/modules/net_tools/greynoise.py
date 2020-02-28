@@ -20,19 +20,19 @@ options:
   action:
     description:
       - Action to take against GreyNoise API.
-    required: true
+    required: false
     default: list_tags
     choices: [ query_ip, query_tag, list_tags ]
     type: str
   ip:
     description:
       - IP to query.
-    required: true
+    required: false
     type: str
   tag:
     description:
       - Tag to query.
-    required: true
+    required: false
     type: str
   greynoise_api_key:
     description:
