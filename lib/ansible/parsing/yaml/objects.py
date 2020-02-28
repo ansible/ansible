@@ -157,8 +157,8 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
     def __repr__(self):
         return repr(self.data)
 
-    def __int__(self):
-        return int(self.data)
+    def __int__(self, base=10):
+        return int(self.data, base=base)
 
     def __float__(self):
         return float(self.data)
@@ -169,8 +169,9 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
     def __hash__(self):
         return hash(self.data)
 
-    def __getnewargs__(self):
-        return (self.data[:],)
+    # This breaks vault, do not define it, we cannot satisfy this
+    # def __getnewargs__(self):
+    #    return (self.data[:],)
 
     def __lt__(self, string):
         if isinstance(string, AnsibleVaultEncryptedUnicode):
@@ -202,6 +203,11 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
 
     def __getitem__(self, index):
         return self.data[index]
+
+    def __getslice__(self, start, end):
+        start = max(start, 0)
+        end = max(end, 0)
+        return self.data[start:end]
 
     def __add__(self, other):
         if isinstance(other, AnsibleVaultEncryptedUnicode):
@@ -240,11 +246,6 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
         if isinstance(sub, AnsibleVaultEncryptedUnicode):
             sub = sub.data
         return self.data.count(sub, start, end)
-
-    def encode(self, encoding='utf-8', errors='strict'):
-        encoding = 'utf-8' if encoding is None else encoding
-        errors = 'strict' if errors is None else errors
-        return self.data.encode(encoding, errors)
 
     def endswith(self, suffix, start=0, end=_sys.maxsize):
         return self.data.endswith(suffix, start, end)
