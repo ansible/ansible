@@ -100,7 +100,7 @@ class Lldp_interfacesFacts(object):
         if match is None:
             return {}
         intf = match.group(1)
-        if get_interface_type(intf) == 'unknown':
+        if get_interface_type(intf) not in ['management', 'ethernet']:
             return {}
         config['name'] = intf
         if 'lldp receive' in conf:  # for parsed state only

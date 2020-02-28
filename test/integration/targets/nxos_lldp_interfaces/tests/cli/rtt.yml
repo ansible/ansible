@@ -6,6 +6,8 @@
   nxos_feature:
     feature: lldp
 
+- include_tasks: remove_config.yaml
+
 - block:
     - name: RTT - Apply the provided configuration (base config)
       nxos_lldp_interfaces:
