@@ -15,9 +15,15 @@ def test_get_bin_path(mocker):
     mocker.patch.dict('os.environ', {'PATH': path})
     mocker.patch('os.pathsep', ':')
 
-    mocker.patch('os.path.exists', side_effect=[False, True])
     mocker.patch('os.path.isdir', return_value=False)
     mocker.patch('ansible.module_utils.common.process.is_executable', return_value=True)
+
+    # pytest-mock 2.0.0 will throw when os.path.exists is messed with
+    # and then another method is patched afterwards. Likely
+    # something in the pytest-mock chain uses os.path.exists internally, and
+    # since pytest-mock prohibits context-specific patching, there's not a
+    # good solution. For now, just patch os.path.exists last.
+    mocker.patch('os.path.exists', side_effect=[False, True])
 
     assert '/usr/local/bin/notacommand' == get_bin_path('notacommand')
 
