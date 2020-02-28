@@ -658,6 +658,12 @@ class ClearLinuxHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class CloudlinuxserverHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Cloudlinuxserver'
+    strategy_class = RedHatStrategy
+
+
 class CloudlinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Cloudlinux'
