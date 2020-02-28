@@ -16,72 +16,79 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: mongodb_parameter
-short_description: Change an administrative parameter on a MongoDB server.
+short_description: Change an administrative parameter on a MongoDB server
 description:
     - Change an administrative parameter on a MongoDB server.
 version_added: "2.1"
 options:
     login_user:
         description:
-            - The username used to authenticate with
+            - The MongoDB username used to authenticate with.
+        type: str
     login_password:
         description:
-            - The password used to authenticate with
+            - The login user's password used to authenticate with.
+        type: str
     login_host:
         description:
-            - The host running the database
+            - The host running the database.
+        type: str
         default: localhost
     login_port:
         description:
-            - The port to connect to
+            - The MongoDB port to connect to.
         default: 27017
+        type: int
     login_database:
         description:
-            - The database where login credentials are stored
+            - The database where login credentials are stored.
+        type: str
     replica_set:
         description:
-            - Replica set to connect to (automatically connects to primary for writes)
-    database:
-        description:
-            - The name of the database to add/remove the user from
-        required: true
+            - Replica set to connect to (automatically connects to primary for writes).
+        type: str
     ssl:
         description:
-            - Whether to use an SSL connection when connecting to the database
+            - Whether to use an SSL connection when connecting to the database.
         type: bool
-        default: 'no'
+        default: no
     param:
         description:
-            - MongoDB administrative parameter to modify
+            - MongoDB administrative parameter to modify.
+        type: str
         required: true
     value:
         description:
-            - MongoDB administrative parameter value to set
+            - MongoDB administrative parameter value to set.
+        type: str
         required: true
     param_type:
         description:
-            - Define the parameter value (str, int)
+            - Define the type of parameter value.
         default: str
+        type: str
+        choices: [int, str]
 
 notes:
-    - Requires the pymongo Python package on the remote host, version 2.4.2+. This
-      can be installed using pip or the OS package manager. @see http://api.mongodb.org/python/current/installation.html
+    - Requires the pymongo Python package on the remote host, version 2.4.2+.
+    - This can be installed using pip or the OS package manager.
+    - See also U(http://api.mongodb.org/python/current/installation.html)
 requirements: [ "pymongo" ]
 author: "Loic Blot (@nerzhul)"
 '''
 
-EXAMPLES = '''
-# Set MongoDB syncdelay to 60 (this is an int)
-- mongodb_parameter:
+EXAMPLES = r'''
+- name: Set MongoDB syncdelay to 60 (this is an int)
+  mongodb_parameter:
     param: syncdelay
     value: 60
     param_type: int
 '''
 
-RETURN = '''
+RETURN = r'''
 before:
     description: value before modification
     returned: success
@@ -148,8 +155,8 @@ def main():
             login_port=dict(default=27017, type='int'),
             login_database=dict(default=None),
             replica_set=dict(default=None),
-            param=dict(default=None, required=True),
-            value=dict(default=None, required=True),
+            param=dict(required=True),
+            value=dict(required=True),
             param_type=dict(default="str", choices=['str', 'int']),
             ssl=dict(default=False, type='bool'),
         )
