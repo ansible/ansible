@@ -1,0 +1,54 @@
+- name: Define users dict
+  set_fact:
+    users:
+      alice:
+        name: Alice
+        age: 21
+      bob:
+        name: Bob
+        age: 22
+
+- name: Convert users dict to list
+  set_fact:
+    user_list: "{{ lookup('dict', users) | sort(attribute='key') }}"
+
+- name: Verify results
+  assert:
+    that:
+    - user_list | length == 2
+    - user_list[0].key == 'alice'
+    - user_list[0].value | length == 2
+    - user_list[0].value.name == 'Alice'
+    - user_list[0].value.age == 21
+    - user_list[1].key == 'bob'
+    - user_list[1].value | length == 2
+    - user_list[1].value.name == 'Bob'
+    - user_list[1].value.age == 22
+
+- name: Convert a non-dict (failure expected)
+  set_fact:
+    bad_fact: "{{ lookup('dict', 1) }}"
+  register: result
+  ignore_errors: yes
+
+- name: Verify conversion failed
+  assert:
+    that:
+      - result is failed
+
+- name: Define simple dict
+  set_fact:
+    simple:
+      hello: World
+
+- name: Convert using with_dict to cause terms to not be a list
+  set_fact:
+    hello: "{{ item }}"
+  with_dict: "{{ simple }}"
+
+- name: Verify conversion
+  assert:
+    that:
+      - hello | length == 2
+      - hello.key == 'hello'
+      - hello.value == 'World'
