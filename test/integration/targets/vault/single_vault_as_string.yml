@@ -100,4 +100,3 @@
         that:
           - vaulted_valued|wordcount == 2
       when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.11.2', '>=')
-
