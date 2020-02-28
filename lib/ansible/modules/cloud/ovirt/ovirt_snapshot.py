@@ -367,7 +367,7 @@ def create_snapshot(module, vm_service, snapshots_service, connection):
                 otypes.Snapshot(
                     description=module.params.get('description'),
                     persist_memorystate=module.params.get('use_memory'),
-                    disk_attachments=[otypes.DiskAttachment(id=da_id) for da_id in disk_attachments_id] if disk_attachments_id else None
+                    disk_attachments=[otypes.DiskAttachment(disk=otypes.Disk(id=da_id)) for da_id in disk_attachments_id] if disk_attachments_id else None
                 )
             )
         changed = True
