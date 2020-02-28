@@ -259,13 +259,12 @@ class Static_Routes(ConfigBase):
         for w in temp_want:
             for addr_want in w.get('address_families'):
                 for route_want in addr_want.get('routes'):
-                    have_set = set()
                     new_hops = []
                     for each in route_want.get('next_hops'):
                         want_set = set()
                         new_dict_to_set(each, [], want_set, 0)
                         new_hops.append(want_set)
-                    commands.extend(self._set_config(w, h, addr_want, route_want, route_have, new_hops, have_set))
+                    commands.extend(self._set_config(w, {}, addr_want, route_want, {}, new_hops, set()))
         # Arranging the cmds suct that all delete cmds are fired before all set cmds
         commands = [each for each in sorted(commands) if 'no' in each] + \
                    [each for each in sorted(commands) if 'no' not in each]
