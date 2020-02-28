@@ -6,10 +6,10 @@
   junos_config:
     lines:
       - delete firewall
-      - set firewall family inet filter initial_acl term ten_dot from port bgp protocol tcp source-address 10.0.0.0/8
-      - set firewall family inet filter initial_acl term eleven_dot from port bgp protocol tcp source-address 11.0.0.0/8
-      - set firewall family inet filter second_acl term twelve_dot from port bgp protocol tcp source-address 12.0.0.0/8
-      - "set firewall family inet6 filter initial_acl6 term colon_eleven from port 631 source-address ::11"
+      - set firewall family inet filter initial_acl term ten_dot from source-port bgp protocol tcp source-address 10.0.0.0/8
+      - set firewall family inet filter initial_acl term eleven_dot from source-port bgp protocol tcp source-address 11.0.0.0/8
+      - set firewall family inet filter second_acl term twelve_dot from source-port bgp protocol tcp source-address 12.0.0.0/8
+      - "set firewall family inet6 filter initial_acl6 term colon_eleven from source-port 631 source-address ::11"
 
 - debug:
     msg: "END junos_acls reset ACL config on connection={{ ansible_connection }}"

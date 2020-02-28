@@ -10,40 +10,36 @@
         - acls:
             - aces:
                 - name: ten_dot
-                  port:
-                    bgp: true
                   source:
                     address: 10.0.0.0/8
-                  protocol:
-                    tcp: true
+                    port_protocol:
+                      eq: bgp
+                  protocol: tcp
                 - name: eleven_dot
-                  port:
-                    bgp: true
                   source:
                     address: 11.0.0.0/8
-                  protocol:
-                    tcp: true
+                    port_protocol:
+                      eq: bgp
+                  protocol: tcp
               name: initial_acl
             - aces:
                 - name: ace_20
                   grant: permit
-                  protocol:
-                    igmp: true
+                  protocol: igmp
                   source:
                     address: 192.168.1.100
                 - name: ace_21
                   grant: permit
-                  protocol:
-                    tcp: true
+                  protocol: tcp
               name: second_acl
           afi: ipv4
         - acls:
             - aces:
                 - name: colon_eleven
-                  port:
-                    range: 631
                   source:
                     address: ::11/128
+                    port_protocol:
+                      eq: 631
               name: initial_acl6
           afi: ipv6
 
@@ -57,14 +53,12 @@
               aces:
                 - name: ace_20
                   grant: permit
-                  protocol:
-                    igmp: true
+                  protocol: igmp
                   source:
                     address: 192.168.1.100
                 - name: ace_21
                   grant: permit
-                  protocol:
-                    tcp: true
+                  protocol: tcp
       state: replaced
     register: result
 

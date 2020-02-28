@@ -7,20 +7,18 @@
 
   - set_fact:
       config:
-        - afi: ipv4
-          acls:
-            - name: acl_1
-              aces:
+        - acls:
+            - aces:
                 - name: ace_10
                   grant: deny
-                  protocol:
-                    tcp: true
-            - name: acl_2
-              aces:
+                  protocol: tcp
+              name: acl_1
+            - aces:
                 - name: ace_20
                   grant: deny
-                  protocol:
-                    udp: true
+                  protocol: udp
+              name: acl_2
+          afi: ipv4
 
   - name: Override the entire running configuration with the provided configuration
     junos_acls: &overridden
