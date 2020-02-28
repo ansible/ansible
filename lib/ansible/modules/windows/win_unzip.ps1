@@ -40,6 +40,15 @@ Function Extract-Zip($src, $dest) {
         $entry_target_path = [System.IO.Path]::Combine($dest, $archive_name)
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
+        # Normalize paths for further evaluation
+        $full_target_path = [System.IO.Path]::GetFullPath($entry_target_path)
+        $full_dest_path = [System.IO.Path]::GetFullPath($dest + [System.IO.Path]::DirectorySeparatorChar)
+
+        # Ensure file in the archive does not escape the extraction path
+        if (-not $full_target_path.StartsWith($full_dest_path)) {
+            Fail-Json -obj $result -message "Error unzipping '$src' to '$dest'! Filename contains relative paths which would extract outside the destination: $entry_target_path"
+        }
+
         if (-not (Test-Path -LiteralPath $entry_dir)) {
             New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
             $result.changed = $true

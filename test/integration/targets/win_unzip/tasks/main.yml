@@ -1,4 +1,3 @@
----
 - name: create test directory
   win_file:
     path: '{{ win_unzip_dir }}\output'
@@ -114,3 +113,59 @@
     - unzip_delete is changed
     - unzip_delete.removed
     - not unzip_delete_actual.stat.exists
+
+# Path traversal tests (CVE-2020-1737)
+- name: Create zip files
+  script: create_crafty_zip_files.py {{ output_dir }}
+  delegate_to: localhost
+
+- name: Copy zip files to Windows host
+  win_copy:
+    src: "{{ output_dir }}/{{ item }}.zip"
+    dest: "{{ win_unzip_dir }}/"
+  loop:
+    - hat1
+    - hat2
+    - handcuffs
+    - prison
+
+- name: Perform first trick
+  win_unzip:
+    src: '{{ win_unzip_dir }}\hat1.zip'
+    dest: '{{ win_unzip_dir }}\output'
+  register: hat_trick1
+
+- name: Check for file
+  win_stat:
+    path: '{{ win_unzip_dir }}\output\rabbit.txt'
+  register: rabbit
+
+- name: Perform next tricks (which should all fail)
+  win_unzip:
+    src: '{{ win_unzip_dir }}\{{ item }}.zip'
+    dest: '{{ win_unzip_dir }}\output'
+  ignore_errors: yes
+  register: escape
+  loop:
+    - hat2
+    - handcuffs
+    - prison
+
+- name: Search for files
+  win_find:
+    recurse: yes
+    paths:
+      - '{{ win_unzip_dir }}'
+    patterns:
+      - '*houdini.txt'
+      - '*rabbit.txt'
+  register: files
+
+- name: Check results
+  assert:
+    that:
+      - rabbit.stat.exists
+      - hat_trick1 is success
+      - escape.results | map(attribute='failed') | unique | list == [True]
+      - files.matched == 1
+      - files.files[0]['filename'] == 'rabbit.txt'
