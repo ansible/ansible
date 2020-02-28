@@ -645,10 +645,6 @@ EXAMPLES = """
 #  20 permit tcp 2001:db8:2000:2::2/128 2001:db8:2000:ab::2/128
 
 # Using parsed
-#
-# Before state:
-# ------------
-#
 
 - name: Parse given config to structured data
   nxos_acls:
@@ -658,10 +654,6 @@ EXAMPLES = """
       ipv6 access-list ACL1v6
         10 permit sctp any any
     state: parsed
-
-# After state:
-# -----------
-#
 
 # returns:
 # parsed:
@@ -696,6 +688,7 @@ EXAMPLES = """
 #             prefix: 2001:db8:12::/32
 #           protocol: sctp
 
+
 # Using gathered:
 
 # Before state:
@@ -710,53 +703,42 @@ EXAMPLES = """
   nxos_acls:
     state: gathered
 
-# After state:
-# ------------
-#
-# ip access-list ACL1v4
-#  50 deny tcp any lt 55 192.0.2.64 0.0.0.255 ack fin
-# ipv6 access-list ACL1v6
-#  10 permit sctp any any
-
 # returns:
-# nxos_acls:
-#   config:
-#     - afi: ipv4
-#       acls:
-#         - name: ACL1v4
-#           aces:
-#             - grant: deny
-#               destination:
-#                 address: 192.0.2.64
-#                 wildcard_bits: 0.0.0.255
-#               source:
-#                 any: true
-#                 port_protocol:
-#                   lt: 55
-#               protocol: tcp
-#               protocol_options:
-#                 tcp:
-#                   ack: true
-#                   fin: true
-#               sequence: 50
+# gathered:
+# - afi: ipv4
+#   acls:
+#     - name: ACL1v4
+#       aces:
+#         - grant: deny
+#           destination:
+#             address: 192.0.2.64
+#             wildcard_bits: 0.0.0.255
+#           source:
+#             any: true
+#             port_protocol:
+#               lt: 55
+#           protocol: tcp
+#           protocol_options:
+#             tcp:
+#               ack: true
+#               fin: true
+#           sequence: 50
 
-#     - afi: ipv6
-#       acls:
-#         - name: ACL1v6
-#           aces:
-#             - grant: permit
-#               sequence: 10
-#               source:
-#                 any: true
-#               destination:
-#                 prefix: 2001:db8:12::/32
-#               protocol: sctp
+# - afi: ipv6
+#   acls:
+#     - name: ACL1v6
+#       aces:
+#         - grant: permit
+#           sequence: 10
+#           source:
+#             any: true
+#           destination:
+#             prefix: 2001:db8:12::/32
+#           protocol: sctp
+
 
 # Using rendered
 
-# Before state:
-# ------------
-#
 - name: Render required configuration to be pushed to the device
   nxos_acls:
     config:
@@ -791,9 +773,6 @@ EXAMPLES = """
                   prefix: 2001:db8:12::/32
                 protocol: sctp
     state: rendered
-# After state:
-# -----------
-#
 
 # returns:
 # rendered:
