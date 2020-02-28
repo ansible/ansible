@@ -99,26 +99,26 @@ options:
                     suboptions:
                       eq:
                         description: Match only packets on a given port number.
-                        type: int
+                        type: str
                       gt:
                         description: Match only packets with a greater port number.
-                        type: int
+                        type: str
                       lt:
                         description: Match only packets with a lower port number.
-                        type: int
+                        type: str
                       neq:
                         description: Match only packets not on a given port number.
-                        type: int
+                        type: str
                       range:
                         description: Match only packets in the range of port numbers.
                         type: dict
                         suboptions:
                           start:
                             description: Specify the start of the port range.
-                            type: int
+                            type: str
                           end:
                             description: Specify the end of the port range.
-                            type: int
+                            type: str
                   prefix:
                     description: Destination network prefix. Only for prefixes of value less than 31 for ipv4 and 127 for ipv6.
                                  Prefixes of 32 (ipv4) and 128 (ipv6) should be given in the 'host' key.
@@ -162,26 +162,26 @@ options:
                     suboptions:
                       eq:
                         description: Match only packets on a given port number.
-                        type: int
+                        type: str
                       gt:
                         description: Match only packets with a greater port number.
-                        type: int
+                        type: str
                       lt:
                         description: Match only packets with a lower port number.
-                        type: int
+                        type: str
                       neq:
                         description: Match only packets not on a given port number.
-                        type: int
+                        type: str
                       range:
                         description: Match only packets in the range of port numbers.
                         type: dict
                         suboptions:
                           start:
                             description: Specify the start of the port range.
-                            type: int
+                            type: str
                           end:
                             description: Specify the end of the port range.
-                            type: int
+                            type: str
                   prefix:
                     description: Source network prefix. Only for prefixes of mask value less than 31 for ipv4 and 127 for ipv6.
                                  Prefixes of mask 32 (ipv4) and 128 (ipv6) should be given in the 'host' key.
@@ -487,6 +487,7 @@ EXAMPLES = """
               - remark: Replaced ACE
 
           - name: ACL2v6
+    state: replaced
 
 # After state:
 # ---------------
@@ -554,11 +555,67 @@ EXAMPLES = """
 #  10 deny ipv6 any 2001:db8:3000::/36
 #  20 permit tcp 2001:db8:2000:2::2/128 2001:db8:2000:ab::2/128
 
-- name: Delete existing ACL configuration
+- name: Delete all ACLs
+  nxos_acls:
+    config:
+    state: deleted
+
+# After state:
+# -----------
+#
+
+
+# Before state:
+# -------------
+#
+# ip access-list ACL1v4
+#   10 permit ip any any
+#   20 deny udp any any
+# ip access-list ACL2v4
+#   10 permit ahp 192.0.2.0 0.0.0.255 any
+# ip access-list ACL1v6
+#   10 permit sctp any any
+#   20 remark IPv6 ACL
+# ip access-list ACL2v6
+#  10 deny ipv6 any 2001:db8:3000::/36
+#  20 permit tcp 2001:db8:2000:2::2/128 2001:db8:2000:ab::2/128
+
+- name: Delete all ACLs in given AFI
   nxos_acls:
     config:
       - afi: ipv4
+    state: deleted
 
+# After state:
+# ------------
+#
+# ip access-list ACL1v6
+#   10 permit sctp any any
+#   20 remark IPv6 ACL
+# ip access-list ACL2v6
+#  10 deny ipv6 any 2001:db8:3000::/36
+#  20 permit tcp 2001:db8:2000:2::2/128 2001:db8:2000:ab::2/128
+
+
+
+# Before state:
+# -------------
+#
+# ip access-list ACL1v4
+#   10 permit ip any any
+#   20 deny udp any any
+# ip access-list ACL2v4
+#   10 permit ahp 192.0.2.0 0.0.0.255 any
+# ip access-list ACL1v6
+#   10 permit sctp any any
+#   20 remark IPv6 ACL
+# ip access-list ACL2v6
+#  10 deny ipv6 any 2001:db8:3000::/36
+#  20 permit tcp 2001:db8:2000:2::2/128 2001:db8:2000:ab::2/128
+
+- name: Delete specific ACLs
+  nxos_acls:
+    config:
       - afi: ipv6
         acls:
           - name: ACL1v6
@@ -577,6 +634,11 @@ EXAMPLES = """
 # After state:
 # ------------
 #
+# ip access-list ACL1v4
+#   10 permit ip any any
+#   20 deny udp any any
+# ip access-list ACL2v4
+#   10 permit ahp 192.0.2.0 0.0.0.255 any
 # ip access-list ACl1v6
 # ip access-list ACL2v6
 #  10 deny ipv6 any 2001:db8:3000::/36
