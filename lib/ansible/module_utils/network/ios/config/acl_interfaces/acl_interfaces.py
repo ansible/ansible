@@ -17,7 +17,7 @@ from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.ios.facts.facts import Facts
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.ios.utils.utils import remove_duplicate_interface
+from ansible.module_utils.network.ios.utils.utils import remove_duplicate_interface, normalize_interface
 
 
 class Acl_Interfaces(ConfigBase):

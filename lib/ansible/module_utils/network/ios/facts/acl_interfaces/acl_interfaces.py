@@ -18,7 +18,7 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.network.common import utils
-from ansible.module_utils.network.ios.utils.utils import get_interface_type, normalize_interface
+from ansible.module_utils.network.ios.utils.utils import get_interface_type
 from ansible.module_utils.network.ios.argspec.acl_interfaces.acl_interfaces import Acl_InterfacesArgs
 
 
