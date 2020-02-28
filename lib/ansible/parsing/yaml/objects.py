@@ -123,6 +123,9 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
     def data(self, value):
         self._ciphertext = to_bytes(value)
 
+    def is_encrypted(self):
+        return self.vault and self.vault.is_encrypted(self._ciphertext)
+
     def __hash__(self):
         # Overriding ``__eq__`` causes the ``ABCMeta`` to effectively not inherit ``__hash__``
         return hash(self.data)

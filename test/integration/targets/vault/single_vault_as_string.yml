@@ -16,6 +16,7 @@
 
     - assert:
         that:
+          - vaulted_valued is vault_encrypted
           - vaulted_valued == 'foo bar'
           - vaulted_valued|string == 'foo bar'
           - vaulted_valued|quote == "'foo bar'"
