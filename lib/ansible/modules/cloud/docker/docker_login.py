@@ -98,7 +98,7 @@ EXAMPLES = '''
 
 - name: Log into private registry and force re-authorization
   docker_login:
-    registry: your.private.registry.io
+    registry_url: your.private.registry.io
     username: yourself
     password: secrets3
     reauthorize: yes
