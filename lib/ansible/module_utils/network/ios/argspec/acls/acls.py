@@ -192,9 +192,6 @@ class AclsArgs(object):
                                         'icmp': {
                                             'type': 'dict',
                                             'options': {
-                                                'set': {
-                                                    'type': 'bool'
-                                                },
                                                 'administratively_prohibited':
                                                 {
                                                     'type': 'bool'
@@ -334,9 +331,6 @@ class AclsArgs(object):
                                         'igmp': {
                                             'type': 'dict',
                                             'options': {
-                                                'set': {
-                                                    'type': 'bool'
-                                                },
                                                 'dvmrp': {
                                                     'type': 'bool'
                                                 },
@@ -395,9 +389,6 @@ class AclsArgs(object):
                                         },
                                         'tcp': {
                                             'options': {
-                                                'set': {
-                                                    'type': 'bool'
-                                                },
                                                 'ack': {
                                                     'type': 'bool'
                                                 },
@@ -438,10 +429,6 @@ class AclsArgs(object):
                                 },
                                 'log_input': {
                                     'type': 'str'
-                                },
-                                'line': {
-                                    'type': 'str',
-                                    'aliases': ['ace']
                                 },
                                 'option': {
                                     'type': 'dict',

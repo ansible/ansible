@@ -359,10 +359,6 @@ options:
                   host:
                     description: A single source host
                     type: str
-                  prefix:
-                    description:
-                      - Source network prefix.
-                    type: str
                   port_protocol:
                     description:
                       - Specify the destination port along with protocol.
@@ -406,10 +402,6 @@ options:
                     type: bool
                   host:
                     description: A single destination host
-                    type: str
-                  prefix:
-                    description:
-                      - Source network prefix.
                     type: str
                   port_protocol:
                     description:
