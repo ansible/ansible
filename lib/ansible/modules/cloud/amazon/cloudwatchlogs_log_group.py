@@ -55,7 +55,8 @@ options:
       type: int
     purge_retention_policy:
       description:
-        - "Whether to purge the retention policy or not. Mutually exclusive with I(retention)."
+        - "Whether to purge the retention policy or not."
+        - "Mutually exclusive with I(retention) and I(overwrite)."
       default: false
       required: false
       type: bool
