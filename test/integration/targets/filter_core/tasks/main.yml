@@ -235,3 +235,29 @@
     - assert:
         that:
           - "result.msg.startswith('The task includes an option with an undefined variable')"
+
+- name: regex_search
+  set_fact:
+    match_case: "{{ 'hello' | regex_search('HELLO', ignorecase=false) }}"
+    ignore_case: "{{ 'hello' | regex_search('HELLO', ignorecase=true) }}"
+    single_line: "{{ 'hello\nworld' | regex_search('^world', multiline=false) }}"
+    multi_line: "{{ 'hello\nworld' | regex_search('^world', multiline=true) }}"
+    named_groups: "{{ 'goodbye' | regex_search('(?P<first>good)(?P<second>bye)', '\\g<second>', '\\g<first>') }}"
+    numbered_groups: "{{ 'goodbye' | regex_search('(good)(bye)', '\\2', '\\1') }}"
+
+- name: regex_search unknown argument (failure expected)
+  set_fact:
+    unknown_arg: "{{ 'hello' | regex_search('hello', 'unknown') }}"
+  ignore_errors: yes
+  register: failure
+
+- name: regex_search check
+  assert:
+    that:
+      - match_case == ''
+      - ignore_case == 'hello'
+      - single_line == ''
+      - multi_line == 'world'
+      - named_groups == ['bye', 'good']
+      - numbered_groups == ['bye', 'good']
+      - failure is failed
