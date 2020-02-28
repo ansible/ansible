@@ -139,7 +139,7 @@ def check_required_by(requirements, module_parameters):
     :arg requirements: Dictionary of requirements
     :arg module_parameters: Dictionary of module parameters
 
-    :returns: Empty dictionary or raises TypeError if the
+    :returns: Empty dictionary or raises TypeError if the check fails.
     """
 
     result = {}
@@ -149,16 +149,17 @@ def check_required_by(requirements, module_parameters):
     for (key, value) in requirements.items():
         if key not in module_parameters or module_parameters[key] is None:
             continue
-        result[key] = []
         # Support strings (single-item lists)
         if isinstance(value, string_types):
             value = [value]
         for required in value:
             if required not in module_parameters or module_parameters[required] is None:
+                if key not in result:
+                    result[key] = []
                 result[key].append(required)
 
     if result:
-        for key, missing in result.items():
+        for key, missing in sorted(result.items()):
             if len(missing) > 0:
                 msg = "missing parameter(s) required by '%s': %s" % (key, ', '.join(missing))
                 raise TypeError(to_native(msg))
