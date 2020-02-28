@@ -1,4 +1,4 @@
-shippable/posix/group2
+shippable/posix/incidental
 skip/aix
 skip/osx
 skip/freebsd

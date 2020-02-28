@@ -1,4 +1,4 @@
 destructive
-shippable/posix/group4
+shippable/posix/incidental
 skip/aix
 skip/osx
