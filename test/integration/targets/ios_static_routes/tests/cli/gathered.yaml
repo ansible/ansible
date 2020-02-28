@@ -1,0 +1,22 @@
+---
+- debug:
+      msg: "START ios_static_routes gathered integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _intial_setup_config.yaml
+
+- block:
+  - name: Gather the provided configuration with the exisiting running configuration
+    ios_static_routes: &gathered
+      config:
+      state: gathered
+    register: result
+
+  - name: Assert that gathered dicts was correctly generated
+    assert:
+      that:
+        - "result['changed'] == false"
+
+  always:
+  - include_tasks: _remove_config.yaml

@@ -28,6 +28,28 @@ def add_command_to_config_list(interface, cmd, commands):
     commands.append(cmd)
 
 
+def new_dict_to_set(input_dict, temp_list, test_set, count):
+    test_dict = dict()
+    if isinstance(input_dict, dict):
+        input_dict_len = len(input_dict)
+        for k, v in sorted(iteritems(input_dict)):
+            count += 1
+            if isinstance(v, list):
+                temp_list.append(k)
+                for each in v:
+                    if isinstance(each, dict):
+                        if [True for i in each.values() if type(i) == list]:
+                            new_dict_to_set(each, temp_list, test_set, count)
+                        else:
+                            new_dict_to_set(each, temp_list, test_set, 0)
+            else:
+                if v is not None:
+                    test_dict.update({k: v})
+                if tuple(iteritems(test_dict)) not in test_set and count == input_dict_len:
+                    test_set.add(tuple(iteritems(test_dict)))
+                    count = 0
+
+
 def dict_to_set(sample_dict):
     # Generate a set with passed dictionary for comparison
     test_dict = dict()
@@ -160,6 +182,31 @@ def validate_n_expand_ipv4(module, want):
         ip_addr_want = '{0} {1}'.format(ip[0], to_netmask(ip[1]))
 
     return ip_addr_want
+
+
+def netmask_to_cidr(netmask):
+    bit_range = [128, 64, 32, 16, 8, 4, 2, 1]
+    count = 0
+    cidr = 0
+    netmask_list = netmask.split('.')
+    netmask_calc = [i for i in netmask_list if int(i) != 255 and int(i) != 0]
+    if netmask_calc:
+        netmask_calc_index = netmask_list.index(netmask_calc[0])
+    elif sum(list(map(int, netmask_list))) == 0:
+        return '32'
+    else:
+        return '24'
+    for each in bit_range:
+        if cidr == int(netmask.split('.')[2]):
+            if netmask_calc_index == 1:
+                return str(8 + count)
+            elif netmask_calc_index == 2:
+                return str(8 * 2 + count)
+            elif netmask_calc_index == 3:
+                return str(8 * 3 + count)
+            break
+        cidr += each
+        count += 1
 
 
 def normalize_interface(name):
