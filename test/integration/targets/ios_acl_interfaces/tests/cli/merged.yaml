@@ -1,0 +1,53 @@
+---
+- debug:
+    msg: "Start ios_acl_interfaces merged integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+
+  - name: Merge the provided configuration with the exisiting running configuration
+    ios_acl_interfaces: &merged
+      config:
+        - name: GigabitEthernet0/1
+          access_groups:
+            - afi: ipv4
+              acls:
+                - name: 110
+                  direction: in
+                - name: 123
+                  direction: out
+            - afi: ipv6
+              acls:
+                - name: temp_v6
+                  direction: in
+                - name: test_v6
+                  direction: out
+        - name: GigabitEthernet0/2
+          access_groups:
+            - afi: ipv4
+              acls:
+                - name: 110
+                  direction: in
+                - name: 123
+                  direction: out
+      state: merged
+    register: result
+
+  - assert:
+      that:
+        - "result.commands|length == 8"
+        - "result.changed == true"
+        - "result.commands|symmetric_difference(merged.commands) == []"
+
+  - name: Merge the provided configuration with the exisiting running configuration (IDEMPOTENT)
+    ios_acl_interfaces: *merged
+    register: result
+
+  - assert:
+      that:
+        - "result.commands|length == 0"
+        - "result.changed == false"
+
+  always:
+    - include_tasks: _remove_config.yaml

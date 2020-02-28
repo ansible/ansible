@@ -1,0 +1,41 @@
+---
+- debug:
+    msg: "Start ios_acl_interfaces overridden integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _populate_config.yaml
+
+- block:
+
+  - name: Override device configuration of all acl_interfaces with provided configuration
+    ios_acl_interfaces: &overridden
+      config:
+        - name: GigabitEthernet0/1
+          access_groups:
+            - afi: ipv4
+              acls:
+                - name: 100
+                  direction: out
+                - name: 110
+                  direction: in
+      state: overridden
+    become: yes
+    register: result
+
+  - assert:
+      that:
+        - "result.commands|length == 8"
+        - "result.changed == true"
+        - "result.commands|symmetric_difference(overridden.commands) == []"
+
+  - name: Override device configuration of all acl_interfaces with provided configuration (IDEMPOTENT)
+    ios_acl_interfaces: *overridden
+    become: yes
+    register: result
+
+  - assert:
+      that:
+        - "result.commands|length == 0"
+        - "result.changed == false"
+
+  always:
+    - include_tasks: _remove_config.yaml

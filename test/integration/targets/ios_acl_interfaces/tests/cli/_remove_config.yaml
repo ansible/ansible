@@ -1,0 +1,15 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      interface GigabitEthernet 0/1
+      no ip access-group 110 in
+      no ip access-group 100 out
+      no ip access-group 123 out
+      no ipv6 traffic-filter temp_v6 in
+      no ipv6 traffic-filter test_v6 out
+      interface GigabitEthernet 0/2
+      no ip access-group 110 in
+      no ip access-group 123 out
