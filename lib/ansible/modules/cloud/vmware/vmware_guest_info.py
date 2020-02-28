@@ -145,7 +145,7 @@ EXAMPLES = '''
   register: info
 
 - name: Gather some information about a guest using MoID
-  vmware_guest_facts:
+  vmware_guest_info:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
