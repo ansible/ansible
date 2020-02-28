@@ -574,7 +574,7 @@ def verify_collections(collections, search_paths, apis, validate_certs, ignore_e
                     for search_path in search_paths:
                         b_search_path = to_bytes(os.path.join(search_path, namespace, name), errors='surrogate_or_strict')
                         if os.path.isdir(b_search_path):
-                            if not os.path.isfile(os.path.join(to_text(b_search_path), 'MANIFEST.json')):
+                            if not os.path.isfile(os.path.join(to_text(b_search_path, errors='surrogate_or_strict'), 'MANIFEST.json')):
                                 raise AnsibleError(
                                     message="Collection %s does not appear to have a MANIFEST.json. " % collection_name +
                                             "A MANIFEST.json is expected if the collection has been built and installed via ansible-galaxy."
