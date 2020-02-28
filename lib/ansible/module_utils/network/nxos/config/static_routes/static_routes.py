@@ -360,7 +360,12 @@ class Static_routes(ConfigBase):
                         commands.extend(self.del_commands([obj_in_have]))
         else:
             if have:
-                commands = self.del_commands(have)
+                # delete everything
+                del_have = []
+                for h in have:
+                    if h['vrf'] != 'management':  # protect management vrf
+                        del_have.append(h)
+                commands = self.del_commands(del_have)
 
         final_delete_commands = []
         # del_commands might add 'vrf context..' twice for two routes in the same vrf. This removes it
