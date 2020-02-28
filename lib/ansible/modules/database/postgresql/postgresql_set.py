@@ -98,7 +98,7 @@ EXAMPLES = r'''
   postgresql_set:
     name: work_mem
     value: 32mb
-    register: set
+  register: set
 
 - debug:
     msg: "{{ set.name }} {{ set.prev_val_pretty }} >> {{ set.value_pretty }} restart_req: {{ set.restart_required }}"
