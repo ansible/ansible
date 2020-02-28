@@ -60,6 +60,16 @@
   loop: "{{ certificates }}"
   when: not (item.is_ca | default(false))
 
+- name: Get certificate infos
+  openssl_certificate_info:
+    path: '{{ output_dir }}/{{ item }}.pem'
+  loop:
+  - cert-1
+  - cert-2
+  - cert-3
+  - cert-4
+  register: certificate_infos
+
 - block:
   - name: Running tests with cryptography backend
     include_tasks: impl.yml
