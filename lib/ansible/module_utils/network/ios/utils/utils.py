@@ -29,9 +29,6 @@ def add_command_to_config_list(interface, cmd, commands):
     commands.append(cmd)
 
 
-<<<<<<< HEAD
-def new_dict_to_set(input_dict, temp_list, test_set, count):
-=======
 def check_n_return_valid_ipv6_addr(module, input_list, filtered_ipv6_list):
     # To verify the valid ipv6 address
     try:
@@ -48,7 +45,6 @@ def check_n_return_valid_ipv6_addr(module, input_list, filtered_ipv6_list):
 
 def new_dict_to_set(input_dict, temp_list, test_set, count=0):
     # recursive function to convert input dict to set for comparision
->>>>>>> fix ios_acl
     test_dict = dict()
     if isinstance(input_dict, dict):
         input_dict_len = len(input_dict)
@@ -65,11 +61,6 @@ def new_dict_to_set(input_dict, temp_list, test_set, count=0):
             else:
                 if v is not None:
                     test_dict.update({k: v})
-<<<<<<< HEAD
-                if tuple(iteritems(test_dict)) not in test_set and count == input_dict_len:
-                    test_set.add(tuple(iteritems(test_dict)))
-                    count = 0
-=======
                 try:
                     if tuple(iteritems(test_dict)) not in test_set and count == input_dict_len:
                         test_set.add(tuple(iteritems(test_dict)))
@@ -90,7 +81,6 @@ def new_dict_to_set(input_dict, temp_list, test_set, count=0):
                     expand_dict(new_dict)
                     if tuple(iteritems(temp_dict)) not in test_set:
                         test_set.add(tuple(iteritems(temp_dict)))
->>>>>>> fix ios_acl
 
 
 def dict_to_set(sample_dict):
@@ -225,6 +215,31 @@ def validate_n_expand_ipv4(module, want):
         ip_addr_want = '{0} {1}'.format(ip[0], to_netmask(ip[1]))
 
     return ip_addr_want
+
+
+def netmask_to_cidr(netmask):
+    bit_range = [128, 64, 32, 16, 8, 4, 2, 1]
+    count = 0
+    cidr = 0
+    netmask_list = netmask.split('.')
+    netmask_calc = [i for i in netmask_list if int(i) != 255 and int(i) != 0]
+    if netmask_calc:
+        netmask_calc_index = netmask_list.index(netmask_calc[0])
+    elif sum(list(map(int, netmask_list))) == 0:
+        return '32'
+    else:
+        return '24'
+    for each in bit_range:
+        if cidr == int(netmask.split('.')[2]):
+            if netmask_calc_index == 1:
+                return str(8 + count)
+            elif netmask_calc_index == 2:
+                return str(8 * 2 + count)
+            elif netmask_calc_index == 3:
+                return str(8 * 3 + count)
+            break
+        cidr += each
+        count += 1
 
 
 def normalize_interface(name):
