@@ -157,10 +157,11 @@ class Acl_interfaces(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        commands = []
+        new_commands = []
         del_dict = {'name': want['name'], 'access_groups': []}
         obj_in_have = search_obj_in_list(want['name'], have, 'name')
         if obj_in_have != want:
+            commands = []
             if obj_in_have and 'access_groups' in obj_in_have.keys():
                 for ag in obj_in_have['access_groups']:
                     want_afi = []
@@ -184,11 +185,11 @@ class Acl_interfaces(ConfigBase):
 
             commands.extend(self._state_deleted([del_dict], have))
             commands.extend(self._state_merged(want, have))
-            for i in range(1, len(commands)):
-                if commands[i] == commands[0]:
-                    commands[i] = ''
-            commands = list(filter(None, commands))
-        return commands
+            new_commands.append(commands[0])
+            commands = [commands[i]
+                        for i in range(1, len(commands)) if commands[i] != commands[0]]
+            new_commands.extend(commands)
+        return new_commands
 
     def _state_overridden(self, want, have):
         """ The command generator when state is overridden

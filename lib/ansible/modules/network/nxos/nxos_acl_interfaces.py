@@ -241,6 +241,8 @@ EXAMPLES = """# Using merged
                 direction: out
 
       - name: Ethernet1/2
+    state: deleted
+
 # After state:
 # -------------
 # interface Ethernet1/2
@@ -250,10 +252,6 @@ EXAMPLES = """# Using merged
 #   ipv6 traffic-filter ACL1v6 in
 
 # Using parsed
-
-# Before state:
-# ------------
-#
 
 - name: Parse given configuration into structured format
   nxos_acl_interfaces:
@@ -265,10 +263,6 @@ EXAMPLES = """# Using merged
       ip access-group ACL1v4 out
       ip port access-group PortACL in
     state: parsed
-
-# After state:
-# -----------
-#
 
 # returns
 # parsed:
@@ -292,6 +286,7 @@ EXAMPLES = """# Using merged
 #          - name: ACL1v6
 #             direction: in
 
+
 # Using gathered:
 
 # Before state:
@@ -307,14 +302,6 @@ EXAMPLES = """# Using merged
   nxos_acl_interfaces:
     config:
     state: gathered
-# After state:
-# ------------
-# interface Ethernet1/2
-#   ipv6 traffic-filter ACL1v6 in
-# interface Ethernet1/5
-#   ipv6 traffic-filter ACL1v6 in
-#   ip access-group ACL1v4 out
-#   ip port access-group PortACL in
 
 # returns
 # gathered:
@@ -338,11 +325,8 @@ EXAMPLES = """# Using merged
 #          - name: ACL1v6
 #             direction: in
 
-# Using rendered
 
-# Before state:
-# ------------
-#
+# Using rendered
 
 - name: Render required configuration to be pushed to the device
   nxos_acl_interfaces:
@@ -368,9 +352,6 @@ EXAMPLES = """# Using merged
               - name: ACL1v6
                 direction: in
     state: rendered
-# After state:
-# -----------
-#
 
 # returns
 # rendered:
