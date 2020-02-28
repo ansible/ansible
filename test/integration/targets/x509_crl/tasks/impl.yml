@@ -38,6 +38,14 @@
       - serial_number: 1234
         revocation_date: 20191001000000Z
   register: crl_1
+- name: Retrieve CRL 1 infos
+  x509_crl_info:
+    path: '{{ output_dir }}/ca-crl1.crl'
+  register: crl_1_info_1
+- name: Retrieve CRL 1 infos via file content
+  x509_crl_info:
+    content: '{{ lookup("file", output_dir ~ "/ca-crl1.crl") }}'
+  register: crl_1_info_2
 - name: Create CRL 1 (idempotent, check mode)
   x509_crl:
     path: '{{ output_dir }}/ca-crl1.crl'
