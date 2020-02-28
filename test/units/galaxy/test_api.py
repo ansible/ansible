@@ -341,7 +341,7 @@ def test_publish_failure(api_version, collection_url, response, expected, collec
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, import_uri, full_import_uri', [
     ('https://galaxy.server.com/api', 'v2', 'Token', GalaxyToken('my token'),
      '1234',
-     'https://galaxy.server.com/api/v2/collection-imports/1234'),
+     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub/', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
@@ -374,7 +374,7 @@ def test_wait_import_task(server_url, api_version, token_type, token_ins, import
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, import_uri, full_import_uri', [
     ('https://galaxy.server.com/api/', 'v2', 'Token', GalaxyToken('my token'),
      '1234',
-     'https://galaxy.server.com/api/v2/collection-imports/1234'),
+     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
@@ -421,7 +421,7 @@ def test_wait_import_task_multiple_requests(server_url, api_version, token_type,
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, import_uri, full_import_uri,', [
     ('https://galaxy.server.com/api/', 'v2', 'Token', GalaxyToken('my token'),
      '1234',
-     'https://galaxy.server.com/api/v2/collection-imports/1234'),
+     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub/', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
@@ -498,7 +498,7 @@ def test_wait_import_task_with_failure(server_url, api_version, token_type, toke
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, import_uri, full_import_uri', [
     ('https://galaxy.server.com/api/', 'v2', 'Token', GalaxyToken('my_token'),
      '1234',
-     'https://galaxy.server.com/api/v2/collection-imports/1234'),
+     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub/', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
@@ -571,7 +571,7 @@ def test_wait_import_task_with_failure_no_error(server_url, api_version, token_t
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, import_uri, full_import_uri', [
     ('https://galaxy.server.com/api', 'v2', 'Token', GalaxyToken('my token'),
      '1234',
-     'https://galaxy.server.com/api/v2/collection-imports/1234'),
+     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      '1234',
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
@@ -787,34 +787,34 @@ def test_get_collection_versions(api_version, token_type, token_ins, response, m
         {
             'count': 6,
             'links': {
-                'next': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/?page=2',
+                'next': '/api/v3/collections/namespace/collection/versions/?page=2',
                 'previous': None,
             },
             'data': [
                 {
                     'version': '1.0.0',
-                    'href': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/1.0.0',
+                    'href': '/api/v3/collections/namespace/collection/versions/1.0.0',
                 },
                 {
                     'version': '1.0.1',
-                    'href': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/1.0.1',
+                    'href': '/api/v3/collections/namespace/collection/versions/1.0.1',
                 },
             ],
         },
         {
             'count': 6,
             'links': {
-                'next': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/?page=3',
-                'previous': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions',
+                'next': '/api/v3/collections/namespace/collection/versions/?page=3',
+                'previous': '/api/v3/collections/namespace/collection/versions',
             },
             'data': [
                 {
                     'version': '1.0.2',
-                    'href': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/1.0.2',
+                    'href': '/api/v3/collections/namespace/collection/versions/1.0.2',
                 },
                 {
                     'version': '1.0.3',
-                    'href': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/1.0.3',
+                    'href': '/api/v3/collections/namespace/collection/versions/1.0.3',
                 },
             ],
         },
@@ -822,16 +822,16 @@ def test_get_collection_versions(api_version, token_type, token_ins, response, m
             'count': 6,
             'links': {
                 'next': None,
-                'previous': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/?page=2',
+                'previous': '/api/v3/collections/namespace/collection/versions/?page=2',
             },
             'data': [
                 {
                     'version': '1.0.4',
-                    'href': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/1.0.4',
+                    'href': '/api/v3/collections/namespace/collection/versions/1.0.4',
                 },
                 {
                     'version': '1.0.5',
-                    'href': 'https://galaxy.server.com/api/v3/collections/namespace/collection/versions/1.0.5',
+                    'href': '/api/v3/collections/namespace/collection/versions/1.0.5',
                 },
             ],
         },
