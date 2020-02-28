@@ -15,10 +15,6 @@ DOCUMENTATION = '''
 module: ovirt
 author:
 - Vincent Van der Kussen (@vincentvdk)
-deprecated:
-    removed_in: "2.10"
-    why: Compatible only with deprecated version of ovirt. Was not migrated to ovirt.ovirt_collection.
-    alternative: Use M(ovirt_vm) instead
 short_description: oVirt/RHEV platform management
 description:
     - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vm) supports oVirt/RHV version 4.
@@ -224,6 +220,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.removed import removed_module
+
 
 # ------------------------------------------------------------------- #
 # create connection with API
