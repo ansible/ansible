@@ -1,0 +1,12 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      no ip route vrf ansible_temp_vrf 192.0.2.0 255.255.255.0 192.0.2.1 tag 50 name test_vrf track 150
+      no ip route 198.51.100.0 255.255.255.0 198.51.101.3 name route_3
+      no ip route 198.51.100.0 255.255.255.0 198.51.101.2 30 name route_2
+      no ip route 198.51.100.0 255.255.255.0 198.51.101.1 110 tag 40 name route_1 multicast
+      no ipv6 route 2001:DB8:0:3::/64 2001:DB8:0:3::2 tag 105 name test_v6
+      no vrf definition ansible_temp_vrf
