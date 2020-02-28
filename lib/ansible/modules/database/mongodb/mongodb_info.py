@@ -57,7 +57,6 @@ options:
   login_host:
     description:
     - The host running MongoDB instance to login to.
-    - This must be a mongos.
     required: no
     type: str
     default: 'localhost'
@@ -90,7 +89,7 @@ requirements: [ 'pymongo' ]
 
 EXAMPLES = r'''
 - name: Gather all supported information
-  mongodb_shard:
+  mongodb_info:
     login_user: admin
     login_password: secret
   register: result
@@ -100,13 +99,13 @@ EXAMPLES = r'''
     msg: '{{ result }}'
 
 - name: Gather only information about databases and their total size
-  mongodb_shard:
+  mongodb_info:
     login_user: admin
     login_password: secret
     filter: databases, total_size
 
 - name: Gather all information except parameters
-  mongodb_shard:
+  mongodb_info:
     login_user: admin
     login_password: secret
     filter: '!parameters'
