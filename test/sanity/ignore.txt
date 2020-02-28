@@ -3058,8 +3058,11 @@ lib/ansible/modules/net_tools/dnsmadeeasy.py validate-modules:parameter-type-not
 lib/ansible/modules/net_tools/ip_netns.py validate-modules:doc-missing-type
 lib/ansible/modules/net_tools/ipinfoio_facts.py validate-modules:doc-missing-type
 lib/ansible/modules/net_tools/ipinfoio_facts.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/net_tools/ldap/_ldap_attr.py validate-modules:parameter-type-not-in-doc  # This triggers when a parameter is undocumented
+lib/ansible/modules/net_tools/ldap/_ldap_attr.py validate-modules:undocumented-parameter # Parameter removed but reason for removal is shown by custom code
 lib/ansible/modules/net_tools/ldap/ldap_entry.py validate-modules:doc-missing-type
 lib/ansible/modules/net_tools/ldap/ldap_entry.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/net_tools/ldap/ldap_entry.py validate-modules:undocumented-parameter # Parameter removed but reason for removal is shown by custom code
 lib/ansible/modules/net_tools/ldap/ldap_passwd.py validate-modules:doc-missing-type
 lib/ansible/modules/net_tools/ldap/ldap_passwd.py validate-modules:doc-required-mismatch
 lib/ansible/modules/net_tools/netbox/netbox_device.py validate-modules:doc-missing-type

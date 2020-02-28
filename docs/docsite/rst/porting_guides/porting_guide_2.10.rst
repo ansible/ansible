@@ -101,6 +101,10 @@ The following modules will be removed in Ansible 2.14. Please update your playbo
 Noteworthy module changes
 -------------------------
 
+* **Security** The ``ldap_attr`` and ``ldap_entry`` modules have had the ``params`` module option removed
+  due to circumventing Ansible's normal option handling.  In particular, if the ``bind_pw`` option
+  was set with ``params``, the value of the option could end up being placed in a logfile or
+  displayed on stdout.  Set these parameters directly with the available module options instead.
 * The ``datacenter`` option has been removed from :ref:`vmware_guest_find <vmware_guest_find_module>`
 * The options ``ip_address`` and ``subnet_mask`` have been removed from :ref:`vmware_vmkernel <vmware_vmkernel_module>`; use the suboptions ``ip_address`` and ``subnet_mask`` of the ``network`` option instead.
 * Ansible modules created with ``add_file_common_args=True`` added a number of undocumented arguments which were mostly there to ease implementing certain action plugins. The undocumented arguments ``src``, ``follow``, ``force``, ``content``, ``backup``, ``remote_src``, ``regexp``, ``delimiter``, and ``directory_mode`` are now no longer added. Modules relying on these options to be added need to specify them by themselves.
