@@ -50,11 +50,12 @@ options:
       description:
         - The number of days to retain the log events in the specified log group.
         - "Valid values are: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]"
+        - Mutually exclusive with I(purge_retention_policy).
       required: false
       type: int
     purge_retention_policy:
       description:
-        - "Wether to purge the retention policy or not. Take precedence over retention when used together."
+        - "Whether to purge the retention policy or not. Mutually exclusive with I(retention)."
       default: false
       required: false
       type: bool
@@ -245,7 +246,7 @@ def main():
         overwrite=dict(required=False, type='bool', default=False)
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec, mutually_exclusive=[['retention', 'purge_retention_policy']])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
