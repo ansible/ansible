@@ -1,0 +1,12 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      no ip access-list standard std_acl
+      no ip access-list extended test_acl
+      no ip access-list extended 110
+      no ip access-list extended 123
+      no ip access-list extended 150
+      no ipv6 access-list R1_TRAFFIC
