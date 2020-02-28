@@ -246,7 +246,8 @@ def main():
         overwrite=dict(required=False, type='bool', default=False)
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec, mutually_exclusive=[['retention', 'purge_retention_policy']])
+    mutually_exclusive=[['retention', 'purge_retention_policy'], ['purge_retention_policy', 'overwrite']]
+    module = AnsibleModule(argument_spec=argument_spec, mutually_exclusive=mutually_exclusive)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
