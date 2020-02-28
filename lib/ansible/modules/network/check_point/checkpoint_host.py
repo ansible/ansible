@@ -95,7 +95,6 @@ checkpoint_hosts:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec, publish, install_policy
-import json
 
 
 def get_host(module, connection):
@@ -159,7 +158,6 @@ def main():
     )
     argument_spec.update(checkpoint_argument_spec)
 
-    required_if = [('state', 'present', 'ip_address')]
     module = AnsibleModule(argument_spec=argument_spec)
     connection = Connection(module._socket_path)
     code, response = get_host(module, connection)

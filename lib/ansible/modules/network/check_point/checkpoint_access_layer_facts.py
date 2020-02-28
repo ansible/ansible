@@ -61,8 +61,6 @@ ansible_facts:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
-from ansible.module_utils.six.moves.urllib.error import HTTPError
-import json
 
 
 def get_access_layer(module, connection):
