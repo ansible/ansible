@@ -1,3 +1,2 @@
 dependencies:
-  - prepare_tests
-  - setup_flatpak_remote
+  - incidental_setup_flatpak_remote

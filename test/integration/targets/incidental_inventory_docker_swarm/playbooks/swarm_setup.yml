@@ -7,7 +7,7 @@
   tasks:
     - name: Setup docker
       import_role:
-        name: setup_docker
+        name: incidental_setup_docker
 
     - name: Create a Swarm cluster
       docker_swarm:

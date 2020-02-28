@@ -1,2 +1,2 @@
 dependencies:
-  - setup_postgresql_db
+  - incidental_setup_postgresql_db

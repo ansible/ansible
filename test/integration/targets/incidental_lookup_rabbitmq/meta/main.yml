@@ -1,2 +1,2 @@
 dependencies:
-  - setup_rabbitmq
+  - incidental_setup_rabbitmq

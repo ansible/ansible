@@ -1,2 +1,2 @@
 dependencies:
-  - setup_zabbix
+  - incidental_setup_zabbix

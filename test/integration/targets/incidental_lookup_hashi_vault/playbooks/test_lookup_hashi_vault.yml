@@ -6,4 +6,4 @@
 
     - name: Test lookup hashi_vault
       import_role:
-        name: lookup_hashi_vault/lookup_hashi_vault
+        name: incidental_lookup_hashi_vault/lookup_hashi_vault

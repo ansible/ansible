@@ -1,2 +1,2 @@
 dependencies:
-  - setup_openssl
+  - incidental_setup_openssl
