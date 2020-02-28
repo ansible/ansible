@@ -34,7 +34,6 @@
           - vaulted_valued|length == 7
           - vaulted_valued|list == ['f', 'o', 'o', ' ', 'b', 'a', 'r']
           - vaulted_valued|lower == 'foo bar'
-          - vaulted_valued|map('upper')|list == ['F', 'O', 'O', ' ', 'B', 'A', 'R']
           - vaulted_valued|replace('foo', 'baz') == 'baz bar'
           - vaulted_valued|reverse|string == 'rab oof'
           - vaulted_valued|safe == 'foo bar'
@@ -78,6 +77,12 @@
           - vaulted_valued|shuffle(seed='foo') == ["b", "o", "a", " ", "o", "f", "r"]
           - vaulted_valued|pprint == "u'foo bar'"
       when: ansible_python.version.major == 2
+
+    - assert:
+        that:
+          - vaulted_valued|map('upper')|list == ['F', 'O', 'O', ' ', 'B', 'A', 'R']
+      when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.7', '>=')
+
 
     - assert:
         that:
