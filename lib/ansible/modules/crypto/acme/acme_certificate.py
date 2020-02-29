@@ -37,10 +37,10 @@ description:
       It is I(not) the responsibility of this module to perform these steps."
    - "For details on how to fulfill these challenges, you might have to read through
       L(the main ACME specification,https://tools.ietf.org/html/rfc8555#section-8)
-      and the L(TLS-ALPN-01 specification,https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3).
+      and the L(TLS-ALPN-01 specification,https://www.rfc-editor.org/rfc/rfc8737.html#section-3).
       Also, consider the examples provided for this module."
    - "The module includes experimental support for IP identifiers according to
-      the L(current ACME IP draft,https://tools.ietf.org/html/draft-ietf-acme-ip-05)."
+      the L(RFC 8738,https://www.rfc-editor.org/rfc/rfc8738.html)."
 notes:
    - "At least one of C(dest) and C(fullchain_dest) must be specified."
    - "This module includes basic account management functionality.
@@ -62,8 +62,8 @@ seealso:
     description: The specification of the ACME protocol (RFC 8555).
     link: https://tools.ietf.org/html/rfc8555
   - name: ACME TLS ALPN Challenge Extension
-    description: The current draft specification of the C(tls-alpn-01) challenge.
-    link: https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05
+    description: The specification of the C(tls-alpn-01) challenge (RFC 8737).
+    link: https://www.rfc-editor.org/rfc/rfc8737.html-05
   - module: acme_challenge_cert_helper
     description: Helps preparing C(tls-alpn-01) challenges.
   - module: openssl_privatekey
@@ -428,7 +428,7 @@ challenge_data:
         - "For C(tls-alpn-01) challenges, note that this return value contains a
            Base64 encoded version of the correct binary blob which has to be put
            into the acmeValidation x509 extension; see
-           U(https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3)
+           U(https://www.rfc-editor.org/rfc/rfc8737.html#section-3)
            for details. To do this, you might need the C(b64decode) Jinja filter
            to extract the binary blob from this return value."
       returned: changed
@@ -686,7 +686,7 @@ class ACMEClient(object):
                 record = (resource + identifier[1:]) if identifier.startswith('*.') else (resource + '.' + identifier)
                 data[challenge_type] = {'resource': resource, 'resource_value': value, 'record': record}
             elif challenge_type == 'tls-alpn-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3
+                # https://www.rfc-editor.org/rfc/rfc8737.html#section-3
                 if identifier_type == 'ip':
                     # IPv4/IPv6 address: use reverse mapping (RFC1034, RFC3596)
                     resource = compat_ipaddress.ip_address(identifier).reverse_pointer
