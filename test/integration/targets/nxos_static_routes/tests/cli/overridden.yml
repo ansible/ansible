@@ -45,7 +45,6 @@
           - "'vrf context default' in result.commands"
           - "'no ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.commands"
           - "'no ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.commands"
-          - "result.commands | length == 8"
 
     - name: Gather static_routes post facts
       nxos_facts: *facts
