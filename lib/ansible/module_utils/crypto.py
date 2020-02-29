@@ -1945,7 +1945,7 @@ def cryptography_decode_name(name):
         return 'URI:{0}'.format(name.value)
     if isinstance(name, x509.DirectoryName):
         return 'dirName:' + ''.join([
-            '/{0}={1}'.format(cryptography_oid_to_name(attribute.oid), _dn_escape_value(attribute.value))
+            '/{0}={1}'.format(cryptography_oid_to_name(attribute.oid, short=True), _dn_escape_value(attribute.value))
             for attribute in name.value
         ])
     if isinstance(name, x509.RegisteredID):
