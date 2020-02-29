@@ -1,0 +1,61 @@
+---
+- name: Validate CRL 1
+  assert:
+    that:
+      - crl_1_check is changed
+      - crl_1 is changed
+      - crl_1_idem_check is not changed
+      - crl_1_idem is not changed
+      - crl_1_idem_content_check is not changed
+      - crl_1_idem_content is not changed
+
+- name: Validate CRL 1 info
+  assert:
+    that:
+      - crl_1_info_1 == crl_1_info_2
+      - crl_1_info_1.digest == 'ecdsa-with-SHA256'
+      - crl_1_info_1.issuer | length == 1
+      - crl_1_info_1.issuer.commonName == 'Ansible'
+      - crl_1_info_1.issuer_ordered | length == 1
+      - crl_1_info_1.last_update == '20191013000000Z'
+      - crl_1_info_1.next_update == '20191113000000Z'
+      - crl_1_info_1.revoked_certificates | length == 3
+      - crl_1_info_1.revoked_certificates[0].invalidity_date is none
+      - crl_1_info_1.revoked_certificates[0].invalidity_date_critical == false
+      - crl_1_info_1.revoked_certificates[0].issuer is none
+      - crl_1_info_1.revoked_certificates[0].issuer_critical == false
+      - crl_1_info_1.revoked_certificates[0].reason is none
+      - crl_1_info_1.revoked_certificates[0].reason_critical == false
+      - crl_1_info_1.revoked_certificates[0].revocation_date == '20191013000000Z'
+      - crl_1_info_1.revoked_certificates[0].serial_number == certificate_infos.results[0].serial_number
+      - crl_1_info_1.revoked_certificates[1].invalidity_date == '20191012000000Z'
+      - crl_1_info_1.revoked_certificates[1].invalidity_date_critical == false
+      - crl_1_info_1.revoked_certificates[1].issuer is none
+      - crl_1_info_1.revoked_certificates[1].issuer_critical == false
+      - crl_1_info_1.revoked_certificates[1].reason == 'key_compromise'
+      - crl_1_info_1.revoked_certificates[1].reason_critical == true
+      - crl_1_info_1.revoked_certificates[1].revocation_date == '20191013000000Z'
+      - crl_1_info_1.revoked_certificates[1].serial_number == certificate_infos.results[1].serial_number
+      - crl_1_info_1.revoked_certificates[2].invalidity_date is none
+      - crl_1_info_1.revoked_certificates[2].invalidity_date_critical == false
+      - crl_1_info_1.revoked_certificates[2].issuer is none
+      - crl_1_info_1.revoked_certificates[2].issuer_critical == false
+      - crl_1_info_1.revoked_certificates[2].reason is none
+      - crl_1_info_1.revoked_certificates[2].reason_critical == false
+      - crl_1_info_1.revoked_certificates[2].revocation_date == '20191001000000Z'
+      - crl_1_info_1.revoked_certificates[2].serial_number == 1234
+
+- name: Validate CRL 2
+  assert:
+    that:
+      - crl_2_check is changed
+      - crl_2 is changed
+      - crl_2_idem_check is not changed
+      - crl_2_idem is not changed
+      - crl_2_idem_update_change_check is changed
+      - crl_2_idem_update_change is changed
+      - crl_2_idem_update_check is not changed
+      - crl_2_idem_update is not changed
+      - crl_2_change_check is changed
+      - crl_2_change is changed
+      - crl_2_change.crl == lookup('file', output_dir ~ '/ca-crl2.crl', rstrip=False)

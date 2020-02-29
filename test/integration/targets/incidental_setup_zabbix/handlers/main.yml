@@ -1,0 +1,15 @@
+- name: remove zabbix repository
+  apt_repository:
+    repo: "{{ zabbix_apt_repository }}"
+    filename: zabbix
+    state: absent
+
+- name: remove zabbix packages
+  apt:
+    name: "{{ zabbix_packages }}"
+    state: absent
+
+- name: remove zabbix pip packages
+  pip:
+    name: zabbix-api
+    state: absent

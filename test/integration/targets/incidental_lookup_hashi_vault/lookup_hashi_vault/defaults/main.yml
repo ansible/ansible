@@ -1,0 +1,4 @@
+---
+vault_gen_path: 'gen/testproject'
+vault_kv1_path: 'kv1/testproject'
+vault_kv2_path: 'kv2/data/testproject'

@@ -1,0 +1,143 @@
+# test code for the mongodb_parameter module
+# (c) 2019,  Rhys Campbell <rhys.james.campbell@googlemail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+
+- name: Ensure tests home exists
+  file:
+    path: "{{ remote_tmp_dir }}/tests"
+    state: directory
+
+- include_tasks: mongod_teardown.yml
+
+- include_tasks: mongod_singlenode.yml
+
+- name: Set syncdelay to 99
+  mongodb_parameter:
+    login_port: 3001
+    param: syncdelay
+    value: 99
+    param_type: int
+  register: sd_change
+
+- assert:
+    that:
+      - sd_change.before | int == 60
+      - sd_change.after | int == 99
+      - sd_change.changed == True
+
+- name: Set syncdelay to 99 (again)
+  mongodb_parameter:
+    login_port: 3001
+    param: syncdelay
+    value: 99
+    param_type: int
+  register: sd_change
+
+- assert:
+    that:
+      - sd_change.before | int == 99
+      - sd_change.after | int == 99
+      - sd_change.changed == False
+
+- name: Create admin user with module
+  mongodb_user:
+    login_port: 3001
+    database: admin
+    name: "{{ mongodb_admin_user }}"
+    password: "{{ mongodb_admin_password }}"
+    roles: root
+    state: present
+  register: mongodb_admin_user_created
+
+- assert:
+    that:
+      - mongodb_admin_user_created.changed == True
+
+- name: Kill all mongod processes
+  command: pkill  -{{ kill_signal }} mongod
+  ignore_errors: true
+
+- name: Getting pids for mongod
+  pids:
+    name: mongod
+  register: pids_of_mongod
+
+- name: Wait for all mongod processes to exit
+  wait_for:
+    path: "/proc/{{ item }}/status"
+    state: absent
+    delay: 3
+  with_items: "{{ pids_of_mongod }}"
+
+- set_fact:
+    mongod_auth: true
+
+- include_tasks: mongod_singlenode.yml
+# Tests with auth enabled
+
+- name: Set syncdelay to 59 with auth
+  mongodb_parameter:
+    login_port: 3001
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    param: syncdelay
+    value: 59
+    param_type: int
+  register: sd_change
+
+- assert:
+    that:
+      - sd_change.before | int == 60
+      - sd_change.after | int == 59
+      - sd_change.changed == True
+
+- name: Set syncdelay to 59 (again) with auth
+  mongodb_parameter:
+    login_port: 3001
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    param: syncdelay
+    value: 59
+    param_type: int
+  register: sd_change
+
+- assert:
+    that:
+      - sd_change.before | int == 59
+      - sd_change.after | int == 59
+      - sd_change.changed == False
+
+- name: Set authenticationMechanisms to MONGODB-X509 with auth (will fail) 
+  mongodb_parameter:
+    login_port: 3001
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    param: authenticationMechanisms
+    value: "MONGODB-X509"
+    param_type: str
+  register: diag_change
+  ignore_errors: yes
+
+- assert:
+    that:
+       - '"unable to change parameter" in diag_change.msg'
+       - diag_change.failed == True
+
+# Clean up
+- include_tasks: mongod_teardown.yml

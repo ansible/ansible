@@ -1,0 +1,150 @@
+---
+- name: Enable ufw
+  ufw:
+    state: enabled
+
+# ############################################
+- name: Make sure logging is off
+  ufw:
+    logging: no
+- name: Logging (check mode)
+  ufw:
+    logging: yes
+  check_mode: yes
+  register: logging_check
+- name: Logging
+  ufw:
+    logging: yes
+  register: logging
+- name: Get logging
+  shell: |
+    ufw status verbose | grep "^Logging:"
+  register: ufw_logging
+  environment:
+    LC_ALL: C
+- name: Logging (idempotency)
+  ufw:
+    logging: yes
+  register: logging_idem
+- name: Logging (idempotency, check mode)
+  ufw:
+    logging: yes
+  check_mode: yes
+  register: logging_idem_check
+- name: Logging (change, check mode)
+  ufw:
+    logging: full
+  check_mode: yes
+  register: logging_change_check
+- name: Logging (change)
+  ufw:
+    logging: full
+  register: logging_change
+- name: Get logging
+  shell: |
+    ufw status verbose | grep "^Logging:"
+  register: ufw_logging_change
+  environment:
+    LC_ALL: C
+- assert:
+    that:
+    - logging_check is changed
+    - logging is changed
+    - "ufw_logging.stdout == 'Logging: on (low)'"
+    - logging_idem is not changed
+    - logging_idem_check is not changed
+    - "ufw_logging_change.stdout == 'Logging: on (full)'"
+    - logging_change is changed
+    - logging_change_check is changed
+
+# ############################################
+- name: Default (check mode)
+  ufw:
+    default: reject
+    direction: incoming
+  check_mode: yes
+  register: default_check
+- name: Default
+  ufw:
+    default: reject
+    direction: incoming
+  register: default
+- name: Get defaults
+  shell: |
+    ufw status verbose | grep "^Default:"
+  register: ufw_defaults
+  environment:
+    LC_ALL: C
+- name: Default (idempotency)
+  ufw:
+    default: reject
+    direction: incoming
+  register: default_idem
+- name: Default (idempotency, check mode)
+  ufw:
+    default: reject
+    direction: incoming
+  check_mode: yes
+  register: default_idem_check
+- name: Default (change, check mode)
+  ufw:
+    default: allow
+    direction: incoming
+  check_mode: yes
+  register: default_change_check
+- name: Default (change)
+  ufw:
+    default: allow
+    direction: incoming
+  register: default_change
+- name: Get defaults
+  shell: |
+    ufw status verbose | grep "^Default:"
+  register: ufw_defaults_change
+  environment:
+    LC_ALL: C
+- name: Default (change again)
+  ufw:
+    default: deny
+    direction: incoming
+  register: default_change_2
+- name: Default (change incoming implicitly, check mode)
+  ufw:
+    default: allow
+  check_mode: yes
+  register: default_change_implicit_check
+- name: Default (change incoming implicitly)
+  ufw:
+    default: allow
+  register: default_change_implicit
+- name: Get defaults
+  shell: |
+    ufw status verbose | grep "^Default:"
+  register: ufw_defaults_change_implicit
+  environment:
+    LC_ALL: C
+- name: Default (change incoming implicitly, idempotent, check mode)
+  ufw:
+    default: allow
+  check_mode: yes
+  register: default_change_implicit_idem_check
+- name: Default (change incoming implicitly, idempotent)
+  ufw:
+    default: allow
+  register: default_change_implicit_idem
+- assert:
+    that:
+    - default_check is changed
+    - default is changed
+    - "'reject (incoming)' in ufw_defaults.stdout"
+    - default_idem is not changed
+    - default_idem_check is not changed
+    - default_change_check is changed
+    - default_change is changed
+    - "'allow (incoming)' in ufw_defaults_change.stdout"
+    - default_change_2 is changed
+    - default_change_implicit_check is changed
+    - default_change_implicit is changed
+    - default_change_implicit_idem_check is not changed
+    - default_change_implicit_idem is not changed
+    - "'allow (incoming)' in ufw_defaults_change_implicit.stdout"

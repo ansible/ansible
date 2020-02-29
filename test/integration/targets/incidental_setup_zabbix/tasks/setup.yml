@@ -1,0 +1,89 @@
+# sets up and starts Zabbix with default settings using a MySQL database.
+
+- name: install zabbix repository key
+  apt_key:
+    url: "{{ zabbix_apt_repository_key }}"
+    state: present
+
+- name: install zabbix repository
+  apt_repository:
+    repo: "{{ zabbix_apt_repository }}"
+    filename: zabbix
+    state: present
+  notify: remove zabbix repository
+
+- name: check if dpkg is set to exclude specific destinations
+  stat:
+    path: /etc/dpkg/dpkg.cfg.d/excludes
+  register: dpkg_excludes
+
+- name: ensure documentation installations are allowed for zabbix
+  lineinfile:
+    path: /etc/dpkg/dpkg.cfg.d/excludes
+    regexp: '^path-include=/usr/share/doc/zabbix*$'
+    line: 'path-include=/usr/share/doc/zabbix*'
+    state: present
+  when: dpkg_excludes.stat.exists
+
+- name: install zabbix apt dependencies
+  apt:
+    name: "{{ zabbix_packages }}"
+    state: latest
+    update_cache: yes
+  notify: remove zabbix packages
+
+- name: install zabbix-api python package
+  pip:
+    name: zabbix-api
+    state: latest
+  notify: remove zabbix pip packages
+
+- name: create mysql user {{ db_user }}
+  mysql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    state: present
+    priv: "{{ db_name }}.*:ALL"
+    login_unix_socket: '{{ mysql_socket }}'
+
+- name: import initial zabbix database
+  mysql_db:
+    name: "{{ db_name }}"
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+    state: import
+    target: /usr/share/doc/zabbix-server-mysql/create.sql.gz
+
+- name: deploy zabbix-server configuration
+  template:
+    src: zabbix_server.conf.j2
+    dest: /etc/zabbix/zabbix_server.conf
+    owner: root
+    group: zabbix
+    mode: 0640
+
+- name: deploy zabbix web frontend configuration
+  template:
+    src: zabbix.conf.php.j2
+    dest: /etc/zabbix/web/zabbix.conf.php
+    mode: 0644
+
+- name: Create proper run directory for zabbix-server
+  file:
+    path: /var/run/zabbix
+    state: directory
+    owner: zabbix
+    group: zabbix
+    mode: 0775
+
+- name: restart zabbix-server
+  service:
+    name: zabbix-server
+    state: restarted
+    enabled: yes
+
+- name: restart apache2
+  service:
+    name: apache2
+    state: restarted
+    enabled: yes

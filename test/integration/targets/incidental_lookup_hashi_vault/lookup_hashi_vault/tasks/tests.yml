@@ -1,0 +1,35 @@
+- name: 'test {{ auth_type }} auth without SSL (lookup parameters)'
+  include_tasks: '{{ auth_type }}_test.yml'
+  vars:
+    conn_params: 'url=http://localhost:8200 '
+
+- name: 'test {{ auth_type }} auth without SSL (environment variable)'
+  include_tasks: '{{ auth_type }}_test.yml'
+  args:
+    apply:
+      vars:
+        conn_params: ''
+      environment:
+        VAULT_ADDR: 'http://localhost:8200'
+
+- when: pyopenssl_version.stdout is version('0.15', '>=')
+  block:
+    - name: 'test {{ auth_type }} auth with certs (validation enabled, lookup parameters)'
+      include_tasks: '{{ auth_type }}_test.yml'
+      vars:
+        conn_params: 'url=https://localhost:8201 ca_cert={{ local_temp_dir }}/cert.pem validate_certs=True '
+
+    - name: 'test {{ auth_type }} auth with certs (validation enabled, environment variables)'
+      include_tasks: '{{ auth_type }}_test.yml'
+      args:
+        apply:
+          vars:
+            conn_params: ''
+          environment:
+            VAULT_ADDR: 'https://localhost:8201'
+            VAULT_CACERT: '{{ local_temp_dir }}/cert.pem'
+
+    - name: 'test {{ auth_type }} auth with certs (validation disabled, lookup parameters)'
+      include_tasks: '{{ auth_type }}_test.yml'
+      vars:
+        conn_params: 'url=https://localhost:8201 validate_certs=False '

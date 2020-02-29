@@ -1,0 +1,29 @@
+# The RHEL extras repository must be enabled to provide the container-selinux package.
+# See: https://docs.docker.com/engine/installation/linux/docker-ee/rhel/#install-using-the-repository
+
+- name: Install Docker pre-reqs
+  dnf:
+    name: "{{ docker_prereq_packages }}"
+    state: present
+  notify: cleanup docker
+  register: result
+  until: result is success
+  retries: 10
+  delay: 2
+
+- name: Set-up repository
+  command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  args:
+    warn: no
+
+- name: Install docker
+  dnf:
+    name: "{{ docker_packages }}"
+    state: present
+  notify: cleanup docker
+
+- name: Make sure the docker daemon is running (failure expected inside docker container)
+  service:
+    name: docker
+    state: started
+  ignore_errors: "{{ ansible_virtualization_type == 'docker' }}"

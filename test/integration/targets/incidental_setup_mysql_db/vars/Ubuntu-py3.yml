@@ -1,0 +1,16 @@
+mysql_service: 'mysql'
+
+mysql_packages:
+    - mysql-server
+    - python3-pymysql
+    - bzip2
+
+mysql_cleanup_packages:
+  - mysql-client*
+  - mysql-server*
+  - mysql-common
+  - mysql-sandbox
+
+mysql_data_dirs:
+  - /var/lib/mysql
+  - /usr/share/mysql

@@ -1,0 +1,7 @@
+# Initial CI tests of postgresql_user module
+- import_tasks: postgresql_user_initial.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# General tests:
+- import_tasks: postgresql_user_general.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')

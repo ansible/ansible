@@ -1,0 +1,155 @@
+---
+- name: Install Hashi Vault on controlled node and test
+
+  vars:
+    vault_version: '0.11.0'
+    vault_uri: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/lookup_hashi_vault/vault_{{ vault_version }}_{{ ansible_system | lower }}_{{ vault_arch }}.zip'
+    vault_cmd: '{{ local_temp_dir }}/vault'
+
+  block:
+    - name: Create a local temporary directory
+      tempfile:
+        state: directory
+      register: tempfile_result
+
+    - set_fact:
+        local_temp_dir: '{{ tempfile_result.path }}'
+
+    - when: pyopenssl_version.stdout is version('0.15', '>=')
+      block:
+        - name: Generate privatekey
+          openssl_privatekey:
+            path: '{{ local_temp_dir }}/privatekey.pem'
+
+        - name: Generate CSR
+          openssl_csr:
+            path: '{{ local_temp_dir }}/csr.csr'
+            privatekey_path: '{{ local_temp_dir }}/privatekey.pem'
+            subject:
+              commonName: localhost
+
+        - name: Generate selfsigned certificate
+          openssl_certificate:
+            path: '{{ local_temp_dir }}/cert.pem'
+            csr_path: '{{ local_temp_dir }}/csr.csr'
+            privatekey_path: '{{ local_temp_dir }}/privatekey.pem'
+            provider: selfsigned
+            selfsigned_digest: sha256
+          register: selfsigned_certificate
+
+    - name: 'Install unzip'
+      package:
+        name: unzip
+      when: ansible_distribution != "MacOSX"  # unzip already installed
+
+    - assert:
+        # Linux: x86_64, FreeBSD: amd64
+        that: ansible_architecture in ['i386', 'x86_64', 'amd64']
+    - set_fact:
+        vault_arch: '386'
+      when: ansible_architecture == 'i386'
+    - set_fact:
+        vault_arch: amd64
+      when: ansible_architecture in ['x86_64', 'amd64']
+
+    - name: 'Download vault binary'
+      unarchive:
+        src: '{{ vault_uri }}'
+        dest: '{{ local_temp_dir }}'
+        remote_src: true
+
+    - environment:
+        # used by vault command
+        VAULT_DEV_ROOT_TOKEN_ID: '47542cbc-6bf8-4fba-8eda-02e0a0d29a0a'
+      block:
+        - name: 'Create configuration file'
+          template:
+            src: vault_config.hcl.j2
+            dest: '{{ local_temp_dir }}/vault_config.hcl'
+
+        - name: 'Start vault service'
+          environment:
+            VAULT_ADDR: 'http://localhost:8200'
+          block:
+            - name: 'Start vault server (dev mode enabled)'
+              shell: 'nohup {{ vault_cmd }} server -dev -config {{ local_temp_dir }}/vault_config.hcl </dev/null >/dev/null 2>&1 &'
+
+            - name: 'Create generic secrets engine'
+              command: '{{ vault_cmd }} secrets enable -path=gen generic'
+
+            - name: 'Create KV v1 secrets engine'
+              command: '{{ vault_cmd }} secrets enable -path=kv1 -version=1 kv'
+
+            - name: 'Create KV v2 secrets engine'
+              command: '{{ vault_cmd }} secrets enable -path=kv2 -version=2 kv'
+
+            - name: 'Create a test policy'
+              shell: "echo '{{ policy }}' | {{ vault_cmd }} policy write test-policy -"
+              vars:
+                policy: |
+                  path "{{ vault_gen_path }}/secret1" {
+                    capabilities = ["read"]
+                  }
+                  path "{{ vault_gen_path }}/secret2" {
+                    capabilities = ["read", "update"]
+                  }
+                  path "{{ vault_gen_path }}/secret3" {
+                    capabilities = ["deny"]
+                  }
+                  path "{{ vault_kv1_path }}/secret1" {
+                    capabilities = ["read"]
+                  }
+                  path "{{ vault_kv1_path }}/secret2" {
+                    capabilities = ["read", "update"]
+                  }
+                  path "{{ vault_kv1_path }}/secret3" {
+                    capabilities = ["deny"]
+                  }
+                  path "{{ vault_kv2_path }}/secret1" {
+                    capabilities = ["read"]
+                  }
+                  path "{{ vault_kv2_path }}/secret2" {
+                    capabilities = ["read", "update"]
+                  }
+                  path "{{ vault_kv2_path }}/secret3" {
+                    capabilities = ["deny"]
+                  }
+
+            - name: 'Create generic secrets'
+              command: '{{ vault_cmd }} write {{ vault_gen_path }}/secret{{ item }} value=foo{{ item }}'
+              loop: [1, 2, 3]
+
+            - name: 'Create KV v1 secrets'
+              command: '{{ vault_cmd }} kv put {{ vault_kv1_path }}/secret{{ item }} value=foo{{ item }}'
+              loop: [1, 2, 3]
+
+            - name: 'Create KV v2 secrets'
+              command: '{{ vault_cmd }} kv put {{ vault_kv2_path | regex_replace("/data") }}/secret{{ item }} value=foo{{ item }}'
+              loop: [1, 2, 3]
+
+            - name: setup approle auth
+              import_tasks: approle_setup.yml
+              when: ansible_distribution != 'RedHat' or ansible_distribution_major_version is version('7', '>')
+
+            - name: setup token auth
+              import_tasks: token_setup.yml
+
+        - import_tasks: tests.yml
+          vars:
+            auth_type: approle
+          when: ansible_distribution != 'RedHat' or ansible_distribution_major_version is version('7', '>')
+
+        - import_tasks: tests.yml
+          vars:
+            auth_type: token
+
+      always:
+        - name: 'Kill vault process'
+          shell: "kill $(cat {{ local_temp_dir }}/vault.pid)"
+          ignore_errors: true
+
+  always:
+    - name: 'Delete temp dir'
+      file:
+        path: '{{ local_temp_dir }}'
+        state: absent

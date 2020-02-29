@@ -1,0 +1,3 @@
+dependencies:
+  - incidental_setup_mongodb
+  - setup_remote_tmp_dir

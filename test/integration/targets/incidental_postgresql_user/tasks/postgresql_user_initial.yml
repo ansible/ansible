@@ -1,0 +1,153 @@
+#
+# Create and destroy user, test 'password' and 'encrypted' parameters
+#
+# unencrypted values are not supported on newer versions
+# do not run the encrypted: no tests if on 10+
+- set_fact:
+    encryption_values:
+    - 'yes'
+
+- set_fact:
+    encryption_values: '{{ encryption_values + ["no"]}}'
+  when: postgres_version_resp.stdout is version('10', '<=')
+
+- include_tasks: test_password.yml
+  vars:
+    encrypted: '{{ loop_item }}'
+    db_password1: 'secretù' # use UTF-8
+  loop: '{{ encryption_values }}'
+  loop_control:
+    loop_var: loop_item
+
+# BYPASSRLS role attribute was introduced in PostgreSQL 9.5, so
+# we want to test attribute management differently depending
+# on the version.
+- set_fact:
+    bypassrls_supported: "{{ postgres_version_resp.stdout is version('9.5.0', '>=') }}"
+
+# test 'no_password_change' and 'role_attr_flags' parameters
+- include_tasks: test_no_password_change.yml
+  vars:
+    no_password_changes: '{{ loop_item }}'
+  loop:
+    - 'yes'
+    - 'no'
+  loop_control:
+    loop_var: loop_item
+
+### TODO: fail_on_user
+
+#
+# Test login_user functionality
+#
+- name: Create a user to test login module parameters
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    state: "present"
+    encrypted: 'yes'
+    password: "password"
+    role_attr_flags: "CREATEDB,LOGIN,CREATEROLE"
+    login_user: "{{ pg_user }}"
+    db: postgres
+
+- name: Create db
+  postgresql_db:
+    name: "{{ db_name }}"
+    state: "present"
+    login_user: "{{ db_user1 }}"
+    login_password: "password"
+    login_host: "localhost"
+
+- name: Check that database created
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+
+- name: Create a user
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: "present"
+    encrypted: 'yes'
+    password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
+    db: "{{ db_name }}"
+    login_user: "{{ db_user1 }}"
+    login_password: "password"
+    login_host: "localhost"
+
+- name: Check that it was created
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "select * from pg_user where usename='{{ db_user2 }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+
+- name: Grant database privileges
+  postgresql_privs:
+    type: "database"
+    state: "present"
+    roles: "{{ db_user2 }}"
+    privs: "CREATE,connect"
+    objs: "{{ db_name }}"
+    db: "{{ db_name }}"
+    login: "{{ db_user1 }}"
+    password: "password"
+    host: "localhost"
+
+- name: Check that the user has the requested permissions (database)
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
+  register: result_database
+
+- assert:
+    that:
+      - "result_database.stdout_lines[-1] == '(1 row)'"
+      - "db_user2 ~ '=Cc' in result_database.stdout"
+
+- name: Remove user
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: 'absent'
+    priv: "ALL"
+    db: "{{ db_name }}"
+    login_user: "{{ db_user1 }}"
+    login_password: "password"
+    login_host: "localhost"
+
+- name: Check that they were removed
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "select * from pg_user where usename='{{ db_user2 }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"
+
+- name: Destroy DB
+  postgresql_db:
+    state: absent
+    name: "{{ db_name }}"
+    login_user: "{{ db_user1 }}"
+    login_password: "password"
+    login_host: "localhost"
+
+- name: Check that database was destroyed
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"

@@ -1,0 +1,81 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# The aim of this test is to be sure that SSL options work in general
+# and preparing the environment for testing these options in
+# the following PostgreSQL modules (ssl_db, ssl_user, certs).
+# Configured by https://www.postgresql.org/docs/current/ssl-tcp.html
+
+####################
+# Prepare for tests:
+
+- name: postgresql SSL - create database
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: "{{ ssl_db }}"
+
+- name: postgresql SSL - create role
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    name: "{{ ssl_user }}"
+    role_attr_flags: SUPERUSER
+    password: "{{ ssl_pass }}"
+
+- name: postgresql SSL - install openssl
+  become: yes
+  package: name=openssl state=present
+
+- name: postgresql SSL - create certs 1
+  become_user: root
+  become: yes
+  shell: 'openssl req -new -nodes -text -out ~{{ pg_user }}/root.csr \
+         -keyout ~{{ pg_user }}/root.key -subj "/CN=localhost.local"'
+
+- name: postgresql SSL - create certs 2
+  become_user: root
+  become: yes
+  shell: 'openssl x509 -req -in ~{{ pg_user }}/root.csr -text -days 3650 \
+         -extensions v3_ca -signkey ~{{ pg_user }}/root.key -out ~{{ pg_user }}/root.crt'
+
+- name: postgresql SSL - create certs 3
+  become_user: root
+  become: yes
+  shell: 'openssl req -new -nodes -text -out ~{{ pg_user }}/server.csr \
+         -keyout ~{{ pg_user }}/server.key -subj "/CN=localhost.local"'
+
+- name: postgresql SSL - create certs 4
+  become_user: root
+  become: yes
+  shell: 'openssl x509 -req -in ~{{ pg_user }}/server.csr -text -days 365 \
+         -CA ~{{ pg_user }}/root.crt -CAkey ~{{ pg_user }}/root.key -CAcreateserial -out server.crt'
+
+- name: postgresql SSL - set right permissions to files
+  become_user: root
+  become: yes
+  file:
+    path: '{{ item }}'
+    mode: 0600
+    owner: '{{ pg_user }}'
+    group: '{{ pg_user }}'
+  with_items:
+  - '~{{ pg_user }}/root.key'
+  - '~{{ pg_user }}/server.key'
+  - '~{{ pg_user }}/root.crt'
+  - '~{{ pg_user }}/server.csr'
+
+- name: postgresql SSL - enable SSL
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_set:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: ssl
+    value: on
+
+- name: postgresql SSL - reload PostgreSQL to enable ssl on
+  become: yes
+  service:
+    name: "{{ postgresql_service }}"
+    state: reloaded

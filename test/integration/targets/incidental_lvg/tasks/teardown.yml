@@ -1,0 +1,17 @@
+- name: Remove test volume group
+  lvg:
+    vg: testvg
+    state: absent
+
+- name: Detach loop device
+  command: "losetup -d {{ item.stdout }}"
+  loop: "{{ loop_devices.results|default([]) }}"
+  when:
+    - item.stdout is defined
+    - item.stdout is match("/dev/.*")
+
+- name: Remove device files
+  file:
+    path: "{{ remote_tmp_dir }}/img{{ item }}"
+    state: absent
+  with_sequence: 'count={{ loop_devices.results|length }}'
