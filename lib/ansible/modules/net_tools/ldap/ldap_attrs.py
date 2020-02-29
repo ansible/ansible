@@ -250,7 +250,7 @@ class LdapAttrs(LdapGeneric):
                 results = self.connection.search_s(
                     self.dn, ldap.SCOPE_BASE, attrlist=[name])
             except ldap.LDAPError as e:
-                self.fail("Cannot search for attribute %s" % self.name, e)
+                self.fail("Cannot search for attribute %s" % name, e)
 
             current = results[0][1].get(name, [])
 
