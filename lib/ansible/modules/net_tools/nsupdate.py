@@ -420,6 +420,13 @@ class RecordManager(object):
         if lookup.rcode() != dns.rcode.NOERROR:
             self.module.fail_json(msg='Failed to lookup TTL of existing matching record.')
 
+        if self.module.params['type'].lower() == 'ns' and self.fqdn.lower() != self.zone.lower():
+            try:
+                current_ttl = lookup.authority[0].ttl
+                return current_ttl != self.module.params['ttl']
+            except IndexError:
+                pass
+
         current_ttl = lookup.answer[0].ttl
         return current_ttl != self.module.params['ttl']
 

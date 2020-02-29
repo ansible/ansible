@@ -1,0 +1,2 @@
+bugfixes:
+  - nsupdate - Improve TTL change detection for NS records (https://github.com/ansible/ansible/issues/66845)
