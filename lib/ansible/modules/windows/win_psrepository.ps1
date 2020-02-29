@@ -7,7 +7,7 @@
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 
-[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', Target='_location$')]
+[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', Justification='Some vars are referenced via Get-Variable')]
 param() # param() is needed for attribute to take effect.
 
 # win_psrepository (Windows PowerShell repositories Additions/Removals/Updates)
