@@ -221,6 +221,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         messages += self.check_ci_group(
             targets=tuple(filter_targets(posix_targets, ['cloud/'], include=False, directories=False, errors=False)),
             find=self.format_shippable_group_alias('linux').replace('linux', 'posix'),
+            find_incidental=['shippable/posix/incidental/'],
         )
 
         for cloud in clouds:

@@ -1,0 +1,97 @@
+---
+- name: Install Consul and test
+
+  vars:
+    consul_version: '1.5.0'
+    consul_uri: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/consul/consul_{{ consul_version }}_{{ ansible_system | lower }}_{{ consul_arch }}.zip
+    consul_cmd: '{{ output_dir }}/consul'
+
+  block:
+    - name: register pyOpenSSL version
+      command: "{{ ansible_python_interpreter }} -c 'import OpenSSL; print(OpenSSL.__version__)'"
+      register: pyopenssl_version
+
+    - name: Install requests<2.20 (CentOS/RHEL 6)
+      pip:
+        name: requests<2.20
+      register: result
+      until: result is success
+      when: ansible_distribution_file_variety|default() == 'RedHat' and ansible_distribution_major_version is version('6', '<=')
+
+    - name: Install python-consul
+      pip:
+        name: python-consul
+      register: result
+      until: result is success
+
+    - when: pyopenssl_version.stdout is version('0.15', '>=')
+      block:
+        - name: Generate privatekey
+          openssl_privatekey:
+            path: '{{ output_dir }}/privatekey.pem'
+
+        - name: Generate CSR
+          openssl_csr:
+            path: '{{ output_dir }}/csr.csr'
+            privatekey_path: '{{ output_dir }}/privatekey.pem'
+            subject:
+              commonName: localhost
+
+        - name: Generate selfsigned certificate
+          openssl_certificate:
+            path: '{{ output_dir }}/cert.pem'
+            csr_path: '{{ output_dir }}/csr.csr'
+            privatekey_path: '{{ output_dir }}/privatekey.pem'
+            provider: selfsigned
+            selfsigned_digest: sha256
+          register: selfsigned_certificate
+
+    - name: 'Install unzip'
+      package:
+        name: unzip
+      register: result
+      until: result is success
+      when: ansible_distribution != "MacOSX"  # unzip already installed
+
+    - assert:
+        # Linux: x86_64, FreeBSD: amd64
+        that: ansible_architecture in ['i386', 'x86_64', 'amd64']
+    - set_fact:
+        consul_arch: '386'
+      when: ansible_architecture == 'i386'
+    - set_fact:
+        consul_arch: amd64
+      when: ansible_architecture in ['x86_64', 'amd64']
+
+    - name: 'Download consul binary'
+      unarchive:
+        src: '{{ consul_uri }}'
+        dest: '{{ output_dir }}'
+        remote_src: true
+      register: result
+      until: result is success
+
+    - vars:
+        remote_dir: '{{ echo_output_dir.stdout }}'
+      block:
+        - command: 'echo {{ output_dir }}'
+          register: echo_output_dir
+
+        - name: 'Create configuration file'
+          template:
+            src: consul_config.hcl.j2
+            dest: '{{ output_dir }}/consul_config.hcl'
+
+        - name: 'Start Consul (dev mode enabled)'
+          shell: 'nohup {{ consul_cmd }} agent -dev -config-file {{ output_dir }}/consul_config.hcl </dev/null >/dev/null 2>&1 &'
+
+        - name: 'Create some data'
+          command: '{{ consul_cmd }} kv put data/value{{ item }} foo{{ item }}'
+          loop: [1, 2, 3]
+
+        - import_tasks: consul_session.yml
+
+      always:
+        - name: 'Kill consul process'
+          shell: "kill $(cat {{ output_dir }}/consul.pid)"
+          ignore_errors: true
