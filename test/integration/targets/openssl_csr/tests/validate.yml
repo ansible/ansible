@@ -184,6 +184,95 @@
       - everything_1 is changed
       - everything_2 is not changed
       - everything_3 is not changed
+      - everything_info.basic_constraints == [
+          "CA:TRUE",
+          "pathlen:23",
+        ]
+      - everything_info.basic_constraints_critical == true
+      - everything_info.extended_key_usage == [
+            "Any Extended Key Usage",
+            "Biometric Info",
+            "Code Signing",
+            "E-mail Protection",
+            "IPSec User",
+            "OCSP Signing",
+            "TLS Web Client Authentication",
+            "TLS Web Server Authentication",
+            "TLS Web Server Authentication",
+            "Time Stamping",
+            "dvcs",
+            "qcStatements",
+        ]
+      - everything_info.extended_key_usage_critical == false
+      - everything_info.key_usage == [
+            "CRL Sign",
+            "Certificate Sign",
+            "Data Encipherment",
+            "Decipher Only",
+            "Digital Signature",
+            "Encipher Only",
+            "Key Agreement",
+            "Key Encipherment",
+            "Non Repudiation"
+        ],
+      - everything_info.key_usage_critical == true
+      - everything_info.ocsp_must_staple == true
+      - everything_info.ocsp_must_staple_critical == false
+      - everything_info.signature_valid == true
+      - everything_info.subject.commonName == "www.example.com"
+      - everything_info.subject.countryName == "de"
+      - everything_info.subject.emailAddress == "test@example.com"
+      - everything_info.subject.givenName == "First Name"
+      - everything_info.subject.localityName == "Somewhere"
+      - everything_info.subject.organizationName == "Ansible"
+      - everything_info.subject.organizationalUnitName == "Crypto Department"
+      - everything_info.subject.postalAddress == "1234 Somewhere"
+      - everything_info.subject.postalCode == "1234"
+      - everything_info.subject.pseudonym == "test"
+      - everything_info.subject.serialNumber == "1234"
+      - everything_info.subject.stateOrProvinceName == "Zurich"
+      - everything_info.subject.streetAddress == "Welcome Street"
+      - everything_info.subject.surname == "Last Name"
+      - everything_info.subject.title == "Chief"
+      - everything_info.subject.userId == "asdf"
+      - everything_info.subject | length == 16
+      - everything_info.subject_alt_name_critical == false
+
+- name: Check CSR with everything (pyOpenSSL specific)
+  assert:
+    that:
+      - everything_info.subject_alt_name == [
+            "DNS:www.ansible.com",
+            "IP:1.2.3.4",
+            "IP:::1",
+            "email:test@example.org",
+            "URI:https://example.org/test/index.html",
+            "RID:1.2.3.4",
+        ]
+  when: select_crypto_backend == 'pyopenssl'
+
+- name: Check CSR with everything (non-pyOpenSSL specific)
+  assert:
+    that:
+      - everything_info.authority_cert_issuer == [
+            "DNS:ca.example.org",
+            "IP:1.2.3.4"
+        ]
+      - everything_info.authority_cert_serial_number == 12345
+      - everything_info.authority_key_identifier == "44:55:66:77"
+      - everything_info.subject_alt_name == [
+            "DNS:www.ansible.com",
+            "IP:1.2.3.4",
+            "IP:::1",
+            "email:test@example.org",
+            "URI:https://example.org/test/index.html",
+            "RID:1.2.3.4",
+            "otherName:1.2.3.4;0c:07:63:65:72:74:72:65:71",
+            "dirName:/O=Example Net/CN=example.net",
+            "dirName:/O=Example Com/CN=example.com"
+        ]
+      - everything_info.subject_key_identifier == "00:11:22:33"
+  when: select_crypto_backend != 'pyopenssl'
 
 - name: Verify Ed25519 and Ed448 tests (for cryptography >= 2.6, < 2.8)
   assert:

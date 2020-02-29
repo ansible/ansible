@@ -758,6 +758,12 @@
       - "dirName:/O  =Example Com/CN=  example.com"
   register: everything_3
 
+- name: Get info from CSR with everything
+  openssl_csr_info:
+    path: '{{ output_dir }}/csr_everything.csr'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: everything_info
+
 - name: Ed25519 and Ed448 tests (for cryptography >= 2.6)
   block:
     - name: Generate privatekeys
