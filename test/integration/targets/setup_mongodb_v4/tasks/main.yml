@@ -1,0 +1,7 @@
+# Copyright 2020, Andrew Klychkov <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_tasks: setup_mongodb.yml
+  when:
+  - ansible_distribution == 'CentOS'
+  - ansible_distribution_major_version is version('7', '>=')

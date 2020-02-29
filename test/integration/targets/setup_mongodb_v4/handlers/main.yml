@@ -1,0 +1,10 @@
+- name: Remove MongoDB packages
+  yum:
+    name: '{{ mongodb_pkgs }}'
+    state: absent
+
+- name: Stop MongoDB
+  systemd:
+    name: mongod.service
+    state: stopped
+  notify: Stop MongoDB

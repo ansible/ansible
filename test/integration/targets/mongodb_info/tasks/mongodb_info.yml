@@ -1,0 +1,60 @@
+# Copyright 2020, Andrew Klychkov <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- vars:
+    task_parameters: &task_parameters
+      register: result
+    mongo_parameters: &mongo_parameters
+      login_port: '{{ mongodb_default_port }}'
+      login_user: '{{ mongodb_admin_user }}'
+      login_password: '{{ mongodb_admin_password }}'
+      login_database: '{{ mongodb_default_db }}'
+
+  block:
+
+  - name: Get info
+    <<: *task_parameters
+    mongodb_info:
+      <<: *mongo_parameters
+
+  - assert:
+      that:
+      - result is not changed
+      - result.general.version == '4.2.3'
+      - result.databases.admin
+      - result.total_size
+      - result.users.admin
+      - result.roles.backup
+      - result.parameters.logLevel == 0
+
+  - name: Get info with filter
+    <<: *task_parameters
+    mongodb_info:
+      <<: *mongo_parameters
+      filter: general, total_size
+
+  - assert:
+      that:
+      - result is not changed
+      - result.general.version == '4.2.3'
+      - result.total_size
+      - result.databases is not defined
+      - result.parameters is not defined
+      - result.users is not defined
+      - result.roles is not defined
+
+  - name: Get info with filter
+    <<: *task_parameters
+    mongodb_info:
+      <<: *mongo_parameters
+      filter: '!parameters'
+
+  - assert:
+      that:
+      - result is not changed
+      - result.general.version == '4.2.3'
+      - result.databases.admin
+      - result.total_size
+      - result.users.admin
+      - result.roles.backup
+      - result.parameters is not defined

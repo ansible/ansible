@@ -1,0 +1,4 @@
+mongodb_default_port: 27017
+mongodb_admin_user: admin
+mongodb_admin_password: admin
+mongodb_default_db: admin
