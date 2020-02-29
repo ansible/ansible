@@ -132,7 +132,7 @@ EXAMPLES = r'''
       name: VRF1
     state: present
   delegate_to: localhost
-  
+
 - name: Add a new BD from another Schema
   mso_schema_template_bd:
     host: mso_host
