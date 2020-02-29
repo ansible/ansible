@@ -27,7 +27,7 @@ options:
     description:
     - API token.
     - Required for api token authentication.
-    - "You can obtain your API token from the bottom of the Cloudflare 'My Account' page, found here: U(https://dash.cloudflare.com/)"
+    - "You can obtain your API token from the bottom of the Cloudflare 'My Account' page, found here: U(https://dash.cloudflare.com/)". IMPORTANT: Use the "Global API Key", NOT a custom API token.
     type: str
     required: false
     version_added: '2.10'
