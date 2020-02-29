@@ -7,6 +7,9 @@
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 
+[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', Target='_location$')]
+param() # param() is needed for attribute to take effect.
+
 # win_psrepository (Windows PowerShell repositories Additions/Removals/Updates)
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
