@@ -132,6 +132,21 @@ EXAMPLES = r'''
       name: VRF1
     state: present
   delegate_to: localhost
+  
+- name: Add a new BD from another Schema
+  mso_schema_template_bd:
+    host: mso_host
+    username: admin
+    password: SomeSecretPassword
+    schema: Schema 1
+    template: Template 1
+    bd: BD 1
+    vrf:
+      name: VRF1
+      schema: Schema Origin
+      template: Template Origin
+    state: present
+  delegate_to: localhost
 
 - name: Remove an BD
   mso_schema_template_bd:
