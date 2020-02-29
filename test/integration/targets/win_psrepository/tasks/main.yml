@@ -11,9 +11,6 @@
   - name: run all tests
     include_tasks: tests.yml
 
-  - name: run redirection tests
-    include_tasks: redirects.yml
-
   - name: run update and force behavior tests
     include_tasks: update_and_force.yml
   always:

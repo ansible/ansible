@@ -1,25 +1,25 @@
 ---
 repository_name: My Get
-repository_source_location: https://www.myget.org/F/powershellgetdemo/api/v2
-repository_publish_location: '{{ redirect_publish_expected_target }}'
-repository_script_source_location: '{{ redirect_script_source_expected_target }}'
-repository_script_publish_location: '{{ redirect_script_publish_expected_target }}'
+repository_source_location:               https://www.myget.org/F/powershellgetdemo/api/v2
+repository_publish_location:              '{{ repository_source_location }}/fake/publish'
+repository_script_source_location:        '{{ repository_source_location }}/fake/script'
+repository_script_publish_location:       '{{ repository_source_location }}/fake/script/publish'
 
-repository_source_location2: '{{ remote_tmp_dir }}'
+repository_source_location2:              '{{ remote_tmp_dir }}'
 
-redirect_url:                             http://httpbin.org/redirect
-redirect_expected_target:                 http://httpbin.org/get
+redirect_url:                             http://{{ httpbin_host }}/redirect
+redirect_expected_target:                 http://{{ httpbin_host }}/get
 
-redirect_publish_url:                     http://httpbin.org/redirect-to?url=http%3A%2F%2Fhttpbin.org%2Fcache&status_code=307
-redirect_publish_expected_target:         http://httpbin.org/cache
+redirect_publish_url:                     http://{{ httpbin_host }}/redirect-to?url=http%3A%2F%2F{{ httpbin_host }}%2Fcache&status_code=307
+redirect_publish_expected_target:         http://{{ httpbin_host }}/cache
 
-redirect_script_source_url:               http://httpbin.org/redirect-to?url=http%3A%2F%2Fhttpbin.org%2Fxml&status_code=301
-redirect_script_source_expected_target:   http://httpbin.org/xml
+redirect_script_source_url:               http://{{ httpbin_host }}/redirect-to?url=http%3A%2F%2F{{ httpbin_host }}%2Fxml&status_code=301
+redirect_script_source_expected_target:   http://{{ httpbin_host }}/xml
 
-redirect_script_publish_url:              http://httpbin.org/redirect-to?url=http%3A%2F%2Fhttpbin.org%2Fjson&status_code=302
-redirect_script_publish_expected_target:  http://httpbin.org/json
+redirect_script_publish_url:              http://{{ httpbin_host }}/redirect-to?url=http%3A%2F%2F{{ httpbin_host }}%2Fjson&status_code=302
+redirect_script_publish_expected_target:  http://{{ httpbin_host }}/json
 
-repository_source_location_alt:           http://httpbin.org/response-headers
-repository_publish_location_alt:          http://httpbin.org/gzip
-repository_script_source_location_alt:    http://httpbin.org/html
-repository_script_publish_location_alt:   http://httpbin.org/deflate
+repository_source_location_alt:           http://{{ httpbin_host }}/response-headers
+repository_publish_location_alt:          http://{{ httpbin_host }}/gzip
+repository_script_source_location_alt:    http://{{ httpbin_host }}/html
+repository_script_publish_location_alt:   http://{{ httpbin_host }}/deflate
