@@ -8,7 +8,7 @@ import os
 from . import types as t
 
 from .io import (
-    read_text_file,
+    read_binary_file,
 )
 
 from .util import (
@@ -165,7 +165,10 @@ def extract_python_module_utils_imports(path, module_utils):
     :type module_utils: set[str]
     :rtype: set[str]
     """
-    code = read_text_file(path)
+    # Python code must be read as bytes to avoid a SyntaxError when the source uses comments to declare the file encoding.
+    # See: https://www.python.org/dev/peps/pep-0263
+    # Specifically: If a Unicode string with a coding declaration is passed to compile(), a SyntaxError will be raised.
+    code = read_binary_file(path)
 
     try:
         tree = ast.parse(code)
