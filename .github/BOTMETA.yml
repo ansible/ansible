@@ -852,7 +852,18 @@ files:
     labels:
       - networking
       - infoblox
-  $modules/net_tools/netbox/: FragmentedPacket
+  $modules/net_tools/netbox:
+    maintainers: FragmentedPacket
+  $modules/net_tools/netbox/netbox_device.py:
+    migrated_to: netbox.netbox
+  $modules/net_tools/netbox/netbox_interface.py:
+    migrated_to: netbox.netbox
+  $modules/net_tools/netbox/netbox_ip_address.py:
+    migrated_to: netbox.netbox
+  $modules/net_tools/netbox/netbox_prefix.py:
+    migrated_to: netbox.netbox
+  $modules/net_tools/netbox/netbox_site.py:
+    migrated_to: netbox.netbox
   $modules/network/a10/: ericchou1 mischapeters
   $modules/network/aci/: &aci
     keywords: [ aci, cisco msc, cisco mso, multisite, multi-site ]
@@ -3776,6 +3787,7 @@ files:
   $plugins/inventory/netbox.py:
     support: community
     maintainers: $team_netbox
+    migrated_to: netbox.netbox
   $plugins/inventory/openshift.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87
