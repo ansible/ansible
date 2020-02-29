@@ -177,8 +177,8 @@ def check_compatibility(module, srv_version, driver_version):
 
     Args:
         module: Ansible module.
-        srv_version (str): MongoDB server version.
-        driver_version (str): Pymongo version.
+        srv_version (LooseVersion): MongoDB server version.
+        driver_version (LooseVersion): Pymongo version.
     """
     msg = 'pymongo driver version and MongoDB version are incompatible: '
 
