@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - cloudwatchlogs_log_group - Fix a KeyError when updating a log group that does not have a retention period
+    (https://github.com/ansible/ansible/issues/47945)
