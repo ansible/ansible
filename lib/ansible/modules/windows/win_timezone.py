@@ -20,6 +20,7 @@ options:
     description:
     - Timezone to set to.
     - 'Example: Central Standard Time'
+    - To disable Daylight Saving time, add the suffix C(_dstoff) on timezones that support this.
     type: str
     required: yes
 notes:
@@ -47,6 +48,10 @@ EXAMPLES = r'''
 - name: Set timezone to 'Central Standard Time' (GMT-06:00)
   win_timezone:
     timezone: Central Standard Time
+
+- name: Set timezime to Pacific Standard time and disable Daylight Saving time adjustments
+  win_timezone:
+    timezone: Pacific Standard Time_dstoff
 '''
 
 RETURN = r'''

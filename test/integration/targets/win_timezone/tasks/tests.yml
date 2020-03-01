@@ -73,6 +73,17 @@
     - central.timezone == 'Central Standard Time'
   when: in_check_mode
 
+- name: Change timezone to dstoff
+  win_timezone:
+    timezone: Eastern Standard Time_dstoff
+  register: dstoff_result
+
+- name: Test dstoff timezone
+  assert:
+    that:
+    - dstoff_result is changed
+    - dstoff_result.timezone == 'Eastern Standard Time_dstoff'
+
 - name: Change timezone to GMT+666
   win_timezone:
     timezone: Dag's Standard Time
