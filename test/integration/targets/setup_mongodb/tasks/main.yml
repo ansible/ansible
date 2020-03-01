@@ -157,7 +157,7 @@
   when:
     - ansible_os_family == "RedHat"
     - ansible_distribution_version|float >= 8
-  notify: Remove redhat_packages_py3
+  notify: Remove redhat_packages_py36
 
 - name: Install pip packages
   pip:
