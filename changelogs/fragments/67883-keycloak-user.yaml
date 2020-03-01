@@ -1,0 +1,2 @@
+minor_changes:
+  - keycloak_user - Allows administration of Keycloak users via Keycloak API.

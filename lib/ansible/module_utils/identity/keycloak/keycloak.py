@@ -46,6 +46,8 @@ URL_CLIENTTEMPLATE = "{url}/admin/realms/{realm}/client-templates/{id}"
 URL_CLIENTTEMPLATES = "{url}/admin/realms/{realm}/client-templates"
 URL_GROUPS = "{url}/admin/realms/{realm}/groups"
 URL_GROUP = "{url}/admin/realms/{realm}/groups/{groupid}"
+URL_USERS = "{url}/admin/realms/{realm}/users"
+URL_USER = "{url}/admin/realms/{realm}/users/{userid}"
 
 
 def keycloak_argument_spec():
@@ -478,3 +480,143 @@ class KeycloakAPI(object):
 
         except Exception as e:
             self.module.fail_json(msg="Unable to delete group %s: %s" % (groupid, str(e)))
+
+    def get_users(self, realm="master"):
+        """ Fetch the name and ID of all users on the Keycloak server.
+
+        To fetch the full data of the user, make a subsequent call to
+        get_user_by_userid, passing in the ID of the user you wish to return.
+
+        :param realm: Return the users of this realm (default "master").
+        """
+        users_url = URL_USERS.format(url=self.baseurl, realm=realm)
+        try:
+            return json.loads(to_native(open_url(users_url, method="GET", headers=self.restheaders,
+                                                 validate_certs=self.validate_certs).read()))
+        except Exception as e:
+            self.module.fail_json(msg="Could not fetch list of users in realm %s: %s"
+                                      % (realm, str(e)))
+
+    def get_user_by_userid(self, uid, realm="master"):
+        """ Fetch a keycloak user from the provided realm using the user's unique ID.
+
+        If the user does not exist, None is returned.
+
+        gid is a UUID provided by the Keycloak API
+        :param uid: UUID of the user to be returned
+        :param realm: Realm in which the user resides; default 'master'.
+        """
+        user_url = URL_USER.format(url=self.baseurl, realm=realm, userid=uid)
+        try:
+            return json.loads(to_native(open_url(user_url, method="GET", headers=self.restheaders,
+                                                 validate_certs=self.validate_certs).read()))
+
+        except HTTPError as e:
+            if e.code == 404:
+                return None
+            else:
+                self.module.fail_json(msg="Could not fetch user %s in realm %s: %s"
+                                          % (uid, realm, str(e)))
+        except Exception as e:
+            self.module.fail_json(msg="Could not fetch user %s in realm %s: %s"
+                                      % (uid, realm, str(e)))
+
+    def get_user_by_username(self, username, realm="master"):
+        """ Fetch a keycloak user within a realm based on its username.
+
+        The Keycloak API does not allow filtering of the Groups resource by name.
+        As a result, this method first retrieves the entire list of users - username and ID -
+        then performs a second query to fetch the user.
+
+        If the user does not exist, None is returned.
+        :param username: Username of the user to fetch.
+        :param realm: Realm in which the user resides; default 'master'
+        """
+        users_url = "{url_users}?max=1&{username}".format(
+            url_users=URL_USERS.format(url=self.baseurl, realm=realm),
+            username=urlencode({'username': username})
+        )
+        try:
+            all_users = json.loads(to_native(open_url(users_url, method="GET", headers=self.restheaders,
+                                                      validate_certs=self.validate_certs).read()))
+        except HTTPError as e:
+            if e.code == 404:
+                return None
+            else:
+                self.module.fail_json(msg="Could not find user %s in realm %s: %s"
+                                          % (username, realm, str(e)))
+
+        try:
+            for user in all_users:
+                return self.get_user_by_userid(user['id'], realm=realm)
+
+            return None
+
+        except Exception as e:
+            self.module.fail_json(msg="Could not fetch user %s in realm %s: %s"
+                                      % (username, realm, str(e)))
+
+    def create_user(self, userrep, realm="master"):
+        """ Create a Keycloak user.
+
+        :param userrep: a UserRepresentation of the user to be created. Must contain at minimum the field username.
+        :return: HTTPResponse object on success
+        """
+        users_url = URL_USERS.format(url=self.baseurl, realm=realm)
+        try:
+            return open_url(users_url, method='POST', headers=self.restheaders,
+                            data=json.dumps(userrep), validate_certs=self.validate_certs)
+        except Exception as e:
+            self.module.fail_json(msg="Could not create user %s in realm %s: %s"
+                                      % (userrep['username'], realm, str(e)))
+
+    def update_user(self, userrep, realm="master"):
+        """ Update an existing user.
+
+        :param userrep: A UserRepresentation of the updated user.
+        :return HTTPResponse object on success
+        """
+        user_url = URL_USER.format(url=self.baseurl, realm=realm, userid=userrep['id'])
+
+        try:
+            return open_url(user_url, method='PUT', headers=self.restheaders,
+                            data=json.dumps(userrep), validate_certs=self.validate_certs)
+        except Exception as e:
+            self.module.fail_json(msg='Could not update user %s in realm %s: %s'
+                                      % (userrep['username'], realm, str(e)))
+
+    def delete_user(self, username=None, userid=None, realm="master"):
+        """ Delete a user. One of username or userid must be provided.
+
+        Providing the user ID is preferred as it avoids a second lookup to
+        convert a user username to an ID.
+
+        :param username: The username of the user. A lookup will be performed to retrieve the user ID.
+        :param userid: The ID of the user (preferred to username).
+        :param realm: The realm in which this user resides, default "master".
+        """
+
+        if userid is None and username is None:
+            # prefer an exception since this is almost certainly a programming error in the module itself.
+            raise Exception("Unable to delete user - one of user ID or username must be provided.")
+
+        # only lookup the username if userid isn't provided.
+        # in the case that both are provided, prefer the ID, since it's one
+        # less lookup.
+        if userid is None and username is not None:
+            user = self.get_user_by_username(username, realm=realm)
+            if user is not None:
+                userid = user['id']
+
+        # if the user doesn't exist - no problem, nothing to delete.
+        if userid is None:
+            return None
+
+        # should have a good groupid by here.
+        user_url = URL_USER.format(realm=realm, userid=userid, url=self.baseurl)
+        try:
+            return open_url(user_url, method='DELETE', headers=self.restheaders,
+                            validate_certs=self.validate_certs)
+
+        except Exception as e:
+            self.module.fail_json(msg="Unable to delete user %s: %s" % (userid, str(e)))
