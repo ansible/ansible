@@ -1,0 +1,2 @@
+bugfixes:
+- get_certificate - Fix cryptography backend when pyopenssl is unavailable (https://github.com/ansible/ansible/issues/67900)
