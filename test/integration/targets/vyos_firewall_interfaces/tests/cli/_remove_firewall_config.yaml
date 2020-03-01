@@ -1,0 +1,10 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      delete firewall name INBOUND
+      delete firewall name OUTBOUND
+      delete firewall name LOCAL
+      delete firewall ipv6-name V6-LOCAL
