@@ -46,11 +46,8 @@ FACT_RESOURCE_SUBSETS = dict(
     interfaces=InterfacesFacts,
     l3_interfaces=L3_interfacesFacts,
     l2_interfaces=L2_interfacesFacts,
-    << << << < HEAD
     lldp_interfaces=Lldp_interfacesFacts,
-    == == == =
     acl_interfaces=Acl_interfacesFacts,
-    >>>>>> > Added nxos_acl_interfaces config states
 )
 
 
