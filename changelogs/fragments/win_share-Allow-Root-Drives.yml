@@ -1,2 +1,3 @@
 ---
+bugfixes:
  - "win_share - Allow for root letters paths"
