@@ -134,7 +134,7 @@ def run_module():
 
         # To save on time, skip the import wait until the last collection is being uploaded.
         publish_args = ['ansible-galaxy', 'collection', 'publish', collection_path, '--server',
-                        module.params['server'], '--token', module.params['token']]
+                        module.params['server'], '--api-key', module.params['token']]
         if idx != (len(module.params['collections']) - 1):
             publish_args.append('--no-wait')
         module.run_command(publish_args)
