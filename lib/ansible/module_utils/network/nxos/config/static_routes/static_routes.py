@@ -411,12 +411,18 @@ class Static_routes(ConfigBase):
             ip = want['forward_router_address'] + ' '
         if 'interface' in params:
             intf = normalize_interface(want['interface']) + ' '
+            if 'null0' in intf:
+                ip = ''
+                intf = 'null0 '
         if 'route_name' in params:
             name = 'name ' + str(want['route_name']) + ' '
         if 'tag' in params:
             tag = 'tag ' + str(want['tag']) + ' '
         command = intf + ip + vrf + name + tag + track + pref
-        return command
+        if intf != 'Null0 ' and ip == '':
+            self._module.fail_json(
+                msg='forward_router_address error')
+        return command.strip()
 
     def set_commands(self, want, have):
         commands = []

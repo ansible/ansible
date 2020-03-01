@@ -94,10 +94,10 @@ options:
                     description:
                       - IP address of the next hop router
                     type: str
-                    required: True
+                    # required: True
                   interface:
                     description:
-                      - Outgoing interface to take. For anything except 'null0', then next hop IP address should also be configured.
+                      - Outgoing interface to take. For anything except 'Null0', then next hop IP address should also be configured.
                     type: str
                   admin_distance:
                     description:

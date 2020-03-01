@@ -124,14 +124,16 @@ class Static_routesFacts(object):
             inner_dict['afi'] = 'ipv4'
             ipv4 = re.match(r'.* (\d+\.\d+\.\d+\.\d+\/?\d*).*',
                             conf)  # gets next hop ip
-            inner_dict['forward_router_address'] = ipv4.group(1)
-
+            if ipv4:
+                inner_dict['forward_router_address'] = ipv4.group(1)
+                conf = re.sub(inner_dict['forward_router_address'], '', conf)
         else:
             inner_dict['afi'] = 'ipv6'
             conf = re.sub(inner_dict['dest'], '', conf)
             ipv6 = re.match(r'.* (\S*:\S*:\S*\/?\d*).*', conf)
-            inner_dict['forward_router_address'] = ipv6.group(1)
-        conf = re.sub(inner_dict['forward_router_address'], '', conf)
+            if ipv6:
+                inner_dict['forward_router_address'] = ipv6.group(1)
+                conf = re.sub(inner_dict['forward_router_address'], '', conf)
 
         nullif = re.search(r'null0', conf, re.IGNORECASE)
         if nullif:
