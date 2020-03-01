@@ -51,4 +51,4 @@
   always:
   - include_tasks: _remove_config.yaml
 
-  - include_tasks: _populate_rule_sets.yaml
+  - include_tasks: _remove_firewall_config.yaml
