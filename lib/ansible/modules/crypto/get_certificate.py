@@ -258,9 +258,6 @@ def main():
         changed=False,
     )
 
-    if not PYOPENSSL_FOUND:
-        module.fail_json(msg=missing_required_lib('pyOpenSSL >= 0.15'), exception=PYOPENSSL_IMP_ERR)
-
     if timeout:
         setdefaulttimeout(timeout)
 
