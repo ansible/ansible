@@ -66,7 +66,7 @@ options:
   ssl_mode:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for more information on the modes.
       - Default of C(prefer) matches libpq default.
     type: str
     default: prefer
@@ -105,7 +105,7 @@ notes:
 - The default authentication assumes that you are either logging in as
   or sudo'ing to the C(postgres) account on the host.
 - This module uses I(psycopg2), a Python PostgreSQL database adapter.
-- You must ensure that psycopg2 is installed on the host before using this module.
+- You must ensure that C(psycopg2) is installed on the host before using this module.
 - If the remote host is the PostgreSQL server (which is the default case),
   then PostgreSQL must also be installed on the remote host.
 - For Ubuntu-based systems, install the C(postgresql), C(libpq-dev),

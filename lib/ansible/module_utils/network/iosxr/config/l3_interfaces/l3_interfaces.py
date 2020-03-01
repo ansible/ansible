@@ -156,7 +156,7 @@ class L3_Interfaces(ConfigBase):
                     not_in_have.add(interface['name'])
             else:
                 # We didn't find a matching desired state, which means we can
-                # pretend we recieved an empty desired state.
+                # pretend we received an empty desired state.
                 interface = dict(name=each['name'])
                 kwargs = {'want': interface, 'have': each}
                 commands.extend(self._clear_config(**kwargs))

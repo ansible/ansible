@@ -157,7 +157,7 @@ class Lldp_Interfaces(ConfigBase):
                     break
             else:
                 # We didn't find a matching desired state, which means we can
-                # pretend we recieved an empty desired state.
+                # pretend we received an empty desired state.
                 interface = dict(name=each['name'])
                 commands.extend(self._clear_config(interface, each))
                 continue

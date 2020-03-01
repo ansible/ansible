@@ -32,7 +32,7 @@ DOCUMENTATION = '''
         env:
           - name: JABBER_PASS
       to:
-        description: chat identifier that will recieve the message
+        description: chat identifier that will receive the message
         required: True
         env:
           - name: JABBER_TO
