@@ -23,6 +23,7 @@ from ansible.module_utils.network.nxos.facts.vlans.vlans import VlansFacts
 from ansible.module_utils.network.nxos.facts.lacp_interfaces.lacp_interfaces import Lacp_interfacesFacts
 from ansible.module_utils.network.nxos.facts.lldp_global.lldp_global import Lldp_globalFacts
 from ansible.module_utils.network.nxos.facts.lldp_interfaces.lldp_interfaces import Lldp_interfacesFacts
+from ansible.module_utils.network.nxos.facts.acl_interfaces.acl_interfaces import Acl_interfacesFacts
 
 
 FACT_LEGACY_SUBSETS = dict(
@@ -45,7 +46,11 @@ FACT_RESOURCE_SUBSETS = dict(
     interfaces=InterfacesFacts,
     l3_interfaces=L3_interfacesFacts,
     l2_interfaces=L2_interfacesFacts,
+    << << << < HEAD
     lldp_interfaces=Lldp_interfacesFacts,
+    == == == =
+    acl_interfaces=Acl_interfacesFacts,
+    >>>>>> > Added nxos_acl_interfaces config states
 )
 
 
@@ -68,9 +73,11 @@ class Facts(FactsBase):
         :return: the facts gathered
         """
         if self.VALID_RESOURCE_SUBSETS:
-            self.get_network_resources_facts(FACT_RESOURCE_SUBSETS, resource_facts_type, data)
+            self.get_network_resources_facts(
+                FACT_RESOURCE_SUBSETS, resource_facts_type, data)
 
         if self.VALID_LEGACY_GATHER_SUBSETS:
-            self.get_network_legacy_facts(FACT_LEGACY_SUBSETS, legacy_facts_type)
+            self.get_network_legacy_facts(
+                FACT_LEGACY_SUBSETS, legacy_facts_type)
 
         return self.ansible_facts, self._warnings
