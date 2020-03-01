@@ -125,6 +125,17 @@ class ImportTest(SanityMultipleVersion):
             run_command(args, generate_pip_install(virtualenv_pip, 'sanity.import', packages=['setuptools']), env=env, capture=capture_pip)
             run_command(args, generate_pip_install(virtualenv_pip, 'sanity.import', packages=['coverage']), env=env, capture=capture_pip)
 
+        try:
+            # In some environments pkg_resources is installed as a separate pip package which needs to be removed.
+            # For example, using Python 3.8 on Ubuntu 18.04 a virtualenv is created with only pip and setuptools.
+            # However, a venv is created with an additional pkg-resources package which is independent of setuptools.
+            # Making sure pkg-resources is removed preserves the import test consistency between venv and virtualenv.
+            # Additionally, in the above example, the pyparsing package vendored with pkg-resources is out-of-date and generates deprecation warnings.
+            # Thus it is important to remove pkg-resources to prevent system installed packages from generating deprecation warnings.
+            run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'pkg-resources'], env=env, capture=capture_pip)
+        except SubprocessError:
+            pass
+
         run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'setuptools'], env=env, capture=capture_pip)
         run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env, capture=capture_pip)
 
