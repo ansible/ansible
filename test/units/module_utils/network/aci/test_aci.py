@@ -249,10 +249,24 @@ class AciRest(unittest.TestCase):
             error_text = to_native(u"Unable to parse output as XML, see 'raw' output. None (line 0)", errors='surrogate_or_strict')
         elif PY2:
             error_text = "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (line 1)"
-        elif sys.version_info >= (3, 8):
-            error_text = "Unable to parse output as XML, see 'raw' output. None (line 0)"
         else:
-            error_text = "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (<string>, line 1)"
+            error_text = None
+
+        xml_response = ''
+        aci.response_xml(xml_response)
+
+        if error_text is None:
+            # errors vary on Python 3.8+ for unknown reasons
+            # accept any of the following error messages
+            errors = (
+                "Unable to parse output as XML, see 'raw' output. None (line 0)",
+                "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (<string>, line 1)",
+            )
+
+            for error in errors:
+                if error in aci.error['text']:
+                    error_text = error
+                    break
 
         error = dict(
             code=-1,
@@ -261,9 +275,6 @@ class AciRest(unittest.TestCase):
 
         raw = ''
 
-        xml_response = ''
-        xml_result = dict()
-        aci.response_xml(xml_response)
         self.assertEqual(aci.error, error)
         self.assertEqual(aci.result['raw'], raw)
 
