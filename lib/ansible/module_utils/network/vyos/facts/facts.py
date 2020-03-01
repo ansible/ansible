@@ -8,6 +8,7 @@ calls the appropriate facts gathering function
 """
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.vyos.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.vyos.facts.l3_interfaces.l3_interfaces import L3_interfacesFacts
@@ -17,6 +18,7 @@ from ansible.module_utils.network.vyos.facts.lldp_interfaces.lldp_interfaces imp
 from ansible.module_utils.network.vyos.facts.firewall_rules.firewall_rules import Firewall_rulesFacts
 from ansible.module_utils.network.vyos.facts.static_routes.static_routes import Static_routesFacts
 from ansible.module_utils.network.vyos.facts.firewall_global.firewall_global import Firewall_globalFacts
+from ansible.module_utils.network.vyos.facts.firewall_interfaces.firewall_interfaces import Firewall_interfacesFacts
 from ansible.module_utils.network.vyos.facts.legacy.base import Default, Neighbors, Config
 
 
@@ -33,7 +35,8 @@ FACT_RESOURCE_SUBSETS = dict(
     lldp_interfaces=Lldp_interfacesFacts,
     static_routes=Static_routesFacts,
     firewall_rules=Firewall_rulesFacts,
-    firewall_global=Firewall_globalFacts
+    firewall_global=Firewall_globalFacts,
+    firewall_interfaces=Firewall_interfacesFacts
 )
 
 
