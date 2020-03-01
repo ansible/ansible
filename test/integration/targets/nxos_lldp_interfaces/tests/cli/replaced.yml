@@ -1,0 +1,62 @@
+---
+  - debug:
+      msg: "Start nxos_lldp_interfaces replaced integration tests connection = {{ansible_connection}}"
+
+  - name: Enable lldp feature
+    nxos_feature:
+      feature: lldp
+      state: enabled
+
+  - block:
+    - name: Setup
+      cli_config:
+        config: |
+          interface Ethernet1/2
+            no lldp receive
+            lldp tlv-set management-address 192.168.122.64
+
+    - name: Replaced
+      nxos_lldp_interfaces: &replaced
+        config:
+          - name: Ethernet1/2
+            transmit: false
+            tlv_set:
+              vlan: 2
+        state: replaced
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == true"
+          - "'interface Ethernet1/2' in result.commands"
+          - "'lldp receive' in result.commands"
+          - "'no lldp tlv-set management-address 192.168.122.64' in result.commands"
+          - "'no lldp transmit' in result.commands"
+          - "'lldp tlv-set vlan 2' in result.commands"
+          - "result.commands|length == 5"
+
+    - name: Gather lldp_interfaces post facts
+      nxos_facts: 
+        gather_subset:
+          - '!all'
+          - '!min'
+        gather_network_resources: lldp_interfaces
+
+    - assert: 
+        that:
+          - "ansible_facts.network_resources.lldp_interfaces == result.after"
+
+    - name: Idempotence - Replaced
+      nxos_lldp_interfaces: *replaced
+      register: result
+ 
+    - assert:
+        that:
+          - "result.changed == false"
+          - "result.commands|length == 0"
+
+    always:
+    - name: teardown
+      nxos_feature:
+        feature: lldp
+        state: disabled

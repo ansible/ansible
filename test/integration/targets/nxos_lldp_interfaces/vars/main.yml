@@ -1,0 +1,14 @@
+---
+parsed:
+  - name: Ethernet1/1
+    receive: true
+    transmit: false
+
+  - name: Ethernet1/2
+    receive: false
+    tlv_set:
+      vlan: 12
+
+  - name: Ethernet1/3
+    tlv_set:
+      management_address: 192.0.2.12

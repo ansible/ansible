@@ -1,0 +1,60 @@
+---
+  - debug:
+      msg: "Start nxos_lldp_interfaces merged integration tests connection={{ansible_connection}}"
+
+  - name: Enable lldp
+    nxos_feature:
+      feature: lldp
+    
+  - block:
+    - name: Merged
+      nxos_lldp_interfaces: &merged
+        config:
+          - name: Ethernet 1/1
+            receive: false
+            tlv_set:
+              vlan: 123
+          
+          - name: Ethernet1/2
+            transmit: false
+            tlv_set:
+              management_address: 10.0.0.1
+        state: merged
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == true"
+          - "'interface Ethernet1/1' in result.commands"
+          - "'no lldp receive' in result.commands"
+          - "'lldp tlv-set vlan 123' in result.commands"
+          - "'interface Ethernet1/2' in result.commands"
+          - "'no lldp transmit' in result.commands"
+          - "'lldp tlv-set management-address 10.0.0.1' in result.commands"
+          - "result.commands | length == 6"
+
+    - name: Gather lldp_interfaces facts
+      nxos_facts:
+        gather_subset:
+          - '!all'
+          - '!min'
+        gather_network_resources: lldp_interfaces
+
+    - assert:
+        that:
+          - "ansible_facts.network_resources.lldp_interfaces == result.after"
+ 
+    - name: Idempotence - Merged
+      nxos_lldp_interfaces: *merged
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+          - "result.commands | length == 0"
+
+    always:
+    - name: teardown
+      nxos_feature: 
+        feature: lldp
+        state: disabled

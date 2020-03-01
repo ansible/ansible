@@ -22,6 +22,7 @@ from ansible.module_utils.network.nxos.facts.telemetry.telemetry import Telemetr
 from ansible.module_utils.network.nxos.facts.vlans.vlans import VlansFacts
 from ansible.module_utils.network.nxos.facts.lacp_interfaces.lacp_interfaces import Lacp_interfacesFacts
 from ansible.module_utils.network.nxos.facts.lldp_global.lldp_global import Lldp_globalFacts
+from ansible.module_utils.network.nxos.facts.lldp_interfaces.lldp_interfaces import Lldp_interfacesFacts
 
 
 FACT_LEGACY_SUBSETS = dict(
@@ -44,6 +45,7 @@ FACT_RESOURCE_SUBSETS = dict(
     interfaces=InterfacesFacts,
     l3_interfaces=L3_interfacesFacts,
     l2_interfaces=L2_interfacesFacts,
+    lldp_interfaces=Lldp_interfacesFacts,
 )
 
 
