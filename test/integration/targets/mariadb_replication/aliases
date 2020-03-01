@@ -3,8 +3,5 @@ unsupported  # these tests conflict with mysql_replication tests and do not run 
 skip/aix
 skip/osx
 skip/freebsd
-skip/ubuntu
-skip/fedora
-skip/opensuse
 skip/rhel
 needs/root
