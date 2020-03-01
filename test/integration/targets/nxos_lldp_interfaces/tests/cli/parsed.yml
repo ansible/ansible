@@ -1,0 +1,47 @@
+---
+- debug:
+    msg: Start nxos_lldp_interfaces parsed integration tests connection={{ansible_connection}}"
+
+- name: Enable lldp
+  nxos_feature:
+    feature: lldp
+
+- block:
+    - name: Gather lldp interfaces facts
+      nxos_facts: &facts
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: lldp_interfaces
+
+    - name: Parsed
+      nxos_lldp_interfaces: &parsed
+        running_config: |
+          interface Ethernet1/1
+            lldp receive
+            no lldp transmit
+          interface Ethernet1/2
+            no lldp receive
+            lldp tlv-set vlan 12
+          interface Ethernet1/3
+            lldp tlv-set management-address 192.0.2.12
+        state: parsed
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+          - "result.parsed == parsed"
+
+    - name: Idempotence - Parsed
+      nxos_lldp_interfaces: *parsed
+      register: result
+
+    - assert:
+        that: "result.changed == false"
+
+  always:
+    - name: teardown
+      nxos_feature:
+        feature: lldp
+        state: disabled
