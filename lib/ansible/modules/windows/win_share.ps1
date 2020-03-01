@@ -83,7 +83,13 @@ If ($state -eq "absent") {
     }
 
     # normalize path and remove slash at the end
-    $path = (Get-Item $path).FullName -replace "\\$"
+    $path = (Get-Item $path).FullName
+
+    # Allow for X:\ case
+    If ("$path" -Match "(.+)[^\:]\\$")
+    {
+    	$path = $Matches[1]
+    }
 
     # need to (re-)create share
     If (-not $share) {

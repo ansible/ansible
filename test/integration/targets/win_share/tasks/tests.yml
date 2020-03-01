@@ -17,6 +17,23 @@
     - create_share_check is changed
     - create_share_actual_check.stdout_lines == []
 
+- name: create root share
+  win_share:
+    name: "ROOT_TEST"
+    path: 'C:\'
+    state: present
+  register: create_share_root
+
+- name: check if root share exists
+  win_shell: Get-SmbShare | Where-Object { $_.Name -eq  'ROOT_TEST' }
+  register: create_share_root_actual
+
+- name: assert create root share
+  assert:
+    that:
+    - create_share_root is changed
+    - create_share_root_actual.stdout_lines != []
+
 - name: create share
   win_share:
     name: "{{test_win_share_name}}"
