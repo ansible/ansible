@@ -100,7 +100,7 @@ Once the collection have been downloaded the folder will contain the collections
 ``requirement.yml`` file. This folder can be used as is by ``ansible-galaxy collection install`` to install them on a
 host without access to a Galaxy or Automation Hub server.
 
-.. code-block::
+.. code-block:: bash
 
    # This must be run when in the directory that contains the offline collections and requirements.yml file downloaded
    # by the internet connect host

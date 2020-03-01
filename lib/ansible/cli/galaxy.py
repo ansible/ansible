@@ -195,7 +195,7 @@ class GalaxyCLI(CLI):
         download_parser.add_argument('args', help='Collection(s)', metavar='collection', nargs='*')
 
         download_parser.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
-                                       help="Don't download collection(s) listed as dependencies.")
+                                     help="Don't download collection(s) listed as dependencies.")
 
         download_parser.add_argument('-p', '--download-path', dest='download_path',
                                      default='./collections',

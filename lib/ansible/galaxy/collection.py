@@ -508,26 +508,28 @@ def download_collections(collections, output_path, apis, validate_certs, no_deps
     :param validate_certs: Whether to validate the certificate if downloading a tarball from a non-Galaxy host.
     :param no_deps: Ignore any collection dependencies and only download the base requirements.
     """
-    with _tempdir() as b_temp_path, _display_progress():
+    with _tempdir() as b_temp_path:
         display.display("Process install dependency map")
-        dep_map = _build_dependency_map(collections, [], b_temp_path, apis, validate_certs, True, True, no_deps)
+        with _display_progress():
+            dep_map = _build_dependency_map(collections, [], b_temp_path, apis, validate_certs, True, True, no_deps)
 
         requirements = []
         display.display("Starting collection download process to '%s'" % output_path)
-        for name, requirement in dep_map.items():
-            collection_filename = "%s-%s-%s.tar.gz" % (requirement.namespace, requirement.name,
-                                                       requirement.latest_version)
-            dest_path = os.path.join(output_path, collection_filename)
-            requirements.append({'name': collection_filename, 'version': requirement.latest_version})
+        with _display_progress():
+            for name, requirement in dep_map.items():
+                collection_filename = "%s-%s-%s.tar.gz" % (requirement.namespace, requirement.name,
+                                                           requirement.latest_version)
+                dest_path = os.path.join(output_path, collection_filename)
+                requirements.append({'name': collection_filename, 'version': requirement.latest_version})
 
-            display.display("Downloading collection '%s' to '%s'" % (name, dest_path))
-            b_temp_download_path = requirement.download(b_temp_path)
-            os.rename(b_temp_download_path, to_bytes(dest_path, errors='surrogate_or_strict'))
+                display.display("Downloading collection '%s' to '%s'" % (name, dest_path))
+                b_temp_download_path = requirement.download(b_temp_path)
+                shutil.move(b_temp_download_path, to_bytes(dest_path, errors='surrogate_or_strict'))
 
-        requirements_path = os.path.join(output_path, 'requirements.yml')
-        display.display("Writing requirements.yml file of downloaded collections to '%s'" % requirements_path)
-        with open(to_bytes(requirements_path, errors='surrogate_or_strict'), mode='wb') as req_fd:
-            req_fd.write(to_bytes(yaml.safe_dump({'collections': requirements}), errors='surrogate_or_strict'))
+            requirements_path = os.path.join(output_path, 'requirements.yml')
+            display.display("Writing requirements.yml file of downloaded collections to '%s'" % requirements_path)
+            with open(to_bytes(requirements_path, errors='surrogate_or_strict'), mode='wb') as req_fd:
+                req_fd.write(to_bytes(yaml.safe_dump({'collections': requirements}), errors='surrogate_or_strict'))
 
 
 def publish_collection(collection_path, api, wait, timeout):
