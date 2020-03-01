@@ -50,7 +50,7 @@ options:
     description:
       - A device the message should be sent to. Multiple devices can be specified, separated by a comma.
     required: false
-    version_added: "2.9"
+    version_added: "2.10"
 
 author:
   - "Jim Richardson (@weaselkeeper)"
