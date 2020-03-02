@@ -86,12 +86,21 @@ def get_connection(module):
     if hasattr(module, '_asa_connection'):
         return module._asa_connection
 
+    # Not all modules include the 'context' key.
+    context = module.params.get('context')
     capabilities = get_capabilities(module)
     network_api = capabilities.get('network_api')
     if network_api == 'cliconf':
         module._asa_connection = Connection(module._socket_path)
     else:
         module.fail_json(msg='Invalid connection type %s' % network_api)
+
+    if context:
+        if context == 'system':
+            command = 'changeto system'
+        else:
+            command = 'changeto context %s' % context
+        module._asa_connection.get(command)
 
     return module._asa_connection
 

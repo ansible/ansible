@@ -20,6 +20,7 @@ from ansible.module_utils.network.asa.facts.legacy.base import Default, Hardware
 FACT_LEGACY_SUBSETS = dict(
     default=Default,
     hardware=Hardware,
+    config=Config
 )
 
 FACT_RESOURCE_SUBSETS = dict()
@@ -43,6 +44,8 @@ class Facts(FactsBase):
         :rtype: dict
         :return: the facts gathered
         """
+        if self.VALID_RESOURCE_SUBSETS:
+            self.get_network_resources_facts(FACT_RESOURCE_SUBSETS, resource_facts_type, data)
 
         if self.VALID_LEGACY_GATHER_SUBSETS:
             self.get_network_legacy_facts(FACT_LEGACY_SUBSETS, legacy_facts_type)
