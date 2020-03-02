@@ -24,6 +24,7 @@ from ansible.module_utils.network.nxos.facts.lacp_interfaces.lacp_interfaces imp
 from ansible.module_utils.network.nxos.facts.lldp_global.lldp_global import Lldp_globalFacts
 from ansible.module_utils.network.nxos.facts.lldp_interfaces.lldp_interfaces import Lldp_interfacesFacts
 from ansible.module_utils.network.nxos.facts.acl_interfaces.acl_interfaces import Acl_interfacesFacts
+from ansible.module_utils.network.nxos.facts.acls.acls import AclsFacts
 
 
 FACT_LEGACY_SUBSETS = dict(
@@ -48,6 +49,7 @@ FACT_RESOURCE_SUBSETS = dict(
     l2_interfaces=L2_interfacesFacts,
     lldp_interfaces=Lldp_interfacesFacts,
     acl_interfaces=Acl_interfacesFacts,
+    acls=AclsFacts,
 )
 
 

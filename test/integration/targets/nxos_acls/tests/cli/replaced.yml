@@ -1,0 +1,65 @@
+---
+- debug:
+    msg: Start nxos_acls replaced integration tests connection={{ansible_connection}}"
+
+- include_tasks: populate_config.yaml
+
+- block:
+    - name: Replaced
+      nxos_acls: &replaced
+        config:
+          - afi: ipv4
+
+          - afi: ipv6
+            acls:
+              - name: ACL1v6
+                aces:
+                  - sequence: 30
+                    grant: permit
+                    source:
+                      any: true
+                    destination:
+                      any: true
+                    protocol: pim
+
+                  - sequence: 40
+                    remark: Replaced ACE
+              - name: ACL2v6
+        state: replaced
+      register: result
+
+    - assert:
+        that:
+          - "'no ip access-list ACL1v4' in result.commands"
+          - "'no ip access-list ACL2v4' in result.commands"
+          - "'ipv6 access-list ACL1v6' in result.commands"
+          - "'no 10 permit sctp any any' in result.commands"
+          - "'no 20 remark IPv6 ACL' in result.commands"
+          - "'30 permit pim any any' in result.commands"
+          - "'40 remark Replaced ACE' in result.commands"
+          - "'ipv6 access-list ACL2v6' in result.commands"
+          - "'no 10 deny ipv6 any host 2001:db8:3000::36' in result.commands"
+          - "'no 20 permit tcp host 2001:db8:2000:2::2 host 2001:db8:2000:ab::2' in result.commands"
+          - "result.commands|length == 10"
+
+    - name: Gather static_routes post facts
+      nxos_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: acls
+
+    - assert:
+        that:
+          - "ansible_facts.network_resources.acls == result.after"
+
+    - name: Idempotence - Replaced
+      nxos_acls: *replaced
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+
+  always:
+    - include_tasks: remove_config.yaml

@@ -1,0 +1,87 @@
+---
+- debug:
+    msg: "Start nxos_acls round trip integration tests connection = {{ansible_connection}}"
+
+- block:
+    - name: RTT - Apply provided configuration
+      nxos_acls:
+        config:
+          - afi: ipv4
+            acls:
+              - name: ACL1v4
+                aces:
+                  - grant: deny
+                    destination:
+                      address: 192.0.2.64
+                      wildcard_bits: 0.0.0.255
+                    source:
+                      any: true
+                      port_protocol:
+                        lt: 25
+                    protocol: tcp
+                    protocol_options:
+                      tcp:
+                        ack: true
+                        fin: true
+                    sequence: 50
+
+                  - grant: permit
+                    protocol: ip
+                    source:
+                      any: true
+                    destination:
+                      any: true
+                    fragments: true
+                    log: true
+                    sequence: 20
+        state: merged
+
+    - name: Gather interfaces facts
+      nxos_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources:
+          - acls
+
+    - name: Apply configuration to be reverted
+      nxos_acls:
+        config:
+          - afi: ipv6
+            acls:
+              - name: ACL1v6
+                aces:
+                  - grant: permit
+                    sequence: 10
+                    source:
+                      any: true
+                    destination:
+                      host: 2001:db8:12::128
+                    protocol: sctp
+        state: overridden
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == True"
+          - "'no ip access-list ACL1v4' in result.commands"
+          - "'ipv6 access-list ACL1v6' in result.commands"
+          - "'10 permit sctp any host 2001:db8:12::128' in result.commands"
+          - "result.commands | length == 3 "
+
+    - name: Revert back to base configuration using facts round trip
+      nxos_acls:
+        config: "{{ ansible_facts['network_resources']['acls'] }}"
+        state: overridden
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == True"
+          - "'ip access-list ACL1v4' in result.commands"
+          - "'20 permit ip any any fragments log' in result.commands"
+          - "'50 deny tcp any lt smtp 192.0.2.64 0.0.0.255 fin ack' in result.commands"
+          - "'no ipv6 access-list ACL1v6' in result.commands"
+          - "result.commands | length == 4 "
+  always:
+    - include_tasks: remove_config.yaml
