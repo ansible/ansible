@@ -149,7 +149,7 @@ options:
   ssl_mode:
     description:
     - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-    - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for more information on the modes.
     - Default of C(prefer) matches libpq default.
     type: str
     default: prefer
@@ -780,8 +780,16 @@ class Connection(object):
         executed_queries.append(query)
         self.cursor.execute(query)
         status_after = get_status(objs)
-        status_before.sort()
-        status_after.sort()
+
+        def nonesorted(e):
+            # For python 3+ that can fail trying
+            # to compare NoneType elements by sort method.
+            if e is None:
+                return ''
+            return e
+
+        status_before.sort(key=nonesorted)
+        status_after.sort(key=nonesorted)
         return status_before != status_after
 
 

@@ -1,0 +1,2 @@
+bugfixes:
+  - vultr - Fixed the issue retry max delay param was ignored.

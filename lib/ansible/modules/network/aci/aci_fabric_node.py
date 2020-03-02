@@ -55,6 +55,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 seealso:
 - name: APIC Management Information Model reference
@@ -218,6 +223,7 @@ def main():
         serial=dict(type='str', aliases=['serial_number']),  # Not required for querying all objects
         switch=dict(type='str', aliases=['name', 'switch_name']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -236,6 +242,7 @@ def main():
     description = module.params.get('description')
     role = module.params.get('role')
     state = module.params.get('state')
+    name_alias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -263,6 +270,7 @@ def main():
                 # rn='nodep-{0}'.format(serial),
                 role=role,
                 serial=serial,
+                nameAlias=name_alias,
             )
         )
 

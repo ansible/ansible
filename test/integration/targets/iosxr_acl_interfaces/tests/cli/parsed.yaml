@@ -1,0 +1,14 @@
+---
+- debug:
+      msg: "START iosxr_acl_interfaces parsed integration tests on connection={{ ansible_connection }}"
+
+- name: Parse externally provided ACL interfaces config to agnostic model
+  iosxr_acl_interfaces:
+    running_config: "{{ lookup('file', './fixtures/parsed.cfg') }}"
+    state: parsed
+  register: result
+
+- name: Assert that config was correctly parsed
+  assert:
+    that:
+      - "{{ merged['after'] | symmetric_difference(result['parsed']) |length == 0 }}"

@@ -51,7 +51,7 @@ class ACMServiceManager(object):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         self.client = module.client('acm')
 
-    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0, catch_extra_error_codes=['RequestInProgressException'])
     def delete_certificate_with_backoff(self, client, arn):
         client.delete_certificate(CertificateArn=arn)
 
@@ -63,7 +63,7 @@ class ACMServiceManager(object):
             module.fail_json_aws(e, msg="Couldn't delete certificate %s" % arn)
         module.debug("Successfully deleted certificate %s" % arn)
 
-    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0, catch_extra_error_codes=['RequestInProgressException'])
     def list_certificates_with_backoff(self, client, statuses=None):
         paginator = client.get_paginator('list_certificates')
         kwargs = dict()
@@ -71,18 +71,18 @@ class ACMServiceManager(object):
             kwargs['CertificateStatuses'] = statuses
         return paginator.paginate(**kwargs).build_full_result()['CertificateSummaryList']
 
-    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0, catch_extra_error_codes=['ResourceNotFoundException', 'RequestInProgressException'])
     def get_certificate_with_backoff(self, client, certificate_arn):
         response = client.get_certificate(CertificateArn=certificate_arn)
         # strip out response metadata
         return {'Certificate': response['Certificate'],
                 'CertificateChain': response['CertificateChain']}
 
-    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0, catch_extra_error_codes=['ResourceNotFoundException', 'RequestInProgressException'])
     def describe_certificate_with_backoff(self, client, certificate_arn):
         return client.describe_certificate(CertificateArn=certificate_arn)['Certificate']
 
-    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0, catch_extra_error_codes=['ResourceNotFoundException', 'RequestInProgressException'])
     def list_certificate_tags_with_backoff(self, client, certificate_arn):
         return client.list_tags_for_certificate(CertificateArn=certificate_arn)['Tags']
 
@@ -118,8 +118,7 @@ class ACMServiceManager(object):
                 try:
                     cert_data.update(self.get_certificate_with_backoff(client, certificate['CertificateArn']))
                 except (BotoCoreError, ClientError, KeyError) as e:
-                    if e.response['Error']['Code'] != "RequestInProgressException":
-                        module.fail_json_aws(e, msg="Couldn't obtain certificate data for domain %s" % certificate['DomainName'])
+                    module.fail_json_aws(e, msg="Couldn't obtain certificate data for domain %s" % certificate['DomainName'])
             cert_data = camel_dict_to_snake_dict(cert_data)
             try:
                 tags = self.list_certificate_tags_with_backoff(client, certificate['CertificateArn'])
@@ -177,7 +176,7 @@ class ACMServiceManager(object):
 
     # Tags are a normal Ansible style dict
     # {'Key':'Value'}
-    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0, catch_extra_error_codes=['ResourceNotFoundException', 'RequestInProgressException'])
     def tag_certificate_with_backoff(self, client, arn, tags):
         aws_tags = ansible_dict_to_boto3_tag_list(tags)
         client.add_tags_to_certificate(CertificateArn=arn, Tags=aws_tags)

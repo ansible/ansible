@@ -26,6 +26,7 @@ options:
         - Specifies whether SNMP information should be queried or modified.
         choices: ['query', 'present']
         default: present
+        type: str
     v2c_enabled:
         description:
         - Specifies whether SNMPv2c is enabled.
@@ -38,21 +39,26 @@ options:
         description:
         - Sets authentication mode for SNMPv3.
         choices: ['MD5', 'SHA']
+        type: str
     v3_auth_pass:
         description:
         - Authentication password for SNMPv3.
         - Must be at least 8 characters long.
+        type: str
     v3_priv_mode:
         description:
         - Specifies privacy mode for SNMPv3.
         choices: ['DES', 'AES128']
+        type: str
     v3_priv_pass:
         description:
         - Privacy password for SNMPv3.
         - Must be at least 8 characters long.
+        type: str
     peer_ips:
         description:
         - Semi-colon delimited IP addresses which can perform SNMP queries.
+        type: str
     net_name:
         description:
         - Name of network.
@@ -228,10 +234,7 @@ data:
                     returned: success, when network specified
 '''
 
-import os
-from ansible.module_utils.basic import AnsibleModule, json, env_fallback
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule, json
 from ansible.module_utils.common.dict_transformations import recursive_diff, snake_dict_to_camel_dict
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
@@ -317,19 +320,11 @@ def main():
                          peer_ips=dict(type='str'),
                          access=dict(type='str', choices=['none', 'community', 'users']),
                          community_string=dict(type='str', no_log=True),
-                         users=dict(type='list', default=None, element='str', options=user_arg_spec),
+                         users=dict(type='list', default=None, elements='', options=user_arg_spec),
                          net_name=dict(type='str'),
                          net_id=dict(type='str'),
                          )
 
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # change is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
-    result = dict(
-        changed=False,
-    )
     # the AnsibleModule object will be our abstraction working with Ansible
     # this includes instantiation, a couple of common attr would be the
     # args/params passed to the execution, as well as if the module

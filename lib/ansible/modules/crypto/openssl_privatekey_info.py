@@ -38,7 +38,12 @@ options:
         description:
             - Remote absolute path where the private key file is loaded from.
         type: path
-        required: true
+    content:
+        description:
+            - Content of the private key file.
+            - Either I(path) or I(content) must be specified, but not both.
+        type: str
+        version_added: "2.10"
     passphrase:
         description:
             - The passphrase for the private key.
@@ -318,13 +323,14 @@ def _is_cryptography_key_consistent(key, key_public_data, key_private_data):
 class PrivateKeyInfo(crypto_utils.OpenSSLObject):
     def __init__(self, module, backend):
         super(PrivateKeyInfo, self).__init__(
-            module.params['path'],
+            module.params['path'] or '',
             'present',
             False,
             module.check_mode,
         )
         self.backend = backend
         self.module = module
+        self.content = module.params['content']
 
         self.passphrase = module.params['passphrase']
         self.return_private_key_data = module.params['return_private_key_data']
@@ -355,12 +361,16 @@ class PrivateKeyInfo(crypto_utils.OpenSSLObject):
             can_parse_key=False,
             key_is_consistent=None,
         )
-        try:
-            with open(self.path, 'rb') as b_priv_key_fh:
-                priv_key_detail = b_priv_key_fh.read()
+        if self.content is not None:
+            priv_key_detail = self.content.encode('utf-8')
             result['can_load_key'] = True
-        except (IOError, OSError) as exc:
-            self.module.fail_json(msg=to_native(exc), **result)
+        else:
+            try:
+                with open(self.path, 'rb') as b_priv_key_fh:
+                    priv_key_detail = b_priv_key_fh.read()
+                result['can_load_key'] = True
+            except (IOError, OSError) as exc:
+                self.module.fail_json(msg=to_native(exc), **result)
         try:
             self.key = crypto_utils.load_privatekey(
                 path=None,
@@ -576,21 +586,29 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(type='path', required=True),
+            path=dict(type='path'),
+            content=dict(type='str'),
             passphrase=dict(type='str', no_log=True),
             return_private_key_data=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
+        ),
+        required_one_of=(
+            ['path', 'content'],
+        ),
+        mutually_exclusive=(
+            ['path', 'content'],
         ),
         supports_check_mode=True,
     )
 
     try:
-        base_dir = os.path.dirname(module.params['path']) or '.'
-        if not os.path.isdir(base_dir):
-            module.fail_json(
-                name=base_dir,
-                msg='The directory %s does not exist or the file is not a directory' % base_dir
-            )
+        if module.params['path'] is not None:
+            base_dir = os.path.dirname(module.params['path']) or '.'
+            if not os.path.isdir(base_dir):
+                module.fail_json(
+                    name=base_dir,
+                    msg='The directory %s does not exist or the file is not a directory' % base_dir
+                )
 
         backend = module.params['select_crypto_backend']
         if backend == 'auto':

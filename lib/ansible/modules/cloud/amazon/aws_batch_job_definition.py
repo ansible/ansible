@@ -188,7 +188,7 @@ EXAMPLES = '''
     state: present
   tasks:
 - name: My Batch Job Definition
-  batch_job_definition:
+  aws_batch_job_definition:
     job_definition_name: My Batch Job Definition
     state: present
     type: container
@@ -216,7 +216,7 @@ output:
   description: "returns what action was taken, whether something was changed, invocation and response"
   returned: always
   sample:
-    batch_job_definition_action: none
+    aws_batch_job_definition_action: none
     changed: false
     response:
       job_definition_arn: "arn:aws:batch:...."
@@ -226,18 +226,14 @@ output:
   type: dict
 '''
 
-from ansible.module_utils._text import to_native
-from ansible.module_utils.aws.batch import AWSConnection, cc, set_api_params
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, HAS_BOTO3
+from ansible.module_utils.aws.batch import cc, set_api_params
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
-import traceback
-
 try:
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass  # Handled by HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -251,12 +247,12 @@ except ImportError:
 # logger.setLevel(logging.DEBUG)
 
 
-def validate_params(module, aws):
+def validate_params(module, batch_client):
     """
     Performs basic parameter validation.
 
     :param module:
-    :param aws:
+    :param batch_client:
     :return:
     """
     return
@@ -268,9 +264,9 @@ def validate_params(module, aws):
 #
 # ---------------------------------------------------------------------------------------------------
 
-def get_current_job_definition(module, connection):
+def get_current_job_definition(module, batch_client):
     try:
-        environments = connection.client().describe_job_definitions(
+        environments = batch_client.describe_job_definitions(
             jobDefinitionName=module.params['job_definition_name']
         )
         if len(environments['jobDefinitions']) > 0:
@@ -283,16 +279,15 @@ def get_current_job_definition(module, connection):
         return None
 
 
-def create_job_definition(module, aws):
+def create_job_definition(module, batch_client):
     """
         Adds a Batch job definition
 
         :param module:
-        :param aws:
+        :param batch_client:
         :return:
         """
 
-    client = aws.client('batch')
     changed = False
 
     # set API parameters
@@ -305,11 +300,10 @@ def create_job_definition(module, aws):
 
     try:
         if not module.check_mode:
-            client.register_job_definition(**api_params)
+            batch_client.register_job_definition(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error registering job definition: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Error registering job definition')
 
     return changed
 
@@ -334,25 +328,23 @@ def get_compute_environment_order_list(module):
     return compute_environment_order_list
 
 
-def remove_job_definition(module, aws):
+def remove_job_definition(module, batch_client):
     """
     Remove a Batch job definition
 
     :param module:
-    :param aws:
+    :param batch_client:
     :return:
     """
 
-    client = aws.client('batch')
     changed = False
 
     try:
         if not module.check_mode:
-            client.deregister_job_definition(jobDefinition=module.params['job_definition_arn'])
+            batch_client.deregister_job_definition(jobDefinition=module.params['job_definition_arn'])
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error removing job definition: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Error removing job definition')
     return changed
 
 
@@ -377,7 +369,7 @@ def job_definition_equal(module, current_definition):
     return equal
 
 
-def manage_state(module, aws):
+def manage_state(module, batch_client):
     changed = False
     current_state = 'absent'
     state = module.params['state']
@@ -388,7 +380,7 @@ def manage_state(module, aws):
     check_mode = module.check_mode
 
     # check if the job definition exists
-    current_job_definition = get_current_job_definition(module, aws)
+    current_job_definition = get_current_job_definition(module, batch_client)
     if current_job_definition:
         current_state = 'present'
 
@@ -396,21 +388,21 @@ def manage_state(module, aws):
         if current_state == 'present':
             # check if definition has changed and register a new version if necessary
             if not job_definition_equal(module, current_job_definition):
-                create_job_definition(module, aws)
+                create_job_definition(module, batch_client)
                 action_taken = 'updated with new version'
                 changed = True
         else:
             # Create Job definition
-            changed = create_job_definition(module, aws)
+            changed = create_job_definition(module, batch_client)
             action_taken = 'added'
 
-        response = get_current_job_definition(module, aws)
+        response = get_current_job_definition(module, batch_client)
         if not response:
             module.fail_json(msg='Unable to get job definition information after creating/updating')
     else:
         if current_state == 'present':
             # remove the Job definition
-            changed = remove_job_definition(module, aws)
+            changed = remove_job_definition(module, batch_client)
             action_taken = 'deregistered'
     return dict(changed=changed, batch_job_definition_action=action_taken, response=response)
 
@@ -428,45 +420,37 @@ def main():
     :return dict: ansible facts
     """
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            state=dict(required=False, default='present', choices=['present', 'absent']),
-            job_definition_name=dict(required=True),
-            job_definition_arn=dict(),
-            type=dict(required=True),
-            parameters=dict(type='dict'),
-            image=dict(required=True),
-            vcpus=dict(type='int', required=True),
-            memory=dict(type='int', required=True),
-            command=dict(type='list', default=[]),
-            job_role_arn=dict(),
-            volumes=dict(type='list', default=[]),
-            environment=dict(type='list', default=[]),
-            mount_points=dict(type='list', default=[]),
-            readonly_root_filesystem=dict(),
-            privileged=dict(),
-            ulimits=dict(type='list', default=[]),
-            user=dict(),
-            attempts=dict(type='int'),
-            region=dict(aliases=['aws_region', 'ec2_region'])
-        )
+    argument_spec = dict(
+        state=dict(required=False, default='present', choices=['present', 'absent']),
+        job_definition_name=dict(required=True),
+        job_definition_arn=dict(),
+        type=dict(required=True),
+        parameters=dict(type='dict'),
+        image=dict(required=True),
+        vcpus=dict(type='int', required=True),
+        memory=dict(type='int', required=True),
+        command=dict(type='list', default=[]),
+        job_role_arn=dict(),
+        volumes=dict(type='list', default=[]),
+        environment=dict(type='list', default=[]),
+        mount_points=dict(type='list', default=[]),
+        readonly_root_filesystem=dict(),
+        privileged=dict(),
+        ulimits=dict(type='list', default=[]),
+        user=dict(),
+        attempts=dict(type='int')
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
 
-    # validate dependencies
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required for this module.')
+    batch_client = module.client('batch')
 
-    aws = AWSConnection(module, ['batch'])
+    validate_params(module, batch_client)
 
-    validate_params(module, aws)
-
-    results = manage_state(module, aws)
+    results = manage_state(module, batch_client)
 
     module.exit_json(**camel_dict_to_snake_dict(results))
 

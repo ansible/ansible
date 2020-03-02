@@ -1,29 +1,35 @@
 ---
   - name: set up elb_target test prerequisites
+    module_defaults:
+      group/aws:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token | default(omit) }}"
+        region: "{{ aws_region }}"
 
     block:
 
+    # ============================================================
+
     - name:
       debug: msg="********** Setting up elb_target test dependencies **********"
-    # ============================================================
-
-    - name: set up aws connection info
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: yes
 
     # ============================================================
+    - name: Find AMI to use
+      ec2_ami_info:
+        owners: 'amazon'
+        filters:
+          name: '{{ ec2_ami_name }}'
+      register: ec2_amis
+    - set_fact:
+        ec2_ami_image: '{{ ec2_amis.images[0].image_id }}'
+
 
     - name: set up testing VPC
       ec2_vpc_net:
         name: "{{ resource_prefix }}-vpc"
         state: present
         cidr_block: 20.0.0.0/16
-        <<: *aws_connection_info
         tags:
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
@@ -33,7 +39,6 @@
       ec2_vpc_igw:
         vpc_id: "{{ vpc.vpc.id }}"
         state: present
-        <<: *aws_connection_info
       register: igw
 
     - name: set up testing subnet
@@ -44,7 +49,6 @@
         az: "{{ aws_region }}a"
         resource_tags:
           Name: "{{ resource_prefix }}-subnet"
-        <<: *aws_connection_info
       register: subnet_1
 
     - name: set up testing subnet
@@ -55,7 +59,6 @@
         az: "{{ aws_region }}b"
         resource_tags:
           Name: "{{ resource_prefix }}-subnet"
-        <<: *aws_connection_info
       register: subnet_2
 
     - name: create routing rules
@@ -69,7 +72,6 @@
         subnets:
           - "{{ subnet_1.subnet.id }}"
           - "{{ subnet_2.subnet.id }}"
-        <<: *aws_connection_info
       register: route_table
 
     - name: create testing security group
@@ -86,7 +88,6 @@
             from_port: 22
             to_port: 22
             cidr_ip: 0.0.0.0/0
-        <<: *aws_connection_info
       register: sg
 
     - name: set up testing target group (type=instance)
@@ -100,7 +101,18 @@
         target_type: instance
         tags:
           Description: "Created by {{ resource_prefix }}"
-        <<: *aws_connection_info
+
+    - name: set up testing target group (type=instance) with UDP protocol
+      elb_target_group:
+        name: "{{ tg_tcpudp_name }}"
+        protocol: udp
+        port: 53
+        vpc_id: '{{ vpc.vpc.id }}'
+        state: present
+        target_type: instance
+        tags:
+          Protocol: "UDP"
+          Description: "Created by {{ resource_prefix }}"
 
     - name: set up testing target group for ALB (type=instance)
       elb_target_group:
@@ -113,13 +125,12 @@
         target_type: instance
         tags:
           Description: "Created by {{ resource_prefix }}"
-        <<: *aws_connection_info
 
     - name: set up ec2 instance to use as a target
       ec2:
         group_id: "{{ sg.group_id }}"
-        instance_type: t2.micro
-        image: "{{ ec2_ami_image[aws_region] }}"
+        instance_type: t3.micro
+        image: "{{ ec2_ami_image }}"
         vpc_subnet_id: "{{ subnet_2.subnet.id }}"
         instance_tags:
           Name: "{{ resource_prefix }}-inst"
@@ -139,7 +150,6 @@
           runcmd:
             - "service httpd start"
             - echo "HELLO ANSIBLE" > /var/www/html/index.html
-        <<: *aws_connection_info
       register: ec2
 
     - name: create an application load balancer
@@ -157,7 +167,6 @@
               - Type: forward
                 TargetGroupName: "{{ tg_name }}-used"
         state: present
-        <<: *aws_connection_info
 
     # ============================================================
 
@@ -171,7 +180,6 @@
         target_group_name: "{{ tg_name }}"
         target_id: "{{ ec2.instance_ids[0] }}"
         state: present
-        <<: *aws_connection_info
       register: result
 
     - name: target is registered
@@ -179,7 +187,7 @@
         that:
           - result.changed
           - result.target_group_arn
-          - "'{{ result.target_health_descriptions.target.id }}' == '{{ ec2.instance_ids[0] }}'"
+          - result.target_health_descriptions.target.id == ec2.instance_ids[0]
 
     # ============================================================
 
@@ -188,7 +196,6 @@
         target_group_name: "{{ tg_name }}"
         target_id: "{{ ec2.instance_ids[0] }}"
         state: present
-        <<: *aws_connection_info
       register: result
 
     - name: target was already registered
@@ -204,7 +211,6 @@
         target_id: "{{ ec2.instance_ids[0] }}"
         state: absent
         deregister_unused: true
-        <<: *aws_connection_info
       register: result
 
     - name: target group was deleted
@@ -221,8 +227,7 @@
         target_id: "{{ ec2.instance_ids[0] }}"
         state: present
         target_status: healthy
-        target_status_timeout: 200
-        <<: *aws_connection_info
+        target_status_timeout: 400
       register: result
 
     - name: target is registered
@@ -230,8 +235,8 @@
         that:
           - result.changed
           - result.target_group_arn
-          - "'{{ result.target_health_descriptions.target.id }}' == '{{ ec2.instance_ids[0] }}'"
-          - "{{ result.target_health_descriptions.target_health }} == {'state': 'healthy'}"
+          - result.target_health_descriptions.target.id == ec2.instance_ids[0]
+          - result.target_health_descriptions.target_health == healthy_state
 
     # ============================================================
 
@@ -242,7 +247,6 @@
         state: absent
         target_status: unused
         target_status_timeout: 400
-        <<: *aws_connection_info
       register: result
 
     - name: target was deregistered
@@ -257,7 +261,6 @@
         target_group_name: "{{ tg_name }}-used"
         target_id: "{{ ec2.instance_ids[0] }}"
         state: absent
-        <<: *aws_connection_info
       register: result
 
     - name: target was already deregistered
@@ -273,8 +276,7 @@
         target_id: "{{ ec2.instance_ids[0] }}"
         state: present
         target_status: healthy
-        target_status_timeout: 200
-        <<: *aws_connection_info
+        target_status_timeout: 400
       register: result
 
     - name: target is registered
@@ -282,15 +284,14 @@
         that:
           - result.changed
           - result.target_group_arn
-          - "'{{ result.target_health_descriptions.target.id }}' == '{{ ec2.instance_ids[0] }}'"
-          - "{{ result.target_health_descriptions.target_health }} == {'state': 'healthy'}"
+          - result.target_health_descriptions.target.id == ec2.instance_ids[0]
+          - result.target_health_descriptions.target_health == healthy_state
 
     - name: start deregisteration but don't wait
       elb_target:
         target_group_name: "{{ tg_name }}-used"
         target_id: "{{ ec2.instance_ids[0] }}"
         state: absent
-        <<: *aws_connection_info
       register: result
 
     - name: target is starting to deregister
@@ -306,7 +307,6 @@
         state: absent
         target_status: unused
         target_status_timeout: 400
-        <<: *aws_connection_info
       register: result
 
     - name: target was deregistered already and now has finished
@@ -326,7 +326,7 @@
       ec2:
         group_id: "{{ sg.group_id }}"
         instance_type: t2.micro
-        image: "{{ ec2_ami_image[aws_region] }}"
+        image: "{{ ec2_ami_image }}"
         vpc_subnet_id: "{{ subnet_2.subnet.id }}"
         instance_tags:
           Name: "{{ resource_prefix }}-inst"
@@ -337,7 +337,6 @@
         volumes: []
         wait: true
         ebs_optimized: false
-        <<: *aws_connection_info
       ignore_errors: true
 
     - name: remove testing target groups
@@ -352,14 +351,33 @@
         tags:
           Description: "Created by {{ resource_prefix }}"
         wait: true
-        wait_timeout: 200
-        <<: *aws_connection_info
+        wait_timeout: 400
       register: removed
       retries: 10
       until: removed is not failed
       with_items:
         - "{{ tg_name }}"
         - "{{ tg_name }}-used"
+      ignore_errors: true
+
+    - name: remove udp testing target groups
+      elb_target_group:
+        name: "{{ item }}"
+        protocol: udp
+        port: 53
+        vpc_id: '{{ vpc.vpc.id }}'
+        state: absent
+        target_type: instance
+        tags:
+          Description: "Created by {{ resource_prefix }}"
+          Protocol: "UDP"
+        wait: true
+        wait_timeout: 400
+      register: removed
+      retries: 10
+      until: removed is not failed
+      with_items:
+        - "{{ tg_tcpudp_name }}"
       ignore_errors: true
 
     - name: remove application load balancer
@@ -378,8 +396,7 @@
                 TargetGroupName: "{{ tg_name }}-used"
         state: absent
         wait: true
-        wait_timeout: 200
-        <<: *aws_connection_info
+        wait_timeout: 400
       register: removed
       retries: 10
       until: removed is not failed
@@ -400,7 +417,6 @@
             from_port: 22
             to_port: 22
             cidr_ip: 0.0.0.0/0
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
@@ -411,7 +427,6 @@
         state: absent
         lookup: id
         route_table_id: "{{ route_table.route_table.id }}"
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
@@ -425,7 +440,6 @@
         az: "{{ aws_region }}a"
         resource_tags:
           Name: "{{ resource_prefix }}-subnet"
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
@@ -439,7 +453,6 @@
         az: "{{ aws_region }}b"
         resource_tags:
           Name: "{{ resource_prefix }}-subnet"
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
@@ -449,7 +462,6 @@
       ec2_vpc_igw:
         vpc_id: "{{ vpc.vpc.id }}"
         state: absent
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed
@@ -463,7 +475,6 @@
         tags:
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
-        <<: *aws_connection_info
       register: removed
       retries: 10
       until: removed is not failed

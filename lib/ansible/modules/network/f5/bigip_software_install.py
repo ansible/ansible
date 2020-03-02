@@ -445,7 +445,7 @@ class ModuleManager(object):
                 pass
 
     def wait_for_software_install_on_device(self):
-        # We need to delay this slightly in case the the volume needs to be
+        # We need to delay this slightly in case the volume needs to be
         # created first
         for dummy in range(10):
             try:

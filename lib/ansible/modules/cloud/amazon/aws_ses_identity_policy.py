@@ -94,7 +94,7 @@ import json
 try:
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def get_identity_policy(connection, module, identity, policy_name):

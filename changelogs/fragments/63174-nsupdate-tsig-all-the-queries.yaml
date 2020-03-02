@@ -1,0 +1,2 @@
+minor_changes:
+  - nsupdate - Use provided TSIG key to not only sign update queries but also lookup queries

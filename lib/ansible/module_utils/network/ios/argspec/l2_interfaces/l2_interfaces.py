@@ -36,9 +36,13 @@ class L2_InterfacesArgs(object):
 
     argument_spec = {'config': {'elements': 'dict',
                                 'options': {'name': {'type': 'str', 'required': True},
+                                            'mode': {'type': 'str', 'choices': ['access', 'trunk']},
                                             'access': {'type': 'dict',
                                                        'options': {'vlan': {'type': 'int'}}
                                                        },
+                                            'voice': {'type': 'dict',
+                                                      'options': {'vlan': {'type': 'int'}}
+                                                      },
                                             'trunk': {'type': 'dict',
                                                       'options': {'allowed_vlans': {'type': 'list'},
                                                                   'encapsulation': {'type': 'str',

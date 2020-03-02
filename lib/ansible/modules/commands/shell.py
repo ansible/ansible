@@ -184,7 +184,7 @@ stdout:
     description: The command standard output
     returned: always
     type: str
-    sample: 'Clustering node rabbit@slave1 with rabbit@master ...'
+    sample: 'Clustering node rabbit@slave1 with rabbit@master …'
 stderr:
     description: The command standard error
     returned: always
@@ -204,5 +204,10 @@ stdout_lines:
     description: The command standard output split in lines
     returned: always
     type: list
-    sample: [u'Clustering node rabbit@slave1 with rabbit@master ...']
+    sample: [u'Clustering node rabbit@slave1 with rabbit@master …']
+stderr_lines:
+    description: The command standard error split in lines
+    returned: always
+    type: list
+    sample: [u'ls cannot access foo: No such file or directory', u'ls …']
 '''

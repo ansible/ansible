@@ -110,6 +110,16 @@
       <<: *aws_connection_info
     register: tg
 
+  - name: create a target group for testing tcp_udp protocols
+    elb_target_group:
+      name: "{{ tg_tcpudp_name }}"
+      protocol: tcp_udp
+      port: 80
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: present
+      <<: *aws_connection_info
+    register: tg_tcpudp
+
   - include_tasks: test_nlb_bad_listener_options.yml
   - include_tasks: test_nlb_tags.yml
   - include_tasks: test_creating_nlb.yml
@@ -143,6 +153,23 @@
       delay: 3
       until: remove_tg is success
       when: tg is defined
+      ignore_errors: yes
+
+    - name: destroy tcp_udp target group if it was created
+      elb_target_group:
+        name: "{{ tg_tcpudp_name }}"
+        protocol: tcp_udp
+        port: 80
+        vpc_id: "{{ vpc.vpc.id }}"
+        state: absent
+        wait: yes
+        wait_timeout: 600
+        <<: *aws_connection_info
+      register: remove_tg
+      retries: 5
+      delay: 3
+      until: remove_tg is success
+      when: tg_tcpudp is defined
       ignore_errors: yes
 
     - name: destroy sec group

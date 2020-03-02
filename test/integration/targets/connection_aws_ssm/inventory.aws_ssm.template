@@ -1,0 +1,10 @@
+[aws_ssm]
+@NAME ansible_aws_ssm_instance_id=@HOST ansible_aws_ssm_region=@AWS_REGION
+
+[aws_ssm:vars]
+ansible_connection=aws_ssm
+ansible_aws_ssm_bucket_name=@S3_BUCKET
+
+# support tests that target testhost
+[testhost:children]
+aws_ssm

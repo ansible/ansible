@@ -122,8 +122,6 @@ location:
 
 '''
 
-from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
-from ansible.module_utils.ec2 import boto3_conn
 from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceManager
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -147,14 +145,7 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
 
     def __init__(self, module):
         self.module = module
-        self.create_client('cloudfront')
-
-    def create_client(self, resource):
-        try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self.module, boto3=True)
-            self.client = boto3_conn(self.module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except (ClientError, BotoCoreError) as e:
-            self.module.fail_json_aws(e, msg="Unable to establish connection.")
+        self.client = module.client('cloudfront')
 
     def create_origin_access_identity(self, caller_reference, comment):
         try:
@@ -242,14 +233,12 @@ class CloudFrontOriginAccessIdentityValidationManager(object):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(choices=['present', 'absent'], default='present'),
         origin_access_identity_id=dict(),
         caller_reference=dict(),
         comment=dict(),
-    ))
+    )
 
     result = {}
     e_tag = None

@@ -105,7 +105,6 @@ RETURN = '''
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 try:
     import botocore
@@ -222,28 +221,23 @@ def delete_lifecycle_hook(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            autoscaling_group_name=dict(required=True, type='str'),
-            lifecycle_hook_name=dict(required=True, type='str'),
-            transition=dict(type='str', choices=['autoscaling:EC2_INSTANCE_TERMINATING', 'autoscaling:EC2_INSTANCE_LAUNCHING']),
-            role_arn=dict(type='str'),
-            notification_target_arn=dict(type='str'),
-            notification_meta_data=dict(type='str'),
-            heartbeat_timeout=dict(type='int'),
-            default_result=dict(default='ABANDON', choices=['ABANDON', 'CONTINUE']),
-            state=dict(default='present', choices=['present', 'absent'])
-        )
+    argument_spec = dict(
+        autoscaling_group_name=dict(required=True, type='str'),
+        lifecycle_hook_name=dict(required=True, type='str'),
+        transition=dict(type='str', choices=['autoscaling:EC2_INSTANCE_TERMINATING', 'autoscaling:EC2_INSTANCE_LAUNCHING']),
+        role_arn=dict(type='str'),
+        notification_target_arn=dict(type='str'),
+        notification_meta_data=dict(type='str'),
+        heartbeat_timeout=dict(type='int'),
+        default_result=dict(default='ABANDON', choices=['ABANDON', 'CONTINUE']),
+        state=dict(default='present', choices=['present', 'absent'])
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               required_if=[['state', 'present', ['transition']]])
     state = module.params.get('state')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(module, conn_type='client', resource='autoscaling', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('autoscaling')
 
     changed = False
 

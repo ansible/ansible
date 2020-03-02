@@ -1,0 +1,2 @@
+bugfixes:
+- Added support for OSMC distro in hostname module (https://github.com/ansible/ansible/issues/66189).

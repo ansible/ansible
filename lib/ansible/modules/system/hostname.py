@@ -658,6 +658,12 @@ class ClearLinuxHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class CloudlinuxserverHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Cloudlinuxserver'
+    strategy_class = RedHatStrategy
+
+
 class CloudlinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Cloudlinux'
@@ -793,6 +799,18 @@ class NetBSDHostname(Hostname):
 class NeonHostname(Hostname):
     platform = 'Linux'
     distribution = 'Neon'
+    strategy_class = DebianStrategy
+
+
+class OsmcHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Osmc'
+    strategy_class = SystemdStrategy
+
+
+class VoidLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Void'
     strategy_class = DebianStrategy
 
 

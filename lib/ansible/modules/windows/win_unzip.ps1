@@ -40,7 +40,16 @@ Function Extract-Zip($src, $dest) {
         $entry_target_path = [System.IO.Path]::Combine($dest, $archive_name)
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
-        if (-not (Test-Path -Path $entry_dir)) {
+        # Normalize paths for further evaluation
+        $full_target_path = [System.IO.Path]::GetFullPath($entry_target_path)
+        $full_dest_path = [System.IO.Path]::GetFullPath($dest + [System.IO.Path]::DirectorySeparatorChar)
+
+        # Ensure file in the archive does not escape the extraction path
+        if (-not $full_target_path.StartsWith($full_dest_path)) {
+            Fail-Json -obj $result -message "Error unzipping '$src' to '$dest'! Filename contains relative paths which would extract outside the destination: $entry_target_path"
+        }
+
+        if (-not (Test-Path -LiteralPath $entry_dir)) {
             New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
             $result.changed = $true
         }
@@ -142,14 +151,14 @@ If ($ext -eq ".zip" -And $recurse -eq $false) {
     }
 
     If ($recurse) {
-        Get-ChildItem $dest -recurse | Where-Object {$pcx_extensions -contains $_.extension} | ForEach-Object {
+        Get-ChildItem -LiteralPath $dest -recurse | Where-Object {$pcx_extensions -contains $_.extension} | ForEach-Object {
             Try {
                 Expand-Archive $_.FullName -OutputPath $dest -Force -WhatIf:$check_mode
             } Catch {
                 Fail-Json -obj $result -message "Error recursively expanding '$src' to '$dest'! Msg: $($_.Exception.Message)"
             }
             If ($delete_archive) {
-                Remove-Item $_.FullName -Force -WhatIf:$check_mode
+                Remove-Item -LiteralPath $_.FullName -Force -WhatIf:$check_mode
                 $result.removed = $true
             }
         }
@@ -160,7 +169,7 @@ If ($ext -eq ".zip" -And $recurse -eq $false) {
 
 If ($delete_archive){
     try {
-        Remove-Item $src -Recurse -Force -WhatIf:$check_mode
+        Remove-Item -LiteralPath $src -Recurse -Force -WhatIf:$check_mode
     } catch {
         Fail-Json -obj $result -message "failed to delete archive at '$src': $($_.Exception.Message)"
     }

@@ -1,0 +1,2 @@
+bugfixes:
+  - "update ``user`` module to support silencing ``no_log`` warnings in the future (see: https://github.com/ansible/ansible/pull/64733)"

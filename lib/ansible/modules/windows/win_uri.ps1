@@ -12,18 +12,34 @@
 
 $spec = @{
     options = @{
+       url = @{ type = "str"; required = $true }
        content_type = @{ type = "str" }
        body = @{ type = "raw" }
        dest = @{ type = "path" }
        creates = @{ type = "path" }
+       method = @{ default = "GET" }
        removes = @{ type = "path" }
        return_content = @{ type = "bool"; default = $false }
        status_code = @{ type = "list"; elements = "int"; default = @(200) }
+
+       # Defined for the alias backwards compatibility, remove once aliases are removed
+       url_username = @{
+           aliases = @("user", "username")
+           deprecated_aliases = @(
+               @{ name = "user"; version = "2.14" },
+               @{ name = "username"; version = "2.14" }
+           )
+       }
+       url_password = @{
+           aliases = @("password")
+           deprecated_aliases = @(
+               @{ name = "password"; version = "2.14" }
+           )
+       }
     }
     supports_check_mode = $true
 }
-$spec.options += $ansible_web_request_options
-$spec.options.method.default = "GET"
+$spec = Merge-WebRequestSpec -ModuleSpec $spec
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
@@ -58,7 +74,7 @@ if ($removes -and -not (Test-AnsiblePath -Path $removes)) {
     $module.ExitJson()
 }
 
-$client = Get-AnsibleWebRequest -Module $module
+$client = Get-AnsibleWebRequest -Uri $url -Module $module
 
 if ($null -ne $content_type) {
     $client.ContentType = $content_type

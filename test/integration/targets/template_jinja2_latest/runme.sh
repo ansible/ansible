@@ -4,7 +4,7 @@ set -eux
 
 source virtualenv.sh
 
-pip install -U jinja2
+pip install -U -r requirements.txt
 
 ANSIBLE_ROLES_PATH=../
 export ANSIBLE_ROLES_PATH

@@ -1,0 +1,63 @@
+---
+- debug:
+    msg: "Start nxos_acl_interfaces merged integration tests connection = {{ansible_connection}}"
+
+- include_tasks: populate_acl.yaml
+
+- block:
+    - name: Gather acl interfaces facts
+      nxos_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: acl_interfaces
+
+    - name: Merged
+      nxos_acl_interfaces: &merged
+        config:
+          - name: Ethernet1/2
+            access_groups:
+              - afi: ipv6
+                acls:
+                  - name: ACL1v6
+                    direction: in
+
+          - name: Eth1/5
+            access_groups:
+              - afi: ipv4
+                acls:
+                  - name: PortACL
+                    direction: in
+                    port: True
+
+                  - name: ACL1v4
+                    direction: out
+
+              - afi: ipv6
+                acls:
+                  - name: ACL1v6
+                    direction: in
+        state: merged
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == True"
+          - "'interface Ethernet1/2' in result.commands"
+          - "'ipv6 traffic-filter ACL1v6 in' in result.commands"
+          - "'interface Ethernet1/5' in result.commands"
+          - "'ip port access-group PortACL in' in result.commands"
+          - "'ip access-group ACL1v4 out' in result.commands"
+          - "'ipv6 traffic-filter ACL1v6 in' in result.commands"
+          - "result.commands | length == 6 "
+
+    - name: Idempotence - Merged
+      nxos_acl_interfaces: *merged
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+
+  always:
+    - include_tasks: remove_config.yaml

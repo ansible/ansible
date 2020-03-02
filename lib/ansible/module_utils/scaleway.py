@@ -118,10 +118,12 @@ class Scaleway(object):
     def send(self, method, path, data=None, headers=None, params=None):
         url = self._url_builder(path=path, params=params)
         self.warn(url)
-        data = self.module.jsonify(data)
 
         if headers is not None:
             self.headers.update(headers)
+
+        if self.headers['Content-Type'] == "application/json":
+            data = self.module.jsonify(data)
 
         resp, info = fetch_url(
             self.module, url, data=data, headers=self.headers, method=method,

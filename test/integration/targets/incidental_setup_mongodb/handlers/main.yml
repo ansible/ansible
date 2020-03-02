@@ -1,0 +1,24 @@
+- name: Remove debian_packages_py2
+  apt:
+    name: "{{ debian_packages_py2 }}"
+    state: absent
+
+- name: Remove debian_packages_py36
+  apt:
+    name: "{{ debian_packages_py36 }}"
+    state: absent
+
+- name: Remove redhat_packages_py2
+  yum:
+    name: "{{ redhat_packages_py36 }}"
+    state: absent
+
+- name: Remove redhat_packages_py36
+  yum:
+    name: "{{ redhat_packages_py36 }}"
+    state: absent
+
+- name: remove mongodb pip packages
+  pip:
+    name: "{{ pip_packages }}"
+    state: absent

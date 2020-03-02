@@ -1,0 +1,2 @@
+minor_changes:
+- postgresql_db - add ``dump_extra_args`` parameter (https://github.com/ansible/ansible/pull/66717).

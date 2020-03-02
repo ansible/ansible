@@ -662,7 +662,7 @@ class TaskExecutor:
                 if not isidentifier(self._task.register):
                     raise AnsibleError("Invalid variable name in 'register' specified: '%s'" % self._task.register)
 
-                vars_copy[self._task.register] = wrap_var(result)
+                vars_copy[self._task.register] = result = wrap_var(result)
 
             if self._task.async_val > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
@@ -720,7 +720,7 @@ class TaskExecutor:
             # This gives changed/failed_when access to additional recently modified
             # attributes of result
             if self._task.register:
-                vars_copy[self._task.register] = wrap_var(result)
+                vars_copy[self._task.register] = result = wrap_var(result)
 
             # if we didn't skip this task, use the helpers to evaluate the changed/
             # failed_when properties
@@ -751,7 +751,7 @@ class TaskExecutor:
         # do the final update of the local variables here, for both registered
         # values and any facts which may have been created
         if self._task.register:
-            variables[self._task.register] = wrap_var(result)
+            variables[self._task.register] = result = wrap_var(result)
 
         if 'ansible_facts' in result:
             if self._task.action in ('set_fact', 'include_vars'):
@@ -1017,16 +1017,23 @@ class TaskExecutor:
         Returns the correct action plugin to handle the requestion task action
         '''
 
-        module_prefix = self._task.action.split('.')[-1].split('_')[0]
+        module_collection, separator, module_name = self._task.action.rpartition(".")
+        module_prefix = module_name.split('_')[0]
+        if module_collection:
+            # For network modules, which look for one action plugin per platform, look for the
+            # action plugin in the same collection as the module by prefixing the action plugin
+            # with the same collection.
+            network_action = "{0}.{1}".format(module_collection, module_prefix)
+        else:
+            network_action = module_prefix
 
         collections = self._task.collections
 
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
             handler_name = self._task.action
-        # FIXME: is this code path even live anymore? check w/ networking folks; it trips sometimes when it shouldn't
-        elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
-            handler_name = module_prefix
+        elif all((module_prefix in C.NETWORK_GROUP_MODULES, self._shared_loader_obj.action_loader.has_plugin(network_action, collection_list=collections))):
+            handler_name = network_action
         else:
             # FUTURE: once we're comfortable with collections impl, preface this action with ansible.builtin so it can't be hijacked
             handler_name = 'normal'

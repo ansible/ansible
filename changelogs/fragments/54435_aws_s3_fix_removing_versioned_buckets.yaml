@@ -1,0 +1,2 @@
+bugfixes:
+  - aws_s3 - Delete objects and delete markers so versioned buckets can be removed.

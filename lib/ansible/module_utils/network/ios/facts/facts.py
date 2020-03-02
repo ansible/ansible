@@ -23,6 +23,9 @@ from ansible.module_utils.network.ios.facts.lacp_interfaces.lacp_interfaces impo
 from ansible.module_utils.network.ios.facts.lldp_global.lldp_global import Lldp_globalFacts
 from ansible.module_utils.network.ios.facts.lldp_interfaces.lldp_interfaces import Lldp_InterfacesFacts
 from ansible.module_utils.network.ios.facts.l3_interfaces.l3_interfaces import L3_InterfacesFacts
+from ansible.module_utils.network.ios.facts.acl_interfaces.acl_interfaces import Acl_InterfacesFacts
+from ansible.module_utils.network.ios.facts.static_routes.static_routes import Static_RoutesFacts
+from ansible.module_utils.network.ios.facts.acls.acls import AclsFacts
 from ansible.module_utils.network.ios.facts.legacy.base import Default, Hardware, Interfaces, Config
 
 
@@ -43,6 +46,9 @@ FACT_RESOURCE_SUBSETS = dict(
     lldp_global=Lldp_globalFacts,
     lldp_interfaces=Lldp_InterfacesFacts,
     l3_interfaces=L3_InterfacesFacts,
+    acl_interfaces=Acl_InterfacesFacts,
+    static_routes=Static_RoutesFacts,
+    acls=AclsFacts,
 )
 
 

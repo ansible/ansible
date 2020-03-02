@@ -87,7 +87,7 @@ EXAMPLES = r'''
 - name: Create new AIX host
   purefa_host:
     host: foo
-    personaility: aix
+    personality: aix
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
@@ -452,12 +452,13 @@ def main():
                 if not all_connected_arrays:
                     module.fail_json(msg='No target arrays connected to source array. Setting preferred arrays not possible.')
                 else:
-                    current_arrays = []
+                    current_arrays = [array.get()['array_name']]
                     for current_array in range(0, len(all_connected_arrays)):
-                        current_arrays.append(all_connected_arrays[current_array]['array_name'])
+                        if all_connected_arrays[current_array]['type'] == "sync-replication":
+                            current_arrays.append(all_connected_arrays[current_array]['array_name'])
                 for array_to_connect in range(0, len(module.params['preferred_array'])):
                     if module.params['preferred_array'][array_to_connect] not in current_arrays:
-                        module.fail_json(msg='Array {0} not in existing array connections.'.format(module.params['preferred_array'][array_to_connect]))
+                        module.fail_json(msg='Array {0} is not a synchronously connected array.'.format(module.params['preferred_array'][array_to_connect]))
         except Exception:
             module.fail_json(msg='Failed to get existing array connections.')
 

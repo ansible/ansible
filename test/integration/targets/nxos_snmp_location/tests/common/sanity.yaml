@@ -1,19 +1,15 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_snmp_location sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: Setup - Remove snmp_location if configured
   nxos_snmp_location: &remove
     location: Test 
-    provider: "{{ connection }}"
     state: absent
 
 - block:
   - name: Configure snmp location 
     nxos_snmp_location: &config
       location: Testing
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -32,7 +28,6 @@
   - name: Change snmp location 
     nxos_snmp_location: &config1
       location: Test
-      provider: "{{ connection }}"
       state: present
     register: result
 

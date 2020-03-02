@@ -1,0 +1,2 @@
+bugfixes:
+  - Fixes the url handling in lxd_container module that url cannot be specified in lxd environment created by snap.

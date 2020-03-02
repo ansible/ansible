@@ -193,6 +193,19 @@ resources:
         firewall rule will be enabled.
       returned: success
       type: bool
+    logConfig:
+      description:
+      - This field denotes whether to enable logging for a particular firewall rule.
+        If logging is enabled, logs will be exported to Stackdriver.
+      returned: success
+      type: complex
+      contains:
+        enableLogging:
+          description:
+          - This field denotes whether to enable logging for a particular firewall
+            rule. If logging is enabled, logs will be exported to Stackdriver.
+          returned: success
+          type: bool
     id:
       description:
       - The unique identifier for the resource.
@@ -213,7 +226,7 @@ resources:
       - 'URL of the network resource for this firewall rule. If not specified when
         creating a firewall rule, the default network is used: global/networks/default
         If you choose to specify this property, you can specify the network as a full
-        or partial URL. For example, the following are all valid URLs: U(https://www.googleapis.com/compute/v1/projects/myproject/global/)
+        or partial URL. For example, the following are all valid URLs: https://www.googleapis.com/compute/v1/projects/myproject/global/
         networks/my-network projects/myproject/global/networks/my-network global/networks/default
         .'
       returned: success

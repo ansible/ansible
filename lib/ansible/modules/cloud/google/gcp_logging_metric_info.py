@@ -257,7 +257,7 @@ resources:
               description:
               - Must be greater than 1.
               returned: success
-              type: int
+              type: str
             scale:
               description:
               - Must be greater than 0.

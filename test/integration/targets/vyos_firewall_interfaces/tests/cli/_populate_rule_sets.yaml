@@ -1,0 +1,10 @@
+---
+- name: Setup
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      set firewall name 'INBOUND'
+      set firewall name 'OUTBOUND'
+      set firewall name 'LOCAL'
+      set firewall ipv6-name 'V6-LOCAL'

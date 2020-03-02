@@ -290,7 +290,7 @@ creation_time:
 '''  # NOQA
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict, ec2_argument_spec
+from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict
 
 try:
     import botocore
@@ -480,8 +480,7 @@ def create_scaling_policy(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
+    argument_spec = dict(
         state=dict(type='str', required=True, choices=['present', 'absent']),
         policy_name=dict(type='str', required=True),
         service_namespace=dict(type='str', required=True, choices=['appstream', 'dynamodb', 'ec2', 'ecs', 'elasticmapreduce']),

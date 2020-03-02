@@ -1,0 +1,5 @@
+---
+ec2_ami_name: 'amzn2-ami-hvm-2.0.20190612-x86_64-gp2'
+
+tg_name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-tg"
+lb_name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-lb"

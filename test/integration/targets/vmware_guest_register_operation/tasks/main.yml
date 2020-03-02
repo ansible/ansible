@@ -13,7 +13,7 @@
 
 - block:
   - name: gather facts of vm
-    vmware_guest_facts:
+    vmware_guest_info:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
@@ -218,7 +218,7 @@
         | length == 1
 
 - name: Gather facts of vm
-  vmware_guest_facts:
+  vmware_guest_info:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"

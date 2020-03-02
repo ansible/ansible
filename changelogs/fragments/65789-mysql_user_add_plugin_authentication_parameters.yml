@@ -1,0 +1,4 @@
+minor_changes:
+- mysql_user - add ``plugin`` parameter (https://github.com/ansible/ansible/pull/44267).
+- mysql_user - add ``plugin_hash_string`` parameter (https://github.com/ansible/ansible/pull/44267).
+- mysql_user - add ``plugin_auth_string`` parameter (https://github.com/ansible/ansible/pull/44267).

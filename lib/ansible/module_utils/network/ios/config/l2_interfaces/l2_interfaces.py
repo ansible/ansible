@@ -36,6 +36,7 @@ class L2_Interfaces(ConfigBase):
     ]
 
     access_cmds = {'access_vlan': 'switchport access vlan'}
+    voice_cmds = {'voice_vlan': 'switchport voice vlan'}
     trunk_cmds = {'encapsulation': 'switchport trunk encapsulation', 'pruning_vlans': 'switchport trunk pruning vlan',
                   'native_vlan': 'switchport trunk native vlan', 'allowed_vlans': 'switchport trunk allowed vlan'}
 
@@ -155,7 +156,7 @@ class L2_Interfaces(ConfigBase):
                     break
             else:
                 # We didn't find a matching desired state, which means we can
-                # pretend we recieved an empty desired state.
+                # pretend we received an empty desired state.
                 interface = dict(name=each['name'])
                 kwargs = {'want': interface, 'have': each}
                 commands.extend(self._clear_config(**kwargs))
@@ -245,14 +246,21 @@ class L2_Interfaces(ConfigBase):
 
         if diff:
             diff = dict(diff)
+            mode = diff.get('mode')
+            access = diff.get('access')
+            trunk = diff.get('trunk')
 
-            if diff.get('access'):
-                cmd = 'switchport access vlan {0}'.format(diff.get('access')[0][1])
+            if access:
+                cmd = 'switchport access vlan {0}'.format(access[0][1])
+                add_command_to_config_list(interface, cmd, commands)
+
+            if diff.get('voice'):
+                cmd = 'switchport voice vlan {0}'.format(diff.get('voice')[0][1])
                 add_command_to_config_list(interface, cmd, commands)
 
             if want_trunk:
-                if diff.get('trunk'):
-                    diff = dict(diff.get('trunk'))
+                if trunk:
+                    diff = dict(trunk)
                 if diff.get('encapsulation'):
                     cmd = self.trunk_cmds['encapsulation'] + ' {0}'.format(diff.get('encapsulation'))
                     add_command_to_config_list(interface, cmd, commands)
@@ -271,6 +279,10 @@ class L2_Interfaces(ConfigBase):
                     cmd = self.trunk_cmds['pruning_vlans'] + ' {0}'.format(pruning_vlans)
                     add_command_to_config_list(interface, cmd, commands)
 
+            if mode:
+                cmd = 'switchport mode {0}'.format(mode)
+                add_command_to_config_list(interface, cmd, commands)
+
         return commands
 
     def _clear_config(self, want, have):
@@ -281,11 +293,20 @@ class L2_Interfaces(ConfigBase):
         else:
             interface = 'interface ' + have['name']
 
+        if have.get('mode') or want.get('mode'):
+            remove_command_from_config_list(interface, 'switchport mode', commands)
+
         if have.get('access') and want.get('access') is None:
             remove_command_from_config_list(interface, L2_Interfaces.access_cmds['access_vlan'], commands)
         elif have.get('access') and want.get('access'):
             if have.get('access').get('vlan') != want.get('access').get('vlan'):
                 remove_command_from_config_list(interface, L2_Interfaces.access_cmds['access_vlan'], commands)
+
+        if have.get('voice') and want.get('voice') is None:
+            remove_command_from_config_list(interface, L2_Interfaces.voice_cmds['voice_vlan'], commands)
+        elif have.get('voice') and want.get('voice'):
+            if have.get('voice').get('vlan') != want.get('voice').get('vlan'):
+                remove_command_from_config_list(interface, L2_Interfaces.voice_cmds['voice_vlan'], commands)
 
         if have.get('trunk') and want.get('trunk') is None:
             # Check when no config is passed

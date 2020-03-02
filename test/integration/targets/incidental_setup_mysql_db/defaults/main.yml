@@ -1,0 +1,18 @@
+mysql_service: mysqld
+
+mysql_packages:
+    - mysql-server
+    - MySQL-python
+    - bzip2
+
+mysql_cleanup_packages:
+  - mysql-community-client
+  - mysql-community-common
+  - mysql-community-libs
+  - mysql-community-libs-compat
+  - mysql-community-server
+  - mysql80-community-release
+
+mysql_data_dirs:
+  - /var/lib/mysql
+  - /usr/mysql

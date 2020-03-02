@@ -1,5 +1,3 @@
-# SCW_API_KEY='XXX' SCW_ORG='YYY' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_volume
-
 - name: Make sure volume is not there before tests
   scaleway_volume:
     name: ansible-test-volume

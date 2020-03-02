@@ -44,6 +44,7 @@ from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVar
 from ansible.module_utils.six import iteritems, string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Sequence, Mapping, MutableMapping
+from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
@@ -505,8 +506,8 @@ class Templar:
         are being changed.
         '''
 
-        if not isinstance(variables, dict):
-            raise AnsibleAssertionError("the type of 'variables' should be a dict but was a %s" % (type(variables)))
+        if not isinstance(variables, Mapping):
+            raise AnsibleAssertionError("the type of 'variables' should be a Mapping but was a %s" % (type(variables)))
         self._available_variables = variables
         self._cached_result = {}
 
@@ -627,12 +628,12 @@ class Templar:
                         # we only cache in the case where we have a single variable
                         # name, to make sure we're not putting things which may otherwise
                         # be dynamic in the cache (filters, lookups, etc.)
-                        if cache:
+                        if cache and only_one:
                             self._cached_result[sha1_hash] = result
 
                 return result
 
-            elif isinstance(variable, (list, tuple)):
+            elif is_sequence(variable):
                 return [self.template(
                     v,
                     preserve_trailing_newlines=preserve_trailing_newlines,
@@ -640,7 +641,7 @@ class Templar:
                     overrides=overrides,
                     disable_lookups=disable_lookups,
                 ) for v in variable]
-            elif isinstance(variable, (dict, Mapping)):
+            elif isinstance(variable, Mapping):
                 d = {}
                 # we don't use iteritems() here to avoid problems if the underlying dict
                 # changes sizes due to the templating, which can happen with hostvars
@@ -748,7 +749,7 @@ class Templar:
         return self._lookup(name, *args, **kwargs)
 
     def _lookup(self, name, *args, **kwargs):
-        instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
+        instance = self._lookup_loader.get(name, loader=self._loader, templar=self)
 
         if instance is not None:
             wantlist = kwargs.pop('wantlist', False)

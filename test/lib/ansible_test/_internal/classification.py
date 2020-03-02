@@ -728,11 +728,9 @@ class PathMapper:
         if path.startswith('test/ansible_test/'):
             return minimal  # these tests are not invoked from ansible-test
 
-        if path.startswith('test/legacy/'):
-            return minimal
-
         if path.startswith('test/lib/ansible_test/config/'):
             if name.startswith('cloud-config-'):
+                # noinspection PyTypeChecker
                 cloud_target = 'cloud/%s/' % name.split('-')[2].split('.')[0]
 
                 if cloud_target in self.integration_targets_by_alias:
@@ -808,18 +806,16 @@ class PathMapper:
         if path.startswith('test/lib/'):
             return all_tests(self.args)  # test infrastructure, run all tests
 
-        if path.startswith('test/utils/shippable/tools/'):
-            return minimal  # not used by tests
+        if path.startswith('test/support/'):
+            return all_tests(self.args)  # test infrastructure, run all tests
 
         if path.startswith('test/utils/shippable/'):
             if dirname == 'test/utils/shippable':
                 test_map = {
                     'cloud.sh': 'integration:cloud/',
-                    'freebsd.sh': 'integration:all',
                     'linux.sh': 'integration:all',
                     'network.sh': 'network-integration:all',
-                    'osx.sh': 'integration:all',
-                    'rhel.sh': 'integration:all',
+                    'remote.sh': 'integration:all',
                     'sanity.sh': 'sanity:all',
                     'units.sh': 'units:all',
                     'windows.sh': 'windows-integration:all',

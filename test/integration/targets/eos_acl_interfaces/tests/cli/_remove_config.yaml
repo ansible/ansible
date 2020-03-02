@@ -1,0 +1,8 @@
+---
+- name: Setup
+  eos_acl_interfaces:
+    config:
+      - name: "{{ Interfaces['int1'] }}"
+      - name: "{{ Interfaces['int2'] }}"
+    state: deleted
+  become: yes

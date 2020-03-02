@@ -90,7 +90,6 @@ class TestIosxrConfigModule(TestIosxrModule):
     def test_iosxr_config_lines_w_parents(self):
         lines = ['shutdown']
         parents = ['interface GigabitEthernet0/0']
-        candidate = parents + lines
         set_module_args(dict(lines=lines, parents=parents))
         module = MagicMock()
         module.params = {'lines': lines, 'parents': parents, 'src': None}
@@ -194,29 +193,29 @@ class TestIosxrConfigModule(TestIosxrModule):
     def test_iosxr_config_src_and_lines_fails(self):
         args = dict(src='foo', lines='foo')
         set_module_args(args)
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)
 
     def test_iosxr_config_src_and_parents_fails(self):
         args = dict(src='foo', parents='foo')
         set_module_args(args)
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)
 
     def test_iosxr_config_match_exact_requires_lines(self):
         args = dict(match='exact')
         set_module_args(args)
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)
 
     def test_iosxr_config_match_strict_requires_lines(self):
         args = dict(match='strict')
         set_module_args(args)
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)
 
     def test_iosxr_config_replace_block_requires_lines(self):
         args = dict(replace='block')
         set_module_args(args)
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)
 
     def test_iosxr_config_replace_config_requires_src(self):
         args = dict(replace='config')
         set_module_args(args)
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)

@@ -39,6 +39,149 @@
     that:
       - gitlab_project_variable_state is changed
 
+- name: test new format
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+  register: gitlab_project_variable_state
+
+- name: state must be not changed
+  assert:
+    that:
+      - gitlab_project_variable_state is not changed
+
+- name: change protected attribute
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+        protected: True
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: revert protected attribute
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+        protected: False
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: change masked attribute
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+        masked: True
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: revert masked attribute by not mention it
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: revert again masked attribute by not mention it (idempotent)
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+  register: gitlab_project_variable_state
+
+- name: state must be not changed
+  assert:
+    that:
+      - gitlab_project_variable_state is not changed
+
+- name: set both (masked and protected) attribute
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+        masked: True
+        protected: True
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: set again both (masked and protected) attribute (idempotent)
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+        masked: True
+        protected: True
+  register: gitlab_project_variable_state
+
+- name: state must not be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is not changed
+
+- name: revert both (masked and protected) attribute
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID:
+        value: checkmode
+        protected: False
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
 - name: change a variable value in check_mode again
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
@@ -211,6 +354,44 @@
       - gitlab_project_variable_state.project_variable.removed|length == 0
       - gitlab_project_variable_state.project_variable.updated|length == 0
       - gitlab_project_variable_state.project_variable.untouched[0] == "some"
+
+- name: test integer values
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      some: 42
+    purge: False
+  register: gitlab_project_variable_state
+
+- name: only one variable is left state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 0
+      - gitlab_project_variable_state.project_variable.untouched|length == 0
+      - gitlab_project_variable_state.project_variable.removed|length == 0
+      - gitlab_project_variable_state.project_variable.updated|length == 1
+
+- name: test float values
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      some: 42.23
+    purge: False
+  register: gitlab_project_variable_state
+
+- name: only one variable is left state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 0
+      - gitlab_project_variable_state.project_variable.untouched|length == 0
+      - gitlab_project_variable_state.project_variable.removed|length == 0
+      - gitlab_project_variable_state.project_variable.updated|length == 1
 
 - name: delete the last left variable
   gitlab_project_variable:

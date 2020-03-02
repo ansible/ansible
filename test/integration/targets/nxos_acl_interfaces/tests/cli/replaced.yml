@@ -1,0 +1,60 @@
+---
+- debug:
+    msg: "Start nxos_acl_interfaces replaced integration tests connection = {{ansible_connection}}"
+
+- include_tasks: populate_config.yaml
+
+- block:
+    - name: Replaced
+      nxos_acl_interfaces: &replaced
+        config:
+          - name: Eth1/5
+            access_groups:
+              - afi: ipv4
+                acls:
+                  - name: NewACLv4
+                    direction: out
+
+          - name: Ethernet1/3
+            access_groups:
+              - afi: ipv6
+                acls:
+                  - name: NewACLv6
+                    direction: in
+                    port: true
+        state: replaced
+      register: result
+
+    - assert:
+        that:
+          - "result.changed==True"
+          - "'interface Ethernet1/5' in result.commands"
+          - "'no ip access-group ACL1v4 out' in result.commands"
+          - "'no ip port access-group PortACL in' in result.commands"
+          - "'no ipv6 traffic-filter ACL1v6 in' in result.commands"
+          - "'ip access-group NewACLv4 out' in result.commands"
+          - "'interface Ethernet1/3' in result.commands"
+          - "'ipv6 port traffic-filter NewACLv6 in' in result.commands"
+          - "result.commands|length==7"
+
+    - name: Gather acl_interfaces post facts
+      nxos_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: acl_interfaces
+
+    - assert:
+        that:
+          - "ansible_facts.network_resources.acl_interfaces == result.after"
+
+    - name: Idempotence - Replaced
+      nxos_acl_interfaces: *replaced
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+
+  always:
+    - include_tasks: remove_config.yaml

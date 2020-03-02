@@ -165,7 +165,7 @@ class AnsibleVultrServerInfo(Vultr):
         return self.get_firewallgroup(firewallgroup, 'FIREWALLGROUPID').get('description')
 
     def _get_plan_name(self, plan):
-        return self.get_plan(plan, 'VPSPLANID').get('name')
+        return self.get_plan(plan, 'VPSPLANID', optional=True).get('name') or 'N/A'
 
     def get_servers(self):
         return self.api_query(path="/v1/server/list")

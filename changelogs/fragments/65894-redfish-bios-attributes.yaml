@@ -1,0 +1,4 @@
+minor_changes:
+- redfish_config - New ``bios_attributes`` option to allow setting multiple BIOS attributes in one command.
+deprecated_features:
+- redfish_config - Deprecate ``bios_attribute_name`` and ``bios_attribute_value`` in favor of new `bios_attributes`` option.

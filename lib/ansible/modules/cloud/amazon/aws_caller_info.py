@@ -70,7 +70,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 try:
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def main():

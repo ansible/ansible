@@ -103,7 +103,7 @@
           - result.vpc.cidr_block_association_set | length == 1
           - result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[0].cidr_block == vpc_cidr
-          - result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"
+          - result.vpc.cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
           - '"classic_link_enabled" in result.vpc'
           - result.vpc.dhcp_options_id.startswith("dopt-")
           - result.vpc.id.startswith("vpc-")
@@ -111,7 +111,7 @@
           - result.vpc.ipv6_cidr_block_association_set | length == 1
           - result.vpc.ipv6_cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block | ipv6
-          - result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state == "associated"
+          - result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state in ["associated", "associating"]
           - '"is_default" in result.vpc'
           - '"state" in result.vpc'
           - result.vpc.tags.keys() | length == 1
@@ -147,7 +147,7 @@
           - result.vpc.cidr_block_association_set | length == 1
           - result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[0].cidr_block == vpc_cidr
-          - result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"
+          - result.vpc.cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
           - '"classic_link_enabled" in result.vpc'
           - result.vpc.dhcp_options_id.startswith("dopt-")
           - result.vpc.id.startswith("vpc-")
@@ -155,7 +155,7 @@
           - result.vpc.ipv6_cidr_block_association_set | length == 1
           - result.vpc.ipv6_cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block | ipv6
-          - result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state == "associated"
+          - result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state in ["associated", "associating"]
           - '"is_default" in result.vpc'
           - '"state" in result.vpc'
           - result.vpc.tags.keys() | length == 1
@@ -186,7 +186,7 @@
           - vpc_info.vpcs[0].cidr_block_association_set | length == 1
           - vpc_info.vpcs[0].cidr_block_association_set[0].association_id == result.vpc.cidr_block_association_set[0].association_id
           - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block == result.vpc.cidr_block_association_set[0].cidr_block
-          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
           - '"classic_link_dns_supported" in vpc_info.vpcs[0]'
           - '"classic_link_enabled" in vpc_info.vpcs[0]'
           - vpc_info.vpcs[0].dhcp_options_id == result.vpc.dhcp_options_id
@@ -197,7 +197,7 @@
           - vpc_info.vpcs[0].ipv6_cidr_block_association_set | length == 1
           - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].association_id == result.vpc.ipv6_cidr_block_association_set[0].association_id
           - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block == result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block
-          - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state == "associated"
+          - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state in ["associated", "associating"]
           - '"is_default" in vpc_info.vpcs[0]'
           - vpc_info.vpcs[0].owner_id == caller_facts.account
           - '"state" in vpc_info.vpcs[0]'
@@ -294,7 +294,7 @@
           - vpc_info.vpcs[0].cidr_block_association_set | length == 1
           - vpc_info.vpcs[0].cidr_block_association_set[0].association_id == result.vpc.cidr_block_association_set[0].association_id
           - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block == result.vpc.cidr_block_association_set[0].cidr_block
-          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
           - '"classic_link_dns_supported" in vpc_info.vpcs[0]'
           - '"classic_link_enabled" in vpc_info.vpcs[0]'
           - vpc_info.vpcs[0].dhcp_options_id == result.vpc.dhcp_options_id
@@ -305,7 +305,7 @@
           - vpc_info.vpcs[0].ipv6_cidr_block_association_set | length == 1
           - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].association_id == result.vpc.ipv6_cidr_block_association_set[0].association_id
           - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block == result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block
-          - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state == "associated"
+          - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state in ["associated", "associating"]
           - '"is_default" in vpc_info.vpcs[0]'
           - vpc_info.vpcs[0].owner_id == caller_facts.account
           - '"state" in vpc_info.vpcs[0]'
@@ -787,8 +787,8 @@
     #      - vpc_info.vpcs[0].cidr_block_association_set | length == 1
     #      - vpc_info.vpcs[0].cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
     #      - vpc_info.vpcs[0].cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
-    #      - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
-    #      - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state == "associated"
+    #      - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+    #      - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
     #      - vpc_cidr in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
     #      - vpc_cidr_a not in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
     #      - vpc_cidr_b not in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -818,16 +818,16 @@
           - result.vpc.cidr_block_association_set | length == 2
           - result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
-          - result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[1].cidr_block_state.state == "associated"
+          - result.vpc.cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b not in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_info.vpcs[0].cidr_block_association_set | length == 2
           - vpc_info.vpcs[0].cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
-          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state == "associated"
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b not in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -857,16 +857,16 @@
           - result.vpc.cidr_block_association_set | length == 2
           - result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
-          - result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[1].cidr_block_state.state == "associated"
+          - result.vpc.cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b not in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_info.vpcs[0].cidr_block_association_set | length == 2
           - vpc_info.vpcs[0].cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
-          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state == "associated"
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b not in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -899,8 +899,8 @@
     #      - vpc_info.vpcs[0].cidr_block_association_set | length == 2
     #      - vpc_info.vpcs[0].cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
     #      - vpc_info.vpcs[0].cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
-    #      - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
-    #      - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state == "associated"
+    #      - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+    #      - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
     #      - vpc_cidr in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
     #      - vpc_cidr_a in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
     #      - vpc_cidr_b not in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -931,9 +931,9 @@
           - result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-          - result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[1].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[2].cidr_block_state.state == "associated"
+          - result.vpc.cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -941,9 +941,9 @@
           - vpc_info.vpcs[0].cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state == "associated"
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -973,9 +973,9 @@
           - result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-          - result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[1].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[2].cidr_block_state.state == "associated"
+          - result.vpc.cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -983,9 +983,9 @@
           - vpc_info.vpcs[0].cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state == "associated"
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -1016,9 +1016,9 @@
           - result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-          - result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[1].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[2].cidr_block_state.state == "associated"
+          - result.vpc.cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -1026,9 +1026,9 @@
           - vpc_info.vpcs[0].cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state == "associated"
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -1059,9 +1059,9 @@
           - result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-          - result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[1].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[2].cidr_block_state.state == "associated"
+          - result.vpc.cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -1069,9 +1069,9 @@
           - vpc_info.vpcs[0].cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state == "associated"
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -1102,9 +1102,9 @@
           - result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-          - result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[1].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[2].cidr_block_state.state == "associated"
+          - result.vpc.cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -1112,9 +1112,9 @@
           - vpc_info.vpcs[0].cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state == "associated"
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -1145,9 +1145,9 @@
           - result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
           - result.vpc.cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-          - result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[1].cidr_block_state.state == "associated"
-          - result.vpc.cidr_block_association_set[2].cidr_block_state.state == "associated"
+          - result.vpc.cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+          - result.vpc.cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -1155,9 +1155,9 @@
           - vpc_info.vpcs[0].cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
           - vpc_info.vpcs[0].cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state == "associated"
-          - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state == "associated"
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+          - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
           - vpc_cidr in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_a in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
           - vpc_cidr_b in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -1189,9 +1189,9 @@
     #      - vpc_info.vpcs[0].cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
     #      - vpc_info.vpcs[0].cidr_block_association_set[1].association_id.startswith("vpc-cidr-assoc-")
     #      - vpc_info.vpcs[0].cidr_block_association_set[2].association_id.startswith("vpc-cidr-assoc-")
-    #      - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
-    #      - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state == "associated"
-    #      - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state == "associated"
+    #      - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state in ["associated", "associating"]
+    #      - vpc_info.vpcs[0].cidr_block_association_set[1].cidr_block_state.state in ["associated", "associating"]
+    #      - vpc_info.vpcs[0].cidr_block_association_set[2].cidr_block_state.state in ["associated", "associating"]
     #      - vpc_cidr in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
     #      - vpc_cidr_a in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)
     #      - vpc_cidr_b in (vpc_info.vpcs[0] | json_query("cidr_block_association_set[*].cidr_block") | list)

@@ -19,7 +19,6 @@
 - name: "Check installed OS for newly installed version {{ tv }}"
   nxos_command:
     commands: ['show version | json']
-    provider: "{{ connection }}"
   register: output
 
 - debug: msg="Version detected {{ output['stdout_lines'][0]['kickstart_ver_str'] }}"

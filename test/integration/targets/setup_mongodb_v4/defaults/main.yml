@@ -1,0 +1,13 @@
+mongodb_repo_name: mongodb
+mongodb_repo_descr: MongoDB Repository
+mongodb_repo_link: http://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/4.2/$basearch/
+mongodb_gpgkey: https://www.mongodb.org/static/pgp/server-4.2.asc
+mongodb_pkgs:
+- mongodb-org
+
+pymongo_repo: git://github.com/mongodb/mongo-python-driver.git
+
+mongodb_default_port: 27017
+mongodb_admin_user: admin
+mongodb_admin_password: admin
+mongodb_default_db: admin

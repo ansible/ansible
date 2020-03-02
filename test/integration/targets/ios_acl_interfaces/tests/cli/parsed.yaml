@@ -1,0 +1,16 @@
+---
+- debug:
+    msg: "START ios_acl_interfaces parsed integration tests on connection={{ ansible_connection }}"
+
+- name: Parse the commands for provided configuration
+  ios_acl_interfaces: &parsed
+    running_config:
+       "{{ lookup('file', '_parsed.cfg') }}"
+    state: parsed
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "parsed['config']|symmetric_difference(result.parsed) == []"

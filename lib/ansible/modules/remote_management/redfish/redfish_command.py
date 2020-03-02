@@ -119,6 +119,42 @@ options:
       - The ID of the System, Manager or Chassis to modify
     type: str
     version_added: "2.10"
+  update_image_uri:
+    required: false
+    description:
+      - The URI of the image for the update
+    type: str
+    version_added: "2.10"
+  update_protocol:
+    required: false
+    description:
+      - The protocol for the update
+    type: str
+    version_added: "2.10"
+  update_targets:
+    required: false
+    description:
+      - The list of target resource URIs to apply the update to
+    type: list
+    elements: str
+    version_added: "2.10"
+  update_creds:
+    required: false
+    description:
+      - The credentials for retrieving the update image
+    type: dict
+    suboptions:
+      username:
+        required: false
+        description:
+          - The username for retrieving the update image
+        type: str
+      password:
+        required: false
+        description:
+          - The password for retrieving the update image
+        type: str
+    version_added: "2.10"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -294,6 +330,38 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       timeout: 20
+
+  - name: Clear Sessions
+    redfish_command:
+      category: Sessions
+      command: ClearSessions
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Simple update
+    redfish_command:
+      category: Update
+      command: SimpleUpdate
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      update_image_uri: https://example.com/myupdate.img
+
+  - name: Simple update with additional options
+    redfish_command:
+      category: Update
+      command: SimpleUpdate
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      update_image_uri: //example.com/myupdate.img
+      update_protocol: FTP
+      update_targets:
+        - /redfish/v1/UpdateService/FirmwareInventory/BMC
+      update_creds:
+        username: operator
+        password: supersecretpwd
 '''
 
 RETURN = '''
@@ -317,7 +385,9 @@ CATEGORY_COMMANDS_ALL = {
     "Accounts": ["AddUser", "EnableUser", "DeleteUser", "DisableUser",
                  "UpdateUserRole", "UpdateUserPassword", "UpdateUserName",
                  "UpdateAccountServiceProperties"],
+    "Sessions": ["ClearSessions"],
     "Manager": ["GracefulRestart", "ClearLogs"],
+    "Update": ["SimpleUpdate"]
 }
 
 
@@ -340,7 +410,17 @@ def main():
             timeout=dict(type='int', default=10),
             uefi_target=dict(),
             boot_next=dict(),
-            resource_id=dict()
+            resource_id=dict(),
+            update_image_uri=dict(),
+            update_protocol=dict(),
+            update_targets=dict(type='list', elements='str', default=[]),
+            update_creds=dict(
+                type='dict',
+                options=dict(
+                    username=dict(),
+                    password=dict()
+                )
+            )
         ),
         supports_check_mode=False
     )
@@ -365,6 +445,14 @@ def main():
 
     # System, Manager or Chassis ID to modify
     resource_id = module.params['resource_id']
+
+    # update options
+    update_opts = {
+        'update_image_uri': module.params['update_image_uri'],
+        'update_protocol': module.params['update_protocol'],
+        'update_targets': module.params['update_targets'],
+        'update_creds': module.params['update_creds']
+    }
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
@@ -433,6 +521,16 @@ def main():
                 if command in led_commands:
                     result = rf_utils.manage_indicator_led(command)
 
+    elif category == "Sessions":
+        # execute only if we find SessionService resources
+        resource = rf_utils._find_sessionservice_resource()
+        if resource['ret'] is False:
+            module.fail_json(msg=resource['msg'])
+
+        for command in command_list:
+            if command == "ClearSessions":
+                result = rf_utils.clear_sessions()
+
     elif category == "Manager":
         MANAGER_COMMANDS = {
             "GracefulRestart": rf_utils.restart_manager_gracefully,
@@ -446,6 +544,16 @@ def main():
 
         for command in command_list:
             result = MANAGER_COMMANDS[command]()
+
+    elif category == "Update":
+        # execute only if we find UpdateService resources
+        resource = rf_utils._find_updateservice_resource()
+        if resource['ret'] is False:
+            module.fail_json(msg=resource['msg'])
+
+        for command in command_list:
+            if command == "SimpleUpdate":
+                result = rf_utils.simple_update(update_opts)
 
     # Return data back or fail with proper message
     if result['ret'] is True:

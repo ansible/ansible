@@ -162,7 +162,6 @@ options:
         choices:
             - ReadOnly
             - ReadWrite
-        default: ReadOnly
         aliases:
             - disk_caching
     os_disk_size_gb:
@@ -819,8 +818,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             storage_account_name=dict(type='str', aliases=['storage_account']),
             storage_container_name=dict(type='str', aliases=['storage_container'], default='vhds'),
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
-            os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite'],
-                                 default='ReadOnly'),
+            os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite']),
             os_disk_size_gb=dict(type='int'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'StandardSSD_LRS', 'Premium_LRS']),
             os_disk_name=dict(type='str'),
@@ -1129,7 +1127,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     powerstate_change = 'generalized'
 
                 vm_dict['zones'] = [int(i) for i in vm_dict['zones']] if 'zones' in vm_dict and vm_dict['zones'] else None
-                if self.zones != vm_dict['zones']:
+                if self.zones and self.zones != vm_dict['zones']:
                     self.log("CHANGED: virtual machine {0} zones".format(self.name))
                     differences.append('Zones')
                     changed = True
@@ -1240,6 +1238,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             requested_storage_uri,
                             self.storage_container_name,
                             self.storage_blob_name)
+                    # disk caching
+                    if not self.os_disk_caching:
+                        self.os_disk_caching = 'ReadOnly'
 
                     if not self.short_hostname:
                         self.short_hostname = self.name

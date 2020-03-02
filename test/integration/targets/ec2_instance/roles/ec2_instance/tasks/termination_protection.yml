@@ -1,0 +1,184 @@
+- block:
+
+    - name: Create instance with termination protection (check mode)
+      ec2_instance:
+        name: "{{ resource_prefix }}-termination-protection"
+        image_id: "{{ ec2_ami_image }}"
+        tags:
+          TestId: "{{ resource_prefix }}"
+        security_groups: "{{ sg.group_id }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        termination_protection: true
+        instance_type: "{{ ec2_instance_type }}"
+        state: running
+        wait: yes
+      check_mode: yes
+      register: create_instance_check_mode_results
+
+    - name: Check the returned value for the earlier task
+      assert:
+        that:
+          - "{{ create_instance_check_mode_results.changed }}"
+          - "{{ create_instance_check_mode_results.spec.DisableApiTermination }}"
+
+    - name: Create instance with termination protection
+      ec2_instance:
+        name: "{{ resource_prefix }}-termination-protection"
+        image_id: "{{ ec2_ami_image }}"
+        tags:
+          TestId: "{{ resource_prefix }}"
+        security_groups: "{{ sg.group_id }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        termination_protection: true
+        instance_type: "{{ ec2_instance_type }}"
+        state: running
+        wait: yes
+      register: create_instance_results
+
+    - name: Check return values of the create instance task
+      assert:
+        that:
+          - "{{ create_instance_results.instances | length }} > 0"
+          - "'{{ create_instance_results.instances.0.state.name }}' == 'running'"
+          - "'{{ create_instance_results.spec.DisableApiTermination }}'"
+
+    - name: Create instance with termination protection (check mode) (idempotent)
+      ec2_instance:
+        name: "{{ resource_prefix }}-termination-protection"
+        image_id: "{{ ec2_ami_image }}"
+        tags:
+          TestId: "{{ resource_prefix }}"
+        security_groups: "{{ sg.group_id }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        termination_protection: true
+        instance_type: "{{ ec2_instance_type }}"
+        state: running
+        wait: yes
+      check_mode: yes
+      register: create_instance_check_mode_results
+
+    - name: Check the returned value for the earlier task
+      assert:
+        that:
+          - "{{ not create_instance_check_mode_results.changed }}"
+
+    - name: Create instance with termination protection (idempotent)
+      ec2_instance:
+        name: "{{ resource_prefix }}-termination-protection"
+        image_id: "{{ ec2_ami_image }}"
+        tags:
+          TestId: "{{ resource_prefix }}"
+        security_groups: "{{ sg.group_id }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        termination_protection: true
+        instance_type: "{{ ec2_instance_type }}"
+        state: running
+        wait: yes
+      register: create_instance_results
+
+    - name: Check return values of the create instance task
+      assert:
+        that:
+          - "{{ not create_instance_results.changed }}"
+          - "{{ create_instance_results.instances | length }} > 0"
+
+    - name: Try to terminate the instance (expected to fail)
+      ec2_instance:
+        filters:
+          tag:Name: "{{ resource_prefix }}-termination-protection"
+        state: absent
+      failed_when: "'Unable to terminate instances' not in terminate_instance_results.msg"
+      register: terminate_instance_results
+
+    # https://github.com/ansible/ansible/issues/67716
+    # Updates to termination protection in check mode has a bug (listed above)
+
+    - name: Set termination protection to false
+      ec2_instance:
+        name: "{{ resource_prefix }}-termination-protection"
+        image_id: "{{ ec2_ami_image }}"
+        termination_protection: false
+        instance_type: "{{ ec2_instance_type }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      register: set_termination_protection_results
+
+    - name: Check return value
+      assert:
+        that:
+          - "{{ set_termination_protection_results.changed }}"
+          - "{{ not set_termination_protection_results.changes[0].DisableApiTermination.Value }}"
+
+    - name: Set termination protection to false (idempotent)
+      ec2_instance:
+        name: "{{ resource_prefix }}-termination-protection"
+        image_id: "{{ ec2_ami_image }}"
+        termination_protection: false
+        instance_type: "{{ ec2_instance_type }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      register: set_termination_protection_results
+
+    - name: Check return value
+      assert:
+        that:
+          - "{{ not set_termination_protection_results.changed }}"
+
+    - name: Set termination protection to true
+      ec2_instance:
+        name: "{{ resource_prefix }}-termination-protection"
+        image_id: "{{ ec2_ami_image }}"
+        termination_protection: true
+        instance_type: "{{ ec2_instance_type }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      register: set_termination_protection_results
+
+    - name: Check return value
+      assert:
+        that:
+          - "{{ set_termination_protection_results.changed }}"
+          - "{{ set_termination_protection_results.changes[0].DisableApiTermination.Value }}"
+
+    - name: Set termination protection to true (idempotent)
+      ec2_instance:
+        name: "{{ resource_prefix }}-termination-protection"
+        image_id: "{{ ec2_ami_image }}"
+        termination_protection: true
+        instance_type: "{{ ec2_instance_type }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      register: set_termination_protection_results
+
+    - name: Check return value
+      assert:
+        that:
+          - "{{ not set_termination_protection_results.changed }}"
+
+    - name: Set termination protection to false (so we can terminate instance)
+      ec2_instance:
+        name: "{{ resource_prefix }}-termination-protection"
+        image_id: "{{ ec2_ami_image }}"
+        termination_protection: false
+        instance_type: "{{ ec2_instance_type }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      register: set_termination_protection_results
+
+    - name: Terminate the instance
+      ec2_instance:
+        filters:
+          tag:TestId: "{{ resource_prefix }}"
+        state: absent
+
+  always:
+
+    - name: Set termination protection to false (so we can terminate instance) (cleanup)
+      ec2_instance:
+        filters:
+          tag:TestId: "{{ resource_prefix }}"
+        termination_protection: false
+      ignore_errors: yes
+
+    - name: Terminate instance
+      ec2_instance:
+        filters:
+          tag:TestId: "{{ resource_prefix }}"
+        state: absent
+        wait: false
+      ignore_errors: yes

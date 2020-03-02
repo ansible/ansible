@@ -59,9 +59,7 @@ options:
     - "Here 'host' is an invisible folder under VMware Web Client."
     - "Another example, if there is a nested folder structure like '/myhosts/india/pune' under
        datacenter 'dc2', then C(folder) value will be '/dc2/host/myhosts/india/pune'."
-    - "Other Examples: "
-    - "  - '/Site2/dc2/Asia-Cluster/host'"
-    - "  - '/dc3/Asia-Cluster/host'"
+    - "Other Examples: '/Site2/dc2/Asia-Cluster/host' or '/dc3/Asia-Cluster/host'"
     version_added: "2.6"
     aliases: ['folder_name']
     type: str

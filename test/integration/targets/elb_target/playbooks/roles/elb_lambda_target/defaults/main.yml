@@ -1,0 +1,5 @@
+resource_shortprefix: 'ansible-test-{{ resource_prefix | regex_search("([0-9]+)$") }}'
+lambda_role_name: '{{ resource_shortprefix }}-elb-target-lambda'
+#lambda_role_name: '{{ resource_prefix }}-elb-target-lambda'
+lambda_name: '{{ resource_prefix }}-elb-target-lambda'
+elb_target_group_name: '{{ resource_shortprefix }}-elb-tg'

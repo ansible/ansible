@@ -7,6 +7,10 @@ import os
 
 from . import types as t
 
+from .io import (
+    read_binary_file,
+)
+
 from .util import (
     display,
     ApplicationError,
@@ -130,7 +134,7 @@ def get_python_module_utils_name(path):  # type: (str) -> str
     if path.endswith('/__init__.py'):
         path = os.path.dirname(path)
 
-    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.sep, '.')
+    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.path.sep, '.')
 
     return name
 
@@ -161,20 +165,22 @@ def extract_python_module_utils_imports(path, module_utils):
     :type module_utils: set[str]
     :rtype: set[str]
     """
-    with open(path, 'r') as module_fd:
-        code = module_fd.read()
+    # Python code must be read as bytes to avoid a SyntaxError when the source uses comments to declare the file encoding.
+    # See: https://www.python.org/dev/peps/pep-0263
+    # Specifically: If a Unicode string with a coding declaration is passed to compile(), a SyntaxError will be raised.
+    code = read_binary_file(path)
 
-        try:
-            tree = ast.parse(code)
-        except SyntaxError as ex:
-            # Treat this error as a warning so tests can be executed as best as possible.
-            # The compile test will detect and report this syntax error.
-            display.warning('%s:%s Syntax error extracting module_utils imports: %s' % (path, ex.lineno, ex.msg))
-            return set()
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as ex:
+        # Treat this error as a warning so tests can be executed as best as possible.
+        # The compile test will detect and report this syntax error.
+        display.warning('%s:%s Syntax error extracting module_utils imports: %s' % (path, ex.lineno, ex.msg))
+        return set()
 
-        finder = ModuleUtilFinder(path, module_utils)
-        finder.visit(tree)
-        return finder.imports
+    finder = ModuleUtilFinder(path, module_utils)
+    finder.visit(tree)
+    return finder.imports
 
 
 class ModuleUtilFinder(ast.NodeVisitor):

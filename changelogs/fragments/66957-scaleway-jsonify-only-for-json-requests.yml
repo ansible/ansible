@@ -1,0 +1,2 @@
+bugfixes:
+- 'scaleway: use jsonify unmarshaller only for application/json requests to avoid breaking the multiline configuration with requests in text/plain (https://github.com/ansible/ansible/issues/65036)'

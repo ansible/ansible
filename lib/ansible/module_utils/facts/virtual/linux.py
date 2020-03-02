@@ -49,13 +49,17 @@ class LinuxVirtual(Virtual):
 
         # lxc does not always appear in cgroups anymore but sets 'container=lxc' environment var, requires root privs
         if os.path.exists('/proc/1/environ'):
-            for line in get_file_lines('/proc/1/environ'):
+            for line in get_file_lines('/proc/1/environ', line_sep='\x00'):
                 if re.search('container=lxc', line):
                     virtual_facts['virtualization_type'] = 'lxc'
                     virtual_facts['virtualization_role'] = 'guest'
                     return virtual_facts
                 if re.search('container=podman', line):
                     virtual_facts['virtualization_type'] = 'podman'
+                    virtual_facts['virtualization_role'] = 'guest'
+                    return virtual_facts
+                if re.search('^container=.', line):
+                    virtual_facts['virtualization_type'] = 'container'
                     virtual_facts['virtualization_role'] = 'guest'
                     return virtual_facts
 
@@ -89,7 +93,7 @@ class LinuxVirtual(Virtual):
 
         product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
 
-        if product_name in ('KVM', 'Bochs', 'AHV'):
+        if product_name in ('KVM', 'KVM Server', 'Bochs', 'AHV'):
             virtual_facts['virtualization_type'] = 'kvm'
             return virtual_facts
 

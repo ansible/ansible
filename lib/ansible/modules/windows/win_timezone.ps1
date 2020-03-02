@@ -28,18 +28,12 @@ Try {
         Exit-Json $result "Timezone '$timezone' is already set on this machine"
     } Else {
         # Check that timezone is listed as an available timezone to the machine
-        $tzList = $(tzutil.exe /l)
+        $tzList = $(tzutil.exe /l).ToLower()
         If ($LASTEXITCODE -ne 0) {
             Throw "An error occurred when listing the available timezones."
         }
 
-        $tzExists = $false
-        ForEach ($tz in $tzList) {
-            If ( $tz -eq $timezone ) {
-                $tzExists = $true
-                break
-            }
-        }
+        $tzExists = $tzList.Contains(($timezone -Replace '_dstoff').ToLower())
         if (-not $tzExists) {
             Fail-Json $result "The specified timezone: $timezone isn't supported on the machine."
         }

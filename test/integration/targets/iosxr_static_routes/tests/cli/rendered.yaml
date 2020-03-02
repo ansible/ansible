@@ -1,0 +1,76 @@
+---
+- debug:
+      msg: "START iosxr_static_routes rendered integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Use rendered state to convert task input to device specific commands
+      iosxr_static_routes:
+        config:
+          - vrf: DEV_SITE
+            address_families:
+              - afi: ipv4
+                safi: unicast
+                routes:
+                  - dest: 192.0.2.48/28
+                    next_hops:
+                      - forward_router_address: 192.0.2.12
+                        description: "DEV"
+                        dest_vrf: test_1
+                      
+                  - dest: 192.0.2.80/28
+                    next_hops:
+                      - interface: FastEthernet0/0/0/2
+                        forward_router_address: 192.0.2.14
+                        dest_vrf: test_1
+                        track: ip_sla_2
+                        vrflabel: 124
+          
+          - address_families:
+              - afi: ipv4
+                safi: unicast
+                routes:
+                  - dest: 192.0.2.16/28
+                    next_hops:
+                      - forward_router_address: 192.0.2.10
+                        interface: FastEthernet0/0/0/1
+                        description: "LAB"
+                        metric: 120
+                        tag: 10
+                          
+                      - interface: FastEthernet0/0/0/5
+                        track: ip_sla_1
+                      
+                  - dest: 192.0.2.32/28
+                    next_hops:
+                      - forward_router_address: 192.0.2.11
+                        admin_distance: 100
+                  
+              - afi: ipv6
+                safi: unicast
+                routes:
+                  - dest: 2001:db8:1000::/36
+                    next_hops:
+                      - interface: FastEthernet0/0/0/7
+                        description: "DC"
+                          
+                      - interface: FastEthernet0/0/0/8
+                        forward_router_address: 2001:db8:2000:2::1
+        state: rendered
+      register: result
+
+    - assert:
+        that: "{{ merged['commands'] | symmetric_difference(result['rendered']) |length==0 }}"
+
+    - name: Gather static routes facts from the device and assert that its empty
+      iosxr_static_routes:
+        state: gathered
+      register: result
+
+    - name: Make sure that rendered task actually did not make any changes to the device
+      assert:
+        that: "{{ result['gathered'] == [] }}"
+  
+  always:
+    - include_tasks: _remove_config.yaml

@@ -1,0 +1,42 @@
+---
+- debug:
+    msg: "Start nxos_lldp_interfaces rendered tests connection={{ ansible_connection }}"
+
+- name: Rendered
+  nxos_lldp_interfaces: &rendered
+    config:
+      - name: Ethernet1/1
+        receive: true
+        transmit: false
+
+      - name: Ethernet1/2
+        receive: false
+        tlv_set:
+          vlan: 12
+
+      - name: Ethernet1/3
+        tlv_set:
+          management_address: 192.0.2.12
+    state: rendered
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'interface Ethernet1/1' in result.rendered"
+      - "'lldp receive' in result.rendered"
+      - "'no lldp transmit' in result.rendered"
+      - "'interface Ethernet1/2' in result.rendered"
+      - "'no lldp receive' in result.rendered"
+      - "'lldp tlv-set vlan 12' in result.rendered"
+      - "'interface Ethernet1/3' in result.rendered"
+      - "'lldp tlv-set management-address 192.0.2.12' in result.rendered"
+      - "result.rendered | length == 8"
+
+- name: Idempotence - Rendered
+  nxos_lldp_interfaces: *rendered
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"

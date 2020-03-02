@@ -18,7 +18,6 @@ short_description: Manages UCS Organizations for UCS Manager
 
 description:
   - Manages UCS Organizations for UCS Manager.
-  - Examples can be used with the UCS Platform Emulator U(https://cs.co/ucspe).
 
 extends_documentation_fragment: ucs
 

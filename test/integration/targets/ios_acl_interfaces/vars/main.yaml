@@ -1,0 +1,99 @@
+---
+interfaces:
+  int1:
+    GigabitEthernet0/1
+  int2:
+    GigabitEthernet0/2
+
+
+merged:
+  commands:
+    - interface GigabitEthernet0/1
+    - ip access-group 110 in
+    - ip access-group 123 out
+    - ipv6 traffic-filter temp_v6 in
+    - ipv6 traffic-filter test_v6 out
+    - interface GigabitEthernet0/2
+    - ip access-group 110 in
+    - ip access-group 123 out
+
+replaced:
+  commands:
+    - interface GigabitEthernet0/1
+    - no ip access-group 123 out
+    - no ipv6 traffic-filter temp_v6 in
+    - no ipv6 traffic-filter test_v6 out
+    - ip access-group 100 out
+
+overridden:
+  commands:
+    - interface GigabitEthernet0/1
+    - no ip access-group 123 out
+    - no ipv6 traffic-filter test_v6 out
+    - no ipv6 traffic-filter temp_v6 in
+    - ip access-group 100 out
+    - interface GigabitEthernet0/2
+    - no ip access-group 110 in
+    - no ip access-group 123 out
+
+gathered:
+  config:
+    - name: GigabitEthernet0/0
+    - access_groups:
+      - acls:
+        - direction: 'in'
+          name: '110'
+        - direction: 'out'
+          name: '123'
+        afi: 'ipv4'
+      - acls:
+        - direction: 'in'
+          name: 'temp_v6'
+        - direction: 'out'
+          name: 'test_v6'
+        afi: 'ipv6'
+      name: GigabitEthernet0/1
+    - access_groups:
+      - acls:
+        - direction: 'in'
+          name: '110'
+        - direction: 'out'
+          name: '123'
+        afi: ipv4
+      name: GigabitEthernet0/2
+
+parsed:
+  config:
+  - access_groups:
+    - acls:
+      - direction: in
+        name: '110'
+      - direction: out
+        name: '123'
+      afi: ipv4
+    - acls:
+      - direction: in
+        name: temp_v6
+      - direction: out
+        name: test_v6
+      afi: ipv6
+    name: GigabitEthernet0/1
+  - access_groups:
+    - acls:
+      - direction: in
+        name: '110'
+      - direction: out
+        name: '123'
+      afi: ipv4
+    name: GigabitEthernet0/2
+
+rtt:
+  commands:
+    - interface GigabitEthernet0/1
+    - no ip access-group 100 out
+    - ip access-group 123 out
+    - ipv6 traffic-filter temp_v6 in
+    - ipv6 traffic-filter test_v6 out
+    - interface GigabitEthernet0/2
+    - ip access-group 110 in
+    - ip access-group 123 out

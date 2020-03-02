@@ -1,0 +1,22 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Delete VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: nothinghere
+    datacenter: "{{ dc1 }}"
+    state: absent
+  register: delete_vm
+  ignore_errors: yes
+
+- debug: var=delete_vm
+
+- name: assert that changes were made
+  assert:
+    that:
+      - "not delete_vm.changed"

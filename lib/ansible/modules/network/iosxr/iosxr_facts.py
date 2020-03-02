@@ -55,7 +55,7 @@ options:
         specific subset should not be collected.
         Valid subsets are 'all', 'lacp', 'lacp_interfaces', 'lldp_global',
         'lldp_interfaces', 'interfaces', 'l2_interfaces', 'l3_interfaces',
-        'lag_interfaces'.
+        'lag_interfaces', 'acls', 'acl_interfaces', 'static_routes.
     required: false
     version_added: "2.9"
 """
@@ -193,13 +193,15 @@ def main():
 
     :returns: ansible_facts
     """
-    spec = FactsArgs.argument_spec
-    spec.update(iosxr_argument_spec)
+    argument_spec = FactsArgs.argument_spec
+    argument_spec.update(iosxr_argument_spec)
 
-    module = AnsibleModule(argument_spec=spec,
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
-    warnings = ['default value for `gather_subset` '
-                'will be changed to `min` from `!config` v2.11 onwards']
+
+    warnings = []
+    if module.params["gather_subset"] == "!config":
+        warnings.append('default value for `gather_subset` will be changed to `min` from `!config` v2.11 onwards')
 
     result = Facts(module).get_facts()
 

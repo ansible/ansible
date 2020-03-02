@@ -1,0 +1,7 @@
+destructive
+shippable/posix/incidental
+skip/aix
+skip/osx
+skip/freebsd
+skip/rhel
+needs/root

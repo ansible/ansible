@@ -108,7 +108,7 @@ class GalaxyToken(object):
 
     @property
     def config(self):
-        if not self._config:
+        if self._config is None:
             self._config = self._read()
 
         # Prioritise the token passed into the constructor

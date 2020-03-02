@@ -43,6 +43,24 @@
         that:
           - create_kms.key_state == "Enabled"
           - create_kms.tags['Hello'] == 'World'
+          - create_kms.enable_key_rotation == false
+
+    - name: enable key rotation
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        tags:
+          Hello: World
+        state: present
+        enabled: yes
+        enable_key_rotation: yes
+      register: create_kms
+
+    - name: assert that key rotation is enabled
+      assert:
+        that:
+          - create_kms.key_state == "Enabled"
+          - create_kms.tags['Hello'] == 'World'
+          - create_kms.enable_key_rotation == true
 
     - name: find facts about the key
       aws_kms_info:
@@ -54,6 +72,7 @@
       assert:
         that:
           - new_key["keys"]|length == 1
+          - new_key["keys"][0]["enable_key_rotation"] == true
 
     - name: Update Policy on key to match AWS Console generate policy
       aws_kms:

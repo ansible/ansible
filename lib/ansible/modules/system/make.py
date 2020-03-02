@@ -127,7 +127,7 @@ def main():
         make_parameters = []
 
     if module.params['file'] is not None:
-        base_command = [make_path, "--file", module.params['file'], make_target]
+        base_command = [make_path, "-f", module.params['file'], make_target]
     else:
         base_command = [make_path, make_target]
     base_command.extend(make_parameters)

@@ -66,6 +66,15 @@ options:
             description:
             - Configure given VLAN in access port. It's used as the access VLAN ID.
             type: int
+      voice:
+        description:
+        - Switchport mode voice command to configure the interface with a voice vlan.
+        type: dict
+        suboptions:
+          vlan:
+            description:
+            - Configure given voice VLAN on access port. It's used as the voice VLAN ID.
+            type: int
       trunk:
         description:
         - Switchport mode trunk command to configure the interface as a Layer 2 trunk.
@@ -90,6 +99,13 @@ options:
             description:
             - Pruning VLAN to be configured in trunk port. It's used as the trunk pruning VLAN ID.
             type: list
+      mode:
+        description:
+        - Mode in which interface needs to be configured.
+        - An interface whose trunk encapsulation is "Auto" can not be configured to "trunk" mode.
+        version_added: '2.10'
+        type: str
+        choices: ['access', 'trunk']
   state:
     choices:
     - merged
@@ -124,13 +140,17 @@ EXAMPLES = """
   ios_l2_interfaces:
     config:
       - name: GigabitEthernet0/1
+        mode: access
         access:
           vlan: 10
+        voice:
+          vlan: 40
       - name: GigabitEthernet0/2
+        mode: trunk
         trunk:
-          allowed_vlan: 10-20, 40
+          allowed_vlans: 10-20,40
           native_vlan: 20
-          pruning_vlan: 10,20
+          pruning_vlans: 10,20
           encapsulation: dot1q
     state: merged
 
@@ -141,6 +161,8 @@ EXAMPLES = """
 # interface GigabitEthernet0/1
 #  description Configured by Ansible
 #  switchport access vlan 10
+#  switchport access vlan 40
+#  switchport mode access
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test
@@ -148,6 +170,7 @@ EXAMPLES = """
 #  switchport trunk encapsulation dot1q
 #  switchport trunk native vlan 20
 #  switchport trunk pruning vlan 10,20
+#  switchport mode trunk
 #  media-type rj45
 #  negotiation auto
 
@@ -172,9 +195,9 @@ EXAMPLES = """
     config:
       - name: GigabitEthernet0/2
         trunk:
-        - allowed_vlan: 20-25,40
+        - allowed_vlans: 20-25,40
           native_vlan: 20
-          pruning_vlan: 10
+          pruning_vlans: 10
           encapsulation: isl
     state: replaced
 
@@ -220,6 +243,8 @@ EXAMPLES = """
       - name: GigabitEthernet0/2
         access:
           vlan: 20
+        voice:
+          vlan: 40
     state: overridden
 
 # After state:
@@ -232,6 +257,7 @@ EXAMPLES = """
 # interface GigabitEthernet0/2
 #  description This is test
 #  switchport access vlan 20
+#  switchport voice vlan 40
 #  media-type rj45
 #  negotiation auto
 

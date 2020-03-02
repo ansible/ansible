@@ -182,6 +182,8 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.lxd import LXDClient, LXDClientException
 
+# ANSIBLE_LXD_DEFAULT_URL is a default value of the lxd endpoint
+ANSIBLE_LXD_DEFAULT_URL = 'unix:/var/lib/lxd/unix.socket'
 
 # PROFILE_STATES is a list for states supported
 PROFILES_STATES = [
@@ -212,7 +214,9 @@ class LXDProfileManagement(object):
         self.debug = self.module._verbosity >= 4
 
         try:
-            if os.path.exists(self.module.params['snap_url'].replace('unix:', '')):
+            if self.module.params['url'] != ANSIBLE_LXD_DEFAULT_URL:
+                self.url = self.module.params['url']
+            elif os.path.exists(self.module.params['snap_url'].replace('unix:', '')):
                 self.url = self.module.params['snap_url']
             else:
                 self.url = self.module.params['url']
@@ -366,7 +370,7 @@ def main():
             ),
             url=dict(
                 type='str',
-                default='unix:/var/lib/lxd/unix.socket'
+                default=ANSIBLE_LXD_DEFAULT_URL
             ),
             snap_url=dict(
                 type='str',

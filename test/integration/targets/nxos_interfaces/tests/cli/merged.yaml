@@ -3,6 +3,8 @@
     msg: "Start nxos_interfaces merged integration tests connection={{ ansible_connection }}"
 
 - set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: enabled=true
+  when: platform is not search('N3[5KL]|N[56]K|titanium')
 
 - name: setup
   cli_config: &cleanup
@@ -15,15 +17,20 @@
       config:
         - name: "{{ test_int1 }}"
           description: Configured by Ansible
+          enabled: "{{ enabled|default(omit)}}"
       state:  merged
     register: result
 
   - assert:
       that:
         - "result.changed == true"
-        - "result.before|length == 0"
         - "'interface {{ test_int1 }}' in result.commands"
         - "'description Configured by Ansible' in result.commands"
+
+  - assert:
+      that:
+        - "'no shutdown' in result.commands"
+    when: enabled is defined
 
   - name: Gather interfaces facts
     nxos_facts:

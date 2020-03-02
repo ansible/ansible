@@ -11,9 +11,12 @@ DOCUMENTATION = '''
     short_description: Executes an inventory script that returns JSON
     options:
       cache:
-        description: Toggle the usage of the configured Cache plugin.
-        default: False
-        type: boolean
+        deprecated:
+          why: This option has never been in use. External scripts must implement their own caching.
+          version: "2.12"
+        description:
+          - This option has no effect. The plugin will not cache results because external inventory scripts
+            are responsible for their own caching. This option will be removed in 2.12.
         ini:
            - section: inventory_plugin_script
              key: cache
@@ -36,6 +39,7 @@ DOCUMENTATION = '''
           This is a performance optimization as the script would be called per host otherwise.
     notes:
         - Whitelisted in configuration by default.
+        - The plugin does not cache results because external inventory scripts are responsible for their own caching.
 '''
 
 import os
@@ -47,6 +51,9 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
+from ansible.utils.display import Display
+
+display = Display()
 
 
 class InventoryModule(BaseInventoryPlugin, Cacheable):
@@ -86,8 +93,12 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         super(InventoryModule, self).parse(inventory, loader, path)
         self.set_options()
 
-        if cache is None:
-            cache = self.get_option('cache')
+        if self.get_option('cache') is not None:
+            display.deprecated(
+                msg="The 'cache' option is deprecated for the script inventory plugin. "
+                "External scripts implement their own caching and this option has never been used",
+                version="2.12"
+            )
 
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
@@ -95,39 +106,36 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         cmd = [path, "--list"]
 
         try:
-            cache_key = self._get_cache_prefix(path)
-            if not cache or cache_key not in self._cache:
-                try:
-                    sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                except OSError as e:
-                    raise AnsibleParserError("problem running %s (%s)" % (' '.join(cmd), to_native(e)))
-                (stdout, stderr) = sp.communicate()
+            try:
+                sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except OSError as e:
+                raise AnsibleParserError("problem running %s (%s)" % (' '.join(cmd), to_native(e)))
+            (stdout, stderr) = sp.communicate()
 
-                path = to_native(path)
-                err = to_native(stderr or "")
+            path = to_native(path)
+            err = to_native(stderr or "")
 
-                if err and not err.endswith('\n'):
-                    err += '\n'
+            if err and not err.endswith('\n'):
+                err += '\n'
 
-                if sp.returncode != 0:
-                    raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
+            if sp.returncode != 0:
+                raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
 
-                # make sure script output is unicode so that json loader will output unicode strings itself
-                try:
-                    data = to_text(stdout, errors="strict")
-                except Exception as e:
-                    raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
+            # make sure script output is unicode so that json loader will output unicode strings itself
+            try:
+                data = to_text(stdout, errors="strict")
+            except Exception as e:
+                raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
 
-                try:
-                    self._cache[cache_key] = self.loader.load(data)
-                except Exception as e:
-                    raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
+            try:
+                processed = self.loader.load(data)
+            except Exception as e:
+                raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
 
-                # if no other errors happened and you want to force displaying stderr, do so now
-                if stderr and self.get_option('always_show_stderr'):
-                    self.display.error(msg=to_text(err))
+            # if no other errors happened and you want to force displaying stderr, do so now
+            if stderr and self.get_option('always_show_stderr'):
+                self.display.error(msg=to_text(err))
 
-            processed = self._cache[cache_key]
             if not isinstance(processed, Mapping):
                 raise AnsibleError("failed to parse executable inventory script results from {0}: needs to be a json dict\n{1}".format(path, err))
 

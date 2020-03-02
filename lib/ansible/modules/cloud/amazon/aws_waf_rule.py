@@ -150,7 +150,6 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, list_rules_with_backoff, list_regional_rules_with_backoff, MATCH_LOOKUP
 from ansible.module_utils.aws.waf import get_web_acl_with_backoff, list_web_acls_with_backoff, list_regional_web_acls_with_backoff
@@ -331,23 +330,19 @@ def ensure_rule_absent(client, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            metric_name=dict(),
-            state=dict(default='present', choices=['present', 'absent']),
-            conditions=dict(type='list'),
-            purge_conditions=dict(type='bool', default=False),
-            waf_regional=dict(type='bool', default=False),
-        ),
+    argument_spec = dict(
+        name=dict(required=True),
+        metric_name=dict(),
+        state=dict(default='present', choices=['present', 'absent']),
+        conditions=dict(type='list'),
+        purge_conditions=dict(type='bool', default=False),
+        waf_regional=dict(type='bool', default=False),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec)
     state = module.params.get('state')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     resource = 'waf' if not module.params['waf_regional'] else 'waf-regional'
-    client = boto3_conn(module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client(resource)
     if state == 'present':
         (changed, results) = ensure_rule_present(client, module)
     else:

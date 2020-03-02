@@ -123,6 +123,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
   tenant:
     description:
     - The name of the Tenant.
@@ -354,6 +359,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         vrf=dict(type='str', aliases=['vrf_name']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -394,6 +400,7 @@ def main():
     state = module.params.get('state')
     tenant = module.params.get('tenant')
     vrf = module.params.get('vrf')
+    name_alias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(
@@ -431,6 +438,7 @@ def main():
                 unicastRoute=enable_routing,
                 unkMacUcastAct=l2_unknown_unicast,
                 unkMcastAct=l3_unknown_multicast,
+                nameAlias=name_alias,
             ),
             child_configs=[
                 {'fvRsCtx': {'attributes': {'tnFvCtxName': vrf}}},

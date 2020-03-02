@@ -156,7 +156,7 @@ EXAMPLES = r'''
     group: foo
     mode: u+rw,g-wx,o-rwx
 
-- name: Copy a new "ntp.conf file into place, backing up the original if it differs from the copied version
+- name: Copy a new "ntp.conf" file into place, backing up the original if it differs from the copied version
   copy:
     src: /mine/ntp.conf
     dest: /etc/ntp.conf
@@ -291,7 +291,7 @@ class AnsibleModuleError(Exception):
 # basic::AnsibleModule() until then but if so, make it a private function so that we don't have to
 # keep it for backwards compatibility later.
 def clear_facls(path):
-    setfacl = get_bin_path('setfacl', True)
+    setfacl = get_bin_path('setfacl')
     # FIXME "setfacl -b" is available on Linux and FreeBSD. There is "setfacl -D e" on z/OS. Others?
     acl_command = [setfacl, '-b', path]
     b_acl_command = [to_bytes(x) for x in acl_command]
@@ -509,6 +509,7 @@ def main():
             remote_src=dict(type='bool'),
             local_follow=dict(type='bool'),
             checksum=dict(type='str'),
+            follow=dict(type='bool', default=False),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -573,8 +574,9 @@ def main():
         )
 
     # Special handling for recursive copy - create intermediate dirs
-    if _original_basename and dest.endswith(os.sep):
-        dest = os.path.join(dest, _original_basename)
+    if dest.endswith(os.sep):
+        if _original_basename:
+            dest = os.path.join(dest, _original_basename)
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
         dirname = os.path.dirname(dest)
         b_dirname = to_bytes(dirname, errors='surrogate_or_strict')
@@ -778,9 +780,8 @@ def main():
     if backup_file:
         res_args['backup_file'] = backup_file
 
-    module.params['dest'] = dest
     if not module.check_mode:
-        file_args = module.load_file_common_arguments(module.params)
+        file_args = module.load_file_common_arguments(module.params, path=dest)
         res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
 
     module.exit_json(**res_args)

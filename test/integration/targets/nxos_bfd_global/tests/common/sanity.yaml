@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bfd_global sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: set facts common
   # nd_* vars are "non-default" values
@@ -81,7 +79,6 @@
 - name: Setup
   nxos_feature: &setup_teardown
     feature: bfd
-    provider: "{{ connection }}"
     state: disabled
   ignore_errors: yes
 
@@ -117,7 +114,6 @@
       fabricpath_interval:   "{{ nd_fab_interval | default(omit) }}"
       fabricpath_slow_timer: "{{ nd_fab_slow | default(omit) }}"
       fabricpath_vlan:       "{{ nd_fab_vlan | default(omit) }}"
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -148,7 +144,6 @@
       fabricpath_interval:   "{{ fab_interval | default(omit) }}"
       fabricpath_slow_timer: "{{ fab_slow | default(omit) }}"
       fabricpath_vlan:       "{{ fab_vlan | default(omit) }}"
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

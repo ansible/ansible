@@ -1,0 +1,13 @@
+---
+- name: Intitial Setup Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      vrf definition ansible_temp_vrf
+      address-family ipv4
+      ip route vrf ansible_temp_vrf 192.0.2.0 255.255.255.0 192.0.2.1 tag 50 name test_vrf track 150
+      ip route 198.51.100.0 255.255.255.0 198.51.101.3 name route_3
+      ip route 198.51.100.0 255.255.255.0 198.51.101.2 30 name route_2
+      ip route 198.51.100.0 255.255.255.0 198.51.101.1 110 tag 40 name route_1 multicast
+      ipv6 route 2001:DB8:0:3::/64 2001:DB8:0:3::2 tag 105 name test_v6

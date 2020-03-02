@@ -1,0 +1,6 @@
+---
+# defaults file for ec2_instance
+ec2_instance_name: '{{ resource_prefix }}-node'
+ec2_instance_owner: 'integration-run-{{ resource_prefix }}'
+ec2_ami_name: "amzn-ami-hvm*"
+alarm_prefix: "ansible-test"

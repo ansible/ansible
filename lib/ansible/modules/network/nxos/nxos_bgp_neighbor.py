@@ -327,8 +327,11 @@ def state_present(module, existing, proposed, candidate):
             commands.append('no {0}'.format(key))
         elif value == 'default':
             if existing_commands.get(key):
-                existing_value = existing_commands.get(key)
-                commands.append('no {0} {1}'.format(key, existing_value))
+                if key == 'password':
+                    commands.append("no password")
+                else:
+                    existing_value = existing_commands.get(key)
+                    commands.append('no {0} {1}'.format(key, existing_value))
         else:
             if key == 'log-neighbor-changes':
                 if value == 'enable':

@@ -1,5 +1,3 @@
-# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_ip_info
-
 - name: Get ip informations and register it in a variable
   scaleway_ip_info:
     region: par1

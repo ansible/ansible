@@ -1,3 +1,4 @@
 cloud/vcenter
-shippable/vcenter/group1
+shippable/vcenter/group2
 needs/target/prepare_vmware_tests
+zuul/vmware/vcenter_1esxi

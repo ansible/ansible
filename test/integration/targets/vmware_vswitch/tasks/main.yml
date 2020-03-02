@@ -11,16 +11,7 @@
 
   # TODO: akasurde: VCSIM does not suport network manager system
   - name: Ensure the vswitch is not already here
-    vmware_vswitch:
-      validate_certs: no
-      hostname: '{{ item.host }}'
-      username: '{{ esxi_user }}'
-      password: '{{ esxi_password }}'
-      switch: '{{ item.switch }}'
-      state: absent
-    with_items:
-      - {host: "{{ esxi1 }}", switch: "vmswitch_0001"}
-      - {host: "{{ esxi2 }}", switch: "vmswitch_0002"}
+    include_tasks: teardown.yml
 
   - name: Add a nic to a switch
     vmware_vswitch:
@@ -91,3 +82,5 @@
   - assert:
       that:
       - add_vswitch_with_host_system is changed
+  always:
+  - include_tasks: teardown.yml

@@ -9,7 +9,6 @@
     lines:
       - no ip name-server {{ item }}
     match: none
-    provider: "{{ connection }}"
   ignore_errors: yes
   with_items:
       - 192.0.2.1
@@ -22,7 +21,6 @@
       - 192.0.2.1
       - 192.0.2.2
       - 192.0.2.3
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -38,7 +36,6 @@
       - 192.0.2.1
       - 192.0.2.2
       - 192.0.2.3
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -77,7 +74,6 @@
     name_servers:
       - 192.0.2.1
       - 192.0.2.2
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -89,7 +85,6 @@
 - name: default name server
   nxos_system: &defns
     name_servers: default
-    provider: "{{ connection }}"
   register: result
 
 - assert:

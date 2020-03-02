@@ -31,7 +31,7 @@ options:
     description:
       - The protocol the load balancer uses when performing health checks on targets.
     required: false
-    choices: [ 'http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP' ]
+    choices: [ 'http', 'https', 'tcp', 'tls', 'udp', 'tcp_udp', 'HTTP', 'HTTPS', 'TCP', 'TLS', 'UDP', 'TCP_UDP']
     type: str
   health_check_port:
     description:
@@ -43,6 +43,7 @@ options:
   health_check_path:
     description:
       - The ping path that is the destination on the targets for health checks. The path must be defined in order to set a health check.
+      - Requires the I(health_check_protocol) parameter to be set.
     required: false
     type: str
   health_check_interval:
@@ -81,7 +82,7 @@ options:
     description:
       - The protocol to use for routing traffic to the targets. Required when I(state) is C(present).
     required: false
-    choices: [ 'http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP']
+    choices: [ 'http', 'https', 'tcp', 'tls', 'udp', 'tcp_udp', 'HTTP', 'HTTPS', 'TCP', 'TLS', 'UDP', 'TCP_UDP']
     type: str
   purge_tags:
     description:
@@ -131,8 +132,8 @@ options:
         If the target type is ip, specify IP addresses from the subnets of the virtual private cloud (VPC) for the target
         group, the RFC 1918 range (10.0.0.0/8, 172.16.0.0/12, and 192.168.0.0/16), and the RFC 6598 range (100.64.0.0/10).
         You can't specify publicly routable IP addresses.
+      - The default behavior is C(instance).
     required: false
-    default: instance
     choices: ['instance', 'ip', 'lambda']
     version_added: 2.5
     type: str
@@ -188,8 +189,14 @@ EXAMPLES = '''
     protocol: http
     port: 80
     vpc_id: vpc-01234567
-    health_check_path: /
-    successful_response_codes: "200,250-260"
+    health_check_protocol: http
+    health_check_path: /health_check
+    health_check_port: 80
+    successful_response_codes: 200
+    health_check_interval: 15
+    health_check_timeout: 3
+    healthy_threshold_count: 4
+    unhealthy_threshold_count: 3
     state: present
 
 # Delete a target group
@@ -203,6 +210,7 @@ EXAMPLES = '''
     protocol: http
     port: 81
     vpc_id: vpc-01234567
+    health_check_protocol: http
     health_check_path: /
     successful_response_codes: "200,250-260"
     targets:
@@ -220,6 +228,7 @@ EXAMPLES = '''
     protocol: http
     port: 81
     vpc_id: vpc-01234567
+    health_check_protocol: http
     health_check_path: /
     successful_response_codes: "200,250-260"
     target_type: ip
@@ -373,10 +382,10 @@ import time
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict, ec2_argument_spec,
+from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict,
                                       compare_aws_tags, ansible_dict_to_boto3_tag_list)
 from distutils.version import LooseVersion
 
@@ -440,8 +449,10 @@ def create_or_update_target_group(connection, module):
     changed = False
     new_target_group = False
     params = dict()
+    target_type = module.params.get("target_type")
     params['Name'] = module.params.get("name")
-    if module.params.get("target_type") != "lambda":
+    params['TargetType'] = target_type
+    if target_type != "lambda":
         params['Protocol'] = module.params.get("protocol").upper()
         params['Port'] = module.params.get("port")
         params['VpcId'] = module.params.get("vpc_id")
@@ -480,7 +491,8 @@ def create_or_update_target_group(connection, module):
             params['UnhealthyThresholdCount'] = module.params.get("unhealthy_threshold_count")
 
         # Only need to check response code and path for http(s) health checks
-        if module.params.get("health_check_protocol") is not None and module.params.get("health_check_protocol").upper() != 'TCP':
+        protocol = module.params.get("health_check_protocol")
+        if protocol is not None and protocol.upper() in ['HTTP', 'HTTPS']:
 
             if module.params.get("health_check_path") is not None:
                 params['HealthCheckPath'] = module.params.get("health_check_path")
@@ -490,10 +502,8 @@ def create_or_update_target_group(connection, module):
                 params['Matcher']['HttpCode'] = module.params.get("successful_response_codes")
 
     # Get target type
-    if module.params.get("target_type") is not None:
-        params['TargetType'] = module.params.get("target_type")
-        if params['TargetType'] == 'ip':
-            fail_if_ip_target_type_not_supported(module)
+    if target_type == 'ip':
+        fail_if_ip_target_type_not_supported(module)
 
     # Get target group
     tg = get_target_group(connection, module)
@@ -535,7 +545,7 @@ def create_or_update_target_group(connection, module):
                 health_check_params['UnhealthyThresholdCount'] = params['UnhealthyThresholdCount']
 
             # Only need to check response code and path for http(s) health checks
-            if tg['HealthCheckProtocol'] != 'TCP':
+            if tg['HealthCheckProtocol'] in ['HTTP', 'HTTPS']:
                 # Health check path
                 if 'HealthCheckPath'in params and tg['HealthCheckPath'] != params['HealthCheckPath']:
                     health_check_params['HealthCheckPath'] = params['HealthCheckPath']
@@ -568,7 +578,7 @@ def create_or_update_target_group(connection, module):
 
             if module.params.get("targets"):
 
-                if module.params.get("target_type") != "lambda":
+                if target_type != "lambda":
                     params['Targets'] = module.params.get("targets")
 
                     # Correct type of target ports
@@ -650,7 +660,7 @@ def create_or_update_target_group(connection, module):
                         module.fail_json_aws(
                             e, msg="Couldn't register targets")
             else:
-                if module.params.get("target_type") != "lambda":
+                if target_type != "lambda":
 
                     current_instances = current_targets['TargetHealthDescriptions']
 
@@ -691,7 +701,7 @@ def create_or_update_target_group(connection, module):
         tg = get_target_group(connection, module)
 
         if module.params.get("targets"):
-            if module.params.get("target_type") != "lambda":
+            if target_type != "lambda":
                 params['Targets'] = module.params.get("targets")
                 try:
                     connection.register_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=params['Targets'])
@@ -799,34 +809,33 @@ def delete_target_group(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            deregistration_delay_timeout=dict(type='int'),
-            health_check_protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP']),
-            health_check_port=dict(),
-            health_check_path=dict(),
-            health_check_interval=dict(type='int'),
-            health_check_timeout=dict(type='int'),
-            healthy_threshold_count=dict(type='int'),
-            modify_targets=dict(default=True, type='bool'),
-            name=dict(required=True),
-            port=dict(type='int'),
-            protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP']),
-            purge_tags=dict(default=True, type='bool'),
-            stickiness_enabled=dict(type='bool'),
-            stickiness_type=dict(default='lb_cookie'),
-            stickiness_lb_cookie_duration=dict(type='int'),
-            state=dict(required=True, choices=['present', 'absent']),
-            successful_response_codes=dict(),
-            tags=dict(default={}, type='dict'),
-            target_type=dict(default='instance', choices=['instance', 'ip', 'lambda']),
-            targets=dict(type='list'),
-            unhealthy_threshold_count=dict(type='int'),
-            vpc_id=dict(),
-            wait_timeout=dict(type='int', default=200),
-            wait=dict(type='bool', default=False)
-        )
+    protocols_list = ['http', 'https', 'tcp', 'tls', 'udp', 'tcp_udp', 'HTTP',
+                      'HTTPS', 'TCP', 'TLS', 'UDP', 'TCP_UDP']
+    argument_spec = dict(
+        deregistration_delay_timeout=dict(type='int'),
+        health_check_protocol=dict(choices=protocols_list),
+        health_check_port=dict(),
+        health_check_path=dict(),
+        health_check_interval=dict(type='int'),
+        health_check_timeout=dict(type='int'),
+        healthy_threshold_count=dict(type='int'),
+        modify_targets=dict(default=True, type='bool'),
+        name=dict(required=True),
+        port=dict(type='int'),
+        protocol=dict(choices=protocols_list),
+        purge_tags=dict(default=True, type='bool'),
+        stickiness_enabled=dict(type='bool'),
+        stickiness_type=dict(default='lb_cookie'),
+        stickiness_lb_cookie_duration=dict(type='int'),
+        state=dict(required=True, choices=['present', 'absent']),
+        successful_response_codes=dict(),
+        tags=dict(default={}, type='dict'),
+        target_type=dict(choices=['instance', 'ip', 'lambda']),
+        targets=dict(type='list'),
+        unhealthy_threshold_count=dict(type='int'),
+        vpc_id=dict(),
+        wait_timeout=dict(type='int', default=200),
+        wait=dict(type='bool', default=False)
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -835,6 +844,9 @@ def main():
                                   ['target_type', 'ip', ['protocol', 'port', 'vpc_id']],
                               ]
                               )
+
+    if module.params.get('target_type') is None:
+        module.params['target_type'] = 'instance'
 
     connection = module.client('elbv2')
 

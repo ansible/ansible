@@ -1,2 +1,373 @@
 ---
-# tasks file for test_ec2_vol
+
+- module_defaults:
+    group/aws:
+      aws_access_key: '{{ aws_access_key | default(omit) }}'
+      aws_secret_key: '{{ aws_secret_key | default(omit) }}'
+      security_token: '{{ security_token | default(omit) }}'
+      region: '{{ aws_region | default(omit) }}'
+
+  block:
+
+    # ==== Env setup ==========================================================
+    - name: list available AZs
+      aws_az_info:
+      register: region_azs
+
+    - name: pick an AZ for testing
+      set_fact:
+        availability_zone: "{{ region_azs.availability_zones[0].zone_name }}"
+
+    - name: Create a test VPC
+      ec2_vpc_net:
+        name: "{{ vpc_name }}"
+        cidr_block: "{{ vpc_cidr }}"
+        tags:
+          Name: ec2_vol testing
+          ResourcePrefix: "{{ resource_prefix }}"
+      register: testing_vpc
+
+    - name: Create a test subnet
+      ec2_vpc_subnet:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: "{{ subnet_cidr }}"
+        tags:
+          Name: ec2_vol testing
+          ResourcePrefix: "{{ resource_prefix }}"
+        az: '{{ availability_zone }}'
+      register: testing_subnet
+
+    - name: Find AMI to use
+      ec2_ami_info:
+        owners: 'amazon'
+        filters:
+          name: '{{ ec2_ami_name }}'
+      register: ec2_amis
+
+    - name: Set fact with latest AMI
+      vars:
+        latest_ami: '{{ ec2_amis.images | sort(attribute="creation_date") | last }}'
+      set_fact:
+        ec2_ami_image: '{{ latest_ami.image_id }}'
+
+    # ==== ec2_vol tests ===============================================
+
+    - name: create a volume (validate module defaults)
+      ec2_vol:
+        volume_size: 1
+        zone: "{{ availability_zone }}"
+        tags:
+          ResourcePrefix: "{{ resource_prefix }}"
+      register: volume1
+
+    - name: check task return attributes
+      assert:
+        that:
+          - volume1.changed
+          - "'volume' in volume1"
+          - "'volume_id' in volume1"
+          - "'volume_type' in volume1"
+          - "'device' in volume1"
+          - "volume1.volume.status == 'available'"
+          - "volume1.volume_type == 'standard'"
+          - "'attachment_set' in volume1.volume and 'instance_id' in volume1.volume.attachment_set and not volume1.volume.attachment_set.instance_id"
+          - "not volume1.volume.encrypted"
+
+    # no idempotency check needed here
+
+    - name: create another volume (override module defaults)
+      ec2_vol:
+        encrypted: yes
+        volume_size: 4
+        volume_type: io1
+        iops: 101
+        name: "{{ resource_prefix }}"
+        tags:
+          ResourcePrefix: "{{ resource_prefix }}"
+        zone: "{{ availability_zone }}"
+      register: volume2
+
+    - name: check task return attributes
+      assert:
+        that:
+          - volume2.changed
+          - "'volume' in volume2"
+          - "'volume_id' in volume2"
+          - "'volume_type' in volume2"
+          - "'device' in volume2"
+          - "volume2.volume.status == 'available'"
+          - "volume2.volume_type == 'io1'"
+          - "volume2.volume.iops == 101"
+          - "volume2.volume.size == 4"
+          - "volume2.volume.encrypted"
+
+    - name: create another volume (override module defaults) (idempotent)
+      ec2_vol:
+        encrypted: yes
+        volume_size: 4
+        volume_type: io1
+        iops: 101
+        name: "{{ resource_prefix }}"
+        tags:
+          ResourcePrefix: "{{ resource_prefix }}"
+        zone: "{{ availability_zone }}"
+      register: volume2_idem
+
+    - name: check task return attributes
+      assert:
+        that:
+          - not volume2_idem.changed
+
+    - name: create snapshot from volume
+      ec2_snapshot:
+        volume_id: "{{ volume1.volume_id }}"
+        description: "Resource Prefix - {{ resource_prefix }}"
+        snapshot_tags:
+          ResourcePrefix: "{{ resource_prefix }}"
+      register: vol1_snapshot
+
+    - name: check task return attributes
+      assert:
+        that:
+          - vol1_snapshot.changed
+
+    - name: create a volume from a snapshot
+      ec2_vol:
+        snapshot: "{{ vol1_snapshot.snapshot_id }}"
+        encrypted: yes
+        volume_type: gp2
+        volume_size: 1
+        zone: "{{ availability_zone }}"
+        tags:
+          ResourcePrefix: "{{ resource_prefix }}"
+      register: volume3
+
+    - name: check task return attributes
+      assert:
+        that:
+          - volume3.changed
+          - "volume3.volume.snapshot_id ==  vol1_snapshot.snapshot_id"
+
+    - name: create an ec2 instance
+      ec2_instance:
+        name: "{{ resource_prefix }}"
+        vpc_subnet_id: "{{ testing_subnet.subnet.id }}"
+        instance_type: t3.nano
+        image_id: "{{ ec2_ami_image }}"
+        tags:
+          ResourcePrefix: "{{ resource_prefix }}"
+      register: test_instance
+
+    - name: check task return attributes
+      assert:
+        that:
+          - test_instance.changed
+
+    - name: attach existing volume to an instance
+      ec2_vol:
+        id: "{{ volume1.volume_id }}"
+        instance: "{{ test_instance.instance_ids[0] }}"
+        device_name: /dev/sdg
+        delete_on_termination: no
+      register: vol_attach_result
+
+    - name: check task return attributes
+      assert:
+        that:
+          - "vol_attach_result.changed"
+          - "'device' in vol_attach_result and vol_attach_result.device == '/dev/sdg'"
+          - "'volume' in vol_attach_result"
+          - "vol_attach_result.volume.attachment_set.status == 'attached'"
+          - "vol_attach_result.volume.attachment_set.instance_id == test_instance.instance_ids[0]"
+          - "vol_attach_result.volume.attachment_set.device == '/dev/sdg'"
+
+#          Failing
+#          - "vol_attach_result.volume.attachment_set.deleteOnTermination"
+
+    - name: attach existing volume to an instance (idempotent)
+      ec2_vol:
+        id: "{{ volume1.volume_id }}"
+        instance: "{{ test_instance.instance_ids[0] }}"
+        device_name: /dev/sdg
+        delete_on_termination: no
+      register: vol_attach_result
+
+    - name: check task return attributes
+      assert:
+        that:
+          - "not vol_attach_result.changed"
+
+    - name: attach a new volume to an instance
+      ec2_vol:
+        instance: "{{ test_instance.instance_ids[0] }}"
+        device_name: /dev/sdh
+        volume_size: 1
+        volume_type: gp2
+        tags:
+          ResourcePrefix: "{{ resource_prefix }}"
+      register: new_vol_attach_result
+
+    - name: check task return attributes
+      assert:
+        that:
+          - "new_vol_attach_result.changed"
+          - "'device' in new_vol_attach_result and new_vol_attach_result.device == '/dev/sdh'"
+          - "'volume' in new_vol_attach_result"
+          - "new_vol_attach_result.volume.attachment_set.status == 'attached'"
+          - "new_vol_attach_result.volume.attachment_set.instance_id == test_instance.instance_ids[0]"
+          - "new_vol_attach_result.volume.attachment_set.device == '/dev/sdh'"
+
+    - name: attach a new volume to an instance (idempotent)
+      ec2_vol:
+        instance: "{{ test_instance.instance_ids[0] }}"
+        device_name: /dev/sdh
+        volume_size: 1
+        volume_type: gp2
+        tags:
+          ResourcePrefix: "{{ resource_prefix }}"
+      register: new_vol_attach_result_idem
+
+    - name: check task return attributes
+      assert:
+        that:
+          - "not new_vol_attach_result_idem.changed"
+          - "'Volume mapping for /dev/sdh already exists' in new_vol_attach_result_idem.msg"
+
+    - name: create a volume from a snapshot and attach to the instance
+      ec2_vol:
+        instance: "{{ test_instance.instance_ids[0] }}"
+        device_name: /dev/sdi
+        snapshot: "{{ vol1_snapshot.snapshot_id }}"
+        tags:
+          ResourcePrefix: "{{ resource_prefix }}"
+      register: attach_new_vol_from_snapshot_result
+
+    - name: check task return attributes
+      assert:
+        that:
+          - "attach_new_vol_from_snapshot_result.changed"
+          - "'device' in attach_new_vol_from_snapshot_result and attach_new_vol_from_snapshot_result.device == '/dev/sdi'"
+          - "'volume' in attach_new_vol_from_snapshot_result"
+          - "attach_new_vol_from_snapshot_result.volume.attachment_set.status == 'attached'"
+          - "attach_new_vol_from_snapshot_result.volume.attachment_set.instance_id == test_instance.instance_ids[0]"
+
+    - name: list volumes attached to instance
+      ec2_vol:
+        instance: "{{ test_instance.instance_ids[0] }}"
+        state: list
+      register: inst_vols
+
+    - name: check task return attributes
+      assert:
+        that:
+          - "not inst_vols.changed"
+          - "'volumes' in inst_vols"
+          - "inst_vols.volumes | length == 4"
+
+    - name: get info on ebs volumes
+      ec2_vol_info:
+      register: ec2_vol_info
+
+    - name: check task return attributes
+      assert:
+        that:
+          - "not ec2_vol_info.failed"
+
+    - name: get info on ebs volumes
+      ec2_vol_info:
+        filters:
+          attachment.instance-id: "{{ test_instance.instance_ids[0] }}"
+      register: ec2_vol_info
+
+    - name: check task return attributes
+      assert:
+        that:
+          - "{{ ec2_vol_info.volumes | length == 4 }}"
+
+    - name: detach volume from the instance
+      ec2_vol:
+        id: "{{ new_vol_attach_result.volume_id }}"
+        instance: ""
+      register: new_vol_attach_result
+
+    - name: check task return attributes
+      assert:
+        that:
+          - "new_vol_attach_result.changed"
+          - "new_vol_attach_result.volume.status == 'available'"
+
+    - name: detach volume from the instance (idempotent)
+      ec2_vol:
+        id: "{{ new_vol_attach_result.volume_id }}"
+        instance: ""
+      register: new_vol_attach_result_idem
+
+    - name: check task return attributes
+      assert:
+        that:
+          - "not new_vol_attach_result_idem.changed"
+
+    - name: delete volume
+      ec2_vol:
+        id: "{{ volume2.volume_id }}"
+        state: absent
+      register: delete_volume_result
+
+    - name: check task return attributes
+      assert:
+        that:
+          - "delete_volume_result.changed"
+
+    - name: delete volume (idempotent)
+      ec2_vol:
+        id: "{{ volume2.volume_id }}"
+        state: absent
+      register: delete_volume_result_idem
+
+    - name: check task return attributes
+      assert:
+        that:
+          - "not delete_volume_result_idem.changed"
+
+    # ==== Cleanup ============================================================
+
+  always:
+
+    - name: delete test instance
+      ec2_instance:
+        instance_ids:
+          - "{{ test_instance.instance_ids[0] }}"
+        state: terminated
+      ignore_errors: yes
+
+    - name: delete volumes
+      ec2_vol:
+        id: "{{ item.volume_id }}"
+        state: absent
+      ignore_errors: yes
+      with_items:
+        - "{{ volume1 }}"
+        - "{{ volume2 }}"
+        - "{{ volume3 }}"
+        - "{{ new_vol_attach_result }}"
+        - "{{ attach_new_vol_from_snapshot_result }}"
+
+    - name: delete snapshot
+      ec2_snapshot:
+        snapshot_id: "{{ vol1_snapshot.snapshot_id }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: delete test subnet
+      ec2_vpc_subnet:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: "{{ subnet_cidr }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: delete test VPC
+      ec2_vpc_net:
+        name: "{{ vpc_name }}"
+        cidr_block: "{{ vpc_cidr }}"
+        state: absent
+      ignore_errors: yes

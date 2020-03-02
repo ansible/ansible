@@ -112,6 +112,25 @@
         - "yum_result is not changed"
   when: ansible_distribution == 'CentOS'
 
+# This test case is unfortunately distro specific because we have to specify
+# repo names which are not the same across Fedora/RHEL/CentOS for base/updates
+- name: install sos again with disable all and enable select repo(s)
+  yum:
+    name: sos
+    state: present
+    enablerepo:
+      - "base"
+      - "updates"
+    disablerepo: "*"
+  register: yum_result
+  when: ansible_distribution == 'CentOS'
+- name: verify no change on fourth install with missing repo enablerepo (yum)
+  assert:
+    that:
+        - "yum_result is success"
+        - "yum_result is not changed"
+  when: ansible_distribution == 'CentOS'
+
 - name: install sos again with only missing repo enablerepo
   yum:
     name: sos

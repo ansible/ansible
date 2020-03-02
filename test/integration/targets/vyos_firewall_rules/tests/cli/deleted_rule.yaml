@@ -1,0 +1,49 @@
+---
+- debug:
+    msg: "Start vyos_firewall_rules deleted integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _populate.yaml
+
+- block:
+  - name: Delete firewall rule.
+    vyos_firewall_rules: &deleted_r
+      config:
+        - afi: 'ipv6'
+          rule_sets:
+            - name: 'UPLINK'
+              rules:
+                - number: 1
+      state: deleted
+    register: result
+
+  - name: Assert that the before dicts were correctly generated
+    assert:
+      that:
+        - "{{ populate | symmetric_difference(result['before']) |length == 0 }}"
+
+  - name: Assert that the correct set of commands were generated
+    assert:
+      that:
+        - "{{ deleted_r['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+  - name: Assert that the after dicts were correctly generated
+    assert:
+      that:
+        - "{{ deleted_r['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+  - name: Delete attributes of given interfaces (IDEMPOTENT)
+    vyos_firewall_rules: *deleted_r
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  - name: Assert that the before dicts were correctly generated
+    assert:
+      that:
+        - "{{ deleted_r['after'] | symmetric_difference(result['before']) |length == 0 }}"
+  always:
+  - include_tasks: _remove_config.yaml

@@ -52,7 +52,7 @@ options:
         can also be used with an initial C(M(!)) to specify that a
         specific subset should not be collected.
         Valid subsets are 'all', 'interfaces', 'l3_interfaces', 'lag_interfaces',
-        'lldp_global', 'lldp_interfaces'.
+        'lldp_global', 'lldp_interfaces', 'static_routes', 'firewall_rules', 'firewall_global', 'firewall_interfaces'.
     required: false
     version_added: "2.9"
 """
@@ -150,14 +150,14 @@ def main():
     :returns: ansible_facts
     """
     argument_spec = FactsArgs.argument_spec
-
     argument_spec.update(vyos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    warnings = ['default value for `gather_subset` '
-                'will be changed to `min` from `!config` v2.11 onwards']
+    warnings = []
+    if module.params["gather_subset"] == "!config":
+        warnings.append('default value for `gather_subset` will be changed to `min` from `!config` v2.11 onwards')
 
     result = Facts(module).get_facts()
 

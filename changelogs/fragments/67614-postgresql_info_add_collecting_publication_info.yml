@@ -1,0 +1,2 @@
+minor_changes:
+- postgresql_info - add collecting info about logical replication publications in databases (https://github.com/ansible/ansible/pull/67614).

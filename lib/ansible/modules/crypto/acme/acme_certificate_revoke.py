@@ -98,7 +98,7 @@ options:
   revoke_reason:
     description:
       - "One of the revocation reasonCodes defined in
-         L(https://tools.ietf.org/html/rfc5280#section-5.3.1, Section 5.3.1 of RFC5280)."
+         L(Section 5.3.1 of RFC5280,https://tools.ietf.org/html/rfc5280#section-5.3.1)."
       - "Possible values are C(0) (unspecified), C(1) (keyCompromise),
          C(2) (cACompromise), C(3) (affiliationChanged), C(4) (superseded),
          C(5) (cessationOfOperation), C(6) (certificateHold),

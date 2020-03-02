@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: mongodb_replicaset
-short_description: Initialises a MongoDB replicaset.
+short_description: Initialises a MongoDB replicaset
 description:
 - Initialises a MongoDB replicaset in a new deployment.
 - Validates the replicaset name for existing deployments.
@@ -54,6 +54,7 @@ options:
     - Supply as a simple csv string, i.e. mongodb1:27017,mongodb2:27017,mongodb3:27017.
     - If a port number is not provided then 27017 is assumed.
     type: list
+    elements: raw
   validate:
     description:
     - Performs some basic validation on the provided replicaset config.
@@ -299,7 +300,7 @@ def main():
             login_host=dict(type='str', default="localhost"),
             login_port=dict(type='int', default=27017),
             replica_set=dict(type='str', default="rs0"),
-            members=dict(type='list'),
+            members=dict(type='list', elements='raw'),
             arbiter_at_index=dict(type='int'),
             validate=dict(type='bool', default=True),
             ssl=dict(type='bool', default=False),
@@ -333,7 +334,7 @@ def main():
     if validate:
         if len(members) <= 2 or len(members) % 2 == 0:
             module.fail_json(msg="MongoDB Replicaset validation failed. Invalid number of replicaset members.")
-        if arbiter_at_index is not None and len(members) - 1 > arbiter_at_index:
+        if arbiter_at_index is not None and len(members) - 1 < arbiter_at_index:
             module.fail_json(msg="MongoDB Replicaset validation failed. Invalid arbiter index.")
 
     result = dict(

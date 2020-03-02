@@ -1,0 +1,46 @@
+# Tests for priv parameter value passed as a dict
+- name: Create test databases
+  mysql_db:
+    name: '{{ item }}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  loop:
+  - data1
+  - data2
+
+- name: Create user with privileges
+  mysql_user:
+    name: '{{ user_name_3 }}'
+    password: '{{ user_password_3 }}'
+    priv:
+      "data1.*": "SELECT"
+      "data2.*": "SELECT"
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+
+- name: Run command to show privileges for user (expect privileges in stdout)
+  command: mysql "-e SHOW GRANTS FOR '{{ user_name_3 }}'@'localhost';"
+  register: result
+
+- name: Assert user has giving privileges
+  assert:
+    that:
+    - "'GRANT SELECT ON `data1`.*' in result.stdout"
+    - "'GRANT SELECT ON `data2`.*' in result.stdout"
+
+##########
+# Clean up
+- name: Drop test databases
+  mysql_db:
+    name: '{{ item }}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  loop:
+  - data1
+  - data2
+
+- name: Drop test user
+  mysql_user:
+    name: '{{ user_name_3 }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'

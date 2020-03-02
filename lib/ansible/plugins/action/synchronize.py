@@ -272,7 +272,7 @@ class ActionModule(ActionBase):
             # Create a connection to localhost to run rsync on
             new_stdin = self._connection._new_stdin
 
-            # Unike port, there can be only one shell
+            # Unlike port, there can be only one shell
             localhost_shell = None
             for host in C.LOCALHOST:
                 localhost_vars = task_vars['hostvars'].get(host, {})
@@ -286,7 +286,7 @@ class ActionModule(ActionBase):
                 localhost_shell = os.path.basename(C.DEFAULT_EXECUTABLE)
             self._play_context.shell = localhost_shell
 
-            # Unike port, there can be only one executable
+            # Unlike port, there can be only one executable
             localhost_executable = None
             for host in C.LOCALHOST:
                 localhost_vars = task_vars['hostvars'].get(host, {})
@@ -391,7 +391,7 @@ class ActionModule(ActionBase):
 
         # If launching synchronize against docker container
         # use rsync_opts to support container to override rsh options
-        if self._remote_transport in ['docker', 'buildah']:
+        if self._remote_transport in ['docker', 'buildah'] and not use_delegate:
             # Replicate what we do in the module argumentspec handling for lists
             if not isinstance(_tmp_args.get('rsync_opts'), MutableSequence):
                 tmp_rsync_opts = _tmp_args.get('rsync_opts', [])

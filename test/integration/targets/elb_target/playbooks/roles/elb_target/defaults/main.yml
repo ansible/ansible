@@ -1,7 +1,10 @@
 ---
-ec2_ami_image:
-  us-east-1: ami-8c1be5f6
-  us-east-2: ami-c5062ba0
+ec2_ami_name: 'amzn2-ami-hvm-2.0.20190612-x86_64-gp2'
 
-tg_name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-tg"
-lb_name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-lb"
+resource_shortprefix: 'ansible-test-{{ resource_prefix | regex_search("([0-9]+)$") }}'
+tg_name: "{{ resource_shortprefix }}-tg"
+tg_tcpudp_name: "{{ resource_shortprefix }}-tgtcpudp"
+lb_name: "{{ resource_shortprefix }}-lb"
+
+healthy_state:
+   state: 'healthy'

@@ -11,16 +11,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ipa_user
 author: Thomas Krahn (@Nosmoht)
 short_description: Manage FreeIPA users
 description:
-- Add, modify and delete user within IPA server
+- Add, modify and delete user within IPA server.
 options:
   displayname:
-    description: Display name
+    description: Display name.
+    type: str
   update_password:
     description:
     - Set password for a user.
@@ -29,53 +30,75 @@ options:
     choices: [ always, on_create ]
     version_added: 2.8
   givenname:
-    description: First name
+    description: First name.
+    type: str
   krbpasswordexpiration:
     description:
-    - Date at which the user password will expire
-    - In the format YYYYMMddHHmmss
-    - e.g. 20180121182022 will expire on 21 January 2018 at 18:20:22
+    - Date at which the user password will expire.
+    - In the format YYYYMMddHHmmss.
+    - e.g. 20180121182022 will expire on 21 January 2018 at 18:20:22.
     version_added: 2.5
+    type: str
   loginshell:
-    description: Login shell
+    description: Login shell.
+    type: str
   mail:
     description:
     - List of mail addresses assigned to the user.
     - If an empty list is passed all assigned email addresses will be deleted.
     - If None is passed email addresses will not be checked or changed.
+    type: list
+    elements: str
   password:
     description:
-    - Password for a user. Will not be set for an existing user unless C(update_password) is set to C(always), which is the default.
+    - Password for a user.
+    - Will not be set for an existing user unless I(update_password=always), which is the default.
+    type: str
   sn:
-    description: Surname
+    description: Surname.
+    type: str
   sshpubkey:
     description:
     - List of public SSH key.
     - If an empty list is passed all assigned public keys will be deleted.
     - If None is passed SSH public keys will not be checked or changed.
+    type: list
+    elements: str
   state:
-    description: State to ensure
+    description: State to ensure.
     default: "present"
-    choices: ["present", "absent", "enabled", "disabled"]
+    choices: ["absent", "disabled", "enabled", "present"]
+    type: str
   telephonenumber:
     description:
     - List of telephone numbers assigned to the user.
     - If an empty list is passed all assigned telephone numbers will be deleted.
     - If None is passed telephone numbers will not be checked or changed.
+    type: list
+    elements: str
   title:
-    description: Title
+    description: Title.
+    type: str
   uid:
-    description: uid of the user
+    description: uid of the user.
     required: true
     aliases: ["name"]
+    type: str
   uidnumber:
     description:
-    - Account Settings UID/Posix User ID number
+    - Account Settings UID/Posix User ID number.
+    type: str
     version_added: 2.5
   gidnumber:
     description:
-    - Posix Group ID
+    - Posix Group ID.
+    type: str
     version_added: 2.5
+  homedirectory:
+    description:
+    - Default home directory of the user.
+    version_added: '2.10'
+    type: str
 extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 requirements:
@@ -83,9 +106,9 @@ requirements:
 - hashlib
 '''
 
-EXAMPLES = '''
-# Ensure pinky is present and always reset password
-- ipa_user:
+EXAMPLES = r'''
+- name: Ensure pinky is present and always reset password
+  ipa_user:
     name: pinky
     state: present
     krbpasswordexpiration: 20200119235959
@@ -100,20 +123,21 @@ EXAMPLES = '''
     - ssh-dsa ....
     uidnumber: 1001
     gidnumber: 100
+    homedirectory: /home/pinky
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
 
-# Ensure brain is absent
-- ipa_user:
+- name: Ensure brain is absent
+  ipa_user:
     name: brain
     state: absent
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
 
-# Ensure pinky is present but don't reset password if already exists
-- ipa_user:
+- name: Ensure pinky is present but don't reset password if already exists
+  ipa_user:
     name: pinky
     state: present
     givenname: Pinky
@@ -123,10 +147,9 @@ EXAMPLES = '''
     ipa_user: admin
     ipa_pass: topsecret
     update_password: on_create
-
 '''
 
-RETURN = '''
+RETURN = r'''
 user:
   description: User as returned by IPA API
   returned: always
@@ -167,7 +190,7 @@ class UserIPAClient(IPAClient):
 
 def get_user_dict(displayname=None, givenname=None, krbpasswordexpiration=None, loginshell=None,
                   mail=None, nsaccountlock=False, sn=None, sshpubkey=None, telephonenumber=None,
-                  title=None, userpassword=None, gidnumber=None, uidnumber=None):
+                  title=None, userpassword=None, gidnumber=None, uidnumber=None, homedirectory=None):
     user = {}
     if displayname is not None:
         user['displayname'] = displayname
@@ -194,6 +217,8 @@ def get_user_dict(displayname=None, givenname=None, krbpasswordexpiration=None, 
         user['gidnumber'] = gidnumber
     if uidnumber is not None:
         user['uidnumber'] = uidnumber
+    if homedirectory is not None:
+        user['homedirectory'] = homedirectory
 
     return user
 
@@ -275,7 +300,8 @@ def ensure(module, client):
                                 sshpubkey=module.params['sshpubkey'], nsaccountlock=nsaccountlock,
                                 telephonenumber=module.params['telephonenumber'], title=module.params['title'],
                                 userpassword=module.params['password'],
-                                gidnumber=module.params.get('gidnumber'), uidnumber=module.params.get('uidnumber'))
+                                gidnumber=module.params.get('gidnumber'), uidnumber=module.params.get('uidnumber'),
+                                homedirectory=module.params.get('homedirectory'))
 
     update_password = module.params.get('update_password')
     ipa_user = client.user_find(name=name)
@@ -311,17 +337,18 @@ def main():
                                               choices=['always', 'on_create']),
                          krbpasswordexpiration=dict(type='str'),
                          loginshell=dict(type='str'),
-                         mail=dict(type='list'),
+                         mail=dict(type='list', elements='str'),
                          sn=dict(type='str'),
                          uid=dict(type='str', required=True, aliases=['name']),
                          gidnumber=dict(type='str'),
                          uidnumber=dict(type='str'),
                          password=dict(type='str', no_log=True),
-                         sshpubkey=dict(type='list'),
+                         sshpubkey=dict(type='list', elements='str'),
                          state=dict(type='str', default='present',
                                     choices=['present', 'absent', 'enabled', 'disabled']),
-                         telephonenumber=dict(type='list'),
-                         title=dict(type='str'))
+                         telephonenumber=dict(type='list', elements='str'),
+                         title=dict(type='str'),
+                         homedirectory=dict(type='str'))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

@@ -1,0 +1,70 @@
+---
+- debug:
+    msg: "Start nxos_lldp_interfaces round trip integration tests on connection={{ ansible_connection }}"
+
+- name: Enable lldp
+  nxos_feature:
+    feature: lldp
+
+- include_tasks: remove_config.yaml
+
+- block:
+    - name: RTT - Apply the provided configuration (base config)
+      nxos_lldp_interfaces:
+        config:
+          - name: Ethernet1/1
+            transmit: false
+            tlv_set:
+              vlan: 5
+        state: merged
+      register: base_config
+
+    - name: Gather interfaces facts
+      nxos_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources:
+          - lldp_interfaces
+
+    - name: Apply provided configuration (this will be reverted)
+      nxos_lldp_interfaces:
+        config:
+          - name: Ethernet1/1
+            transmit: false
+
+          - name: Ethernet1/2
+            transmit: true
+            tlv_set:
+              vlan: 12
+              management_address: 10.1.1.2
+        state: overridden
+      register: result
+
+    - name: Assert that changes were applied
+      assert:
+        that:
+          - "result.changed == true"
+          - "'interface Ethernet1/1' in result.commands"
+          - "'no lldp tlv-set vlan 5' in result.commands"
+          - "'interface Ethernet1/2' in result.commands"
+          - "'lldp transmit' in result.commands"
+          - "'lldp tlv-set vlan 12' in result.commands"
+          - "'lldp tlv-set management-address 10.1.1.2' in result.commands"
+          - "result.commands | length == 6"
+
+    - name: Revert back to base configuration
+      nxos_lldp_interfaces:
+        config: "{{ ansible_facts['network_resources']['lldp_interfaces'] }}"
+        state: overridden
+      register: revert
+
+    - name: Assert that config was reverted
+      assert:
+        that: "{{ base_config['after'] | symmetric_difference(revert['after']) |length == 0 }}"
+
+  always:
+    - name: teardown
+      nxos_feature:
+        feature: lldp
+        state: disabled

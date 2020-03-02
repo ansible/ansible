@@ -17,6 +17,7 @@
               native_vlan: 20
               pruning_vlans: 10,20
               encapsulation: dot1q
+            mode: trunk
         state: merged
       register: result
 

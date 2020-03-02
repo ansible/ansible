@@ -50,6 +50,7 @@ options:
     type: str
     aliases:
     - login_db
+    required: true
   force_trust:
     description:
     - Marks the language as trusted, even if it's marked as untrusted in pg_pltemplate.

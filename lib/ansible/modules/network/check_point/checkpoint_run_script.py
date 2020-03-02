@@ -71,8 +71,6 @@ checkpoint_run_script:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
-from ansible.module_utils.network.checkpoint.checkpoint import publish, install_policy
-import json
 
 
 def run_script(module, connection):

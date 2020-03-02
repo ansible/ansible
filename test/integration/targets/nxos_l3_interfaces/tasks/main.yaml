@@ -1,2 +1,18 @@
 ---
+# The interface-count asserts need to also account for mgmt0 which is a reserved
+# interface; i.e. it will be included in L3 facts when it has non-default values
+# but excluded from result.before/after because it's not allowed to be managed.
+- set_fact:
+    # Zuul CI skips prepare_nxos but will have dhcp configured on mgmt0
+    rsvd_intf_len: 1
+
+- block:
+  - set_fact:
+      mgmt:
+        "{{ intdataraw|selectattr('interface', 'equalto', 'mgmt0')|list}}"
+  - set_fact:
+      rsvd_intf_len:
+        "{{ 1 if (mgmt and 'ip_addr' in mgmt[0]) else 0}}"
+  when: prepare_nxos_tests_task | default(True) | bool
+
 - { include: cli.yaml, tags: ['cli'] }

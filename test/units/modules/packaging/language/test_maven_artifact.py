@@ -65,6 +65,6 @@ def test_find_version_by_spec(mocker, version_by_spec, version_choosed):
     _getContent.return_value = maven_metadata_example
 
     artifact = maven_artifact.Artifact("junit", "junit", None, version_by_spec, "jar")
-    mvn_downloader = maven_artifact.MavenDownloader(basic.AnsibleModule, "http://repo1.maven.org/maven2")
+    mvn_downloader = maven_artifact.MavenDownloader(basic.AnsibleModule, "https://repo1.maven.org/maven2")
 
     assert mvn_downloader.find_version_by_spec(artifact) == version_choosed

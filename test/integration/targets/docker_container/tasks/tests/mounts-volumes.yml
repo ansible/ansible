@@ -293,6 +293,7 @@
     volumes:
     - "/tmp:/tmp"
     - "/:/whatever:rw,z"
+    - "/anon:rw"
   register: volumes_1
 
 - name: volumes (idempotency)
@@ -304,6 +305,7 @@
     volumes:
     - "/:/whatever:rw,z"
     - "/tmp:/tmp"
+    - "/anon:rw"
   register: volumes_2
 
 - name: volumes (less volumes)
@@ -363,9 +365,12 @@
 - assert:
     that:
     - volumes_1 is changed
+    - volumes_1.container.Config.Volumes | length == 1
+    - volumes_1.container.Config.Volumes['/anon:rw'] | length == 0
     - volumes_2 is not changed
     - volumes_3 is not changed
     - volumes_4 is changed
+    - not volumes_4.container.Config.Volumes
     - volumes_5 is changed
     - volumes_6 is failed
     - "'The mount point \"/tmp\" appears twice in the volumes option' in volumes_6.msg"

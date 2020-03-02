@@ -29,6 +29,7 @@ version_added: '2.8'
 author:
   - Gaudenz Steinlin (@gaudenz)
   - René Moser (@resmo)
+  - Denis Krienbühl (@href)
 options:
   state:
     description:
@@ -56,6 +57,12 @@ options:
         Defaults to C(ssd) on volume creation.
     choices: [ ssd, bulk ]
     type: str
+  zone:
+    description:
+      - Zone in which the volume resides (e.g. C(lgp1) or C(rma1)). Cannot be
+        changed after creating the volume. Defaults to the project default zone.
+    type: str
+    version_added: '2.10'
   server_uuids:
     description:
       - UUIDs of the servers this volume is attached to. Set this to C([]) to
@@ -76,6 +83,7 @@ EXAMPLES = '''
 - name: Create an SSD volume
   cloudscale_volume:
     name: my_ssd_volume
+    zone: 'lpg1'
     size_gb: 50
     api_token: xxxxxx
   register: my_ssd_volume
@@ -92,6 +100,7 @@ EXAMPLES = '''
 - name: Create and attach volume to server
   cloudscale_volume:
     name: my_ssd_volume
+    zone: 'lpg1'
     size_gb: 50
     server_uuids:
       - ea3b39a3-77a8-4d0b-881d-0bb00a1e7f48
@@ -138,6 +147,12 @@ type:
   returned: state == present
   type: str
   sample: bulk
+zone:
+  description: The zone of the volume.
+  returned: state == present
+  type: dict
+  sample: {'slug': 'lpg1'}
+  version_added: '2.10'
 server_uuids:
   description: The UUIDs of the servers this volume is attached to.
   returned: state == present
@@ -189,6 +204,7 @@ class AnsibleCloudscaleVolume(AnsibleCloudscaleBase):
         data = {
             'name': self._module.params.get('name'),
             'type': self._module.params.get('type'),
+            'zone': self._module.params.get('zone'),
             'size_gb': self._module.params.get('size_gb') or 'ssd',
             'server_uuids': self._module.params.get('server_uuids') or [],
             'tags': self._module.params.get('tags'),
@@ -262,6 +278,7 @@ def main():
         state=dict(default='present', choices=('present', 'absent')),
         name=dict(),
         uuid=dict(),
+        zone=dict(),
         size_gb=dict(type='int'),
         type=dict(choices=('ssd', 'bulk')),
         server_uuids=dict(type='list', aliases=['server_uuid']),

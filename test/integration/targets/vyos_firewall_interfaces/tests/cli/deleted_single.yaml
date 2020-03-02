@@ -1,0 +1,54 @@
+---
+- debug:
+    msg: "Start vyos_firewall_interfaces deleted integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _populate_rule_sets.yaml
+
+- include_tasks: _populate.yaml
+
+- block:
+  - name: Delete firewall interface.
+    vyos_firewall_interfaces: &deleted_single
+      config:
+         - name: 'eth1'
+           access_rules:
+             - afi: 'ipv4'
+               rules:
+                 - direction: 'in'
+                   name: 'INBOUND'
+      state: deleted
+    register: result
+
+  - name: Assert that the before dicts were correctly generated
+    assert:
+      that:
+        - "{{ populate | symmetric_difference(result['before']) |length == 0 }}"
+
+  - name: Assert that the correct set of commands were generated
+    assert:
+      that:
+        - "{{ deleted_single['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+  - name: Assert that the after dicts were correctly generated
+    assert:
+      that:
+        - "{{ deleted_single['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+  - name: Delete attributes of given interfaces (IDEMPOTENT)
+    vyos_firewall_interfaces: *deleted_single
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  - name: Assert that the before dicts were correctly generated
+    assert:
+      that:
+        - "{{ deleted_single['after'] | symmetric_difference(result['before']) |length == 0 }}"
+  always:
+  - include_tasks: _remove_config.yaml
+
+  - include_tasks: _remove_firewall_config.yaml

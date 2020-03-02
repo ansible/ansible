@@ -92,7 +92,7 @@ vultr_user_info:
       description: Email of the user.
       returned: success
       type: str
-      sample: "john@exmaple.com"
+      sample: "john@example.com"
     api_enabled:
       description: Whether the API is enabled or not.
       returned: success

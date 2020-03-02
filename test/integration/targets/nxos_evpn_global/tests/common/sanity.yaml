@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_evpn_global sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: "Setup"
   nxos_config: &remove_evpn_config
@@ -12,7 +10,6 @@
 - name: "Disable feature nv overlay"
   nxos_feature: &disable_feature_nv_overlay
     feature: nv overlay
-    provider: "{{ connection }}"
     state: disabled
   ignore_errors: yes
 
@@ -20,7 +17,6 @@
   - name: "Enable feature nv overlay"
     nxos_feature: &enable_feature_nv_overlay
       feature: nv overlay
-      provider: "{{ connection }}"
       state: enabled
     ignore_errors: yes
 

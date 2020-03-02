@@ -1,0 +1,49 @@
+---
+- name: Setup
+  eos_acls: &merged
+    config:
+      - afi: "ipv4"
+        acls:
+         - name: test1
+           aces:
+             - sequence: 35
+               grant: "deny"
+               protocol: "tcp"
+               source:
+                 subnet_address: 20.0.0.0/8
+               destination:
+                 any: true
+               log: true
+             - remark: "Run by ansible"
+             - grant: "permit"
+               protocol: "6"
+               source:
+                any: true
+               destination:
+                any: true
+         - name: test4
+           aces:
+             - grant: "permit"
+               source:
+                 any: true
+                 port_protocol:
+                  eq: "25"
+               destination:
+                 any: true
+                 port_protocol:
+                  eq: "www"
+               protocol: "tcp"
+               ttl:
+                 eq: "55"
+      - afi: "ipv6"
+        acls:
+          - name: test2
+            standard: true
+            aces:
+              - grant: "permit"
+                log: "true"
+                source:
+                  any: true
+    state: merged
+  become: yes
+  register: result

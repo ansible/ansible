@@ -227,12 +227,9 @@ arns:
 
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils.aws.acm import ACMServiceManager
-from ansible.module_utils._text import to_bytes, to_text
-from ssl import PEM_cert_to_DER_cert
+from ansible.module_utils._text import to_text
 import base64
-import traceback
 import re  # regex library
 
 
@@ -265,8 +262,7 @@ def PEM_body_to_DER(module, pem):
     try:
         der = base64.b64decode(to_text(pem))
     except (ValueError, TypeError) as e:
-        module.fail_json(msg="Unable to decode certificate chain",
-                         exception=traceback.format_exc())
+        module.fail_json_aws(e, msg="Unable to decode certificate chain")
     return der
 
 
@@ -299,21 +295,17 @@ def main():
         private_key=dict(no_log=True),
         state=dict(default='present', choices=['present', 'absent'])
     )
-    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
+    required_if = [
+        ['state', 'present', ['certificate', 'name_tag', 'private_key']],
+    ]
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True, required_if=required_if)
     acm = ACMServiceManager(module)
 
     # Check argument requirements
     if module.params['state'] == 'present':
-        if not module.params['certificate']:
-            module.fail_json(msg="Parameter 'certificate' must be specified if 'state' is specified as 'present'")
-        elif module.params['certificate_arn']:
+        if module.params['certificate_arn']:
             module.fail_json(msg="Parameter 'certificate_arn' is only valid if parameter 'state' is specified as 'absent'")
-        elif not module.params['name_tag']:
-            module.fail_json(msg="Parameter 'name_tag' must be specified if parameter 'state' is specified as 'present'")
-        elif not module.params['private_key']:
-            module.fail_json(msg="Parameter 'private_key' must be specified if 'state' is specified as 'present'")
     else:  # absent
-
         # exactly one of these should be specified
         absent_args = ['certificate_arn', 'domain_name', 'name_tag']
         if sum([(module.params[a] is not None) for a in absent_args]) != 1:
@@ -326,9 +318,7 @@ def main():
     else:
         tags = None
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='acm',
-                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client('acm')
 
     # fetch the list of certificates currently in ACM
     certificates = acm.get_certificates(client=client,

@@ -1,0 +1,8 @@
+---
+- cli_config:
+    config: |
+      no interface port-channel1
+      no interface port-channel2
+      no interface port-channel12
+  ignore_errors: yes
+#this is just for RTT to remove spill overs from other modules and pass in ZUUL

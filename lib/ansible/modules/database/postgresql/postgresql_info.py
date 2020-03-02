@@ -235,10 +235,29 @@ databases:
               returned: always
               type: str
               sample: postgres
+        publications:
+          description:
+          - Information about logical replication publications (available for PostgreSQL 10 and higher)
+            U(https://www.postgresql.org/docs/current/logical-replication-publication.html).
+          - Content depends on PostgreSQL server version.
+          returned: if configured
+          type: dict
+          version_added: "2.10"
+          sample: { "pub1": { "ownername": "postgres", "puballtables": true, "pubinsert": true, "pubupdate": true } }
+        subscriptions:
+          description:
+          - Information about replication subscriptions (available for PostgreSQL 10 and higher)
+            U(https://www.postgresql.org/docs/current/logical-replication-subscription.html).
+          - Content depends on PostgreSQL server version.
+          returned: if configured
+          type: dict
+          version_added: "2.10"
+          sample:
+          - { "my_subscription": {"ownername": "postgres", "subenabled": true, "subpublications": ["first_publication"] } }
 repl_slots:
   description:
   - Replication slots (available in 9.4 and later)
-    U(https://www.postgresql.org/docs/current/catalog-pg-replication-slots.html).
+    U(https://www.postgresql.org/docs/current/view-pg-replication-slots.html).
   returned: if existent
   type: dict
   sample: { "slot0": { "active": false, "database": null, "plugin": null, "slot_type": "physical" } }
@@ -470,6 +489,7 @@ from ansible.module_utils.postgres import (
     get_conn_params,
     postgres_common_argument_spec,
 )
+from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
 
@@ -587,6 +607,63 @@ class PgClusterInfo(object):
                 subset_map[s]()
 
         return self.pg_info
+
+    def get_pub_info(self):
+        """Get publication statistics."""
+        query = ("SELECT p.*, r.rolname AS ownername "
+                 "FROM pg_catalog.pg_publication AS p "
+                 "JOIN pg_catalog.pg_roles AS r "
+                 "ON p.pubowner = r.oid")
+
+        result = self.__exec_sql(query)
+
+        if result:
+            result = [dict(row) for row in result]
+        else:
+            return {}
+
+        publications = {}
+
+        for elem in result:
+            if not publications.get(elem['pubname']):
+                publications[elem['pubname']] = {}
+
+            for key, val in iteritems(elem):
+                if key != 'pubname':
+                    publications[elem['pubname']][key] = val
+
+        return publications
+
+    def get_subscr_info(self):
+        """Get subscription statistics."""
+        query = ("SELECT s.*, r.rolname AS ownername, d.datname AS dbname "
+                 "FROM pg_catalog.pg_subscription s "
+                 "JOIN pg_catalog.pg_database d "
+                 "ON s.subdbid = d.oid "
+                 "JOIN pg_catalog.pg_roles AS r "
+                 "ON s.subowner = r.oid")
+
+        result = self.__exec_sql(query)
+
+        if result:
+            result = [dict(row) for row in result]
+        else:
+            return {}
+
+        subscr_info = {}
+
+        for elem in result:
+            if not subscr_info.get(elem['dbname']):
+                subscr_info[elem['dbname']] = {}
+
+            if not subscr_info[elem['dbname']].get(elem['subname']):
+                subscr_info[elem['dbname']][elem['subname']] = {}
+
+                for key, val in iteritems(elem):
+                    if key not in ('subname', 'dbname'):
+                        subscr_info[elem['dbname']][elem['subname']][key] = val
+
+        return subscr_info
 
     def get_tablespaces(self):
         """Get information about tablespaces."""
@@ -873,11 +950,17 @@ class PgClusterInfo(object):
                 size=i[6],
             )
 
+        if self.cursor.connection.server_version >= 100000:
+            subscr_info = self.get_subscr_info()
+
         for datname in db_dict:
             self.cursor = self.db_obj.reconnect(datname)
             db_dict[datname]['namespaces'] = self.get_namespaces()
             db_dict[datname]['extensions'] = self.get_ext_info()
             db_dict[datname]['languages'] = self.get_lang_info()
+            if self.cursor.connection.server_version >= 100000:
+                db_dict[datname]['publications'] = self.get_pub_info()
+                db_dict[datname]['subscriptions'] = subscr_info.get(datname, {})
 
         self.pg_info["databases"] = db_dict
 
@@ -906,7 +989,7 @@ def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
         db=dict(type='str', aliases=['login_db']),
-        filter=dict(type='list'),
+        filter=dict(type='list', elements='str'),
         session_role=dict(type='str'),
     )
     module = AnsibleModule(

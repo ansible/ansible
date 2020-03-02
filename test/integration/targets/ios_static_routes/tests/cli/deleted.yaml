@@ -1,0 +1,66 @@
+---
+- debug:
+    msg: "Start Deleted integration state for ios_static_routes ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _intial_setup_config.yaml
+
+- block:
+    - name: Delete attributes of provided configured interfaces
+      ios_static_routes: &deleted
+        config:
+          - vrf: ansible_temp_vrf
+            address_families:
+            - afi: ipv4
+              routes:
+              - dest: 192.0.2.0/24
+                next_hops:
+                - forward_router_address: 192.0.2.1
+                  name: test_vrf
+                  tag: 50
+                  track: 150
+          - address_families:
+            - afi: ipv4
+              routes:
+              - dest: 198.51.100.0/24
+                next_hops:
+                - forward_router_address: 198.51.101.1
+                  name: route_1
+                  distance_metric: 110
+                  tag: 40
+                  multicast: True
+                - forward_router_address: 198.51.101.2
+                  name: route_2
+                  distance_metric: 30
+                - forward_router_address: 198.51.101.3
+                  name: route_3
+            - afi: ipv6
+              routes:
+              - dest: 2001:DB8:0:3::/64
+                next_hops:
+                - forward_router_address: 2001:DB8:0:3::2
+                  name: test_v6
+                  tag: 105
+        state: deleted
+      register: result
+
+    - assert:
+        that:
+          - "result.commands|length == 5"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(deleted.commands) == []"
+
+    - name: Delete attributes of all configured interfaces (IDEMPOTENT)
+      ios_static_routes: *deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result.commands|length == 0"
+          - "result.changed == false"
+
+  always:
+    - include_tasks: _populate_config.yaml
+    - include_tasks: _remove_config.yaml
