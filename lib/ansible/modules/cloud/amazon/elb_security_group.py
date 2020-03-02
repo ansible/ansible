@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: elb_security_group
-short_description: Attach a security group to an elb
+short_description: Attach a security group to an already existing elb
 description:
   - Attach a security group to an elb
 requirements: ['boto3 >= 1.11.15']
@@ -31,15 +31,15 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: Attach SGs
+- name: Attach SGs to alb
   elb_security_group:
     profile: 'my_aws_profile'
     region: 'my_region'
     elb_arn: "arn:aws:elasticloadbalancing:..."
     security_group_ids: ['sg-1aaaa', 'sg-2bbbb']
-  register: result
+  register: alb_sg
 - debug:
-    msg: "{{ result }}"
+    msg: "{{ alb_sg }}"
 '''
 
 RETURN = '''
