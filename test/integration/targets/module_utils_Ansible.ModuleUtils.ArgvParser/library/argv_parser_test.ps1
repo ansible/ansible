@@ -40,7 +40,7 @@ namespace Ansible.Command
 }
 '@
 
-Function Run-Process($executable, $arguments) {
+Function Invoke-Process($executable, $arguments) {
     $proc = New-Object System.Diagnostics.Process
     $psi = $proc.StartInfo
     $psi.FileName = $executable
@@ -72,7 +72,7 @@ foreach ($expected in $tests) {
     $joined_string = Argv-ToString -arguments $expected
     # We can't used CommandLineToArgvW to test this out as it seems to mangle
     # \, might be something to do with unicode but not sure...
-    $actual = Run-Process -executable $exe -arguments $joined_string
+    $actual = Invoke-Process -executable $exe -arguments $joined_string
 
     if ($expected.Count -ne $actual.Count) {
         $result.actual = $actual -join "`n"

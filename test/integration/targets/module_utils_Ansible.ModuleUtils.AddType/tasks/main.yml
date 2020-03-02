@@ -1,0 +1,10 @@
+---
+- name: call module with AddType tests
+  add_type_test:
+  register: add_type_test
+
+- name: assert call module with AddType tests
+  assert:
+    that:
+    - not add_type_test is failed
+    - add_type_test.res == 'success'

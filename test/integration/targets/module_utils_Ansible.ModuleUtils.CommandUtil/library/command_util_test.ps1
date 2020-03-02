@@ -98,7 +98,7 @@ Assert-Equals -actual $actual.stdout -expected "💩`n"
 Assert-Equals -actual $actual.stderr -expected ""
 
 $test_name = "test default environment variable"
-Set-Item -Path env:TESTENV -Value "test"
+Set-Item -LiteralPath env:TESTENV -Value "test"
 $actual = Run-Command -command "cmd.exe /c set"
 $env_present = $actual.stdout -split "`r`n" | Where-Object { $_ -eq "TESTENV=test" }
 if ($null -eq $env_present) {

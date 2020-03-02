@@ -2,7 +2,7 @@
 # They are being run as part of the Windows smoke tests. Please do not significantly
 # increase the size of these tests, as the smoke tests need to remain fast.
 # Any significant additions should be made to the (as yet nonexistent) PS module_utils unit tests.
-
+---
 - name: find a nonexistent drive letter
   raw: foreach($c in [char[]]([char]'D'..[char]'Z')) { If (-not $(Get-PSDrive $c -ErrorAction SilentlyContinue)) { return $c } }
   register: bogus_driveletter
