@@ -1,0 +1,2 @@
+minor_changes:
+  - rhn_channel - add ca_cert param for use with self-signed spacewalk certificate
