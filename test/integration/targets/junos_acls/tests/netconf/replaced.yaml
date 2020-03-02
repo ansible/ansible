@@ -39,7 +39,7 @@
                   source:
                     address: ::11/128
                     port_protocol:
-                      eq: 631
+                      eq: "631"
               name: initial_acl6
           afi: ipv6
 
