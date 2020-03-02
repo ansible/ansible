@@ -348,7 +348,7 @@ $tests = [Ordered]@{
         $params = @{
             Headers = @{
                 'Content-Length' = 0
-                testing_header = 'testing_header'
+                testingheader = 'testing_header'
                 TestHeader = 'test-header'
                 'User-Agent' = 'test-agent'
             }
@@ -364,7 +364,7 @@ $tests = [Ordered]@{
         } | ConvertFrom-Json
 
         $actual.headers.'Testheader' | Assert-Equals -Expected 'test-header'
-        $actual.headers.'Testing-Header' | Assert-Equals -Expected 'testing_header'
+        $actual.headers.'testingheader' | Assert-Equals -Expected 'testing_header'
         $actual.Headers.'User-Agent' | Assert-Equals -Expected 'test-agent'
     }
 
