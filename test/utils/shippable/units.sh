@@ -23,15 +23,30 @@ group3=()
 
 networks2=(
     aireos
+    apconos
+    aruba
+    asa
     avi
     check_point
+    cloudengine
     cloudvision
+    cnos
+    cumulus
     dellos10
     dellos6
     dellos9
+    edgeos
+    edgeswitch
+    enos
     eos
+    eric_eccli
+    exos
     f5
     fortimanager
+    frr
+    ftd
+    icx
+    ingate
     ios
     iosxr
     ironware
@@ -42,25 +57,6 @@ networks2=(
     netvisor
     nos
     nso
-)
-
-networks3=(
-    apconos
-    aruba
-    asa
-    cloudengine
-    cnos
-    cumulus
-    edgeos
-    edgeswitch
-    enos
-    eric_eccli
-    exos
-    fortios
-    frr
-    ftd
-    icx
-    ingate
     nuage
     nxos
     onyx
@@ -71,6 +67,10 @@ networks3=(
     slxos
     voss
     vyos
+)
+
+networks3=(
+    fortios
 )
 
 for network in "${networks2[@]}"; do
