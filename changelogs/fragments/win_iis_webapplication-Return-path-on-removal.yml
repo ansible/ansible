@@ -1,0 +1,3 @@
+---
+ minor_changes:
+    - "win_iis_webapplication - Return webapp physical path and applicaiton pool name on removal"

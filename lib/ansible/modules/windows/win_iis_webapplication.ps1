@@ -65,8 +65,13 @@ try {
 
   # Remove application
   if ($state -eq 'absent' -and $application) {
-    $application = Remove-WebApplication -Site $site -Name $name -WhatIf:$check_mode
+    $application = Get-WebApplication -Site $site -Name $name
+    $result.physical_path = $application.PhysicalPath
+    $result.application_pool = $application.ApplicationPool
+
+    Remove-WebApplication -Site $site -Name $name -WhatIf:$check_mode
     $result.changed = $true
+
   }
 
   $application = Get-WebApplication -Site $site -Name $name

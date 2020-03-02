@@ -1,0 +1,29 @@
+[
+    {
+        "type": "Directory",
+        "name": "c:\\Github\\ansible\\lib\\ansible\\modules\\windows",
+        "parent_id": null,
+        "fsPath": "c:\\Github\\ansible\\lib\\ansible\\modules\\windows",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "JObPXs8exC2n6Uay"
+    },
+    {
+        "type": "Directory",
+        "name": "c:\\Github\\ansible\\changelogs\\fragments",
+        "parent_id": null,
+        "fsPath": "c:\\Github\\ansible\\changelogs\\fragments",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "C0yXtQUwI9hmB3M1"
+    },
+    {
+        "type": "Directory",
+        "name": "c:\\Github\\ansible\\test\\integration\\targets",
+        "parent_id": null,
+        "fsPath": "c:\\Github\\ansible\\test\\integration\\targets",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "U7HBpuPdJnTsIlhj"
+    }
+]
