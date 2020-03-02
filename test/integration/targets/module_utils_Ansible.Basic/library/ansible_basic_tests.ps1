@@ -115,7 +115,7 @@ $tests = @{
     }
 
     "Empty spec and no options - complex_args" = {
-        $complex_args = @{}
+        Set-Variable -Name complex_args -Scope Global -Value @{}
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
 
         $m.CheckMode | Assert-Equals -Expected $false
@@ -167,7 +167,7 @@ $tests = @{
     "Internal param changes - complex_args" = {
         $m_tmpdir = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
         New-Item -Path $m_tmpdir -ItemType Directory > $null
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_check_mode = $true
             _ansible_debug = $true
             _ansible_diff = $true
@@ -264,7 +264,7 @@ $tests = @{
                 delegate_type = @{type = [Func[[Object], [UInt64]]]{ [System.UInt64]::Parse($args[0]) }}
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_default = 1
             string_option = 1
             required_option = "required"
@@ -514,7 +514,7 @@ $tests = @{
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             list_delegate_type = @(
                 "1234",
                 4321
@@ -552,7 +552,7 @@ $tests = @{
                 option1 = @{ type = "int"; required = $true }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_module_name = "win_test"
             Option1 = "1"
         }
@@ -601,7 +601,7 @@ $tests = @{
                 dict = @{type = "dict"}
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_module_name = "test_no_log"
             username = "user - pass - name"
             password = "pass"
@@ -717,7 +717,7 @@ test_no_log - Invoked with:
                 password2 = @{type = "str"; no_log = $true}
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_module_name = "test_no_log"
             password1 = ""
         }
@@ -759,7 +759,7 @@ test_no_log - Invoked with:
                 removed2 = @{removed_in_version = "2.2"}
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             removed1 = "value"
         }
 
@@ -808,7 +808,7 @@ test_no_log - Invoked with:
             }
         }
 
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             alias1 = "alias1"
             option2 = "option2"
             option3 = @{
@@ -867,7 +867,7 @@ test_no_log - Invoked with:
                 option1 = "option2"
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option1 = "option1"
             option2 = "option2"
         }
@@ -908,7 +908,7 @@ test_no_log - Invoked with:
                 option1 = "option2", "option3"
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option1 = "option1"
             option2 = "option2"
             option3 = "option3"
@@ -950,7 +950,7 @@ test_no_log - Invoked with:
                 option1 = "option2"
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option1 = "option1"
             option2 = $null
         }
@@ -991,13 +991,13 @@ test_no_log - Invoked with:
                 option1 = "option2"
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option1 = "option1"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1029,13 +1029,13 @@ test_no_log - Invoked with:
                 option1 = "option2", "option3"
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option1 = "option1"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1057,7 +1057,7 @@ test_no_log - Invoked with:
     }
 
     "Debug without debug set" = {
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_debug = $false
         }
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
@@ -1067,7 +1067,7 @@ test_no_log - Invoked with:
     }
 
     "Debug with debug set" = {
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_debug = $true
         }
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
@@ -1166,7 +1166,7 @@ test_no_log - Invoked with:
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
 
         try {
-            Get-Item -Path $null
+            Get-Item -LiteralPath $null
         } catch {
             $error_record = $_
         }
@@ -1193,7 +1193,7 @@ test_no_log - Invoked with:
     }
 
     "FailJson with Exception and verbosity 3" = {
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_verbosity = 3
         }
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
@@ -1222,13 +1222,13 @@ test_no_log - Invoked with:
     }
 
     "FailJson with ErrorRecord and verbosity 3" = {
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_verbosity = 3
         }
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
 
         try {
-            Get-Item -Path $null
+            Get-Item -LiteralPath $null
         } catch {
             $error_record = $_
         }
@@ -1247,8 +1247,8 @@ test_no_log - Invoked with:
         $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = @{}}
         $actual.failed | Assert-Equals -Expected $true
         $actual.msg | Assert-Equals -Expected "fail message"
-        $actual.exception.Contains("Cannot bind argument to parameter 'Path' because it is null") | Assert-Equals -Expected $true
-        $actual.exception.Contains("+             Get-Item -Path `$null") | Assert-Equals -Expected $true
+        $actual.exception.Contains("Cannot bind argument to parameter 'LiteralPath' because it is null") | Assert-Equals -Expected $true
+        $actual.exception.Contains("+             Get-Item -LiteralPath `$null") | Assert-Equals -Expected $true
         $actual.exception.Contains("ScriptStackTrace:") | Assert-Equals -Expected $true
     }
 
@@ -1277,7 +1277,7 @@ test_no_log - Invoked with:
     }
 
     "Diff entry with diff set" = {
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_diff = $true
         }
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
@@ -1367,12 +1367,12 @@ test_no_log - Invoked with:
     }
 
     "Unknown internal key" = {
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_invalid = "invalid"
         }
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1408,11 +1408,11 @@ test_no_log - Invoked with:
 
         $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
         New-Item -Path $remote_tmp -ItemType Directory > $null
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_remote_tmp = $remote_tmp.ToString()
         }
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
 
         $actual_tmpdir = $m.Tmpdir
         $parent_tmpdir = Split-Path -Path $actual_tmpdir -Parent
@@ -1420,8 +1420,8 @@ test_no_log - Invoked with:
 
         $parent_tmpdir | Assert-Equals -Expected $remote_tmp
         $tmpdir_name.StartSwith("ansible-moduletmp-") | Assert-Equals -Expected $true
-        (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
         $children = [System.IO.Directory]::EnumerateDirectories($remote_tmp)
         $children.Count | Assert-Equals -Expected 1
         $actual_tmpdir_sd = (Get-Acl -Path $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
@@ -1432,8 +1432,8 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
-        (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $false
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equals -Expected $false
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
         $output.warnings.Count | Assert-Equals -Expected 0
     }
 
@@ -1451,11 +1451,11 @@ test_no_log - Invoked with:
         $expected_sd = $dir_security.GetSecurityDescriptorSddlForm("Access, Owner")
 
         $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_remote_tmp = $remote_tmp.ToString()
         }
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $false
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $false
 
         $actual_tmpdir = $m.Tmpdir
         $parent_tmpdir = Split-Path -Path $actual_tmpdir -Parent
@@ -1463,8 +1463,8 @@ test_no_log - Invoked with:
 
         $parent_tmpdir | Assert-Equals -Expected $remote_tmp
         $tmpdir_name.StartSwith("ansible-moduletmp-") | Assert-Equals -Expected $true
-        (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
         $children = [System.IO.Directory]::EnumerateDirectories($remote_tmp)
         $children.Count | Assert-Equals -Expected 1
         $actual_remote_sd = (Get-Acl -Path $remote_tmp).GetSecurityDescriptorSddlForm("Access, Owner")
@@ -1477,8 +1477,8 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
-        (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $false
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equals -Expected $false
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
         $output.warnings.Count | Assert-Equals -Expected 1
         $nt_account = $current_user.Translate([System.Security.Principal.NTAccount])
         $actual_warning = "Module remote_tmp $remote_tmp did not exist and was created with FullControl to $nt_account, "
@@ -1490,7 +1490,7 @@ test_no_log - Invoked with:
     "Module tmp, keep remote files" = {
         $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
         New-Item -Path $remote_tmp -ItemType Directory > $null
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_remote_tmp = $remote_tmp.ToString()
             _ansible_keep_remote_files = $true
         }
@@ -1502,18 +1502,18 @@ test_no_log - Invoked with:
 
         $parent_tmpdir | Assert-Equals -Expected $remote_tmp
         $tmpdir_name.StartSwith("ansible-moduletmp-") | Assert-Equals -Expected $true
-        (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
 
         try {
             $m.ExitJson()
         } catch [System.Management.Automation.RuntimeException] {
             $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
-        (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
         $output.warnings.Count | Assert-Equals -Expected 0
-        Remove-Item -Path $actual_tmpdir -Force -Recurse
+        Remove-Item -LiteralPath $actual_tmpdir -Force -Recurse
     }
 
     "Invalid argument spec key" = {
@@ -1522,7 +1522,7 @@ test_no_log - Invoked with:
         }
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1555,7 +1555,7 @@ test_no_log - Invoked with:
         }
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1580,7 +1580,7 @@ test_no_log - Invoked with:
         }
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1607,7 +1607,7 @@ test_no_log - Invoked with:
         }
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1635,7 +1635,7 @@ test_no_log - Invoked with:
         }
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1667,7 +1667,7 @@ test_no_log - Invoked with:
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1701,7 +1701,7 @@ test_no_log - Invoked with:
             }
         }
 
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = @{
                 sub_option_key = "a"
             }
@@ -1709,12 +1709,11 @@ test_no_log - Invoked with:
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.ArgumentException] {
             $failed = $true
             $expected_msg = "name is required in a deprecated_aliases entry - found in option_key"
             $_.Exception.Message | Assert-Equals -Expected $expected_msg
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
     }
@@ -1731,7 +1730,7 @@ test_no_log - Invoked with:
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1755,7 +1754,7 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = "abc"
             invalid_key = "def"
             another_key = "ghi"
@@ -1763,7 +1762,7 @@ test_no_log - Invoked with:
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1789,14 +1788,14 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_check_mode = $true
             option_key = "abc"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
@@ -1827,7 +1826,7 @@ test_no_log - Invoked with:
             }
             supports_check_mode = $true
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_check_mode = $true
         }
 
@@ -1843,13 +1842,13 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = "a"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1880,7 +1879,7 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = @{
                 sub_option_key = "a"
             }
@@ -1888,7 +1887,7 @@ test_no_log - Invoked with:
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -1916,7 +1915,7 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = "2"
         }
 
@@ -1939,7 +1938,7 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = "ABC"
         }
 
@@ -1968,7 +1967,7 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = "ABC"
         }
 
@@ -1998,7 +1997,7 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = "AbC", "ghi", "jkl"
         }
 
@@ -2026,13 +2025,13 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = "c"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -2058,13 +2057,13 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = "abc"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -2090,13 +2089,13 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = "a", "c"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -2121,14 +2120,14 @@ test_no_log - Invoked with:
             }
             mutually_exclusive = @(,@("option1", "option2"))
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option1 = "a"
             option2 = "b"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -2152,13 +2151,13 @@ test_no_log - Invoked with:
                 option2 = @{required = $true}
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option1 = "a"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -2219,7 +2218,7 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = @{
                 another_key = "abc"
             }
@@ -2227,7 +2226,7 @@ test_no_log - Invoked with:
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -2252,13 +2251,13 @@ test_no_log - Invoked with:
             }
             required_together = @(,@("option1", "option2"))
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option1 = "abc"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -2290,7 +2289,7 @@ test_no_log - Invoked with:
             }
             required_together = @(,@("option_key", "another_option"))
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = @{
                 option1 = "abc"
             }
@@ -2299,7 +2298,7 @@ test_no_log - Invoked with:
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -2325,13 +2324,13 @@ test_no_log - Invoked with:
             }
             required_one_of = @(@("option1", "option2"), @("option2", "option3"))
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             option1 = "abc"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -2359,7 +2358,7 @@ test_no_log - Invoked with:
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -2385,7 +2384,7 @@ test_no_log - Invoked with:
             }
             required_if = @(,@("state", "absent", @("name", "path")))
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             name = "abc"
         }
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
@@ -2414,14 +2413,14 @@ test_no_log - Invoked with:
             }
             required_if = @(,@("state", "absent", @("name", "path")))
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             state = "absent"
             name = "abc"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -2447,13 +2446,13 @@ test_no_log - Invoked with:
             }
             required_if = @(,@("state", "absent", @("name", "path"), $true))
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             state = "absent"
         }
 
         $failed = $false
         try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
@@ -2479,7 +2478,7 @@ test_no_log - Invoked with:
             }
             required_if = @(,@("state", "absent", @("name", "path"), $true))
         }
-        $complex_args = @{
+        Set-Variable -Name complex_args -Scope Global -Value @{
             state = "absent"
             name = "abc"
         }
@@ -2543,7 +2542,7 @@ test_no_log - Invoked with:
 try {
     foreach ($test_impl in $tests.GetEnumerator()) {
         # Reset the variables before each test
-        $complex_args = @{}
+        Set-Variable -Name complex_args -Value @{} -Scope Global
 
         $test = $test_impl.Key
         &$test_impl.Value
