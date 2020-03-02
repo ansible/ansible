@@ -145,7 +145,7 @@ class Subversion(object):
             bits.extend(["--username", self.username])
         if self.password:
             if self.has_option_password_from_stdin():
-                bits.extend(["--password-from-stdin"])
+                bits.append("--password-from-stdin")
                 stdin_data = self.password
             else:
                 self.module.warn("The authentication provided will be used on the svn command line and is not secure. "
