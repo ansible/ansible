@@ -1,0 +1,48 @@
+---
+- debug:
+    msg: "Start nxos_acl_interfaces rendered tests connection={{ ansible_connection }}"
+
+- name: Rendered
+  nxos_acl_interfaces: &rendered
+    config:
+      - name: Ethernet1/2
+        access_groups:
+          - afi: ipv6
+            acls:
+              - name: ACL1v6
+                direction: in
+
+      - name: Ethernet1/5
+        access_groups:
+          - afi: ipv4
+            acls:
+              - name: PortACL
+                direction: in
+                port: True
+              - name: ACL1v4
+                direction: out
+          - afi: ipv6
+            acls:
+              - name: ACL1v6
+                direction: in
+    state: rendered
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'interface Ethernet1/2' in result.rendered"
+      - "'ipv6 traffic-filter ACL1v6 in' in result.rendered"
+      - "'interface Ethernet1/5' in result.rendered"
+      - "'ipv6 traffic-filter ACL1v6 in' in result.rendered"
+      - "'ip access-group ACL1v4 out' in result.rendered"
+      - "'ip port access-group PortACL in' in result.rendered"
+      - "result.rendered | length == 6"
+
+- name: Idempotence - Rendered
+  nxos_acl_interfaces: *rendered
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"

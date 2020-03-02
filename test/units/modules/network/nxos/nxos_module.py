@@ -73,7 +73,8 @@ class TestNxosModule(ModuleTestCase):
 
         retvals = {}
         for model in models:
-            retvals[model] = self.execute_module(failed, changed, commands, sort, device=model)
+            retvals[model] = self.execute_module(
+                failed, changed, commands, sort, device=model)
 
         return retvals
 
@@ -87,19 +88,19 @@ class TestNxosModule(ModuleTestCase):
         else:
             result = self.changed(changed)
             self.assertEqual(result['changed'], changed, result)
-
-        if commands is not None:
+        if commands is not None and len(commands) > 0:
             if sort:
-                self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
+                self.assertEqual(sorted(commands), sorted(
+                    result['commands']), result['commands'])
             else:
-                self.assertEqual(commands, result['commands'], result['commands'])
+                self.assertEqual(
+                    commands, result['commands'], result['commands'])
 
         return result
 
     def failed(self):
         with self.assertRaises(AnsibleFailJson) as exc:
             self.module.main()
-
         result = exc.exception.args[0]
         self.assertTrue(result['failed'], result)
         return result

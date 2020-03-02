@@ -1,0 +1,20 @@
+---
+- name: collect cli test cases
+  find:
+    paths: "{{ role_path }}/tests/cli"
+    patterns: "{{ testcase }}.yml"
+  connection: local
+  register: test_cases
+
+- set_fact:
+    test_cases:
+      files: "{{ test_cases.files }}"
+
+- name: set test_items
+  set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
+
+- name: run test cases (connection=network_cli)
+  include: "{{ test_case_to_run }} ansible_connection=network_cli connection={{ cli }}"
+  with_items: "{{ test_items }}"
+  loop_control:
+    loop_var: test_case_to_run

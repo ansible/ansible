@@ -1,0 +1,34 @@
+---
+- debug:
+    msg: Start nxos_acl_interfaces gathered integration tests connection={{ansible_connection}}"
+
+- include_tasks: populate_config.yaml
+
+- block:
+    - name: Gather acl interfaces facts
+      nxos_facts: &facts
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: acl_interfaces
+
+    - name: Gathered
+      nxos_acl_interfaces: &gathered
+        state: gathered
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+          - "ansible_facts.network_resources.acl_interfaces == result.gathered"
+
+    - name: Idempotence - Gathered
+      nxos_acl_interfaces: *gathered
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+
+  always:
+    - include_tasks: remove_config.yaml
