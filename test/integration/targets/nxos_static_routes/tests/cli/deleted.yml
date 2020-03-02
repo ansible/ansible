@@ -103,11 +103,6 @@
           - "'vrf context default' in result.commands"
           - "'no ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.commands"
           - "'no ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.commands"
-          - "'no ip route 192.0.2.16/28 192.0.2.23 name replaced_route1 3' in result.commands"
-          - "'no ip route 192.0.2.16/28 Ethernet1/2 192.0.2.45 vrf destinationVRF name replaced_route2' in result.commands"
-          - "'no ip route 192.0.2.36/30 192.0.2.48 name test_route2 2' in result.commands"
-          - "'no ip route 192.0.2.36/30 192.0.2.32 name test_route1 tag 14' in result.commands"
-          - "result.commands | length == 10"
           - "result.changed == true"
 
     - name: Idempotence - deleted

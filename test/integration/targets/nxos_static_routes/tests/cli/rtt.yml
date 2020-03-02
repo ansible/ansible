@@ -64,9 +64,6 @@
           - "'ip route 192.0.2.44/30 192.0.2.55 tag 1 1' in result.commands"
           - "'vrf context trial_vrf' in result.commands"
           - "'no ip route 192.0.2.32/30 192.0.2.105 vrf test_dest_vrf' in result.commands"
-          # - "'vrf context management' in result.commands"
-          # - "'no ip route 0.0.0.0/0 10.0.2.2' in result.commands"
-          # - "result.commands | length == 8"
 
     - name: Revert back to base configuration
       nxos_static_routes:

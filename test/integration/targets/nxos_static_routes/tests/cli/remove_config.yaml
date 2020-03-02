@@ -5,6 +5,10 @@
       no ip route 192.0.2.16/28 192.0.2.24 name new_route
       no ip route 192.0.2.80/28 192.0.2.26 tag 12
       no ip route 192.0.2.44/30 192.0.2.55 tag 1 1
+      no ip route 192.0.2.16/28 192.0.2.23 name replaced_route1 3
+      no ip route 192.0.2.16/28 Ethernet1/2 192.0.2.45 vrf destinationVRF name replaced_route2
+      no ip route 192.0.2.36/30 192.0.2.32 name test_route1 tag 14
+      no ip route 192.0.2.36/30 192.0.2.48 name test_route2 2
       no vrf context trial_vrf
   ignore_errors: yes
   #error is thrown if we deleted trial_vrf when it is not present already. ignore_errors circumvents it
