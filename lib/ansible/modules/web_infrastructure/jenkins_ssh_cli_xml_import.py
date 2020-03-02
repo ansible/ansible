@@ -199,7 +199,10 @@ def main():
     elif result is None:
         result = process_command(module, ssh_user, ssh_host, ssh_port, object_type, cred_store, cred_domain, object_xml_type, object_xml)
 
-    module.exit_json(**result)
+    if result['return_code'] != 0:
+        module.fail_json(msg='MODULE FAILURE\nSee return_code & return_statement for the exact error.',**result)
+    else:
+        module.exit_json(**result)
 
 
 if __name__ == '__main__':

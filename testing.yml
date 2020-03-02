@@ -11,7 +11,7 @@
       user: radix
       port: 7070
       type: node
-      # xml_code_input: '<slave><name>_test_zwolle_2ndline</name><description>zigann01 on aptv006</description><remoteFS>/home/zigann01</remoteFS><numExecutors>10</numExecutors><mode>EXCLUSIVE</mode><retentionStrategy class="hudson.slaves.RetentionStrategy$Always"/><launcher class="hudson.plugins.sshslaves.SSHLauncher" plugin="ssh-slaves@1.31.0"><host>aptv006.mgt.resource.tld</host><port>22</port><credentialsId>zigann01_aptv</credentialsId><launchTimeoutSeconds>210</launchTimeoutSeconds><maxNumRetries>10</maxNumRetries><retryWaitTime>15</retryWaitTime><sshHostKeyVerificationStrategy class="hudson.plugins.sshslaves.verifiers.KnownHostsFileKeyVerificationStrategy"/><tcpNoDelay>true</tcpNoDelay></launcher><label>zigann01_aptv006</label><nodeProperties/><userId>radix</userId></slave>'
-      xml_file_input: '/home/radix/node.xml'
+      xml_code_input: '<slave><name>_test_zwolle_2ndline</name><description>zigann01 on aptv006</description><remoteFS>/home/zigann01</remoteFS><numExecutors>10</numExecutors><mode>EXCLUSIVE</mode><retentionStrategy class="hudson.slaves.RetentionStrategy$Always"/><launcher class="hudson.plugins.sshslaves.SSHLauncher" plugin="ssh-slaves@1.31.0"><host>aptv006.mgt.resource.tld</host><port>22</port><credentialsId>zigann01_aptv</credentialsId><launchTimeoutSeconds>210</launchTimeoutSeconds><maxNumRetries>10</maxNumRetries><retryWaitTime>15</retryWaitTime><sshHostKeyVerificationStrategy class="hudson.plugins.sshslaves.verifiers.KnownHostsFileKeyVerificationStrategy"/><tcpNoDelay>true</tcpNoDelay></launcher><label>zigann01_aptv006</label><nodeProperties/><userId>radix</userId></slave>'
+      # xml_file_input: '/home/radix/node.xml'
 
 ...
