@@ -52,12 +52,12 @@ $tests = @{
 
     "Test backup file in check mode" = {
         $orig_file = Join-Path -Path $tmp_dir -ChildPath "file-check.txt"
-        Set-Content -Path $orig_file -Value "abc"
+        Set-Content -LiteralPath $orig_file -Value "abc"
         $actual = Backup-File -path $orig_file -WhatIf
 
         (Test-Path -LiteralPath $actual) | Assert-Equals -Expected $false
 
-        $parent_dir = Split-Path -Path $actual
+        $parent_dir = Split-Path -LiteralPath $actual
         $backup_file = Split-Path -Path $actual -Leaf
         $parent_dir | Assert-Equals -Expected $tmp_dir
         ($backup_file -match "^file-check\.txt\.$pid\.\d{8}-\d{6}\.bak$") | Assert-Equals -Expected $true
@@ -66,16 +66,16 @@ $tests = @{
     "Test backup file" = {
         $content = "abc"
         $orig_file = Join-Path -Path $tmp_dir -ChildPath "file.txt"
-        Set-Content -Path $orig_file -Value $content
+        Set-Content -LiteralPath $orig_file -Value $content
         $actual = Backup-File -path $orig_file
 
         (Test-Path -LiteralPath $actual) | Assert-Equals -Expected $true
 
-        $parent_dir = Split-Path -Path $actual
+        $parent_dir = Split-Path -LiteralPath $actual
         $backup_file = Split-Path -Path $actual -Leaf
         $parent_dir | Assert-Equals -Expected $tmp_dir
         ($backup_file -match "^file\.txt\.$pid\.\d{8}-\d{6}\.bak$") | Assert-Equals -Expected $true
-        (Get-Content -Path $actual -Raw) | Assert-Equals -Expected "$content`r`n"
+        (Get-Content -LiteralPath $actual -Raw) | Assert-Equals -Expected "$content`r`n"
     }
 }
 

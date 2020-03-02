@@ -8185,11 +8185,8 @@ test/integration/targets/win_dsc/files/xTestDsc/1.0.1/DSCResources/ANSIBLE_xTest
 test/integration/targets/win_dsc/files/xTestDsc/1.0.1/xTestDsc.psd1 pslint!skip
 test/integration/targets/win_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_iis_webbinding/library/test_get_webbindings.ps1 pslint:PSUseApprovedVerbs
-test/integration/targets/win_module_utils/library/argv_parser_test.ps1 pslint:PSUseApprovedVerbs
-test/integration/targets/win_module_utils/library/backup_file_test.ps1 pslint:PSCustomUseLiteralPath
-test/integration/targets/win_module_utils/library/command_util_test.ps1 pslint:PSCustomUseLiteralPath
-test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings
-test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings
+test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
+test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/win_ping/library/win_ping_syntax_error.ps1 pslint!skip
 test/integration/targets/win_psmodule/files/module/template.psd1 pslint!skip
 test/integration/targets/win_psmodule/files/module/template.psm1 pslint!skip
