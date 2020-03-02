@@ -4,20 +4,21 @@
 # Copyright: (c) 2020, Paul Wetering <pwetering@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: jenkins_ssh_cli_xml_import
 author:
   - Paul Wetering (@cusux)
-short_description: Import XML Jenkins objects using the SSH CLI
+short_description: Import XML Jenkins objects using the Jenkins SSH CLI
 version_added: "2.9"
 description:
   - The C(jenkins_ssh_cli_xml_import) module imports XML files utilizing the Jenkins SSH CLI to create Jenkins objects.
@@ -57,41 +58,40 @@ notes:
   - Due to the Jenkins SSH CLI design, it does not report on success. It is important to set C(change_when) to clarify module usage in the ansible output.
 '''
 
-EXAMPLES = r'''
+
+EXAMPLES = '''
 # Create a new Jenkins credential using a variable containing the Jenkins credential XML code
 - name: Create Jenkins credential by XML code input
   jenkins_ssh_cli_xml_import:
-    user: '{{ ansible_user }}'
+    user: "{{ ansible_user }}"
     host: jenkins.example.com
     port: 8181
     type: credential
-    credential_store: 'system::system::jenkins'
-    credential_domain: 'my_domain'
-    xml_code_input: '{{ jenkins_credential_xml_code }}'
+    credential_store: "system::system::jenkins"
+    credential_domain: "my_domain"
+    xml_code_input: "{{ jenkins_credential_xml_code }}"
 
 # Create a new Jenkins node using a variable containing the remote Jenkins node XML file
 - name: Create Jenkins node by XML file input
   jenkins_ssh_cli_xml_import:
-    user: '{{ ansible_user }}'
+    user: "{{ ansible_user }}"
     type: node
-    xml_file_input: '{{ jenkins_credential_xml_file }}'
+    xml_file_input: "{{ jenkins_credential_xml_file }}"
 '''
 
-RETURN = r'''
+
+RETURN = '''
 output:
     description: Result of script
     returned: always
     type: str
-    sample: 'Import successful'
+    sample: "Import successful"
 '''
 
-import subprocess
-import json
 import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native
 
 
 def compile_cli_command(cmd, store, domain, xml):
@@ -135,8 +135,8 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
 
     host = 'localhost'
 
-    execution = subprocess.Popen("ssh -l {user} -p {port} {host} {cmd}".format(user=user, port=cli_port, host=host, cmd=ssh_command),
-                                 shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    execution = module.run_command("ssh -l {user} -p {port} {host} {cmd}".format(user=user, port=cli_port, host=host, cmd=ssh_command),
+                                   shell=True, stdout=module.PIPE, stderr=module.STDOUT)
 
     retVal = 0
     for line in execution.stdout.readlines():
