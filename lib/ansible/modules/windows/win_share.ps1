@@ -86,7 +86,7 @@ If ($state -eq "absent") {
     $path = (Get-Item $path).FullName
 
     # Allow for X:\ case
-    If ("$path" -Match "(.+)[^\:]\\$")
+    If ("$path" -Match "(.+[^\:])\\$")
     {
     	$path = $Matches[1]
     }
