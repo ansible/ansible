@@ -197,12 +197,12 @@ class Acls(ConfigBase):
                 if acl.get('aces'):
                     for ace in acl['aces']:
                         term_node = build_child_xml_node(filter_node, 'term')
+                        build_child_xml_node(term_node, 'name', ace['name'])
                         if delete:
                             term_node.attrib.update(delete)
                             needs_delete = False
                             continue
 
-                        build_child_xml_node(term_node, 'name', ace['name'])
                         if ace.get("source") or ace.get('destination') or ace.get('protocol'):
                             from_node = build_child_xml_node(term_node, 'from')
                             for direction in ('source', 'destination'):
