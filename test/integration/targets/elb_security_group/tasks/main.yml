@@ -43,7 +43,7 @@
             to_port: 80
             cidr_ip: 0.0.0.0/0
       register: sec_groups
-      loop: ['x','y']
+      loop: ['x','y','z']
     - name: Provision an alb
       elb_application_lb:
         name: "{{ alb_name }}"
@@ -53,31 +53,33 @@
           - "{{ test_subnets_msg['results'][0]['subnet']['id'] }}"
           - "{{ test_subnets_msg['results'][1]['subnet']['id'] }}"
         state: present
-      register: test_alb_msg
-    # - name: Attach security groups
-    #   elb_security_group:
-    #     region: "eu-west-1"
-    #     elb_arn: "{{ alb.load_balancer_arn }}"
-    #     security_group_ids: [ "{{ sec_group.id }}" ]
-    #   register: sg_count
-    # - assert:
-    #     that:
-    #       - sg_count is defined
-    #       - sg_count == 2
+      register: alb
+    - name: Attach a security group
+      elb_security_group:
+        elb_arn: "{{ alb.load_balancer_arn }}"
+        security_group_ids:
+          - "{{ sec_groups['results'][1]['group_id'] }}"
+          - "{{ sec_groups['results'][2]['group_id'] }}"
+      register: elb_sg_msg
+    - assert:
+        that:
+          - elb_sg_msg['changed']
+          - elb_sg_msg['response'] is defined
+          - elb_sg_msg['response'] == 2
 
 # Cleanup
   always:
-    - name: remove sgs
-      ec2_group:
-        name: "{{ prefix_num }}-{{ item }}"
-        state: absent
-        vpc_id: "{{ test_vpc.vpc.id }}"
-      loop: ['x', 'y']
     - name: remove alb
       elb_application_lb:
         name: "{{alb_name}}"
         state: absent
       ignore_errors: yes
+    - name: remove sgs
+      ec2_group:
+        name: "{{ prefix_num }}-{{ item }}"
+        state: absent
+        vpc_id: "{{ test_vpc.vpc.id }}"
+      loop: ['x', 'y','z']
     - name: remove subnet
       ec2_vpc_subnet:
         cidr: "{{ item.cidr }}"
