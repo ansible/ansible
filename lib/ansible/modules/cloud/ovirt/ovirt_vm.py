@@ -523,25 +523,21 @@ options:
         description:
             - "If I(true) C(kernel_params), C(initrd_path) and C(kernel_path) will persist in virtual machine configuration,
                if I(False) it will be used for run once."
-            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
         type: bool
         version_added: "2.8"
     kernel_path:
         description:
             - Path to a kernel image used to boot the virtual machine.
             - Kernel image must be stored on either the ISO domain or on the host's storage.
-            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
         version_added: "2.3"
     initrd_path:
         description:
             - Path to an initial ramdisk to be used with the kernel specified by C(kernel_path) option.
             - Ramdisk image must be stored on either the ISO domain or on the host's storage.
-            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
         version_added: "2.3"
     kernel_params:
         description:
             - Kernel command line parameters (formatted as string) to be used with the kernel specified by C(kernel_path) option.
-            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
         version_added: "2.3"
     instance_type:
         description:
@@ -1314,7 +1310,6 @@ from ansible.module_utils.ovirt import (
     search_by_attributes,
     search_by_name,
     wait,
-    engine_supported,
 )
 
 
@@ -2334,15 +2329,6 @@ def import_vm(module, connection):
     return True
 
 
-def check_deprecated_params(module, connection):
-    if engine_supported(connection, '4.4') and \
-            (module.params.get('kernel_params_persist') is not None or
-             module.params.get('kernel_path') is not None or
-             module.params.get('initrd_path') is not None or
-             module.params.get('kernel_params') is not None):
-        module.warn("Parameters 'kernel_params_persist', 'kernel_path', 'initrd_path', 'kernel_params' are not supported since oVirt 4.4.")
-
-
 def control_state(vm, vms_service, module):
     if vm is None:
         return
@@ -2503,7 +2489,6 @@ def main():
         state = module.params['state']
         auth = module.params.pop('auth')
         connection = create_connection(auth)
-        check_deprecated_params(module, connection)
         vms_service = connection.system_service().vms_service()
         vms_module = VmsModule(
             connection=connection,
