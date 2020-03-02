@@ -89,18 +89,11 @@ class TestNxosModule(ModuleTestCase):
         if commands is not None and len(commands) > 0:
             if sort:
                 self.assertEqual(sorted(commands), sorted(
-<<<<<<< HEAD
                     result['commands']), result['commands'])
             else:
                 self.assertEqual(
                     commands, result['commands'], result['commands'])
 
-=======
-                    result['commands']), result)
-            else:
-                self.assertEqual(
-                    commands, result['commands'], result)
->>>>>>> Unit tests and formatting
         return result
 
     def failed(self):
