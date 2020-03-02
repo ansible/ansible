@@ -8381,7 +8381,6 @@ test/units/module_utils/test_hetzner.py future-import-boilerplate
 test/units/module_utils/test_hetzner.py metaclass-boilerplate
 test/units/module_utils/test_kubevirt.py future-import-boilerplate
 test/units/module_utils/test_kubevirt.py metaclass-boilerplate
-test/units/module_utils/test_netapp.py future-import-boilerplate
 test/units/module_utils/test_text.py future-import-boilerplate
 test/units/module_utils/test_utm_utils.py future-import-boilerplate
 test/units/module_utils/test_utm_utils.py metaclass-boilerplate
@@ -8404,9 +8403,7 @@ test/units/modules/cloud/kubevirt/test_kubevirt_vm.py metaclass-boilerplate
 test/units/modules/cloud/linode/conftest.py future-import-boilerplate
 test/units/modules/cloud/linode/conftest.py metaclass-boilerplate
 test/units/modules/cloud/linode/test_linode.py metaclass-boilerplate
-test/units/modules/cloud/linode_v4/conftest.py future-import-boilerplate
-test/units/modules/cloud/linode_v4/conftest.py metaclass-boilerplate
-test/units/modules/cloud/linode_v4/test_linode_v4.py metaclass-boilerplate
+test/units/modules/cloud/linode/test_linode_v4.py metaclass-boilerplate
 test/units/modules/cloud/misc/test_terraform.py future-import-boilerplate
 test/units/modules/cloud/misc/test_terraform.py metaclass-boilerplate
 test/units/modules/cloud/misc/virt_net/conftest.py future-import-boilerplate
@@ -8690,7 +8687,6 @@ test/units/modules/storage/netapp/test_na_ontap_vscan_on_demand_task.py future-i
 test/units/modules/storage/netapp/test_na_ontap_vscan_on_demand_task.py metaclass-boilerplate
 test/units/modules/storage/netapp/test_na_ontap_vscan_scanner_pool.py future-import-boilerplate
 test/units/modules/storage/netapp/test_na_ontap_vscan_scanner_pool.py metaclass-boilerplate
-test/units/modules/storage/netapp/test_netapp.py metaclass-boilerplate
 test/units/modules/storage/netapp/test_netapp_e_alerts.py future-import-boilerplate
 test/units/modules/storage/netapp/test_netapp_e_asup.py future-import-boilerplate
 test/units/modules/storage/netapp/test_netapp_e_auditlog.py future-import-boilerplate
