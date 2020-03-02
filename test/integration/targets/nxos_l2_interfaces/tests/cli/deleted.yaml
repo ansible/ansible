@@ -46,7 +46,7 @@
         - "'interface {{ test_int2 }}' in result.commands"
         - "'no switchport mode' in result.commands"
         - "'no switchport trunk allowed vlan' in result.commands"
-        - "result.commands|length == 4"
+        - "result.commands|length == 5"
 
   - name: Idempotence - deleted
     nxos_l2_interfaces: *deleted
