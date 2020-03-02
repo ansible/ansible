@@ -76,13 +76,24 @@ author:
 '''
 
 EXAMPLES = '''
+- name: Get VM UUID
+  vmware_guest_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter }}"
+    folder: "/{{datacenter}}/vm"
+    name: "{{ vm_name }}"
+  delegate_to: localhost
+  register: vm_facts
+  
 - name: Upgrade VMware Tools using uuid
   vmware_guest_tools_upgrade:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter_name }}"
-    uuid: 421e4592-c069-924d-ce20-7e7533fab926
+    uuid: "{{ vm_facts.instance.hw_product_uuid }}"
   delegate_to: localhost
 
 - name: Upgrade VMware Tools using MoID
