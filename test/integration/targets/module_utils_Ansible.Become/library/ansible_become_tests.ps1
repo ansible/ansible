@@ -957,7 +957,7 @@ try {
     Set-Acl -Path $tmp_dir -AclObject $acl
 
     $tmp_script = Join-Path -Path $tmp_dir -ChildPath "whoami.ps1"
-    Set-Content -Path $tmp_script -Value $test_whoami
+    Set-Content -LiteralPath $tmp_script -Value $test_whoami
 
     foreach ($user in $standard_user, $admin_user) {
         $user_obj = $adsi.Children | Where-Object { $_.SchemaClassName -eq "User" -and $_.Name -eq $user }
@@ -996,7 +996,7 @@ try {
         &$test_impl.Value
     }
 } finally {
-    Remove-Item -Path $tmp_dir -Force -Recurse
+    Remove-Item -LiteralPath $tmp_dir -Force -Recurse
     foreach ($user in $standard_user, $admin_user) {
         $user_obj = $adsi.Children | Where-Object { $_.SchemaClassName -eq "User" -and $_.Name -eq $user }
         $adsi.Delete("User", $user_obj.Name.Value)

@@ -8178,9 +8178,6 @@ test/integration/targets/want_json_modules_posix/library/helloworld.py metaclass
 test/integration/targets/win_audit_rule/library/test_get_audit_rule.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_chocolatey/files/tools/chocolateyUninstall.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_chocolatey_source/library/choco_source.ps1 pslint:PSCustomUseLiteralPath
-test/integration/targets/win_csharp_utils/library/ansible_basic_tests.ps1 pslint:PSCustomUseLiteralPath
-test/integration/targets/win_csharp_utils/library/ansible_basic_tests.ps1 pslint:PSUseDeclaredVarsMoreThanAssignments # test setup requires vars to be set globally and not referenced in the same scope
-test/integration/targets/win_csharp_utils/library/ansible_become_tests.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xSetReboot/ANSIBLE_xSetReboot.psm1 pslint!skip
 test/integration/targets/win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1 pslint!skip
 test/integration/targets/win_dsc/files/xTestDsc/1.0.0/xTestDsc.psd1 pslint!skip

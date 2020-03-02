@@ -1,0 +1,29 @@
+---
+- set_fact:
+    test_username: ansible-test
+    test_password: Password123{{ lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}
+
+- name: create test Admin user
+  win_user:
+    name: '{{ test_username }}'
+    password: '{{ test_password }}'
+    state: present
+    groups:
+    - Administrators
+
+- block:
+  - name: test Ansible.AccessToken.cs
+    ansible_access_token_tests:
+      test_username: '{{ test_username }}'
+      test_password: '{{ test_password }}'
+    register: ansible_access_token_test
+
+  - name: assert test Ansible.AccessToken.cs
+    assert:
+      that:
+      - ansible_access_token_test.data == "success"
+  always:
+  - name: remove test Admin user
+    win_user:
+      name: '{{ test_username }}'
+      state: absent
