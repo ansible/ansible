@@ -154,7 +154,7 @@ class CollectionRequirement:
 
     def install(self, path, b_temp_path):
         if self.skip:
-            display.display("Skipping '%s' as it is already installed" % to_text(self))
+            display.display("%s is already installed, skipping" % to_text(self))
             return
 
         # Install if it is not
