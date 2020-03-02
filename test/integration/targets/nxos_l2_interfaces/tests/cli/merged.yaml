@@ -34,6 +34,7 @@
         - "result.before|length == 0"
         - "'interface {{ test_int1 }}' in result.commands"
         - "'switchport access vlan 6' in result.commands"
+        - "'switchport trunk allowed vlan 200' in result.commands"
         - "result.commands|length == 3"
 
   - name: Gather l2_interfaces facts
