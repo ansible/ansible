@@ -32,7 +32,6 @@ networks2=(
     eos
     f5
     fortimanager
-    fortios
     ios
     iosxr
     ironware
@@ -57,6 +56,7 @@ networks3=(
     enos
     eric_eccli
     exos
+    fortios
     frr
     ftd
     icx
