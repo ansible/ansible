@@ -1,0 +1,40 @@
+---
+- debug:
+    msg: Start nxos_acl_interfaces parsed integration tests connection={{ansible_connection}}"
+
+- include_tasks: populate_config.yaml
+
+- block:
+    - name: Gather acl interfaces facts
+      nxos_facts: &facts
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: acl_interfaces
+
+    - name: Parsed
+      nxos_acl_interfaces: &parsed
+        running_config: |
+          interface Ethernet1/2
+          ipv6 traffic-filter ACL1v6 in
+          interface Ethernet1/5
+          ipv6 traffic-filter ACL1v6 in
+          ip access-group ACL1v4 out
+          ip port access-group PortACL in
+        state: parsed
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+          - "result.parsed == parsed"
+
+    - name: Idempotence - Parsed
+      nxos_acl_interfaces: *parsed
+      register: result
+
+    - assert:
+        that: "result.changed == false"
+
+  always:
+    - include_tasks: remove_config.yaml

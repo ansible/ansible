@@ -1,0 +1,15 @@
+---
+- name: Adding base configuration
+  cli_config:
+    config: |
+      ip access-list ACL1v4
+      ip access-list NewACLv4
+      ipv6 access-list ACL1v6
+      ipv6 access-list NewACLv6
+      ip access-list PortACL
+      interface Ethernet1/2
+        ipv6 traffic-filter ACL1v6 in
+      interface Ethernet1/5
+        ip port access-group PortACL in
+        ip access-group ACL1v4 out
+        ipv6 traffic-filter ACL1v6 in
