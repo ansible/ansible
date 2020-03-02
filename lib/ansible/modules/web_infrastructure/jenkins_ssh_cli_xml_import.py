@@ -81,8 +81,18 @@ EXAMPLES = '''
 
 
 RETURN = '''
-output:
-    description: Result of script
+raw_command:
+    description: Command passed to remote node
+    returned: always
+    type: str
+    sample: "create-node < /tmp/jenkins_object.xml"
+return_code:
+    description: Returncode
+    returned: always
+    type: int
+    sample: 0
+return_statement:
+    description: Result of the module run
     returned: always
     type: str
     sample: "Import successful"
@@ -131,22 +141,27 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
 
     ssh_command = compile_cli_command(cmd_type, store, domain, xml_input)
 
+    result = dict(changed=False,
+                  raw_command=ssh_command,
+                  return_code='',
+                  return_statement='')
+
     host = 'localhost'
 
-    execution = module.run_command("ssh -l " + user + " -p " + cli_port + " " + host + " " + ssh_command)
-
-    print(execution.return_value)
-
-    retVal = 0
-    for line in execution.return_value.readlines():
-        execution.wait()
-        print(line)
-    retVal = execution.returncode
+    rc, stdout, stderr = module.run_command("ssh -l " + user + " -p " + cli_port + " " + host + " " + ssh_command)
 
     if os.path.exists('/tmp/jenkins_object.xml'):
         os.remove('/tmp/jenkins_object.xml')
 
-    return(retVal)
+    result['return_code'] = rc
+
+    if rc != 0:
+        result['return_statement'] = stderr
+    else:
+        result['return_statement'] = stdout
+        result['changed'] = True
+
+    return(result)
 
 
 def main():
@@ -184,9 +199,7 @@ def main():
     elif result is None:
         result = process_command(module, ssh_user, ssh_host, ssh_port, object_type, cred_store, cred_domain, object_xml_type, object_xml)
 
-    module.exit_json(
-        output=result,
-    )
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
