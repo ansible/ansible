@@ -43,7 +43,7 @@
             to_port: 80
             cidr_ip: 0.0.0.0/0
       register: sec_groups
-      loop: ['x','y','z']
+      loop: ['x', 'y', 'z']
     - name: Provision an alb
       elb_application_lb:
         name: "{{ alb_name }}"
@@ -79,7 +79,7 @@
         name: "{{ prefix_num }}-{{ item }}"
         state: absent
         vpc_id: "{{ test_vpc.vpc.id }}"
-      loop: ['x', 'y','z']
+      loop: ['x', 'y', 'z']
     - name: remove subnet
       ec2_vpc_subnet:
         cidr: "{{ item.cidr }}"

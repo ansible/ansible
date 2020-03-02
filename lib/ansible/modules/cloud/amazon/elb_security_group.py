@@ -20,10 +20,10 @@ author:
   - "Michael Moyle (@mmoyle)"
 options:
     elb_arn:
-        description:
+        description: ARN of an existing application load balancer
         type: string
-    security_groups:
-        description: List of security groups to attach
+    security_group_ids:
+        description: List of security groups IDs to attach to alb
         type: list
 extends_documentation_fragment:
     - aws
