@@ -83,7 +83,7 @@ If ($state -eq "absent") {
     }
 
     # normalize path and remove slash at the end
-    $path = (Get-Item $path).FullName
+    $path = (Get-Item $path).FullName -replace "\:$",":\"
 
     # Allow for X:\ case
     If ("$path" -Match "(.+[^\:])\\$")
