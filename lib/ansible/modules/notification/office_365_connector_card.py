@@ -134,7 +134,7 @@ RETURN = """
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.ec2 import snake_dict_to_camel_dict
+from ansible.module_utils.common.dict_transformations import snake_dict_to_camel_dict
 
 OFFICE_365_CARD_CONTEXT = "http://schema.org/extensions"
 OFFICE_365_CARD_TYPE = "MessageCard"
