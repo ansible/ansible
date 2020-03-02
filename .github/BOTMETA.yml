@@ -2577,6 +2577,12 @@ files:
   $modules/packaging/os/zypper.py:
     maintainers: $team_suse
     ignored: dirtyharrycallahan robinro
+  $modules/remote_management/cpm/:
+    migrated_to: wti.remote
+  $plugins/lookup/cpm_metering.py:
+    migrated_to: wti.remote
+  $plugins/lookup/cpm_status.py:
+    migrated_to: wti.remote
   $modules/remote_management/foreman/: $team_foreman
   $modules/remote_management/hpilo/:
     ignored: dagwieers
