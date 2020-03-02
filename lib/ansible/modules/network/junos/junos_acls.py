@@ -185,15 +185,6 @@ options:
                       echo_reply:
                         description: Echo reply
                         type: bool
-                      general_parameter_problem:
-                        description: Parameter problem
-                        type: bool
-                      host_isolated:
-                        description: Host isolated
-                        type: bool
-                      host_precedence_unreachable:
-                        description: Host unreachable for precedence
-                        type: bool
                       host_redirect:
                         description: Host redirect
                         type: bool
@@ -209,41 +200,17 @@ options:
                       host_unreachable:
                         description: Host unreachable
                         type: bool
-                      information_reply:
-                        description: Information replies
-                        type: bool
-                      information_request:
-                        description: Information requests
-                        type: bool
-                      mask_reply:
-                        description: Mask replies
-                        type: bool
-                      mask_request:
-                        description: Mask requests
-                        type: bool
                       net_redirect:
                         description: Network redirect
                         type: bool
                       net_tos_redirect:
                         description: Net redirect for TOS
                         type: bool
-                      net_tos_unreachable:
-                        description: Network unreachable for TOS
-                        type: bool
-                      net_unreachable:
-                        description: Net unreachable
-                        type: bool
                       network_unknown:
                         description: Network unknown
                         type: bool
-                      option_missing:
-                        description: Parameter required but not present
-                        type: bool
                       port_unreachable:
                         description: Port unreachable
-                        type: bool
-                      precedence_unreachable:
-                        description: Precedence cutoff
                         type: bool
                       protocol_unreachable:
                         description: Protocol unreachable
@@ -260,26 +227,14 @@ options:
                       router_solicitation:
                         description: Router discovery solicitations
                         type: bool
-                      source_quench:
-                        description: Source quenches
-                        type: bool
                       source_route_failed:
                         description: Source route failed
                         type: bool
                       time_exceeded:
                         description: All time exceeded.
                         type: bool
-                      timestamp_reply:
-                        description: Timestamp replies
-                        type: bool
-                      timestamp_request:
-                        description: Timestamp requests
-                        type: bool
                       ttl_exceeded:
                         description: TTL exceeded
-                        type: bool
-                      unreachable:
-                        description: All unreachables
                         type: bool
   state:
     description:

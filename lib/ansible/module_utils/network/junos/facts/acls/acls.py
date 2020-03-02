@@ -193,7 +193,7 @@ class AclsFacts(object):
                             if icmp_code == "ttl-eq-zero-during-reassembly":
                                 ace["protocol_options"]["icmp"]["reassembly-timeout"] = True
                             if icmp_code == "ttl-eq-zero-during-transit":
-                                ace["protocol_options"]["icmp"]["time_exceeded"] = True
+                                ace["protocol_options"]["icmp"]["ttl_exceeded"] = True
 
                     if term.get("then"):
                         if "accept" in term["then"]:
