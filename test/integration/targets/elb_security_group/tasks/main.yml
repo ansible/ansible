@@ -56,7 +56,7 @@
       register: alb
     - name: Attach a security group
       elb_security_group:
-        elb_arn: "{{ alb.load_balancer_arn }}"
+        alb_arn: "{{ alb.load_balancer_arn }}"
         security_group_ids:
           - "{{ sec_groups['results'][1]['group_id'] }}"
           - "{{ sec_groups['results'][2]['group_id'] }}"

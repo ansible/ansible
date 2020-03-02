@@ -19,12 +19,15 @@ version_added: "2.10"
 author:
   - "Michael Moyle (@mmoyle)"
 options:
-    elb_arn:
+    alb_arn:
         description: ARN of an existing application load balancer
-        type: string
+        type: str
+        required: true
     security_group_ids:
         description: List of security groups IDs to attach to alb
         type: list
+        elements: str
+        required: true
 extends_documentation_fragment:
     - aws
     - ec2
@@ -35,7 +38,7 @@ EXAMPLES = '''
   elb_security_group:
     profile: 'my_aws_profile'
     region: 'my_region'
-    elb_arn: "arn:aws:elasticloadbalancing:..."
+    alb_arn: "arn:aws:elasticloadbalancing:..."
     security_group_ids: ['sg-1aaaa', 'sg-2bbbb']
   register: alb_sg
 - debug:
@@ -60,11 +63,11 @@ except ImportError:
 
 
 @AWSRetry.exponential_backoff()
-def elb_sg_attach(elbv2_client, elb_arn, sg_ids):
+def elb_sg_attach(elbv2_client, alb_arn, sg_ids):
     '''Attach security groups to elb and return number of sgs attached '''
 
     response = elbv2_client.set_security_groups(
-        LoadBalancerArn=elb_arn,
+        LoadBalancerArn=alb_arn,
         SecurityGroups=sg_ids
     )
 
@@ -73,7 +76,7 @@ def elb_sg_attach(elbv2_client, elb_arn, sg_ids):
 
 def main():
     argument_spec = dict(
-        elb_arn=dict(required=True, type='str'),
+        alb_arn=dict(required=True, type='str'),
         security_group_ids=dict(required=True, type='list')
     )
     result = dict(
@@ -87,9 +90,9 @@ def main():
     try:
         result['response'] = elb_sg_attach(
             elbv2_client,
-            module.params.get('elb_arn'),
+            module.params.get('alb_arn'),
             module.params.get('security_group_ids')
-            )
+        )
 
         result['changed'] = True
 
