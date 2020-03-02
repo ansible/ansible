@@ -1,0 +1,111 @@
+- name: set connection information for aws modules and run tasks
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  vars:
+    alb_name: "alb-sg-test-{{ resource_prefix | regex_search('([0-9]+)$') }}"
+  block:
+    - name: Provision VPC
+      ec2_vpc_net:
+        cidr_block: 10.11.0.0/16
+        name: "{{ resource_prefix }}_vpc"
+        state: present
+      register: test_vpc
+    - name: provision subnet
+      ec2_vpc_subnet:
+        cidr: "{{ item.cidr }}"
+        az: "{{ aws_region}}{{item.az}}"
+        vpc_id: "{{ test_vpc.vpc.id }}"
+        state: present
+      loop:
+        - { az: 'a', cidr: '10.11.0.0/24'}
+        - { az: 'b', cidr: '10.11.1.0/24'}
+      register: test_subnets_msg
+    - name: provision igw
+      ec2_vpc_igw:
+        vpc_id: "{{ test_vpc.vpc.id }}"
+        state: present
+      register: test_igw
+    - name: Create some groups for alb
+      ec2_group:
+        name: "{{ resource_prefix }}-{{ item }}"
+        description: "security group for Ansible ALB integration tests"
+        state: present
+        vpc_id: "{{ test_vpc.vpc.id }}"
+        rules:
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 0.0.0.0/0
+      register: sec_groups
+      loop: ['1','2']
+    # - name: Provision an alb
+    #   elb_application_lb:
+    #     name: "{{ alb_name }}"
+    #     security_groups:
+    #       - "default"
+    #     subnets:
+    #       - "{{ test_subnets_msg['results'][0]['subnet']['id'] }}"
+    #       - "{{ test_subnets_msg['results'][1]['subnet']['id'] }}"
+    #     listeners:
+    #       - Protocol: HTTP
+    #         Port: 80
+    #         # The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.
+    #         SslPolicy: ELBSecurityPolicy-2015-05
+    #         # Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
+    #         #   - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
+    #         DefaultActions:
+    #           - Type: forward # Required.
+    #             TargetGroupName: # Required. The name of the target group
+    #     state: present
+    #   register: alb
+    # - name: Attach security groups
+    #   elb_security_group:
+    #     region: "eu-west-1"
+    #     elb_arn: "{{ alb.load_balancer_arn }}"
+    #     security_group_ids: [ "{{ sec_group.id }}" ]
+    #   register: sg_count
+    # - assert:
+    #     that:
+    #       - sg_count is defined
+    #       - sg_count == 2
+
+# Cleanup
+  always:
+    - name: remove sgs
+      ec2_group:
+        name: "{{ resource_prefix }}-{{ item }}"
+        state: absent
+        vpc_id: "{{ test_vpc.vpc.id }}"
+      loop: ['1', '2']
+    - name: remove alb
+      elb_application_lb:
+        name: "{{alb_name}}"
+        state: absent
+      ignore_errors: yes
+    - name: remove subnet
+      ec2_vpc_subnet:
+        cidr: "{{ item.cidr }}"
+        az: "{{ aws_region}}{{item.az}}"
+        vpc_id: "{{ test_vpc.vpc.id }}"
+        state: absent
+      loop:
+        - { az: 'a', cidr: '10.11.0.0/24'}
+        - { az: 'b', cidr: '10.11.1.0/24'}
+    - name: remove igw
+      ec2_vpc_igw:
+        vpc_id: "{{ test_vpc.vpc.id }}"
+        state: absent
+    - name: remove VPC
+      ec2_vpc_net:
+        cidr_block: 10.11.0.0/16
+        name: "{{ resource_prefix }}_vpc"
+        state: absent
+      register: remove_vpc
+      retries: 10
+      delay: 5
+      until: remove_vpc is success
+      ignore_errors: yes

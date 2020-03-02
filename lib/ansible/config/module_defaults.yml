@@ -433,6 +433,8 @@ groupings:
   - aws
   elb_network_lb:
   - aws
+  elb_security_group:
+  - aws
   elb_target:
   - aws
   elb_target_facts:
