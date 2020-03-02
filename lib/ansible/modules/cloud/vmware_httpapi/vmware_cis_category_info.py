@@ -79,6 +79,29 @@ category:
 from ansible.module_utils.vmware_httpapi.VmwareRestModule import VmwareRestModule
 
 
+def get_category_by_id(module, category_id):
+    category_id_url = module.get_url('category') + '/id:' + category_id
+    response = dict()
+    response['status'], response['data'] = module._connection.send_request(category_id_url, {}, method='GET')
+    if response['status'] == 200:
+        return response['data']['value']
+    return {}
+
+
+def get_categories_used_by_id(module, used_by_id):
+    results = []
+    url = module.get_url('category') + '?~action=list-used-categories'
+    data = {
+        'used_by_entity': used_by_id
+    }
+    response = dict()
+    response['status'], response['data'] = module._connection.send_request(url, data, method='POST')
+    if response['status'] == 200:
+        for cat_id in response['data']['value']:
+            results.append(get_category_by_id(module, category_id=cat_id))
+    module.exit_json(category=results)
+
+
 def main():
     argument_spec = VmwareRestModule.create_argument_spec()
     argument_spec.update(
@@ -127,22 +150,50 @@ def main():
     used_by_type = module.params['used_by_type']
     used_by_id = module.params['used_by_id']
 
+    results = []
+
     url = module.get_url('category')
-    data = {}
-    if category_name is not None:
-        category_id = module.get_id('category', category_name)
+    response = dict()
+    response['status'], response['data'] = module._connection.send_request(url, {}, method='GET')
+    if response['status'] != 200:
+        module.fail_json(msg="Failed to get information about categories")
+
+    category_ids = response['data'].get('value', [])
     if category_id is not None:
-        url += '/id:' + category_id
-        module.get(url=url)
-    else:
-        if used_by_name is not None:
+        if category_id in category_ids:
+            results.append(get_category_by_id(module, category_id=category_id))
+        module.exit_json(category=results)
+    elif category_name is not None:
+        for cat_id in category_ids:
+            category_obj = get_category_by_id(module, category_id=cat_id)
+            if category_obj['name'] == category_name:
+                results.append(category_obj)
+        module.exit_json(category=results)
+    elif used_by_name is not None:
+        if used_by_type == 'tag':
+            tag_url = module.get_url('tag')
+            response = dict()
+            response['status'], response['data'] = module._connection.send_request(tag_url, {}, method='GET')
+            if response['status'] == 200:
+                for tag_id in response['data']['value']:
+                    tag_details_url = tag_url + '/id:' + tag_id
+                    response = dict()
+                    response['status'], response['data'] = module._connection.send_request(tag_details_url, {}, method='GET')
+                    if response['status'] != 200:
+                        continue
+                    if response['data']['value']['name'] == used_by_name:
+                        used_by_id = tag_id
+                        break
+                get_categories_used_by_id(module, used_by_id)
+        else:
             used_by_id = module.get_id(used_by_type, used_by_name)
-        url += '?~action=list-used-categories'
-        data = {
-            'used_by_entity': used_by_id
-        }
-        module.post(url=url, data=data)
-    module.exit()
+            get_categories_used_by_id(module, used_by_id)
+    elif used_by_id is not None:
+        get_categories_used_by_id(module, used_by_id)
+    else:
+        for cat_id in category_ids:
+            results.append(get_category_by_id(module, category_id=cat_id))
+        module.exit_json(category=results)
 
 
 if __name__ == '__main__':

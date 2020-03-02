@@ -582,7 +582,7 @@ class VmwareRestModule(AnsibleModule):
                    + INVENTORY[object_type]['url'])
             if '/' in name:
                 name.replace('/', '%2F')
-            url += '&filter.names=' + name
+            url += '?filter.names=' + name
         except KeyError:
             self.fail(msg='object_type must be one of [%s].'
                       % ", ".join(list(INVENTORY.keys())))
@@ -601,8 +601,8 @@ class VmwareRestModule(AnsibleModule):
             self.fail(msg=msg)
 
         ids = []
-        for i in range(num_items):
-            ids += data[i][object_type]
+        for obj in data['value']:
+            ids.append(obj[object_type])
         return ids
 
     def _build_filter(self, object_type):
@@ -645,7 +645,9 @@ class VmwareRestModule(AnsibleModule):
             self.url = (API[INVENTORY[object_type]['api']]['base']
                         + INVENTORY[object_type]['url'])
             if with_filter:
-                self.url += self._build_filter(object_type)
+                filters = self._build_filter(object_type)
+                if filters:
+                    self.url += filters
         except KeyError:
             self.handle_object_key_error()
         return self.url
