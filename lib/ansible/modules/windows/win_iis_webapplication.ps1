@@ -71,7 +71,6 @@ try {
 
     Remove-WebApplication -Site $site -Name $name -WhatIf:$check_mode
     $result.changed = $true
-
   }
 
   $application = Get-WebApplication -Site $site -Name $name
