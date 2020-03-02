@@ -1,0 +1,9 @@
+---
+- name: Remove config
+  cli_config:
+    config: |
+      no ip access-list ACL1v4
+      no ip access-list ACL2v4
+      no ipv6 access-list ACL1v6
+      no ipv6 access-list ACL2v6
+      no ip access-list NewACL

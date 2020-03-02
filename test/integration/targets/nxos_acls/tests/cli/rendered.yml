@@ -1,0 +1,56 @@
+---
+- debug:
+    msg: "Start nxos_acls rendered tests connection={{ ansible_connection }}"
+
+- name: Rendered
+  nxos_acls: &rendered
+    config:
+      - afi: ipv4
+        acls:
+          - name: ACL1v4
+            aces:
+              - grant: deny
+                destination:
+                  address: 192.0.2.64
+                  wildcard_bits: 0.0.0.255
+                source:
+                  any: true
+                  port_protocol:
+                    eq: 43
+                protocol: tcp
+                protocol_options:
+                  tcp:
+                    ack: true
+                    fin: true
+                sequence: 50
+
+      - afi: ipv6
+        acls:
+          - name: ACL1v6
+            aces:
+              - grant: permit
+                sequence: 10
+                source:
+                  any: true
+                destination:
+                  prefix: 2001:db8:12::/32
+                protocol: sctp
+    state: rendered
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'ip access-list ACL1v4' in result.rendered"
+      - "'50 deny tcp any eq whois 192.0.2.64 0.0.0.255 ack fin' in result.rendered"
+      - "'ipv6 access-list ACL1v6' in result.rendered"
+      - "'10 permit sctp any 2001:db8:12::/32' in result.rendered"
+      - "result.rendered | length == 4"
+
+- name: Idempotence - Rendered
+  nxos_acls: *rendered
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
