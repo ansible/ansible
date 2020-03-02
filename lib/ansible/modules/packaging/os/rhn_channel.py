@@ -127,7 +127,7 @@ def main():
     password = module.params['password']
 
     # initialize connection
-    if module.params['ca_cert'] is not None and sys.version_info > (2, 7, 9):
+    if module.params['ca_cert'] is not None and sys.version_info >= (2, 7, 9):
         ctx = ssl.create_default_context()
         ctx.load_verify_locations(cafile=module.params['ca_cert'])
         client = xmlrpc_client.ServerProxy(saturl, context=ctx)
