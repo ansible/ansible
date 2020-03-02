@@ -132,7 +132,7 @@ def main():
         ctx.load_verify_locations(cafile=module.params['ca_cert'])
         client = xmlrpc_client.ServerProxy(saturl, context=ctx)
     else:
-        if sys.version_info < (2, 7, 9):
+        if module.params['ca_cert'] and sys.version_info < (2, 7, 9):
             warnings.warn("ca_cert option require at least python 2.7.9")
         client = xmlrpc_client.ServerProxy(saturl)
 
