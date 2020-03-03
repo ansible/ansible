@@ -13,6 +13,13 @@ else
     target="shippable/posix/"
 fi
 
+# detect the post migration ansible/ansible repo and enable test support plugins
+if [ -f lib/ansible/config/routing.yml ]; then
+    # this option is only useful for ansible/ansible (not collections) and should not be used prior to migration (except for incidental tests)
+    enable_test_support=--enable-test-support
+fi
+
 # shellcheck disable=SC2086
 ansible-test integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
+    ${enable_test_support:+"$enable_test_support"} \
     --docker "${image}"
