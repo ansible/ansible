@@ -304,7 +304,7 @@ def test_build_requirement_from_name(galaxy_server, monkeypatch):
     assert actual.skip is False
     assert actual.versions == set([u'2.1.9', u'2.1.10'])
     assert actual.latest_version == u'2.1.10'
-    assert actual.dependencies is None
+    assert actual.dependencies == {}
 
     assert mock_get_versions.call_count == 1
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')
@@ -324,7 +324,7 @@ def test_build_requirement_from_name_with_prerelease(galaxy_server, monkeypatch)
     assert actual.skip is False
     assert actual.versions == set([u'1.0.1', u'2.0.1'])
     assert actual.latest_version == u'2.0.1'
-    assert actual.dependencies is None
+    assert actual.dependencies == {}
 
     assert mock_get_versions.call_count == 1
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')
@@ -374,7 +374,7 @@ def test_build_requirement_from_name_second_server(galaxy_server, monkeypatch):
     assert actual.skip is False
     assert actual.versions == set([u'1.0.2', u'1.0.3'])
     assert actual.latest_version == u'1.0.3'
-    assert actual.dependencies is None
+    assert actual.dependencies == {}
 
     assert mock_404.call_count == 1
     assert mock_404.mock_calls[0][1] == ('namespace', 'collection')
@@ -474,7 +474,7 @@ def test_build_requirement_from_name_multiple_version_results(galaxy_server, mon
     assert actual.skip is False
     assert actual.versions == set([u'2.0.0', u'2.0.1', u'2.0.3', u'2.0.4', u'2.0.5'])
     assert actual.latest_version == u'2.0.5'
-    assert actual.dependencies is None
+    assert actual.dependencies == {}
 
     assert mock_get_versions.call_count == 1
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')
