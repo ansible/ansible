@@ -37,6 +37,15 @@ options:
         - This is useful for overcoming the 4096 character limit imposed by AWS.
     type: boolean
     default: false
+  on_missing:
+    description:
+        - action to take if term is missing from config
+        - Error will raise a fatal error
+        - Skip will just ignore the term
+        - Warn will skip over it but issue a warning
+    default: error
+    type: string
+    choices: ['error', 'skip', 'warn']
 """
 
 EXAMPLES = r"""
@@ -51,6 +60,11 @@ EXAMPLES = r"""
      password: "{{ lookup('aws_secret', 'DbSecret') }}"
      tags:
        Environment: staging
+
+ - name: skip if secret not exist
+   debug: msg="{{ lookup('aws_secret', secret_name, on_missing='skip')}}"
+   var:
+     secret_name: not-exist
 """
 
 RETURN = r"""
@@ -60,6 +74,7 @@ _raw:
 """
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 
 try:
     import boto3
@@ -108,6 +123,10 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
+        missing = kwargs.get('on_missing', 'error').lower()
+        if not isinstance(missing, string_types) or missing not in ['error', 'warn', 'skip']:
+            raise AnsibleError('"on_missing" must be a string and one of "error", "warn" or "skip", not %s' % missing)
+
         self.set_options(var_options=variables, direct=kwargs)
         boto_credentials = self._get_credentials()
 
@@ -130,7 +149,11 @@ class LookupModule(LookupBase):
                 if 'SecretString' in response:
                     secrets.append(response['SecretString'])
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                raise AnsibleError("Failed to retrieve secret: %s" % to_native(e))
+                if e.response['Error']['Code'] == 'ResourceNotFoundException' and missing in ['warn','skip']:
+                    if missing == 'warn':
+                        self._display.warning('Skipping, did not find secret %s' % term)
+                else:
+                    raise AnsibleError("Failed to retrieve secret: %s" % to_native(e))
 
         if kwargs.get('join'):
             joined_secret = []
