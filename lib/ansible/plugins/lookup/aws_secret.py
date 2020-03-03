@@ -39,7 +39,16 @@ options:
     default: false
   on_missing:
     description:
-        - action to take if term is missing from config
+        - action to take if secret is missing
+        - Error will raise a fatal error
+        - Skip will just ignore the term
+        - Warn will skip over it but issue a warning
+    default: error
+    type: string
+    choices: ['error', 'skip', 'warn']
+  on_denied:
+    description:
+        - action to take if access to secret is denied
         - Error will raise a fatal error
         - Skip will just ignore the term
         - Warn will skip over it but issue a warning
@@ -65,6 +74,11 @@ EXAMPLES = r"""
    debug: msg="{{ lookup('aws_secret', secret_name, on_missing='skip')}}"
    var:
      secret_name: not-exist
+
+ - name: skip if access to secret is denied
+   debug: msg="{{ lookup('aws_secret', denied-secret, on_denied='skip')}}"
+   var:
+     secret_name: denied-secret
 """
 
 RETURN = r"""
@@ -127,6 +141,10 @@ class LookupModule(LookupBase):
         if not isinstance(missing, string_types) or missing not in ['error', 'warn', 'skip']:
             raise AnsibleError('"on_missing" must be a string and one of "error", "warn" or "skip", not %s' % missing)
 
+        denied = kwargs.get('on_denied', 'error').lower()
+        if not isinstance(denied, string_types) or denied not in ['error', 'warn', 'skip']:
+            raise AnsibleError('"on_denied" must be a string and one of "error", "warn" or "skip", not %s' % denied)
+
         self.set_options(var_options=variables, direct=kwargs)
         boto_credentials = self._get_credentials()
 
@@ -149,9 +167,12 @@ class LookupModule(LookupBase):
                 if 'SecretString' in response:
                     secrets.append(response['SecretString'])
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                if e.response['Error']['Code'] == 'ResourceNotFoundException' and missing in ['warn','skip']:
+                if e.response['Error']['Code'] == 'ResourceNotFoundException' and missing in ['warn', 'skip']:
                     if missing == 'warn':
                         self._display.warning('Skipping, did not find secret %s' % term)
+                elif e.response['Error']['Code'] == 'AccessDeniedException' and denied in ['warn', 'skip']:
+                    if denied == 'warn':
+                        self._display.warning('Skipping, access denied for secret %s' % term)
                 else:
                     raise AnsibleError("Failed to retrieve secret: %s" % to_native(e))
 
