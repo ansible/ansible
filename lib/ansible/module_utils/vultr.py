@@ -61,7 +61,7 @@ class Vultr:
                 'api_key': self.module.params.get('api_key') or config.get('key'),
                 'api_timeout': self.module.params.get('api_timeout') or int(config.get('timeout') or 60),
                 'api_retries': self.module.params.get('api_retries') or int(config.get('retries') or 5),
-                'api_retry_max_delay': self.module.params.get('api_retries') or int(config.get('retry_max_delay') or 12),
+                'api_retry_max_delay': self.module.params.get('api_retry_max_delay') or int(config.get('retry_max_delay') or 12),
                 'api_endpoint': self.module.params.get('api_endpoint') or config.get('endpoint') or VULTR_API_ENDPOINT,
             }
         except ValueError as e:
