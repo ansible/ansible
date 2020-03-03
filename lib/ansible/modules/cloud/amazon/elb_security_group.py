@@ -77,7 +77,7 @@ def elb_sg_attach(elbv2_client, alb_arn, sg_ids):
 def main():
     argument_spec = dict(
         alb_arn=dict(required=True, type='str'),
-        security_group_ids=dict(required=True, type='list')
+        security_group_ids=dict(required=True, type='list', elements='str')
     )
     result = dict(
         changed=False,
