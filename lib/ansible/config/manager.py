@@ -145,13 +145,13 @@ def ensure_type(value, value_type, origin=None):
                 errmsg = 'pathlist'
 
         elif value_type in ('str', 'string'):
-            if isinstance(value, string_types):
+            if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode)):
                 value = unquote(to_text(value, errors='surrogate_or_strict'))
             else:
                 errmsg = 'string'
 
         # defaults to string type
-        elif isinstance(value, string_types):
+        elif isinstance(value, (string_types, AnsibleVaultEncryptedUnicode)):
             value = unquote(to_text(value, errors='surrogate_or_strict'))
 
         if errmsg:

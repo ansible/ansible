@@ -1,0 +1,2 @@
+bugfixes:
+  - plugins - Allow ensure_type to decrypt the value for string types (and implicit string types) when value is an inline vault.
