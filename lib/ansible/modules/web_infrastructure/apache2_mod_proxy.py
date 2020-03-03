@@ -35,6 +35,9 @@ options:
     description:
       - (ipv4|ipv6|fqdn):port of the Apache httpd 2.4 mod_proxy balancer pool.
     required: true
+  balancer_name:
+     description:
+       - name of the balancer to use if this vhost as more than one balancer
   balancer_member:
     description:
       - (ipv4|ipv6|fqdn) of the balancer member to get or to set attributes to.
@@ -46,7 +49,7 @@ options:
       - Desired state of the member host.
         (absent|disabled),drained,hot_standby,ignore_errors can be
         simultaneously invoked by separating them with a comma (e.g. state=drained,ignore_errors).
-    choices: ["present", "absent", "enabled", "disabled", "drained", "hot_standby", "ignore_errors"]
+    choices: ["present", "absent", "enabled", "disabled", "drained", "hot_standby", "ignore_errors","lf:<number>"]
   tls:
     description:
       - Use https to access balancer management page.
@@ -341,22 +344,25 @@ class Balancer(object):
         except TypeError:
             self.module.fail_json(msg="Cannot parse balancer page HTML! " + str(self.page))
         else:
-            for tag in soup.findAll('h3'):
-                if tag.a.contents[0] != 'balancer://'+self.name:
-                    continue
-                i=0
-                for s in tag.next_siblings:
-                    if s.name=='table':
-                        i=i+1
-                    if i==2:
-                        for element in s.findAll('a'):
-                            balancer_member_suffix = str(element.get('href'))
-                            if not balancer_member_suffix:
-                                self.module.fail_json(msg="Argument 'balancer_member_suffix' is empty!")
-                            else:
-                                yield BalancerMember(str(self.base_url + balancer_member_suffix), str(self.url), self.module)
-                        break
-                break
+            h3s=soup.find_all('h3')
+            if self.name is None:
+                if len(h3s)>1:
+                    self.module.fail_json(msg="More than one balancer, balancer_name required")
+                return self.parse_balancer(h3s[0])
+            else:
+                for tag in h3s:
+                    if tag.a.contents[0] != 'balancer://'+self.name:
+                        continue
+                    return self.parse_balancer(tag)
+                self.module.fail_json(msg="balancer '"+self.name+"' not found")
+    def parse_balancer(self, h3):
+        table=h3.find_next_siblings('table', limit=2)
+        for element in table[1].findAll('a'):
+            balancer_member_suffix = str(element.get('href'))
+            if not balancer_member_suffix:
+                self.module.fail_json(msg="Argument 'balancer_member_suffix' is empty!")
+            else:
+                yield BalancerMember(str(self.base_url + balancer_member_suffix), str(self.url), self.module)
 
     members = property(get_balancer_members)
 
@@ -367,7 +373,7 @@ def main():
         argument_spec=dict(
             balancer_vhost=dict(required=True, default=None, type='str'),
             balancer_url_suffix=dict(default="/balancer-manager", type='str'),
-            balancer_name=dict(required=True, default=None, type='str'),
+            balancer_name=dict(default=None, type='str'),
             balancer_member=dict(type='str', aliases=['member_host']),
             state=dict(type='str'),
             tls=dict(default=False, type='bool'),
