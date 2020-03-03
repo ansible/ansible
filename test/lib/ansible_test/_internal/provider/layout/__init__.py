@@ -114,6 +114,18 @@ class ContentLayout(Layout):
         self.is_ansible = root == ANSIBLE_SOURCE_ROOT
 
     @property
+    def delegation_install_root(self):
+        return '/root/ansible'
+
+    @property
+    def delegation_content_root(self):
+        content_root = self.delegation_install_root
+        if self.collection:
+            content_root += '/%s' % self.collection.directory
+
+        return content_root
+
+    @property
     def prefix(self):  # type: () -> str
         """Return the collection prefix or an empty string if not a collection."""
         if self.collection:

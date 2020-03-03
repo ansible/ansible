@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-test - Fix coverage path rewriter when reading coverage in a delegation scenario from a collection

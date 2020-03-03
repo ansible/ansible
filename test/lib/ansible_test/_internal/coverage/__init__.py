@@ -229,9 +229,9 @@ def sanitize_filename(
         new_name = os.path.abspath(modules[module_name])
         display.info('%s -> %s' % (filename, new_name), verbosity=3)
         filename = new_name
-    elif re.search('^(/.*?)?/root/ansible/', filename):
+    elif re.search('^(/.*?)?%s/' % data_context().content.delegation_install_root, filename):
         # Rewrite the path of code running on a remote host or in a docker container as root.
-        new_name = re.sub('^(/.*?)?/root/ansible/', root_path, filename)
+        new_name = re.sub('^(/.*?)?%s/' % data_context().content.delegation_content_root, root_path, filename)
         display.info('%s -> %s' % (filename, new_name), verbosity=3)
         filename = new_name
     elif integration_temp_path in filename:
