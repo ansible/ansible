@@ -67,7 +67,7 @@ EXAMPLES = '''
         list_resources: yes
 '''
 RETURN = '''
-azure_resourcegroups:
+resourcegroups:
     description:
         - List of resource group dicts.
     returned: always
