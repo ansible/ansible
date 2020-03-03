@@ -113,7 +113,7 @@ def rebalance(args):
     # Finally print a summary of the proposed test split.
     for group_number, test_info in group_info.items():
         print("Group %d - Total Runtime (s): %d" % (group_number, test_info['total_time']))
-        print_test_runtime({n: target_times[n] for n in test_info['targets']})
+        print_test_runtime(dict([(n, target_times[n]) for n in test_info['targets']]))
         print()
 
 
