@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2020 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -20,6 +19,8 @@ from ansible.playbook.task import Task
     '../../../foo',
     '/../../../foo',
     '/../foo',
+    '//..//foo',
+    '..//..//foo',
 ]
 )
 def test_fetch_path_traversal(mocker, source):
