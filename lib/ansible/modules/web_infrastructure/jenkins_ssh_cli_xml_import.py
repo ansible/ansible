@@ -148,7 +148,7 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
 
     host = 'localhost'
 
-    rc, stdout, stderr = module.run_command("ssh -l " + user + " -p " + cli_port + " " + host + " " + ssh_command)
+    rc, stdout, stderr = module.run_command("ssh -l " + user + " -p " + cli_port + " " + host + " " + ssh_command, use_unsafe_shell=True)
 
     if os.path.exists('/tmp/jenkins_object.xml'):
         os.remove('/tmp/jenkins_object.xml')
