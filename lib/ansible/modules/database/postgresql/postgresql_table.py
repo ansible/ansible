@@ -124,7 +124,7 @@ seealso:
   link: https://www.postgresql.org/docs/current/sql-droptable.html
 - name: PostgreSQL data types
   description: Complete reference of the PostgreSQL data types documentation.
-  link: postgresql.org/docs/current/datatype.html
+  link: https://www.postgresql.org/docs/current/datatype.html
 author:
 - Andrei Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
