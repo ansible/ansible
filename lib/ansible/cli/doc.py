@@ -36,6 +36,17 @@ def jdump(text):
     display.display(json.dumps(text, sort_keys=True, indent=4))
 
 
+def add_collection_plugins(plugin_list, plugin_type):
+
+    colldirs = list_collection_dirs()
+    for ns in colldirs.keys():
+        for path in colldirs[ns]:
+
+            collname = get_collection_name_from_path(path)
+            ptype = C.COLLECTION_PTYPE_COMPAT.get(plugin_type, plugin_type)
+            plugin_list.update(DocCLI.find_plugins(os.path.join(path, 'plugins', ptype), plugin_type, collname))
+
+
 class RemovedPlugin(Exception):
     pass
 
@@ -125,13 +136,7 @@ class DocCLI(CLI):
             for path in paths:
                 self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
 
-            colldirs = list_collection_dirs()
-            for ns in colldirs.keys():
-                for path in colldirs[ns]:
-
-                    collname = get_collection_name_from_path(path)
-                    ptype = C.COLLECTION_PTYPE_COMPAT.get(plugin_type, plugin_type)
-                    self.plugin_list.update(DocCLI.find_plugins(os.path.join(path, 'plugins', ptype), plugin_type, collname))
+            add_collection_plugins(self.plugin_list, plugin_type)
 
             plugins = self._get_plugin_list_filenames(loader)
             if do_json:
@@ -154,13 +159,7 @@ class DocCLI(CLI):
             for path in paths:
                 self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
 
-            colldirs = list_collection_dirs()
-            for ns in colldirs.keys():
-                for path in colldirs[ns]:
-
-                    collname = get_collection_name_from_path(path)
-                    ptype = C.COLLECTION_PTYPE_COMPAT.get(plugin_type, plugin_type)
-                    self.plugin_list.update(DocCLI.find_plugins(os.path.join(path, 'plugins', ptype), plugin_type, collname))
+            add_collection_plugins(self.plugin_list, plugin_type)
 
             descs = self._get_plugin_list_descriptions(loader)
             if do_json:
