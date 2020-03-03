@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix examples in eos_vlans (https://github.com/ansible/ansible/pull/66131).
