@@ -19,7 +19,7 @@ module: jenkins_ssh_cli_xml_import
 author:
   - Paul Wetering (@cusux)
 short_description: Import XML Jenkins objects using the Jenkins SSH CLI
-version_added: "2.9"
+version_added: "2.10"
 description:
   - The C(jenkins_ssh_cli_xml_import) module imports XML files utilizing the Jenkins SSH CLI to create Jenkins objects.
 options:
@@ -27,14 +27,17 @@ options:
     description:
       - The SSH user to setup the connection with the SSH CLI.
     required: true
+    type: str
   host:
     description:
       - The Jenkins SSH CLI host to connect to. By default this module should be ran on the Jenkins node, therefore it is defaulted to C(localhost).
     default: localhost
+    type: str
   port:
     description:
       - The default Jenkins web interface port. By default Jenkins web interface is set to C(8080).
     default: 8080
+    type: int
   type:
     description:
       - Type of Jenkins object to import.
@@ -44,16 +47,20 @@ options:
     description:
       - The credential store in which to create the credentials object. If this option is used, the C(type=credential) must be specified.
     default: "system::system::jenkins"
+    type: str
   credential_domain:
     description:
       - The credential domain in which to create the credentials object. If this option is used, the C(type=credential) must be specified.
     default: "_"
+    type: str
   xml_code_input:
     description:
       - The XML code input for Jenkins object creation. If this option is used, the C(xml_file_input) must not be used.
+    type: str
   xml_file_input:
     description:
       - The absolute remote XML file path for Jenkins object creation. If this option is used, the C(xml_code_input) must not be used.
+    type:str
 notes:
   - Due to the Jenkins SSH CLI design, it does not report on success. It is important to set C(change_when) to clarify module usage in the ansible output.
 '''
