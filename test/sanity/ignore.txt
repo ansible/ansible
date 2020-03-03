@@ -7704,7 +7704,6 @@ lib/ansible/modules/web_infrastructure/jenkins_plugin.py validate-modules:doc-mi
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py validate-modules:undocumented-parameter
 lib/ansible/modules/web_infrastructure/jenkins_script.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/web_infrastructure/jenkins_ssh_cli_xml_import.py validate-modules:invalid-argument-spec
 lib/ansible/modules/web_infrastructure/jira.py validate-modules:doc-missing-type
 lib/ansible/modules/web_infrastructure/jira.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/web_infrastructure/jira.py validate-modules:undocumented-parameter

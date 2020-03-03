@@ -59,7 +59,7 @@ notes:
 '''
 
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Create a new Jenkins credential using a variable containing the Jenkins credential XML code
 - name: Create Jenkins credential by XML code input
   jenkins_ssh_cli_xml_import:
@@ -80,7 +80,7 @@ EXAMPLES = '''
 '''
 
 
-RETURN = '''
+RETURN = r'''
 raw_command:
     description: Command passed to remote node
     returned: always
@@ -200,7 +200,7 @@ def main():
         result = process_command(module, ssh_user, ssh_host, ssh_port, object_type, cred_store, cred_domain, object_xml_type, object_xml)
 
     if result['return_code'] != 0:
-        module.fail_json(msg='MODULE FAILURE\nSee return_statement for the exact error.',**result)
+        module.fail_json(msg='MODULE FAILURE\nSee return_statement for the exact error.', **result)
     else:
         module.exit_json(**result)
 
