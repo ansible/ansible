@@ -239,7 +239,6 @@ def delegate_docker(args, exclude, require, integration_targets):
 
     python_interpreter = get_python_interpreter(args, get_docker_completion(), args.docker_raw)
 
-
     install_root = data_context().content.delegation_install_root
     content_root = data_context().content.delegation_content_root
     remote_results_root = os.path.join(content_root, data_context().content.results_path)

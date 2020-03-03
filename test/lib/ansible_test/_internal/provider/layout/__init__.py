@@ -115,10 +115,12 @@ class ContentLayout(Layout):
 
     @property
     def delegation_install_root(self):
+        """Return the install root path when running through a delegated context."""
         return '/root/ansible'
 
     @property
     def delegation_content_root(self):
+        """Return the content root path when running through a delegated context."""
         content_root = self.delegation_install_root
         if self.collection:
             content_root += '/%s' % self.collection.directory
