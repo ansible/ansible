@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_text
@@ -29,14 +30,7 @@ from ansible.utils.sentinel import Sentinel
 
 
 # For filtering out modules correctly below
-FREEFORM_ACTIONS = frozenset((
-    'command',
-    'win_command',
-    'shell',
-    'win_shell',
-    'script',
-    'raw'
-))
+FREEFORM_ACTIONS = frozenset(C.MODULE_REQUIRE_ARGS)
 
 RAW_PARAM_MODULES = FREEFORM_ACTIONS.union((
     'include',
