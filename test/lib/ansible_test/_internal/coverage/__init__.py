@@ -153,7 +153,11 @@ def enumerate_python_arcs(
         yield filename, set(arcs)
 
 
-def enumerate_powershell_lines(path):  # type: (str) -> t.Generator[t.Tuple[str, t.Dict[int, int]]]
+def enumerate_powershell_lines(
+        path,  # type: str
+        collection_search_re,  # type: t.Optional[t.Pattern]
+        collection_sub_re,  # type: t.Optional[t.Pattern]
+):  # type: (...) -> t.Generator[t.Tuple[str, t.Dict[int, int]]]
     """Enumerate PowerShell code coverage lines in the given file."""
     if os.path.getsize(path) == 0:
         display.warning('Empty coverage file: %s' % path, verbosity=2)
@@ -166,7 +170,7 @@ def enumerate_powershell_lines(path):  # type: (str) -> t.Generator[t.Tuple[str,
         return
 
     for filename, hits in coverage_run.items():
-        filename = sanitize_filename(filename)
+        filename = sanitize_filename(filename, collection_search_re=collection_search_re, collection_sub_re=collection_sub_re)
 
         if not filename:
             continue

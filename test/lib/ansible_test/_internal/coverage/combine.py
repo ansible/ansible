@@ -135,6 +135,8 @@ def _command_coverage_combine_powershell(args):
     sources = _get_coverage_targets(args, walk_powershell_targets)
     groups = _build_stub_groups(args, sources, _default_stub_value)
 
+    collection_search_re, collection_sub_re = get_collection_path_regexes()
+
     for coverage_file in coverage_files:
         counter += 1
         display.info('[%4d/%4d] %s' % (counter, len(coverage_files), coverage_file), verbosity=2)
@@ -145,7 +147,7 @@ def _command_coverage_combine_powershell(args):
             display.warning('Unexpected name for coverage file: %s' % coverage_file)
             continue
 
-        for filename, hits in enumerate_powershell_lines(coverage_file):
+        for filename, hits in enumerate_powershell_lines(coverage_file, collection_search_re, collection_sub_re):
             if group not in groups:
                 groups[group] = {}
 
