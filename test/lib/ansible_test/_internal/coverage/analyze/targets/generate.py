@@ -90,6 +90,7 @@ def analyze_powershell_coverage(
 ):  # type: (...) -> Lines
     """Analyze PowerShell code coverage"""
     results = {}  # type: Lines
+    collection_search_re, collection_sub_re = get_collection_path_regexes()
     powershell_files = get_powershell_coverage_files()
 
     for powershell_file in powershell_files:
@@ -99,7 +100,7 @@ def analyze_powershell_coverage(
         target_name = get_target_name(powershell_file)
         target_index = get_target_index(target_name, target_indexes)
 
-        for filename, hits in enumerate_powershell_lines(powershell_file):
+        for filename, hits in enumerate_powershell_lines(powershell_file, collection_search_re, collection_sub_re):
             lines = results.setdefault(filename, {})
 
             for covered_line in hits:
