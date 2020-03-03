@@ -1,0 +1,2 @@
+bugfixes:
+  - gem - fixed issue when compiling gems with custom build_flags (https://github.com/ansible/ansible/issues/67973)

@@ -137,3 +137,24 @@ class TestGem(ModuleTestCase):
         assert run_command.called
 
         assert '--force' in get_command(run_command)
+
+    def test_build_flags(self):
+        set_module_args({
+            'name': 'dummy',
+            'user_install': True,
+            'build_flags': '  --pkg-include-path=/usr/local/include/foo   --pkg-lib-path=/usr/local/lib/foo   ',
+        })
+
+        self.patch_rubygems_version()
+        self.patch_installed_versions([])
+        run_command = self.patch_run_command()
+
+        with pytest.raises(AnsibleExitJson) as exc:
+            gem.main()
+
+        result = exc.value.args[0]
+        assert result['changed']
+        assert run_command.called
+
+        cmd = get_command(run_command)
+        assert cmd.endswith('-- --build-flags --pkg-include-path=/usr/local/include/foo --pkg-lib-path=/usr/local/lib/foo')
