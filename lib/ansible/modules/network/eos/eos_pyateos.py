@@ -22,9 +22,9 @@ extends_documentation_fragment: eos
 options:
     test:
         description:
-        - One ore more test to be run. Every test correspond to a specific "show" command
-        i.e. ntp - show ntp associations.
-        For more details: https://gitlab.com/networkAutomation/pyateos/-/blob/master/README.md
+            - One ore more test to be run. Every test correspond to a specific "show" command
+            i.e. ntp - show ntp associations.
+            For more details: https://gitlab.com/networkAutomation/pyateos/-/blob/master/README.md
         choices: [
             'acl',
             'arp',
@@ -79,12 +79,12 @@ options:
             - Pre set group of test. `group` and `test` are allowed togehter.
             For more details: https://gitlab.com/networkAutomation/pyateos/-/blob/master/README.md
         type: list
-    choices: [
-        'mgmt',
-        'routing',
-        'layer2',
-        'ctr',
-        'all'
+        choices: [
+            'mgmt',
+            'routing',
+            'layer2',
+            'ctr',
+            'all'
         ]
     hostname:
         description:
