@@ -30,20 +30,23 @@ options:
     description:
       - Suffix of the balancer pool url required to access the balancer pool
         status page (e.g. balancer_vhost[:port]/balancer_url_suffix).
-    default: /balancer-manager/
+    default: /balancer-manager
   balancer_vhost:
     description:
       - (ipv4|ipv6|fqdn):port of the Apache httpd 2.4 mod_proxy balancer pool.
     required: true
   balancer_name:
-     description:
-       - name of the balancer to use if this vhost as more than one balancer
+    description:
+      - name of the balancer to use if this vhost as more than one balancer
+    version_added: 2.10
   balancer_member:
     description:
       - (ipv4|ipv6|fqdn) of the balancer member to get or to set attributes to.
         Port number is autodetected and should not be specified here.
         If undefined, apache2_mod_proxy module will return a members list of
         dictionaries of all the current balancer pool members' attributes.
+    version_added: 2.10
+    aliases: ['member_host']
   state:
     description:
       - Desired state of the member host.
@@ -253,7 +256,7 @@ class BalancerMember(object):
             self.module.fail_json(msg="Could not get balancer_member_page, check for connectivity! " + balancer_member_page[1])
         else:
             try:
-                soup = BeautifulSoup(balancer_member_page[0],features="html.parser")
+                soup = BeautifulSoup(balancer_member_page[0], features="html.parser")
             except TypeError:
                 self.module.fail_json(msg="Cannot parse balancer_member_page HTML! " + str(soup))
             else:
@@ -289,14 +292,14 @@ class BalancerMember(object):
 
         request_body = regexp_extraction(self.management_url, EXPRESSION, 1)
         for k in values.keys():
-            v=''
-            if k=='lf':
-                v=str(float(values[k]))
+            v = ''
+            if k == 'lf':
+                v = str(float(values[k]))
             elif values[k]:
-                v='1'
+                v = '1'
             else:
-                v='0'
-            request_body = request_body + str(values_mapping[k]) + '='+v
+                v = '0'
+            request_body = request_body + str(values_mapping[k]) + '=' + v
 
         response = fetch_url(self.module, self.management_url, data=str(request_body), headers={'referer': self.management_url})
         if response[1]['status'] != 200:
@@ -310,7 +313,7 @@ class Balancer(object):
     """ Apache httpd 2.4 mod_proxy balancer object"""
 
     def __init__(self, host, suffix, name, module, members=None, tls=False):
-        self.name=name
+        self.name = name
         if tls:
             self.base_url = str(str('https://') + str(host))
             self.url = str(str('https://') + str(host) + str(suffix))
@@ -344,19 +347,20 @@ class Balancer(object):
         except TypeError:
             self.module.fail_json(msg="Cannot parse balancer page HTML! " + str(self.page))
         else:
-            h3s=soup.find_all('h3')
+            h3s = soup.find_all('h3')
             if self.name is None:
-                if len(h3s)>1:
+                if len(h3s) > 1:
                     self.module.fail_json(msg="More than one balancer, balancer_name required")
                 return self.parse_balancer(h3s[0])
             else:
                 for tag in h3s:
-                    if tag.a.contents[0] != 'balancer://'+self.name:
+                    if tag.a.contents[0] != 'balancer://' + self.name:
                         continue
                     return self.parse_balancer(tag)
-                self.module.fail_json(msg="balancer '"+self.name+"' not found")
+                self.module.fail_json(msg="balancer '" + self.name + "' not found")
+
     def parse_balancer(self, h3):
-        table=h3.find_next_siblings('table', limit=2)
+        table = h3.find_next_siblings('table', limit=2)
         for element in table[1].findAll('a'):
             balancer_member_suffix = str(element.get('href'))
             if not balancer_member_suffix:
@@ -386,26 +390,25 @@ def main():
         module.fail_json(msg=missing_required_lib('BeautifulSoup'), exception=BEAUTIFUL_SOUP_IMP_ERR)
 
     member_status = {}
-    p=re.compile('(present|absent|enabled|disabled|drained|hot_standby|ignore_errors|lf)(?::([^,]+))?')
+    p = re.compile('(present|absent|enabled|disabled|drained|hot_standby|ignore_errors|lf)(?::([^,]+))?')
     if module.params['state'] is not None:
         states = module.params['state'].split(',')
         for _state in states:
-            m=p.match(_state)
+            m = p.match(_state)
             if m:
-                s=m.group(1)
-                v=m.group(2)
-                if v==None:
-                    v=True
-                if s=='enabled' or s=='present':
-                    s='disabled'
-                    v=False
-                elif s=='absent':
-                    s='disabled'
-                member_status[s]=v
+                s = m.group(1)
+                v = m.group(2)
+                if v is None:
+                    v = True
+                if s == 'enabled' or s == 'present':
+                    s = 'disabled'
+                    v = False
+                elif s == 'absent':
+                    s = 'disabled'
+                member_status[s] = v
             else:
-                module.fail_json(
-                    msg="State can only take values amongst 'lf:<number>', 'present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors' found: '"+_state+"'"
-                )
+                module.fail_json(msg="State can only take values amongst 'lf:<number>', 'present', 'absent', 'enabled',"
+                                     "'disabled', 'drained', 'hot_standby', 'ignore_errors' found: '" + _state + "'")
     else:
         states = ['None']
 
@@ -447,7 +450,7 @@ def main():
                         changed = True
                 module.exit_json(
                     changed=changed,
-                    member= {
+                    member={
                         "host": member.host,
                         "status": member.status,
                         "protocol": member.protocol,
