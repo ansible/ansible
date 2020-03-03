@@ -189,8 +189,8 @@ def options(module):
     special_options = ['routers', 'router-templates', 'domain-name-servers',
                        'domain-name', 'broadcast-address', 'broadcast-address-offset',
                        'dhcp-lease-time', 'dhcp6.name-servers']
-    #options-router-templates, broadcast-address-offset, dhcp6.name-servers don't have any associated number
-    special_num = [3, 6, 15, 28, 51] 
+    # options-router-templates, broadcast-address-offset, dhcp6.name-servers don't have any associated number
+    special_num = [3, 6, 15, 28, 51]
     options = list()
     for item in module.params['options']:
         opt = dict([(k, v) for k, v in iteritems(item) if v is not None])
