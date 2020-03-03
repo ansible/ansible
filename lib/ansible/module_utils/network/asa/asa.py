@@ -50,7 +50,7 @@ asa_provider_spec = {
 }
 
 asa_argument_spec = {
-    'provider': dict(type='dict', options=asa_provider_spec),
+    'provider': dict(type='dict', options=asa_provider_spec, removed_in_version=2.14),
 }
 
 asa_top_spec = {

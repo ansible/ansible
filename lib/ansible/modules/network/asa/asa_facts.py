@@ -38,6 +38,7 @@ description:
     and can enable or disable collection of additional facts.
   - Note, to collects facts from ASA device properly user should
     elevate the privilege to become.
+extends_documentation_fragment: asa
 notes:
   - Tested against asa 9.10(1)11
 options:
@@ -50,8 +51,19 @@ options:
       - Specify a list of values to include a larger subset.
       - Use a value with an initial C(!) to collect all facts except that subset.
     required: false
+    type: list
     default: '!config'
-    type: 'list'
+  gather_network_resources:
+    description:
+      - When supplied, this argument will restrict the facts collected
+        to a given subset. Possible values for this argument include
+        all and the resources like interfaces, vlans etc.
+        Can specify a list of values to include a larger subset.
+        Values can also be used with an initial C(M(!)) to specify that
+        a specific subset should not be collected.
+        Valid subsets are 'all'.
+    required: false
+    type: list
 """
 
 EXAMPLES = """
@@ -166,10 +178,14 @@ from ansible.module_utils.network.asa.asa import asa_argument_spec
 
 
 def main():
-    """ Main entry point for AnsibleModule
+    """
+    Main entry point for module execution
+
+    :returns: ansible_facts
     """
     argument_spec = FactsArgs.argument_spec
     argument_spec.update(asa_argument_spec)
+
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 

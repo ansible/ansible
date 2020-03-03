@@ -35,6 +35,7 @@ options:
       - For more information please see the L(Network Guide, ../network/getting_started/network_differences.html#multiple-communication-protocols).
       - HORIZONTALLINE
       - A dict object containing connection details.
+    type: dict
     suboptions:
       host:
         description:
