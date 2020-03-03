@@ -212,7 +212,9 @@ def uninstall(module):
     cmd.append(module.params['name'])
     module.run_command(cmd, environ_update=environ, check_rc=True)
 
+
 import shlex
+
 
 def install(module):
 
@@ -254,8 +256,8 @@ def install(module):
         cmd.append('--env-shebang')
     cmd.append(module.params['gem_source'])
     if module.params['build_flags']:
-        cmd.extend([ '--', '--build-flags'])
-        cmd.extend( shlex.split(module.params['build_flags']) )
+        cmd.extend(['--', '--build-flags'])
+        cmd.extend(shlex.split(module.params['build_flags']))
     if module.params['force']:
         cmd.append('--force')
     module.run_command(cmd, check_rc=True)
