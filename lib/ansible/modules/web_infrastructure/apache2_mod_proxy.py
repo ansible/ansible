@@ -35,7 +35,7 @@ options:
     description:
       - (ipv4|ipv6|fqdn):port of the Apache httpd 2.4 mod_proxy balancer pool.
     required: true
-  member_host:
+  balancer_member:
     description:
       - (ipv4|ipv6|fqdn) of the balancer member to get or to set attributes to.
         Port number is autodetected and should not be specified here.
@@ -68,7 +68,7 @@ EXAMPLES = '''
 - apache2_mod_proxy:
     balancer_vhost: myws.mydomain.org
     balancer_suffix: /lb/
-    member_host: node1.myws.mydomain.org
+    balancer_host: node1.myws.mydomain.org
 
 # Enable all balancer pool members:
 - apache2_mod_proxy:
@@ -76,14 +76,14 @@ EXAMPLES = '''
   register: result
 - apache2_mod_proxy:
     balancer_vhost: '{{ myloadbalancer_host }}'
-    member_host: '{{ item.host }}'
+    balancer_member: '{{ item.host }}'
     state: present
   with_items: '{{ result.members }}'
 
 # Gracefully disable a member from a loadbalancer node:
 - apache2_mod_proxy:
     balancer_vhost: '{{ vhost_host }}'
-    member_host: '{{ member.host }}'
+    balancer_member: '{{ member.host }}'
     state: drained
   delegate_to: myloadbalancernode
 - wait_for:
@@ -93,14 +93,14 @@ EXAMPLES = '''
   delegate_to: myloadbalancernode
 - apache2_mod_proxy:
     balancer_vhost: '{{ vhost_host }}'
-    member_host: '{{ member.host }}'
+    balancer_member: '{{ member.host }}'
     state: absent
   delegate_to: myloadbalancernode
 '''
 
 RETURN = '''
 member:
-    description: specific balancer member information dictionary, returned when apache2_mod_proxy module is invoked with member_host parameter.
+    description: specific balancer member information dictionary, returned when apache2_mod_proxy module is invoked with balancer_member parameter.
     type: dict
     returned: success
     sample:
@@ -131,7 +131,7 @@ member:
         }
       }
 members:
-    description: list of member (defined above) dictionaries, returned when apache2_mod_proxy is invoked with no member_host and state args.
+    description: list of member (defined above) dictionaries, returned when apache2_mod_proxy is invoked with no balancer_member and state args.
     returned: success
     type: list
     sample:
@@ -194,7 +194,7 @@ import traceback
 
 BEAUTIFUL_SOUP_IMP_ERR = None
 try:
-    from BeautifulSoup import BeautifulSoup
+    from bs4 import BeautifulSoup
 except ImportError:
     BEAUTIFUL_SOUP_IMP_ERR = traceback.format_exc()
     HAS_BEAUTIFULSOUP = False
@@ -244,20 +244,20 @@ class BalancerMember(object):
     def get_member_attributes(self):
         """ Returns a dictionary of a balancer member's attributes."""
 
-        balancer_member_page = fetch_url(self.module, self.management_url)
+        balancer_member_page = fetch_url(self.module, self.management_url, headers={'referer': self.management_url})
 
         if balancer_member_page[1]['status'] != 200:
             self.module.fail_json(msg="Could not get balancer_member_page, check for connectivity! " + balancer_member_page[1])
         else:
             try:
-                soup = BeautifulSoup(balancer_member_page[0])
+                soup = BeautifulSoup(balancer_member_page[0],features="html.parser")
             except TypeError:
                 self.module.fail_json(msg="Cannot parse balancer_member_page HTML! " + str(soup))
             else:
                 subsoup = soup.findAll('table')[1].findAll('tr')
                 keys = subsoup[0].findAll('th')
                 for valuesset in subsoup[1::1]:
-                    if re.search(pattern=self.host, string=str(valuesset)):
+                    if re.search(self.host, str(valuesset)):
                         values = valuesset.findAll('td')
                         return dict((keys[x].string, values[x].string) for x in range(0, len(keys)))
 
@@ -267,7 +267,7 @@ class BalancerMember(object):
                           'drained': 'Drn',
                           'hot_standby': 'Stby',
                           'ignore_errors': 'Ign'}
-        status = {}
+        status = {'lf': float(self.attributes['Factor'])}
         actual_status = str(self.attributes['Status'])
         for mode in status_mapping.keys():
             if re.search(pattern=status_mapping[mode], string=actual_status):
@@ -281,16 +281,21 @@ class BalancerMember(object):
         values_mapping = {'disabled': '&w_status_D',
                           'drained': '&w_status_N',
                           'hot_standby': '&w_status_H',
-                          'ignore_errors': '&w_status_I'}
+                          'ignore_errors': '&w_status_I',
+                          'lf': '&w_lf'}
 
         request_body = regexp_extraction(self.management_url, EXPRESSION, 1)
-        for k in values_mapping.keys():
-            if values[str(k)]:
-                request_body = request_body + str(values_mapping[k]) + '=1'
+        for k in values.keys():
+            v=''
+            if k=='lf':
+                v=str(float(values[k]))
+            elif values[k]:
+                v='1'
             else:
-                request_body = request_body + str(values_mapping[k]) + '=0'
+                v='0'
+            request_body = request_body + str(values_mapping[k]) + '='+v
 
-        response = fetch_url(self.module, self.management_url, data=str(request_body))
+        response = fetch_url(self.module, self.management_url, data=str(request_body), headers={'referer': self.management_url})
         if response[1]['status'] != 200:
             self.module.fail_json(msg="Could not set the member status! " + self.host + " " + response[1]['status'])
 
@@ -301,7 +306,8 @@ class BalancerMember(object):
 class Balancer(object):
     """ Apache httpd 2.4 mod_proxy balancer object"""
 
-    def __init__(self, host, suffix, module, members=None, tls=False):
+    def __init__(self, host, suffix, name, module, members=None, tls=False):
+        self.name=name
         if tls:
             self.base_url = str(str('https://') + str(host))
             self.url = str(str('https://') + str(host) + str(suffix))
@@ -331,16 +337,26 @@ class Balancer(object):
     def get_balancer_members(self):
         """ Returns members of the balancer as a generator object for later iteration."""
         try:
-            soup = BeautifulSoup(self.page)
+            soup = BeautifulSoup(self.page, features="html.parser")
         except TypeError:
             self.module.fail_json(msg="Cannot parse balancer page HTML! " + str(self.page))
         else:
-            for element in soup.findAll('a')[1::1]:
-                balancer_member_suffix = str(element.get('href'))
-                if not balancer_member_suffix:
-                    self.module.fail_json(msg="Argument 'balancer_member_suffix' is empty!")
-                else:
-                    yield BalancerMember(str(self.base_url + balancer_member_suffix), str(self.url), self.module)
+            for tag in soup.findAll('h3'):
+                if tag.a.contents[0] != 'balancer://'+self.name:
+                    continue
+                i=0
+                for s in tag.next_siblings:
+                    if s.name=='table':
+                        i=i+1
+                    if i==2:
+                        for element in s.findAll('a'):
+                            balancer_member_suffix = str(element.get('href'))
+                            if not balancer_member_suffix:
+                                self.module.fail_json(msg="Argument 'balancer_member_suffix' is empty!")
+                            else:
+                                yield BalancerMember(str(self.base_url + balancer_member_suffix), str(self.url), self.module)
+                        break
+                break
 
     members = property(get_balancer_members)
 
@@ -350,8 +366,9 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             balancer_vhost=dict(required=True, default=None, type='str'),
-            balancer_url_suffix=dict(default="/balancer-manager/", type='str'),
-            member_host=dict(type='str'),
+            balancer_url_suffix=dict(default="/balancer-manager", type='str'),
+            balancer_name=dict(required=True, default=None, type='str'),
+            balancer_member=dict(type='str', aliases=['member_host']),
             state=dict(type='str'),
             tls=dict(default=False, type='bool'),
             validate_certs=dict(default=True, type='bool')
@@ -362,25 +379,37 @@ def main():
     if HAS_BEAUTIFULSOUP is False:
         module.fail_json(msg=missing_required_lib('BeautifulSoup'), exception=BEAUTIFUL_SOUP_IMP_ERR)
 
+    member_status = {}
+    p=re.compile('(present|absent|enabled|disabled|drained|hot_standby|ignore_errors|lf)(?::([^,]+))?')
     if module.params['state'] is not None:
         states = module.params['state'].split(',')
-        if (len(states) > 1) and (("present" in states) or ("enabled" in states)):
-            module.fail_json(msg="state present/enabled is mutually exclusive with other states!")
-        else:
-            for _state in states:
-                if _state not in ['present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors']:
-                    module.fail_json(
-                        msg="State can only take values amongst 'present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors'."
-                    )
+        for _state in states:
+            m=p.match(_state)
+            if m:
+                s=m.group(1)
+                v=m.group(2)
+                if v==None:
+                    v=True
+                if s=='enabled' or s=='present':
+                    s='disabled'
+                    v=False
+                elif s=='absent':
+                    s='disabled'
+                member_status[s]=v
+            else:
+                module.fail_json(
+                    msg="State can only take values amongst 'lf:<number>', 'present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors' found: '"+_state+"'"
+                )
     else:
         states = ['None']
 
     mybalancer = Balancer(module.params['balancer_vhost'],
                           module.params['balancer_url_suffix'],
+                          module.params['balancer_name'],
                           module=module,
                           tls=module.params['tls'])
 
-    if module.params['member_host'] is None:
+    if module.params['balancer_member'] is None:
         json_output_list = []
         for member in mybalancer.members:
             json_output_list.append({
@@ -399,18 +428,9 @@ def main():
         )
     else:
         changed = False
-        member_exists = False
-        member_status = {'disabled': False, 'drained': False, 'hot_standby': False, 'ignore_errors': False}
-        for mode in member_status.keys():
-            for state in states:
-                if mode == state:
-                    member_status[mode] = True
-                elif mode == 'disabled' and state == 'absent':
-                    member_status[mode] = True
 
         for member in mybalancer.members:
-            if str(member.host) == str(module.params['member_host']):
-                member_exists = True
+            if str(member.host) == str(module.params['balancer_member']):
                 if module.params['state'] is not None:
                     member_status_before = member.status
                     if not module.check_mode:
@@ -419,23 +439,19 @@ def main():
                         member_status_after = member_status
                     if member_status_before != member_status_after:
                         changed = True
-                json_output = {
-                    "host": member.host,
-                    "status": member.status,
-                    "protocol": member.protocol,
-                    "port": member.port,
-                    "path": member.path,
-                    "attributes": member.attributes,
-                    "management_url": member.management_url,
-                    "balancer_url": member.balancer_url
-                }
-        if member_exists:
-            module.exit_json(
-                changed=changed,
-                member=json_output
-            )
-        else:
-            module.fail_json(msg=str(module.params['member_host']) + ' is not a member of the balancer ' + str(module.params['balancer_vhost']) + '!')
+                module.exit_json(
+                    changed=changed,
+                    member= {
+                        "host": member.host,
+                        "status": member.status,
+                        "protocol": member.protocol,
+                        "port": member.port,
+                        "path": member.path,
+                        "attributes": member.attributes,
+                        "management_url": member.management_url,
+                        "balancer_url": member.balancer_url
+                    })
+        module.fail_json(msg=str(module.params['balancer_member']) + ' is not a member of the balancer ' + str(module.params['balancer_vhost']) + '!')
 
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
