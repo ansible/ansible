@@ -31,7 +31,7 @@ author: "Trishna Guha (@trishnaguha)"
 short_description: Manage multiline banners on Cisco NXOS devices
 description:
   - This will configure both exec and motd banners on remote devices
-    running Cisco NXOS. It allows playbooks to add or remote
+    running Cisco NXOS. It allows playbooks to add or remove
     banner text from the active running configuration.
 options:
   banner:
