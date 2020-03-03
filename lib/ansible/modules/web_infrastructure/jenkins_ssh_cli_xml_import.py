@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: jenkins_ssh_cli_xml_import
 author:
@@ -41,7 +41,7 @@ options:
   type:
     description:
       - Type of Jenkins object to import.
-    choices: [credential, node, job]
+    choices: ['credential', 'node', 'job']
     required: true
   credential_store:
     description:
