@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-test - Remove out-of-date constraint on installing paramiko versions 2.5.0 or later in tests.
