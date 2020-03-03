@@ -137,7 +137,7 @@ def ensure_type(value, value_type, origin=None):
 
         elif value_type == 'pathlist':
             if isinstance(value, string_types):
-                value = value.split(',')
+                value = [x.strip() for x in value.split(',')]
 
             if isinstance(value, Sequence):
                 value = [resolve_path(x, basedir=basedir) for x in value]
