@@ -38,14 +38,13 @@ options:
   balancer_name:
     description:
       - name of the balancer to use if this vhost as more than one balancer
-    version_added: 2.10
+    version_added: '2.10'
   balancer_member:
     description:
       - (ipv4|ipv6|fqdn) of the balancer member to get or to set attributes to.
         Port number is autodetected and should not be specified here.
         If undefined, apache2_mod_proxy module will return a members list of
         dictionaries of all the current balancer pool members' attributes.
-    version_added: 2.10
     aliases: ['member_host']
   state:
     description:
