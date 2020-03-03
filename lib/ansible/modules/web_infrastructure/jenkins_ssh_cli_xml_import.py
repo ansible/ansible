@@ -26,33 +26,34 @@ options:
   user:
     description:
       - The SSH user to setup the connection with the SSH CLI.
-    required: true
     type: str
+    required: true
   host:
     description:
       - The Jenkins SSH CLI host to connect to. By default this module should be ran on the Jenkins node, therefore it is defaulted to C(localhost).
-    default: localhost
     type: str
+    default: localhost
   port:
     description:
       - The default Jenkins web interface port. By default Jenkins web interface is set to C(8080).
-    default: 8080
     type: int
+    default: 8080
   type:
     description:
       - Type of Jenkins object to import.
-    choices: ['credential', 'node', 'job']
+    type: str
+    choices: ["credential", "node", "job"]
     required: true
   credential_store:
     description:
       - The credential store in which to create the credentials object. If this option is used, the C(type=credential) must be specified.
-    default: "system::system::jenkins"
     type: str
+    default: "system::system::jenkins"
   credential_domain:
     description:
       - The credential domain in which to create the credentials object. If this option is used, the C(type=credential) must be specified.
-    default: "_"
     type: str
+    default: "_"
   xml_code_input:
     description:
       - The XML code input for Jenkins object creation. If this option is used, the C(xml_file_input) must not be used.
@@ -60,9 +61,10 @@ options:
   xml_file_input:
     description:
       - The absolute remote XML file path for Jenkins object creation. If this option is used, the C(xml_code_input) must not be used.
-    type:str
+    type: str
 notes:
-  - Due to the Jenkins SSH CLI design, it does not report on success. It is important to set C(change_when) to clarify module usage in the ansible output.
+  - Due to the Jenkins SSH CLI design, it does not report on success.
+  - This has been resolved in the module, however it might be necessary to set C(change_when) to clarify module usage in the ansible output.
 '''
 
 
@@ -173,14 +175,14 @@ def process_command(module, user, host, port, cmd_type, store, domain, xml_type,
 
 def main():
     module = AnsibleModule(
-        argument_spec=dict(user=dict(type="str", required=True),
-                           host=dict(type="str", required=False, default="localhost"),
+        argument_spec=dict(user=dict(required=True),
+                           host=dict(required=False, default="localhost"),
                            port=dict(type="int", required=False, default=8080),
                            type=dict(choices=['credential', 'node', 'job'], required=True),
-                           credential_store=dict(type="str", required=False, default="system::system::jenkins"),
-                           credential_domain=dict(type="str", required=False, default="_"),
-                           xml_code_input=dict(type="str", required=False),
-                           xml_file_input=dict(type="str", required=False))
+                           credential_store=dict(required=False, default="system::system::jenkins"),
+                           credential_domain=dict(required=False, default="_"),
+                           xml_code_input=dict(required=False),
+                           xml_file_input=dict(required=False))
     )
 
     ssh_user = module.params['user']
