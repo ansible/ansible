@@ -53,7 +53,7 @@
   vars:
     account_info:
       # For valid values, see
-      # https://tools.ietf.org/html/draft-ietf-acme-acme-16#section-7.3
+      # https://www.rfc-editor.org/rfc/rfc8555.html#section-7.3
       contact:
       - mailto:me@example.com
   register: account_update
@@ -72,7 +72,8 @@
   vars:
     create_order:
       # For valid values, see
-      # https://tools.ietf.org/html/draft-ietf-acme-acme-16#section-7.4
+      # https://www.rfc-editor.org/rfc/rfc8555.html#section-7.4 and
+      # https://www.rfc-editor.org/rfc/rfc8738.html
       identifiers:
       - type: dns
         value: example.com
