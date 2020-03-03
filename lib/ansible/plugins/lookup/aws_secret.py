@@ -39,6 +39,7 @@ options:
     default: false
   on_missing:
     description:
+<<<<<<< HEAD
         - action to take if secret is missing
         - Error will raise a fatal error
         - Skip will just ignore the term
@@ -49,6 +50,9 @@ options:
   on_denied:
     description:
         - action to take if access to secret is denied
+=======
+        - action to take if term is missing from config
+>>>>>>> aws_secrets.py: add on_missing option
         - Error will raise a fatal error
         - Skip will just ignore the term
         - Warn will skip over it but issue a warning
@@ -74,11 +78,14 @@ EXAMPLES = r"""
    debug: msg="{{ lookup('aws_secret', secret_name, on_missing='skip')}}"
    var:
      secret_name: not-exist
+<<<<<<< HEAD
 
  - name: skip if access to secret is denied
    debug: msg="{{ lookup('aws_secret', denied-secret, on_denied='skip')}}"
    var:
      secret_name: denied-secret
+=======
+>>>>>>> aws_secrets.py: add on_missing option
 """
 
 RETURN = r"""
