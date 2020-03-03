@@ -168,6 +168,9 @@ matrix:
     - env: T=linux/ubuntu1604/5
     - env: T=linux/ubuntu1804/5
 
+    - env: T=fallaxy/2.7/1
+    - env: T=fallaxy/3.6/1
+
     - env: T=i/aix/7.2
     - env: T=i/osx/10.11
     - env: T=i/rhel/7.6
