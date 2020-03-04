@@ -1,3 +1,7 @@
+- name: End play on CentOS 8
+  meta: end_play
+  when: ansible_facts.distribution ~ ansible_facts.distribution_major_version == 'CentOS8'
+
 - name: python 2
   set_fact:
     python_suffix: ""
