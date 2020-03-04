@@ -59,6 +59,12 @@ options:
         type: bool
         default: 'no'
         version_added: "2.3"
+    replace:
+        description:
+          - Replace existing packages with explicit other versions.
+        type: bool
+        default: 'no'
+        version_added: "X.X"
     quick:
         description:
           - Replace or delete packages quickly; do not bother with checksums
@@ -107,6 +113,7 @@ EXAMPLES = '''
   openbsd_pkg:
     name: python%3.5
     state: present
+    replace: yes
 
 - name: Update all packages on the system
   openbsd_pkg:
@@ -271,7 +278,13 @@ def package_latest(names, pkg_spec, module):
     if module.params['clean']:
         upgrade_cmd += 'c'
 
+    if module.params['replace']:
+        upgrade_cmd += 'r'
+
+    if module.params['
+
     if module.params['quick']:
+        upgrade_cmd += 'q'']:
         upgrade_cmd += 'q'
 
     for name in names:
@@ -527,6 +540,7 @@ def main():
             build=dict(type='bool', default=False),
             ports_dir=dict(type='path', default='/usr/ports'),
             quick=dict(type='bool', default=False),
+            replace=dict(type='bool', default=False),
             clean=dict(type='bool', default=False),
         ),
         supports_check_mode=True
