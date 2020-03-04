@@ -52,7 +52,7 @@ options:
     required: true
     aliases: ['token']
 
-  message:
+  send_message:
     description:
       - The message you would like to send.
     required: True
@@ -68,7 +68,7 @@ EXAMPLES = """
     recipient_id: "{{ room_id }}"
     message_type: markdown
     personal_token: "{{ token }}"
-    message: "**Cisco Spark Ansible Module - Room Message in Markdown**"
+    send_message: "**Cisco Spark Ansible Module - Room Message in Markdown**"
 
 - name: Cisco Spark - Text Message to a Room
   cisco_spark:
@@ -76,7 +76,7 @@ EXAMPLES = """
     recipient_id: "{{ room_id }}"
     message_type: text
     personal_token: "{{ token }}"
-    message: "Cisco Spark Ansible Module - Room Message in Text"
+    send_message: "Cisco Spark Ansible Module - Room Message in Text"
 
 - name: Cisco Spark - Text Message by an Individuals ID
   cisco_spark:
@@ -84,7 +84,7 @@ EXAMPLES = """
     recipient_id: "{{ person_id}}"
     message_type: text
     personal_token: "{{ token }}"
-    message: "Cisco Spark Ansible Module - Text Message to Individual by ID"
+    send_message: "Cisco Spark Ansible Module - Text Message to Individual by ID"
 
 - name: Cisco Spark - Text Message by an Individuals E-Mail Address
   cisco_spark:
@@ -92,7 +92,7 @@ EXAMPLES = """
     recipient_id: "{{ person_email }}"
     message_type: text
     personal_token: "{{ token }}"
-    message: "Cisco Spark Ansible Module - Text Message to Individual by E-Mail"
+    send_message: "Cisco Spark Ansible Module - Text Message to Individual by E-Mail"
 
 """
 
@@ -105,7 +105,7 @@ status_code:
   type: int
   sample: 200
 
-message:
+send_message:
     description:
       - The Response Message returned by the Spark API.
       - Full Response Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
@@ -139,7 +139,7 @@ def spark_message(module):
 
         payload = {
             ansible['recipient_type']: ansible['recipient_id'],
-            ansible['message_type']: ansible['message']
+            ansible['message_type']: ansible['send_message']
         }
 
         payload = module.jsonify(payload)
@@ -176,7 +176,7 @@ def main():
             message_type=dict(required=False, default=['text'], aliases=[
                               'type'], choices=['text', 'markdown']),
             personal_token=dict(required=True, no_log=True, aliases=['token']),
-            message=dict(required=True)
+            send_message=dict(required=True)
 
         ),
 
