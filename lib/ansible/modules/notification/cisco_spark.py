@@ -16,14 +16,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cisco_spark
-short_description: Send a message to a Cisco Spark Room or Individual.
+short_description: Send a message to a Cisco Webex Teams Room or Individual.
 description:
-    - Send a message to a Cisco Spark Room or Individual with options to control the formatting.
-version_added: "2.3"
+    - Send a message to a Cisco Webex Teams Room or Individual with options to control the formatting.
+version_added: "2.10"
 author: Drew Rusell (@drew-russell)
 notes:
   - The C(recipient_id) type must be valid for the supplied C(recipient_id).
-  - Full API documentation can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
+  - Full API documentation can be found at U(https://developer.webex.com/docs/api/v1/messages/create-a-message).
 
 options:
 
@@ -52,7 +52,7 @@ options:
     required: true
     aliases: ['token']
 
-  message:
+  send_message:
     description:
       - The message you would like to send.
     required: True
@@ -62,29 +62,29 @@ EXAMPLES = """
 # Note: The following examples assume a variable file has been imported
 # that contains the appropriate information.
 
-- name: Cisco Spark - Markdown Message to a Room
+- name: Cisco Webex Teams - Markdown Message to a Room
   cisco_spark:
     recipient_type: roomId
     recipient_id: "{{ room_id }}"
     message_type: markdown
     personal_token: "{{ token }}"
-    message: "**Cisco Spark Ansible Module - Room Message in Markdown**"
+    send_message: "**Cisco Webex Teams Ansible Module - Room Message in Markdown**"
 
-- name: Cisco Spark - Text Message to a Room
+- name: Cisco Webex Teams - Text Message to a Room
   cisco_spark:
     recipient_type: roomId
     recipient_id: "{{ room_id }}"
     message_type: text
     personal_token: "{{ token }}"
-    message: "Cisco Spark Ansible Module - Room Message in Text"
+    send_message: "Cisco Webex Teams Ansible Module - Room Message in Text"
 
-- name: Cisco Spark - Text Message by an Individuals ID
+- name: Cisco Webex Teams - Text Message by an Individuals ID
   cisco_spark:
     recipient_type: toPersonId
     recipient_id: "{{ person_id}}"
     message_type: text
     personal_token: "{{ token }}"
-    message: "Cisco Spark Ansible Module - Text Message to Individual by ID"
+    send_message: "Cisco Webex Teams Ansible Module - Text Message to Individual by ID"
 
 - name: Cisco Spark - Text Message by an Individuals E-Mail Address
   cisco_spark:
@@ -92,23 +92,23 @@ EXAMPLES = """
     recipient_id: "{{ person_email }}"
     message_type: text
     personal_token: "{{ token }}"
-    message: "Cisco Spark Ansible Module - Text Message to Individual by E-Mail"
+    send_message: "Cisco Webex Teams Ansible Module - Text Message to Individual by E-Mail"
 
 """
 
 RETURN = """
 status_code:
   description:
-    - The Response Code returned by the Spark API.
-    - Full Response Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
+    - The Response Code returned by the Webex Teams API.
+    - Full Response Code explanations can be found at U(https://https://developer.webex.com/docs/api/v1/messages/create-a-message).
   returned: always
   type: int
   sample: 200
 
-message:
+send_message:
     description:
-      - The Response Message returned by the Spark API.
-      - Full Response Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
+      - The Response Message returned by the Webex teams API.
+      - Full Response Code explanations can be found at U(https://developer.webex.com/docs/api/v1/messages/create-a-message).
     returned: always
     type: str
     sample: OK (585 bytes)
@@ -119,7 +119,7 @@ from ansible.module_utils.urls import fetch_url
 
 def spark_message(module):
     """ When check mode is specified, establish a read only connection, that does not return any user specific
-    data, to validate connectivity. In regular mode, send a message to a Cisco Spark Room or Individual"""
+    data, to validate connectivity. In regular mode, send a message to a Cisco Webex teams Room or Individual"""
 
     # Ansible Specific Variables
     results = {}
@@ -139,7 +139,7 @@ def spark_message(module):
 
         payload = {
             ansible['recipient_type']: ansible['recipient_id'],
-            ansible['message_type']: ansible['message']
+            ansible['message_type']: ansible['send_message']
         }
 
         payload = module.jsonify(payload)
@@ -147,21 +147,21 @@ def spark_message(module):
     response, info = fetch_url(module, url, data=payload, headers=headers)
 
     status_code = info['status']
-    message = info['msg']
+    send_message = info['msg']
 
     # Module will fail if the response is not 200
     if status_code != 200:
         results['failed'] = True
         results['status_code'] = status_code
-        results['message'] = message
+        results['send_message'] = send_message
     else:
         results['failed'] = False
         results['status_code'] = status_code
 
         if module.check_mode:
-            results['message'] = 'Authentication Successful.'
+            results['send_message'] = 'Authentication Successful.'
         else:
-            results['message'] = message
+            results['send_message'] = send_message
 
     return results
 
@@ -176,7 +176,7 @@ def main():
             message_type=dict(required=False, default=['text'], aliases=[
                               'type'], choices=['text', 'markdown']),
             personal_token=dict(required=True, no_log=True, aliases=['token']),
-            message=dict(required=True)
+            send_message=dict(required=True)
 
         ),
 
