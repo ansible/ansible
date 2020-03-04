@@ -281,10 +281,7 @@ def package_latest(names, pkg_spec, module):
     if module.params['replace']:
         upgrade_cmd += 'r'
 
-    if module.params['
-
     if module.params['quick']:
-        upgrade_cmd += 'q'']:
         upgrade_cmd += 'q'
 
     for name in names:
