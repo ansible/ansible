@@ -8293,6 +8293,7 @@ test/support/windows-integration/plugins/modules/win_lineinfile.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_regedit.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_security_policy.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_shell.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_wait_for.ps1 pslint!skip
 test/units/config/manager/test_find_ini_config_file.py future-import-boilerplate
 test/units/contrib/inventory/test_vmware_inventory.py future-import-boilerplate
 test/units/contrib/inventory/test_vmware_inventory.py metaclass-boilerplate
