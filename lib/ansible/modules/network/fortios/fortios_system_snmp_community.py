@@ -88,9 +88,7 @@ options:
         suboptions:
             events:
                 description:
-                    - SNMP trap events.
-                type: str
-                choices:
+                    - SNMP trap events. Accepted events are as below:
                     - cpu-high
                     - mem-low
                     - log-full
@@ -126,6 +124,7 @@ options:
                     - load-balance-real-server-down
                     - device-new
                     - per-cpu-high
+                type: str
             hosts:
                 description:
                     - Configure IPv4 SNMP managers (hosts).
@@ -453,6 +452,31 @@ def fortios_system_snmp(data, fos):
         resp
 
 
+def validate_events(data):
+
+    events_set = {"cpu-high","mem-low","log-full","intf-ip",
+                  "vpn-tun-up","vpn-tun-down","ha-switch",
+                  "ha-hb-failure","ips-signature","ips-anomaly",
+                  "av-virus","av-oversize","av-pattern",
+                  "av-fragmented","fm-if-change","fm-conf-change",
+                  "bgp-established","bgp-backward-transition",
+                  "ha-member-up","ha-member-down","ent-conf-change",
+                  "av-conserve","av-bypass","av-oversize-passed",
+                  "av-oversize-blocked","ips-pkg-update","ips-fail-open",
+                  "faz-disconnect","wc-ap-up","wc-ap-down",
+                  "fswctl-session-up","fswctl-session-down","load-balance-real-server-down",
+                  "device-new","per-cpu-high"}
+    # check if the current events is a subset of the events_set
+    curr_events_str = data['system_snmp_community']['events']
+    if curr_events_str is None:
+        return True
+    if len(curr_events_str) == 0:
+        return False
+
+    curr_events_set = set(curr_events_str.split())
+    return curr_events_set.issubset(events_set)
+
+
 def main():
     fields = {
         "host": {"required": False, "type": "str"},
@@ -466,19 +490,7 @@ def main():
         "system_snmp_community": {
             "required": False, "type": "dict", "default": None,
             "options": {
-                "events": {"required": False, "type": "str",
-                           "choices": ["cpu-high", "mem-low", "log-full",
-                                       "intf-ip", "vpn-tun-up", "vpn-tun-down",
-                                       "ha-switch", "ha-hb-failure", "ips-signature",
-                                       "ips-anomaly", "av-virus", "av-oversize",
-                                       "av-pattern", "av-fragmented", "fm-if-change",
-                                       "fm-conf-change", "bgp-established", "bgp-backward-transition",
-                                       "ha-member-up", "ha-member-down", "ent-conf-change",
-                                       "av-conserve", "av-bypass", "av-oversize-passed",
-                                       "av-oversize-blocked", "ips-pkg-update", "ips-fail-open",
-                                       "faz-disconnect", "wc-ap-up", "wc-ap-down",
-                                       "fswctl-session-up", "fswctl-session-down", "load-balance-real-server-down",
-                                       "device-new", "per-cpu-high"]},
+                "events": {"required": False, "type": "str"},
                 "hosts": {"required": False, "type": "list",
                           "options": {
                               "ha_direct": {"required": False, "type": "str",
@@ -524,6 +536,11 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
+
+    # validate user input for events attribute
+    if not validate_events(module.params):
+        module.fail_json(msg="Please enter valid events")
+        return
 
     # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \

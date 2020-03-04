@@ -92,6 +92,60 @@ def test_system_snmp_community_creation(mocker):
     assert response['http_status'] == 200
 
 
+def test_system_snmp_community_custom_events_validation__multiple(mocker):
+    schema_method_mock = mocker.patch('ansible.module_utils.network.fortios.fortios.FortiOSHandler.schema')
+
+    set_method_result = {'status': 'success', 'http_method': 'POST', 'http_status': 200}
+    set_method_mock = mocker.patch('ansible.module_utils.network.fortios.fortios.FortiOSHandler.set', return_value=set_method_result)
+
+    input_data = {
+        'username': 'admin',
+        'state': 'present',
+        'system_snmp_community': {
+            'events': 'cpu-high mem-low',
+            'id': '4',
+            'name': 'default_name_5',
+            'query_v1_port': '6',
+            'query_v1_status': 'enable',
+            'query_v2c_port': '8',
+            'query_v2c_status': 'enable',
+            'status': 'enable',
+            'trap_v1_lport': '11',
+            'trap_v1_rport': '12',
+            'trap_v1_status': 'enable',
+            'trap_v2c_lport': '14',
+            'trap_v2c_rport': '15',
+            'trap_v2c_status': 'enable'
+        },
+        'vdom': 'root'}
+
+    is_error, changed, response = fortios_system_snmp_community.fortios_system_snmp(input_data, fos_instance)
+
+    expected_data = {
+        'events': 'cpu-high mem-low',
+        'id': '4',
+        'name': 'default_name_5',
+                'query-v1-port': '6',
+                'query-v1-status': 'enable',
+                'query-v2c-port': '8',
+                'query-v2c-status': 'enable',
+                'status': 'enable',
+                'trap-v1-lport': '11',
+                'trap-v1-rport': '12',
+                'trap-v1-status': 'enable',
+                'trap-v2c-lport': '14',
+                'trap-v2c-rport': '15',
+                'trap-v2c-status': 'enable'
+    }
+
+    set_method_mock.assert_called_with('system.snmp', 'community', data=expected_data, vdom='root')
+    schema_method_mock.assert_not_called()
+    assert not is_error
+    assert changed
+    assert response['status'] == 'success'
+    assert response['http_status'] == 200
+
+
 def test_system_snmp_community_creation_fails(mocker):
     schema_method_mock = mocker.patch('ansible.module_utils.network.fortios.fortios.FortiOSHandler.schema')
 
