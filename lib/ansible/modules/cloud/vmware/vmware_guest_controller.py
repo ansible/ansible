@@ -116,6 +116,16 @@ options:
          choices:
            - present
            - absent
+
+       bus_sharing:
+         description:
+         - Bus sharing type for SCSI controller. 
+         required: false
+         type: str
+         choices:
+             - noSharing
+             - physicalSharing
+             - virtualSharing
      type: list
    gather_disk_controller_facts:
      description:
@@ -308,12 +318,13 @@ class PyVmomiHelper(PyVmomi):
 
         return ctl_specified, disks_attached_exist
 
-    def create_controller(self, ctl_type, bus_number=0):
+    def create_controller(self, ctl_type, bus_number=0, bus_sharing='noSharing'):
         """
         Create new disk or USB controller with specified type
         Args:
             ctl_type: controller type
             bus_number: disk controller bus number
+            bus_sharing: noSharing, physicalSharing, virtualSharing
 
         Return: Virtual device spec for virtual controller
         """
@@ -329,7 +340,7 @@ class PyVmomiHelper(PyVmomi):
             disk_ctl.device = self.scsi_device_type.get(ctl_type)()
             disk_ctl.device.key = -randint(1000, 6999)
             disk_ctl.device.hotAddRemove = True
-            disk_ctl.device.sharedBus = 'noSharing'
+            disk_ctl.device.sharedBus = '%s' % bus_sharing
             disk_ctl.device.scsiCtlrUnitNumber = 7
         elif ctl_type in self.usb_device_type.keys():
             disk_ctl.device = self.usb_device_type.get(ctl_type)()
@@ -367,6 +378,7 @@ class PyVmomiHelper(PyVmomi):
                     controller_devicekey=device.key,
                     controller_unitnumber=device.unitNumber,
                     controller_disks_devicekey=device.device,
+                    controller_sharedbus=device.sharedBus
                 )
                 if isinstance(device, tuple(self.scsi_device_type.values())):
                     disk_ctl_facts['scsi'].update(ctl_facts_dict)
@@ -416,6 +428,11 @@ class PyVmomiHelper(PyVmomi):
                             ctl_config['controller_number'] = self.disk_ctl_bus_num_list['scsi'].pop(0)
                         else:
                             ctl_config['controller_number'] = None
+
+                        # default value for bus_sharing
+                        if ctl_config.get('bus_sharing') == None:
+                            ctl_config['bus_sharing'] = 'noSharing'
+
                     elif ctl_config['type'] == 'sata' or ctl_config['type'] == 'nvme':
                         if len(self.disk_ctl_bus_num_list.get(ctl_config['type'])) != 0:
                             ctl_config['controller_number'] = self.disk_ctl_bus_num_list.get(ctl_config['type']).pop(0)
@@ -449,7 +466,14 @@ class PyVmomiHelper(PyVmomi):
                 # create other disk controller
                 else:
                     if disk_ctl_config.get('controller_number') is not None:
-                        disk_controller_new = self.create_controller(disk_ctl_config['type'], disk_ctl_config.get('controller_number'))
+                        disk_controller_new = (
+                            self.create_controller(
+                                disk_ctl_config['type'],
+                                disk_ctl_config.get('controller_number'),
+                                disk_ctl_config.get('bus_sharing'),
+                            )
+                        )
+
                         self.config_spec.deviceChange.append(disk_controller_new)
                         self.change_detected = True
                     else:
@@ -470,7 +494,7 @@ class PyVmomiHelper(PyVmomi):
                         self.module.warn("Can not remove specified controller, type '%s', bus number '%s',"
                                          " there are disks attaching to it." % (disk_ctl_config['type'], disk_ctl_config.get('controller_number')))
                 else:
-                    self.module.warn("Not find specified controller to remove, type '%s', bus number '%s'."
+                    self.module.warn("Specified controller to remove, type '%s', bus number '%s not found'."
                                      % (disk_ctl_config['type'], disk_ctl_config.get('controller_number')))
 
         try:
@@ -513,6 +537,11 @@ def main():
                     choices=['sata', 'nvme', 'lsilogic', 'buslogic', 'lsilogicsas', 'paravirtual', 'usb2', 'usb3'],
                     required=True,
                 ),
+                bus_sharing=dict(
+                    type='str',
+                    choices=['noSharing', 'physicalSharing', 'virtualSharing'],
+                    required=False
+                )
             ),
         ),
         use_instance_uuid=dict(type='bool', default=False),
