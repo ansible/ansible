@@ -73,21 +73,6 @@ matrix:
     - env: T=windows/2016/7
     - env: T=windows/2019/7
 
-    - env: T=i/windows/2012
-    - env: T=i/windows/2012-R2
-    - env: T=i/windows/2016
-    - env: T=i/windows/2019
-
-    - env: T=ios/csr1000v//1
-
-    - env: T=vyos/1.1.8/2.7/1
-    - env: T=vyos/1.1.8/3.6/1
-
-    - env: T=i/ios/csr1000v//1
-
-    - env: T=i/vyos/1.1.8/2.7/1
-    - env: T=i/vyos/1.1.8/3.6/1
-
     - env: T=aix/7.2/1
     - env: T=osx/10.11/1
     - env: T=rhel/7.6/1
@@ -168,6 +153,9 @@ matrix:
     - env: T=linux/ubuntu1604/5
     - env: T=linux/ubuntu1804/5
 
+    - env: T=fallaxy/2.7/1
+    - env: T=fallaxy/3.6/1
+
     - env: T=i/aix/7.2
     - env: T=i/osx/10.11
     - env: T=i/rhel/7.6
@@ -184,6 +172,30 @@ matrix:
     - env: T=i/linux/ubuntu1604
     - env: T=i/linux/ubuntu1804
 
+    - env: T=i/windows/2012
+    - env: T=i/windows/2012-R2
+    - env: T=i/windows/2016
+    - env: T=i/windows/2019
+
+    - env: T=i/ios/csr1000v//1
+    - env: T=i/vyos/1.1.8/2.7/1
+    - env: T=i/vyos/1.1.8/3.6/1
+
+    - env: T=i/aws/2.7/1
+    - env: T=i/aws/3.6/1
+    - env: T=i/azure/2.7/1
+    - env: T=i/azure/3.6/1
+    - env: T=i/vcenter//1
+    - env: T=i/cs//1
+    - env: T=i/tower//1
+    - env: T=i/cloud//1
+    - env: T=i/hcloud//1
+
+    - env: T=ios/csr1000v//1
+
+    - env: T=vyos/1.1.8/2.7/1
+    - env: T=vyos/1.1.8/3.6/1
+
     - env: T=aws/2.7/1
     - env: T=aws/3.6/1
 
@@ -195,9 +207,6 @@ matrix:
 
     - env: T=aws/2.7/4
     - env: T=aws/3.6/4
-
-    - env: T=i/aws/2.7/1
-    - env: T=i/aws/3.6/1
 
     - env: T=azure/2.7/1
     - env: T=azure/3.6/1
@@ -232,16 +241,11 @@ matrix:
     - env: T=azure/2.7/11
     - env: T=azure/3.6/11
 
-    - env: T=i/azure/2.7/1
-    - env: T=i/azure/3.6/1
-
     - env: T=vcenter/2.7/1
     - env: T=vcenter/3.6/1
 
     - env: T=vcenter/2.7/2
     - env: T=vcenter/3.6/2
-
-    - env: T=i/vcenter//1
 
     - env: T=cs/2.7/1
     - env: T=cs/3.6/1
@@ -249,17 +253,11 @@ matrix:
     - env: T=cs/2.7/2
     - env: T=cs/3.6/2
 
-    - env: T=i/cs//1
-
     - env: T=tower/2.7/1
     - env: T=tower/3.6/1
 
-    - env: T=i/tower//1
-
     - env: T=cloud/2.7/1
     - env: T=cloud/3.6/1
-
-    - env: T=i/cloud//1
 
     - env: T=hcloud/2.7/1
     - env: T=hcloud/3.6/1
@@ -267,7 +265,6 @@ matrix:
     - env: T=hcloud/2.7/2
     - env: T=hcloud/3.6/2
 
-    - env: T=i/hcloud//1
 branches:
   except:
     - "*-patch-*"
