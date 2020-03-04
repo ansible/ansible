@@ -268,6 +268,10 @@ epub:
 webdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) docs)
 
+.PHONY: linkcheckdocs
+linkcheckdocs:
+	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) linkcheckdocs)
+
 .PHONY: generate_rst
 generate_rst: lib/ansible/cli/*.py
 	mkdir -p ./docs/man/man1/ ; \
