@@ -3,6 +3,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -13,10 +16,10 @@ module: lambda_policy
 short_description: Creates, updates or deletes AWS Lambda policy statements.
 description:
     - This module allows the management of AWS Lambda policy statements.
-      It is idempotent and supports "Check" mode.  Use module M(lambda) to manage the lambda
-      function itself, M(lambda_alias) to manage function aliases, M(lambda_event) to manage event source mappings
-      such as Kinesis streams, M(execute_lambda) to execute a lambda function and M(lambda_info) to gather information
-      relating to one or more lambda functions.
+    - It is idempotent and supports "Check" mode.
+    - Use module M(lambda) to manage the lambda function itself, M(lambda_alias) to manage function aliases,
+      M(lambda_event) to manage event source mappings such as Kinesis streams, M(execute_lambda) to execute a
+      lambda function and M(lambda_info) to gather information relating to one or more lambda functions.
 
 version_added: "2.4"
 
@@ -28,38 +31,44 @@ options:
     description:
       - "Name of the Lambda function whose resource policy you are updating by adding a new permission."
       - "You can specify a function name (for example, Thumbnail ) or you can specify Amazon Resource Name (ARN) of the"
-      - "function (for example, arn:aws:lambda:us-west-2:account-id:function:ThumbNail ). AWS Lambda also allows you to"
-      - "specify partial ARN (for example, account-id:Thumbnail ). Note that the length constraint applies only to the"
+      - "function (for example, C(arn:aws:lambda:us-west-2:account-id:function:ThumbNail) ). AWS Lambda also allows you to"
+      - "specify partial ARN (for example, C(account-id:Thumbnail) ). Note that the length constraint applies only to the"
       - "ARN. If you specify only the function name, it is limited to 64 character in length."
     required: true
     aliases: ['lambda_function_arn', 'function_arn']
+    type: str
 
   state:
     description:
       - Describes the desired state.
     default: "present"
     choices: ["present", "absent"]
+    type: str
 
   alias:
     description:
-      - Name of the function alias. Mutually exclusive with C(version).
+      - Name of the function alias. Mutually exclusive with I(version).
+    type: str
 
   version:
     description:
-      -  Version of the Lambda function. Mutually exclusive with C(alias).
+      -  Version of the Lambda function. Mutually exclusive with I(alias).
+    type: int
 
   statement_id:
     description:
       -  A unique statement identifier.
     required: true
     aliases: ['sid']
+    type: str
 
   action:
     description:
       -  "The AWS Lambda action you want to allow in this statement. Each Lambda action is a string starting with
-         lambda: followed by the API name (see Operations ). For example, lambda:CreateFunction . You can use wildcard
-         (lambda:* ) to grant permission for all AWS Lambda actions."
+         lambda: followed by the API name (see Operations ). For example, C(lambda:CreateFunction) . You can use wildcard
+         (C(lambda:*)) to grant permission for all AWS Lambda actions."
     required: true
+    type: str
 
   principal:
     description:
@@ -68,24 +77,28 @@ options:
          any valid AWS service principal such as sns.amazonaws.com . For example, you might want to allow a custom
          application in another AWS account to push events to AWS Lambda by invoking your function."
     required: true
+    type: str
 
   source_arn:
     description:
       -  This is optional; however, when granting Amazon S3 permission to invoke your function, you should specify this
          field with the bucket Amazon Resource Name (ARN) as its value. This ensures that only events generated from
          the specified bucket can invoke the function.
+    type: str
 
   source_account:
     description:
-      -  The AWS account ID (without a hyphen) of the source owner. For example, if the SourceArn identifies a bucket,
+      -  The AWS account ID (without a hyphen) of the source owner. For example, if I(source_arn) identifies a bucket,
          then this is the bucket owner's account ID. You can use this additional condition to ensure the bucket you
          specify is owned by a specific account (it is possible the bucket owner deleted the bucket and some other AWS
          account created the bucket). You can also use this condition to specify all sources (that is, you don't
-         specify the SourceArn ) owned by a specific account.
+         specify the I(source_arn) ) owned by a specific account.
+    type: str
 
   event_source_token:
     description:
-      -  Token string representing source ARN or account. Mutually exclusive with C(source_arn) or C(source_account).
+      -  Token string representing source ARN or account. Mutually exclusive with I(source_arn) or I(source_account).
+    type: str
 
 requirements:
     - boto3
@@ -111,9 +124,11 @@ EXAMPLES = '''
       principal: s3.amazonaws.com
       source_arn: arn:aws:s3:eu-central-1:123456789012:bucketName
       source_account: 123456789012
+    register: lambda_policy_action
 
   - name: show results
-    debug: var=lambda_policy_action
+    debug:
+      var: lambda_policy_action
 
 '''
 
@@ -129,12 +144,11 @@ import json
 import re
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 
 try:
     from botocore.exceptions import ClientError
 except Exception:
-    pass  # will be protected by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def pc(key):
@@ -383,15 +397,6 @@ def manage_state(module, lambda_client):
     return dict(changed=changed, ansible_facts=dict(lambda_policy_action=action_taken))
 
 
-def setup_client(module):
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    if region:
-        connection = boto3_conn(module, conn_type='client', resource='lambda', region=region, endpoint=ec2_url, **aws_connect_params)
-    else:
-        module.fail_json(msg="region must be specified")
-    return connection
-
-
 def setup_module_object():
     argument_spec = dict(
         state=dict(default='present', choices=['present', 'absent']),
@@ -423,7 +428,7 @@ def main():
     """
 
     module = setup_module_object()
-    client = setup_client(module)
+    client = module.client('lambda')
     validate_params(module)
     results = manage_state(module, client)
 

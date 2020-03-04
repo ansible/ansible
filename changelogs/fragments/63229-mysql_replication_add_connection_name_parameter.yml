@@ -1,0 +1,2 @@
+minor_changes:
+- mysql_replication - add ``connection_name`` parameter (https://github.com/ansible/ansible/issues/46243).

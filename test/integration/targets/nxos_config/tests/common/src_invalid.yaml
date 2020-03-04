@@ -6,7 +6,6 @@
 - name: configure with invalid src
   nxos_config:
     src: basic/foobar.j2
-    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 

@@ -1,0 +1,5 @@
+deprecated_features:
+- "ec2_eip - The ``wait_timeout`` option had no effect and will be removed in Ansible 2.14"
+- "ec2_key - The ``wait`` option had no effect and will be removed in Ansible 2.14"
+- "ec2_key - The ``wait_timeout`` option had no effect and will be removed in Ansible 2.14"
+- "ec2_lc - The ``associate_public_ip_address`` option had no effect and will be removed in Ansible 2.14"

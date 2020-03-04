@@ -1,0 +1,698 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: postgresql_slot - set max_replication_slots
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_set:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: max_replication_slots
+    value: '10'
+
+- name: postgresql_slot - set wal_level to logical
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_set:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: wal_level
+    value: logical
+
+- name: postgresql_slot - restart PostgreSQL
+  become: yes
+  service:
+    name: "{{ postgresql_service }}"
+    state: restarted
+
+#
+# state=present
+#
+
+# check_mode
+- name: postgresql_slot - create slot in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot0
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == []
+
+# Check, rowcount must be 0
+- name: postgresql_slot - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot0'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+    - result.rowcount == 0
+
+# true mode
+- name: postgresql_slot - create physical slot
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot0
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["SELECT pg_create_physical_replication_slot('slot0', false)"]
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["SELECT pg_create_physical_replication_slot('slot0')"]
+  when: postgres_version_resp.stdout is version('9.6', '<')
+
+# Check, rowcount must be 1
+- name: postgresql_slot - check that the slot exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot0' and slot_type = 'physical'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+    - result.rowcount == 1
+
+# check mode
+- name: postgresql_slot - try create physical slot again in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot0
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+
+# Check, rowcount must be 1
+- name: postgresql_slot - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot0' and slot_type = 'physical'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+    - result.rowcount == 1
+
+# true mode
+- name: postgresql_slot - try create physical slot again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot0
+    slot_type: physical
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+
+# Check, rowcount must be 1
+- name: postgresql_slot - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot0' and slot_type = 'physical'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+    - result.rowcount == 1
+
+#
+# immediately_reserve
+#
+
+- name: postgresql_slot - create physical slot with immediately_reserve
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot1
+    immediately_reserve: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["SELECT pg_create_physical_replication_slot('slot1', true)"]
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+# Check, rowcount must be 1
+- name: postgresql_slot - check that the slot exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot1' and slot_type = 'physical' and restart_lsn is not NULL"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+ 
+- assert:
+    that:
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+#
+# slot_type: logical
+#
+# available from postgresql 10
+#
+# on RedHat family tests failed:
+# ERROR: could not access file "test_decoding": No such file or directory
+# "Your distrib did not compile the test decoder."
+# So the tests are restricted by Ubuntu because of the module functionality
+# depends on PostgreSQL server version only.
+
+# check_mode
+- name: postgresql_slot - create slot in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot2
+    slot_type: logical
+  check_mode: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == []
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# Check, rowcount must be 0
+- name: postgresql_slot - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot2'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+ 
+- assert:
+    that:
+    - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# true mode
+- name: postgresql_slot - create logical slot
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot2
+    slot_type: logical
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["SELECT pg_create_logical_replication_slot('slot2', 'test_decoding')"]
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# Check, rowcount must be 1
+- name: postgresql_slot - check that the slot exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot2' and slot_type = 'logical'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+ 
+- assert:
+    that:
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# check mode
+- name: postgresql_slot - try create logical slot again in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot2
+    slot_type: logical
+  check_mode: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# Check, rowcount must be 1
+- name: postgresql_slot - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot2' and slot_type = 'logical'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
+ 
+- assert:
+    that:
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# true mode
+- name: postgresql_slot - try create logical slot again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot2
+    slot_type: logical
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# Check, rowcount must be 1
+- name: postgresql_slot - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot2' and slot_type = 'logical'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+ 
+- assert:
+    that:
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+#
+# output_plugin: test_decoding
+#
+
+- name: postgresql_slot - create logical slot with output_plugin
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot3
+    slot_type: logical
+    output_plugin: test_decoding
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["SELECT pg_create_logical_replication_slot('slot3', 'test_decoding')"]
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# Check, rowcount must be 1
+- name: postgresql_slot - check that the slot exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot3' and slot_type = 'logical' and plugin = 'test_decoding'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+ 
+- assert:
+    that:
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+#
+# state: absent for logical slots
+#
+
+# check_mode
+- name: postgresql_slot - drop logical slot in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot2
+    state: absent
+  check_mode: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == []
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# Check, rowcount must be 1
+- name: postgresql_slot - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot2'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+ 
+- assert:
+    that:
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# true mode
+- name: postgresql_slot - drop logical slot
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot2
+    state: absent
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["SELECT pg_drop_replication_slot('slot2')"]
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# Check, rowcount must be 0
+- name: postgresql_slot - check that the slot does not exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot2' and slot_type = 'logical'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+ 
+- assert:
+    that:
+    - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# check mode
+- name: postgresql_slot - try drop logical slot again in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot2
+    state: absent
+  check_mode: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# Check, rowcount must be 0
+- name: postgresql_slot - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot2' and slot_type = 'logical'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
+ 
+- assert:
+    that:
+    - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# true mode
+- name: postgresql_slot - try drop logical slot again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot2
+    state: absent
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+# Check, rowcount must be 0
+- name: postgresql_slot - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot2' and slot_type = 'logical'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+ 
+- assert:
+    that:
+    - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+
+#
+# state=absent for physical slots
+#
+
+# check_mode
+- name: postgresql_slot - drop physical slot in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot1
+    state: absent
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == []
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+# Check, rowcount must be 1
+- name: postgresql_slot - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot1'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+ 
+- assert:
+    that:
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+# true mode
+- name: postgresql_slot - drop physical slot
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot1
+    state: absent
+  register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["SELECT pg_drop_replication_slot('slot1')"]
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+# Check, rowcount must be 0
+- name: postgresql_slot - check that the slot does not exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot1' and slot_type = 'physical'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+ 
+- assert:
+    that:
+    - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+# check mode
+- name: postgresql_slot - try drop physical slot again in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot1
+    state: absent
+  check_mode: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+# Check, rowcount must be 0
+- name: postgresql_slot - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot1' and slot_type = 'physical'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+ 
+- assert:
+    that:
+    - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+# true mode
+- name: postgresql_slot - try drop physical slot again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: slot1
+    state: absent
+  register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+# Check, rowcount must be 0
+- name: postgresql_slot - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot1' and slot_type = 'physical'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+ 
+- assert:
+    that:
+    - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+#
+# clean up
+#
+- name: postgresql_slot - clean up
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_slot:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: "{{ item }}"
+    state: absent
+  ignore_errors: yes
+  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
+  with_items:
+  - slot0
+  - slot3

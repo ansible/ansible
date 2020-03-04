@@ -1,2 +1,0 @@
-bugfixes:
-  - docker_swarm_service - fix resource lookup if mounts.source="".

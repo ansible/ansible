@@ -33,7 +33,7 @@ module: gcp_compute_network
 description:
 - Manages a VPC network or legacy network resource on GCP.
 short_description: Creates a GCP Network
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -52,17 +52,6 @@ options:
     description:
     - An optional description of this resource. The resource must be recreated to
       modify this field.
-    required: false
-    type: str
-  ipv4_range:
-    description:
-    - If this field is specified, a deprecated legacy network is created.
-    - You will no longer be able to create a legacy network on Feb 1, 2020.
-    - See the [legacy network docs](U(https://cloud.google.com/vpc/docs/legacy)) for
-      more details.
-    - The range of internal addresses that are legal on this legacy network.
-    - 'This range is a CIDR specification, for example: `192.168.0.0/16`.'
-    - The resource must be recreated to modify this field.
     required: false
     type: str
   name:
@@ -90,7 +79,7 @@ options:
       to determine what type of network-wide routing behavior to enforce.
     required: false
     type: dict
-    version_added: 2.8
+    version_added: '2.8'
     suboptions:
       routing_mode:
         description:
@@ -102,10 +91,56 @@ options:
         - 'Some valid choices include: "REGIONAL", "GLOBAL"'
         required: true
         type: str
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/networks)'
 - 'Official Documentation: U(https://cloud.google.com/vpc/docs/vpc)'
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -137,17 +172,6 @@ id:
   - The unique identifier for the resource.
   returned: success
   type: int
-ipv4_range:
-  description:
-  - If this field is specified, a deprecated legacy network is created.
-  - You will no longer be able to create a legacy network on Feb 1, 2020.
-  - See the [legacy network docs](U(https://cloud.google.com/vpc/docs/legacy)) for
-    more details.
-  - The range of internal addresses that are legal on this legacy network.
-  - 'This range is a CIDR specification, for example: `192.168.0.0/16`.'
-  - The resource must be recreated to modify this field.
-  returned: success
-  type: str
 name:
   description:
   - Name of the resource. Provided by the client when the resource is created. The
@@ -214,12 +238,10 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
-            ipv4_range=dict(type='str'),
             name=dict(required=True, type='str'),
             auto_create_subnetworks=dict(type='bool'),
             routing_config=dict(type='dict', options=dict(routing_mode=dict(required=True, type='str'))),
-        ),
-        mutually_exclusive=[['auto_create_subnetworks', 'ipv4_range']],
+        )
     )
 
     if not module.params['scopes']:
@@ -285,7 +307,6 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#network',
         u'description': module.params.get('description'),
-        u'IPv4Range': module.params.get('ipv4_range'),
         u'name': module.params.get('name'),
         u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks'),
         u'routingConfig': NetworkRoutingconfig(module.params.get('routing_config', {}), module).to_request(),
@@ -357,7 +378,6 @@ def response_to_hash(module, response):
         u'description': module.params.get('description'),
         u'gatewayIPv4': response.get(u'gatewayIPv4'),
         u'id': response.get(u'id'),
-        u'IPv4Range': module.params.get('ipv4_range'),
         u'name': module.params.get('name'),
         u'subnetworks': response.get(u'subnetworks'),
         u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks'),

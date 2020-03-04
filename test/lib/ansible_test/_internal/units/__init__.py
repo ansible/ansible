@@ -11,10 +11,13 @@ from ..util import (
     get_available_python_versions,
     is_subdir,
     SubprocessError,
+    REMOTE_ONLY_PYTHON_VERSIONS,
 )
 
 from ..util_common import (
     intercept_command,
+    ResultType,
+    handle_layout_messages,
 )
 
 from ..ansible_util import (
@@ -44,7 +47,6 @@ from ..executor import (
     Delegate,
     get_changes_filter,
     install_command_requirements,
-    REMOTE_ONLY_PYTHON_VERSIONS,
     SUPPORTED_PYTHON_VERSIONS,
 )
 
@@ -53,6 +55,8 @@ def command_units(args):
     """
     :type args: UnitsConfig
     """
+    handle_layout_messages(data_context().content.unit_messages)
+
     changes = get_changes_filter(args)
     require = args.require + changes
     include = walk_internal_targets(walk_units_targets(), args.include, args.exclude, require)
@@ -73,7 +77,7 @@ def command_units(args):
 
     version_commands = []
 
-    available_versions = get_available_python_versions(list(SUPPORTED_PYTHON_VERSIONS))
+    available_versions = sorted(get_available_python_versions(list(SUPPORTED_PYTHON_VERSIONS)).keys())
 
     for version in SUPPORTED_PYTHON_VERSIONS:
         # run all versions unless version given, in which case run only that version
@@ -98,8 +102,11 @@ def command_units(args):
             'yes' if args.color else 'no',
             '-p', 'no:cacheprovider',
             '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
-            '--junit-xml', os.path.join(data_context().results, 'junit', 'python%s-units.xml' % version),
+            '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-units.xml' % version),
         ]
+
+        if not data_context().content.collection:
+            cmd.append('--durations=25')
 
         if version != '2.6':
             # added in pytest 4.5.0, which requires python 2.7+
@@ -115,9 +122,7 @@ def command_units(args):
 
         if plugins:
             env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest/plugins')
-
-            for plugin in plugins:
-                cmd.extend(['-p', plugin])
+            env['PYTEST_PLUGINS'] = ','.join(plugins)
 
         if args.collect_only:
             cmd.append('--collect-only')

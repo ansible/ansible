@@ -19,6 +19,7 @@
 NAME = ansible
 OS = $(shell uname -s)
 PREFIX ?= '/usr/local'
+SDIST_DIR ?= 'dist'
 
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
@@ -222,18 +223,19 @@ install_manpages:
 
 .PHONY: sdist_check
 sdist_check:
+	$(PYTHON) -c 'import setuptools, sys; sys.exit(int(not (tuple(map(int, setuptools.__version__.split("."))) > (39, 2, 0))))'
 	$(PYTHON) packaging/sdist/check-link-behavior.py
 
 .PHONY: sdist
 sdist: sdist_check clean docs
-	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist --dist-dir=$(SDIST_DIR)
 
 # Official releases generate the changelog as the last commit before the release.
 # Snapshots shouldn't result in new checkins so the changelog is generated as
 # part of creating the tarball.
 .PHONY: snapshot
 snapshot: sdist_check clean docs changelog
-	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist --dist-dir=$(SDIST_DIR)
 
 .PHONY: sdist_upload
 sdist_upload: clean docs
@@ -300,7 +302,7 @@ rpm: rpmcommon
 	--define "_srcrpmdir %{_topdir}" \
 	--define "_specdir $(RPMSPECDIR)" \
 	--define "_sourcedir %{_topdir}" \
-	--define "_rpmfilename $(RPMNVR).%%{ARCH}.rpm" \
+	--define "_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm" \
 	--define "__python `which $(PYTHON)`" \
 	--define "upstream_version $(VERSION)" \
 	--define "rpmversion $(RPMVERSION)" \

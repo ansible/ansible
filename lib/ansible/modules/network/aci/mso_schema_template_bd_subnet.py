@@ -148,15 +148,15 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    template = module.params['template']
-    bd = module.params['bd']
-    subnet = module.params['subnet']
-    description = module.params['description']
-    scope = module.params['scope']
-    shared = module.params['shared']
-    no_default_gateway = module.params['no_default_gateway']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    template = module.params.get('template')
+    bd = module.params.get('bd')
+    subnet = module.params.get('subnet')
+    description = module.params.get('description')
+    scope = module.params.get('scope')
+    shared = module.params.get('shared')
+    no_default_gateway = module.params.get('no_default_gateway')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
@@ -168,28 +168,28 @@ def main():
     schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
-    templates = [t['name'] for t in schema_obj['templates']]
+    templates = [t.get('name') for t in schema_obj.get('templates')]
     if template not in templates:
         mso.fail_json(msg="Provided template '{0}' does not exist. Existing templates: {1}".format(template, ', '.join(templates)))
     template_idx = templates.index(template)
 
     # Get BD
-    bds = [b['name'] for b in schema_obj['templates'][template_idx]['bds']]
+    bds = [b.get('name') for b in schema_obj.get('templates')[template_idx]['bds']]
     if bd not in bds:
         mso.fail_json(msg="Provided BD '{0}' does not exist. Existing BDs: {1}".format(bd, ', '.join(bds)))
     bd_idx = bds.index(bd)
 
     # Get Subnet
-    subnets = [s['ip'] for s in schema_obj['templates'][template_idx]['bds'][bd_idx]['subnets']]
+    subnets = [s.get('ip') for s in schema_obj.get('templates')[template_idx]['bds'][bd_idx]['subnets']]
     if subnet in subnets:
         subnet_idx = subnets.index(subnet)
         # FIXME: Changes based on index are DANGEROUS
         subnet_path = '/templates/{0}/bds/{1}/subnets/{2}'.format(template, bd, subnet_idx)
-        mso.existing = schema_obj['templates'][template_idx]['bds'][bd_idx]['subnets'][subnet_idx]
+        mso.existing = schema_obj.get('templates')[template_idx]['bds'][bd_idx]['subnets'][subnet_idx]
 
     if state == 'query':
         if subnet is None:
-            mso.existing = schema_obj['templates'][template_idx]['bds'][bd_idx]['subnets']
+            mso.existing = schema_obj.get('templates')[template_idx]['bds'][bd_idx]['subnets']
         elif not mso.existing:
             mso.fail_json(msg="Subnet IP '{subnet}' not found".format(subnet=subnet))
         mso.exit_json()

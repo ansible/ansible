@@ -47,6 +47,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
+$rule_action  = Get-AnsibleParam -obj $params -name "rule_action" -type "str" -default "set" -validateset "set","add"
 
 if (-not (Get-Command -Name Get-SmbShare -ErrorAction SilentlyContinue)) {
     Fail-Json $result "The current host does not support the -SmbShare cmdlets required by this module. Please run on Server 2012 or Windows 8 and later"
@@ -151,65 +152,83 @@ If ($state -eq "absent") {
 
     # remove permissions
     $permissions = Get-SmbShareAccess -Name $name
-    ForEach ($permission in $permissions) {
-        If ($permission.AccessControlType -eq "Deny") {
-            $cim_count = 0
-            foreach ($count in $permissions) {
-                $cim_count++
-            }
-            # Don't remove the Deny entry for Everyone if there are no other permissions set (cim_count == 1)
-            if (-not ($permission.AccountName -eq 'Everyone' -and $cim_count -eq 1)) {
-                If (-not ($permissionDeny.Contains($permission.AccountName))) {
-                    if (-not $check_mode) {
-                        Unblock-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName | Out-Null
+    if($rule_action -eq "set") {
+        ForEach ($permission in $permissions) {
+            If ($permission.AccessControlType -eq "Deny") {
+                $cim_count = 0
+                foreach ($count in $permissions) {
+                    $cim_count++
+                }
+                # Don't remove the Deny entry for Everyone if there are no other permissions set (cim_count == 1)
+                if (-not ($permission.AccountName -eq 'Everyone' -and $cim_count -eq 1)) {
+                    If (-not ($permissionDeny.Contains($permission.AccountName))) {
+                        if (-not $check_mode) {
+                            Unblock-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName | Out-Null
+                        }
+                        $result.changed = $true
+                        $result.actions += "Unblock-SmbShareAccess -Force -Name $name -AccountName $($permission.AccountName)"
+                    } else {
+                        # Remove from the deny list as it already has the permissions
+                        $permissionDeny.remove($permission.AccountName) | Out-Null
                     }
-                    $result.changed = $true
-                    $result.actions += "Unblock-SmbShareAccess -Force -Name $name -AccountName $($permission.AccountName)"
-                } else {
-                    # Remove from the deny list as it already has the permissions
-                    $permissionDeny.remove($permission.AccountName) | Out-Null
+                }
+            } ElseIf ($permission.AccessControlType -eq "Allow") {
+                If ($permission.AccessRight -eq "Full") {
+                    If (-not ($permissionFull.Contains($permission.AccountName))) {
+                        if (-not $check_mode) {
+                            Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName | Out-Null
+                        }
+                        $result.changed = $true
+                        $result.actions += "Revoke-SmbShareAccess -Force -Name $name -AccountName $($permission.AccountName)"
+
+                        Continue
+                    }
+
+                    # user got requested permissions
+                    $permissionFull.remove($permission.AccountName) | Out-Null
+                } ElseIf ($permission.AccessRight -eq "Change") {
+                    If (-not ($permissionChange.Contains($permission.AccountName))) {
+                        if (-not $check_mode) {
+                            Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName | Out-Null
+                        }
+                        $result.changed = $true
+                        $result.actions += "Revoke-SmbShareAccess -Force -Name $name -AccountName $($permission.AccountName)"
+
+                        Continue
+                    }
+
+                    # user got requested permissions
+                    $permissionChange.remove($permission.AccountName) | Out-Null
+                } ElseIf ($permission.AccessRight -eq "Read") {
+                    If (-not ($permissionRead.Contains($permission.AccountName))) {
+                        if (-not $check_mode) {
+                            Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName | Out-Null
+                        }
+                        $result.changed = $true
+                        $result.actions += "Revoke-SmbShareAccess -Force -Name $name -AccountName $($permission.AccountName)"
+
+                        Continue
+                    }
+
+                    # user got requested permissions
+                    $permissionRead.Remove($permission.AccountName) | Out-Null
                 }
             }
-        } ElseIf ($permission.AccessControlType -eq "Allow") {
-            If ($permission.AccessRight -eq "Full") {
-                If (-not ($permissionFull.Contains($permission.AccountName))) {
-                    if (-not $check_mode) {
-                        Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName | Out-Null
-                    }
-                    $result.changed = $true
-                    $result.actions += "Revoke-SmbShareAccess -Force -Name $name -AccountName $($permission.AccountName)"
-
-                    Continue
+        }
+    } ElseIf ($rule_action -eq "add") {
+        ForEach($permission in $permissions) {
+            If ($permission.AccessControlType -eq "Deny") {
+                If ($permissionDeny.Contains($permission.AccountName)) {
+                    $permissionDeny.Remove($permission.AccountName)
                 }
-
-                # user got requested permissions
-                $permissionFull.remove($permission.AccountName) | Out-Null
-            } ElseIf ($permission.AccessRight -eq "Change") {
-                If (-not ($permissionChange.Contains($permission.AccountName))) {
-                    if (-not $check_mode) {
-                        Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName | Out-Null
-                    }
-                    $result.changed = $true
-                    $result.actions += "Revoke-SmbShareAccess -Force -Name $name -AccountName $($permission.AccountName)"
-
-                    Continue
+            } ElseIf ($permission.AccessControlType -eq "Allow") {
+                If ($permissionFull.Contains($permission.AccountName) -and $permission.AccessRight -eq "Full") {
+                    $permissionFull.Remove($permission.AccountName)
+                } ElseIf ($permissionChange.Contains($permission.AccountName) -and $permission.AccessRight -eq "Change") {
+                    $permissionChange.Remove($permission.AccountName)
+                } ElseIf ($permissionRead.Contains($permission.AccountName) -and $permission.AccessRight -eq "Read") {
+                    $permissionRead.Remove($permission.AccountName)
                 }
-
-                # user got requested permissions
-                $permissionChange.remove($permission.AccountName) | Out-Null
-            } ElseIf ($permission.AccessRight -eq "Read") {
-                If (-not ($permissionRead.Contains($permission.AccountName))) {
-                    if (-not $check_mode) {
-                        Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName | Out-Null
-                    }
-                    $result.changed = $true
-                    $result.actions += "Revoke-SmbShareAccess -Force -Name $name -AccountName $($permission.AccountName)"
-
-                    Continue
-                }
-
-                # user got requested permissions
-                $permissionRead.Remove($permission.AccountName) | Out-Null
             }
         }
     }

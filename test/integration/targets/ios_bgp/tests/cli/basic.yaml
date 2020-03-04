@@ -6,6 +6,62 @@
   ignore_errors: yes
 
 - block:
+    
+  - name: Add fake config with 'bgp' string
+    ios_config:
+      match: none
+      replace: block
+      lines:
+      - "no ip access-list extended BGP_ACL"
+      - "ip access-list extended BGP_ACL"
+      - "permit tcp any any eq bgp"
+
+  - name: Try delete fake bgp config
+    register: result
+    ios_bgp:
+      operation: delete
+
+  - assert:
+      that:
+      - 'result.changed == false'
+
+  - name: Clean fake config with 'bgp' string
+    ios_config:
+      match: none
+      replace: block
+      lines:
+      - "no ip access-list extended BGP_ACL"
+
+  - name: Add fake bgp-like config
+    ios_config:
+      match: none
+      replace: block
+      lines:
+      - "no ip access-list extended BGP_ACL_2"
+      - "ip access-list extended BGP_ACL_2"
+      - "remark router bgp 64496"
+      - "remark neighbor 192.0.2.10 remote-as 64496"
+      - "remark neighbor 192.0.2.10 shutdown"
+      - "remark address-family ipv4"
+      - "remark neighbor 192.0.2.10 activate"
+      - "remark exit-address-family"
+      - "permit tcp any any eq bgp"
+
+  - name: Try delete fake bgp-like config
+    register: result
+    ios_bgp:
+      operation: delete
+
+  - assert:
+      that:
+      - 'result.changed == false'
+
+  - name: Clean fake bgp-like config
+    ios_config:
+      match: none
+      replace: block
+      lines:
+      - "no ip access-list extended BGP_ACL_2"
 
   - name: Configure BGP with AS 64496 and a router-id
     ios_bgp: &config
@@ -86,6 +142,11 @@
             remote_as: 64511
             description: EBGP_NBR_1
             local_as: 64497
+
+          - neighbor: 10.10.20.20
+            remote_as: 65012
+            description: BGP_NBR_2
+            ebgp_multihop: 100
     register: result
 
   - assert:
@@ -94,6 +155,8 @@
         - "'neighbor 203.0.113.10 remote-as 64511' in result.commands"
         - "'neighbor 203.0.113.10 description EBGP_NBR_1' in result.commands"
         - "'neighbor 203.0.113.10 local-as 64497' in result.commands"
+        - "'neighbor 10.10.20.20 remote-as 65012' in result.commands"
+        - "'neighbor 10.10.20.20 description BGP_NBR_2' in result.commands"
         - "'no neighbor 192.0.2.10' in result.commands"
 
   - name: Configure BGP neighbors with operation replace (idempotent)
@@ -180,6 +243,11 @@
               - neighbor: 192.0.2.15
                 activate: yes
                 route_reflector_client: True
+
+              - neighbor: 10.10.20.20
+                activate: yes
+                prefix_list_in: incoming-prefixes
+                prefix_list_out: outgoing-prefixes
     register: result
 
   - assert:
@@ -192,6 +260,9 @@
         - "'neighbor 203.0.113.10 advertisement-interval 120' in result.commands"
         - "'neighbor 192.0.2.15 activate' in result.commands"
         - "'neighbor 192.0.2.15 route-reflector-client' in result.commands"
+        - "'neighbor 10.10.20.20 activate' in result.commands"
+        - "'neighbor 10.10.20.20 prefix-list incoming-prefixes in' in result.commands"
+        - "'neighbor 10.10.20.20 prefix-list outgoing-prefixes out' in result.commands"
 
   - name: Configure BGP neighbors under address family mode (idempotent)
     ios_bgp: *af_nbr
@@ -380,6 +451,36 @@
         - "'router bgp 64497' in result.commands"
         - "'bgp router-id 192.0.2.10' in result.commands"
         - "'bgp log-neighbor-changes' in result.commands"
+  
+  - name: "Configure BGP neighbors with classful boundary"
+    ios_bgp: &classful
+      config:
+        bgp_as: 64497
+        log_neighbor_changes: true
+        networks:
+          - prefix: 198.51.100.0
+            masklen: 23
+
+          - prefix: 201.0.113.32
+            masklen: 24
+
+      operation: merge
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == true'
+        - "'router bgp 64497' in result.commands"
+        - "'network 198.51.100.0 mask 255.255.254.0' in result.commands"
+        - "'network 201.0.113.32' in result.commands"
+
+  - name: Configure BGP neighbors with classful boundary (idempotent)
+    ios_bgp: *classful
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
 
   always:
   - name: Teardown

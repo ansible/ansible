@@ -1,0 +1,2 @@
+bugfixes:
+- "Fixed explicit disk arguments not resulting in disk snapshots in VM snapshot at all"

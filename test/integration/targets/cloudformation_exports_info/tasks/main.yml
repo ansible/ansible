@@ -1,0 +1,39 @@
+- name: set connection information for aws modules and run tasks
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+
+  block:
+    - name: Create a minimal stack with an export set by parameter
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        template_body: "{{ lookup('file','test_stack.yml') }}"
+        template_parameters:
+          TestParamName: "cf-exports-param"
+          TestParamValue: "Set By CF Exports"
+          BucketSuffix: "{{ resource_prefix }}"
+      register: cf_stack
+    - name: Read from Exports
+      cloudformation_exports_info:
+        region: "{{ aws_region }}"
+      register: exports_result
+    - set_fact:
+        export_items: "{{ exports_result['export_items'] }}"
+    - assert:
+        that:
+          - export_items is defined
+          - export_items['cf-exports-param'] is defined
+          # - export_items | length == 1
+
+
+# Cleanup
+  always:
+
+    - name: delete stack
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        state: absent
+      ignore_errors: yes

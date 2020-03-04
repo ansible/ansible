@@ -128,11 +128,11 @@ def main():
         ],
     )
 
-    tenant = module.params['tenant']
-    schema = module.params['schema']
-    template = module.params['template']
-    display_name = module.params['display_name']
-    state = module.params['state']
+    tenant = module.params.get('tenant')
+    schema = module.params.get('schema')
+    template = module.params.get('template')
+    display_name = module.params.get('display_name')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
@@ -145,13 +145,13 @@ def main():
         schema_path = 'schemas/{id}'.format(**schema_obj)
 
         # Get template
-        templates = [t['name'] for t in schema_obj['templates']]
+        templates = [t.get('name') for t in schema_obj.get('templates')]
         if template:
             if template in templates:
                 template_idx = templates.index(template)
-                mso.existing = schema_obj['templates'][template_idx]
+                mso.existing = schema_obj.get('templates')[template_idx]
         else:
-            mso.existing = schema_obj['templates']
+            mso.existing = schema_obj.get('templates')
     else:
         schema_path = 'schemas'
 
@@ -204,7 +204,7 @@ def main():
                 sites=[],
             )
 
-            mso.existing = payload['templates'][0]
+            mso.existing = payload.get('templates')[0]
 
             if not module.check_mode:
                 mso.request(schema_path, method='POST', data=payload)

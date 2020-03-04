@@ -22,13 +22,13 @@ short_description: Log into a Docker registry.
 version_added: "2.0"
 description:
     - Provides functionality similar to the "docker login" command.
-    - Authenticate with a docker registry and add the credentials to your local Docker config file. Adding the
-      credentials to the config files allows future connections to the registry using tools such as Ansible's Docker
-      modules, the Docker CLI and Docker SDK for Python without needing to provide credentials.
+    - Authenticate with a docker registry and add the credentials to your local Docker config file respectively the
+      credentials store associated to the registry. Adding the credentials to the config files resp. the credential
+      store allows future connections to the registry using tools such as Ansible's Docker modules, the Docker CLI
+      and Docker SDK for Python without needing to provide credentials.
     - Running in check mode will perform the authentication without updating the config file.
 options:
   registry_url:
-    required: False
     description:
       - The registry URL.
     type: str
@@ -38,18 +38,18 @@ options:
       - url
   username:
     description:
-      - The username for the registry account
+      - The username for the registry account.
+      - Required when I(state) is C(present).
     type: str
-    required: yes
   password:
     description:
-      - The plaintext password for the registry account
+      - The plaintext password for the registry account.
+      - Required when I(state) is C(present).
     type: str
-    required: yes
   email:
-    required: False
     description:
-      - "The email address for the registry account."
+      - Does nothing, do not use.
+      - Will be removed in Ansible 2.14.
     type: str
   reauthorize:
     description:
@@ -81,8 +81,9 @@ extends_documentation_fragment:
   - docker.docker_py_1_documentation
 requirements:
   - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
+  - "L(Python bindings for docker credentials store API) >= 0.2.1
+    (use L(docker-pycreds,https://pypi.org/project/docker-pycreds/) when using Docker SDK for Python < 4.0.0)"
   - "Docker API >= 1.20"
-  - "Only to be able to logout, that is for I(state) = C(absent): the C(docker) command line utility"
 author:
   - Olaf Kilian (@olsaki) <olaf.kilian@symanex.com>
   - Chris Houseknecht (@chouseknecht)
@@ -97,7 +98,7 @@ EXAMPLES = '''
 
 - name: Log into private registry and force re-authorization
   docker_login:
-    registry: your.private.registry.io
+    registry_url: your.private.registry.io
     username: yourself
     password: secrets3
     reauthorize: yes
@@ -119,7 +120,6 @@ login_results:
     returned: when state='present'
     type: dict
     sample: {
-        "email": "testuer@yahoo.com",
         "serveraddress": "localhost:5000",
         "username": "testuser"
     }
@@ -130,21 +130,156 @@ import json
 import os
 import re
 import traceback
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     from docker.errors import DockerException
+    from docker import auth
+
+    # Earlier versions of docker/docker-py put decode_auth
+    # in docker.auth.auth instead of docker.auth
+    if hasattr(auth, 'decode_auth'):
+        from docker.auth import decode_auth
+    else:
+        from docker.auth.auth import decode_auth
+
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
+    HAS_DOCKER_PY,
     DEFAULT_DOCKER_REGISTRY,
     DockerBaseClass,
     EMAIL_REGEX,
     RequestException,
 )
+
+NEEDS_DOCKER_PYCREDS = False
+
+# Early versions of docker/docker-py rely on docker-pycreds for
+# the credential store api.
+if HAS_DOCKER_PY:
+    try:
+        from docker.credentials.errors import StoreError, CredentialsNotFound
+        from docker.credentials import Store
+    except ImportError:
+        try:
+            from dockerpycreds.errors import StoreError, CredentialsNotFound
+            from dockerpycreds.store import Store
+        except ImportError as exc:
+            HAS_DOCKER_ERROR = str(exc)
+            NEEDS_DOCKER_PYCREDS = True
+
+
+if NEEDS_DOCKER_PYCREDS:
+    # docker-pycreds missing, so we need to create some place holder classes
+    # to allow instantiation.
+
+    class StoreError(Exception):
+        pass
+
+    class CredentialsNotFound(Exception):
+        pass
+
+
+class DockerFileStore(object):
+    '''
+    A custom credential store class that implements only the functionality we need to
+    update the docker config file when no credential helpers is provided.
+    '''
+
+    program = "<legacy config>"
+
+    def __init__(self, config_path):
+        self._config_path = config_path
+
+        # Make sure we have a minimal config if none is available.
+        self._config = dict(
+            auths=dict()
+        )
+
+        try:
+            # Attempt to read the existing config.
+            with open(self._config_path, "r") as f:
+                config = json.load(f)
+        except (ValueError, IOError):
+            # No config found or an invalid config found so we'll ignore it.
+            config = dict()
+
+        # Update our internal config with what ever was loaded.
+        self._config.update(config)
+
+    @property
+    def config_path(self):
+        '''
+        Return the config path configured in this DockerFileStore instance.
+        '''
+
+        return self._config_path
+
+    def get(self, server):
+        '''
+        Retrieve credentials for `server` if there are any in the config file.
+        Otherwise raise a `StoreError`
+        '''
+
+        server_creds = self._config['auths'].get(server)
+        if not server_creds:
+            raise CredentialsNotFound('No matching credentials')
+
+        (username, password) = decode_auth(server_creds['auth'])
+
+        return dict(
+            Username=username,
+            Secret=password
+        )
+
+    def _write(self):
+        '''
+        Write config back out to disk.
+        '''
+        # Make sure directory exists
+        dir = os.path.dirname(self._config_path)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        # Write config; make sure it has permissions 0x600
+        content = json.dumps(self._config, indent=4, sort_keys=True).encode('utf-8')
+        f = os.open(self._config_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        try:
+            os.write(f, content)
+        finally:
+            os.close(f)
+
+    def store(self, server, username, password):
+        '''
+        Add a credentials for `server` to the current configuration.
+        '''
+
+        b64auth = base64.b64encode(
+            to_bytes(username) + b':' + to_bytes(password)
+        )
+        auth = to_text(b64auth)
+
+        # build up the auth structure
+        new_auth = dict(
+            auths=dict()
+        )
+        new_auth['auths'][server] = dict(
+            auth=auth
+        )
+
+        self._config.update(new_auth)
+        self._write()
+
+    def erase(self, server):
+        '''
+        Remove credentials for the given server from the configuration.
+        '''
+
+        self._config['auths'].pop(server)
+        self._write()
 
 
 class LoginManager(DockerBaseClass):
@@ -164,8 +299,15 @@ class LoginManager(DockerBaseClass):
         self.email = parameters.get('email')
         self.reauthorize = parameters.get('reauthorize')
         self.config_path = parameters.get('config_path')
+        self.state = parameters.get('state')
 
-        if parameters['state'] == 'present':
+    def run(self):
+        '''
+        Do the actuall work of this task here. This allows instantiation for partial
+        testing.
+        '''
+
+        if self.state == 'present':
             self.login()
         else:
             self.logout()
@@ -200,114 +342,107 @@ class LoginManager(DockerBaseClass):
             self.fail("Logging into %s for user %s failed - %s" % (self.registry_url, self.username, str(exc)))
 
         # If user is already logged in, then response contains password for user
-        # This returns correct password if user is logged in and wrong password is given.
         if 'password' in response:
-            del response['password']
+            # This returns correct password if user is logged in and wrong password is given.
+            # So if it returns another password as we passed, and the user didn't request to
+            # reauthorize, still do it.
+            if not self.reauthorize and response['password'] != self.password:
+                try:
+                    response = self.client.login(
+                        self.username,
+                        password=self.password,
+                        email=self.email,
+                        registry=self.registry_url,
+                        reauth=True,
+                        dockercfg_path=self.config_path
+                    )
+                except Exception as exc:
+                    self.fail("Logging into %s for user %s failed - %s" % (self.registry_url, self.username, str(exc)))
+            response.pop('password', None)
         self.results['login_result'] = response
 
-        if not self.check_mode:
-            self.update_config_file()
+        self.update_credentials()
 
     def logout(self):
         '''
         Log out of the registry. On success update the config file.
-        TODO: port to API once docker.py supports this.
 
         :return: None
         '''
 
-        cmd = [self.client.module.get_bin_path('docker', True), "logout", self.registry_url]
-        # TODO: docker does not support config file in logout, restore this when they do
-        # if self.config_path and self.config_file_exists(self.config_path):
-        #     cmd.extend(["--config", self.config_path])
+        # Get the configuration store.
+        store = self.get_credential_store_instance(self.registry_url, self.config_path)
 
-        (rc, out, err) = self.client.module.run_command(cmd)
-        if rc != 0:
-            self.fail("Could not log out: %s" % err)
-        if b'Not logged in to ' in out:
+        try:
+            current = store.get(self.registry_url)
+        except CredentialsNotFound:
+            # get raises an exception on not found.
+            self.log("Credentials for %s not present, doing nothing." % (self.registry_url))
             self.results['changed'] = False
-        elif b'Removing login credentials for ' in out:
+            return
+
+        if not self.check_mode:
+            store.erase(self.registry_url)
+        self.results['changed'] = True
+
+    def update_credentials(self):
+        '''
+        If the authorization is not stored attempt to store authorization values via
+        the appropriate credential helper or to the config file.
+
+        :return: None
+        '''
+
+        # Check to see if credentials already exist.
+        store = self.get_credential_store_instance(self.registry_url, self.config_path)
+
+        try:
+            current = store.get(self.registry_url)
+        except CredentialsNotFound:
+            # get raises an exception on not found.
+            current = dict(
+                Username='',
+                Secret=''
+            )
+
+        if current['Username'] != self.username or current['Secret'] != self.password or self.reauthorize:
+            if not self.check_mode:
+                store.store(self.registry_url, self.username, self.password)
+            self.log("Writing credentials to configured helper %s for %s" % (store.program, self.registry_url))
+            self.results['actions'].append("Wrote credentials to configured helper %s for %s" % (
+                store.program, self.registry_url))
             self.results['changed'] = True
+
+    def get_credential_store_instance(self, registry, dockercfg_path):
+        '''
+        Return an instance of docker.credentials.Store used by the given registry.
+
+        :return: A Store or None
+        :rtype: Union[docker.credentials.Store, NoneType]
+        '''
+
+        # Older versions of docker-py don't have this feature.
+        try:
+            credstore_env = self.client.credstore_env
+        except AttributeError:
+            credstore_env = None
+
+        config = auth.load_config(config_path=dockercfg_path)
+
+        if hasattr(auth, 'get_credential_store'):
+            store_name = auth.get_credential_store(config, registry)
+        elif 'credsStore' in config:
+            store_name = config['credsStore']
         else:
-            self.client.module.warn('Unable to determine whether logout was successful.')
+            store_name = None
 
-        # Adding output to actions, so that user can inspect what was actually returned
-        self.results['actions'].append(to_text(out))
+        # Make sure that there is a credential helper before trying to instantiate a
+        # Store object.
+        if store_name:
+            self.log("Found credential store %s" % store_name)
+            return Store(store_name, environment=credstore_env)
 
-    def config_file_exists(self, path):
-        if os.path.exists(path):
-            self.log("Configuration file %s exists" % (path))
-            return True
-        self.log("Configuration file %s not found." % (path))
-        return False
-
-    def create_config_file(self, path):
-        '''
-        Create a config file with a JSON blob containing an auths key.
-
-        :return: None
-        '''
-
-        self.log("Creating docker config file %s" % (path))
-        config_path_dir = os.path.dirname(path)
-        if not os.path.exists(config_path_dir):
-            try:
-                os.makedirs(config_path_dir)
-            except Exception as exc:
-                self.fail("Error: failed to create %s - %s" % (config_path_dir, str(exc)))
-        self.write_config(path, dict(auths=dict()))
-
-    def write_config(self, path, config):
-        try:
-            json.dump(config, open(path, "w"), indent=5, sort_keys=True)
-        except Exception as exc:
-            self.fail("Error: failed to write config to %s - %s" % (path, str(exc)))
-
-    def update_config_file(self):
-        '''
-        If the authorization not stored in the config file or reauthorize is True,
-        update the config file with the new authorization.
-
-        :return: None
-        '''
-
-        path = self.config_path
-        if not self.config_file_exists(path):
-            self.create_config_file(path)
-
-        try:
-            # read the existing config
-            config = json.load(open(path, "r"))
-        except ValueError:
-            self.log("Error reading config from %s" % (path))
-            config = dict()
-
-        if not config.get('auths'):
-            self.log("Adding auths dict to config.")
-            config['auths'] = dict()
-
-        if not config['auths'].get(self.registry_url):
-            self.log("Adding registry_url %s to auths." % (self.registry_url))
-            config['auths'][self.registry_url] = dict()
-
-        b64auth = base64.b64encode(
-            to_bytes(self.username) + b':' + to_bytes(self.password)
-        )
-        auth = to_text(b64auth)
-
-        encoded_credentials = dict(
-            auth=auth,
-            email=self.email
-        )
-
-        if config['auths'][self.registry_url] != encoded_credentials or self.reauthorize:
-            # Update the config file with the new authorization
-            config['auths'][self.registry_url] = encoded_credentials
-            self.log("Updating config file %s with new authorization for %s" % (path, self.registry_url))
-            self.results['actions'].append("Updated config file %s with new authorization for %s" % (
-                path, self.registry_url))
-            self.results['changed'] = True
-            self.write_config(path, config)
+        return DockerFileStore(dockercfg_path)
 
 
 def main():
@@ -316,7 +451,7 @@ def main():
         registry_url=dict(type='str', default=DEFAULT_DOCKER_REGISTRY, aliases=['registry', 'url']),
         username=dict(type='str'),
         password=dict(type='str', no_log=True),
-        email=dict(type='str'),
+        email=dict(type='str', removed_in_version='2.14'),
         reauthorize=dict(type='bool', default=False, aliases=['reauth']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         config_path=dict(type='path', default='~/.docker/config.json', aliases=['dockercfg_path']),
@@ -340,7 +475,9 @@ def main():
             login_result={}
         )
 
-        LoginManager(client, results)
+        manager = LoginManager(client, results)
+        manager.run()
+
         if 'actions' in results:
             del results['actions']
         client.module.exit_json(**results)

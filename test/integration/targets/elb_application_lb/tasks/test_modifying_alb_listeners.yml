@@ -118,6 +118,69 @@
         - alb.changed
         - alb.listeners[0].rules|length == 3
 
+  - name: add a rule that uses the host header condition to the listener
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      purge_rules: no
+      listeners:
+        - Protocol: HTTP
+          Port: 80
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+          Rules:
+            - Conditions:
+                - Field: host-header
+                  Values:
+                    - 'local.mydomain.com'
+              Priority: '3'
+              Actions:
+                - TargetGroupName: "{{ tg_name }}"
+                  Type: forward
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed
+        - alb.listeners[0].rules|length == 4
+        - '{{ alb|json_query("listeners[].rules[].conditions[].host_header_config.values[]")|length  == 1 }}'
+
+  - name: test replacing the rule that uses the host header condition with multiple host header conditions
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      purge_rules: no
+      state: present
+      listeners:
+        - Protocol: HTTP
+          Port: 80
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+          Rules:
+            - Conditions:
+                - Field: host-header
+                  Values:
+                    - 'local.mydomain.com'
+                    - 'alternate.mydomain.com'
+              Priority: '3'
+              Actions:
+                - TargetGroupName: "{{ tg_name }}"
+                  Type: forward
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed
+        - alb.listeners[0].rules|length == 4
+        - '{{ alb|json_query("listeners[].rules[].conditions[].host_header_config.values[]")|length  == 2 }}'
+
   - name: remove the rule
     elb_application_lb:
       name: "{{ alb_name }}"

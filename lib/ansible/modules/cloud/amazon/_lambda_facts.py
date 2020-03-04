@@ -1,18 +1,9 @@
 #!/usr/bin/python
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
@@ -38,16 +29,18 @@ options:
   query:
     description:
       - Specifies the resource type for which to gather facts.  Leave blank to retrieve all facts.
-    required: true
     choices: [ "aliases", "all", "config", "mappings", "policy", "versions" ]
     default: "all"
+    type: str
   function_name:
     description:
       - The name of the lambda function for which facts are requested.
     aliases: [ "function", "name"]
+    type: str
   event_source_arn:
     description:
       - For query type 'mappings', this is the Amazon Resource Name (ARN) of the Amazon Kinesis or DynamoDB stream.
+    type: str
 author: Pierre Jodouin (@pjodouin)
 requirements:
     - boto3
@@ -97,7 +90,7 @@ lambda_facts.function.TheName:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 import json
 import datetime
 import sys
@@ -107,7 +100,7 @@ import re
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass  # protected by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def fix_return(node):
@@ -368,16 +361,7 @@ def main():
         if len(function_name) > 64:
             module.fail_json(msg='Function name "{0}" exceeds 64 character limit'.format(function_name))
 
-    try:
-        region, endpoint, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        aws_connect_kwargs.update(dict(region=region,
-                                       endpoint=endpoint,
-                                       conn_type='client',
-                                       resource='lambda'
-                                       ))
-        client = boto3_conn(module, **aws_connect_kwargs)
-    except ClientError as e:
-        module.fail_json_aws(e, "trying to set up boto connection")
+    client = module.client('lambda')
 
     this_module = sys.modules[__name__]
 

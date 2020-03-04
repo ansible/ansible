@@ -1,0 +1,2 @@
+minor_changes:
+  - "new magic variable - ``ansible_config_file`` - full path of used Ansible config file"

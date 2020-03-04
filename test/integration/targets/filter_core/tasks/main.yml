@@ -1,0 +1,263 @@
+# test code for filters
+# Copyright: (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2019, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
+- name: a dummy task to test the changed and success filters
+  shell: echo hi
+  register: some_registered_var
+
+- debug:
+    var: some_registered_var
+
+- name: Verify that we workaround a py26 json bug
+  template:
+    src: py26json.j2
+    dest: "{{ output_dir }}/py26json.templated"
+    mode: 0644
+
+- name: 9851 - Verify that we don't trigger https://github.com/ansible/ansible/issues/9851
+  copy:
+    content: " [{{ item | to_nice_json }}]"
+    dest: "{{ output_dir }}/9851.out"
+  with_items:
+  - {"k": "Quotes \"'\n"}
+
+- name: 9851 - copy known good output into place
+  copy:
+    src: 9851.txt
+    dest: "{{ output_dir }}/9851.txt"
+
+- name: 9851 - Compare generated json to known good
+  shell: diff -w {{ output_dir }}/9851.out {{ output_dir }}/9851.txt
+  register: diff_result_9851
+
+- name: 9851 - verify generated file matches known good
+  assert:
+    that:
+        - 'diff_result_9851.stdout == ""'
+
+- name: fill in a basic template
+  template:
+    src: foo.j2
+    dest: "{{ output_dir }}/foo.templated"
+    mode: 0644
+  register: template_result
+
+- name: copy known good into place
+  copy:
+    src: foo.txt
+    dest: "{{ output_dir }}/foo.txt"
+
+- name: compare templated file to known good
+  shell: diff -w {{ output_dir }}/foo.templated {{ output_dir }}/foo.txt
+  register: diff_result
+
+- name: verify templated file matches known good
+  assert:
+    that:
+      - 'diff_result.stdout == ""'
+
+- name: Test extract
+  assert:
+    that:
+      - '"c" == 2 | extract(["a", "b", "c"])'
+      - '"b" == 1 | extract(["a", "b", "c"])'
+      - '"a" == 0 | extract(["a", "b", "c"])'
+
+- name: Container lookups with extract
+  assert:
+    that:
+      - "'x' == [0]|map('extract',['x','y'])|list|first"
+      - "'y' == [1]|map('extract',['x','y'])|list|first"
+      - "42 == ['x']|map('extract',{'x':42,'y':31})|list|first"
+      - "31 == ['x','y']|map('extract',{'x':42,'y':31})|list|last"
+      - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
+      - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
+  # map was added to jinja2 in version 2.7
+  when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.7', '>=')
+
+- name: Test extract filter with defaults
+  vars:
+    container:
+      key:
+        subkey: value
+  assert:
+    that:
+      - "'key' | extract(badcontainer) | default('a') == 'a'"
+      - "'key' | extract(badcontainer, 'subkey') | default('a') == 'a'"
+      - "('key' | extract(badcontainer)).subkey | default('a') == 'a'"
+      - "'badkey' | extract(container) | default('a') == 'a'"
+      - "'badkey' | extract(container, 'subkey') | default('a') == 'a'"
+      - "('badkey' | extract(container)).subsubkey | default('a') == 'a'"
+      - "'key' | extract(container, 'badsubkey') | default('a') == 'a'"
+      - "'key' | extract(container, ['badsubkey', 'subsubkey']) | default('a') == 'a'"
+      - "('key' | extract(container, 'badsubkey')).subsubkey | default('a') == 'a'"
+      - "'badkey' | extract(hostvars) | default('a') == 'a'"
+      - "'badkey' | extract(hostvars, 'subkey') | default('a') == 'a'"
+      - "('badkey' | extract(hostvars)).subsubkey | default('a') == 'a'"
+      - "'localhost' | extract(hostvars, 'badsubkey') | default('a') == 'a'"
+      - "'localhost' | extract(hostvars, ['badsubkey', 'subsubkey']) | default('a') == 'a'"
+      - "('localhost' | extract(hostvars, 'badsubkey')).subsubkey | default('a') == 'a'"
+
+- name: Test hash filter
+  assert:
+    that:
+      - '"{{ "hash" | hash("sha1") }}" == "2346ad27d7568ba9896f1b7da6b5991251debdf2"'
+      - '"{{ "café" | hash("sha1") }}" == "f424452a9673918c6f09b0cdd35b20be8e6ae7d7"'
+
+- name: Flatten tests
+  block:
+    - name: use flatten
+      set_fact:
+        flat_full: '{{orig_list|flatten}}'
+        flat_one: '{{orig_list|flatten(levels=1)}}'
+        flat_two: '{{orig_list|flatten(levels=2)}}'
+        flat_tuples: '{{ [1,3] | zip([2,4]) | list | flatten }}'
+
+    - name: Verify flatten filter works as expected
+      assert:
+        that:
+          - flat_full == [1, 2, 3, 4, 5, 6, 7]
+          - flat_one == [1, 2, 3, [4, [5]], 6, 7]
+          - flat_two == [1, 2, 3, 4, [5], 6, 7]
+          - flat_tuples == [1, 2, 3, 4]
+  vars:
+    orig_list: [1, 2, [3, [4, [5]], 6], 7]
+
+- name: Test base64 filter
+  assert:
+    that:
+    - "'Ansible - くらとみ\n' | b64encode == 'QW5zaWJsZSAtIOOBj+OCieOBqOOBvwo='"
+    - "'QW5zaWJsZSAtIOOBj+OCieOBqOOBvwo=' | b64decode == 'Ansible - くらとみ\n'"
+    - "'Ansible - くらとみ\n' | b64encode(encoding='utf-16-le') == 'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoA'"
+    - "'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoA' | b64decode(encoding='utf-16-le') == 'Ansible - くらとみ\n'"
+
+- set_fact:
+    x:
+      x: x
+      key: x
+    y:
+      y: y
+      key: y
+    z:
+      z: z
+      key: z
+
+    # Most complicated combine dicts from the documentation
+    default:
+      a:
+        a':
+          x: default_value
+          y: default_value
+          list:
+            - default_value
+      b:
+        - 1
+        - 1
+        - 2
+        - 3
+    patch:
+      a:
+        a':
+          y: patch_value
+          z: patch_value
+          list:
+            - patch_value
+      b:
+        - 3
+        - 4
+        - 4
+        - key: value
+    result:
+      a:
+        a':
+          x: default_value
+          y: patch_value
+          z: patch_value
+          list:
+            - default_value
+            - patch_value
+      b:
+        - 1
+        - 1
+        - 2
+        - 3
+        - 4
+        - 4
+        - key: value
+
+- name: Verify combine filter
+  assert:
+    that:
+      - "([x] | combine) == x"
+      - "(x | combine(y)) == {'x': 'x', 'y': 'y', 'key': 'y'}"
+      - "(x | combine(y, z)) == {'x': 'x', 'y': 'y', 'z': 'z', 'key': 'z'}"
+      - "([x, y, z] | combine) == {'x': 'x', 'y': 'y', 'z': 'z', 'key': 'z'}"
+      - "([x, y] | combine(z)) == {'x': 'x', 'y': 'y', 'z': 'z', 'key': 'z'}"
+      # more advance dicts combination tests are done in "merge_hash" function unit tests
+      # but even it's redundant with those unit tests, we do at least the most complicated exemple of the documentation here
+      - "(default | combine(patch, recursive=True, list_merge='append_rp')) == result"
+
+- set_fact:
+    combine: "{{[x, [y]] | combine(z)}}"
+  ignore_errors: yes
+  register: result
+
+- name: Ensure combining objects which aren't dictionaries throws an error
+  assert:
+    that:
+      - "result.msg.startswith(\"failed to combine variables, expected dicts but got\")"
+
+- name: Ensure combining two dictionaries containing undefined variables provides a helpful error
+  block:
+    - set_fact:
+        foo:
+          key1: value1
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': undef_variable}) }}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.msg.startswith('The task includes an option with an undefined variable')"
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': {'nested': [undef_variable]}})}}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.msg.startswith('The task includes an option with an undefined variable')"
+
+- name: regex_search
+  set_fact:
+    match_case: "{{ 'hello' | regex_search('HELLO', ignorecase=false) }}"
+    ignore_case: "{{ 'hello' | regex_search('HELLO', ignorecase=true) }}"
+    single_line: "{{ 'hello\nworld' | regex_search('^world', multiline=false) }}"
+    multi_line: "{{ 'hello\nworld' | regex_search('^world', multiline=true) }}"
+    named_groups: "{{ 'goodbye' | regex_search('(?P<first>good)(?P<second>bye)', '\\g<second>', '\\g<first>') }}"
+    numbered_groups: "{{ 'goodbye' | regex_search('(good)(bye)', '\\2', '\\1') }}"
+
+- name: regex_search unknown argument (failure expected)
+  set_fact:
+    unknown_arg: "{{ 'hello' | regex_search('hello', 'unknown') }}"
+  ignore_errors: yes
+  register: failure
+
+- name: regex_search check
+  assert:
+    that:
+      - match_case == ''
+      - ignore_case == 'hello'
+      - single_line == ''
+      - multi_line == 'world'
+      - named_groups == ['bye', 'good']
+      - numbered_groups == ['bye', 'good']
+      - failure is failed

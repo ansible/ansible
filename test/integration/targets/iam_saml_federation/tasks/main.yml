@@ -1,0 +1,87 @@
+- module_defaults:
+    group/aws:
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token | default(omit) }}"
+  block:
+    # ============================================================
+    #   TESTS
+    - name: Create the identity provider
+      iam_saml_federation:
+        name: '{{ resource_prefix }}-saml'
+        state: present
+        saml_metadata_document: '{{ lookup("file", "example1.xml") }}'
+      register: create_result
+
+    - name: assert idp created
+      assert:
+        that:
+          - create_result is changed
+
+    - name: Test that nothing changes when we retry
+      iam_saml_federation:
+        name: '{{ resource_prefix }}-saml'
+        state: present
+        saml_metadata_document: '{{ lookup("file", "example1.xml") }}'
+      register: create_result
+
+    - name: assert the idp doesn't change when we retry
+      assert:
+        that:
+          - create_result is not changed
+
+    - name: Change the identity provider
+      iam_saml_federation:
+        name: '{{ resource_prefix }}-saml'
+        state: present
+        saml_metadata_document: '{{ lookup("file", "example2.xml") }}'
+      register: change_result
+
+    - name: assert idp created
+      assert:
+        that:
+          - change_result is changed
+
+    - name: Test that nothing changes when we retry
+      iam_saml_federation:
+        name: '{{ resource_prefix }}-saml'
+        state: present
+        saml_metadata_document: '{{ lookup("file", "example2.xml") }}'
+      register: change_result
+
+    - name: assert the idp doesn't change when we retry
+      assert:
+        that:
+          - change_result is not changed
+
+    - name: Delete the identity provider
+      iam_saml_federation:
+        name: '{{ resource_prefix }}-saml'
+        state: absent
+      register: destroy_result
+
+    - name: assert deleted
+      assert:
+        that:
+          - destroy_result is changed
+
+    - name: Attempt to re-delete the identity provider
+      iam_saml_federation:
+        name: '{{ resource_prefix }}-saml'
+        state: absent
+      register: destroy_result
+
+    - name: assert deleted
+      assert:
+        that:
+          - destroy_result is not changed
+
+  always:
+    # ============================================================
+    #   CLEAN-UP
+    - name: finish off by deleting the identity provider
+      iam_saml_federation:
+        name: '{{ resource_prefix }}-saml'
+        state: absent
+      register: destroy_result

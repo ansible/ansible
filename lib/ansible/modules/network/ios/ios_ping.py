@@ -103,7 +103,7 @@ rtt:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.ios.ios import run_commands
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import ios_argument_spec
 import re
 
 
@@ -128,7 +128,6 @@ def main():
     vrf = module.params["vrf"]
 
     warnings = list()
-    check_args(module, warnings)
 
     results = {}
     if warnings:
@@ -185,7 +184,7 @@ def parse_ping(ping_stats):
     """
     Function used to parse the statistical information from the ping response.
     Example: "Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/8 ms"
-    Returns the percent of packet loss, recieved packets, transmitted packets, and RTT dict.
+    Returns the percent of packet loss, received packets, transmitted packets, and RTT dict.
     """
     rate_re = re.compile(r"^\w+\s+\w+\s+\w+\s+(?P<pct>\d+)\s+\w+\s+\((?P<rx>\d+)/(?P<tx>\d+)\)")
     rtt_re = re.compile(r".*,\s+\S+\s+\S+\s+=\s+(?P<min>\d+)/(?P<avg>\d+)/(?P<max>\d+)\s+\w+\s*$|.*\s*$")

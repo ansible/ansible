@@ -27,6 +27,7 @@
 - name: Fail volume creation with UUID
   cloudscale_volume:
     uuid: ea3b39a3-77a8-4d0b-881d-0bb00a1e7f48
+    name: '{{ cloudscale_resource_prefix }}-inexistent'
     size_gb: 10
   register: vol
   ignore_errors: True
@@ -34,20 +35,4 @@
   assert:
     that:
       - vol is failed
-
-- name: Create volume
-  cloudscale_volume:
-    name: '{{ cloudscale_resource_prefix }}-name-UUID'
-    size_gb: 50
-  register: vol
-- name: Fail name and UUID
-  cloudscale_volume:
-    name: '{{ vol.name }}'
-    uuid: '{{ vol.uuid }}'
-    size_gb: 100
-  register: vol
-  ignore_errors: True
-- name: 'VERIFY: Fail name and UUID'
-  assert:
-    that:
-      - vol is failed
+      - vol.msg.startswith('The volume with UUID \'ea3b39a3-77a8-4d0b-881d-0bb00a1e7f48\' was not found')

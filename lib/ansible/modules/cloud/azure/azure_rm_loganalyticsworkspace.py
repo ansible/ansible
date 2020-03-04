@@ -76,7 +76,7 @@ EXAMPLES = '''
   azure_rm_loganalyticsworkspace:
     resource_group: myResourceGroup
     name: myLogAnalyticsWorkspace
-    intelligence_pack:
+    intelligence_packs:
         Backup: true
 '''
 

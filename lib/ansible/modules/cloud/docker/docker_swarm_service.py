@@ -26,6 +26,7 @@ options:
       - List arguments to be passed to the container.
       - Corresponds to the C(ARG) parameter of C(docker service create).
     type: list
+    elements: str
   command:
     description:
       - Command to execute when the container starts.
@@ -39,6 +40,7 @@ options:
       - Corresponds to the C(--config) option of C(docker service create).
       - Requires API version >= 1.30.
     type: list
+    elements: dict
     suboptions:
       config_id:
         description:
@@ -53,7 +55,6 @@ options:
         description:
           - Name of the file containing the config. Defaults to the I(config_name) if not specified.
         type: str
-        required: yes
       uid:
         description:
           - UID of the config file's owner.
@@ -72,6 +73,7 @@ options:
       - Corresponds to the C(--constraint) option of C(docker service create).
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(placement.constraints) instead.
     type: list
+    elements: str
   container_labels:
     description:
       - Dictionary of key value pairs.
@@ -83,18 +85,21 @@ options:
       - Corresponds to the C(--dns) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: str
   dns_search:
     description:
       - List of custom DNS search domains.
       - Corresponds to the C(--dns-search) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: str
   dns_options:
     description:
       - List of custom DNS options.
       - Corresponds to the C(--dns-option) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: str
   endpoint_mode:
     description:
       - Service endpoint mode.
@@ -120,6 +125,7 @@ options:
         variable that shows up more than once.
       - If variable also present in I(env), then I(env) value will override.
     type: list
+    elements: path
     version_added: "2.8"
   force_update:
     description:
@@ -134,6 +140,7 @@ options:
       - Corresponds to the C(--group) option of C(docker service update).
       - Requires API version >= 1.25.
     type: list
+    elements: str
     version_added: "2.8"
   healthcheck:
     description:
@@ -186,7 +193,6 @@ options:
       - Service image path and tag.
       - Corresponds to the C(IMAGE) parameter of C(docker service create).
     type: str
-    required: yes
   labels:
     description:
       - Dictionary of key value pairs.
@@ -203,12 +209,12 @@ options:
         type: float
       memory:
         description:
-          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+          - "Service memory limit in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
-          - C(0) equals no reservation.
+          - C(0) equals no limit.
           - Omitting the unit defaults to bytes.
-          - Corresponds to the C(--reserve-memory) option of C(docker service create).
+          - Corresponds to the C(--limit-memory) option of C(docker service create).
         type: str
     type: dict
     version_added: "2.8"
@@ -220,7 +226,7 @@ options:
     type: float
   limit_memory:
     description:
-      - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Service memory limit in format C(<number>[<unit>]). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - C(0) equals no limit.
@@ -271,12 +277,13 @@ options:
       - List of dictionaries describing the service mounts.
       - Corresponds to the C(--mount) option of C(docker service create).
     type: list
+    elements: dict
     suboptions:
       source:
         description:
           - Mount source (e.g. a volume name or a host path).
+          - Must be specified if I(type) is not C(tmpfs).
         type: str
-        required: yes
       target:
         description:
           - Container path.
@@ -338,7 +345,7 @@ options:
         version_added: "2.8"
       tmpfs_size:
         description:
-          - "Size of the tmpfs mount (format: C(<number>[<unit>])). Number is a positive integer.
+          - "Size of the tmpfs mount in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
           - Can only be used when I(mode) is C(tmpfs).
@@ -358,11 +365,14 @@ options:
     required: yes
   networks:
     description:
-      - List of the service networks names.
+      - List of the service networks names or dictionaries.
+      - When passed dictionaries valid sub-options are I(name), which is required, and
+        I(aliases) and I(options).
       - Prior to API version 1.29, updating and removing networks is not supported.
         If changes are made the service will then be removed and recreated.
       - Corresponds to the C(--network) option of C(docker service create).
     type: list
+    elements: raw
   placement:
     description:
       - Configures service placement preferences and constraints.
@@ -372,12 +382,14 @@ options:
           - List of the service constraints.
           - Corresponds to the C(--constraint) option of C(docker service create).
         type: list
+        elements: str
       preferences:
         description:
           - List of the placement preferences as key value pairs.
           - Corresponds to the C(--placement-pref) option of C(docker service create).
           - Requires API version >= 1.27.
         type: list
+        elements: dict
     type: dict
     version_added: "2.8"
   publish:
@@ -386,6 +398,7 @@ options:
       - Corresponds to the C(--publish) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: dict
     suboptions:
       published_port:
         description:
@@ -438,7 +451,7 @@ options:
         type: float
       memory:
         description:
-          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+          - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
           - C(0) equals no reservation.
@@ -455,7 +468,7 @@ options:
     type: float
   reserve_memory:
     description:
-      - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - C(0) equals no reservation.
@@ -591,6 +604,7 @@ options:
       - Corresponds to the C(--secret) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: dict
     suboptions:
       secret_id:
         description:
@@ -604,6 +618,7 @@ options:
       filename:
         description:
           - Name of the file containing the secret. Defaults to the I(secret_name) if not specified.
+          - Corresponds to the C(target) key of C(docker service create --secret).
         type: str
       uid:
         description:
@@ -619,11 +634,10 @@ options:
         type: int
   state:
     description:
-      - I(absent) - A service matching the specified name will be removed and have its tasks stopped.
-      - I(present) - Asserts the existence of a service matching the name and provided configuration parameters.
+      - C(absent) - A service matching the specified name will be removed and have its tasks stopped.
+      - C(present) - Asserts the existence of a service matching the name and provided configuration parameters.
         Unspecified configuration parameters will be set to docker defaults.
     type: str
-    required: yes
     default: present
     choices:
       - present
@@ -884,6 +898,7 @@ changes:
   description:
     - List of changed service attributes if a service has been altered, [] otherwise.
   type: list
+  elements: str
   sample: ['container_labels', 'replicas']
 rebuilt:
   returned: always
@@ -997,6 +1012,17 @@ EXAMPLES = '''
     networks:
       - mynetwork
 
+- name: Set networks as a dictionary
+  docker_swarm_service:
+    name: myservice
+    image: alpine:edge
+    networks:
+      - name: "mynetwork"
+        aliases:
+          - "mynetwork_alias"
+        options:
+          foo: bar
+
 - name: Set secrets
   docker_swarm_service:
     name: myservice
@@ -1048,6 +1074,7 @@ from ansible.module_utils.docker.common import (
     DockerBaseClass,
     convert_duration_to_nanosecond,
     parse_healthcheck,
+    clean_dict_booleans_for_docker_api,
     RequestException,
 )
 
@@ -1116,6 +1143,58 @@ def get_docker_environment(env, env_files):
     return sorted(env_list)
 
 
+def get_docker_networks(networks, network_ids):
+    """
+    Validate a list of network names or a list of network dictionaries.
+    Network names will be resolved to ids by using the network_ids mapping.
+    """
+    if networks is None:
+        return None
+    parsed_networks = []
+    for network in networks:
+        if isinstance(network, string_types):
+            parsed_network = {'name': network}
+        elif isinstance(network, dict):
+            if 'name' not in network:
+                raise TypeError(
+                    '"name" is required when networks are passed as dictionaries.'
+                )
+            name = network.pop('name')
+            parsed_network = {'name': name}
+            aliases = network.pop('aliases', None)
+            if aliases is not None:
+                if not isinstance(aliases, list):
+                    raise TypeError('"aliases" network option is only allowed as a list')
+                if not all(
+                    isinstance(alias, string_types) for alias in aliases
+                ):
+                    raise TypeError('Only strings are allowed as network aliases.')
+                parsed_network['aliases'] = aliases
+            options = network.pop('options', None)
+            if options is not None:
+                if not isinstance(options, dict):
+                    raise TypeError('Only dict is allowed as network options.')
+                parsed_network['options'] = clean_dict_booleans_for_docker_api(options)
+            # Check if any invalid keys left
+            if network:
+                invalid_keys = ', '.join(network.keys())
+                raise TypeError(
+                    '%s are not valid keys for the networks option' % invalid_keys
+                )
+
+        else:
+            raise TypeError(
+                'Only a list of strings or dictionaries are allowed to be passed as networks.'
+            )
+        network_name = parsed_network.pop('name')
+        try:
+            parsed_network['id'] = network_ids[network_name]
+        except KeyError as e:
+            raise ValueError('Could not find a network named: %s.' % e)
+        parsed_networks.append(parsed_network)
+    return parsed_networks or []
+
+
 def get_nanoseconds_from_raw_option(name, value):
     if value is None:
         return None
@@ -1154,28 +1233,107 @@ def has_dict_changed(new_dict, old_dict):
         if value is not None
     )
     for option, value in defined_options.items():
-        if value != old_dict.get(option):
+        old_value = old_dict.get(option)
+        if not value and not old_value:
+            continue
+        if value != old_value:
             return True
     return False
 
 
-def has_list_of_dicts_changed(new_list, old_list):
+def has_list_changed(new_list, old_list, sort_lists=True, sort_key=None):
     """
-    Check two lists of dicts has differences.
+    Check two lists have differences. Sort lists by default.
     """
+
+    def sort_list(unsorted_list):
+        """
+        Sort a given list.
+        The list may contain dictionaries, so use the sort key to handle them.
+        """
+
+        if unsorted_list and isinstance(unsorted_list[0], dict):
+            if not sort_key:
+                raise Exception(
+                    'A sort key was not specified when sorting list'
+                )
+            else:
+                return sorted(unsorted_list, key=lambda k: k[sort_key])
+
+        # Either the list is empty or does not contain dictionaries
+        try:
+            return sorted(unsorted_list)
+        except TypeError:
+            return unsorted_list
+
     if new_list is None:
         return False
     old_list = old_list or []
     if len(new_list) != len(old_list):
         return True
-    for new_item, old_item in zip(new_list, old_list):
+
+    if sort_lists:
+        zip_data = zip(sort_list(new_list), sort_list(old_list))
+    else:
+        zip_data = zip(new_list, old_list)
+    for new_item, old_item in zip_data:
+        is_same_type = type(new_item) == type(old_item)
+        if not is_same_type:
+            if isinstance(new_item, string_types) and isinstance(old_item, string_types):
+                # Even though the types are different between these items,
+                # they are both strings. Try matching on the same string type.
+                try:
+                    new_item_type = type(new_item)
+                    old_item_casted = new_item_type(old_item)
+                    if new_item != old_item_casted:
+                        return True
+                    else:
+                        continue
+                except UnicodeEncodeError:
+                    # Fallback to assuming the strings are different
+                    return True
+            else:
+                return True
+        if isinstance(new_item, dict):
+            if has_dict_changed(new_item, old_item):
+                return True
+        elif new_item != old_item:
+            return True
+
+    return False
+
+
+def have_networks_changed(new_networks, old_networks):
+    """Special case list checking for networks to sort aliases"""
+
+    if new_networks is None:
+        return False
+    old_networks = old_networks or []
+    if len(new_networks) != len(old_networks):
+        return True
+
+    zip_data = zip(
+        sorted(new_networks, key=lambda k: k['id']),
+        sorted(old_networks, key=lambda k: k['id'])
+    )
+
+    for new_item, old_item in zip_data:
+        new_item = dict(new_item)
+        old_item = dict(old_item)
+        # Sort the aliases
+        if 'aliases' in new_item:
+            new_item['aliases'] = sorted(new_item['aliases'] or [])
+        if 'aliases' in old_item:
+            old_item['aliases'] = sorted(old_item['aliases'] or [])
+
         if has_dict_changed(new_item, old_item):
             return True
+
     return False
 
 
 class DockerService(DockerBaseClass):
-    def __init__(self):
+    def __init__(self, docker_api_version, docker_py_version):
         super(DockerService, self).__init__()
         self.image = ""
         self.command = None
@@ -1227,7 +1385,9 @@ class DockerService(DockerBaseClass):
         self.update_max_failure_ratio = None
         self.update_order = None
         self.working_dir = None
-        self.can_update_networks = None
+
+        self.docker_api_version = docker_api_version
+        self.docker_py_version = docker_py_version
 
     def get_facts(self):
         return {
@@ -1280,6 +1440,22 @@ class DockerService(DockerBaseClass):
             'user': self.user,
             'working_dir': self.working_dir,
         }
+
+    @property
+    def can_update_networks(self):
+        # Before Docker API 1.29 adding/removing networks was not supported
+        return (
+            self.docker_api_version >= LooseVersion('1.29') and
+            self.docker_py_version >= LooseVersion('2.7')
+        )
+
+    @property
+    def can_use_task_template_networks(self):
+        # In Docker API 1.25 attaching networks to TaskTemplate is preferred over Spec
+        return (
+            self.docker_api_version >= LooseVersion('1.25') and
+            self.docker_py_version >= LooseVersion('2.7')
+        )
 
     @staticmethod
     def get_restart_config_from_ansible_params(params):
@@ -1474,11 +1650,18 @@ class DockerService(DockerBaseClass):
 
     @classmethod
     def from_ansible_params(
-        cls, ap, old_service, image_digest, can_update_networks, secret_ids, config_ids
+        cls,
+        ap,
+        old_service,
+        image_digest,
+        secret_ids,
+        config_ids,
+        network_ids,
+        docker_api_version,
+        docker_py_version,
     ):
-        s = DockerService()
+        s = DockerService(docker_api_version, docker_py_version)
         s.image = image_digest
-        s.can_update_networks = can_update_networks
         s.args = ap['args']
         s.endpoint_mode = ap['endpoint_mode']
         s.dns = ap['dns']
@@ -1491,11 +1674,12 @@ class DockerService(DockerBaseClass):
         s.labels = ap['labels']
         s.container_labels = ap['container_labels']
         s.mode = ap['mode']
-        s.networks = ap['networks']
         s.stop_signal = ap['stop_signal']
         s.user = ap['user']
         s.working_dir = ap['working_dir']
         s.read_only = ap['read_only']
+
+        s.networks = get_docker_networks(ap['networks'], network_ids)
 
         s.command = ap['command']
         if isinstance(s.command, string_types):
@@ -1588,7 +1772,9 @@ class DockerService(DockerBaseClass):
                 service_m = {}
                 service_m['readonly'] = param_m['readonly']
                 service_m['type'] = param_m['type']
-                service_m['source'] = param_m['source']
+                if param_m['source'] is None and param_m['type'] != 'tmpfs':
+                    raise ValueError('Source must be specified for mounts which are not of type tmpfs')
+                service_m['source'] = param_m['source'] or ''
                 service_m['target'] = param_m['target']
                 service_m['labels'] = param_m['labels']
                 service_m['no_copy'] = param_m['no_copy']
@@ -1641,7 +1827,7 @@ class DockerService(DockerBaseClass):
         force_update = False
         if self.endpoint_mode is not None and self.endpoint_mode != os.endpoint_mode:
             differences.add('endpoint_mode', parameter=self.endpoint_mode, active=os.endpoint_mode)
-        if self.env is not None and self.env != (os.env or []):
+        if has_list_changed(self.env, os.env):
             differences.add('env', parameter=self.env, active=os.env)
         if self.log_driver is not None and self.log_driver != os.log_driver:
             differences.add('log_driver', parameter=self.log_driver, active=os.log_driver)
@@ -1650,26 +1836,26 @@ class DockerService(DockerBaseClass):
         if self.mode != os.mode:
             needs_rebuild = True
             differences.add('mode', parameter=self.mode, active=os.mode)
-        if has_list_of_dicts_changed(self.mounts, os.mounts):
+        if has_list_changed(self.mounts, os.mounts, sort_key='target'):
             differences.add('mounts', parameter=self.mounts, active=os.mounts)
-        if has_list_of_dicts_changed(self.configs, os.configs):
+        if has_list_changed(self.configs, os.configs, sort_key='config_name'):
             differences.add('configs', parameter=self.configs, active=os.configs)
-        if has_list_of_dicts_changed(self.secrets, os.secrets):
+        if has_list_changed(self.secrets, os.secrets, sort_key='secret_name'):
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
-        if self.networks is not None and self.networks != (os.networks or []):
+        if have_networks_changed(self.networks, os.networks):
             differences.add('networks', parameter=self.networks, active=os.networks)
             needs_rebuild = not self.can_update_networks
         if self.replicas != os.replicas:
             differences.add('replicas', parameter=self.replicas, active=os.replicas)
-        if self.command is not None and self.command != (os.command or []):
+        if has_list_changed(self.command, os.command, sort_lists=False):
             differences.add('command', parameter=self.command, active=os.command)
-        if self.args is not None and self.args != (os.args or []):
+        if has_list_changed(self.args, os.args, sort_lists=False):
             differences.add('args', parameter=self.args, active=os.args)
-        if self.constraints is not None and self.constraints != (os.constraints or []):
+        if has_list_changed(self.constraints, os.constraints):
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
-        if self.placement_preferences is not None and self.placement_preferences != (os.placement_preferences or []):
+        if has_list_changed(self.placement_preferences, os.placement_preferences, sort_lists=False):
             differences.add('placement_preferences', parameter=self.placement_preferences, active=os.placement_preferences)
-        if self.groups is not None and self.groups != (os.groups or []):
+        if has_list_changed(self.groups, os.groups):
             differences.add('groups', parameter=self.groups, active=os.groups)
         if self.labels is not None and self.labels != (os.labels or {}):
             differences.add('labels', parameter=self.labels, active=os.labels)
@@ -1718,11 +1904,11 @@ class DockerService(DockerBaseClass):
             differences.add('image', parameter=self.image, active=change)
         if self.user and self.user != os.user:
             differences.add('user', parameter=self.user, active=os.user)
-        if self.dns is not None and self.dns != (os.dns or []):
+        if has_list_changed(self.dns, os.dns, sort_lists=False):
             differences.add('dns', parameter=self.dns, active=os.dns)
-        if self.dns_search is not None and self.dns_search != (os.dns_search or []):
+        if has_list_changed(self.dns_search, os.dns_search, sort_lists=False):
             differences.add('dns_search', parameter=self.dns_search, active=os.dns_search)
-        if self.dns_options is not None and self.dns_options != (os.dns_options or []):
+        if has_list_changed(self.dns_options, os.dns_options):
             differences.add('dns_options', parameter=self.dns_options, active=os.dns_options)
         if self.has_healthcheck_changed(os):
             differences.add('healthcheck', parameter=self.healthcheck, active=os.healthcheck)
@@ -1741,8 +1927,11 @@ class DockerService(DockerBaseClass):
     def has_healthcheck_changed(self, old_publish):
         if self.healthcheck_disabled is False and self.healthcheck is None:
             return False
-        if self.healthcheck_disabled and old_publish.healthcheck is None:
-            return False
+        if self.healthcheck_disabled:
+            if old_publish.healthcheck is None:
+                return False
+            if old_publish.healthcheck.get('test') == ['NONE']:
+                return False
         return self.healthcheck != old_publish.healthcheck
 
     def has_publish_changed(self, old_publish):
@@ -1773,18 +1962,6 @@ class DockerService(DockerBaseClass):
         if '@' not in self.image:
             old_image = old_image.split('@')[0]
         return self.image != old_image, old_image
-
-    def __str__(self):
-        return str({
-            'mode': self.mode,
-            'env': self.env,
-            'endpoint_mode': self.endpoint_mode,
-            'mounts': self.mounts,
-            'configs': self.configs,
-            'secrets': self.secrets,
-            'networks': self.networks,
-            'replicas': self.replicas
-        })
 
     def build_container_spec(self):
         mounts = None
@@ -1879,6 +2056,8 @@ class DockerService(DockerBaseClass):
             container_spec_args['labels'] = self.container_labels
         if self.healthcheck is not None:
             container_spec_args['healthcheck'] = types.Healthcheck(**self.healthcheck)
+        elif self.healthcheck_disabled:
+            container_spec_args['healthcheck'] = types.Healthcheck(test=['NONE'])
         if self.hostname is not None:
             container_spec_args['hostname'] = self.hostname
         if self.hosts is not None:
@@ -2000,6 +2179,10 @@ class DockerService(DockerBaseClass):
             task_template_args['resources'] = resources
         if self.force_update:
             task_template_args['force_update'] = self.force_update
+        if self.can_use_task_template_networks:
+            networks = self.build_networks()
+            if networks:
+                task_template_args['networks'] = networks
         return types.TaskTemplate(container_spec=container_spec, **task_template_args)
 
     def build_service_mode(self):
@@ -2007,46 +2190,38 @@ class DockerService(DockerBaseClass):
             self.replicas = None
         return types.ServiceMode(self.mode, replicas=self.replicas)
 
-    def build_networks(self, docker_networks):
+    def build_networks(self):
         networks = None
         if self.networks is not None:
             networks = []
-            for network_name in self.networks:
-                network_id = None
-                try:
-                    network_id = list(
-                        filter(lambda n: n['name'] == network_name, docker_networks)
-                    )[0]['id']
-                except (IndexError, KeyError):
-                    pass
-                if network_id:
-                    networks.append({'Target': network_id})
-                else:
-                    raise Exception('no docker networks named: %s' % network_name)
+            for network in self.networks:
+                docker_network = {'Target': network['id']}
+                if 'aliases' in network:
+                    docker_network['Aliases'] = network['aliases']
+                if 'options' in network:
+                    docker_network['DriverOpts'] = network['options']
+                networks.append(docker_network)
         return networks
 
     def build_endpoint_spec(self):
         endpoint_spec_args = {}
         if self.publish is not None:
-            ports = {}
+            ports = []
             for port in self.publish:
+                port_spec = {
+                    'Protocol': port['protocol'],
+                    'PublishedPort': port['published_port'],
+                    'TargetPort': port['target_port']
+                }
                 if port.get('mode'):
-                    ports[port['published_port']] = (
-                        port['target_port'],
-                        port['protocol'],
-                        port['mode'],
-                    )
-                else:
-                    ports[port['published_port']] = (
-                        port['target_port'],
-                        port['protocol'],
-                    )
+                    port_spec['PublishMode'] = port['mode']
+                ports.append(port_spec)
             endpoint_spec_args['ports'] = ports
         if self.endpoint_mode is not None:
             endpoint_spec_args['mode'] = self.endpoint_mode
         return types.EndpointSpec(**endpoint_spec_args) if endpoint_spec_args else None
 
-    def build_docker_service(self, docker_networks):
+    def build_docker_service(self):
         container_spec = self.build_container_spec()
         placement = self.build_placement()
         task_template = self.build_task_template(container_spec, placement)
@@ -2054,7 +2229,6 @@ class DockerService(DockerBaseClass):
         update_config = self.build_update_config()
         rollback_config = self.build_rollback_config()
         service_mode = self.build_service_mode()
-        networks = self.build_networks(docker_networks)
         endpoint_spec = self.build_endpoint_spec()
 
         service = {'task_template': task_template, 'mode': service_mode}
@@ -2062,12 +2236,14 @@ class DockerService(DockerBaseClass):
             service['update_config'] = update_config
         if rollback_config:
             service['rollback_config'] = rollback_config
-        if networks:
-            service['networks'] = networks
         if endpoint_spec:
             service['endpoint_spec'] = endpoint_spec
         if self.labels:
             service['labels'] = self.labels
+        if not self.can_use_task_template_networks:
+            networks = self.build_networks()
+            if networks:
+                service['networks'] = networks
         return service
 
 
@@ -2078,15 +2254,12 @@ class DockerServiceManager(object):
         self.retries = 2
         self.diff_tracker = None
 
-    def get_networks_names_ids(self):
-        return [{'name': n['Name'], 'id': n['Id']} for n in self.client.networks()]
-
     def get_service(self, name):
         try:
             raw_data = self.client.inspect_service(name)
         except NotFound:
             return None
-        ds = DockerService()
+        ds = DockerService(self.client.docker_api_version, self.client.docker_py_version)
 
         task_template_data = raw_data['Spec']['TaskTemplate']
         ds.image = task_template_data['ContainerSpec']['Image']
@@ -2102,10 +2275,16 @@ class DockerServiceManager(object):
 
         healthcheck_data = task_template_data['ContainerSpec'].get('Healthcheck')
         if healthcheck_data:
-            options = ['test', 'interval', 'timeout', 'start_period', 'retries']
+            options = {
+                'Test': 'test',
+                'Interval': 'interval',
+                'Timeout': 'timeout',
+                'StartPeriod': 'start_period',
+                'Retries': 'retries'
+            }
             healthcheck = dict(
-                (key.lower(), value) for key, value in healthcheck_data.items()
-                if value is not None and key.lower() in options
+                (options[key], value) for key, value in healthcheck_data.items()
+                if value is not None and key in options
             )
             ds.healthcheck = healthcheck
 
@@ -2266,24 +2445,22 @@ class DockerServiceManager(object):
                     'mode': secret_data['File'].get('Mode')
                 })
 
-        networks_names_ids = self.get_networks_names_ids()
         raw_networks_data = task_template_data.get('Networks', raw_data['Spec'].get('Networks'))
         if raw_networks_data:
             ds.networks = []
             for network_data in raw_networks_data:
-                network_name = [network_name_id['name'] for network_name_id in networks_names_ids if
-                                network_name_id['id'] == network_data['Target']]
-                if len(network_name) == 0:
-                    ds.networks.append(network_data['Target'])
-                else:
-                    ds.networks.append(network_name[0])
-
+                network = {'id': network_data['Target']}
+                if 'Aliases' in network_data:
+                    network['aliases'] = network_data['Aliases']
+                if 'DriverOpts' in network_data:
+                    network['options'] = network_data['DriverOpts']
+                ds.networks.append(network)
         ds.service_version = raw_data['Version']['Index']
         ds.service_id = raw_data['ID']
         return ds
 
     def update_service(self, name, old_service, new_service):
-        service_data = new_service.build_docker_service(self.get_networks_names_ids())
+        service_data = new_service.build_docker_service()
         result = self.client.update_service(
             old_service.service_id,
             old_service.service_version,
@@ -2295,7 +2472,7 @@ class DockerServiceManager(object):
         self.client.report_warnings(result, ['Warning'])
 
     def create_service(self, name, service):
-        service_data = service.build_docker_service(self.get_networks_names_ids())
+        service_data = service.build_docker_service()
         result = self.client.create_service(name=name, **service_data)
         self.client.report_warnings(result, ['Warning'])
 
@@ -2316,11 +2493,9 @@ class DockerServiceManager(object):
         digest = distribution_data['Descriptor']['digest']
         return '%s@%s' % (name, digest)
 
-    def can_update_networks(self):
-        # Before Docker API 1.29 adding/removing networks was not supported
-        return (
-            self.client.docker_api_version >= LooseVersion('1.29') and
-            self.client.docker_py_version >= LooseVersion('2.7')
+    def get_networks_names_ids(self):
+        return dict(
+            (network['Name'], network['Id']) for network in self.client.networks()
         )
 
     def get_missing_secret_ids(self):
@@ -2395,16 +2570,18 @@ class DockerServiceManager(object):
                 % (module.params['name'], e)
             )
         try:
-            can_update_networks = self.can_update_networks()
             secret_ids = self.get_missing_secret_ids()
             config_ids = self.get_missing_config_ids()
+            network_ids = self.get_networks_names_ids()
             new_service = DockerService.from_ansible_params(
                 module.params,
                 current_service,
                 image_digest,
-                can_update_networks,
                 secret_ids,
-                config_ids
+                config_ids,
+                network_ids,
+                self.client.docker_api_version,
+                self.client.docker_py_version
             )
         except Exception as e:
             return self.client.fail(
@@ -2526,7 +2703,7 @@ def main():
         image=dict(type='str'),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         mounts=dict(type='list', elements='dict', options=dict(
-            source=dict(type='str', required=True),
+            source=dict(type='str'),
             target=dict(type='str', required=True),
             type=dict(
                 type='str',
@@ -2570,7 +2747,7 @@ def main():
             gid=dict(type='str'),
             mode=dict(type='int'),
         )),
-        networks=dict(type='list', elements='str'),
+        networks=dict(type='list', elements='raw'),
         command=dict(type='raw'),
         args=dict(type='list', elements='str'),
         env=dict(type='raw'),
@@ -2590,14 +2767,14 @@ def main():
             mode=dict(type='str', choices=['ingress', 'host']),
         )),
         placement=dict(type='dict', options=dict(
-            constraints=dict(type='list'),
-            preferences=dict(type='list'),
+            constraints=dict(type='list', elements='str'),
+            preferences=dict(type='list', elements='dict'),
         )),
-        constraints=dict(type='list', removed_in_version='2.12'),
+        constraints=dict(type='list', elements='str', removed_in_version='2.12'),
         tty=dict(type='bool'),
-        dns=dict(type='list'),
-        dns_search=dict(type='list'),
-        dns_options=dict(type='list'),
+        dns=dict(type='list', elements='str'),
+        dns_search=dict(type='list', elements='str'),
+        dns_options=dict(type='list', elements='str'),
         healthcheck=dict(type='dict', options=dict(
             test=dict(type='raw'),
             interval=dict(type='str'),
@@ -2716,8 +2893,8 @@ def main():
             usage_msg='set publish.mode'
         ),
         healthcheck_start_period=dict(
-            docker_py_version='2.4.0',
-            docker_api_version='1.25',
+            docker_py_version='2.6.0',
+            docker_api_version='1.29',
             detect_usage=_detect_healthcheck_start_period,
             usage_msg='set healthcheck.start_period'
         ),

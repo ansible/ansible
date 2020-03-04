@@ -371,7 +371,7 @@ class AzureRMCdnendpoint(AzureRMModuleBase):
             if not response:
 
                 if self.started is None:
-                    # If endpoint dosen't exist and no start/stop operation specified, create endpoint.
+                    # If endpoint doesn't exist and no start/stop operation specified, create endpoint.
                     if self.origins is None:
                         self.fail("Origins is not provided when trying to create endpoint")
                     self.log("Need to create the Azure CDN endpoint")

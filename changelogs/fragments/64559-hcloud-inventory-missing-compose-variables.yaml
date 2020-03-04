@@ -1,0 +1,2 @@
+bugfixes:
+  - hcloud - Added missing host variables in Compose section

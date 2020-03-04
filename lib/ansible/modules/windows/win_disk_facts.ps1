@@ -109,6 +109,68 @@ foreach ($disk in $disks) {
             }
         }
     }
+    $win32_disk_drive = Get-CimInstance -ClassName Win32_DiskDrive -ErrorAction SilentlyContinue | Where-Object {
+        if ($_.SerialNumber) {
+            $_.SerialNumber -eq $disk.SerialNumber
+        } elseif ($disk.UniqueIdFormat -eq 'Vendor Specific') {
+            $_.PNPDeviceID -eq $disk.UniqueId.split(':')[0]
+        }
+    }
+    if ($win32_disk_drive) {
+        $disk_info["win32_disk_drive"] += @{
+            availability=$win32_disk_drive.Availability
+            bytes_per_sector=$win32_disk_drive.BytesPerSector
+            capabilities=$win32_disk_drive.Capabilities
+            capability_descriptions=$win32_disk_drive.CapabilityDescriptions
+            caption=$win32_disk_drive.Caption
+            compression_method=$win32_disk_drive.CompressionMethod
+            config_manager_error_code=$win32_disk_drive.ConfigManagerErrorCode
+            config_manager_user_config=$win32_disk_drive.ConfigManagerUserConfig
+            creation_class_name=$win32_disk_drive.CreationClassName
+            default_block_size=$win32_disk_drive.DefaultBlockSize
+            description=$win32_disk_drive.Description
+            device_id=$win32_disk_drive.DeviceID
+            error_cleared=$win32_disk_drive.ErrorCleared
+            error_description=$win32_disk_drive.ErrorDescription
+            error_methodology=$win32_disk_drive.ErrorMethodology
+            firmware_revision=$win32_disk_drive.FirmwareRevision
+            index=$win32_disk_drive.Index
+            install_date=$win32_disk_drive.InstallDate
+            interface_type=$win32_disk_drive.InterfaceType
+            last_error_code=$win32_disk_drive.LastErrorCode
+            manufacturer=$win32_disk_drive.Manufacturer
+            max_block_size=$win32_disk_drive.MaxBlockSize
+            max_media_size=$win32_disk_drive.MaxMediaSize
+            media_loaded=$win32_disk_drive.MediaLoaded
+            media_type=$win32_disk_drive.MediaType
+            min_block_size=$win32_disk_drive.MinBlockSize
+            model=$win32_disk_drive.Model
+            name=$win32_disk_drive.Name
+            needs_cleaning=$win32_disk_drive.NeedsCleaning
+            number_of_media_supported=$win32_disk_drive.NumberOfMediaSupported
+            partitions=$win32_disk_drive.Partitions
+            pnp_device_id=$win32_disk_drive.PNPDeviceID
+            power_management_capabilities=$win32_disk_drive.PowerManagementCapabilities
+            power_management_supported=$win32_disk_drive.PowerManagementSupported
+            scsi_bus=$win32_disk_drive.SCSIBus
+            scsi_logical_unit=$win32_disk_drive.SCSILogicalUnit
+            scsi_port=$win32_disk_drive.SCSIPort
+            scsi_target_id=$win32_disk_drive.SCSITargetId
+            sectors_per_track=$win32_disk_drive.SectorsPerTrack
+            serial_number=$win32_disk_drive.SerialNumber
+            signature=$win32_disk_drive.Signature
+            size=$win32_disk_drive.Size
+            status=$win32_disk_drive.status
+            status_info=$win32_disk_drive.StatusInfo
+            system_creation_class_name=$win32_disk_drive.SystemCreationClassName
+            system_name=$win32_disk_drive.SystemName
+            total_cylinders=$win32_disk_drive.TotalCylinders
+            total_heads=$win32_disk_drive.TotalHeads
+            total_sectors=$win32_disk_drive.TotalSectors
+            total_tracks=$win32_disk_drive.TotalTracks
+            tracks_per_cylinder=$win32_disk_drive.TracksPerCylinder
+        }
+    }
     $disk_info.number = $disk.Number
     $disk_info.size = $disk.Size
     $disk_info.bus_type = $disk.BusType
@@ -181,6 +243,9 @@ foreach ($disk in $disks) {
     }
     $result.ansible_facts.ansible_disks += $disk_info
 }
+
+# Sort by disk number property
+$result.ansible_facts.ansible_disks = @() + ($result.ansible_facts.ansible_disks | Sort-Object -Property {$_.Number})
 
 # Return result
 Exit-Json -obj $result

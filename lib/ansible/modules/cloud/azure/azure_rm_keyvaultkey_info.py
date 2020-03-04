@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_keyvaultkey_info
 version_added: "2.9"
-short_description: Get Azure Key Vault key facts.
+short_description: Get Azure Key Vault key facts
 description:
     - Get facts of Azure Key Vault key.
 
@@ -29,19 +29,19 @@ options:
         type: str
     name:
         description:
-            - Key name. If not set, will list all keys in vault_uri.
+            - Key name. If not set, will list all keys in I(vault_uri).
         type: str
     version:
         description:
             - Key version.
             - Set it to C(current) to show latest version of a key.
             - Set it to C(all) to list all versions of a key.
-            - Set it to specific version to list specific version of a key. eg. fd2682392a504455b79c90dd04a1bf46
+            - Set it to specific version to list specific version of a key. eg. fd2682392a504455b79c90dd04a1bf46.
         default: current
         type: str
     show_deleted_key:
         description:
-            - Set to true to show deleted keys. Set to False to show not deleted keys.
+            - Set to C(true) to show deleted keys. Set to C(false) to show not deleted keys.
         type: bool
         default: false
     tags:
@@ -53,7 +53,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu (@yungezz)"
+    - Yunge Zhu (@yungezz)
 
 '''
 
@@ -87,52 +87,62 @@ EXAMPLES = '''
 
 RETURN = '''
 keyvaults:
-    description: List of keys in Azure Key Vault.
+    description:
+        - List of keys in Azure Key Vault.
     returned: always
     type: complex
     contains:
         kid:
-            description: Key identifier.
+            description:
+                - Key identifier.
             returned: always
             type: str
             sample: "https://myVault.vault.azure.net/keys/key1/fd2682392a504455b79c90dd04a1bf46"
         permitted_operations:
             description:
-                - Permitted operations on the key
+                - Permitted operations on the key.
             type: list
             returned: always
             sample: encrypt
         type:
-            description: Key type.
+            description:
+                - Key type.
             type: str
             returned: always
             sample: RSA
         version:
-            description: Key version.
+            description:
+                - Key version.
             type: str
             returned: always
             sample: fd2682392a504455b79c90dd04a1bf46
         key:
-            description: public part of a key.
+            description:
+                - public part of a key.
             contains:
                 n:
-                    description: RSA modules.
+                    description:
+                        - RSA modules.
                     type: str
                 e:
-                    description: RSA public exponent.
+                    description:
+                        - RSA public exponent.
                     type: str
                 crv:
-                    description: Elliptic curve name.
+                    description:
+                        - Elliptic curve name.
                     type: str
                 x:
-                    description: X component of an EC public key.
+                    description:
+                        - X component of an EC public key.
                     type: str
                 y:
-                    description: Y component of an EC public key.
+                    description:
+                        - Y component of an EC public key.
                     type: str
         managed:
             description:
-                - True if the key's lifetime is managed by key vault.
+                - C(True) if the key's lifetime is managed by key vault.
             type: bool
             sample: True
         tags:
@@ -140,7 +150,7 @@ keyvaults:
                 - Tags of the key.
             returned: always
             type: list
-            sample: foo
+            sample: [foo, ]
         attributes:
             description:
                 - Key attributes.
@@ -176,7 +186,7 @@ keyvaults:
                 recovery_level:
                     description:
                         - Reflects the deletion recovery level currently in effect for keys in the current vault.
-                        - If it contains 'Purgeable' the key can be permanently deleted by a privileged user,
+                        - If it contains C(Purgeable) the key can be permanently deleted by a privileged user.
                         - Otherwise, only the system can purge the key, at the end of the retention interval.
                     returned: always
                     type: str
@@ -387,7 +397,7 @@ class AzureRMKeyVaultKeyInfo(AzureRMModuleBase):
         '''
         Lists keys in specific key vault.
 
-        :return: deserialized keys, incldues key identifier, attributes and tags.
+        :return: deserialized keys, includes key identifier, attributes and tags.
         '''
         self.log("Get the key vaults in current subscription")
 
@@ -429,13 +439,13 @@ class AzureRMKeyVaultKeyInfo(AzureRMModuleBase):
         '''
         Lists deleted keys in specific key vault.
 
-        :return: deserialized keys, incldues key identifier, attributes and tags.
+        :return: deserialized keys, includes key identifier, attributes and tags.
         '''
         self.log("Get the key vaults in current subscription")
 
         results = []
         try:
-            response = self._client.get_deleted_keys(vault_base_url=self.vault)
+            response = self._client.get_deleted_keys(vault_base_url=self.vault_uri)
             self.log("Response : {0}".format(response))
 
             if response:

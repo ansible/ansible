@@ -1,0 +1,3 @@
+deprecated_features:
+- "s3_sync - The ``retries`` option had no effect and will be removed in Ansible 2.14"
+- "s3_lifecycle - The ``requester_pays`` option had no effect and will be removed in Ansible 2.14"

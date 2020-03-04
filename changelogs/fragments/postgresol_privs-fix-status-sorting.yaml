@@ -1,0 +1,2 @@
+bugfixes:
+  - postgresql_privs - sort results before comparing so that the values are compared and not the result of ``.sort()`` (https://github.com/ansible/ansible/pull/65125)

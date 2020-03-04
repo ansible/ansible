@@ -1,6 +1,6 @@
 cloud/azure
 destructive
-shippable/azure/group8
+shippable/azure/group11
 azure_rm_postgresqlserver_facts
 azure_rm_postgresqldatabase
 azure_rm_postgresqldatabase_facts

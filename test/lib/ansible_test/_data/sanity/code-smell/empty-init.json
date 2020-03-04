@@ -2,7 +2,10 @@
     "prefixes": [
         "lib/ansible/modules/",
         "lib/ansible/module_utils/",
-        "test/units/"
+        "plugins/modules/",
+        "plugins/module_utils/",
+        "test/units/",
+        "tests/unit/"
     ],
     "files": [
         "__init__.py"

@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: cloudwatchlogs_log_group
 short_description: create or delete log_group in CloudWatchLogs
 notes:
-    - for details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/logs.html)
+    - For details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/logs.html).
 description:
     - Create or delete log_group in CloudWatchLogs.
 version_added: "2.5"
@@ -26,33 +26,48 @@ requirements: [ json, botocore, boto3 ]
 options:
     state:
       description:
-        - Whether the rule is present, absent or get
+        - Whether the rule is present or absent.
       choices: ["present", "absent"]
       default: present
       required: false
+      type: str
     log_group_name:
       description:
         - The name of the log group.
       required: true
+      type: str
     kms_key_id:
       description:
         - The Amazon Resource Name (ARN) of the CMK to use when encrypting log data.
       required: false
+      type: str
     tags:
       description:
         - The key-value pairs to use for the tags.
       required: false
+      type: dict
     retention:
       description:
-        - "The number of days to retain the log events in the specified log group.
-           Valid values are: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]"
+        - The number of days to retain the log events in the specified log group.
+        - "Valid values are: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]"
+        - Mutually exclusive with I(purge_retention_policy).
       required: false
+      type: int
+    purge_retention_policy:
+      description:
+        - "Whether to purge the retention policy or not."
+        - "Mutually exclusive with I(retention) and I(overwrite)."
+      default: false
+      required: false
+      type: bool
+      version_added: "2.10"
     overwrite:
-     description:
+      description:
         - Whether an existing log group should be overwritten on create.
-     default: false
-     required: false
-     type: bool
+        - Mutually exclusive with I(purge_retention_policy).
+      default: false
+      required: false
+      type: bool
 extends_documentation_fragment:
     - aws
     - ec2
@@ -178,6 +193,17 @@ def input_retention_policy(client, log_group_name, retention, module):
                          exception=traceback.format_exc())
 
 
+def delete_retention_policy(client, log_group_name, module):
+    try:
+        client.delete_retention_policy(logGroupName=log_group_name)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Unable to delete retention policy for log group {0}: {1}".format(log_group_name, to_native(e)),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json(msg="Unable to delete retention policy for log group {0}: {1}".format(log_group_name, to_native(e)),
+                         exception=traceback.format_exc())
+
+
 def delete_log_group(client, log_group_name, module):
     desc_log_group = describe_log_group(client=client,
                                         log_group_name=log_group_name,
@@ -218,10 +244,12 @@ def main():
         kms_key_id=dict(required=False, type='str'),
         tags=dict(required=False, type='dict'),
         retention=dict(required=False, type='int'),
+        purge_retention_policy=dict(required=False, type='bool', default=False),
         overwrite=dict(required=False, type='bool', default=False)
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    mutually_exclusive = [['retention', 'purge_retention_policy'], ['purge_retention_policy', 'overwrite']]
+    module = AnsibleModule(argument_spec=argument_spec, mutually_exclusive=mutually_exclusive)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
@@ -241,15 +269,31 @@ def main():
             break
 
     if state == 'present':
-        if found_log_group and module.params['overwrite'] is True:
-            changed = True
-            delete_log_group(client=logs, log_group_name=module.params['log_group_name'], module=module)
-            found_log_group = create_log_group(client=logs,
-                                               log_group_name=module.params['log_group_name'],
-                                               kms_key_id=module.params['kms_key_id'],
-                                               tags=module.params['tags'],
-                                               retention=module.params['retention'],
-                                               module=module)
+        if found_log_group:
+            if module.params['overwrite'] is True:
+                changed = True
+                delete_log_group(client=logs, log_group_name=module.params['log_group_name'], module=module)
+                found_log_group = create_log_group(client=logs,
+                                                   log_group_name=module.params['log_group_name'],
+                                                   kms_key_id=module.params['kms_key_id'],
+                                                   tags=module.params['tags'],
+                                                   retention=module.params['retention'],
+                                                   module=module)
+            elif module.params['purge_retention_policy']:
+                if found_log_group.get('retentionInDays'):
+                    changed = True
+                    delete_retention_policy(client=logs,
+                                            log_group_name=module.params['log_group_name'],
+                                            module=module)
+            elif module.params['retention'] != found_log_group.get('retentionInDays'):
+                if module.params['retention'] is not None:
+                    changed = True
+                    input_retention_policy(client=logs,
+                                           log_group_name=module.params['log_group_name'],
+                                           retention=module.params['retention'],
+                                           module=module)
+                    found_log_group['retentionInDays'] = module.params['retention']
+
         elif not found_log_group:
             changed = True
             found_log_group = create_log_group(client=logs,
@@ -258,14 +302,6 @@ def main():
                                                tags=module.params['tags'],
                                                retention=module.params['retention'],
                                                module=module)
-        elif found_log_group:
-            if module.params['retention'] != found_log_group['retentionInDays']:
-                changed = True
-                input_retention_policy(client=logs,
-                                       log_group_name=module.params['log_group_name'],
-                                       retention=module.params['retention'],
-                                       module=module)
-                found_log_group['retentionInDays'] = module.params['retention']
 
         module.exit_json(changed=changed, **camel_dict_to_snake_dict(found_log_group))
 

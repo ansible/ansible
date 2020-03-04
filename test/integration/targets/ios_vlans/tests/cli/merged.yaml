@@ -1,0 +1,54 @@
+---
+- debug:
+      msg: "START Merged ios_vlans state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Merge provided configuration with device configuration
+      ios_vlans: &merged
+        config:
+          - name: Vlan_10
+            vlan_id: 10
+            state: active
+            shutdown: disabled
+            remote_span: True
+          - name: Vlan_20
+            vlan_id: 20
+            mtu: 610
+            state: active
+            shutdown: enabled
+          - name: Vlan_30
+            vlan_id: 30
+            state: suspend
+            shutdown: enabled
+        state: merged
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ merged['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['after']) | length == 0 }}"
+
+    - name: Merge provided configuration with device configuration (IDEMPOTENT)
+      ios_vlans: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+  when: ansible_net_version != "15.6(2)T"
+
+  always:
+    - include_tasks: _remove_config.yaml

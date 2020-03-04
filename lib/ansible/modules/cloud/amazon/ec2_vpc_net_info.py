@@ -1,17 +1,9 @@
 #!/usr/bin/python
 #
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -35,10 +27,13 @@ options:
     description:
       - A list of VPC IDs that exist in your account.
     version_added: "2.5"
+    type: list
+    elements: str
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcs.html) for possible filters.
+    type: dict
 extends_documentation_fragment:
     - aws
     - ec2
@@ -111,6 +106,28 @@ vpcs:
             description: True/False depending on attribute setting for DNS support.
             returned: always
             type: bool
+        cidr_block_association_set:
+            description: An array of IPv4 cidr block association set information.
+            returned: always
+            type: complex
+            contains:
+                association_id:
+                    description: The association ID
+                    returned: always
+                    type: str
+                cidr_block:
+                    description: The IPv4 CIDR block that is associated with the VPC.
+                    returned: always
+                    type: str
+                cidr_block_state:
+                    description: A hash/dict that contains a single item. The state of the cidr block association.
+                    returned: always
+                    type: dict
+                    contains:
+                        state:
+                            description: The CIDR block association state.
+                            returned: always
+                            type: str
         ipv6_cidr_block_association_set:
             description: An array of IPv6 cidr block association set information.
             returned: always

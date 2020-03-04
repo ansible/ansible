@@ -1,0 +1,2 @@
+bugfixes:
+  - vmware_guest - Updated reference link to vapp_properties property

@@ -25,6 +25,11 @@ if ($env:ChocolateyForceX86) {
 } else {
     $force_x86 = $false
 }
+if ($env:ChocolateyInstallOverride) {
+    $override_args = $true
+} else {
+    $override_args = $false
+}
 #$process_env = Get-EnvironmentVariableNames -Scope Process
 #$env_vars = @{}
 #foreach ($name in $process_env) {
@@ -39,6 +44,7 @@ $package_info = @{
     force_x86 = $force_x86
     ignore_checksums = $ignore_checksums
     install_args = $env:ChocolateyInstallArguments
+    override_args = $override_args
     package_params = Get-PackageParameters
     proxy_url = $env:ChocolateyProxyLocation
     source = $source

@@ -1,0 +1,48 @@
+---
+- debug:
+    msg: "Start exos_lldp_global deleted integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _reset_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+  - name: Delete attributes of LLDP service
+    exos_lldp_global: &deleted
+      config:
+      state: deleted
+    register: result
+
+  - name: Assert that the before dicts were correctly generated
+    assert:
+      that:
+        - "{{ populate == result['before']}}"
+
+  - name: Assert that correct set of requests were generated
+    assert:
+      that:
+        - "{{ deleted['requests'][0]['method'] == result['requests'][0]['method'] }}"
+        - "{{ deleted['requests'][0]['path'] == result['requests'][0]['path'] }}"
+        - "{{ deleted['requests'][0]['data'] == result['requests'][0]['data'] }}"
+
+  - name: Assert that the after dicts were correctly generated
+    assert:
+      that:
+        - "{{ deleted['after'] == result['after']}}"
+
+  - name: Delete attributes of all configured interfaces (IDEMPOTENT)
+    exos_lldp_global: *deleted
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+      that:
+        - "result.changed == false"
+
+  - name: Assert that the before dicts were correctly generated
+    assert:
+      that:
+        - "{{ deleted['after'] == result['before'] }}"
+
+  always:
+  - include_tasks: _reset_config.yaml

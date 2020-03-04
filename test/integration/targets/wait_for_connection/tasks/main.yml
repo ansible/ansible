@@ -4,6 +4,19 @@
     sleep: 1
     timeout: 10
 
+- name: Test normal connection to target node with delay
+  wait_for_connection:
+    connect_timeout: 5
+    sleep: 1
+    timeout: 10
+    delay: 3
+  register: result
+
+- name: Verify delay was honored
+  assert:
+    that:
+      - result.elapsed >= 3
+
 - name: Use invalid parameter
   wait_for_connection:
     foo: bar

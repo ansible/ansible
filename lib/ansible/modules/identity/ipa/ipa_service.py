@@ -11,57 +11,61 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ipa_service
 author: Cédric Parent (@cprh)
 short_description: Manage FreeIPA service
 description:
-- Add and delete an IPA service using IPA API
+- Add and delete an IPA service using IPA API.
 options:
   krbcanonicalname:
     description:
-    - principal of the service
+    - Principal of the service.
     - Can not be changed as it is the unique identifier.
     required: true
     aliases: ["name"]
+    type: str
   hosts:
     description:
-    - defines the list of 'ManagedBy' hosts
+    - Defines the list of 'ManagedBy' hosts.
     required: false
+    type: list
+    elements: str
   force:
     description:
     - Force principal name even if host is not in DNS.
     required: false
     type: bool
   state:
-    description: State to ensure
+    description: State to ensure.
     required: false
     default: present
-    choices: ["present", "absent"]
+    choices: ["absent", "present"]
+    type: str
 extends_documentation_fragment: ipa.documentation
 version_added: "2.5"
 '''
 
-EXAMPLES = '''
-# Ensure service is present
-- ipa_service:
+EXAMPLES = r'''
+- name: Ensure service is present
+  ipa_service:
     name: http/host01.example.com
     state: present
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
 
-# Ensure service is absent
-- ipa_service:
+- name: Ensure service is absent
+  ipa_service:
     name: http/host01.example.com
     state: absent
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
 
-# Changing Managing hosts list
-- ipa_service:
+- name: Changing Managing hosts list
+  ipa_service:
     name: http/host01.example.com
     host:
        - host01.example.com
@@ -71,7 +75,7 @@ EXAMPLES = '''
     ipa_pass: topsecret
 '''
 
-RETURN = '''
+RETURN = r'''
 service:
   description: Service as returned by IPA API.
   returned: always
@@ -183,7 +187,7 @@ def main():
     argument_spec.update(
         krbcanonicalname=dict(type='str', required=True, aliases=['name']),
         force=dict(type='bool', required=False),
-        hosts=dict(type='list', required=False),
+        hosts=dict(type='list', required=False, elements='str'),
         state=dict(type='str', required=False, default='present',
                    choices=['present', 'absent']))
 

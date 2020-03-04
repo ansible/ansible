@@ -27,7 +27,7 @@ options:
   src:
     description:
       - The C(src) argument takes a single path, or a list of paths to be
-        transfered. The argument C(recursive) must be C(true) to transfer
+        transferred. The argument C(recursive) must be C(true) to transfer
         directories.
     required: true
   dest:
@@ -47,6 +47,20 @@ options:
         to the remote device.
     type: bool
     default: 'no'
+  ssh_private_key_file:
+    description:
+      - The C(ssh_private_key_file) argument is path to the SSH private key file.
+        This can be used if you need to provide a private key rather than loading
+        the key into the ssh-key-ring/environment
+    type: path
+    version_added: '2.10'
+  ssh_config:
+    description:
+      - The C(ssh_config) argument is path to the SSH configuration file.
+        This can be used to load SSH information from a configuration file.
+        If this option is not given by default ~/.ssh/config is queried.
+    type: path
+    version_added: '2.10'
 requirements:
   - junos-eznc
   - ncclient (>=v0.5.2)
@@ -55,6 +69,10 @@ notes:
     the remote device being managed.
   - Tested against vMX JUNOS version 17.3R1.10.
   - Works with C(local) connections only.
+  - Since this module uses junos-eznc to establish connection with junos
+    device the netconf configuration parameters needs to be passed
+    using module options for example C(ssh_config) unlike other junos
+    modules that uses C(netconf) connection type.
 """
 
 EXAMPLES = """
@@ -73,6 +91,12 @@ EXAMPLES = """
   junos_scp:
     src: test.tgz
     remote_src: true
+
+- name: ssh config file path for jumphost config
+  junos_scp:
+    src: test.tgz
+    remote_src: true
+    ssh_config: /home/user/customsshconfig
 """
 
 RETURN = """
@@ -82,42 +106,14 @@ changed:
   type: bool
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_device
 from ansible.module_utils._text import to_native
 
 try:
-    from jnpr.junos import Device
     from jnpr.junos.utils.scp import SCP
-    from jnpr.junos.exception import ConnectError
     HAS_PYEZ = True
 except ImportError:
     HAS_PYEZ = False
-
-
-def connect(module):
-    host = get_param(module, 'host')
-
-    kwargs = {
-        'port': get_param(module, 'port') or 830,
-        'user': get_param(module, 'username')
-    }
-
-    if get_param(module, 'password'):
-        kwargs['passwd'] = get_param(module, 'password')
-
-    if get_param(module, 'ssh_keyfile'):
-        kwargs['ssh_private_key_file'] = get_param(module, 'ssh_keyfile')
-
-    kwargs['gather_facts'] = False
-
-    try:
-        device = Device(host, **kwargs)
-        device.open()
-        device.timeout = get_param(module, 'timeout') or 10
-    except ConnectError as exc:
-        module.fail_json('unable to connect to %s: %s' % (host, to_native(exc)))
-
-    return device
 
 
 def transfer_files(module, device):
@@ -140,6 +136,8 @@ def main():
         dest=dict(type='path', required=False, default="."),
         recursive=dict(type='bool', default=False),
         remote_src=dict(type='bool', default=False),
+        ssh_private_key_file=dict(type='path'),
+        ssh_config=dict(type='path'),
         transport=dict(default='netconf', choices=['netconf'])
     )
 
@@ -162,7 +160,7 @@ def main():
     if not module.check_mode:
         # open pyez connection and transfer files via SCP
         try:
-            device = connect(module)
+            device = get_device(module)
             transfer_files(module, device)
         except Exception as ex:
             module.fail_json(

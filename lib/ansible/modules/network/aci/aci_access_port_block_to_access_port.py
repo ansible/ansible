@@ -40,6 +40,7 @@ options:
   leaf_port_blk_description:
     description:
     - The description to assign to the C(leaf_port_blk).
+    type: str
   from_port:
     description:
     - The beginning (from-range) of the port range block for the leaf access port block.
@@ -282,15 +283,15 @@ def main():
         ],
     )
 
-    leaf_interface_profile = module.params['leaf_interface_profile']
-    access_port_selector = module.params['access_port_selector']
-    leaf_port_blk = module.params['leaf_port_blk']
-    leaf_port_blk_description = module.params['leaf_port_blk_description']
-    from_port = module.params['from_port']
-    to_port = module.params['to_port']
-    from_card = module.params['from_card']
-    to_card = module.params['to_card']
-    state = module.params['state']
+    leaf_interface_profile = module.params.get('leaf_interface_profile')
+    access_port_selector = module.params.get('access_port_selector')
+    leaf_port_blk = module.params.get('leaf_port_blk')
+    leaf_port_blk_description = module.params.get('leaf_port_blk_description')
+    from_port = module.params.get('from_port')
+    to_port = module.params.get('to_port')
+    from_card = module.params.get('from_card')
+    to_card = module.params.get('to_card')
+    state = module.params.get('state')
 
     aci = ACIModule(module)
     aci.construct_url(

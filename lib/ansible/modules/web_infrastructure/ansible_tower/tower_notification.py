@@ -101,7 +101,7 @@ options:
       required: False
     account_sid:
       description:
-        - The Twillio accound SID. Required if I(notification_type=twillio).
+        - The Twillio account SID. Required if I(notification_type=twillio).
       required: False
     subdomain:
       description:

@@ -9,7 +9,7 @@ class PagerDutyTest(unittest.TestCase):
         self.pd = pagerduty.PagerDutyRequest(module=pagerduty, name='name', user='user', token='token')
 
     def _assert_ongoing_maintenance_windows(self, module, url, headers):
-        self.assertEquals('https://api.pagerduty.com/maintenance_windows?filter=ongoing', url)
+        self.assertEqual('https://api.pagerduty.com/maintenance_windows?filter=ongoing', url)
         return object(), {'status': 200}
 
     def _assert_ongoing_window_with_v1_compatible_header(self, module, url, headers, data=None, method=None):
@@ -21,11 +21,11 @@ class PagerDutyTest(unittest.TestCase):
         return object(), {'status': 200}
 
     def _assert_create_a_maintenance_window_url(self, module, url, headers, data=None, method=None):
-        self.assertEquals('https://api.pagerduty.com/maintenance_windows', url)
+        self.assertEqual('https://api.pagerduty.com/maintenance_windows', url)
         return object(), {'status': 201}
 
     def _assert_create_a_maintenance_window_http_method(self, module, url, headers, data=None, method=None):
-        self.assertEquals('POST', method)
+        self.assertEqual('POST', method)
         return object(), {'status': 201}
 
     def _assert_create_a_maintenance_window_from_header(self, module, url, headers, data=None, method=None):
@@ -56,7 +56,7 @@ class PagerDutyTest(unittest.TestCase):
         payload = json.loads(data)
         window_data = payload['maintenance_window']
         services = window_data['services']
-        self.assertEquals(
+        self.assertEqual(
             [{'id': 'service_id', 'type': 'service_reference'}],
             services
         )
@@ -67,7 +67,7 @@ class PagerDutyTest(unittest.TestCase):
         window_data = payload['maintenance_window']
         services = window_data['services']
         print(services)
-        self.assertEquals(
+        self.assertEqual(
             [
                 {'id': 'service_id_1', 'type': 'service_reference'},
                 {'id': 'service_id_2', 'type': 'service_reference'},
@@ -78,7 +78,7 @@ class PagerDutyTest(unittest.TestCase):
         return object(), {'status': 201}
 
     def _assert_absent_maintenance_window_url(self, module, url, headers, method=None):
-        self.assertEquals('https://api.pagerduty.com/maintenance_windows/window_id', url)
+        self.assertEqual('https://api.pagerduty.com/maintenance_windows/window_id', url)
         return object(), {'status': 204}
 
     def _assert_absent_window_with_v1_compatible_header(self, module, url, headers, method=None):

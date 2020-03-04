@@ -63,7 +63,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a site from a schema
-  mso_schema:
+  mso_schema_site:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -74,7 +74,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query a schema site
-  mso_schema:
+  mso_schema_site:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -86,7 +86,7 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all schema sites
-  mso_schema:
+  mso_schema_site:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -122,10 +122,10 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    site = module.params['site']
-    template = module.params['template']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    site = module.params.get('site')
+    template = module.params.get('template')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
@@ -142,13 +142,13 @@ def main():
 
     mso.existing = {}
     if 'sites' in schema_obj:
-        sites = [(s['siteId'], s['templateName']) for s in schema_obj['sites']]
+        sites = [(s.get('siteId'), s.get('templateName')) for s in schema_obj.get('sites')]
         if template:
             if (site_id, template) in sites:
                 site_idx = sites.index((site_id, template))
-                mso.existing = schema_obj['sites'][site_idx]
+                mso.existing = schema_obj.get('sites')[site_idx]
         else:
-            mso.existing = schema_obj['sites']
+            mso.existing = schema_obj.get('sites')
 
     if state == 'query':
         if not mso.existing:

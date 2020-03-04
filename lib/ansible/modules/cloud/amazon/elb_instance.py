@@ -29,13 +29,16 @@ options:
       - register or deregister the instance
     required: true
     choices: ['present', 'absent']
+    type: str
   instance_id:
     description:
       - EC2 Instance ID
     required: true
+    type: str
   ec2_elbs:
     description:
       - List of ELB names, required for registration. The ec2_elbs fact should be used if there was a previous de-register.
+    type: list
   enable_availability_zone:
     description:
       - Whether to enable the availability zone of the instance on the target ELB if the availability zone has not already
@@ -59,6 +62,7 @@ options:
         If non-zero then any transient errors are ignored until the timeout is reached. Ignored when wait=no.
     default: 0
     version_added: "1.6"
+    type: int
 extends_documentation_fragment:
     - aws
     - ec2
@@ -317,7 +321,7 @@ class ElbManager:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state={'required': True},
+        state={'required': True, 'choices': ['present', 'absent']},
         instance_id={'required': True},
         ec2_elbs={'default': None, 'required': False, 'type': 'list'},
         enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},

@@ -1,0 +1,78 @@
+---
+- debug:
+    msg: "START ios_static_routes round trip integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Apply the provided configuration (base config)
+      ios_static_routes:
+        config:
+          - vrf: ansible_temp_vrf
+            address_families:
+            - afi: ipv4
+              routes:
+              - dest: 192.0.2.0/24
+                next_hops:
+                - forward_router_address: 192.0.2.1
+                  name: rtt_vrf
+                  tag: 50
+                  track: 150
+          - address_families:
+            - afi: ipv4
+              routes:
+              - dest: 198.51.100.0/24
+                next_hops:
+                - forward_router_address: 198.51.101.1
+                  name: rtt_route_1
+                  distance_metric: 110
+                  tag: 40
+                  multicast: True
+        state: merged
+      register: base_config
+
+    - name: Gather static routes facts
+      ios_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources:
+          - static_routes
+
+    - name: Apply the configuration which need to be reverted
+      ios_static_routes:
+        config:
+          - vrf: ansible_temp_vrf
+            address_families:
+            - afi: ipv4
+              routes:
+              - dest: 192.0.2.0/24
+                next_hops:
+                - forward_router_address: 192.0.2.12
+                  name: new_rtt_vrf
+                  tag: 10
+                  track: 150
+        state: overridden
+      register: result
+
+    - assert:
+        that:
+          - "result.commands|length == 2"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(rtt.override_commands) == []"
+
+    - name: Revert back to base config using facts round trip
+      ios_static_routes:
+        config: "{{ ansible_facts['network_resources']['static_routes'] }}"
+        state: overridden
+      register: revert
+
+    - assert:
+        that:
+          - "revert.commands|length == 1"
+          - "revert.changed == true"
+          - "revert.commands|symmetric_difference(rtt.override_revert_commands) == []"
+
+  always:
+    - include_tasks: _populate_config.yaml
+    - include_tasks: _remove_config.yaml

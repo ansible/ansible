@@ -1,18 +1,15 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_snmp_user sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: delete_last_user_allowed='true'
 - set_fact: delete_last_user_allowed='false'
-  when: imagetag and (imagetag is version_compare('9.1', 'ge'))
+  when: imagetag and (major_version is version_compare('9.1', 'ge'))
 - set_fact: delete_last_user_allowed='false'
   when: platform is search('N5K|N6K|N9K-F')
 
 - name: Remove snmp user
   nxos_snmp_user: &remove_snmp_user
     user: ntc
-    provider: "{{ connection }}"
     state: absent
   ignore_errors: yes
   when: platform is not search('N5K|N6K|N9K-F')
@@ -21,7 +18,6 @@
   # Some platforms will not allow snmp_user to remove the last role
   nxos_user: &workaround_remove_user
     name: ntc
-    provider: "{{ connection }}"
     state: absent
   ignore_errors: yes
   when: platform is search('N5K|N6K|N9K-F')
@@ -38,7 +34,6 @@
       pwd: N$tOpe%1
       privacy: HelloU$er1
       encrypt: true
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -49,7 +44,6 @@
     nxos_snmp_user: &chg
       user: ntc
       group: network-admin
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -66,7 +60,6 @@
     nxos_snmp_user: &remg
       user: ntc
       group: network-admin
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -87,7 +80,6 @@
       nxos_snmp_user: &remove1
         user: ntc
         group: network-operator
-        provider: "{{ connection }}"
         state: absent
       register: result
 

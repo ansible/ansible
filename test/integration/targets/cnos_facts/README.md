@@ -1,4 +1,4 @@
-# Ansible Role: cnos_facts - Displays switch inforamtion
+# Ansible Role: cnos_facts - Displays switch information
 ---
 <add role description below>
 
@@ -32,7 +32,7 @@ Variable | Description
 `ansible_ssh_pass` | Specifies the password used to log into the switch
 
 To gather subsets you will specify the following variables to get appropriate
-data retrived from the devices
+data retrieved from the devices
 
 Variable | Description
 --- | ---
@@ -47,7 +47,7 @@ Variable | Description
 `username`  | User Name of switch
 `password`  | Password of switch
 `timeout`  | time out value for CLI
-`authorixe`  | Whether u have to enter enable mode for data collection.
+`authorize`  | Whether u have to enter enable mode for data collection.
 `auth_pass`| Enable Password if required
 
 
@@ -87,7 +87,7 @@ To execute an Ansible playbook, use the following command:
 ansible-playbook cnos_facts_sample.yml -vvv
 ```
 
-`-vvv` is an optional verbos command that helps identify what is happening during playbook execution. The playbook for each role is located in the main directory of the solution.
+`-vvv` is an optional verbose command that helps identify what is happening during playbook execution. The playbook for each role is located in the main directory of the solution.
 
 ```
  - name: Module to  do some CLI Command configurations

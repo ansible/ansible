@@ -1,0 +1,37 @@
+repo_link: http://yum.mariadb.org/10.1/centos7-amd64
+repo_gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+
+mariadb_packages:
+  - MariaDB-server
+  - MariaDB-client
+
+packages_to_cleanup:
+  - MariaDB-common
+  - boost-program-options
+  - galera
+  - jemalloc
+
+primary_db:
+  name: primary
+  port: 3306
+  datadir: /var/lib/mysql_primary
+  logdir: /var/log/mysql_primary
+
+replica_db:
+  name: replica01
+  port: 3307
+  datadir: /var/lib/mysql_replica01
+  logdir: /var/log/mysql_replica01
+
+default_datadir: /var/lib/mysql
+default_logdir: /var/log/mariadb
+mysql_safe_err_log: /var/log/mariadb/mysql_safe-err.log
+
+fs_objects_to_clean_up:
+  - "{{ primary_db.datadir }}"
+  - "{{ primary_db.logdir }}"
+  - "{{ replica_db.datadir }}"
+  - "{{ replica_db.logdir }}"
+  - "{{ default_datadir }}"
+  - "{{ default_logdir }}"
+  - "{{ mysql_safe_err_log }}"

@@ -1,0 +1,5 @@
+minor_changes:
+- 'ec2_asg: Migrated to AnsibleAWSModule'
+- 'ec2_asg: Add support for Max Instance Lifetime'
+bugfixes:
+- 'ec2_asg: Ensure "wait" is honored during replace operations'

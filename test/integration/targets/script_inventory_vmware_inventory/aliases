@@ -1,0 +1,7 @@
+shippable/vcenter/group2
+cloud/vcenter
+destructive
+needs/file/contrib/inventory/vmware_inventory.py
+needs/file/contrib/inventory/vmware_inventory.ini
+needs/target/prepare_vmware_tests
+zuul/vmware/vcenter_only

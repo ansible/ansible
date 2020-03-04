@@ -1,0 +1,450 @@
+---
+
+- name: Registering service name
+  set_fact:
+    service_name: "{{ name_prefix ~ '-networks' }}"
+    network_name_1: "{{ name_prefix ~ '-network-1' }}"
+    network_name_2: "{{ name_prefix ~ '-network-2' }}"
+
+- name: Registering service name
+  set_fact:
+    service_names: "{{ service_names + [service_name] }}"
+    network_names: "{{ network_names + [network_name_1, network_name_2] }}"
+
+- docker_network:
+    name: "{{ network_name }}"
+    driver: "overlay"
+    state: present
+  loop:
+    - "{{ network_name_1 }}"
+    - "{{ network_name_2 }}"
+  loop_control:
+    loop_var: network_name
+
+#####################################################################
+## networks #########################################################
+#####################################################################
+
+- name: networks
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_1 }}"
+  register: networks_1
+
+- name: networks (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_1 }}"
+  register: networks_2
+
+- name: networks (dict idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+  register: networks_3
+
+- name: networks (change more)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_1 }}"
+      - "{{ network_name_2 }}"
+  register: networks_4
+
+- name: networks (change more idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_1 }}"
+      - "{{ network_name_2 }}"
+  register: networks_5
+
+- name: networks (change more dict idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+      - name: "{{ network_name_2 }}"
+  register: networks_6
+
+- name: networks (change more mixed idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+      - "{{ network_name_2 }}"
+  register: networks_7
+
+- name: networks (order idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_2 }}"
+      - name: "{{ network_name_1 }}"
+  register: networks_8
+
+- name: networks (change less)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_2 }}"
+  register: networks_9
+
+- name: networks (change less idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_2 }}"
+  register: networks_10
+
+- name: networks (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks: []
+  register: networks_11
+
+- name: networks (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks: []
+  register: networks_12
+
+- name: networks (unknown network)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "idonotexist"
+  register: networks_13
+  ignore_errors: yes
+
+- name: networks (missing dict key name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - foo: "bar"
+  register: networks_14
+  ignore_errors: yes
+
+- name: networks (invalid list type)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - [1, 2, 3]
+  register: networks_15
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - networks_1 is changed
+      - networks_2 is not changed
+      - networks_3 is not changed
+      - networks_4 is changed
+      - networks_5 is not changed
+      - networks_6 is not changed
+      - networks_7 is not changed
+      - networks_8 is not changed
+      - networks_9 is changed
+      - networks_10 is not changed
+      - networks_11 is changed
+      - networks_12 is not changed
+      - networks_13 is failed
+      - '"Could not find a network named: ''idonotexist''" in networks_13.msg'
+      - networks_14 is failed
+      - "'\"name\" is required when networks are passed as dictionaries.' in networks_14.msg"
+      - networks_15 is failed
+      - "'Only a list of strings or dictionaries are allowed to be passed as networks' in networks_15.msg"
+
+- assert:
+    that:
+    - networks_4.rebuilt == false
+    - networks_7.rebuilt == false
+  when: docker_api_version is version('1.29', '>=') and docker_py_version is version('2.7.0', '>=')
+
+- assert:
+    that:
+    - networks_4.rebuilt == true
+    - networks_7.rebuilt == true
+  when: docker_api_version is version('1.29', '<') or docker_py_version is version('2.7.0', '<')
+
+####################################################################
+## networks.aliases ################################################
+####################################################################
+
+- name: networks.aliases
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        aliases:
+          - "alias1"
+          - "alias2"
+  register: networks_aliases_1
+
+- name: networks.aliases (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        aliases:
+          - "alias1"
+          - "alias2"
+  register: networks_aliases_2
+
+- name: networks.aliases (order idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        aliases:
+          - "alias2"
+          - "alias1"
+  register: networks_aliases_3
+
+- name: networks.aliases (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        aliases:
+          - "alias1"
+  register: networks_aliases_4
+
+- name: networks.aliases (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        aliases: []
+  register: networks_aliases_5
+
+- name: networks.aliases (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        aliases: []
+  register: networks_aliases_6
+
+- name: networks.aliases (invalid type)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        aliases:
+          - [1, 2, 3]
+  register: networks_aliases_7
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - networks_aliases_1 is changed
+      - networks_aliases_2 is not changed
+      - networks_aliases_3 is not changed
+      - networks_aliases_4 is changed
+      - networks_aliases_5 is changed
+      - networks_aliases_6 is not changed
+      - networks_aliases_7 is failed
+      - "'Only strings are allowed as network aliases' in networks_aliases_7.msg"
+
+####################################################################
+## networks.options ################################################
+####################################################################
+
+- name: networks.options
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        options:
+          foo: bar
+          test: hello
+  register: networks_options_1
+
+- name: networks.options (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        options:
+          foo: bar
+          test: hello
+  register: networks_options_2
+
+- name: networks.options (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        options:
+          foo: bar
+          test: hej
+  register: networks_options_3
+
+- name: networks.options (change less)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        options:
+          foo: bar
+  register: networks_options_4
+
+- name: networks.options (invalid type)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        options: [1, 2, 3]
+  register: networks_options_5
+  ignore_errors: yes
+
+- name: networks.options (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        options: {}
+  register: networks_options_6
+
+- name: networks.options (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        options: {}
+  register: networks_options_7
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - networks_options_1 is changed
+      - networks_options_2 is not changed
+      - networks_options_3 is changed
+      - networks_options_4 is changed
+      - networks_options_5 is failed
+      - "'Only dict is allowed as network options' in networks_options_5.msg"
+      - networks_options_6 is changed
+      - networks_options_7 is not changed
+
+####################################################################
+####################################################################
+####################################################################
+
+- name: Delete networks
+  docker_network:
+    name: "{{ network_name }}"
+    state: absent
+    force: yes
+  loop:
+    - "{{ network_name_1 }}"
+    - "{{ network_name_2 }}"
+  loop_control:
+    loop_var: network_name
+  ignore_errors: yes

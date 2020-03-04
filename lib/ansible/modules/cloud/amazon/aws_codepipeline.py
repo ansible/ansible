@@ -28,10 +28,12 @@ options:
         description:
             - Name of the pipeline
         required: true
+        type: str
     role_arn:
         description:
             - ARN of the IAM role to use when executing the pipeline
         required: true
+        type: str
     artifact_store:
         description:
             - Location information where artifacts are stored (on S3). Dictionary with fields type and location.
@@ -40,9 +42,12 @@ options:
             type:
                 description:
                     - Type of the artifacts storage (only 'S3' is currently supported).
+                type: str
             location:
                 description:
                     - Bucket name for artifacts.
+                type: str
+        type: dict
     stages:
         description:
             - List of stages to perform in the CodePipeline. List of dictionaries containing name and actions for each stage.
@@ -51,18 +56,27 @@ options:
             name:
                 description:
                     - Name of the stage (step) in the codepipeline
+                type: str
             actions:
                 description:
                     - List of action configurations for that stage.
+                    - 'See the boto3 documentation for full documentation of suboptions:'
+                    - 'U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/codepipeline.html#CodePipeline.Client.create_pipeline)'
+                type: list
+                elements: dict
+        elements: dict
+        type: list
     version:
         description:
             - Version number of the pipeline. This number is automatically incremented when a pipeline is updated.
         required: false
+        type: int
     state:
         description:
             - Create or remove code pipeline
         default: 'present'
         choices: ['present', 'absent']
+        type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -139,19 +153,19 @@ EXAMPLES = '''
 
 RETURN = '''
 pipeline:
-  description: Returns the dictionary desribing the code pipeline configuration.
+  description: Returns the dictionary describing the code pipeline configuration.
   returned: success
   type: complex
   contains:
     name:
       description: Name of the CodePipeline
       returned: always
-      type: string
+      type: str
       sample: my_deploy_pipeline
     role_arn:
       description: ARN of the IAM role attached to the code pipeline
       returned: always
-      type: string
+      type: str
       sample: arn:aws:iam::123123123:role/codepipeline-service-role
     artifact_store:
       description: Information about where the build artifacts are stored
@@ -161,17 +175,17 @@ pipeline:
         type:
           description: The type of the artifacts store, such as S3
           returned: always
-          type: string
+          type: str
           sample: S3
         location:
           description: The location of the artifacts storage (s3 bucket name)
           returned: always
-          type: string
+          type: str
           sample: my_s3_codepipline_bucket
         encryption_key:
           description: The encryption key used to encrypt the artifacts store, such as an AWS KMS key.
           returned: when configured
-          type: string
+          type: str
     stages:
       description: List of stages configured for this pipeline
       returned: always
@@ -193,7 +207,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict, compare_policies
 try:
     import botocore
 except ImportError:
-    pass  # will be detected by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def create_pipeline(client, name, role_arn, artifact_store, stages, version, module):

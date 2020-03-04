@@ -1,0 +1,5 @@
+test_win_file_compression_suffix: win_file_compression .ÅÑŚÌβŁÈ [$!@^&test(;)]
+test_win_file_compression_sub_directories:
+  - 'a'
+  - 'b'
+test_win_file_compression_filename: 'foo.bar'

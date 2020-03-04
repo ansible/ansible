@@ -46,19 +46,22 @@ options:
         type: str
     servers:
         description:
-        - List of syslog server settings
+        - List of syslog server settings.
+        type: list
         suboptions:
             host:
                 description:
                 - IP address or hostname of Syslog server.
+                type: str
             port:
                 description:
                 - Port number Syslog server is listening on.
                 default: "514"
+                type: int
             roles:
                 description:
                 - List of applicable Syslog server roles.
-                choices: ['Wireless event log',
+                choices: ['Wireless Event log',
                           'Appliance event log',
                           'Switch event log',
                           'Air Marshal events',
@@ -66,6 +69,7 @@ options:
                           'URLs',
                           'IDS alerts',
                           'Security events']
+                type: list
 
 author:
     - Kevin Breit (@kbreit)
@@ -122,12 +126,12 @@ data:
       host:
         description: Hostname or IP address of syslog server.
         returned: success
-        type: string
+        type: str
         sample: 192.0.1.1
       port:
         description: Port number for syslog communication.
         returned: success
-        type: string
+        type: str
         sample: 443
       roles:
         description: List of roles assigned to syslog server.
@@ -136,10 +140,7 @@ data:
         sample: "Wireless event log, URLs"
 '''
 
-import os
-from ansible.module_utils.basic import AnsibleModule, json, env_fallback
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule, json
 from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
@@ -164,7 +165,7 @@ def main():
 
     argument_spec = meraki_argument_spec()
     argument_spec.update(net_id=dict(type='str'),
-                         servers=dict(type='list', element='dict', options=server_arg_spec),
+                         servers=dict(type='list', elements='dict', options=server_arg_spec),
                          state=dict(type='str', choices=['present', 'query'], default='present'),
                          net_name=dict(type='str', aliases=['name', 'network']),
                          )

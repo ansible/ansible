@@ -44,7 +44,7 @@ description:
   - This module manages Link Layer Discovery Protocol (LLDP) attributes of interfaces on IOS-XR devices.
 notes:
   - Tested against IOS-XR 6.1.3.
-  - This module works with connection C(network_cli).
+  - This module works with connection C(network_cli). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
 author: Nilashish Chakraborty (@nilashishc)
 options:
   config:
@@ -76,7 +76,7 @@ options:
         type: bool
   state:
     description:
-      - The state the configuration should be left in.
+      - The state of the configuration after module completion.
     type: str
     choices:
     - merged
@@ -542,14 +542,14 @@ EXAMPLES = """
 """
 RETURN = """
 before:
-  description: The configuration prior to the model invocation.
+  description: The configuration as structured data prior to module invocation.
   returned: always
   type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
-  description: The resulting configuration model invocation.
+  description: The configuration as structured data after module completion.
   returned: when changed
   type: list
   sample: >

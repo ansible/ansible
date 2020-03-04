@@ -18,6 +18,18 @@ ansible-config view -c ./ansible-non-existent.cfg 2> err1.txt || grep -Eq 'ERROR
 ansible-config view -c ./no-extension 2> err2.txt || grep -q 'Unsupported configuration file extension' err2.txt || (cat err2.txt; rm -f err*.txt; exit 1)
 rm -f err*.txt
 
+# test setting playbook_dir via envvar
+ANSIBLE_PLAYBOOK_DIR=/tmp ansible localhost -m debug -a var=playbook_dir | grep '"playbook_dir": "/tmp"'
+
+# test setting playbook_dir via cmdline
+ansible localhost -m debug -a var=playbook_dir --playbook-dir=/tmp | grep '"playbook_dir": "/tmp"'
+
+# test setting playbook dir via ansible.cfg
+env -u ANSIBLE_PLAYBOOK_DIR ANSIBLE_CONFIG=./playbookdir_cfg.ini ansible localhost -m debug -a var=playbook_dir | grep '"playbook_dir": "/tmp"'
+
+# test adhoc callback triggers
+ANSIBLE_STDOUT_CALLBACK=callback_debug ANSIBLE_LOAD_CALLBACK_PLUGINS=1 ansible --playbook-dir . testhost -i ../../inventory -m ping | grep -E '^v2_' | diff -u adhoc-callback.stdout -
+
 # Test that no tmp dirs are left behind when running ansible-config
 TMP_DIR=~/.ansible/tmptest
 if [[ -d "$TMP_DIR" ]]; then
@@ -36,3 +48,17 @@ if [[ $file_count -ne 1 ]]; then
     fi
     exit 1
 fi
+
+# Ensure extra vars filename is prepended with '@' sign
+if ansible-playbook -i ../../inventory --extra-vars /tmp/non-existing-file playbook.yml; then
+    echo "extra_vars filename without '@' sign should cause failure"
+    exit 1
+fi
+
+# Ensure extra vars filename is prepended with '@' sign
+if ansible-playbook -i ../../inventory --extra-vars ./vars.yml playbook.yml; then
+    echo "extra_vars filename without '@' sign should cause failure"
+    exit 1
+fi
+
+ansible-playbook -i ../../inventory --extra-vars @./vars.yml playbook.yml

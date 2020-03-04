@@ -76,11 +76,6 @@ class Default(FactsBase):
         if match:
             return match.group(1)
 
-    def parse_license_hostid(self, data):
-        match = re.search(r'License hostid: VDH=(.+)$', data, re.M)
-        if match:
-            return match.group(1)
-
     def platform_facts(self):
         platform_facts = {}
 
@@ -563,44 +558,44 @@ class Legacy(FactsBase):
             if isinstance(data, dict):
                 self.facts.update(self.transform_dict(data, self.VERSION_MAP))
             else:
-                self.facts['_hostname'] = self.parse_hostname(data)
-                self.facts['_os'] = self.parse_os(data)
-                self.facts['_platform'] = self.parse_platform(data)
+                self.facts['hostname'] = self.parse_hostname(data)
+                self.facts['os'] = self.parse_os(data)
+                self.facts['platform'] = self.parse_platform(data)
 
         data = self.run('show interface', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['_interfaces_list'] = self.parse_structured_interfaces(data)
+                self.facts['interfaces_list'] = self.parse_structured_interfaces(data)
             else:
-                self.facts['_interfaces_list'] = self.parse_interfaces(data)
+                self.facts['interfaces_list'] = self.parse_interfaces(data)
 
         data = self.run('show vlan brief', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['_vlan_list'] = self.parse_structured_vlans(data)
+                self.facts['vlan_list'] = self.parse_structured_vlans(data)
             else:
-                self.facts['_vlan_list'] = self.parse_vlans(data)
+                self.facts['vlan_list'] = self.parse_vlans(data)
 
         data = self.run('show module', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['_module'] = self.parse_structured_module(data)
+                self.facts['module'] = self.parse_structured_module(data)
             else:
-                self.facts['_module'] = self.parse_module(data)
+                self.facts['module'] = self.parse_module(data)
 
         data = self.run('show environment fan', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['_fan_info'] = self.parse_structured_fan_info(data)
+                self.facts['fan_info'] = self.parse_structured_fan_info(data)
             else:
-                self.facts['_fan_info'] = self.parse_fan_info(data)
+                self.facts['fan_info'] = self.parse_fan_info(data)
 
         data = self.run('show environment power', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['_power_supply_info'] = self.parse_structured_power_supply_info(data)
+                self.facts['power_supply_info'] = self.parse_structured_power_supply_info(data)
             else:
-                self.facts['_power_supply_info'] = self.parse_power_supply_info(data)
+                self.facts['power_supply_info'] = self.parse_power_supply_info(data)
 
     def parse_structured_interfaces(self, data):
         objects = list()
@@ -627,13 +622,19 @@ class Legacy(FactsBase):
 
     def parse_structured_fan_info(self, data):
         objects = list()
-        if data.get('fandetails'):
-            data = data['fandetails']['TABLE_faninfo']['ROW_faninfo']
-        elif data.get('fandetails_3k'):
-            data = data['fandetails_3k']['TABLE_faninfo']['ROW_faninfo']
-        else:
-            return objects
-        objects = list(self.transform_iterable(data, self.FAN_MAP))
+
+        for key in ("fandetails", "fandetails_3k"):
+            if data.get(key):
+                try:
+                    data = data[key]['TABLE_faninfo']['ROW_faninfo']
+                except KeyError:
+                    # Some virtual images don't actually report faninfo. In this case, move on and
+                    # just return an empty list.
+                    pass
+                else:
+                    objects = list(self.transform_iterable(data, self.FAN_MAP))
+                break
+
         return objects
 
     def parse_structured_power_supply_info(self, data):

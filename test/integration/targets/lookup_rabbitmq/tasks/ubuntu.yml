@@ -1,0 +1,138 @@
+- name: Test failure without pika installed
+  set_fact:
+    rabbit_missing_pika: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F', queue='hello', count=3) }}"
+  ignore_errors: yes
+  register: rabbitmq_missing_pika_error
+
+- assert:
+    that:
+      - "'pika python package is required' in rabbitmq_missing_pika_error.msg"
+
+- name: Install pika and requests
+  pip:
+    name: pika<1.0.0,requests
+    state: latest
+
+- name: Test that giving an incorrect amqp protocol in URL will error
+  set_fact:
+    rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='zzzamqp://guest:guest@192.168.250.1:5672/%2F', queue='hello', count=3) }}"
+  ignore_errors: yes
+  register: rabbitmq_protocol_error
+
+- assert:
+    that:
+      - "rabbitmq_protocol_error is failed"
+      - "'URL malformed' in rabbitmq_protocol_error.msg"
+
+- name: Test that giving an incorrect IP address in URL will error
+  set_fact:
+    rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='amqp://guest:guest@xxxxx192.112312368.250.1:5672/%2F', queue='hello', count=3) }}"
+  ignore_errors: yes
+  register: rabbitmq_ip_error
+
+- assert:
+    that:
+      - "rabbitmq_ip_error is failed"
+      - "'Connection issue' in rabbitmq_ip_error.msg"
+
+- name: Test missing parameters will error
+  set_fact:
+    rabbitmq_test_protocol: "{{ lookup('rabbitmq') }}"
+  ignore_errors: yes
+  register: rabbitmq_params_error
+
+- assert:
+    that:
+      - "rabbitmq_params_error is failed"
+      - "'URL is required for rabbitmq lookup.' in rabbitmq_params_error.msg"
+
+- name: Test missing queue will error
+  set_fact:
+    rabbitmq_queue_protocol: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F') }}"
+  ignore_errors: yes
+  register: rabbitmq_queue_error
+
+- assert:
+    that:
+      - "rabbitmq_queue_error is failed"
+      - "'Queue is required for rabbitmq lookup' in rabbitmq_queue_error.msg"
+
+- name: Enables the rabbitmq_management plugin
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: enabled
+
+- name: Setup test queue
+  rabbitmq_queue:
+      name: hello
+
+- name: Post test message to the exchange (string)
+  uri:
+    url: http://localhost:15672/api/exchanges/%2f/amq.default/publish
+    method: POST
+    body: '{"properties":{},"routing_key":"hello","payload":"ansible-test","payload_encoding":"string"}'
+    user: guest
+    password: guest
+    force_basic_auth: yes
+    return_content: yes
+    headers:
+      Content-Type: "application/json"
+  register: post_data
+
+
+- name: Post test message to the exchange (json)
+  uri:
+    url: http://localhost:15672/api/exchanges/%2f/amq.default/publish
+    method: POST
+    body: '{"properties":{"content_type": "application/json"},"routing_key":"hello","payload":"{\"key\": \"value\" }","payload_encoding":"string"}'
+    user: guest
+    password: guest
+    force_basic_auth: yes
+    return_content: yes
+    headers:
+      Content-Type: "application/json"
+  register: post_data_json
+
+- name: Test retrieve messages
+  set_fact:
+    rabbitmq_msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/%2f/hello', queue='hello') }}"
+  ignore_errors: yes
+  register: rabbitmq_msg_error
+
+- name: Ensure two messages received
+  assert:
+    that:
+      - "rabbitmq_msg_error is not failed"
+      - rabbitmq_msg | length == 2
+
+- name: Ensure first message is a string
+  assert:
+    that:
+      - rabbitmq_msg[0].msg == "ansible-test"
+
+- name: Ensure second message is json
+  assert:
+    that:
+      - rabbitmq_msg[1].json.key == "value"
+
+- name: Test missing vhost
+  set_fact:
+    rabbitmq_msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/missing/', queue='hello') }}"
+  ignore_errors: yes
+  register: rabbitmq_vhost_error
+
+- assert:
+    that:
+      - "rabbitmq_vhost_error is failed"
+      - "'NOT_ALLOWED' in rabbitmq_vhost_error.msg"
+
+# Tidy up
+- name: Uninstall pika and requests
+  pip:
+    name: pika,requests
+    state: absent
+
+- name: Disable the rabbitmq_management plugin
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: disabled

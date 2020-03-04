@@ -86,7 +86,7 @@ hcloud_rdns:
             sample: my-server
         ip_address:
             description: The IP address that point to the DNS ptr
-            type: string
+            type: str
             returned: always
             sample: 123.123.123.123
         dns_ptr:

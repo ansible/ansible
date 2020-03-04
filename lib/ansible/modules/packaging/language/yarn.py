@@ -29,6 +29,7 @@ options:
     description:
       - The name of a node.js library to install
       - If omitted all packages in package.json are installed.
+      - To globally install from local node.js library. Prepend "file:" to the path of the node.js library.
     required: false
   path:
     description:
@@ -183,6 +184,8 @@ class Yarn(object):
 
         if kwargs['version'] and self.name is not None:
             self.name_version = self.name + '@' + str(self.version)
+        elif self.name is not None:
+            self.name_version = self.name
 
     def _exec(self, args, run_in_check_mode=False, check_rc=True):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):

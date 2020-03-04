@@ -1,0 +1,65 @@
+---
+- debug:
+      msg: "START iosxr_lag_interfaces merged integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Merge the provided configuration with the exisiting running configuration
+      iosxr_lag_interfaces: &merged
+        config:
+          - name: Bundle-Ether10
+            mode: active
+            members:
+              - member: GigabitEthernet0/0/0/0
+                mode: inherit
+
+              - member: GigabitEthernet0/0/0/1
+                mode: passive
+            load_balancing_hash: src-ip
+            links:
+              max_active: 10
+              min_active: 2
+
+          - name: Bundle-Ether11
+            load_balancing_hash: dst-ip
+            members:
+              - member: GigabitEthernet0/0/0/8
+                mode: passive
+
+              - member: GigabitEthernet0/0/0/9
+                mode: passive
+        state: merged
+      register: result
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that: "{{ merged['before'] | symmetric_difference(result['before']) |length == 0 }}"
+  
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+  
+    - name: Assert that after dicts was correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['after']) |length == 0 }}"
+  
+    - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+      iosxr_lag_interfaces: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+          - "result.commands|length == 0"
+
+    - name: Assert that before dicts were correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
+
+  always:
+    - include_tasks: _remove_config.yaml

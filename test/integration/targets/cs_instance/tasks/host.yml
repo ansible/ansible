@@ -13,11 +13,12 @@
     state: stopped
 
 - name: setup zone facts
-  cs_zone_facts:
+  cs_zone_info:
     name: "{{ cs_common_zone_basic }}"
+  register: zone_info
 
 - name: setup find the host name
-  shell: cs listHosts type=routing zoneid="{{ cloudstack_zone.id }}"
+  shell: cs listHosts type=routing zoneid="{{ zone_info.zones[0].id }}"
   args:
     chdir: "{{ playbook_dir }}"
   register: host

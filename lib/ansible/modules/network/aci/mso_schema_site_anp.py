@@ -88,6 +88,7 @@ EXAMPLES = r'''
     schema: Schema1
     site: Site1
     template: Template1
+    anp: ANP1
     state: query
   delegate_to: localhost
   register: query_result
@@ -131,11 +132,11 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    site = module.params['site']
-    template = module.params['template']
-    anp = module.params['anp']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    site = module.params.get('site')
+    template = module.params.get('template')
+    anp = module.params.get('anp')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
@@ -145,13 +146,13 @@ def main():
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
     schema_path = 'schemas/{id}'.format(**schema_obj)
-    schema_id = schema_obj['id']
+    schema_id = schema_obj.get('id')
 
     # Get site
     site_id = mso.lookup_site(site)
 
     # Get site_idx
-    sites = [(s['siteId'], s['templateName']) for s in schema_obj['sites']]
+    sites = [(s.get('siteId'), s.get('templateName')) for s in schema_obj.get('sites')]
     if (site_id, template) not in sites:
         mso.fail_json(msg="Provided site/template '{0}-{1}' does not exist. Existing sites/templates: {2}".format(site, template, ', '.join(sites)))
 
@@ -162,16 +163,16 @@ def main():
 
     # Get ANP
     anp_ref = mso.anp_ref(schema_id=schema_id, template=template, anp=anp)
-    anps = [a['anpRef'] for a in schema_obj['sites'][site_idx]['anps']]
+    anps = [a.get('anpRef') for a in schema_obj.get('sites')[site_idx]['anps']]
 
     if anp is not None and anp_ref in anps:
         anp_idx = anps.index(anp_ref)
         anp_path = '/sites/{0}/anps/{1}'.format(site_template, anp)
-        mso.existing = schema_obj['sites'][site_idx]['anps'][anp_idx]
+        mso.existing = schema_obj.get('sites')[site_idx]['anps'][anp_idx]
 
     if state == 'query':
         if anp is None:
-            mso.existing = schema_obj['sites'][site_idx]['anps']
+            mso.existing = schema_obj.get('sites')[site_idx]['anps']
         elif not mso.existing:
             mso.fail_json(msg="ANP '{anp}' not found".format(anp=anp))
         mso.exit_json()

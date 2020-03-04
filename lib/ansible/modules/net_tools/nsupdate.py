@@ -24,7 +24,6 @@ module: nsupdate
 short_description: Manage DNS records.
 description:
     - Create, update and remove DNS records using DDNS updates
-    - DDNS works well with both bind and Microsoft DNS (see https://technet.microsoft.com/en-us/library/cc961412.aspx)
 version_added: "2.3"
 requirements:
   - dnspython
@@ -37,7 +36,7 @@ options:
         default: 'present'
     server:
         description:
-            - Apply DNS modification on this server.
+            - Apply DNS modification on this server, specified by IPv4 or IPv6 address.
         required: true
     port:
         description:
@@ -201,28 +200,6 @@ class RecordManager(object):
     def __init__(self, module):
         self.module = module
 
-        if module.params['zone'] is None:
-            if module.params['record'][-1] != '.':
-                self.module.fail_json(msg='record must be absolute when omitting zone parameter')
-
-            try:
-                self.zone = dns.resolver.zone_for_name(self.module.params['record']).to_text()
-            except (dns.exception.Timeout, dns.resolver.NoNameservers, dns.resolver.NoRootSOA) as e:
-                self.module.fail_json(msg='Zone resolver error (%s): %s' % (e.__class__.__name__, to_native(e)))
-
-            if self.zone is None:
-                self.module.fail_json(msg='Unable to find zone, dnspython returned None')
-        else:
-            self.zone = module.params['zone']
-
-            if self.zone[-1] != '.':
-                self.zone += '.'
-
-        if module.params['record'][-1] != '.':
-            self.fqdn = module.params['record'] + '.' + self.zone
-        else:
-            self.fqdn = module.params['record']
-
         if module.params['key_name']:
             try:
                 self.keyring = dns.tsigkeyring.from_text({
@@ -240,7 +217,22 @@ class RecordManager(object):
         else:
             self.algorithm = module.params['key_algorithm']
 
-        if self.module.params['type'].lower() == 'txt':
+        if module.params['zone'] is None:
+            if module.params['record'][-1] != '.':
+                self.module.fail_json(msg='record must be absolute when omitting zone parameter')
+            self.zone = self.lookup_zone()
+        else:
+            self.zone = module.params['zone']
+
+            if self.zone[-1] != '.':
+                self.zone += '.'
+
+        if module.params['record'][-1] != '.':
+            self.fqdn = module.params['record'] + '.' + self.zone
+        else:
+            self.fqdn = module.params['record']
+
+        if self.module.params['type'].lower() == 'txt' and self.module.params['value'] is not None:
             self.value = list(map(self.txt_helper, self.module.params['value']))
         else:
             self.value = self.module.params['value']
@@ -251,6 +243,35 @@ class RecordManager(object):
         if entry[0] == '"' and entry[-1] == '"':
             return entry
         return '"{text}"'.format(text=entry)
+
+    def lookup_zone(self):
+        name = dns.name.from_text(self.module.params['record'])
+        while True:
+            query = dns.message.make_query(name, dns.rdatatype.SOA)
+            if self.keyring:
+                query.use_tsig(keyring=self.keyring, algorithm=self.algorithm)
+            try:
+                if self.module.params['protocol'] == 'tcp':
+                    lookup = dns.query.tcp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+                else:
+                    lookup = dns.query.udp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            except (dns.tsig.PeerBadKey, dns.tsig.PeerBadSignature) as e:
+                self.module.fail_json(msg='TSIG update error (%s): %s' % (e.__class__.__name__, to_native(e)))
+            except (socket_error, dns.exception.Timeout) as e:
+                self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
+            if lookup.rcode() in [dns.rcode.SERVFAIL, dns.rcode.REFUSED]:
+                self.module.fail_json(msg='Zone lookup failure: \'%s\' will not respond to queries regarding \'%s\'.' % (
+                    self.module.params['server'], self.module.params['record']))
+            try:
+                zone = lookup.authority[0].name
+                if zone == name:
+                    return zone.to_text()
+            except IndexError:
+                pass
+            try:
+                name = name.parent()
+            except dns.name.NoParent:
+                self.module.fail_json(msg='Zone lookup of \'%s\' failed for unknown reason.' % (self.module.params['record']))
 
     def __do_update(self, update):
         response = None
@@ -383,14 +404,21 @@ class RecordManager(object):
 
     def ttl_changed(self):
         query = dns.message.make_query(self.fqdn, self.module.params['type'])
+        if self.keyring:
+            query.use_tsig(keyring=self.keyring, algorithm=self.algorithm)
 
         try:
             if self.module.params['protocol'] == 'tcp':
                 lookup = dns.query.tcp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
             else:
                 lookup = dns.query.udp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+        except (dns.tsig.PeerBadKey, dns.tsig.PeerBadSignature) as e:
+            self.module.fail_json(msg='TSIG update error (%s): %s' % (e.__class__.__name__, to_native(e)))
         except (socket_error, dns.exception.Timeout) as e:
             self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
+
+        if lookup.rcode() != dns.rcode.NOERROR:
+            self.module.fail_json(msg='Failed to lookup TTL of existing matching record.')
 
         current_ttl = lookup.answer[0].ttl
         return current_ttl != self.module.params['ttl']

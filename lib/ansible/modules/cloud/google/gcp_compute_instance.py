@@ -33,7 +33,7 @@ module: gcp_compute_instance
 description:
 - An instance is a virtual machine (VM) hosted on Google's infrastructure.
 short_description: Creates a GCP Instance
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -57,6 +57,12 @@ options:
     type: bool
     aliases:
     - ip_forward
+  deletion_protection:
+    description:
+    - Whether the resource should be protected against deletion.
+    required: false
+    type: bool
+    version_added: '2.9'
   disks:
     description:
     - An array of disks that are associated with the instances that are created from
@@ -217,12 +223,21 @@ options:
         - Full or partial URL of the accelerator type resource to expose to this instance.
         required: false
         type: str
+  hostname:
+    description:
+    - The hostname of the instance to be created. The specified hostname must be RFC1035
+      compliant. If hostname is not specified, the default hostname is [INSTANCE_NAME].c.[PROJECT_ID].internal
+      when using the global DNS, and [INSTANCE_NAME].[ZONE].c.[PROJECT_ID].internal
+      when using zonal DNS.
+    required: false
+    type: str
+    version_added: '2.9'
   labels:
     description:
     - Labels to apply to this instance. A list of key->value pairs.
     required: false
     type: dict
-    version_added: 2.9
+    version_added: '2.9'
   metadata:
     description:
     - The metadata key/value pairs to assign to instances that are created from this
@@ -294,6 +309,32 @@ options:
             - 'Some valid choices include: "ONE_TO_ONE_NAT"'
             required: true
             type: str
+          set_public_ptr:
+            description:
+            - Specifies whether a public DNS PTR record should be created to map the
+              external IP address of the instance to a DNS domain name.
+            required: false
+            type: bool
+            version_added: '2.10'
+          public_ptr_domain_name:
+            description:
+            - The DNS domain name for the public PTR record. You can set this field
+              only if the setPublicPtr field is enabled.
+            required: false
+            type: str
+            version_added: '2.10'
+          network_tier:
+            description:
+            - This signifies the networking tier used for configuring this access
+              configuration. If an AccessConfig is specified without a valid external
+              IP address, an ephemeral IP will be created with this networkTier. If
+              an AccessConfig with a valid external IP address is specified, it must
+              match that of the networkTier associated with the Address resource owning
+              that IP.
+            - 'Some valid choices include: "PREMIUM", "STANDARD"'
+            required: false
+            type: str
+            version_added: '2.10'
       alias_ip_ranges:
         description:
         - An array of alias IP ranges for this network interface. Can only be specified
@@ -395,6 +436,28 @@ options:
         - The list of scopes to be made available for this service account.
         required: false
         type: list
+  shielded_instance_config:
+    description:
+    - Configuration for various parameters related to shielded instances.
+    required: false
+    type: dict
+    version_added: '2.9'
+    suboptions:
+      enable_secure_boot:
+        description:
+        - Defines whether the instance has Secure Boot enabled.
+        required: false
+        type: bool
+      enable_vtpm:
+        description:
+        - Defines whether the instance has the vTPM enabled.
+        required: false
+        type: bool
+      enable_integrity_monitoring:
+        description:
+        - Defines whether the instance has integrity monitoring enabled.
+        required: false
+        type: bool
   status:
     description:
     - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
@@ -405,7 +468,7 @@ options:
       "SUSPENDING", "SUSPENDED", "TERMINATED"'
     required: false
     type: str
-    version_added: 2.8
+    version_added: '2.8'
   tags:
     description:
     - A list of tags to apply to this instance. Tags are used to identify valid sources
@@ -435,7 +498,43 @@ options:
     - A reference to the zone where the machine resides.
     required: true
     type: str
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -478,6 +577,11 @@ EXAMPLES = '''
     - auto_delete: 'true'
       boot: 'true'
       source: "{{ disk }}"
+    - auto_delete: 'true'
+      interface: NVME
+      type: SCRATCH
+      initialize_params:
+        disk_type: local-ssd
     metadata:
       startup-script-url: gs:://graphite-playground/bootstrap.sh
       cost-center: '12345'
@@ -513,6 +617,11 @@ creationTimestamp:
   - Creation timestamp in RFC3339 text format.
   returned: success
   type: str
+deletionProtection:
+  description:
+  - Whether the resource should be protected against deletion.
+  returned: success
+  type: bool
 disks:
   description:
   - An array of disks that are associated with the instances that are created from
@@ -674,6 +783,14 @@ guestAccelerators:
       - Full or partial URL of the accelerator type resource to expose to this instance.
       returned: success
       type: str
+hostname:
+  description:
+  - The hostname of the instance to be created. The specified hostname must be RFC1035
+    compliant. If hostname is not specified, the default hostname is [INSTANCE_NAME].c.[PROJECT_ID].internal
+    when using the global DNS, and [INSTANCE_NAME].[ZONE].c.[PROJECT_ID].internal
+    when using zonal DNS.
+  returned: success
+  type: str
 id:
   description:
   - The unique identifier for the resource. This identifier is defined by the server.
@@ -753,6 +870,27 @@ networkInterfaces:
         type:
           description:
           - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
+          returned: success
+          type: str
+        setPublicPtr:
+          description:
+          - Specifies whether a public DNS PTR record should be created to map the
+            external IP address of the instance to a DNS domain name.
+          returned: success
+          type: bool
+        publicPtrDomainName:
+          description:
+          - The DNS domain name for the public PTR record. You can set this field
+            only if the setPublicPtr field is enabled.
+          returned: success
+          type: str
+        networkTier:
+          description:
+          - This signifies the networking tier used for configuring this access configuration.
+            If an AccessConfig is specified without a valid external IP address, an
+            ephemeral IP will be created with this networkTier. If an AccessConfig
+            with a valid external IP address is specified, it must match that of the
+            networkTier associated with the Address resource owning that IP.
           returned: success
           type: str
     aliasIpRanges:
@@ -851,6 +989,27 @@ serviceAccounts:
       - The list of scopes to be made available for this service account.
       returned: success
       type: list
+shieldedInstanceConfig:
+  description:
+  - Configuration for various parameters related to shielded instances.
+  returned: success
+  type: complex
+  contains:
+    enableSecureBoot:
+      description:
+      - Defines whether the instance has Secure Boot enabled.
+      returned: success
+      type: bool
+    enableVtpm:
+      description:
+      - Defines whether the instance has the vTPM enabled.
+      returned: success
+      type: bool
+    enableIntegrityMonitoring:
+      description:
+      - Defines whether the instance has integrity monitoring enabled.
+      returned: success
+      type: bool
 status:
   description:
   - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
@@ -915,6 +1074,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             can_ip_forward=dict(type='bool', aliases=['ip_forward']),
+            deletion_protection=dict(type='bool'),
             disks=dict(
                 type='list',
                 elements='dict',
@@ -941,6 +1101,7 @@ def main():
                 ),
             ),
             guest_accelerators=dict(type='list', elements='dict', options=dict(accelerator_count=dict(type='int'), accelerator_type=dict(type='str'))),
+            hostname=dict(type='str'),
             labels=dict(type='dict'),
             metadata=dict(type='dict'),
             machine_type=dict(type='str'),
@@ -953,7 +1114,14 @@ def main():
                     access_configs=dict(
                         type='list',
                         elements='dict',
-                        options=dict(name=dict(required=True, type='str'), nat_ip=dict(type='dict'), type=dict(required=True, type='str')),
+                        options=dict(
+                            name=dict(required=True, type='str'),
+                            nat_ip=dict(type='dict'),
+                            type=dict(required=True, type='str'),
+                            set_public_ptr=dict(type='bool'),
+                            public_ptr_domain_name=dict(type='str'),
+                            network_tier=dict(type='str'),
+                        ),
                     ),
                     alias_ip_ranges=dict(type='list', elements='dict', options=dict(ip_cidr_range=dict(type='str'), subnetwork_range_name=dict(type='str'))),
                     network=dict(type='dict'),
@@ -965,6 +1133,9 @@ def main():
                 type='dict', options=dict(automatic_restart=dict(type='bool'), on_host_maintenance=dict(type='str'), preemptible=dict(type='bool'))
             ),
             service_accounts=dict(type='list', elements='dict', options=dict(email=dict(type='str'), scopes=dict(type='list', elements='str'))),
+            shielded_instance_config=dict(
+                type='dict', options=dict(enable_secure_boot=dict(type='bool'), enable_vtpm=dict(type='bool'), enable_integrity_monitoring=dict(type='bool'))
+            ),
             status=dict(type='str'),
             tags=dict(type='dict', options=dict(fingerprint=dict(type='str'), items=dict(type='list', elements='str'))),
             zone=dict(required=True, type='str'),
@@ -1018,10 +1189,14 @@ def update(module, link, kind, fetch):
 
 
 def update_fields(module, request, response):
+    if response.get('deletionProtection') != request.get('deletionProtection'):
+        deletion_protection_update(module, request, response)
     if response.get('labels') != request.get('labels'):
         label_fingerprint_update(module, request, response)
     if response.get('machineType') != request.get('machineType'):
         machine_type_update(module, request, response)
+    if response.get('shieldedInstanceConfig') != request.get('shieldedInstanceConfig'):
+        shielded_instance_config_update(module, request, response)
 
 
 def label_fingerprint_update(module, request, response):
@@ -1049,8 +1224,10 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#instance',
         u'canIpForward': module.params.get('can_ip_forward'),
+        u'deletionProtection': module.params.get('deletion_protection'),
         u'disks': InstanceDisksArray(module.params.get('disks', []), module).to_request(),
         u'guestAccelerators': InstanceGuestacceleratorsArray(module.params.get('guest_accelerators', []), module).to_request(),
+        u'hostname': module.params.get('hostname'),
         u'labels': module.params.get('labels'),
         u'metadata': module.params.get('metadata'),
         u'machineType': machine_type_selflink(module.params.get('machine_type'), module.params),
@@ -1059,6 +1236,7 @@ def resource_to_request(module):
         u'networkInterfaces': InstanceNetworkinterfacesArray(module.params.get('network_interfaces', []), module).to_request(),
         u'scheduling': InstanceScheduling(module.params.get('scheduling', {}), module).to_request(),
         u'serviceAccounts': InstanceServiceaccountsArray(module.params.get('service_accounts', []), module).to_request(),
+        u'shieldedInstanceConfig': InstanceShieldedinstanceconfig(module.params.get('shielded_instance_config', {}), module).to_request(),
         u'status': module.params.get('status'),
         u'tags': InstanceTags(module.params.get('tags', {}), module).to_request(),
     }
@@ -1133,8 +1311,10 @@ def response_to_hash(module, response):
         u'canIpForward': response.get(u'canIpForward'),
         u'cpuPlatform': response.get(u'cpuPlatform'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
+        u'deletionProtection': response.get(u'deletionProtection'),
         u'disks': InstanceDisksArray(module.params.get('disks', []), module).to_request(),
         u'guestAccelerators': InstanceGuestacceleratorsArray(response.get(u'guestAccelerators', []), module).from_response(),
+        u'hostname': response.get(u'hostname'),
         u'id': response.get(u'id'),
         u'labelFingerprint': response.get(u'labelFingerprint'),
         u'labels': response.get(u'labels'),
@@ -1145,6 +1325,7 @@ def response_to_hash(module, response):
         u'networkInterfaces': InstanceNetworkinterfacesArray(response.get(u'networkInterfaces', []), module).from_response(),
         u'scheduling': InstanceScheduling(response.get(u'scheduling', {}), module).from_response(),
         u'serviceAccounts': InstanceServiceaccountsArray(response.get(u'serviceAccounts', []), module).from_response(),
+        u'shieldedInstanceConfig': InstanceShieldedinstanceconfig(response.get(u'shieldedInstanceConfig', {}), module).from_response(),
         u'status': response.get(u'status'),
         u'statusMessage': response.get(u'statusMessage'),
         u'tags': InstanceTags(response.get(u'tags', {}), module).from_response(),
@@ -1184,7 +1365,11 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
-    return decode_response(fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instance'), module)
+    response = fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instance')
+    if response:
+        return decode_response(response, module)
+    else:
+        return {}
 
 
 def wait_for_completion(status, op_result, module):
@@ -1280,6 +1465,33 @@ class InstancePower(object):
 
     def _stop_url(self):
         return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances/{name}/stop".format(**self.module.params)
+
+
+def deletion_protection_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(
+            [
+                "https://www.googleapis.com/compute/v1/",
+                "projects/{project}/zones/{zone}/instances/{name}/setDeletionProtection?deletionProtection={deletionProtection}",
+            ]
+        ).format(**module.params),
+        {},
+    )
+
+
+def shielded_instance_config_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/zones/{zone}/instances/{name}/updateShieldedInstanceConfig"]).format(
+            **module.params
+        ),
+        {
+            u'enableSecureBoot': navigate_hash(module.params, ['shielded_instance_config', 'enable_secure_boot']),
+            u'enableVtpm': navigate_hash(module.params, ['shielded_instance_config', 'enable_vtpm']),
+            u'enableIntegrityMonitoring': navigate_hash(module.params, ['shielded_instance_config', 'enable_integrity_monitoring']),
+        },
+    )
 
 
 class InstanceDisksArray(object):
@@ -1488,11 +1700,27 @@ class InstanceAccessconfigsArray(object):
 
     def _request_for_item(self, item):
         return remove_nones_from_dict(
-            {u'name': item.get('name'), u'natIP': replace_resource_dict(item.get(u'nat_ip', {}), 'address'), u'type': item.get('type')}
+            {
+                u'name': item.get('name'),
+                u'natIP': replace_resource_dict(item.get(u'nat_ip', {}), 'address'),
+                u'type': item.get('type'),
+                u'setPublicPtr': item.get('set_public_ptr'),
+                u'publicPtrDomainName': item.get('public_ptr_domain_name'),
+                u'networkTier': item.get('network_tier'),
+            }
         )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({u'name': item.get(u'name'), u'natIP': item.get(u'natIP'), u'type': item.get(u'type')})
+        return remove_nones_from_dict(
+            {
+                u'name': item.get(u'name'),
+                u'natIP': item.get(u'natIP'),
+                u'type': item.get(u'type'),
+                u'setPublicPtr': item.get(u'setPublicPtr'),
+                u'publicPtrDomainName': item.get(u'publicPtrDomainName'),
+                u'networkTier': item.get(u'networkTier'),
+            }
+        )
 
 
 class InstanceAliasiprangesArray(object):
@@ -1574,6 +1802,33 @@ class InstanceServiceaccountsArray(object):
 
     def _response_from_item(self, item):
         return remove_nones_from_dict({u'email': item.get(u'email'), u'scopes': item.get(u'scopes')})
+
+
+class InstanceShieldedinstanceconfig(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {
+                u'enableSecureBoot': self.request.get('enable_secure_boot'),
+                u'enableVtpm': self.request.get('enable_vtpm'),
+                u'enableIntegrityMonitoring': self.request.get('enable_integrity_monitoring'),
+            }
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {
+                u'enableSecureBoot': self.request.get(u'enableSecureBoot'),
+                u'enableVtpm': self.request.get(u'enableVtpm'),
+                u'enableIntegrityMonitoring': self.request.get(u'enableIntegrityMonitoring'),
+            }
+        )
 
 
 class InstanceTags(object):

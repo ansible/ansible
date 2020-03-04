@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -30,50 +33,95 @@ author: "Rob White (@wimnat)"
 options:
   access_logs_enabled:
     description:
-      - "Whether or not to enable access logs. When true, I(access_logs_s3_bucket) must be set."
-    required: false
+      - Whether or not to enable access logs.
+      - When set, I(access_logs_s3_bucket) must also be set.
     type: bool
   access_logs_s3_bucket:
     description:
       - The name of the S3 bucket for the access logs.
-      - Required if access logs in Amazon S3 are enabled.
       - The bucket must exist in the same
         region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket.
-    required: false
+      - Required if access logs in Amazon S3 are enabled.
+      - When set, I(access_logs_enabled) must also be set.
+    type: str
   access_logs_s3_prefix:
     description:
       - The prefix for the log location in the S3 bucket.
       - If you don't specify a prefix, the access logs are stored in the root of the bucket.
       - Cannot begin or end with a slash.
-    required: false
+    type: str
   deletion_protection:
     description:
       - Indicates whether deletion protection for the ELB is enabled.
-    required: false
     default: no
     type: bool
   http2:
     description:
       - Indicates whether to enable HTTP2 routing.
-    required: false
     default: no
     type: bool
     version_added: 2.6
   idle_timeout:
     description:
       - The number of seconds to wait before an idle connection is closed.
-    required: false
-    default: 60
+    type: int
   listeners:
     description:
       - A list of dicts containing listeners to attach to the ELB. See examples for detail of the dict required. Note that listener keys
         are CamelCased.
-    required: false
+    type: list
+    suboptions:
+        Port:
+            description: The port on which the load balancer is listening.
+            required: true
+            type: int
+        Protocol:
+            description: The protocol for connections from clients to the load balancer.
+            required: true
+            type: str
+        Certificates:
+            description: The SSL server certificate.
+            type: list
+            suboptions:
+                CertificateArn:
+                    description: The Amazon Resource Name (ARN) of the certificate.
+                    type: str
+        SslPolicy:
+            description: The security policy that defines which ciphers and protocols are supported.
+            type: str
+        DefaultActions:
+            description: The default actions for the listener.
+            required: true
+            type: list
+            suboptions:
+                Type:
+                    description: The type of action.
+                    type: str
+                TargetGroupArn:
+                    description: The Amazon Resource Name (ARN) of the target group.
+                    type: str
+        Rules:
+            type: list
+            description:
+              - A list of ALB Listener Rules.
+              - 'For the complete documentation of possible Conditions and Actions please see the boto3 documentation:'
+              - 'https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.create_rule'
+            suboptions:
+                Conditions:
+                    type: list
+                    description: Conditions which must be met for the actions to be applied.
+                Priority:
+                    type: int
+                    description: The rule priority.
+                Actions:
+                    type: list
+                    description: Actions to apply if all of the rule's conditions are met.
   name:
     description:
       - The name of the load balancer. This name must be unique within your AWS account, can have a maximum of 32 characters, must contain only alphanumeric
         characters or hyphens, and must not begin or end with a hyphen.
     required: true
+    type: str
   purge_listeners:
     description:
       - If yes, existing listeners will be purged from the ELB to match exactly what is defined by I(listeners) parameter. If the I(listeners) parameter is
@@ -84,34 +132,36 @@ options:
     description:
       - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
         tags will not be modified.
-    required: false
     default: yes
     type: bool
   subnets:
     description:
       - A list of the IDs of the subnets to attach to the load balancer. You can specify only one subnet per Availability Zone. You must specify subnets from
-        at least two Availability Zones. Required if state=present.
-    required: false
+        at least two Availability Zones.
+      - Required if I(state=present).
+    type: list
   security_groups:
     description:
-      - A list of the names or IDs of the security groups to assign to the load balancer. Required if state=present.
-    required: false
+      - A list of the names or IDs of the security groups to assign to the load balancer.
+      - Required if I(state=present).
     default: []
+    type: list
   scheme:
     description:
       - Internet-facing or internal load balancer. An ELB scheme can not be modified after creation.
-    required: false
     default: internet-facing
     choices: [ 'internet-facing', 'internal' ]
+    type: str
   state:
     description:
       - Create or destroy the load balancer.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   tags:
     description:
       - A dictionary of one or more tags to assign to the load balancer.
-    required: false
+    type: dict
   wait:
     description:
       - Wait for the load balancer to have a state of 'active' before completing. A status check is
@@ -123,6 +173,7 @@ options:
     description:
       - The time in seconds to use in conjunction with I(wait).
     version_added: 2.6
+    type: int
   purge_rules:
     description:
       - When set to no, keep the existing load balancer rules in place. Will modify and add, but will not delete.
@@ -237,6 +288,15 @@ EXAMPLES = '''
                   ContentType: "text/plain"
                   MessageBody: "This is the page you're looking for"
                   StatusCode: "200"
+          - Conditions:
+              - Field: host-header
+                Values:
+                  - "hostname.domain.com"
+                  - "alternate.domain.com"
+            Priority: '4'
+            Actions:
+              - TargetGroupName: test-target-group
+                Type: forward
     state: present
 
 # Remove an ELB
@@ -290,7 +350,7 @@ dns_name:
 idle_timeout_timeout_seconds:
     description: The idle timeout value, in seconds.
     returned: when state is present
-    type: str
+    type: int
     sample: 60
 ip_address_type:
     description:  The type of IP addresses used by the subnets for the load balancer.
@@ -402,8 +462,7 @@ vpc_id:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, ec2_argument_spec, \
-    boto3_tag_list_to_ansible_dict, compare_aws_tags, HAS_BOTO3
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict, compare_aws_tags
 
 from ansible.module_utils.aws.elbv2 import ApplicationLoadBalancer, ELBListeners, ELBListener, ELBListenerRules, ELBListenerRule
 from ansible.module_utils.aws.elb_utils import get_elb_listener_rules
@@ -531,38 +590,35 @@ def delete_elb(elb_obj):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            access_logs_enabled=dict(type='bool'),
-            access_logs_s3_bucket=dict(type='str'),
-            access_logs_s3_prefix=dict(type='str'),
-            deletion_protection=dict(type='bool'),
-            http2=dict(type='bool'),
-            idle_timeout=dict(type='int'),
-            listeners=dict(type='list',
-                           elements='dict',
-                           options=dict(
-                               Protocol=dict(type='str', required=True),
-                               Port=dict(type='int', required=True),
-                               SslPolicy=dict(type='str'),
-                               Certificates=dict(type='list'),
-                               DefaultActions=dict(type='list', required=True),
-                               Rules=dict(type='list')
-                           )
-                           ),
-            name=dict(required=True, type='str'),
-            purge_listeners=dict(default=True, type='bool'),
-            purge_tags=dict(default=True, type='bool'),
-            subnets=dict(type='list'),
-            security_groups=dict(type='list'),
-            scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
-            state=dict(choices=['present', 'absent'], default='present'),
-            tags=dict(type='dict'),
-            wait_timeout=dict(type='int'),
-            wait=dict(default=False, type='bool'),
-            purge_rules=dict(default=True, type='bool')
-        )
+    argument_spec = dict(
+        access_logs_enabled=dict(type='bool'),
+        access_logs_s3_bucket=dict(type='str'),
+        access_logs_s3_prefix=dict(type='str'),
+        deletion_protection=dict(type='bool'),
+        http2=dict(type='bool'),
+        idle_timeout=dict(type='int'),
+        listeners=dict(type='list',
+                       elements='dict',
+                       options=dict(
+                           Protocol=dict(type='str', required=True),
+                           Port=dict(type='int', required=True),
+                           SslPolicy=dict(type='str'),
+                           Certificates=dict(type='list'),
+                           DefaultActions=dict(type='list', required=True),
+                           Rules=dict(type='list')
+                       )
+                       ),
+        name=dict(required=True, type='str'),
+        purge_listeners=dict(default=True, type='bool'),
+        purge_tags=dict(default=True, type='bool'),
+        subnets=dict(type='list'),
+        security_groups=dict(type='list'),
+        scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
+        state=dict(choices=['present', 'absent'], default='present'),
+        tags=dict(type='dict'),
+        wait_timeout=dict(type='int'),
+        wait=dict(default=False, type='bool'),
+        purge_rules=dict(default=True, type='bool')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -570,7 +626,7 @@ def main():
                                   ('state', 'present', ['subnets', 'security_groups'])
                               ],
                               required_together=[
-                                  ['access_logs_enabled', 'access_logs_s3_bucket', 'access_logs_s3_prefix']
+                                  ['access_logs_enabled', 'access_logs_s3_bucket']
                               ]
                               )
 

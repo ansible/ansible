@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -31,6 +34,8 @@ author: QijunPan (@QijunPan)
 notes:
     - Either C(sysmtu) param is required or C(interface) AND C(mtu) params are req'd.
     - C(state=absent) unconfigures a given MTU if that value is currently present.
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     interface:
         description:
@@ -46,7 +51,7 @@ options:
               and 1536 to 12288 for ToR switches.
     jumbo_min:
         description:
-            - Non-jumbo frame size threshod. The default value is 1518.
+            - Non-jumbo frame size threshold. The default value is 1518.
               The value is an integer that ranges from 1518 to jumbo_max, in bytes.
     state:
         description:
@@ -534,6 +539,8 @@ class Mtu(object):
             else:
                 self.end_state[
                     "jumboframe"] = "jumboframe enable %s %s" % (self.jbf_max, 1518)
+        if self.end_state == self.existing:
+            self.changed = False
 
     def work(self):
         """worker"""

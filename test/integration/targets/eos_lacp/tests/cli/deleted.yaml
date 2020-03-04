@@ -1,0 +1,28 @@
+---
+- include_tasks: reset_config.yml
+
+- eos_facts:
+    gather_network_resources: lacp
+  become: yes
+
+- name: Returns lacp to default parameters
+  eos_lacp:
+    state: deleted
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lacp == result.before"
+
+- eos_facts:
+    gather_network_resources: lacp
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lacp == result.after"
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lacp == {}"

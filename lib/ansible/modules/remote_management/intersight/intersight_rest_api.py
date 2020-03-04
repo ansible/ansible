@@ -27,7 +27,7 @@ options:
     required: yes
   query_params:
     description:
-    - Query parameters for the Intersight API query languange.
+    - Query parameters for the Intersight API query language.
     type: dict
   update_method:
     description:
@@ -38,7 +38,7 @@ options:
     default: patch
   api_body:
     description:
-    - The paylod for API requests used to modify resources.
+    - The payload for API requests used to modify resources.
     type: dict
   state:
     description:

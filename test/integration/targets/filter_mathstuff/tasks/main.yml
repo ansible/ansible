@@ -1,0 +1,51 @@
+- name: Verify human_readable
+  tags: "human_readable"
+  assert:
+    that:
+      - '"1.00 Bytes" == 1|human_readable'
+      - '"1.00 bits" == 1|human_readable(isbits=True)'
+      - '"10.00 KB" == 10240|human_readable'
+      - '"97.66 MB" == 102400000|human_readable'
+      - '"0.10 GB" == 102400000|human_readable(unit="G")'
+      - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
+
+- name: Verify human_to_bytes
+  tags: "human_to_bytes"
+  assert:
+    that:
+      - "{{'0'|human_to_bytes}}        == 0"
+      - "{{'0.1'|human_to_bytes}}      == 0"
+      - "{{'0.9'|human_to_bytes}}      == 1"
+      - "{{'1'|human_to_bytes}}        == 1"
+      - "{{'10.00 KB'|human_to_bytes}} == 10240"
+      - "{{   '11 MB'|human_to_bytes}} == 11534336"
+      - "{{  '1.1 GB'|human_to_bytes}} == 1181116006"
+      - "{{'10.00 Kb'|human_to_bytes(isbits=True)}} == 10240"
+
+- name: Verify human_to_bytes (bad string)
+  set_fact:
+    bad_string: "{{ '10.00 foo' | human_to_bytes }}"
+  ignore_errors: yes
+  tags: human_to_bytes
+  register: _human_bytes_test
+
+- name: Verify human_to_bytes (bad string)
+  tags: human_to_bytes
+  assert:
+    that: "{{_human_bytes_test.failed}}"
+
+- name: Verify that union can be chained
+  vars:
+    unions: '{{ [1,2,3]|union([4,5])|union([6,7]) }}'
+  assert:
+    that:
+      - "unions|type_debug == 'list'"
+      - "unions|length == 7"
+
+- name: Test union with unhashable item
+  vars:
+    unions: '{{ [1,2,3]|union([{}]) }}'
+  assert:
+    that:
+      - "unions|type_debug == 'list'"
+      - "unions|length == 4"

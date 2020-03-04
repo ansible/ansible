@@ -1,0 +1,13 @@
+[mysqld]
+server_id           = 2
+port                = {{ standby_port }}
+socket              = /var/run/mysqld/mysqld_slave.sock
+pid-file            = /var/run/mysqld/mysqld_slave.pid
+datadir             = {{ standby_datadir }}
+log_bin             = {{ standby_logdir }}/mysql-bin.log
+relay-log           = {{ standby_logdir }}/relay-bin
+relay-log-index     = {{ standby_logdir }}/relay-bin.index
+master-info-file    = {{ standby_logdir }}/master.info
+relay-log-info-file = {{ standby_logdir }}/relay-log.info
+master-info-repository = TABLE
+relay-log-info-repository = TABLE

@@ -61,6 +61,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 notes:
 - This module does not manage Contract Subjects, see M(aci_contract_subject) to do this.
@@ -243,6 +248,7 @@ def main():
                            'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),  # No default provided on purpose
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -254,13 +260,14 @@ def main():
         ],
     )
 
-    contract = module.params['contract']
-    description = module.params['description']
-    scope = module.params['scope']
-    priority = module.params['priority']
-    dscp = module.params['dscp']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    contract = module.params.get('contract')
+    description = module.params.get('description')
+    scope = module.params.get('scope')
+    priority = module.params.get('priority')
+    dscp = module.params.get('dscp')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
+    name_alias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -289,6 +296,7 @@ def main():
                 scope=scope,
                 prio=priority,
                 targetDscp=dscp,
+                nameAlias=name_alias,
             ),
         )
 

@@ -76,7 +76,7 @@ options:
     autoscale_launch_config_ref:
         description:
             - If configured then avi will trigger orchestration of pool server creation and deletion.
-            - It is only supported for container clouds like mesos, opensift, kubernates, docker etc.
+            - It is only supported for container clouds like mesos, openshift, kubernetes, docker, etc.
             - It is a reference to an object of type autoscalelaunchconfig.
     autoscale_networks:
         description:
@@ -105,7 +105,7 @@ options:
             - It is a reference to an object of type cloud.
     conn_pool_properties:
         description:
-            - Connnection pool properties.
+            - Connection pool properties.
             - Field introduced in 18.2.1.
         version_added: "2.9"
     connection_ramp_duration:
@@ -213,7 +213,7 @@ options:
             - Http header name to be used for the hash key.
     lb_algorithm_core_nonaffinity:
         description:
-            - Degree of non-affinity for core afffinity based server selection.
+            - Degree of non-affinity for core affinity based server selection.
             - Allowed values are 1-65535.
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
@@ -367,7 +367,7 @@ options:
         description:
             - Virtual routing context that the pool is bound to.
             - This is used to provide the isolation of the set of networks the pool is attached to.
-            - The pool inherits the virtual routing conext of the virtual service, and this field is used only internally, and is set by pb-transform.
+            - The pool inherits the virtual routing context of the virtual service, and this field is used only internally, and is set by pb-transform.
             - It is a reference to an object of type vrfcontext.
 extends_documentation_fragment:
     - avi

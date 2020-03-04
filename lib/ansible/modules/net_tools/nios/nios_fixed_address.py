@@ -19,7 +19,7 @@ short_description: Configure Infoblox NIOS DHCP Fixed Address
 description:
   - A fixed address is a specific IP address that a DHCP server
     always assigns when a lease request comes from a particular
-    MAC address of the clien.
+    MAC address of the client.
   - Supports both IPV4 and IPV6 internet protocols
 requirements:
   - infoblox-client
@@ -41,7 +41,6 @@ options:
   network:
     description:
       - Specifies the network range in which ipaddr exists.
-    required: true
     aliases:
       - network
   network_view:
@@ -180,15 +179,23 @@ def options(module):
             vendor_class: <value>
         }
     It will remove any options that are set to None since WAPI will error on
-    that condition.  It will also verify that either `name` or `num` is
+    that condition.  The use_option field only applies
+    to special options that are displayed separately from other options and
+    have a use flag. This function removes the use_option flag from all
+    other options. It will also verify that either `name` or `num` is
     set in the structure but does not validate the values are equal.
     The remainder of the value validation is performed by WAPI
     '''
+    special_options = ['routers', 'router-templates', 'domain-name-servers',
+                       'domain-name', 'broadcast-address', 'broadcast-address-offset',
+                       'dhcp-lease-time', 'dhcp6.name-servers']
     options = list()
     for item in module.params['options']:
         opt = dict([(k, v) for k, v in iteritems(item) if v is not None])
         if 'name' not in opt and 'num' not in opt:
             module.fail_json(msg='one of `name` or `num` is required for option value')
+        if opt['name'] not in special_options:
+            del opt['use_option']
         options.append(opt)
     return options
 
@@ -226,7 +233,7 @@ def main():
         name=dict(required=True),
         ipaddr=dict(required=True, aliases=['ipaddr'], ib_req=True),
         mac=dict(required=True, aliases=['mac'], ib_req=True),
-        network=dict(required=True, aliases=['network'], ib_req=True),
+        network=dict(required=True, aliases=['network']),
         network_view=dict(default='default', aliases=['network_view']),
 
         options=dict(type='list', elements='dict', options=option_spec, transform=options),

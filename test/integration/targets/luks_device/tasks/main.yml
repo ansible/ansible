@@ -15,6 +15,9 @@
   register: cryptfile_device_output
 - set_fact:
     cryptfile_device: "{{ cryptfile_device_output.stdout_lines[1] }}"
+    cryptfile_passphrase1: "uNiJ9vKG2mUOEWDiQVuBHJlfMHE"
+    cryptfile_passphrase2: "HW4Ak2HtE2vvne0qjJMPTtmbV4M"
+    cryptfile_passphrase3: "qQJqsjabO9pItV792k90VvX84MM"
 - block:
   - include_tasks: run-test.yml
     with_fileglob:

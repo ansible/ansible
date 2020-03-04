@@ -157,16 +157,16 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    template = module.params['template']
-    anp = module.params['anp']
-    epg = module.params['epg']
-    subnet = module.params['subnet']
-    description = module.params['description']
-    scope = module.params['scope']
-    shared = module.params['shared']
-    no_default_gateway = module.params['no_default_gateway']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    template = module.params.get('template')
+    anp = module.params.get('anp')
+    epg = module.params.get('epg')
+    subnet = module.params.get('subnet')
+    description = module.params.get('description')
+    scope = module.params.get('scope')
+    shared = module.params.get('shared')
+    no_default_gateway = module.params.get('no_default_gateway')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
@@ -178,35 +178,35 @@ def main():
     schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
-    templates = [t['name'] for t in schema_obj['templates']]
+    templates = [t.get('name') for t in schema_obj.get('templates')]
     if template not in templates:
         mso.fail_json(msg="Provided template '{template}' does not exist. Existing templates: {templates}".format(template=template,
                                                                                                                   templates=', '.join(templates)))
     template_idx = templates.index(template)
 
     # Get ANP
-    anps = [a['name'] for a in schema_obj['templates'][template_idx]['anps']]
+    anps = [a.get('name') for a in schema_obj.get('templates')[template_idx]['anps']]
     if anp not in anps:
         mso.fail_json(msg="Provided anp '{anp}' does not exist. Existing anps: {anps}".format(anp=anp, anps=', '.join(anps)))
     anp_idx = anps.index(anp)
 
     # Get EPG
-    epgs = [e['name'] for e in schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs']]
+    epgs = [e.get('name') for e in schema_obj.get('templates')[template_idx]['anps'][anp_idx]['epgs']]
     if epg not in epgs:
         mso.fail_json(msg="Provided epg '{epg}' does not exist. Existing epgs: {epgs}".format(epg=epg, epgs=', '.join(epgs)))
     epg_idx = epgs.index(epg)
 
     # Get Subnet
-    subnets = [s['ip'] for s in schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['subnets']]
+    subnets = [s.get('ip') for s in schema_obj.get('templates')[template_idx]['anps'][anp_idx]['epgs'][epg_idx]['subnets']]
     if subnet in subnets:
         subnet_idx = subnets.index(subnet)
         # FIXME: Changes based on index are DANGEROUS
         subnet_path = '/templates/{0}/anps/{1}/epgs/{2}/subnets/{3}'.format(template, anp, epg, subnet_idx)
-        mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['subnets'][subnet_idx]
+        mso.existing = schema_obj.get('templates')[template_idx]['anps'][anp_idx]['epgs'][epg_idx]['subnets'][subnet_idx]
 
     if state == 'query':
         if subnet is None:
-            mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['subnets']
+            mso.existing = schema_obj.get('templates')[template_idx]['anps'][anp_idx]['epgs'][epg_idx]['subnets']
         elif not mso.existing:
             mso.fail_json(msg="Subnet '{subnet}' not found".format(subnet=subnet))
         mso.exit_json()

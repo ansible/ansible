@@ -89,7 +89,7 @@
   wait_for:
     path: "/proc/{{ item }}/status"
     state: absent
-  with_items: "{{ pids_of_mongod }}"
+  with_items: "{{ pids_of_mongod.pids }}"
 
 - set_fact:
     current_replicaset: "{{ mongodb_replicaset1 }}"
@@ -493,4 +493,48 @@
 #      - "'Name or service not known' in host_does_not_exist.module_stderr"
 
 # Final clean up to prevent "directory not empty" error
+
+# Test invalid arbiter handling
+# Test with arbiter_at_index
+- name: Test invalid arbiter handling 1
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    arbiter_at_index: 0
+    replica_set: "{{ mongodb_replicaset4 }}"
+    members:
+      - localhost:3001
+      - localhost:3002
+      - localhost:3003
+      - localhost:3004
+  ignore_errors: yes
+  register: invalid_num
+
+- assert:
+    that:
+      - "'MongoDB Replicaset validation failed. Invalid number of replicaset members.' == invalid_num.msg"
+
+- name: Test invalid arbiter handling 2
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    arbiter_at_index: 4
+    replica_set: "{{ mongodb_replicaset4 }}"
+    members:
+      - localhost:3001
+      - localhost:3002
+      - localhost:3003
+  ignore_errors: yes
+  register: invalid_num2
+
+- assert:
+    that:
+      - "'MongoDB Replicaset validation failed. Invalid arbiter index.' == invalid_num2.msg"
+
 - include_tasks: mongod_teardown.yml

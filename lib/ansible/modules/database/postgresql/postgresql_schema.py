@@ -61,7 +61,7 @@ options:
   ssl_mode:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for more information on the modes.
       - Default of C(prefer) matches libpq default.
     type: str
     default: prefer
@@ -74,6 +74,19 @@ options:
     type: str
     aliases: [ ssl_rootcert ]
     version_added: '2.8'
+seealso:
+- name: PostgreSQL schemas
+  description: General information about PostgreSQL schemas.
+  link: https://www.postgresql.org/docs/current/ddl-schemas.html
+- name: CREATE SCHEMA reference
+  description: Complete reference of the CREATE SCHEMA command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createschema.html
+- name: ALTER SCHEMA reference
+  description: Complete reference of the ALTER SCHEMA command documentation.
+  link: https://www.postgresql.org/docs/current/sql-alterschema.html
+- name: DROP SCHEMA reference
+  description: Complete reference of the DROP SCHEMA command documentation.
+  link: https://www.postgresql.org/docs/current/sql-dropschema.html
 author:
 - Flavien Chantelot (@Dorn-) <contact@flavien.io>
 - Thomas O'Donnell (@andytom)
@@ -152,15 +165,15 @@ def set_owner(cursor, schema, owner):
 def get_schema_info(cursor, schema):
     query = ("SELECT schema_owner AS owner "
              "FROM information_schema.schemata "
-             "WHERE schema_name = '%s'" % schema)
-    cursor.execute(query)
+             "WHERE schema_name = %(schema)s")
+    cursor.execute(query, {'schema': schema})
     return cursor.fetchone()
 
 
 def schema_exists(cursor, schema):
     query = ("SELECT schema_name FROM information_schema.schemata "
-             "WHERE schema_name = '%s'" % schema)
-    cursor.execute(query)
+             "WHERE schema_name = %(schema)s")
+    cursor.execute(query, {'schema': schema})
     return cursor.rowcount == 1
 
 

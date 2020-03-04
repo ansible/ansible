@@ -19,15 +19,15 @@
         ad_password: '{{ active_directory_password }}'
         ad_state: present
         validate_certs: no
-      register: host_active_directory_facts_check_mode
+      register: host_active_directory_info_check_mode
       check_mode: yes
 
-    - debug: var=host_active_directory_facts_check_mode
+    - debug: var=host_active_directory_info_check_mode
 
     - assert:
         that:
-          - host_active_directory_facts_check_mode is defined
-          - host_active_directory_facts_check_mode.changed
+          - host_active_directory_info_check_mode is defined
+          - host_active_directory_info_check_mode.changed
 
     - name: Join an AD domain
       vmware_host_active_directory:
@@ -40,15 +40,15 @@
         ad_password: Password123$
         ad_state: present
         validate_certs: no
-      register: host_active_directory_facts
+      register: host_active_directory_info
       ignore_errors: true
 
-    - debug: var=host_active_directory_facts
+    - debug: var=host_active_directory_info
 
     - assert:
         that:
-          - host_active_directory_facts is defined
-          - host_active_directory_facts.changed
+          - host_active_directory_info is defined
+          - host_active_directory_info.changed
 
     - name: Leave AD domain in check mode
       vmware_host_active_directory:
@@ -58,15 +58,15 @@
         esxi_hostname: '{{ esxi1 }}'
         ad_state: absent
         validate_certs: no
-      register: host_active_directory_facts_2_check_mode
+      register: host_active_directory_info_2_check_mode
       check_mode: yes
 
-    - debug: var=host_active_directory_facts_2_check_mode
+    - debug: var=host_active_directory_info_2_check_mode
 
     - assert:
         that:
-          - host_active_directory_facts_2_check_mode is defined
-          - host_active_directory_facts_2_check_mode.changed
+          - host_active_directory_info_2_check_mode is defined
+          - host_active_directory_info_2_check_mode.changed
 
     - name: Leave AD domain
       vmware_host_active_directory:
@@ -76,12 +76,12 @@
         esxi_hostname: '{{ esxi1 }}'
         ad_state: absent
         validate_certs: no
-      register: host_active_directory_facts_2
+      register: host_active_directory_info_2
       ignore_errors: true
 
-    - debug: var=host_active_directory_facts_2
+    - debug: var=host_active_directory_info_2
 
     - assert:
         that:
-          - host_active_directory_facts_2 is defined
-          - host_active_directory_facts_2.changed
+          - host_active_directory_info_2 is defined
+          - host_active_directory_info_2.changed

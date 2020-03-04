@@ -26,10 +26,10 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.release import __version__
-from ansible.utils.collection_loader import set_collection_playbook_paths
+from ansible.utils.collection_loader import AnsibleCollectionLoader, get_collection_name_from_path, set_collection_playbook_paths
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
-from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes
+from ansible.utils.unsafe_proxy import to_unsafe_text
 from ansible.vars.manager import VariableManager
 
 try:
@@ -69,6 +69,13 @@ class CLI(with_metaclass(ABCMeta, object)):
         self.args = args
         self.parser = None
         self.callback = callback
+
+        if C.DEVEL_WARNING and __version__.endswith('dev0'):
+            display.warning(
+                'You are running the development version of Ansible. You should only run Ansible from "devel" if '
+                'you are modifying the Ansible engine, or trying out features under development. This is a rapidly '
+                'changing source of code and can become unstable at any point.'
+            )
 
     @abstractmethod
     def run(self):
@@ -240,8 +247,6 @@ class CLI(with_metaclass(ABCMeta, object)):
             if op['ask_pass']:
                 sshpass = getpass.getpass(prompt="SSH password: ")
                 become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
-                if sshpass:
-                    sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
             else:
                 become_prompt = "%s password: " % become_prompt_method
 
@@ -249,17 +254,15 @@ class CLI(with_metaclass(ABCMeta, object)):
                 becomepass = getpass.getpass(prompt=become_prompt)
                 if op['ask_pass'] and becomepass == '':
                     becomepass = sshpass
-                if becomepass:
-                    becomepass = to_bytes(becomepass)
         except EOFError:
             pass
 
         # we 'wrap' the passwords to prevent templating as
         # they can contain special chars and trigger it incorrectly
         if sshpass:
-            sshpass = AnsibleUnsafeBytes(sshpass)
+            sshpass = to_unsafe_text(sshpass)
         if becomepass:
-            becomepass = AnsibleUnsafeBytes(becomepass)
+            becomepass = to_unsafe_text(becomepass)
 
         return (sshpass, becomepass)
 
@@ -453,6 +456,10 @@ class CLI(with_metaclass(ABCMeta, object)):
             loader.set_basedir(basedir)
             add_all_plugin_dirs(basedir)
             set_collection_playbook_paths(basedir)
+            default_collection = get_collection_name_from_path(basedir)
+            if default_collection:
+                display.warning(u'running with default collection {0}'.format(default_collection))
+                AnsibleCollectionLoader().set_default_collection(default_collection)
 
         vault_ids = list(options['vault_ids'])
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST

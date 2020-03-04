@@ -13,16 +13,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-RETURN = '''
+RETURN = r'''
 ---
 hosts:
-  description: List of Zabbix hosts. See https://www.zabbix.com/documentation/3.4/manual/api/reference/host/get for list of host values.
+  description: List of Zabbix hosts. See https://www.zabbix.com/documentation/4.0/manual/api/reference/host/get for list of host values.
   returned: success
   type: dict
   sample: [ { "available": "1", "description": "", "disable_until": "0", "error": "", "flags": "0", "groups": ["1"], "host": "Host A", ... } ]
 '''
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_host_info
 short_description: Gather information about Zabbix host
@@ -34,17 +34,22 @@ author:
     - "Michael Miko (@RedWhiteMiko)"
 requirements:
     - "python >= 2.6"
-    - "zabbix-api >= 0.5.3"
+    - "zabbix-api >= 0.5.4"
 options:
     host_name:
         description:
             - Name of the host in Zabbix.
             - host_name is the unique identifier used and cannot be updated using this module.
-        required: true
+            - Required when I(host_ip) is not used.
+        required: false
+        type: str
     host_ip:
         description:
             - Host interface IP of the host in Zabbix.
+            - Required when I(host_name) is not used.
         required: false
+        type: list
+        elements: str
     exact_match:
         description:
             - Find the exact match
@@ -60,13 +65,14 @@ options:
             - List of host inventory keys to display in result.
             - Whole host inventory is retrieved if keys are not specified.
         type: list
+        elements: str
         required: false
         version_added: 2.8
 extends_documentation_fragment:
     - zabbix
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Get host info
   local_action:
     module: zabbix_host_info
@@ -119,8 +125,15 @@ class Host(object):
         search_key = 'search'
         if exact_match:
             search_key = 'filter'
-        host_list = self._zapi.host.get({'output': 'extend', 'selectParentTemplates': ['name'], search_key: {'host': [host_name]},
-                                         'selectInventory': host_inventory})
+        host_list = self._zapi.host.get({
+            'output': 'extend',
+            'selectParentTemplates': ['name'],
+            search_key: {'host': [host_name]},
+            'selectInventory': host_inventory,
+            'selectGroups': 'extend',
+            'selectTags': 'extend',
+            'selectMacros': 'extend'
+        })
         if len(host_list) < 1:
             self._module.fail_json(msg="Host not found: %s" % host_name)
         else:
@@ -143,7 +156,9 @@ class Host(object):
                 'selectGroups': 'extend',
                 'selectParentTemplates': ['name'],
                 'hostids': hostinterface['hostid'],
-                'selectInventory': host_inventory
+                'selectInventory': host_inventory,
+                'selectTags': 'extend',
+                'selectMacros': 'extend'
             })
             host[0]['hostinterfaces'] = hostinterface
             host_list.append(host[0])

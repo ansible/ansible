@@ -9,7 +9,7 @@ Network automation leverages the basic Ansible concepts, but there are important
 Execution on the Control Node
 ================================================================================
 
-Unlike most Ansible modules, network modules do not run on the managed nodes. From a user's point of view, network modules work like any other modules. They work with ad-hoc commands, playbooks, and roles. Behind the scenes, however, network modules use a different methodology than the other (Linux/Unix and Windows) modules use. Ansible is written and executed in Python. Because the majority of network devices can not run Python, the Ansible network modules are executed on the Ansible control node, where ``ansible`` or ``ansible-playbook`` runs. 
+Unlike most Ansible modules, network modules do not run on the managed nodes. From a user's point of view, network modules work like any other modules. They work with ad-hoc commands, playbooks, and roles. Behind the scenes, however, network modules use a different methodology than the other (Linux/Unix and Windows) modules use. Ansible is written and executed in Python. Because the majority of network devices can not run Python, the Ansible network modules are executed on the Ansible control node, where ``ansible`` or ``ansible-playbook`` runs.
 
 Network modules also use the control node as a destination for backup files, for those modules that offer a ``backup`` option. With Linux/Unix modules, where a configuration file already exists on the managed node(s), the backup file gets written by default in the same directory as the new, changed file. Network modules do not update configuration files on the managed nodes, because network configuration is not written in files. Network modules write backup files on the control node, usually in the `backup` directory under the playbook root directory.
 
@@ -27,13 +27,16 @@ Because network modules execute on the control node instead of on the managed no
    "httpapi", "API over HTTP/HTTPS", "network_os setting", "yes"
    "local", "depends on provider", "provider setting", "no"
 
-Beginning with Ansible 2.6, we recommend using one of the persistent connection types listed above instead of ``local``. With persistent connections, you can define the hosts and credentials only once, rather than in every task. For more details on using each connection type on various platforms, see the :ref:`platform-specific <platform_options>` pages.
+.. note::
+  ``httpapi`` deprecates ``eos_eapi`` and ``nxos_nxapi``. See :ref:`httpapi_plugins` for details and an example.
+
+Beginning with Ansible 2.6, we recommend using one of the persistent connection types listed above instead of ``local``. With persistent connections, you can define the hosts and credentials only once, rather than in every task. You also need to set the ``network_os`` variable for the specific network platform you are communicating with. For more details on using each connection type on various platforms, see the :ref:`platform-specific <platform_options>` pages.
 
 
 Modules Organized by Network Platform
 ================================================================================
 
-A network platform is a set of network devices with a common operating system that can be managed by a collection of modules.  The modules for each network platform share a prefix, for example: 
+A network platform is a set of network devices with a common operating system that can be managed by a collection of modules.  The modules for each network platform share a prefix, for example:
 
 - Arista: ``eos_``
 - Cisco: ``ios_``, ``iosxr_``, ``nxos_``
@@ -42,6 +45,7 @@ A network platform is a set of network devices with a common operating system th
 
 All modules within a network platform share certain requirements. Some network platforms have specific differences - see the :ref:`platform-specific <platform_options>` documentation for details.
 
+.. _privilege_escalation:
 
 Privilege Escalation: ``enable`` mode, ``become``, and ``authorize``
 ================================================================================

@@ -62,8 +62,8 @@ options:
     description:
       - This parameter is only valid on Server 2012 and newer.
       - Primarily used for enabling and disabling server name indication (SNI).
-      - Set to c(0) to disable SNI.
-      - Set to c(1) to enable SNI.
+      - Set to C(0) to disable SNI.
+      - Set to C(1) to enable SNI.
     type: str
     version_added: "2.5"
 seealso:

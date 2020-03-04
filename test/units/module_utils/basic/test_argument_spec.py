@@ -14,6 +14,7 @@ import pytest
 
 from units.compat.mock import MagicMock
 from ansible.module_utils import basic
+from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
 from ansible.module_utils.six import integer_types
 from ansible.module_utils.six.moves import builtins
 
@@ -102,6 +103,7 @@ def complex_argspec():
         bar3=dict(type='list', elements='path'),
         zardoz=dict(choices=['one', 'two']),
         zardoz2=dict(type='list', choices=['one', 'two', 'three']),
+        zardoz3=dict(type='str', aliases=['zodraz'], deprecated_aliases=[dict(name='zodraz', version='9.99')]),
     )
     mut_ex = (('bar', 'bam'), ('bing', 'bang', 'bong'))
     req_to = (('bam', 'baz'),)
@@ -237,7 +239,7 @@ class TestComplexArgSpecs:
         """Test that the complex argspec issues a warning if we specify an option both with its canonical name and its alias"""
         am = basic.AnsibleModule(**complex_argspec)
         assert isinstance(am.params['foo'], str)
-        assert 'Both option foo and its alias dup are set.' in am._warnings
+        assert 'Both option foo and its alias dup are set.' in get_warning_messages()
         assert am.params['foo'] == 'hello2'
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bam': 'test'}], indirect=['stdin'])
@@ -331,6 +333,14 @@ class TestComplexArgSpecs:
         assert isinstance(am.params['bar3'], list)
         assert am.params['bar3'][0].startswith('/')
         assert am.params['bar3'][1] == 'test/'
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zodraz': 'one'}], indirect=['stdin'])
+    def test_deprecated_alias(self, capfd, mocker, stdin, complex_argspec):
+        """Test a deprecated alias"""
+        am = basic.AnsibleModule(**complex_argspec)
+
+        assert "Alias 'zodraz' is deprecated." in get_deprecation_messages()[0]['msg']
+        assert get_deprecation_messages()[0]['version'] == '9.99'
 
 
 class TestComplexOptions:
@@ -584,3 +594,40 @@ class TestLoadFileCommonArguments:
         res = am.load_file_common_arguments(params=extended_params)
 
         assert res == final_params
+
+
+@pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
+def test_no_log_true(stdin, capfd):
+    """Explicitly mask an argument (no_log=True)."""
+    arg_spec = {
+        "arg_pass": {"no_log": True}
+    }
+    am = basic.AnsibleModule(arg_spec)
+    # no_log=True is picked up by both am._log_invocation and list_no_log_values
+    # (called by am._handle_no_log_values). As a result, we can check for the
+    # value in am.no_log_values.
+    assert "testing" in am.no_log_values
+
+
+@pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
+def test_no_log_false(stdin, capfd):
+    """Explicitly log and display an argument (no_log=False)."""
+    arg_spec = {
+        "arg_pass": {"no_log": False}
+    }
+    am = basic.AnsibleModule(arg_spec)
+    assert "testing" not in am.no_log_values and not get_warning_messages()
+
+
+@pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
+def test_no_log_none(stdin, capfd):
+    """Allow Ansible to make the decision by matching the argument name
+    against PASSWORD_MATCH."""
+    arg_spec = {
+        "arg_pass": {}
+    }
+    am = basic.AnsibleModule(arg_spec)
+    # Omitting no_log is only picked up by _log_invocation, so the value never
+    # makes it into am.no_log_values. Instead we can check for the warning
+    # emitted by am._log_invocation.
+    assert len(get_warning_messages()) > 0

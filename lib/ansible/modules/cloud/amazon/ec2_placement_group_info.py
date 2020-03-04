@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -21,6 +24,8 @@ options:
     description:
       - A list of names to filter on. If a listed group does not exist, there
         will be no corresponding entry in the result; no error will be raised.
+    type: list
+    elements: str
     required: false
     default: []
 extends_documentation_fragment:
@@ -70,14 +75,10 @@ placement_groups:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (connect_to_aws,
-                                      boto3_conn,
-                                      ec2_argument_spec,
-                                      get_aws_connection_info)
 try:
     from botocore.exceptions import (BotoCoreError, ClientError)
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def get_placement_groups_details(connection, module):
@@ -107,11 +108,8 @@ def get_placement_groups_details(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            names=dict(type='list', default=[])
-        )
+    argument_spec = dict(
+        names=dict(type='list', default=[])
     )
 
     module = AnsibleAWSModule(
@@ -121,12 +119,7 @@ def main():
     if module._module._name == 'ec2_placement_group_facts':
         module._module.deprecate("The 'ec2_placement_group_facts' module has been renamed to 'ec2_placement_group_info'", version='2.13')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(
-        module, boto3=True)
-
-    connection = boto3_conn(module,
-                            resource='ec2', conn_type='client',
-                            region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ec2')
 
     placement_groups = get_placement_groups_details(connection, module)
     module.exit_json(changed=False, placement_groups=placement_groups)

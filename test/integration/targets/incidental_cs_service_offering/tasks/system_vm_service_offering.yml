@@ -1,0 +1,151 @@
+---
+- name: setup system offering
+  cs_service_offering:
+    name: System Offering for Ansible
+    is_system: true
+    state: absent
+  register: so
+- name: verify setup system offering
+  assert:
+    that:
+    - so is successful
+
+- name: fail missing storage type and is_system
+  cs_service_offering:
+    name: System Offering for Ansible
+    cpu_number: 1
+    cpu_speed: 500
+    memory: 512
+    host_tag: perf
+    storage_tag: perf
+    storage_type: shared
+    offer_ha: true
+    limit_cpu_usage: false
+    is_system: true
+  register: so
+  ignore_errors: true
+- name: verify create system service offering in check mode
+  assert:
+    that:
+    - so is failed
+    - so.msg.startswith('missing required arguments:')
+
+- name: create system service offering in check mode
+  cs_service_offering:
+    name: System Offering for Ansible
+    cpu_number: 1
+    cpu_speed: 500
+    memory: 512
+    host_tag: perf
+    storage_tag: perf
+    storage_type: shared
+    offer_ha: true
+    limit_cpu_usage: false
+    system_vm_type: domainrouter
+    is_system: true
+  register: so
+  check_mode: true
+- name: verify create system service offering in check mode
+  assert:
+    that:
+    - so is changed
+
+- name: create system service offering
+  cs_service_offering:
+    name: System Offering for Ansible
+    cpu_number: 1
+    cpu_speed: 500
+    memory: 512
+    host_tag: perf
+    storage_tag: perf
+    storage_type: shared
+    offer_ha: true
+    limit_cpu_usage: false
+    system_vm_type: domainrouter
+    is_system: true
+  register: so
+- name: verify create system service offering
+  assert:
+    that:
+    - so is changed
+    - so.name == "System Offering for Ansible"
+    - so.display_text == "System Offering for Ansible"
+    - so.cpu_number == 1
+    - so.cpu_speed == 500
+    - so.memory == 512
+    - so.host_tags == ['perf']
+    - so.storage_tags == ['perf']
+    - so.storage_type == "shared"
+    - so.offer_ha == true
+    - so.limit_cpu_usage == false
+    - so.system_vm_type == "domainrouter"
+    - so.is_system == true
+
+- name: create system service offering idempotence
+  cs_service_offering:
+    name: System Offering for Ansible
+    cpu_number: 1
+    cpu_speed: 500
+    memory: 512
+    host_tag: perf
+    storage_tag: perf
+    storage_type: shared
+    offer_ha: true
+    limit_cpu_usage: false
+    system_vm_type: domainrouter
+    is_system: true
+  register: so
+- name: verify create system service offering idempotence
+  assert:
+    that:
+    - so is not changed
+    - so.name == "System Offering for Ansible"
+    - so.display_text == "System Offering for Ansible"
+    - so.cpu_number == 1
+    - so.cpu_speed == 500
+    - so.memory == 512
+    - so.host_tags == ['perf']
+    - so.storage_tags == ['perf']
+    - so.storage_type == "shared"
+    - so.offer_ha == true
+    - so.limit_cpu_usage == false
+    - so.system_vm_type == "domainrouter"
+    - so.is_system == true
+
+- name: remove system service offering in check mode
+  cs_service_offering:
+    name: System Offering for Ansible
+    is_system: true
+    state: absent
+  check_mode: true
+  register: so
+- name: verify remove system service offering in check mode
+  assert:
+    that:
+    - so is changed
+    - so.name == "System Offering for Ansible"
+    - so.is_system == true
+
+- name: remove system service offering
+  cs_service_offering:
+    name: System Offering for Ansible
+    is_system: true
+    state: absent
+  register: so
+- name: verify remove system service offering
+  assert:
+    that:
+    - so is changed
+    - so.name == "System Offering for Ansible"
+    - so.is_system == true
+
+- name: remove system service offering idempotence
+  cs_service_offering:
+    name: System Offering for Ansible
+    is_system: true
+    state: absent
+  register: so
+- name: verify remove system service offering idempotence
+  assert:
+    that:
+    - so is not changed

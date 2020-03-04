@@ -81,7 +81,7 @@ options:
   user_accesslevel:
     description:
       - This is the access level that needs to be create/modified/deleted
-      - 0 View, 1 User, 2 SuperUser, 3 Adminstrator
+      - 0 View, 1 User, 2 SuperUser, 3 Administrator
     required: false
     choices: [ 0, 1, 2, 3 ]
   user_accessssh:

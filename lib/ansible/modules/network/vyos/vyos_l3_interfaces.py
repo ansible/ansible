@@ -41,6 +41,9 @@ module: vyos_l3_interfaces
 version_added: 2.9
 short_description: Manages L3 interface attributes of VyOS network devices.
 description: This module manages the L3 interface attributes on VyOS network devices.
+notes:
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 author: Nilashish Chakraborty (@NilashishC)
 options:
   config:
@@ -95,7 +98,7 @@ options:
                 type: str
           ipv6:
             description:
-              - List of IPv6 addresses of the virual interface.
+              - List of IPv6 addresses of the virtual interface.
             type: list
             elements: dict
             suboptions:
@@ -105,7 +108,7 @@ options:
                 type: str
   state:
     description:
-      - The state the configuration should be left in.
+      - The state of the configuration after module completion.
     type: str
     choices:
     - merged
@@ -329,14 +332,14 @@ EXAMPLES = """
 """
 RETURN = """
 before:
-  description: The configuration prior to the model invocation.
+  description: The configuration as structured data prior to module invocation.
   returned: always
   type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
-  description: The resulting configuration model invocation.
+  description: The configuration as structured data after module completion.
   returned: when changed
   type: list
   sample: >

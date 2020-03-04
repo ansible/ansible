@@ -17,10 +17,12 @@ module: win_package
 version_added: "1.7"
 short_description: Installs/uninstalls an installable package
 description:
-- Installs or uninstalls a package in either an MSI or EXE format.
-- These packages can be sources from the local file system, network file share
+- Installs or uninstalls software packages for Windows.
+- Supports C(.exe), C(.msi), C(.msp), C(.appx), C(.appxbundle), C(.msix),
+  and C(.msixbundle).
+- These packages can be sourced from the local file system, network file share
   or a url.
-- Please read the notes section around some caveats with this module.
+- See I(provider) for more info on each package type that is supported.
 options:
   arguments:
     description:
@@ -28,20 +30,22 @@ options:
       package.
     - If the package is an MSI do not supply the C(/qn), C(/log) or
       C(/norestart) arguments.
+    - This is only used for the C(msi), C(msp), and C(registry) providers.
     - As of Ansible 2.5, this parameter can be a list of arguments and the
       module will escape the arguments as necessary, it is recommended to use a
       string when dealing with MSI packages due to the unique escaping issues
       with msiexec.
-    type: str
+    type: raw
   chdir:
     description:
     - Set the specified path as the current working directory before installing
       or uninstalling a package.
+    - This is only used for the C(msi), C(msp), and C(registry) providers.
     type: path
     version_added: '2.8'
   creates_path:
     description:
-    - Will check the existance of the path specified and use the result to
+    - Will check the existence of the path specified and use the result to
       determine whether the package is already installed.
     - You can use this in conjunction with C(product_id) and other C(creates_*).
     type: path
@@ -69,11 +73,25 @@ options:
       C(3010).
     - A return code of C(3010) usually means that a reboot is required, the
       C(reboot_required) return value is set if the return code is C(3010).
+    - This is only used for the C(msi), C(msp), and C(registry) providers.
     type: list
+    elements: int
     default: [0, 3010]
+  log_path:
+    description:
+    - Specifies the path to a log file that is persisted after a package is
+      installed or uninstalled.
+    - This is only used for the C(msi) or C(msp) provider.
+    - When omitted, a temporary log file is used instead for those providers.
+    - This is only valid for MSI files, use C(arguments) for the C(registry)
+      provider.
+    type: path
+    version_added: '2.8'
   password:
     description:
     - The password for C(user_name), must be set when C(user_name) is.
+    - This option is deprecated in favour of using become, see examples for
+      more information.
     type: str
     aliases: [ user_password ]
   path:
@@ -81,11 +99,10 @@ options:
     - Location of the package to be installed or uninstalled.
     - This package can either be on the local file system, network share or a
       url.
-    - If the path is on a network share and the current WinRM transport doesn't
-      support credential delegation, then C(user_name) and C(user_password)
-      must be set to access the file.
-    - There are cases where this file will be copied locally to the server so
-      it can access it, see the notes for more info.
+    - When C(state=present), C(product_id) is not set and the path is a URL,
+      this file will always be downloaded to a temporary directory for
+      idempotency checks, otherwise the file will only be downloaded if the
+      package has not been installed based on the C(product_id) checks.
     - If C(state=present) then this value MUST be set.
     - If C(state=absent) then this value does not need to be set if
       C(product_id) is.
@@ -95,21 +112,66 @@ options:
     - The product id of the installed packaged.
     - This is used for checking whether the product is already installed and
       getting the uninstall information if C(state=absent).
-    - You can find product ids for installed programs in the Windows registry
-      editor either at
-      C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit
-      programs at
-      C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall).
-    - This SHOULD be set when the package is not an MSI, or the path is a url
+    - For msi packages, this is the C(ProductCode) (GUID) of the package. This
+      can be found under the same registry paths as the C(registry) provider.
+    - For msp packages, this is the C(PatchCode) (GUID) of the package which
+      can found under the C(Details -> Revision number) of the file's properties.
+    - For msix packages, this is the C(Name) or C(PackageFullName) of the
+      package found under the C(Get-AppxPackage) cmdlet.
+    - For registry (exe) packages, this is the registry key name under the
+      registry paths specified in I(provider).
+    - This value is ignored if C(path) is set to a local accesible file path
+      and the package is not an C(exe).
+    - This SHOULD be set when the package is an C(exe), or the path is a url
       or a network share and credential delegation is not being used. The
       C(creates_*) options can be used instead but is not recommended.
+    - The C(productid) alias will be removed in Ansible 2.14.
     type: str
     aliases: [ productid ]
+  provider:
+    description:
+    - Set the package provider to use when searching for a package.
+    - The C(auto) provider will select the proper provider if I(path)
+      otherwise it scans all the other providers based on the I(product_id).
+    - The C(msi) provider scans for MSI packages installed on a machine wide
+      and current user context based on the C(ProductCode) of the MSI. Before
+      Ansible 2.10 only the machine wide context was searched.
+    - The C(msix) provider is used to install C(.appx), C(.msix),
+      C(.appxbundle), or C(.msixbundle) packages. These packages are only
+      installed or removed on the current use. The host must be set to allow
+      sideloaded apps or in developer mode. See the examples for how to enable
+      this. If a package is already installed but C(path) points to an updated
+      package, this will be installed over the top of the existing one.
+    - The C(msp) provider scans for all MSP patches installed on a machine wide
+      and current user context based on the C(PatchCode) of the MSP. A C(msp)
+      will be applied or removed on all C(msi) products that it applies to and
+      is installed. If the patch is obsoleted or superseded then no action will
+      be taken.
+    - The C(registry) provider is used for traditional C(exe) installers and
+      uses the following registry path to determine if a product was installed;
+      C(HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall),
+      C(HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall),
+      C(HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall), and
+      C(HKCU:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall).
+      Before Ansible 2.10 only the C(HKLM) hive was searched.
+    - Before Ansible 2.10 only the C(msi) and C(registry) providers were used.
+    choices:
+    - auto
+    - msi
+    - msix
+    - msp
+    - registry
+    default: auto
+    type: str
+    version_added: '2.10'
   state:
     description:
     - Whether to install or uninstall the package.
-    - The module uses C(product_id) and whether it exists at the registry path
-      to see whether it needs to install or uninstall the package.
+    - The module uses I(product_id) to determine whether the package is
+      installed or not.
+    - For all providers but C(auto), the I(path) can be used for idempotency
+      checks if it is locally accesible filesystem path.
+    - The C(ensure) alias will be removed in Ansible 2.14.
     type: str
     choices: [ absent, present ]
     default: present
@@ -119,39 +181,61 @@ options:
     - Username of an account with access to the package if it is located on a
       file share.
     - This is only needed if the WinRM transport is over an auth method that
-      does not support credential delegation like Basic or NTLM.
+      does not support credential delegation like Basic or NTLM or become is
+      not used.
+    - This option is deprecated in favour of using become, see examples for
+      more information.
     type: str
     aliases: [ user_name ]
-  validate_certs:
+
+  # Overrides the options in url_windows
+  client_cert:
+    version_added: '2.10'
+  client_cert_password:
+    version_added: '2.10'
+  follow_redirects:
+    version_added: '2.10'
+  force_basic_auth:
+    version_added: '2.10'
+  headers:
+    version_added: '2.10'
+  http_agent:
+    version_added: '2.10'
+  maximum_redirection:
+    version_added: '2.10'
+  method:
+    version_added: '2.10'
+  proxy_password:
+    version_added: '2.10'
+  proxy_url:
+    version_added: '2.10'
+  proxy_use_default_credential:
+    version_added: '2.10'
+  proxy_username:
+    version_added: '2.10'
+  timeout:
     description:
-    - If C(no), SSL certificates will not be validated. This should only be
-      used on personally controlled sites using self-signed certificates.
-    - Before Ansible 2.4 this defaulted to C(no).
-    type: bool
-    default: yes
-    version_added: '2.4'
-  log_path:
-    description:
-    - Specifies the path to a log file that is persisted after an MSI package is installed or uninstalled.
-    - When omitted, a temporary log file is used for MSI packages.
-    - This is only valid for MSI files, use C(arguments) for other package types.
-    type: path
-    version_added: '2.8'
+    - Specifies how long the web download request can be pending before it
+      times out in seconds.
+    - Set to C(0) to specify an infinite timeout.
+    version_added: '2.10'
+  url_password:
+    version_added: '2.10'
+  url_username:
+    version_added: '2.10'
+  use_default_credential:
+    version_added: '2.10'
+  use_proxy:
+    version_added: '2.10'
+extends_documentation_fragment:
+- url_windows
 notes:
 - When C(state=absent) and the product is an exe, the path may be different
   from what was used to install the package originally. If path is not set then
-  the path used will be what is set under C(UninstallString) in the registry
-  for that product_id.
-- Not all product ids are in a GUID form, some programs incorrectly use a
-  different structure but this module should support any format.
-- By default all msi installs and uninstalls will be run with the options
+  the path used will be what is set under C(QuietUninstallString) or
+  C(UninstallString) in the registry for that I(product_id).
+- By default all msi installs and uninstalls will be run with the arguments
   C(/log, /qn, /norestart).
-- It is recommended you download the package first from the URL using the
-  M(win_get_url) module as it opens up more flexibility with what must be set
-  when calling C(win_package).
-- Packages will be temporarily downloaded or copied locally when path is a
-  network location and credential delegation is not set, or path is a URL
-  and the file is not an MSI.
 - All the installation checks under C(product_id) and C(creates_*) add
   together, if one fails then the program is considered to be absent.
 seealso:
@@ -170,7 +254,7 @@ EXAMPLES = r'''
     product_id: '{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}'
     arguments: /install /passive /norestart
 
-- name: Install Visual C thingy with list of arguments instead of a string, and permanent log
+- name: Install Visual C thingy with list of arguments instead of a string
   win_package:
     path: http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x64.exe
     product_id: '{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}'
@@ -178,13 +262,13 @@ EXAMPLES = r'''
     - /install
     - /passive
     - /norestart
-    log_path: D:\logs\vcredist_x64-exe-{{lookup('pipe', 'date +%Y%m%dT%H%M%S')}}.log
 
-- name: Install Remote Desktop Connection Manager from msi
+- name: Install Remote Desktop Connection Manager from msi with a permanent log
   win_package:
     path: https://download.microsoft.com/download/A/F/0/AF0071F3-B198-4A35-AA90-C68D103BDCCF/rdcman.msi
     product_id: '{0240359E-6A4C-4884-9E94-B397A02D893C}'
     state: present
+    log_path: D:\logs\vcredist_x64-exe-{{lookup('pipe', 'date +%Y%m%dT%H%M%S')}}.log
 
 - name: Uninstall Remote Desktop Connection Manager
   win_package:
@@ -202,14 +286,18 @@ EXAMPLES = r'''
     state: absent
 
 # 7-Zip exe doesn't use a guid for the Product ID
-- name: Install 7zip from a network share specifying the credentials
+- name: Install 7zip from a network share with specific credentials
   win_package:
     path: \\domain\programs\7z.exe
     product_id: 7-Zip
     arguments: /S
     state: present
-    user_name: DOMAIN\User
-    user_password: Password
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credential logon_flags=netcredentials_only
+  vars:
+    ansible_become_user: DOMAIN\User
+    ansible_become_password: Password
 
 - name: Install 7zip and use a file version for the installation check
   win_package:
@@ -238,17 +326,45 @@ EXAMPLES = r'''
     arguments: '/q /norestart'
     state: present
     expected_return_code: [0, 666, 3010]
+
+- name: Install a .msp patch
+  win_package:
+    path: C:\Patches\Product.msp
+    state: present
+
+- name: Remove a .msp patch
+  win_package:
+    product_id: '{AC76BA86-A440-FFFF-A440-0C13154E5D00}'
+    state: absent
+
+- name: Enable installation of 3rd party MSIX packages
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock
+    name: AllowAllTrustedApps
+    data: 1
+    type: dword
+    state: present
+
+- name: Install an MSIX package for the current user
+  win_package:
+    path: C:\Installers\Calculator.msix  # Can be .appx, .msixbundle, or .appxbundle
+    state: present
+
+- name: Uninstall an MSIX package using the product_id
+  win_package:
+    product_id: InputApp
+    state: absent
 '''
 
 RETURN = r'''
 log:
-  description: The contents of the MSI log.
-  returned: installation/uninstallation failure for MSI packages
+  description: The contents of the MSI or MSP log.
+  returned: installation/uninstallation failure for MSI or MSP packages
   type: str
   sample: Installation completed successfully
 rc:
   description: The return code of the package process.
-  returned: change occured
+  returned: change occurred
   type: int
   sample: 0
 reboot_required:

@@ -1,0 +1,2 @@
+bugfixes:
+- Fix for network_cli become method to be compatible with collections

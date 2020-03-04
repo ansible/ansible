@@ -6,7 +6,6 @@
       privilege: 15
       role: network-operator
       state: present
-      authorize: yes
       provider: "{{ cli }}"
       configured_password: pass123
     become: yes
@@ -36,6 +35,5 @@
       name: auth_user
       state: absent
       provider: "{{ cli }}"
-      authorize: yes
     become: yes
     register: result

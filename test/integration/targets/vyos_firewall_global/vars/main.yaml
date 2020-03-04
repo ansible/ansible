@@ -1,0 +1,218 @@
+---
+merged:
+  before: []
+
+
+  commands:
+    - "set firewall group address-group MGMT-HOSTS address 192.0.1.1"
+    - "set firewall group address-group MGMT-HOSTS address 192.0.1.3"
+    - "set firewall group address-group MGMT-HOSTS address 192.0.1.5"
+    - "set firewall group address-group MGMT-HOSTS description 'This group has the Management hosts address list'"
+    - "set firewall group address-group MGMT-HOSTS" 
+    - "set firewall group network-group MGMT network 192.0.1.0/24"
+    - "set firewall group network-group MGMT description 'This group has the Management network addresses'"
+    - "set firewall group network-group MGMT"
+    - "set firewall ip-src-route 'enable'"
+    - "set firewall receive-redirects 'disable'" 
+    - "set firewall send-redirects 'enable'"
+    - "set firewall config-trap 'enable'"
+    - "set firewall state-policy established action 'accept'"
+    - "set firewall state-policy established log 'enable'"
+    - "set firewall state-policy invalid action 'reject'"
+    - "set firewall broadcast-ping 'enable'"
+    - "set firewall all-ping 'enable'"
+    - "set firewall log-martians 'enable'"
+    - "set firewall twa-hazards-protection 'enable'"
+    - "set firewall syn-cookies 'enable'"
+    - "set firewall source-validation 'strict'"
+
+  after:
+    config_trap: true
+    group:
+      address_group:
+      - members:
+        - address: 192.0.1.1
+        - address: 192.0.1.3
+        - address: 192.0.1.5
+        description: This group has the Management hosts address list
+        name: MGMT-HOSTS
+      network_group:
+      - members:
+        - address: 192.0.1.0/24
+        description: This group has the Management network addresses
+        name: MGMT
+    log_martians: true
+    ping:
+      all: true
+      broadcast: true
+    route_redirects:
+    - afi: ipv4
+      icmp_redirects:
+        receive: false
+        send: true
+      ip_src_route: true
+    syn_cookies: true
+    state_policy:
+    - action: accept
+      connection_type: established
+      log: true
+    - action: reject
+      connection_type: invalid
+    twa_hazards_protection: true
+    validation: strict
+
+populate:
+  validation: strict
+  config_trap: True
+  log_martians: True
+  syn_cookies: True
+  twa_hazards_protection: True
+  ping:
+    all: True
+    broadcast: True
+  state_policy:
+    - connection_type: 'established'
+      action: 'accept'
+      log: True
+    - connection_type: 'invalid'
+      action: 'reject'
+  route_redirects:
+    - afi: 'ipv4'
+      ip_src_route: True
+      icmp_redirects:
+        send: True
+        receive: False
+  group:
+    address_group:
+      - name: 'MGMT-HOSTS'
+        description: 'This group has the Management hosts address list'
+        members:
+          - address: 192.0.1.1
+          - address: 192.0.1.3
+          - address: 192.0.1.5
+    network_group:
+      - name: 'MGMT'
+        description: 'This group has the Management network addresses'
+        members:
+          - address: 192.0.1.0/24
+
+replaced:
+  commands:
+    - "delete firewall group address-group MGMT-HOSTS"
+    - "set firewall group address-group SALES-HOSTS address 192.0.2.1"
+    - "set firewall group address-group SALES-HOSTS address 192.0.2.2"
+    - "set firewall group address-group SALES-HOSTS address 192.0.2.3"
+    - "set firewall group address-group SALES-HOSTS description 'Sales office hosts address list'"
+    - "set firewall group address-group SALES-HOSTS"
+    - "set firewall group address-group ENG-HOSTS address 192.0.3.1"
+    - "set firewall group address-group ENG-HOSTS address 192.0.3.2"
+    - "set firewall group address-group ENG-HOSTS description 'Sales office hosts address list'"
+    - "set firewall group address-group ENG-HOSTS"
+
+  after:
+    config_trap: true
+    group:
+      address_group:
+      - members:
+        - address: 192.0.3.1
+        - address: 192.0.3.2
+        description: 'Sales office hosts address list'
+        name: 'ENG-HOSTS'
+      - members:
+        - address: 192.0.2.1
+        - address: 192.0.2.2
+        - address: 192.0.2.3
+        description: 'Sales office hosts address list'
+        name: 'SALES-HOSTS'
+      network_group:
+      - members:
+        - address: 192.0.1.0/24
+        description: 'This group has the Management network addresses'
+        name: 'MGMT'
+    log_martians: true
+    ping:
+      all: true
+      broadcast: true
+    route_redirects:
+    - afi: 'ipv4'
+      icmp_redirects:
+        receive: false
+        send: true
+      ip_src_route: true
+    state_policy:
+    - action: 'accept'
+      connection_type: 'established'
+      log: true
+    - action: 'reject'
+      connection_type: 'invalid'
+    syn_cookies: true
+    twa_hazards_protection: true
+    validation: strict
+rendered:
+  commands:
+    - set firewall group address-group SALES-HOSTS address 192.0.2.1
+    - set firewall group address-group SALES-HOSTS address 192.0.2.2
+    - set firewall group address-group SALES-HOSTS address 192.0.2.3
+    - set firewall group address-group SALES-HOSTS description 'Sales office hosts address list'
+    - set firewall group address-group SALES-HOSTS
+    - set firewall group address-group ENG-HOSTS address 192.0.3.1
+    - set firewall group address-group ENG-HOSTS address 192.0.3.2
+    - set firewall group address-group ENG-HOSTS description 'Sales office hosts address list'
+    - set firewall group address-group ENG-HOSTS
+    - set firewall group network-group MGMT network 192.0.1.0/24
+    - set firewall group network-group MGMT description 'This group has the Management network addresses'
+    - set firewall group network-group MGMT
+    - set firewall ip-src-route 'enable'
+    - set firewall receive-redirects 'disable'
+    - set firewall send-redirects 'enable'
+    - set firewall config-trap 'enable'
+    - set firewall state-policy established action 'accept'
+    - set firewall state-policy established log 'enable'
+    - set firewall state-policy invalid action 'reject'
+    - set firewall broadcast-ping 'enable'
+    - set firewall all-ping 'enable'
+    - set firewall log-martians 'enable'
+    - set firewall twa-hazards-protection 'enable'
+    - set firewall syn-cookies 'enable'
+    - set firewall source-validation 'strict'
+deleted:
+  commands:
+    - "delete firewall "
+
+  after: []
+
+round_trip:
+  after:
+    validation: strict
+    config_trap: False
+    log_martians: False
+    syn_cookies: False
+    twa_hazards_protection: False
+    ping:
+      all: False
+      broadcast: False
+    state_policy:
+      - connection_type: 'established'
+        action: 'accept'
+        log: True
+      - connection_type: 'invalid'
+        action: 'reject'
+    route_redirects:
+      - afi: 'ipv4'
+        ip_src_route: True
+        icmp_redirects:
+          send: True
+          receive: False
+    group:
+      address_group:
+        - name: 'MGMT-HOSTS'
+          description: 'This group has the Management hosts address list'
+          members:
+            - address: 192.0.1.1
+            - address: 192.0.1.3
+            - address: 192.0.1.5
+      network_group:
+        - name: 'MGMT'
+          description: 'This group has the Management network addresses'
+          members:
+            - address: 192.0.1.0/24

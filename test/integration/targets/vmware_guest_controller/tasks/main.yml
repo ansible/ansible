@@ -1,0 +1,82 @@
+# Test code for the vmware_guest_controller module
+# Copyright: (c) 2019, Diane Wang (Tomorrow9) <dianew@vmware.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_attach_host: true
+      setup_datastore: true
+      setup_virtualmachines: true
+
+  - name: gather disk controllers facts of the virtual machine
+    vmware_guest_controller:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines[0].name }}"
+      gather_disk_controller_facts: true
+    register: disk_controller_facts
+
+  - debug: var=disk_controller_facts
+
+  - name: get the number of existing disk controllers
+    set_fact:
+      scsi_num: "{{ disk_controller_facts.disk_controller_data.scsi | length }}"
+  - set_fact:
+      sata_num: "{{ disk_controller_facts.disk_controller_data.sata | length }}"
+  - set_fact:
+      nvme_num: "{{ disk_controller_facts.disk_controller_data.nvme | length }}"
+
+  - name: add new disk controllers to virtual machine
+    vmware_guest_controller:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines[0].name }}"
+      sleep_time: 30
+      controllers:
+        - type: sata
+          state: present
+        - type: paravirtual
+          state: present
+    register: add_disk_controller
+
+  - debug: var=add_disk_controller
+
+  - name: assert the new disk controllers were added to VM
+    assert:
+      that:
+        - "add_disk_controller.changed == true"
+        - "{{ add_disk_controller.disk_controller_data.scsi | length | int }} == {{ scsi_num | int + 1 }}"
+        - "{{ add_disk_controller.disk_controller_data.sata | length | int }} == {{ sata_num | int + 1 }}"
+
+  - name: delete specified disk controllers
+    vmware_guest_controller:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines[0].name }}"
+      sleep_time: 30
+      controllers:
+        - state: absent
+          type: sata
+          controller_number: "{{ sata_num }}"
+        - state: absent
+          type: paravirtual
+          controller_number: "{{ scsi_num }}"
+    register: del_disk_controller
+
+  - debug: var=del_disk_controller
+
+  - name: assert the disk controllers were removed
+    assert:
+      that:
+        - "del_disk_controller.changed == true"
+        - "{{ del_disk_controller.disk_controller_data.sata | length | int }} == {{ sata_num | int }}"
+        - "{{ del_disk_controller.disk_controller_data.scsi | length | int }} == {{ scsi_num | int }}"

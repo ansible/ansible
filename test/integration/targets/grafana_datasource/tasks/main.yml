@@ -1,0 +1,8 @@
+- block:
+  - include: elastic.yml
+  - include: influx.yml
+  - include: postgres.yml
+  - include: cloudwatch.yml
+  when:
+    - ansible_distribution == 'Ubuntu'
+    - ansible_distribution_release != 'trusty'

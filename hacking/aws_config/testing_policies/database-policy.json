@@ -12,6 +12,15 @@
             }
         },
         {
+            "Action": "iam:CreateServiceLinkedRole",
+            "Effect": "Allow",
+            "Resource": "arn:aws:iam::*:role/aws-service-role/redshift.amazonaws.com/AWSServiceRoleForRedshift",
+            "Condition": {
+                "StringLike": {
+                    "iam:AWSServiceName": "redshift.amazonaws.com"}
+                }
+        },
+        {
             "Sid": "AllowRDSReadEverywhere",
             "Effect": "Allow",
             "Action": [
@@ -87,6 +96,17 @@
           ],
           "Effect": "Allow",
           "Resource": "*"
+        },
+        {
+            "Sid": "AllowRDSSubnetGroups",
+            "Effect": "Allow",
+            "Action": [
+                "rds:CreateDBSubnetGroup",
+                "rds:DeleteDBSubnetGroup",
+                "rds:DescribeDBSubnetGroups",
+                "rds:ModifyDBSubnetGroup"
+            ],
+            "Resource": ["*"]
         },
         {
           "Sid": "DMSEndpoints",

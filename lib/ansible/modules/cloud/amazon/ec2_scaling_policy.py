@@ -15,41 +15,44 @@ DOCUMENTATION = """
 module: ec2_scaling_policy
 short_description: Create or delete AWS scaling policies for Autoscaling groups
 description:
-  - Can create or delete scaling policies for autoscaling groups
-  - Referenced autoscaling groups must already exist
+  - Can create or delete scaling policies for autoscaling groups.
+  - Referenced autoscaling groups must already exist.
 version_added: "1.6"
 author: "Zacharie Eakin (@Zeekin)"
 options:
   state:
     description:
-      - register or deregister the policy
-    required: true
+      - Register or deregister the policy.
+    default: present
     choices: ['present', 'absent']
+    type: str
   name:
     description:
-      - Unique name for the scaling policy
+      - Unique name for the scaling policy.
     required: true
+    type: str
   asg_name:
     description:
-      - Name of the associated autoscaling group
+      - Name of the associated autoscaling group.
     required: true
+    type: str
   adjustment_type:
     description:
-      - The type of change in capacity of the autoscaling group
-    required: false
+      - The type of change in capacity of the autoscaling group.
     choices: ['ChangeInCapacity','ExactCapacity','PercentChangeInCapacity']
+    type: str
   scaling_adjustment:
     description:
-      - The amount by which the autoscaling group is adjusted by the policy
-    required: false
+      - The amount by which the autoscaling group is adjusted by the policy.
+    type: int
   min_adjustment_step:
     description:
-      - Minimum amount of adjustment when policy is triggered
-    required: false
+      - Minimum amount of adjustment when policy is triggered.
+    type: int
   cooldown:
     description:
-      - The minimum period of time between which autoscaling actions can take place
-    required: false
+      - The minimum period of time (in seconds) between which autoscaling actions can take place.
+    type: int
 extends_documentation_fragment:
     - aws
     - ec2

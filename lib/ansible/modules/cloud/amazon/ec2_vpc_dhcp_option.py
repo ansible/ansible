@@ -35,26 +35,35 @@ options:
   domain_name:
     description:
       - The domain name to set in the DHCP option sets
+    type: str
   dns_servers:
     description:
       - A list of hosts to set the DNS servers for the VPC to. (Should be a
         list of IP addresses rather than host names.)
+    type: list
+    elements: str
   ntp_servers:
     description:
       - List of hosts to advertise as NTP servers for the VPC.
+    type: list
+    elements: str
   netbios_name_servers:
     description:
       - List of hosts to advertise as NetBIOS servers.
+    type: list
+    elements: str
   netbios_node_type:
     description:
       - NetBIOS node type to advertise in the DHCP options.
         The AWS recommendation is to use 2 (when using netbios name services)
         U(https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html)
+    type: int
   vpc_id:
     description:
       - VPC ID to associate with the requested DHCP option set.
         If no vpc id is provided, and no matching option set is found then a new
         DHCP option set is created.
+    type: str
   delete_old:
     description:
       - Whether to delete the old VPC DHCP option set when associating a new one.
@@ -77,12 +86,14 @@ options:
         if the resource_id is provided. (options must match)
     aliases: [ 'resource_tags']
     version_added: "2.1"
+    type: dict
   dhcp_options_id:
     description:
       - The resource_id of an existing DHCP options set.
         If this is specified, then it will override other settings, except tags
         (which will be updated to match)
     version_added: "2.1"
+    type: str
   state:
     description:
       - create/assign or remove the DHCP options.
@@ -91,6 +102,7 @@ options:
     default: present
     choices: [ 'absent', 'present' ]
     version_added: "2.1"
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -207,7 +219,7 @@ def retry_not_found(to_call, *args, **kwargs):
         try:
             return to_call(*args, **kwargs)
         except EC2ResponseError as e:
-            if e.error_code == 'InvalidDhcpOptionID.NotFound':
+            if e.error_code in ['InvalidDhcpOptionID.NotFound', 'InvalidDhcpOptionsID.NotFound']:
                 sleep(3)
                 continue
             raise e

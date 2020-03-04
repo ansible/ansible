@@ -64,6 +64,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 notes:
 - This module is to be used with M(aci_switch_policy_leaf_profile).
@@ -250,6 +255,7 @@ def main():
         'to': dict(type='int', aliases=['node_blk_range_to', 'to_range', 'range_to']),
         'policy_group': dict(type='str', aliases=['policy_group_name']),
         'state': dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        'name_alias': dict(type='str'),
     })
 
     module = AnsibleModule(
@@ -261,15 +267,16 @@ def main():
         ]
     )
 
-    description = module.params['description']
-    leaf_profile = module.params['leaf_profile']
-    leaf = module.params['leaf']
-    leaf_node_blk = module.params['leaf_node_blk']
-    leaf_node_blk_description = module.params['leaf_node_blk_description']
-    from_ = module.params['from']
-    to_ = module.params['to']
-    policy_group = module.params['policy_group']
-    state = module.params['state']
+    description = module.params.get('description')
+    leaf_profile = module.params.get('leaf_profile')
+    leaf = module.params.get('leaf')
+    leaf_node_blk = module.params.get('leaf_node_blk')
+    leaf_node_blk_description = module.params.get('leaf_node_blk_description')
+    from_ = module.params.get('from')
+    to_ = module.params.get('to')
+    policy_group = module.params.get('policy_group')
+    state = module.params.get('state')
+    name_alias = module.params.get('name_alias')
 
     # Build child_configs dynamically
     child_configs = [
@@ -323,6 +330,7 @@ def main():
             class_config=dict(
                 descr=description,
                 name=leaf,
+                nameAlias=name_alias,
             ),
             child_configs=child_configs,
         )

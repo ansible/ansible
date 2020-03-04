@@ -13,6 +13,10 @@ from . import (
     CloudEnvironmentConfig,
 )
 
+from ..io import (
+    read_text_file,
+)
+
 from ..util import (
     find_executable,
     ApplicationError,
@@ -106,8 +110,7 @@ class OpenShiftCloudProvider(CloudProvider):
 
     def _setup_static(self):
         """Configure OpenShift tests for use with static configuration."""
-        with open(self.config_static_path, 'r') as config_fd:
-            config = config_fd.read()
+        config = read_text_file(self.config_static_path)
 
         match = re.search(r'^ *server: (?P<server>.*)$', config, flags=re.MULTILINE)
 

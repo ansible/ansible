@@ -2,16 +2,18 @@
 
 set -o pipefail -eux
 
-# shellcheck disable=SC2086
-ansible-test network-integration --explain ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} > /tmp/explain.txt 2>&1 || { cat /tmp/explain.txt && false; }
-{ grep ' network-integration: .* (targeted)$' /tmp/explain.txt || true; } > /tmp/network.txt
+declare -a args
+IFS='/:' read -ra args <<< "$1"
 
-if [ "${COVERAGE}" == "--coverage" ]; then
-    # when on-demand coverage is enabled, force tests to run for all network platforms
-    echo "coverage" > /tmp/network.txt
+platform="${args[0]}"
+version="${args[1]}"
+python_version="${args[2]}"
+
+if [ "${#args[@]}" -gt 3 ]; then
+    target="shippable/${platform}/group${args[3]}/"
+else
+    target="shippable/${platform}/"
 fi
-
-target="shippable/network/"
 
 stage="${S:-prod}"
 provider="${P:-default}"
@@ -23,27 +25,14 @@ python_versions=(
     3.6
 )
 
-if [ -s /tmp/network.txt ]; then
-    echo "Detected changes requiring integration tests specific to networking:"
-    cat /tmp/network.txt
-
-    echo "Running network integration tests for multiple platforms concurrently."
-
-    platforms=(
-        --platform vyos/1.1.8
-    )
-else
-    echo "No changes requiring integration tests specific to networking were detected."
-    echo "Running network integration tests for a single platform only."
-
-    platforms=(
-        --platform vyos/1.1.8
-    )
+if [ "${python_version}" ]; then
+    # limit tests to a single python version
+    python_versions=("${python_version}")
 fi
 
-for version in "${python_versions[@]}"; do
+for python_version in "${python_versions[@]}"; do
     # terminate remote instances on the final python version tested
-    if [ "${version}" = "${python_versions[-1]}" ]; then
+    if [ "${python_version}" = "${python_versions[-1]}" ]; then
         terminate="always"
     else
         terminate="never"
@@ -51,7 +40,7 @@ for version in "${python_versions[@]}"; do
 
     # shellcheck disable=SC2086
     ansible-test network-integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
-         "${platforms[@]}" \
-        --docker default --python "${version}" \
+        --platform "${platform}/${version}" \
+        --docker default --python "${python_version}" \
         --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done

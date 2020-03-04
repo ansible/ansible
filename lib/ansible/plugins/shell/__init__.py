@@ -170,7 +170,7 @@ class ShellBase(AnsiblePlugin):
             http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_426
             http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_276
 
-            Falls back to 'current workind directory' as we assume 'home is where the remote user ends up'
+            Falls back to 'current working directory' as we assume 'home is where the remote user ends up'
         '''
 
         # Check that the user_path to expand is safe

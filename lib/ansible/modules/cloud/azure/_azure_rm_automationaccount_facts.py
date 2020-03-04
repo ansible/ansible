@@ -1,0 +1,1 @@
+azure_rm_automationaccount_info.py

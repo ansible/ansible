@@ -5,13 +5,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -19,41 +18,68 @@ module: ecs_ecr
 version_added: "2.3"
 short_description: Manage Elastic Container Registry repositories
 description:
-    - Manage Elastic Container Registry repositories
+    - Manage Elastic Container Registry repositories.
 requirements: [ boto3 ]
 options:
     name:
         description:
-            - the name of the repository
+            - The name of the repository.
         required: true
+        type: str
     registry_id:
         description:
             - AWS account id associated with the registry.
             - If not specified, the default registry is assumed.
         required: false
+        type: str
     policy:
         description:
-            - JSON or dict that represents the new policy
+            - JSON or dict that represents the new policy.
         required: false
+        type: json
     force_set_policy:
         description:
-            - if no, prevents setting a policy that would prevent you from
+            - If I(force_set_policy=false), it prevents setting a policy that would prevent you from
               setting another policy in the future.
         required: false
         default: false
         type: bool
-    delete_policy:
+    purge_policy:
         description:
-            - if yes, remove the policy from the repository
+            - If yes, remove the policy from the repository.
+            - Alias C(delete_policy) has been deprecated and will be removed in Ansible 2.14
         required: false
         default: false
         type: bool
+        aliases: [ delete_policy ]
+    image_tag_mutability:
+        description:
+            - Configure whether repository should be mutable (ie. an already existing tag can be overwritten) or not.
+        required: false
+        choices: [mutable, immutable]
+        default: 'mutable'
+        version_added: '2.10'
+        type: str
+    lifecycle_policy:
+        description:
+            - JSON or dict that represents the new lifecycle policy
+        required: false
+        version_added: '2.10'
+        type: json
+    purge_lifecycle_policy:
+        description:
+            - if yes, remove the lifecycle policy from the repository
+        required: false
+        default: false
+        version_added: '2.10'
+        type: bool
     state:
         description:
-            - create or destroy the repository
+            - Create or destroy the repository.
         required: false
         choices: [present, absent]
         default: 'present'
+        type: str
 author:
  - David M. Lee (@leedm777)
 extends_documentation_fragment:
@@ -96,7 +122,32 @@ EXAMPLES = '''
 - name: delete-policy
   ecs_ecr:
     name: needs-no-policy
-    delete_policy: yes
+    purge_policy: yes
+
+- name: create immutable ecr-repo
+  ecs_ecr:
+    name: super/cool
+    image_tag_mutability: immutable
+
+- name: set-lifecycle-policy
+  ecs_ecr:
+    name: needs-lifecycle-policy
+    lifecycle_policy:
+      rules:
+        - rulePriority: 1
+          description: new policy
+          selection:
+            tagStatus: untagged
+            countType: sinceImagePushed
+            countUnit: days
+            countNumber: 365
+          action:
+            type: expire
+
+- name: purge-lifecycle-policy
+  ecs_ecr:
+    name: needs-no-lifecycle-policy
+    purge_lifecycle_policy: true
 '''
 
 RETURN = '''
@@ -130,11 +181,10 @@ import traceback
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass  # Taken care of by ec2.HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, boto_exception, ec2_argument_spec,
-                                      get_aws_connection_info, compare_policies)
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import boto_exception, compare_policies, sort_json_policy_dict
 from ansible.module_utils.six import string_types
 
 
@@ -153,15 +203,8 @@ def build_kwargs(registry_id):
 
 class EcsEcr:
     def __init__(self, module):
-        region, ec2_url, aws_connect_kwargs = \
-            get_aws_connection_info(module, boto3=True)
-
-        self.ecr = boto3_conn(module, conn_type='client',
-                              resource='ecr', region=region,
-                              endpoint=ec2_url, **aws_connect_kwargs)
-        self.sts = boto3_conn(module, conn_type='client',
-                              resource='sts', region=region,
-                              endpoint=ec2_url, **aws_connect_kwargs)
+        self.ecr = module.client('ecr')
+        self.sts = module.client('sts')
         self.check_mode = module.check_mode
         self.changed = False
         self.skipped = False
@@ -190,15 +233,17 @@ class EcsEcr:
                 return None
             raise
 
-    def create_repository(self, registry_id, name):
+    def create_repository(self, registry_id, name, image_tag_mutability):
         if registry_id:
             default_registry_id = self.sts.get_caller_identity().get('Account')
             if registry_id != default_registry_id:
                 raise Exception('Cannot create repository in registry {0}.'
-                                'Would be created in {1} instead.'.format(
-                                    registry_id, default_registry_id))
+                                'Would be created in {1} instead.'.format(registry_id, default_registry_id))
+
         if not self.check_mode:
-            repo = self.ecr.create_repository(repositoryName=name).get('repository')
+            repo = self.ecr.create_repository(
+                repositoryName=name,
+                imageTagMutability=image_tag_mutability).get('repository')
             self.changed = True
             return repo
         else:
@@ -250,6 +295,66 @@ class EcsEcr:
                 return policy
             return None
 
+    def put_image_tag_mutability(self, registry_id, name, new_mutability_configuration):
+        repo = self.get_repository(registry_id, name)
+        current_mutability_configuration = repo.get('imageTagMutability')
+
+        if current_mutability_configuration != new_mutability_configuration:
+            if not self.check_mode:
+                self.ecr.put_image_tag_mutability(
+                    repositoryName=name,
+                    imageTagMutability=new_mutability_configuration,
+                    **build_kwargs(registry_id))
+            else:
+                self.skipped = True
+            self.changed = True
+
+        repo['imageTagMutability'] = new_mutability_configuration
+        return repo
+
+    def get_lifecycle_policy(self, registry_id, name):
+        try:
+            res = self.ecr.get_lifecycle_policy(
+                repositoryName=name, **build_kwargs(registry_id))
+            text = res.get('lifecyclePolicyText')
+            return text and json.loads(text)
+        except ClientError as err:
+            code = err.response['Error'].get('Code', 'Unknown')
+            if code == 'LifecyclePolicyNotFoundException':
+                return None
+            raise
+
+    def put_lifecycle_policy(self, registry_id, name, policy_text):
+        if not self.check_mode:
+            policy = self.ecr.put_lifecycle_policy(
+                repositoryName=name,
+                lifecyclePolicyText=policy_text,
+                **build_kwargs(registry_id))
+            self.changed = True
+            return policy
+        else:
+            self.skipped = True
+            if self.get_repository(registry_id, name) is None:
+                printable = name
+                if registry_id:
+                    printable = '{0}:{1}'.format(registry_id, name)
+                raise Exception(
+                    'could not find repository {0}'.format(printable))
+            return
+
+    def purge_lifecycle_policy(self, registry_id, name):
+        if not self.check_mode:
+            policy = self.ecr.delete_lifecycle_policy(
+                repositoryName=name, **build_kwargs(registry_id))
+            self.changed = True
+            return policy
+        else:
+            policy = self.get_lifecycle_policy(registry_id, name)
+            if policy:
+                self.skipped = True
+                return policy
+            return None
+
 
 def sort_lists_of_strings(policy):
     for statement_index in range(0, len(policy.get('Statement', []))):
@@ -260,19 +365,35 @@ def sort_lists_of_strings(policy):
     return policy
 
 
-def run(ecr, params, verbosity):
+def run(ecr, params):
     # type: (EcsEcr, dict, int) -> Tuple[bool, dict]
     result = {}
     try:
         name = params['name']
         state = params['state']
         policy_text = params['policy']
-        delete_policy = params['delete_policy']
+        purge_policy = params['purge_policy']
         registry_id = params['registry_id']
         force_set_policy = params['force_set_policy']
+        image_tag_mutability = params['image_tag_mutability'].upper()
+        lifecycle_policy_text = params['lifecycle_policy']
+        purge_lifecycle_policy = params['purge_lifecycle_policy']
 
-        # If a policy was given, parse it
-        policy = policy_text and json.loads(policy_text)
+        # Parse policies, if they are given
+        try:
+            policy = policy_text and json.loads(policy_text)
+        except ValueError:
+            result['policy'] = policy_text
+            result['msg'] = 'Could not parse policy'
+            return False, result
+
+        try:
+            lifecycle_policy = \
+                lifecycle_policy_text and json.loads(lifecycle_policy_text)
+        except ValueError:
+            result['lifecycle_policy'] = lifecycle_policy_text
+            result['msg'] = 'Could not parse lifecycle_policy'
+            return False, result
 
         result['state'] = state
         result['created'] = False
@@ -281,20 +402,51 @@ def run(ecr, params, verbosity):
 
         if state == 'present':
             result['created'] = False
+
             if not repo:
-                repo = ecr.create_repository(registry_id, name)
+                repo = ecr.create_repository(registry_id, name, image_tag_mutability)
                 result['changed'] = True
                 result['created'] = True
+            else:
+                repo = ecr.put_image_tag_mutability(registry_id, name, image_tag_mutability)
             result['repository'] = repo
 
-            if delete_policy:
+            if purge_lifecycle_policy:
+                original_lifecycle_policy = \
+                    ecr.get_lifecycle_policy(registry_id, name)
+
+                result['lifecycle_policy'] = None
+
+                if original_lifecycle_policy:
+                    ecr.purge_lifecycle_policy(registry_id, name)
+                    result['changed'] = True
+
+            elif lifecycle_policy_text is not None:
+                try:
+                    lifecycle_policy = sort_json_policy_dict(lifecycle_policy)
+                    result['lifecycle_policy'] = lifecycle_policy
+
+                    original_lifecycle_policy = ecr.get_lifecycle_policy(
+                        registry_id, name)
+
+                    if original_lifecycle_policy:
+                        original_lifecycle_policy = sort_json_policy_dict(
+                            original_lifecycle_policy)
+
+                    if original_lifecycle_policy != lifecycle_policy:
+                        ecr.put_lifecycle_policy(registry_id, name,
+                                                 lifecycle_policy_text)
+                        result['changed'] = True
+                except Exception:
+                    # Some failure w/ the policy. It's helpful to know what the
+                    # policy is.
+                    result['lifecycle_policy'] = lifecycle_policy_text
+                    raise
+
+            if purge_policy:
                 original_policy = ecr.get_repository_policy(registry_id, name)
 
-                if verbosity >= 2:
-                    result['policy'] = None
-
-                if verbosity >= 3:
-                    result['original_policy'] = original_policy
+                result['policy'] = None
 
                 if original_policy:
                     ecr.delete_repository_policy(registry_id, name)
@@ -305,16 +457,12 @@ def run(ecr, params, verbosity):
                     # Sort any lists containing only string types
                     policy = sort_lists_of_strings(policy)
 
-                    if verbosity >= 2:
-                        result['policy'] = policy
+                    result['policy'] = policy
+
                     original_policy = ecr.get_repository_policy(
                         registry_id, name)
-
                     if original_policy:
                         original_policy = sort_lists_of_strings(original_policy)
-
-                    if verbosity >= 3:
-                        result['original_policy'] = original_policy
 
                     if compare_policies(original_policy, policy):
                         ecr.set_repository_policy(
@@ -350,26 +498,28 @@ def run(ecr, params, verbosity):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         registry_id=dict(required=False),
         state=dict(required=False, choices=['present', 'absent'],
                    default='present'),
         force_set_policy=dict(required=False, type='bool', default=False),
         policy=dict(required=False, type='json'),
-        delete_policy=dict(required=False, type='bool')))
+        image_tag_mutability=dict(required=False, choices=['mutable', 'immutable'],
+                                  default='mutable'),
+        purge_policy=dict(required=False, type='bool', aliases=['delete_policy'],
+                          deprecated_aliases=[dict(name='delete_policy', version='2.14')]),
+        lifecycle_policy=dict(required=False, type='json'),
+        purge_lifecycle_policy=dict(required=False, type='bool')
+    )
+    mutually_exclusive = [
+        ['policy', 'purge_policy'],
+        ['lifecycle_policy', 'purge_lifecycle_policy']]
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True,
-                           mutually_exclusive=[
-                               ['policy', 'delete_policy']])
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True, mutually_exclusive=mutually_exclusive)
 
     ecr = EcsEcr(module)
-    passed, result = run(ecr, module.params, module._verbosity)
+    passed, result = run(ecr, module.params)
 
     if passed:
         module.exit_json(**result)

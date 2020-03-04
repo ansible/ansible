@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ipa_config
 author: Fran Fitzpatrick (@fxfitz)
@@ -22,30 +22,32 @@ options:
   ipadefaultloginshell:
     description: Default shell for new users.
     aliases: ["loginshell"]
+    type: str
   ipadefaultemaildomain:
     description: Default e-mail domain for new users.
     aliases: ["emaildomain"]
+    type: str
 extends_documentation_fragment: ipa.documentation
 version_added: "2.7"
 '''
 
-EXAMPLES = '''
-# Ensure the default login shell is bash.
-- ipa_config:
+EXAMPLES = r'''
+- name: Ensure the default login shell is bash.
+  ipa_config:
     ipadefaultloginshell: /bin/bash
     ipa_host: localhost
     ipa_user: admin
     ipa_pass: supersecret
 
-# Ensure the default e-mail domain is ansible.com.
-- ipa_config:
+- name: Ensure the default e-mail domain is ansible.com.
+  ipa_config:
     ipadefaultemaildomain: ansible.com
     ipa_host: localhost
     ipa_user: admin
     ipa_pass: supersecret
 '''
 
-RETURN = '''
+RETURN = r'''
 config:
   description: Configuration as returned by IPA API.
   returned: always

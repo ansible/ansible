@@ -4,7 +4,7 @@
 
 - include_tasks: _populate.yaml
 
-- block:  
+- block:
     - name: Delete attributes of given interfaces
       vyos_interfaces: &deleted
         config:

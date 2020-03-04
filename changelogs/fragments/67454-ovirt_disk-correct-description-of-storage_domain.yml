@@ -1,0 +1,2 @@
+minor_changes:
+  - "ovirt_disk: correct description of storage_domain, there is no default value of the attribute"

@@ -154,6 +154,7 @@ options:
   force:
     description:
       - If C(yes) do not get a cached copy.
+      - Alias C(thirsty) has been deprecated and will be removed in 2.13.
     type: bool
     default: no
     aliases: [ thirsty ]
@@ -236,7 +237,7 @@ EXAMPLES = r'''
     method: GET
     return_content: yes
     headers:
-      Cookie: "{{ login.set_cookie }}"
+      Cookie: "{{ login.cookies_string }}"
 
 - name: Queue build of a project in Jenkins
   uri:
@@ -312,28 +313,45 @@ EXAMPLES = r'''
 
 RETURN = r'''
 # The return information includes all the HTTP headers in lower-case.
+content:
+  description: The response body content.
+  returned: status not in status_code or return_content is true
+  type: str
+  sample: "{}"
+cookies:
+  description: The cookie values placed in cookie jar.
+  returned: on success
+  type: dict
+  sample: {"SESSIONID": "[SESSIONID]"}
+  version_added: "2.4"
+cookies_string:
+  description: The value for future request Cookie headers.
+  returned: on success
+  type: str
+  sample: "SESSIONID=[SESSIONID]"
+  version_added: "2.6"
 elapsed:
-  description: The number of seconds that elapsed while performing the download
+  description: The number of seconds that elapsed while performing the download.
   returned: on success
   type: int
   sample: 23
 msg:
-  description: The HTTP message from the request
+  description: The HTTP message from the request.
   returned: always
   type: str
   sample: OK (unknown bytes)
 redirected:
-  description: Whether the request was redirected
+  description: Whether the request was redirected.
   returned: on success
   type: bool
   sample: false
 status:
-  description: The HTTP status code from the request
+  description: The HTTP status code from the request.
   returned: always
   type: int
   sample: 200
 url:
-  description: The actual URL used for the request
+  description: The actual URL used for the request.
   returned: always
   type: str
   sample: https://www.ansible.com/
@@ -467,7 +485,7 @@ def form_urlencoded(body):
 
     if isinstance(body, (Mapping, Sequence)):
         result = []
-        # Turn a list of lists into a list of tupples that urlencode accepts
+        # Turn a list of lists into a list of tuples that urlencode accepts
         for key, values in kv_list(body):
             if isinstance(values, string_types) or not isinstance(values, (Mapping, Sequence)):
                 values = [values]
@@ -566,6 +584,7 @@ def main():
         timeout=dict(type='int', default=30),
         headers=dict(type='dict', default={}),
         unix_socket=dict(type='path'),
+        remote_src=dict(type='bool', default=False),
     )
 
     module = AnsibleModule(
@@ -573,6 +592,9 @@ def main():
         add_file_common_args=True,
         mutually_exclusive=[['body', 'src']],
     )
+
+    if module.params.get('thirsty'):
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
 
     url = module.params['url']
     body = module.params['body']
@@ -634,8 +656,7 @@ def main():
             # allow file attribute changes
             resp['changed'] = True
             module.params['path'] = dest
-            file_args = module.load_file_common_arguments(module.params)
-            file_args['path'] = dest
+            file_args = module.load_file_common_arguments(module.params, path=dest)
             resp['changed'] = module.set_fs_attributes_if_different(file_args, resp['changed'])
         resp['path'] = dest
 
@@ -654,9 +675,30 @@ def main():
     # Default content_encoding to try
     content_encoding = 'utf-8'
     if 'content_type' in uresp:
-        content_type, params = cgi.parse_header(uresp['content_type'])
-        if 'charset' in params:
-            content_encoding = params['charset']
+        # Handle multiple Content-Type headers
+        charsets = []
+        content_types = []
+        for value in uresp['content_type'].split(','):
+            ct, params = cgi.parse_header(value)
+            if ct not in content_types:
+                content_types.append(ct)
+            if 'charset' in params:
+                if params['charset'] not in charsets:
+                    charsets.append(params['charset'])
+
+        if content_types:
+            content_type = content_types[0]
+            if len(content_types) > 1:
+                module.warn(
+                    'Received multiple conflicting Content-Type values (%s), using %s' % (', '.join(content_types), content_type)
+                )
+        if charsets:
+            content_encoding = charsets[0]
+            if len(charsets) > 1:
+                module.warn(
+                    'Received multiple conflicting charset values (%s), using %s' % (', '.join(charsets), content_encoding)
+                )
+
         u_content = to_text(content, encoding=content_encoding)
         if any(candidate in content_type for candidate in JSON_CANDIDATES):
             try:

@@ -22,7 +22,8 @@ description:
   - This module provides declarative management of VLANs
     on VyOS network devices.
 notes:
-  - Tested against VYOS 1.1.7
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 options:
   name:
     description:
@@ -144,7 +145,6 @@ def map_obj_to_commands(updates, module):
         name = w['name']
         address = w['address']
         state = w['state']
-        interfaces = w['interfaces']
 
         obj_in_have = search_obj_in_list(vlan_id, have)
 

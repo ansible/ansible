@@ -95,11 +95,12 @@ EXAMPLES = r'''
   find:
     paths: /var/tmp/project
     patterns: "^.*?\\.(?:html|?:css|?:js)$"
+    use_regex: yes
   register: f
 
 - name: Upload a directory of files as a set of iFiles
   bigip_file_copy:
-    source: "{{ f.path }}"
+    source: "{{ item.path }}"
     datastore: ifile
     provider:
       password: secret

@@ -47,6 +47,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 notes:
 - The C(aaa_user) must exist before using this module in your playbook.
@@ -232,6 +237,7 @@ def main():
         certificate=dict(type='str', aliases=['cert_data', 'certificate_data']),
         certificate_name=dict(type='str', aliases=['cert_name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -243,17 +249,18 @@ def main():
         ],
     )
 
-    aaa_user = module.params['aaa_user']
-    aaa_user_type = module.params['aaa_user_type']
-    certificate = module.params['certificate']
-    certificate_name = module.params['certificate_name']
-    state = module.params['state']
+    aaa_user = module.params.get('aaa_user')
+    aaa_user_type = module.params.get('aaa_user_type')
+    certificate = module.params.get('certificate')
+    certificate_name = module.params.get('certificate_name')
+    state = module.params.get('state')
+    name_alias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
-            aci_class=ACI_MAPPING[aaa_user_type]['aci_class'],
-            aci_rn=ACI_MAPPING[aaa_user_type]['aci_mo'] + aaa_user,
+            aci_class=ACI_MAPPING.get(aaa_user_type).get('aci_class'),
+            aci_rn=ACI_MAPPING.get(aaa_user_type).get('aci_mo') + aaa_user,
             module_object=aaa_user,
             target_filter={'name': aaa_user},
         ),
@@ -272,6 +279,8 @@ def main():
             class_config=dict(
                 data=certificate,
                 name=certificate_name,
+                nameAlias=name_alias,
+
             ),
         )
 

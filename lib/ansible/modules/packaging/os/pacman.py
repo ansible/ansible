@@ -30,23 +30,14 @@ options:
             - Name or list of names of the package(s) or file(s) to install, upgrade, or remove.
               Can't be used in combination with C(upgrade).
         aliases: [ package, pkg ]
+        type: list
+        elements: str
 
     state:
         description:
             - Desired state of the package.
         default: present
         choices: [ absent, latest, present ]
-
-    recurse:
-        description:
-            - When removing a package, also remove its dependencies, provided
-              that they are not required by other packages and were not
-              explicitly installed by a user.
-              This option is deprecated since 2.8 and will be removed in 2.10,
-              use `extra_args=--recursive`.
-        default: no
-        type: bool
-        version_added: "1.3"
 
     force:
         description:
@@ -338,14 +329,17 @@ def install_packages(module, pacman_path, state, packages, package_files):
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
 
-        data = stdout.split('\n')[3].split(' ')[2:]
-        data = [i for i in data if i != '']
-        for i, pkg in enumerate(data):
-            data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
-            if module._diff:
-                diff['after'] += "%s\n" % pkg
+        # As we pass `--needed` to pacman returns a single line of ` there is nothing to do` if no change is performed.
+        # The check for > 3 is here because we pick the 4th line in normal operation.
+        if len(stdout.split('\n')) > 3:
+            data = stdout.split('\n')[3].split(' ')[2:]
+            data = [i for i in data if i != '']
+            for i, pkg in enumerate(data):
+                data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
+                if module._diff:
+                    diff['after'] += "%s\n" % pkg
 
-        install_c += len(to_install_repos)
+            install_c += len(to_install_repos)
 
     if to_install_files:
         cmd = "%s --upgrade --noconfirm --noprogressbar --needed %s %s" % (pacman_path, module.params["extra_args"], " ".join(to_install_files))
@@ -354,14 +348,17 @@ def install_packages(module, pacman_path, state, packages, package_files):
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
 
-        data = stdout.split('\n')[3].split(' ')[2:]
-        data = [i for i in data if i != '']
-        for i, pkg in enumerate(data):
-            data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
-            if module._diff:
-                diff['after'] += "%s\n" % pkg
+        # As we pass `--needed` to pacman returns a single line of ` there is nothing to do` if no change is performed.
+        # The check for > 3 is here because we pick the 4th line in normal operation.
+        if len(stdout.split('\n')) > 3:
+            data = stdout.split('\n')[3].split(' ')[2:]
+            data = [i for i in data if i != '']
+            for i, pkg in enumerate(data):
+                data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
+                if module._diff:
+                    diff['after'] += "%s\n" % pkg
 
-        install_c += len(to_install_files)
+            install_c += len(to_install_files)
 
     if state == 'latest' and len(package_err) > 0:
         message = "But could not ensure 'latest' state for %s package(s) as remote version could not be fetched." % (package_err)
@@ -427,9 +424,8 @@ def expand_package_groups(module, pacman_path, pkgs):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='list', aliases=['pkg', 'package']),
+            name=dict(type='list', elements='str', aliases=['pkg', 'package']),
             state=dict(type='str', default='present', choices=['present', 'installed', 'latest', 'absent', 'removed']),
-            recurse=dict(type='bool', default=False),
             force=dict(type='bool', default=False),
             extra_args=dict(type='str', default=''),
             upgrade=dict(type='bool', default=False),
@@ -443,6 +439,7 @@ def main():
     )
 
     pacman_path = module.get_bin_path('pacman', True)
+    module.run_command_environ_update = dict(LC_ALL='C')
 
     p = module.params
 
@@ -451,13 +448,6 @@ def main():
         p['state'] = 'present'
     elif p['state'] in ['absent', 'removed']:
         p['state'] = 'absent'
-
-    if p['recurse']:
-        module.deprecate('Option `recurse` is deprecated and will be removed in '
-                         'version 2.10. Please use `extra_args=--recursive` '
-                         'instead', '2.10')
-        if p['state'] == 'absent':
-            p['extra_args'] += " --recursive"
 
     if p["update_cache"] and not module.check_mode:
         update_package_db(module, pacman_path)

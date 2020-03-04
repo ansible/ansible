@@ -1,0 +1,7 @@
+# Initial tests of postgresql_subscription module:
+
+- import_tasks: setup_publication.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18'
+
+- import_tasks: postgresql_subscription_initial.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18'

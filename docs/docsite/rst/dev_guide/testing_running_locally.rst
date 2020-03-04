@@ -6,12 +6,13 @@
 Testing Ansible
 ***************
 
-.. contents:: Topics
-
 This document describes how to:
 
 * Run tests locally using ``ansible-test``
 * Extend
+
+.. contents::
+   :local:
 
 Requirements
 ============
@@ -35,7 +36,7 @@ An API key is required to use this feature.
 
     Recommended for integration tests.
 
-See the `list of supported platforms and versions <https://github.com/ansible/ansible/blob/devel/test/runner/completion/remote.txt>`_ for additional details.
+See the `list of supported platforms and versions <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/remote.txt>`_ for additional details.
 
 Environment Variables
 ---------------------
@@ -43,10 +44,9 @@ Environment Variables
 When using environment variables to manipulate tests there some limitations to keep in mind. Environment variables are:
 
 * Not propagated from the host to the test environment when using the ``--docker`` or ``--remote`` options.
-* Not exposed to the test environment unless whitelisted in ``test/runner/lib/util.py`` in the ``common_environment`` function.
-* Not exposed to the test environment when using the ``--tox`` option unless whitelisted in ``test/runner/tox.ini`` by the ``passenv`` definition.
+* Not exposed to the test environment unless whitelisted in ``test/lib/ansible_test/_internal/util.py`` in the ``common_environment`` function.
 
-    Example: ``ANSIBLE_KEEP_REMOTE_FILES=1`` can be set when running ``ansible-test integration --tox``. However, using the ``--docker`` option would
+    Example: ``ANSIBLE_KEEP_REMOTE_FILES=1`` can be set when running ``ansible-test integration --venv``. However, using the ``--docker`` option would
     require running ``ansible-test shell`` to gain access to the Docker environment. Once at the shell prompt, the environment variable could be set
     and the tests executed. This is useful for debugging tests inside a container by following the
     :ref:`Debugging AnsibleModule-based modules <debugging_ansiblemodule_based_modules>` instructions.
@@ -57,7 +57,7 @@ Interactive Shell
 Use the ``ansible-test shell`` command to get an interactive shell in the same environment used to run tests. Examples:
 
 * ``ansible-test shell --docker`` - Open a shell in the default docker container.
-* ``ansible-test shell --tox 3.6`` - Open a shell in the Python 3.6 ``tox`` environment.
+* ``ansible-test shell --venv --python 3.6`` - Open a shell in a Python 3.6 virtual environment.
 
 
 Code Coverage
@@ -68,12 +68,13 @@ be written.  Online reports are available but only cover the ``devel`` branch (s
 :ref:`developing_testing`).  For new code local reports are needed.
 
 Add the ``--coverage`` option to any test command to collect code coverage data.  If you
-aren't using the ``--tox`` or ``--docker`` options which create an isolated python
+aren't using the ``--venv`` or ``--docker`` options which create an isolated python
 environment then you may have to use the ``--requirements`` option to ensure that the
 correct version of the coverage module is installed::
 
+   ansible-test coverage erase
    ansible-test units --coverage apt
-   ansible-test integration --coverage aws_lambda --tox --requirements
+   ansible-test integration --coverage aws_lambda
    ansible-test coverage html
 
 

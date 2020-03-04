@@ -33,6 +33,7 @@ options:
         description:
             - List of other certificates to include. Pre 2.8 this parameter was called C(ca_certificates)
         type: list
+        elements: path
         aliases: [ ca_certificates ]
     certificate_path:
         description:
@@ -94,6 +95,12 @@ options:
         type: bool
         default: no
         version_added: "2.8"
+    return_content:
+        description:
+            - If set to C(yes), will return the (current or generated) PKCS#12's content as I(pkcs12).
+        type: bool
+        default: no
+        version_added: "2.10"
 extends_documentation_fragment:
     - files
 seealso:
@@ -168,8 +175,14 @@ backup_file:
     returned: changed and if I(backup) is C(yes)
     type: str
     sample: /path/to/ansible.com.pem.2019-03-09@11:22~
+pkcs12:
+    description: The (current or generated) PKCS#12's content Base64 encoded.
+    returned: if I(state) is C(present) and I(return_content) is C(yes)
+    type: str
+    version_added: "2.10"
 '''
 
+import base64
 import stat
 import os
 import traceback
@@ -211,6 +224,8 @@ class Pkcs(crypto_utils.OpenSSLObject):
         self.pkcs12 = None
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.privatekey_path = module.params['privatekey_path']
+        self.pkcs12_bytes = None
+        self.return_content = module.params['return_content']
         self.src = module.params['src']
 
         if module.params['mode'] is None:
@@ -271,7 +286,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
                 return False
 
             if pkcs12_privatekey:
-                # This check is required because pyOpenSSL will not return a firendly name
+                # This check is required because pyOpenSSL will not return a friendly name
                 # if the private key is not set in the file
                 if ((self.pkcs12.get_friendlyname() is not None) and (pkcs12_friendly_name is not None)):
                     if self.pkcs12.get_friendlyname() != pkcs12_friendly_name:
@@ -293,6 +308,10 @@ class Pkcs(crypto_utils.OpenSSLObject):
             result['privatekey_path'] = self.privatekey_path
         if self.backup_file:
             result['backup_file'] = self.backup_file
+        if self.return_content:
+            if self.pkcs12_bytes is None:
+                self.pkcs12_bytes = crypto_utils.load_file_if_exists(self.path, ignore_errors=True)
+            result['pkcs12'] = base64.b64encode(self.pkcs12_bytes) if self.pkcs12_bytes else None
 
         return result
 
@@ -357,6 +376,8 @@ class Pkcs(crypto_utils.OpenSSLObject):
         if self.backup:
             self.backup_file = module.backup_local(self.path)
         crypto_utils.write_file(module, content, mode)
+        if self.return_content:
+            self.pkcs12_bytes = content
 
 
 def main():
@@ -375,6 +396,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present']),
         src=dict(type='path'),
         backup=dict(type='bool', default=False),
+        return_content=dict(type='bool', default=False),
     )
 
     required_if = [

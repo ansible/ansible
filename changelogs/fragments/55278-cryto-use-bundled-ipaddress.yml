@@ -1,3 +1,0 @@
-bugfixes:
-- "openssl_csr, openssl_csr_info - use ``ipaddress`` module bundled with Ansible for normalizations needed for pyOpenSSL backend."
-- "acme_certificate - use ``ipaddress`` module bundled with Ansible for normalizations needed for OpenSSL backend."

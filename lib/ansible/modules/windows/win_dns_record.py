@@ -51,7 +51,7 @@ options:
   value:
     description:
     - The value(s) to specify. Required when C(state=present).
-    - When c(type=PTR) only the partial part of the IP should be given.
+    - When C(type=PTR) only the partial part of the IP should be given.
     aliases: [ values ]
     type: list
   zone:
@@ -70,19 +70,23 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: Create database server alias
+# Demonstrate creating a matching A and PTR record.
+
+- name: Create database server record
   win_dns_record:
-    name: "db1"
-    type: "CNAME"
-    value: "cgyl1404p.amer.example.com"
+    name: "cgyl1404p.amer.example.com"
+    type: "A"
+    value: "10.1.1.1"
     zone: "amer.example.com"
 
-- name: PTR example
+- name: Create matching PTR record
   win_dns_record:
     name: "1.1.1"
     type: "PTR"
     value: "db1"
     zone: "10.in-addr.arpa"
+
+# Demonstrate replacing an A record with a CNAME
 
 - name: Remove static record
   win_dns_record:
@@ -90,6 +94,37 @@ EXAMPLES = r'''
     type: "A"
     state: absent
     zone: "amer.example.com"
+
+- name: Create database server alias
+  win_dns_record:
+    name: "db1"
+    type: "CNAME"
+    value: "cgyl1404p.amer.example.com"
+    zone: "amer.example.com"
+
+# Demonstrate creating multiple A records for the same name
+
+- name: Create multiple A record values for www
+  win_dns_record:
+    name: "www"
+    type: "A"
+    values:
+      - 10.0.42.5
+      - 10.0.42.6
+      - 10.0.42.7
+    zone: "example.com"
+
+# Demonstrates a partial update (replace some existing values with new ones)
+# for a pre-existing name
+
+- name: Update www host with new addresses
+  win_dns_record:
+    name: "www"
+    type: "A"
+    values:
+      - 10.0.42.5  # this old value was kept (others removed)
+      - 10.0.42.12  # this new value was added
+    zone: "example.com"
 '''
 
 RETURN = r'''

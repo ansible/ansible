@@ -1,0 +1,8 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Setup MySQL master-standby replication into one container:
+- import_tasks: setup_mysql_cluster.yml
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - ansible_facts.distribution_major_version is version('7', '==')

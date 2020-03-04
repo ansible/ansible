@@ -41,7 +41,7 @@ options:
             - List of any valid API objects, such as a I(DeploymentConfig), I(Service), etc. The object
               will be created exactly as defined here, with any parameter values substituted in prior to creation.
               The definition of these objects can reference parameters defined earlier.
-            - As part of the the list user can pass also I(VirtualMachine) kind. When passing I(VirtualMachine)
+            - As part of the list user can pass also I(VirtualMachine) kind. When passing I(VirtualMachine)
               user must use Ansible structure of the parameters not the Kubernetes API structure. For more information
               please take a look at M(kubevirt_vm) module and at EXAMPLES section, where you can see example.
         type: list
@@ -129,7 +129,7 @@ options:
             Then, that value is substituted wherever the parameter is referenced. References can be defined in any
             field in the objects list field. This is useful for generating random passwords or allowing the user to
             supply a host name or other user-specific value that is required to customize the template."
-            - "More information can be foud at: U(https://docs.openshift.com/container-platform/3.6/dev_guide/templates.html#writing-parameters)"
+            - "More information can be found at: U(https://docs.openshift.com/container-platform/3.6/dev_guide/templates.html#writing-parameters)"
         type: list
     version:
         description:
@@ -335,7 +335,7 @@ class KubeVirtVMTemplate(KubeVirtRawModule):
         if self.params.get('default_network'):
             annotations['defaults.template.cnv.io/network'] = self.params.get('default_network').get('name')
 
-        # Proccess objects:
+        # Process objects:
         self.client = self.get_api_client()
         definition['objects'] = []
         objects = self.params.get('objects') or []
@@ -358,7 +358,7 @@ class KubeVirtVMTemplate(KubeVirtRawModule):
                 # Set kubevirt API version:
                 vm_definition['apiVersion'] = '%s/%s' % (API_GROUP, MAX_SUPPORTED_API_VERSION)
 
-                # Contruct k8s vm API object:
+                # Construct k8s vm API object:
                 vm_template = vm_definition['spec']['template']
                 dummy, vm_def = self.construct_vm_template_definition('VirtualMachine', vm_definition, vm_template, obj)
 

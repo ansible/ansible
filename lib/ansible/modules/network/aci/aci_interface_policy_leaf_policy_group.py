@@ -126,6 +126,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 notes:
 - When using the module please select the appropriate link_aggregation_type (lag_type).
@@ -342,6 +347,7 @@ def main():
         port_security_policy=dict(type='str', aliases=['port_security_policy_name']),
         aep=dict(type='str', aliases=['aep_name']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -353,26 +359,27 @@ def main():
         ],
     )
 
-    policy_group = module.params['policy_group']
-    description = module.params['description']
-    lag_type = module.params['lag_type']
-    link_level_policy = module.params['link_level_policy']
-    cdp_policy = module.params['cdp_policy']
-    mcp_policy = module.params['mcp_policy']
-    lldp_policy = module.params['lldp_policy']
-    stp_interface_policy = module.params['stp_interface_policy']
-    egress_data_plane_policing_policy = module.params['egress_data_plane_policing_policy']
-    ingress_data_plane_policing_policy = module.params['ingress_data_plane_policing_policy']
-    priority_flow_control_policy = module.params['priority_flow_control_policy']
-    fibre_channel_interface_policy = module.params['fibre_channel_interface_policy']
-    slow_drain_policy = module.params['slow_drain_policy']
-    port_channel_policy = module.params['port_channel_policy']
-    monitoring_policy = module.params['monitoring_policy']
-    storm_control_interface_policy = module.params['storm_control_interface_policy']
-    l2_interface_policy = module.params['l2_interface_policy']
-    port_security_policy = module.params['port_security_policy']
-    aep = module.params['aep']
-    state = module.params['state']
+    policy_group = module.params.get('policy_group')
+    description = module.params.get('description')
+    lag_type = module.params.get('lag_type')
+    link_level_policy = module.params.get('link_level_policy')
+    cdp_policy = module.params.get('cdp_policy')
+    mcp_policy = module.params.get('mcp_policy')
+    lldp_policy = module.params.get('lldp_policy')
+    stp_interface_policy = module.params.get('stp_interface_policy')
+    egress_data_plane_policing_policy = module.params.get('egress_data_plane_policing_policy')
+    ingress_data_plane_policing_policy = module.params.get('ingress_data_plane_policing_policy')
+    priority_flow_control_policy = module.params.get('priority_flow_control_policy')
+    fibre_channel_interface_policy = module.params.get('fibre_channel_interface_policy')
+    slow_drain_policy = module.params.get('slow_drain_policy')
+    port_channel_policy = module.params.get('port_channel_policy')
+    monitoring_policy = module.params.get('monitoring_policy')
+    storm_control_interface_policy = module.params.get('storm_control_interface_policy')
+    l2_interface_policy = module.params.get('l2_interface_policy')
+    port_security_policy = module.params.get('port_security_policy')
+    aep = module.params.get('aep')
+    state = module.params.get('state')
+    name_alias = module.params.get('name_alias')
 
     if lag_type == 'leaf':
         aci_class_name = 'infraAccPortGrp'
@@ -380,6 +387,7 @@ def main():
         class_config_dict = dict(
             name=policy_group,
             descr=description,
+            nameAlias=name_alias,
         )
         # Reset for target_filter
         lag_type = None
@@ -390,6 +398,7 @@ def main():
             name=policy_group,
             descr=description,
             lagT=lag_type,
+            nameAlias=name_alias,
         )
 
     child_configs = [

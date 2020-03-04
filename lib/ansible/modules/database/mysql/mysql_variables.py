@@ -18,32 +18,66 @@ module: mysql_variables
 
 short_description: Manage MySQL global variables
 description:
-    - Query / Set MySQL variables.
-version_added: 1.3
+- Query / Set MySQL variables.
+version_added: '1.3'
 author:
 - Balazs Pocze (@banyek)
 options:
-    variable:
-        description:
-            - Variable name to operate
-        type: str
-        required: True
-    value:
-        description:
-            - If set, then sets variable value to this
-        type: str
+  variable:
+    description:
+    - Variable name to operate
+    type: str
+    required: yes
+  value:
+    description:
+    - If set, then sets variable value to this
+    type: str
+  mode:
+    description:
+    - C(global) assigns C(value) to a global system variable which will be changed at runtime
+      but won't persist across server restarts.
+    - C(persist) assigns C(value) to a global system variable and persists it to
+      the mysqld-auto.cnf option file in the data directory
+      (the variable will survive service restarts).
+    - C(persist_only) persists C(value) to the mysqld-auto.cnf option file in the data directory
+      but without setting the global variable runtime value
+      (the value will be changed after the next service restart).
+    - Supported by MySQL 8.0 or later.
+    - For more information see U(https://dev.mysql.com/doc/refman/8.0/en/set-variable.html).
+    type: str
+    choices: ['global', 'persist', 'persist_only']
+    default: global
+    version_added: '2.10'
+
+seealso:
+- module: mysql_info
+- name: MySQL SET command reference
+  description: Complete reference of the MySQL SET command documentation.
+  link: https://dev.mysql.com/doc/refman/8.0/en/set-statement.html
+
 extends_documentation_fragment:
 - mysql
 '''
+
 EXAMPLES = r'''
 - name: Check for sync_binlog setting
-- mysql_variables:
+  mysql_variables:
     variable: sync_binlog
 
-- name: Set read_only variable to 1
-- mysql_variables:
+- name: Set read_only variable to 1 persistently
+  mysql_variables:
     variable: read_only
     value: 1
+    mode: persist
+'''
+
+RETURN = r'''
+queries:
+  description: List of executed queries which modified DB's state.
+  returned: if executed
+  type: list
+  sample: ["SET GLOBAL `read_only` = 1"]
+  version_added: '2.10'
 '''
 
 import os
@@ -54,6 +88,26 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, mysql_quote_identifier
 from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
+
+executed_queries = []
+
+
+def check_mysqld_auto(module, cursor, mysqlvar):
+    """Check variable's value in mysqld-auto.cnf."""
+    query = ("SELECT VARIABLE_VALUE "
+             "FROM performance_schema.persisted_variables "
+             "WHERE VARIABLE_NAME = %s")
+    try:
+        cursor.execute(query, (mysqlvar,))
+        res = cursor.fetchone()
+    except Exception as e:
+        if "Table 'performance_schema.persisted_variables' doesn't exist" in str(e):
+            module.fail_json(msg='Server version must be 8.0 or greater.')
+
+    if res:
+        return res[0]
+    else:
+        return None
 
 
 def typedvalue(value):
@@ -91,7 +145,7 @@ def getvariable(cursor, mysqlvar):
         return None
 
 
-def setvariable(cursor, mysqlvar, value):
+def setvariable(cursor, mysqlvar, value, mode='global'):
     """ Set a global mysql variable to a given value
 
     The DB driver will handle quoting of the given value based on its
@@ -99,13 +153,21 @@ def setvariable(cursor, mysqlvar, value):
     should be passed as numeric literals.
 
     """
-    query = "SET GLOBAL %s = " % mysql_quote_identifier(mysqlvar, 'vars')
+    if mode == 'persist':
+        query = "SET PERSIST %s = " % mysql_quote_identifier(mysqlvar, 'vars')
+    elif mode == 'global':
+        query = "SET GLOBAL %s = " % mysql_quote_identifier(mysqlvar, 'vars')
+    elif mode == 'persist_only':
+        query = "SET PERSIST_ONLY %s = " % mysql_quote_identifier(mysqlvar, 'vars')
+
     try:
         cursor.execute(query + "%s", (value,))
+        executed_queries.append(query + "%s" % value)
         cursor.fetchall()
         result = True
     except Exception as e:
         result = to_native(e)
+
     return result
 
 
@@ -124,6 +186,7 @@ def main():
             ca_cert=dict(type='path', aliases=['ssl_ca']),
             connect_timeout=dict(type='int', default=30),
             config_file=dict(type='path', default='~/.my.cnf'),
+            mode=dict(type='str', choices=['global', 'persist', 'persist_only'], default='global'),
         ),
     )
     user = module.params["login_user"]
@@ -137,9 +200,11 @@ def main():
 
     mysqlvar = module.params["variable"]
     value = module.params["value"]
+    mode = module.params["mode"]
+
     if mysqlvar is None:
         module.fail_json(msg="Cannot run without variable to operate with")
-    if match('^[0-9a-z_]+$', mysqlvar) is None:
+    if match('^[0-9a-z_.]+$', mysqlvar) is None:
         module.fail_json(msg="invalid variable name \"%s\"" % mysqlvar)
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)
@@ -147,35 +212,64 @@ def main():
         warnings.filterwarnings('error', category=mysql_driver.Warning)
 
     try:
-        cursor = mysql_connect(module, user, password, config_file, ssl_cert, ssl_key, ssl_ca, db,
-                               connect_timeout=connect_timeout)
+        cursor, db_conn = mysql_connect(module, user, password, config_file, ssl_cert, ssl_key, ssl_ca, db,
+                                        connect_timeout=connect_timeout)
     except Exception as e:
         if os.path.exists(config_file):
-            module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
-                                 "Exception message: %s" % (config_file, to_native(e)))
+            module.fail_json(msg=("unable to connect to database, check login_user and "
+                                  "login_password are correct or %s has the credentials. "
+                                  "Exception message: %s" % (config_file, to_native(e))))
         else:
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, to_native(e)))
+
+    mysqlvar_val = None
+    var_in_mysqld_auto_cnf = None
 
     mysqlvar_val = getvariable(cursor, mysqlvar)
     if mysqlvar_val is None:
         module.fail_json(msg="Variable not available \"%s\"" % mysqlvar, changed=False)
+
     if value is None:
         module.exit_json(msg=mysqlvar_val)
-    else:
-        # Type values before using them
-        value_wanted = typedvalue(value)
-        value_actual = typedvalue(mysqlvar_val)
-        if value_wanted == value_actual:
-            module.exit_json(msg="Variable already set to requested value", changed=False)
-        try:
-            result = setvariable(cursor, mysqlvar, value_wanted)
-        except SQLParseError as e:
-            result = to_native(e)
 
-        if result is True:
-            module.exit_json(msg="Variable change succeeded prev_value=%s" % value_actual, changed=True)
-        else:
-            module.fail_json(msg=result, changed=False)
+    if mode in ('persist', 'persist_only'):
+        var_in_mysqld_auto_cnf = check_mysqld_auto(module, cursor, mysqlvar)
+
+        if mode == 'persist_only':
+            if var_in_mysqld_auto_cnf is None:
+                mysqlvar_val = False
+            else:
+                mysqlvar_val = var_in_mysqld_auto_cnf
+
+    # Type values before using them
+    value_wanted = typedvalue(value)
+    value_actual = typedvalue(mysqlvar_val)
+    value_in_auto_cnf = None
+    if var_in_mysqld_auto_cnf is not None:
+        value_in_auto_cnf = typedvalue(var_in_mysqld_auto_cnf)
+
+    if value_wanted == value_actual and mode in ('global', 'persist'):
+        if mode == 'persist' and value_wanted == value_in_auto_cnf:
+            module.exit_json(msg="Variable is already set to requested value globally"
+                                 "and stored into mysqld-auto.cnf file.", changed=False)
+
+        elif mode == 'global':
+            module.exit_json(msg="Variable is already set to requested value.", changed=False)
+
+    if mode == 'persist_only' and value_wanted == value_in_auto_cnf:
+        module.exit_json(msg="Variable is already stored into mysqld-auto.cnf "
+                             "with requested value.", changed=False)
+
+    try:
+        result = setvariable(cursor, mysqlvar, value_wanted, mode)
+    except SQLParseError as e:
+        result = to_native(e)
+
+    if result is True:
+        module.exit_json(msg="Variable change succeeded prev_value=%s" % value_actual,
+                         changed=True, queries=executed_queries)
+    else:
+        module.fail_json(msg=result, changed=False)
 
 
 if __name__ == '__main__':

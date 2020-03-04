@@ -124,16 +124,16 @@ def main():
         ],
     )
 
-    description = module.params['description']
-    display_name = module.params['display_name']
-    tenant = module.params['tenant']
-    state = module.params['state']
+    description = module.params.get('description')
+    display_name = module.params.get('display_name')
+    tenant = module.params.get('tenant')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
     # Convert sites and users
-    sites = mso.lookup_sites(module.params['sites'])
-    users = mso.lookup_users(module.params['users'])
+    sites = mso.lookup_sites(module.params.get('sites'))
+    users = mso.lookup_users(module.params.get('users'))
 
     tenant_id = None
     path = 'tenants'
@@ -142,7 +142,7 @@ def main():
     if tenant:
         mso.existing = mso.get_obj(path, name=tenant)
         if mso.existing:
-            tenant_id = mso.existing['id']
+            tenant_id = mso.existing.get('id')
             # If we found an existing object, continue with it
             path = 'tenants/{id}'.format(id=tenant_id)
     else:

@@ -1,19 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -32,17 +23,21 @@ options:
     description:
       - The source region the AMI should be copied from.
     required: true
+    type: str
   source_image_id:
     description:
       - The ID of the AMI in source region that should be copied.
     required: true
+    type: str
   name:
     description:
       - The name of the new AMI to copy. (As of 2.3 the default is 'default', in prior versions it was 'null'.)
     default: "default"
+    type: str
   description:
     description:
       - An optional human-readable string describing the contents and purpose of the new AMI.
+    type: str
   encrypted:
     description:
       - Whether or not the destination snapshots of the copied AMI should be encrypted.
@@ -50,8 +45,9 @@ options:
     type: bool
   kms_key_id:
     description:
-      - KMS key id used to encrypt image. If not specified, uses default EBS Customer Master Key (CMK) for your account.
+      - KMS key id used to encrypt the image. If not specified, uses default EBS Customer Master Key (CMK) for your account.
     version_added: "2.2"
+    type: str
   wait:
     description:
       - Wait for the copied AMI to be in state 'available' before returning.
@@ -63,9 +59,11 @@ options:
       - From 2.3-2.5 this option was deprecated in favor of boto3 waiter defaults.
         This was reenabled in 2.6 to allow timeouts greater than 10 minutes.
     default: 600
+    type: int
   tags:
     description:
-      - A hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
+      - 'A hash/dictionary of tags to add to the new copied AMI: C({"key":"value"}) and C({"key":"value","key":"value"})'
+    type: dict
   tag_equality:
     description:
       - Whether to use tags if the source AMI already exists in the target region. If this is set, and all tags match
@@ -142,15 +140,13 @@ image_id:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils._text import to_native
 
 try:
     from botocore.exceptions import ClientError, NoCredentialsError, WaiterError, BotoCoreError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by AnsibleAWSModule
 
 
 def copy_image(module, ec2):
@@ -208,8 +204,7 @@ def copy_image(module, ec2):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         source_region=dict(required=True),
         source_image_id=dict(required=True),
         name=dict(default='default'),
@@ -218,7 +213,7 @@ def main():
         kms_key_id=dict(type='str', required=False),
         wait=dict(type='bool', default=False),
         wait_timeout=dict(type='int', default=600),
-        tags=dict(type='dict')),
+        tags=dict(type='dict'),
         tag_equality=dict(type='bool', default=False))
 
     module = AnsibleAWSModule(argument_spec=argument_spec)

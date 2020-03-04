@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-import json
 
 from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
@@ -29,7 +28,7 @@ from ansible.errors import AnsibleConnectionFailure
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br"[\r\n][\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(br"[\r\n]*[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(br']]>]]>[\r\n]?')
     ]
 

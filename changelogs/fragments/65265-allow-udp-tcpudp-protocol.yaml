@@ -1,0 +1,3 @@
+minor_changes:
+  - elb_network_lb - added support to UDP and TCP_UDP protocols
+  - elb_target_group - allow UDP and TCP_UDP protocols; permit only HTTP/HTTPS health checks using response codes and paths

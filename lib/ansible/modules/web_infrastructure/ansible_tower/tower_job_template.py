@@ -140,7 +140,7 @@ options:
       default: 'no'
     ask_inventory:
       description:
-        - Propmt user for inventory on launch.
+        - Prompt user for inventory on launch.
       type: bool
       default: 'no'
     ask_credential:

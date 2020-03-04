@@ -1,2 +1,0 @@
-minor_changes:
-- setup - octal escape sequences are now evaluated for mount facts pulled from /etc/mtab

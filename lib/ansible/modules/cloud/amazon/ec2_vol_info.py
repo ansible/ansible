@@ -16,16 +16,17 @@ DOCUMENTATION = '''
 module: ec2_vol_info
 short_description: Gather information about ec2 volumes in AWS
 description:
-    - Gather information about ec2 volumes in AWS
+    - Gather information about ec2 volumes in AWS.
     - This module was called C(ec2_vol_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.1"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   filters:
+    type: dict
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVolumes.html) for possible filters.
+      - See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVolumes.html) for possible filters.
 extends_documentation_fragment:
     - aws
     - ec2
@@ -63,11 +64,11 @@ import traceback
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, boto3_tag_list_to_ansible_dict
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import AWSRetry
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict
 
 
 def get_volume_info(volume, region):
@@ -98,16 +99,17 @@ def get_volume_info(volume, region):
     return volume_info
 
 
+@AWSRetry.jittered_backoff()
 def describe_volumes_with_backoff(connection, filters):
     paginator = connection.get_paginator('describe_volumes')
     return paginator.paginate(Filters=filters).build_full_result()
 
 
-def list_ec2_volumes(connection, module, region):
+def list_ec2_volumes(connection, module):
 
     # Replace filter key underscores with dashes, for compatibility, except if we're dealing with tags
     sanitized_filters = module.params.get("filters")
-    for key in sanitized_filters:
+    for key in list(sanitized_filters):
         if not key.startswith("tag:"):
             sanitized_filters[key.replace("_", "-")] = sanitized_filters.pop(key)
     volume_dict_array = []
@@ -115,41 +117,24 @@ def list_ec2_volumes(connection, module, region):
     try:
         all_volumes = describe_volumes_with_backoff(connection, ansible_dict_to_boto3_filter_list(sanitized_filters))
     except ClientError as e:
-        module.fail_json(msg=e.response, exception=traceback.format_exc())
+        module.fail_json_aws(e, msg="Failed to describe volumes.")
 
     for volume in all_volumes["Volumes"]:
         volume = camel_dict_to_snake_dict(volume, ignore_list=['Tags'])
-        volume_dict_array.append(get_volume_info(volume, region))
+        volume_dict_array.append(get_volume_info(volume, module.region))
     module.exit_json(volumes=volume_dict_array)
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            filters=dict(default={}, type='dict')
-        )
-    )
+    argument_spec = dict(filters=dict(default={}, type='dict'))
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._name == 'ec2_vol_facts':
         module.deprecate("The 'ec2_vol_facts' module has been renamed to 'ec2_vol_info'", version='2.13')
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
+    connection = module.client('ec2')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(
-        module,
-        conn_type='client',
-        resource='ec2',
-        region=region,
-        endpoint=ec2_url,
-        **aws_connect_params
-    )
-
-    list_ec2_volumes(connection, module, region)
+    list_ec2_volumes(connection, module)
 
 
 if __name__ == '__main__':

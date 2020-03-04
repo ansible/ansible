@@ -10,7 +10,7 @@
         description: "Configured by Ansible - Interface 1"
         mtu: 1024
         speed: 100m
-        enable: false
+        enabled: false
         duplex: full-duplex
         hold_time:
           up: 2000
@@ -19,12 +19,12 @@
         description: "Configured by Ansible - Interface 2"
         mtu: 2048
         speed: 10m
-        enable: true
+        enabled: true
         hold_time:
           up: 3000
           down: 3200
       - name: fxp0
-        enable: true
+        enabled: true
 
 - block:
     - name: Apply the provided configuration (base config)
@@ -34,7 +34,7 @@
             description: "Configured by Ansible - Interface 1"
             mtu: 1024
             speed: 100m
-            enable: False
+            enabled: False
             duplex: full-duplex
             hold_time:
               up: 2000
@@ -43,7 +43,7 @@
             description: "Configured by Ansible - Interface 2"
             mtu: 2048
             speed: 10m
-            enable: True
+            enabled: True
             hold_time:
               up: 3000
               down: 3200
@@ -64,7 +64,7 @@
             description: "Configured by Ansible - Interface 1 modified"
             mtu: 3048
             speed: 10m
-            enable: True
+            enabled: True
             duplex: half-duplex
             hold_time:
               up: 3000
@@ -73,7 +73,7 @@
             description: "Configured by Ansible - Interface 2 modified"
             mtu: 4048
             speed: 100m
-            enable: False
+            enabled: False
             hold_time:
               up: 4000
               down: 5200

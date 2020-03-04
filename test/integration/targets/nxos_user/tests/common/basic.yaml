@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_user basic test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: Remove old entries of user
   nxos_user:
@@ -9,7 +7,6 @@
       - { name: ansibletest1 }
       - { name: ansibletest2 }
       - { name: ansibletest3 }
-    provider: "{{ connection }}"
     state: absent
 
 # Start tests
@@ -17,22 +14,22 @@
   nxos_user:
     name: ansibletest1
     roles: network-operator
-    provider: "{{ connection }}"
     state: present
   register: result
+
+- debug: msg="{{result}}"
 
 - assert:
     that:
       - 'result.changed == true'
       - '"username" in result.commands[0]'
-      - '"role network-operator" in result.commands[1]'
+      - '"role network-operator" in result.commands[0]'
 
 - name: Collection of users
   nxos_user:
     aggregate:
       - { name: ansibletest2 }
       - { name: ansibletest3 }
-    provider: "{{ connection }}"
     state: present
     roles: network-admin
   register: result
@@ -47,7 +44,6 @@
       - { name: ansibletest1 }
       - { name: ansibletest2 }
       - { name: ansibletest3 }
-    provider: "{{ connection }}"
     state: absent
   register: result
 

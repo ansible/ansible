@@ -12,11 +12,6 @@ class ModuleDocFragment(object):
     # Standard files documentation fragment
     DOCUMENTATION = r'''
 options:
-  url:
-    description:
-    - The URL to make the request with.
-    required: yes
-    type: str
   method:
     description:
     - The HTTP Method of the request.
@@ -101,15 +96,10 @@ options:
     description:
     - The username to use for authentication.
     type: str
-    aliases:
-    - user
-    - username
   url_password:
     description:
     - The password for I(url_username).
     type: str
-    aliases:
-    - password
   use_default_credential:
     description:
     - Uses the current user's credentials when authenticating with a server

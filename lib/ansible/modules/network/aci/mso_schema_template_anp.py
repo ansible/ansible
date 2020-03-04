@@ -125,11 +125,11 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    template = module.params['template']
-    anp = module.params['anp']
-    display_name = module.params['display_name']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    template = module.params.get('template')
+    anp = module.params.get('anp')
+    display_name = module.params.get('display_name')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
@@ -141,21 +141,21 @@ def main():
     schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
-    templates = [t['name'] for t in schema_obj['templates']]
+    templates = [t.get('name') for t in schema_obj.get('templates')]
     if template not in templates:
         mso.fail_json(msg="Provided template '{0}' does not exist. Existing templates: {1}".format(template, ', '.join(templates)))
     template_idx = templates.index(template)
 
     # Get ANP
-    anps = [a['name'] for a in schema_obj['templates'][template_idx]['anps']]
+    anps = [a.get('name') for a in schema_obj.get('templates')[template_idx]['anps']]
 
     if anp is not None and anp in anps:
         anp_idx = anps.index(anp)
-        mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]
+        mso.existing = schema_obj.get('templates')[template_idx]['anps'][anp_idx]
 
     if state == 'query':
         if anp is None:
-            mso.existing = schema_obj['templates'][template_idx]['anps']
+            mso.existing = schema_obj.get('templates')[template_idx]['anps']
         elif not mso.existing:
             mso.fail_json(msg="ANP '{anp}' not found".format(anp=anp))
         mso.exit_json()

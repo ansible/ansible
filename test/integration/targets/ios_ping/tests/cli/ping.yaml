@@ -31,7 +31,6 @@
 - name: unexpected unsuccessful ping
   ios_ping: &invalid_ip
     dest: '10.255.255.250'
-    timeout: 45
     provider: "{{ cli }}"
   register: uup
   ignore_errors: yes

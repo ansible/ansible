@@ -1,0 +1,15 @@
+---
+- name: Add configuration
+  cli_config:
+    config: |
+      ip access-list ACL1v4
+        10 permit ip any any
+        20 deny udp any any
+      ip access-list ACL2v4
+        10 permit ahp 192.0.2.0 0.0.0.255 any
+      ipv6 access-list ACL1v6
+        10 permit sctp any any
+        20 remark IPv6 ACL
+      ipv6 access-list ACL2v6
+        10 deny ipv6 any host 2001:db8:3000::36
+        20 permit tcp host 2001:db8:2000:2::2 host 2001:db8:2000:ab::2

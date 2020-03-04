@@ -21,58 +21,78 @@ version_added: "2.0"
 options:
   iam_type:
     description:
-      - Type of IAM resource
+      - Type of IAM resource.
     choices: ["user", "group", "role"]
+    type: str
+    required: true
   name:
     description:
-      - Name of IAM resource to create or identify
+      - Name of IAM resource to create or identify.
     required: true
+    type: str
   new_name:
     description:
-      - When state is update, will replace name with new_name on IAM resource
+      - When I(state=update), will replace I(name) with I(new_name) on IAM resource.
+    type: str
   new_path:
     description:
-      - When state is update, will replace the path with new_path on the IAM resource
+      - When I(state=update), will replace the path with new_path on the IAM resource.
+    type: str
   state:
     description:
       - Whether to create, delete or update the IAM resource. Note, roles cannot be updated.
     required: true
     choices: [ "present", "absent", "update" ]
+    type: str
   path:
     description:
-      - When creating or updating, specify the desired path of the resource. If state is present,
-        it will replace the current path to match what is passed in when they do not match.
+      - When creating or updating, specify the desired path of the resource.
+      - If I(state=present), it will replace the current path to match what is passed in when they do not match.
     default: "/"
+    type: str
   trust_policy:
     description:
-      - The inline (JSON or YAML) trust policy document that grants an entity permission to assume the role. Mutually exclusive with C(trust_policy_filepath).
+      - The inline (JSON or YAML) trust policy document that grants an entity permission to assume the role.
+      - Mutually exclusive with I(trust_policy_filepath).
     version_added: "2.2"
+    type: dict
   trust_policy_filepath:
     description:
-      - The path to the trust policy document that grants an entity permission to assume the role. Mutually exclusive with C(trust_policy).
+      - The path to the trust policy document that grants an entity permission to assume the role.
+      - Mutually exclusive with I(trust_policy).
     version_added: "2.2"
+    type: str
   access_key_state:
     description:
       - When type is user, it creates, removes, deactivates or activates a user's access key(s). Note that actions apply only to keys specified.
-    choices: [ "create", "remove", "active", "inactive"]
+    choices: [ "create", "remove", "active", "inactive", "Create", "Remove", "Active", "Inactive"]
+    type: str
   key_count:
     description:
-      - When access_key_state is create it will ensure this quantity of keys are present. Defaults to 1.
-    default: '1'
+      - When I(access_key_state=create) it will ensure this quantity of keys are present.
+    default: 1
+    type: int
   access_key_ids:
     description:
-      - A list of the keys that you want impacted by the access_key_state parameter.
+      - A list of the keys that you want affected by the I(access_key_state) parameter.
+    type: list
   groups:
     description:
-      - A list of groups the user should belong to. When update, will gracefully remove groups not listed.
+      - A list of groups the user should belong to. When I(state=update), will gracefully remove groups not listed.
+    type: list
   password:
     description:
-      - When type is user and state is present, define the users login password. Also works with update. Note that always returns changed.
+      - When I(type=user) and either I(state=present) or I(state=update), define the users login password.
+      - Note that this will always return 'changed'.
+    type: str
   update_password:
     default: always
     choices: ['always', 'on_create']
     description:
-     - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
+      - When to update user passwords.
+      - I(update_password=always) will ensure the password is set to I(password).
+      - I(update_password=on_create) will only set the password for newly created users.
+    type: str
 notes:
   - 'Currently boto does not support the removal of Managed Policies, the module will error out if your
     user/group/role has managed policies when you try to do state=absent. They will need to be removed manually.'
@@ -265,9 +285,9 @@ def delete_dependencies_first(module, iam, name):
     except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
         if 'must detach all policies first' in error_msg:
-            module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+            module.fail_json(changed=changed, msg="All inline policies have been removed. Though it appears"
                                                   "that %s has Managed Polices. This is not "
-                                                  "currently supported by boto. Please detach the polices "
+                                                  "currently supported by boto. Please detach the policies "
                                                   "through the console and try again." % name)
         module.fail_json(changed=changed, msg="Failed to delete policies: %s" % err, exception=traceback.format_exc())
 
@@ -494,9 +514,9 @@ def delete_group(module=None, iam=None, name=None):
             except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
                 if ('must delete policies first') in error_msg:
-                    module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                    module.fail_json(changed=changed, msg="All inline policies have been removed. Though it appears"
                                                           "that %s has Managed Polices. This is not "
-                                                          "currently supported by boto. Please detach the polices "
+                                                          "currently supported by boto. Please detach the policies "
                                                           "through the console and try again." % name)
                 else:
                     module.fail_json(changed=changed, msg=str(error_msg))
@@ -578,9 +598,9 @@ def delete_role(module, iam, name, role_list, prof_list):
                 except boto.exception.BotoServerError as err:
                     error_msg = boto_exception(err)
                     if ('must detach all policies first') in error_msg:
-                        module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                        module.fail_json(changed=changed, msg="All inline policies have been removed. Though it appears"
                                                               "that %s has Managed Polices. This is not "
-                                                              "currently supported by boto. Please detach the polices "
+                                                              "currently supported by boto. Please detach the policies "
                                                               "through the console and try again." % name)
                     else:
                         module.fail_json(changed=changed, msg=str(err))
@@ -603,11 +623,9 @@ def delete_role(module, iam, name, role_list, prof_list):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        iam_type=dict(
-            default=None, required=True, choices=['user', 'group', 'role']),
+        iam_type=dict(required=True, choices=['user', 'group', 'role']),
         groups=dict(type='list', default=None, required=False),
-        state=dict(
-            default=None, required=True, choices=['present', 'absent', 'update']),
+        state=dict(required=True, choices=['present', 'absent', 'update']),
         password=dict(default=None, required=False, no_log=True),
         update_password=dict(default='always', required=False, choices=['always', 'on_create']),
         access_key_state=dict(default=None, required=False, choices=[
@@ -615,7 +633,7 @@ def main():
             'Active', 'Inactive', 'Create', 'Remove']),
         access_key_ids=dict(type='list', default=None, required=False),
         key_count=dict(type='int', default=1, required=False),
-        name=dict(default=None, required=False),
+        name=dict(required=True),
         trust_policy_filepath=dict(default=None, required=False),
         trust_policy=dict(type='dict', default=None, required=False),
         new_name=dict(default=None, required=False),

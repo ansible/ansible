@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Jon Meran <jonathan.meran@sonos.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -24,94 +27,97 @@ options:
       - The name for your compute environment. Up to 128 letters (uppercase and lowercase), numbers, and underscores
         are allowed.
     required: true
-
+    type: str
   type:
     description:
       - The type of the compute environment.
     required: true
     choices: ["MANAGED", "UNMANAGED"]
-
+    type: str
   state:
     description:
       - Describes the desired state.
     default: "present"
     choices: ["present", "absent"]
-
+    type: str
   compute_environment_state:
     description:
       - The state of the compute environment. If the state is ENABLED, then the compute environment accepts jobs
         from a queue and can scale out automatically based on queues.
     default: "ENABLED"
     choices: ["ENABLED", "DISABLED"]
-
+    type: str
   service_role:
     description:
       - The full Amazon Resource Name (ARN) of the IAM role that allows AWS Batch to make calls to other AWS
         services on your behalf.
     required: true
-
+    type: str
   compute_resource_type:
     description:
       - The type of compute resource.
     required: true
     choices: ["EC2", "SPOT"]
-
+    type: str
   minv_cpus:
     description:
       - The minimum number of EC2 vCPUs that an environment should maintain.
     required: true
-
+    type: int
   maxv_cpus:
     description:
       - The maximum number of EC2 vCPUs that an environment can reach.
     required: true
-
+    type: int
   desiredv_cpus:
     description:
       - The desired number of EC2 vCPUS in the compute environment.
-
+    type: int
   instance_types:
     description:
       - The instance types that may be launched.
     required: true
-
+    type: list
+    elements: str
   image_id:
     description:
       - The Amazon Machine Image (AMI) ID used for instances launched in the compute environment.
-
+    type: str
   subnets:
     description:
       - The VPC subnets into which the compute resources are launched.
     required: true
-
+    type: list
+    elements: str
   security_group_ids:
     description:
       - The EC2 security groups that are associated with instances launched in the compute environment.
     required: true
-
+    type: list
+    elements: str
   ec2_key_pair:
     description:
       - The EC2 key pair that is used for instances launched in the compute environment.
-
+    type: str
   instance_role:
     description:
       - The Amazon ECS instance role applied to Amazon EC2 instances in a compute environment.
     required: true
-
+    type: str
   tags:
     description:
       - Key-value pair tags to be applied to resources that are launched in the compute environment.
-
+    type: dict
   bid_percentage:
     description:
       - The minimum percentage that a Spot Instance price must be when compared with the On-Demand price for that
         instance type before instances are launched. For example, if your bid percentage is 20%, then the Spot price
         must be below 20% of the current On-Demand price for that EC2 instance.
-
+    type: int
   spot_iam_fleet_role:
     description:
       - The Amazon Resource Name (ARN) of the Amazon EC2 Spot Fleet IAM role applied to a SPOT compute environment.
-
+    type: str
 
 requirements:
     - boto3
@@ -151,9 +157,11 @@ EXAMPLES = '''
         tag1: value1
         tag2: value2
       service_role: arn:aws:iam::<account>:role/service-role/<role>
+    register: aws_batch_compute_environment_action
 
   - name: show results
-    debug: var=aws_batch_compute_environment_action
+    debug:
+      var: aws_batch_compute_environment_action
 '''
 
 RETURN = '''
@@ -223,18 +231,14 @@ output:
   type: dict
 '''
 
-from ansible.module_utils._text import to_native
-from ansible.module_utils.aws.batch import AWSConnection
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, HAS_BOTO3
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, camel_dict_to_snake_dict
 import re
-import traceback
 
 try:
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass  # Handled by HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -255,12 +259,11 @@ def set_api_params(module, module_params):
     return snake_dict_to_camel_dict(api_params)
 
 
-def validate_params(module, aws):
+def validate_params(module):
     """
     Performs basic parameter validation.
 
     :param module:
-    :param aws:
     :return:
     """
 
@@ -286,9 +289,9 @@ def validate_params(module, aws):
 #
 # ---------------------------------------------------------------------------------------------------
 
-def get_current_compute_environment(module, connection):
+def get_current_compute_environment(module, client):
     try:
-        environments = connection.client().describe_compute_environments(
+        environments = client.describe_compute_environments(
             computeEnvironments=[module.params['compute_environment_name']]
         )
         if len(environments['computeEnvironments']) > 0:
@@ -299,16 +302,15 @@ def get_current_compute_environment(module, connection):
         return None
 
 
-def create_compute_environment(module, aws):
+def create_compute_environment(module, client):
     """
         Adds a Batch compute environment
 
         :param module:
-        :param aws:
+        :param client:
         :return:
         """
 
-    client = aws.client('batch')
     changed = False
 
     # set API parameters
@@ -336,23 +338,21 @@ def create_compute_environment(module, aws):
         if not module.check_mode:
             client.create_compute_environment(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error creating compute environment: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg='Error creating compute environment')
 
     return changed
 
 
-def remove_compute_environment(module, aws):
+def remove_compute_environment(module, client):
     """
     Remove a Batch compute environment
 
     :param module:
-    :param aws:
+    :param client:
     :return:
     """
 
-    client = aws.client('batch')
     changed = False
 
     # set API parameters
@@ -362,13 +362,12 @@ def remove_compute_environment(module, aws):
         if not module.check_mode:
             client.delete_compute_environment(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error removing compute environment: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg='Error removing compute environment')
     return changed
 
 
-def manage_state(module, aws):
+def manage_state(module, client):
     changed = False
     current_state = 'absent'
     state = module.params['state']
@@ -384,7 +383,7 @@ def manage_state(module, aws):
     check_mode = module.check_mode
 
     # check if the compute environment exists
-    current_compute_environment = get_current_compute_environment(module, aws)
+    current_compute_environment = get_current_compute_environment(module, client)
     response = current_compute_environment
     if current_compute_environment:
         current_state = 'present'
@@ -415,27 +414,26 @@ def manage_state(module, aws):
             if updates:
                 try:
                     if not check_mode:
-                        update_env_response = aws.client().update_compute_environment(**compute_kwargs)
+                        update_env_response = client.update_compute_environment(**compute_kwargs)
                     if not update_env_response:
                         module.fail_json(msg='Unable to get compute environment information after creating')
                     changed = True
                     action_taken = "updated"
-                except (ParamValidationError, ClientError) as e:
-                    module.fail_json(msg="Unable to update environment: {0}".format(to_native(e)),
-                                     exception=traceback.format_exc())
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Unable to update environment.")
 
         else:
             # Create Batch Compute Environment
-            changed = create_compute_environment(module, aws)
+            changed = create_compute_environment(module, client)
             # Describe compute environment
             action_taken = 'added'
-        response = get_current_compute_environment(module, aws)
+        response = get_current_compute_environment(module, client)
         if not response:
             module.fail_json(msg='Unable to get compute environment information after creating')
     else:
         if current_state == 'present':
             # remove the compute environment
-            changed = remove_compute_environment(module, aws)
+            changed = remove_compute_environment(module, client)
             action_taken = 'deleted'
     return dict(changed=changed, batch_compute_environment_action=action_taken, response=response)
 
@@ -453,45 +451,37 @@ def main():
     :return dict: changed, batch_compute_environment_action, response
     """
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            state=dict(default='present', choices=['present', 'absent']),
-            compute_environment_name=dict(required=True),
-            type=dict(required=True, choices=['MANAGED', 'UNMANAGED']),
-            compute_environment_state=dict(required=False, default='ENABLED', choices=['ENABLED', 'DISABLED']),
-            service_role=dict(required=True),
-            compute_resource_type=dict(required=True, choices=['EC2', 'SPOT']),
-            minv_cpus=dict(type='int', required=True),
-            maxv_cpus=dict(type='int', required=True),
-            desiredv_cpus=dict(type='int'),
-            instance_types=dict(type='list', required=True),
-            image_id=dict(),
-            subnets=dict(type='list', required=True),
-            security_group_ids=dict(type='list', required=True),
-            ec2_key_pair=dict(),
-            instance_role=dict(required=True),
-            tags=dict(type='dict'),
-            bid_percentage=dict(type='int'),
-            spot_iam_fleet_role=dict(),
-            region=dict(aliases=['aws_region', 'ec2_region'])
-        )
+    argument_spec = dict(
+        state=dict(default='present', choices=['present', 'absent']),
+        compute_environment_name=dict(required=True),
+        type=dict(required=True, choices=['MANAGED', 'UNMANAGED']),
+        compute_environment_state=dict(required=False, default='ENABLED', choices=['ENABLED', 'DISABLED']),
+        service_role=dict(required=True),
+        compute_resource_type=dict(required=True, choices=['EC2', 'SPOT']),
+        minv_cpus=dict(type='int', required=True),
+        maxv_cpus=dict(type='int', required=True),
+        desiredv_cpus=dict(type='int'),
+        instance_types=dict(type='list', required=True),
+        image_id=dict(),
+        subnets=dict(type='list', required=True),
+        security_group_ids=dict(type='list', required=True),
+        ec2_key_pair=dict(),
+        instance_role=dict(required=True),
+        tags=dict(type='dict'),
+        bid_percentage=dict(type='int'),
+        spot_iam_fleet_role=dict(),
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
 
-    # validate dependencies
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required for this module.')
+    client = module.client('batch')
 
-    aws = AWSConnection(module, ['batch'])
+    validate_params(module)
 
-    validate_params(module, aws)
-
-    results = manage_state(module, aws)
+    results = manage_state(module, client)
 
     module.exit_json(**camel_dict_to_snake_dict(results, ignore_list=['Tags']))
 

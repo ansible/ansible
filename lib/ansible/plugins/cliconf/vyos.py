@@ -33,12 +33,10 @@ version_added: "2.4"
 import re
 import json
 
-from itertools import chain
-
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping
-from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 
@@ -266,3 +264,11 @@ class Cliconf(CliconfBase):
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            self._update_cli_prompt_context(config_context='#', exit_command='exit discard')

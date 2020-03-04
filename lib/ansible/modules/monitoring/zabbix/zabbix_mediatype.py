@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_mediatype
 short_description: Create/Update/Delete Zabbix media types
@@ -22,7 +22,7 @@ version_added: "2.9"
 author:
     - Ruben Tsirunyan (@rubentsirunyan)
 requirements:
-    - zabbix-api
+    - "zabbix-api >= 0.5.4"
 
 options:
     name:
@@ -40,11 +40,11 @@ options:
             - present
             - absent
         default: 'present'
-        required: true
     type:
         type: 'str'
         description:
             - Type of the media type.
+            - Media types I(jabber) and I(ez_texting) workable only with Zabbix 4.2 or less.
         choices:
             - email
             - script
@@ -85,6 +85,7 @@ options:
             - Required when I(type=script).
     script_params:
         type: 'list'
+        elements: str
         description:
             - List of script parameters.
             - Required when I(type=script).
@@ -168,10 +169,9 @@ extends_documentation_fragment:
 
 '''
 
-RETURN = '''
-'''
+RETURN = r''' # '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: 'Create an email mediatype with SMTP authentication'
   zabbix_mediatype:
     name: "Ops email"
@@ -224,7 +224,7 @@ import traceback
 
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.common.text.converters import container_to_bytes
+from distutils.version import LooseVersion
 
 
 try:
@@ -351,7 +351,7 @@ def construct_parameters(**kwargs):
             attempt_interval=str(kwargs['attempt_interval']),
             gsm_modem=kwargs['gsm_modem']
         )
-    elif kwargs['transport_type'] == 'jabber':
+    elif kwargs['transport_type'] == 'jabber' and LooseVersion(kwargs['zbx_api_version']) <= LooseVersion('4.2'):
         return dict(
             description=kwargs['name'],
             status=to_numeric_value(kwargs['status'],
@@ -369,7 +369,7 @@ def construct_parameters(**kwargs):
             username=kwargs['username'],
             passwd=kwargs['password']
         )
-    elif kwargs['transport_type'] == 'ez_texting':
+    elif kwargs['transport_type'] == 'ez_texting' and LooseVersion(kwargs['zbx_api_version']) <= LooseVersion('4.2'):
         return dict(
             description=kwargs['name'],
             status=to_numeric_value(kwargs['status'],
@@ -391,8 +391,10 @@ def construct_parameters(**kwargs):
                                         'Canada': '1'}),
         )
 
+    return {'unsupported_parameter': kwargs['transport_type'], 'zbx_api_version': kwargs['zbx_api_version']}
 
-def check_if_mediatype_exists(module, zbx, name):
+
+def check_if_mediatype_exists(module, zbx, name, zbx_api_version):
     """Checks if mediatype exists.
 
     Args:
@@ -403,10 +405,15 @@ def check_if_mediatype_exists(module, zbx, name):
     Returns:
         Tuple of (True, `id of the mediatype`) if mediatype exists, (False, None) otherwise
     """
+    filter_key_name = 'description'
+    if LooseVersion(zbx_api_version) >= LooseVersion('4.4'):
+        # description key changed to name key from zabbix 4.4
+        filter_key_name = 'name'
+
     try:
         mediatype_list = zbx.mediatype.get({
             'output': 'extend',
-            'filter': {'description': [name]}
+            'filter': {filter_key_name: [name]}
         })
         if len(mediatype_list) < 1:
             return False, None
@@ -453,10 +460,10 @@ def get_update_params(module, zbx, mediatype_id, **kwargs):
         returned by diff() function with
         existing mediatype data and new params passed to it.
     """
-    existing_mediatype = container_to_bytes(zbx.mediatype.get({
+    existing_mediatype = zbx.mediatype.get({
         'output': 'extend',
         'mediatypeids': [mediatype_id]
-    })[0])
+    })[0]
 
     if existing_mediatype['type'] != kwargs['type']:
         return kwargs, diff(existing_mediatype, kwargs)
@@ -590,7 +597,8 @@ def main():
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
-    mediatype_exists, mediatype_id = check_if_mediatype_exists(module, zbx, name)
+    zbx_api_version = zbx.api_version()[:3]
+    mediatype_exists, mediatype_id = check_if_mediatype_exists(module, zbx, name, zbx_api_version)
 
     parameters = construct_parameters(
         name=name,
@@ -612,8 +620,16 @@ def main():
         smtp_authentication=smtp_authentication,
         smtp_verify_host=smtp_verify_host,
         smtp_verify_peer=smtp_verify_peer,
-        message_text_limit=message_text_limit
+        message_text_limit=message_text_limit,
+        zbx_api_version=zbx_api_version
     )
+
+    if 'unsupported_parameter' in parameters:
+        module.fail_json(msg="%s is unsupported for Zabbix version %s" % (parameters['unsupported_parameter'], parameters['zbx_api_version']))
+
+    if LooseVersion(zbx_api_version) >= LooseVersion('4.4'):
+        # description key changed to name key from zabbix 4.4
+        parameters['name'] = parameters.pop('description')
 
     if mediatype_exists:
         if state == 'absent':

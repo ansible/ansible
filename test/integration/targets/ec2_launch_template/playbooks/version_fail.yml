@@ -7,7 +7,7 @@
     group/aws:
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
+      security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
   tasks:
     - block:
@@ -23,7 +23,7 @@
           register: ec2_lt
           ignore_errors: yes
 
-        - name: check that graceful error message is returned when creation with cpu_options and old botocore 
+        - name: check that graceful error message is returned when creation with cpu_options and old botocore
           assert:
             that:
               - ec2_lt is failed

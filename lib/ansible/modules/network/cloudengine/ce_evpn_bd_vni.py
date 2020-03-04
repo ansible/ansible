@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -42,6 +45,9 @@ notes:
     - When using state:absent, evpn is not supported and it will be ignored.
     - When using state:absent to delete VPN target attributes, ensure the configuration of VPN target attributes has
       existed and otherwise it will report an error.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     bridge_domain_id:
         description:
@@ -424,7 +430,7 @@ def is_valid_value(vrf_targe_value):
 
 
 class EvpnBd(object):
-    """Manange evpn instance in BD view"""
+    """Manage evpn instance in BD view"""
 
     def __init__(self, argument_spec, ):
         self.spec = argument_spec
@@ -953,19 +959,19 @@ class EvpnBd(object):
             for ele in self.vpn_target_import:
                 if ele not in self.evpn_info['vpn_target_import'] and ele not in self.evpn_info['vpn_target_both']:
                     self.module.fail_json(
-                        msg='Error: VPN target import attribute value %s doesnot exist.' % ele)
+                        msg='Error: VPN target import attribute value %s does not exist.' % ele)
 
         if self.vpn_target_export:
             for ele in self.vpn_target_export:
                 if ele not in self.evpn_info['vpn_target_export'] and ele not in self.evpn_info['vpn_target_both']:
                     self.module.fail_json(
-                        msg='Error: VPN target export attribute value %s doesnot exist.' % ele)
+                        msg='Error: VPN target export attribute value %s does not exist.' % ele)
 
         if self.vpn_target_both:
             for ele in self.vpn_target_both:
                 if ele not in self.evpn_info['vpn_target_both']:
                     self.module.fail_json(
-                        msg='Error: VPN target export and import attribute value %s doesnot exist.' % ele)
+                        msg='Error: VPN target export and import attribute value %s does not exist.' % ele)
 
     def check_params(self):
         """Check all input params"""
@@ -990,7 +996,7 @@ class EvpnBd(object):
             if self.route_distinguisher:
                 if not self.evpn_info['route_distinguisher']:
                     self.module.fail_json(
-                        msg='Error: Route distinguisher doesnot have been configured.')
+                        msg='Error: Route distinguisher has not been configured.')
                 else:
                     if self.route_distinguisher != self.evpn_info['route_distinguisher']:
                         self.module.fail_json(
@@ -1014,7 +1020,7 @@ class EvpnBd(object):
                 msg='Error: The vxlan vni is not configured or the bridge domain id is invalid.')
 
     def work(self):
-        """Excute task"""
+        """Execute task"""
 
         self.get_evpn_instance_info()
         self.process_input_params()

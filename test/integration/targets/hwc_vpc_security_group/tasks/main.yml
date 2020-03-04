@@ -1,0 +1,82 @@
+---
+# Pre-test setup
+- name: delete a security group
+  hwc_vpc_security_group:
+    name: "ansible_network_security_group_test"
+    state: absent
+#----------------------------------------------------------
+- name: create a security group (check mode)
+  hwc_vpc_security_group:
+    name: "ansible_network_security_group_test"
+    state: present
+  check_mode: yes
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - not result.id
+      - result.changed
+#----------------------------------------------------------
+- name: create a security group
+  hwc_vpc_security_group:
+    name: "ansible_network_security_group_test"
+    state: present
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      result is changed
+#----------------------------------------------------------
+- name: create a security group (idemponent)
+  hwc_vpc_security_group:
+    name: "ansible_network_security_group_test"
+    state: present
+  check_mode: yes
+  register: idemponent
+- name: idemponent
+  assert:
+    that:
+      - not result.changed
+# ----------------------------------------------------------------------------
+- name: create a security group that already exists
+  hwc_vpc_security_group:
+    name: "ansible_network_security_group_test"
+    state: present
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
+#----------------------------------------------------------
+- name: delete a security group (check mode)
+  hwc_vpc_security_group:
+    name: "ansible_network_security_group_test"
+    state: absent
+  check_mode: yes
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      result is changed
+#----------------------------------------------------------
+- name: delete a security group
+  hwc_vpc_security_group:
+    name: "ansible_network_security_group_test"
+    state: absent
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      result is changed
+# ----------------------------------------------------------------------------
+- name: delete a security group that does not exist
+  hwc_vpc_security_group:
+    name: "ansible_network_security_group_test"
+    state: absent
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false

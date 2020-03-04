@@ -1,0 +1,23 @@
+- name: Stop services
+  become: yes
+  become_user: '{{ pg_user }}'
+  shell: '{{ pg_ctl }} -D {{ item.datadir }} -o "-p {{ item.port }}" -m immediate stop'
+  loop:
+  - { datadir: '{{ master_data_dir }}', port: '{{ master_port }}' }
+  - { datadir: '{{ replica_data_dir }}', port: '{{ replica_port }}' }
+  listen: stop postgresql
+
+- name: Remove packages
+  apt:
+    name: '{{ packages_to_remove }}'
+    state: absent
+  listen: cleanup postgresql
+
+- name: Remove FS objects
+  file:
+    state: absent
+    path: "{{ item }}"
+  loop:
+  - "{{ master_root_dir }}"
+  - "{{ replica_root_dir }}"
+  listen: cleanup postgresql

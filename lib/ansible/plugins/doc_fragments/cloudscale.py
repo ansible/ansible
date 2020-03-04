@@ -2,6 +2,9 @@
 # Copyright (c) 2019, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 class ModuleDocFragment(object):
 
@@ -12,10 +15,12 @@ options:
     description:
       - cloudscale.ch API token.
       - This can also be passed in the C(CLOUDSCALE_API_TOKEN) environment variable.
+    type: str
   api_timeout:
     description:
       - Timeout in seconds for calls to the cloudscale.ch API.
     default: 30
+    type: int
 notes:
   - Instead of the api_token parameter the C(CLOUDSCALE_API_TOKEN) environment variable can be used.
   - All operations are performed using the cloudscale.ch public API v1.

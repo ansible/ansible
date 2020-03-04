@@ -15,54 +15,65 @@ DOCUMENTATION = '''
 module: cloudformation_stack_set
 short_description: Manage groups of CloudFormation stacks
 description:
-     - Launches/updates/deletes AWS CloudFormation Stack Sets
+     - Launches/updates/deletes AWS CloudFormation Stack Sets.
 notes:
-     - To make an individual stack, you want the cloudformation module.
+     - To make an individual stack, you want the M(cloudformation) module.
 version_added: "2.7"
 options:
   name:
     description:
-      - name of the cloudformation stack set
+      - Name of the CloudFormation stack set.
     required: true
+    type: str
   description:
     description:
-      - A description of what this stack set creates
+      - A description of what this stack set creates.
+    type: str
   parameters:
     description:
       - A list of hashes of all the template variables for the stack. The value can be a string or a dict.
       - Dict can be used to set additional template parameter attributes like UsePreviousValue (see example).
     default: {}
+    type: dict
   state:
     description:
-      - If state is "present", stack will be created.  If state is "present" and if stack exists and template has changed, it will be updated.
-        If state is "absent", stack will be removed.
+      - If I(state=present), stack will be created.  If I(state=present) and if stack exists and template has changed, it will be updated.
+        If I(state=absent), stack will be removed.
     default: present
     choices: [ present, absent ]
+    type: str
   template:
     description:
-      - The local path of the cloudformation template.
+      - The local path of the CloudFormation template.
       - This must be the full path to the file, relative to the working directory. If using roles this may look
-        like "roles/cloudformation/files/cloudformation-example.json".
-      - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' is present, the stack does exist, and neither 'template',
-        'template_body' nor 'template_url' are specified, the previous template will be reused.
+        like C(roles/cloudformation/files/cloudformation-example.json).
+      - If I(state=present) and the stack does not exist yet, either I(template), I(template_body) or I(template_url)
+        must be specified (but only one of them).
+      - If I(state=present), the stack does exist, and neither I(template), I(template_body) nor I(template_url)
+        are specified, the previous template will be reused.
+    type: path
   template_body:
     description:
-      - Template body. Use this to pass in the actual body of the Cloudformation template.
-      - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' is present, the stack does exist, and neither 'template',
-        'template_body' nor 'template_url' are specified, the previous template will be reused.
+      - Template body. Use this to pass in the actual body of the CloudFormation template.
+      - If I(state=present) and the stack does not exist yet, either I(template), I(template_body) or I(template_url)
+        must be specified (but only one of them).
+      - If I(state=present), the stack does exist, and neither I(template), I(template_body) nor I(template_url)
+        are specified, the previous template will be reused.
+    type: str
   template_url:
     description:
-      - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region
+      - Location of file containing the template body.
+      - The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region
         as the stack.
-      - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' is present, the stack does exist, and neither 'template',
-        'template_body' nor 'template_url' are specified, the previous template will be reused.
+      - If I(state=present) and the stack does not exist yet, either I(template), I(template_body) or I(template_url)
+        must be specified (but only one of them).
+      - If I(state=present), the stack does exist, and neither I(template), I(template_body) nor I(template_url)
+        are specified, the previous template will be reused.
+    type: str
   purge_stacks:
     description:
     - Only applicable when I(state=absent). Sets whether, when deleting a stack set, the stack instances should also be deleted.
-    - By default, instances will be deleted. Set to 'no' or 'false' to keep stacks when stack set is deleted.
+    - By default, instances will be deleted. To keep stacks when stack set is deleted set I(purge_stacks=false).
     type: bool
     default: true
   wait:
@@ -75,6 +86,7 @@ options:
     description:
     - How long to wait (in seconds) for stacks to complete create/update/delete operations.
     default: 900
+    type: int
   capabilities:
     description:
     - Capabilities allow stacks to create and modify IAM resources, which may include adding users or roles.
@@ -82,6 +94,8 @@ options:
     - >
         The following resources require that one or both of these parameters is specified: AWS::IAM::AccessKey,
         AWS::IAM::Group, AWS::IAM::InstanceProfile, AWS::IAM::Policy, AWS::IAM::Role, AWS::IAM::User, AWS::IAM::UserToGroupAddition
+    type: list
+    elements: str
     choices:
     - 'CAPABILITY_IAM'
     - 'CAPABILITY_NAMED_IAM'
@@ -91,35 +105,72 @@ options:
       specifies the region for stack instances.
     - At least one region must be specified to create a stack set. On updates, if fewer regions are specified only the specified regions will
       have their stack instances updated.
+    type: list
+    elements: str
   accounts:
     description:
     - A list of AWS accounts in which to create instance of CloudFormation stacks.
     - At least one region must be specified to create a stack set. On updates, if fewer regions are specified only the specified regions will
       have their stack instances updated.
+    type: list
+    elements: str
   administration_role_arn:
     description:
     - ARN of the administration role, meaning the role that CloudFormation Stack Sets use to assume the roles in your child accounts.
-    - This defaults to I(arn:aws:iam::{{ account ID }}:role/AWSCloudFormationStackSetAdministrationRole) where I({{ account ID }}) is replaced with the
+    - This defaults to C(arn:aws:iam::{{ account ID }}:role/AWSCloudFormationStackSetAdministrationRole) where C({{ account ID }}) is replaced with the
       account number of the current IAM role/user/STS credentials.
     aliases:
     - admin_role_arn
     - admin_role
     - administration_role
+    type: str
   execution_role_name:
     description:
     - ARN of the execution role, meaning the role that CloudFormation Stack Sets assumes in your child accounts.
     - This MUST NOT be an ARN, and the roles must exist in each child account specified.
-    - The default name for the execution role is I(AWSCloudFormationStackSetExecutionRole)
+    - The default name for the execution role is C(AWSCloudFormationStackSetExecutionRole)
     aliases:
     - exec_role_name
     - exec_role
     - execution_role
+    type: str
   tags:
     description:
-      - Dictionary of tags to associate with stack and its resources during stack creation. Can be updated later, updating tags removes previous entries.
+      - Dictionary of tags to associate with stack and its resources during stack creation.
+      - Can be updated later, updating tags removes previous entries.
+    type: dict
   failure_tolerance:
     description:
     - Settings to change what is considered "failed" when running stack instance updates, and how many to do at a time.
+    type: dict
+    suboptions:
+      fail_count:
+        description:
+        - The number of accounts, per region, for which this operation can fail before CloudFormation
+          stops the operation in that region.
+        - You must specify one of I(fail_count) and I(fail_percentage).
+        type: int
+      fail_percentage:
+        type: int
+        description:
+        - The percentage of accounts, per region, for which this stack operation can fail before CloudFormation
+          stops the operation in that region.
+        - You must specify one of I(fail_count) and I(fail_percentage).
+      parallel_percentage:
+        type: int
+        description:
+        - The maximum percentage of accounts in which to perform this operation at one time.
+        - You must specify one of I(parallel_count) and I(parallel_percentage).
+        - Note that this setting lets you specify the maximum for operations.
+          For large deployments, under certain circumstances the actual percentage may be lower.
+      parallel_count:
+        type: int
+        description:
+        - The maximum number of accounts in which to perform this operation at one time.
+        - I(parallel_count) may be at most one more than the I(fail_count).
+        - You must specify one of I(parallel_count) and I(parallel_percentage).
+        - Note that this setting lets you specify the maximum for operations.
+          For large deployments, under certain circumstances the actual count may be lower.
 
 author: "Ryan Scott Brown (@ryansb)"
 extends_documentation_fragment:
@@ -170,7 +221,7 @@ EXAMPLES = '''
 RETURN = '''
 operations_log:
   type: list
-  description: Most recent events in Cloudformation's event log. This may be from a previous run in some cases.
+  description: Most recent events in CloudFormation's event log. This may be from a previous run in some cases.
   returned: always
   sample:
   - action: CREATE
@@ -319,8 +370,7 @@ def stack_set_facts(cfn, stack_set_name):
         ss['Tags'] = boto3_tag_list_to_ansible_dict(ss['Tags'])
         return ss
     except cfn.exceptions.from_code('StackSetNotFound'):
-        # catch NotFound error before the retry kicks in to avoid waiting
-        # if the stack does not exist
+        # Return None if the stack doesn't exist
         return
 
 
@@ -378,14 +428,15 @@ def await_stack_instance_completion(module, cfn, stack_set_name, max_wait):
 
 
 def await_stack_set_exists(cfn, stack_set_name):
-    # AWSRetry will retry on `NotFound` errors for us
+    # AWSRetry will retry on `StackSetNotFound` errors for us
     ss = cfn.describe_stack_set(StackSetName=stack_set_name, aws_retry=True)['StackSet']
     ss['Tags'] = boto3_tag_list_to_ansible_dict(ss['Tags'])
     return camel_dict_to_snake_dict(ss, ignore_list=('Tags',))
 
 
 def describe_stack_tree(module, stack_set_name, operation_ids=None):
-    cfn = module.client('cloudformation', retry_decorator=AWSRetry.jittered_backoff(retries=5, delay=3, max_delay=5))
+    jittered_backoff_decorator = AWSRetry.jittered_backoff(retries=5, delay=3, max_delay=5, catch_extra_error_codes=['StackSetNotFound'])
+    cfn = module.client('cloudformation', retry_decorator=jittered_backoff_decorator)
     result = dict()
     result['stack_set'] = camel_dict_to_snake_dict(
         cfn.describe_stack_set(
@@ -485,7 +536,8 @@ def main():
 
     # Wrap the cloudformation client methods that this module uses with
     # automatic backoff / retry for throttling error codes
-    cfn = module.client('cloudformation', retry_decorator=AWSRetry.jittered_backoff(retries=10, delay=3, max_delay=30))
+    jittered_backoff_decorator = AWSRetry.jittered_backoff(retries=10, delay=3, max_delay=30, catch_extra_error_codes=['StackSetNotFound'])
+    cfn = module.client('cloudformation', retry_decorator=jittered_backoff_decorator)
     existing_stack_set = stack_set_facts(cfn, module.params['name'])
 
     operation_uuid = to_native(uuid.uuid4())

@@ -11,7 +11,7 @@
     name: "{{ gitlab_project_name }}"
     state: present
 
-- name: Cleanup Gitlab hook
+- name: Cleanup GitLab hook
   gitlab_hook:
     server_url: "{{ gitlab_host }}"
     validate_certs: false
@@ -20,7 +20,7 @@
     project: "{{ gitlab_project_name }}"
     state: absent
 
-- name: Create Gitlab Hook
+- name: Create GitLab Hook
   gitlab_hook:
     server_url: "{{ gitlab_host }}"
     validate_certs: false
@@ -36,7 +36,7 @@
       - gitlab_hook_state is changed
 
 
-- name: Create Gitlab Hook ( Idempotency test )
+- name: Create GitLab Hook ( Idempotency test )
   gitlab_hook:
     server_url: "{{ gitlab_host }}"
     validate_certs: false
@@ -51,7 +51,7 @@
     that:
       - gitlab_hook_state_again is not changed
 
-- name: Remove Gitlab hook
+- name: Remove GitLab hook
   gitlab_hook:
     server_url: "{{ gitlab_host }}"
     validate_certs: false

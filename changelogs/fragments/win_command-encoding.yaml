@@ -1,0 +1,2 @@
+minor_changes:
+- win_command, win_shell - Add the ability to override the console output encoding with ``output_encoding_override`` - https://github.com/ansible/ansible/issues/54896

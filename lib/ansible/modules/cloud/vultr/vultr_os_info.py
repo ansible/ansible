@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: vultr_os_info
-short_description: Get infos about the Vultr OSes available.
+short_description: Get information about the Vultr OSes available.
 description:
   - Get infos about OSes available to boot servers.
 version_added: "2.9"
@@ -57,6 +57,12 @@ vultr_api:
       returned: success
       type: int
       sample: 5
+    api_retry_max_delay:
+      description: Exponential backoff delay in seconds between retries up to this max delay value.
+      returned: success
+      type: int
+      sample: 12
+      version_added: '2.9'
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success

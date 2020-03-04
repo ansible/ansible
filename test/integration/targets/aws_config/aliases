@@ -1,3 +1,8 @@
 cloud/aws
 disabled
 shippable/aws/group2
+aws_config_aggregation_authorization
+aws_config_aggregator
+aws_config_delivery_channel
+aws_config_recorder
+aws_config_rule

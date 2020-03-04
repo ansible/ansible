@@ -71,6 +71,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 notes:
 - The C(pool) must exist in order to add or delete a range.
@@ -310,6 +315,7 @@ def main():
         range_name=dict(type='str', aliases=["name", "range"]),  # Not required for querying all objects
         range_start=dict(type='int', aliases=["start"]),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -321,15 +327,16 @@ def main():
         ],
     )
 
-    allocation_mode = module.params['allocation_mode']
-    description = module.params['description']
-    pool = module.params['pool']
-    pool_allocation_mode = module.params['pool_allocation_mode']
-    pool_type = module.params['pool_type']
-    range_end = module.params['range_end']
-    range_name = module.params['range_name']
-    range_start = module.params['range_start']
-    state = module.params['state']
+    allocation_mode = module.params.get('allocation_mode')
+    description = module.params.get('description')
+    pool = module.params.get('pool')
+    pool_allocation_mode = module.params.get('pool_allocation_mode')
+    pool_type = module.params.get('pool_type')
+    range_end = module.params.get('range_end')
+    range_name = module.params.get('range_name')
+    range_start = module.params.get('range_start')
+    state = module.params.get('state')
+    name_alias = module.params.get('name_alias')
 
     if range_end is not None:
         encap_end = '{0}-{1}'.format(pool_type, range_end)
@@ -424,6 +431,7 @@ def main():
                 "from": encap_start,
                 "name": range_name,
                 "to": encap_end,
+                "nameAlias": name_alias,
             },
         )
 

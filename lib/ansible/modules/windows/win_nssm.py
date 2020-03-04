@@ -110,6 +110,51 @@ options:
     type: str
     choices: [ auto, delayed, disabled, manual ]
     default: auto
+  app_rotate_bytes:
+    description:
+      - NSSM will not rotate any file which is smaller than the configured number of bytes.
+    type: int
+    default: 104858
+    version_added: "2.10"
+  app_rotate_online:
+    description:
+      - If set to 1, nssm can rotate files which grow to the configured file size limit while the service is running.
+    type: int
+    choices:
+      - 0
+      - 1
+    default: 0
+    version_added: "2.10"
+  app_stop_method_console:
+    description:
+      - Time to wait after sending Control-C.
+    type: int
+    version_added: "2.10"
+  app_stop_method_skip:
+    description:
+      - To disable service shutdown methods, set to the sum of one or more of the numbers
+      - 1 - Don't send Control-C to the console.
+      - 2 - Don't send WM_CLOSE to windows.
+      - 4 - Don't send WM_QUIT to threads.
+      - 8 - Don't call TerminateProcess().
+    type: int
+    choices:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+    version_added: "2.10"
 seealso:
   - module: win_service
 notes:
@@ -122,6 +167,7 @@ author:
   - Hans-Joachim Kliemeck (@h0nIg)
   - Michael Wild (@themiwi)
   - Kevin Subileau (@ksubileau)
+  - Shachaf Goldstein (@Shachaf92)
 '''
 
 EXAMPLES = r'''
@@ -159,7 +205,7 @@ EXAMPLES = r'''
   win_service:
     name: foo
     dependencies: [ adf, tcpip ]
-    user: foouser
+    username: foouser
     password: secret
     start_mode: manual
     state: started

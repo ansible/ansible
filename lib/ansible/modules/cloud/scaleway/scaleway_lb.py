@@ -320,7 +320,7 @@ def core(module):
     }
     module.params['api_url'] = SCALEWAY_ENDPOINT
     api = Scaleway(module=module)
-    api.api_path = "lbaas/v1beta1/regions/%s/lbs" % region
+    api.api_path = "lb/v1/regions/%s/lbs" % region
 
     changed, summary = state_strategy[wished_load_balancer["state"]](api=api,
                                                                      wished_lb=wished_load_balancer)

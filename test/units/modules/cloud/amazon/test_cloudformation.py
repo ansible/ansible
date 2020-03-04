@@ -1,19 +1,11 @@
 # (c) 2017 Red Hat Inc.
 #
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import pytest
 
@@ -152,25 +144,6 @@ def test_missing_template_body():
     assert exc_info.match('FAIL')
     assert not m.exit_args
     assert "Either 'template', 'template_body' or 'template_url' is required when the stack does not exist." == m.exit_kwargs['msg']
-
-
-def test_disable_rollback_and_on_failure_defined():
-    m = FakeModule(
-        on_create_failure='DELETE',
-        disable_rollback=True,
-    )
-    with pytest.raises(Exception) as exc_info:
-        cfn_module.create_stack(
-            module=m,
-            stack_params={'TemplateBody': ''},
-            cfn=None,
-            events_limit=default_events_limit
-        )
-        pytest.fail('Expected module to fail with both on_create_failure and disable_rollback defined')
-
-    assert exc_info.match('FAIL')
-    assert not m.exit_args
-    assert "You can specify either 'on_create_failure' or 'disable_rollback', but not both." == m.exit_kwargs['msg']
 
 
 def test_on_create_failure_delete(maybe_sleep, placeboify):

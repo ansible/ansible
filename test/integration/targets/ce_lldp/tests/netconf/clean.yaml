@@ -1,0 +1,20 @@
+---
+- debug:
+    msg: "Start ce_lldp deleted remove interface config ansible_connection={{ ansible_connection }}"
+
+- name: change ansible_connection to network_cli
+  set_fact:
+    ansible_connection: network_cli
+# After the global LLDP function is disabled, all LLDP configuration restore defaults except the LLDP alarm function.
+- name: display lldp
+  ce_command:
+    commands:
+      - undo lldp enable
+      - lldp mdn disable
+
+- name: change ansible_connection to netconf
+  set_fact:
+    ansible_connection: netconf
+
+- debug:
+    msg: "End ce_lldp deleted remove interface config ansible_connection={{ ansible_connection }}"

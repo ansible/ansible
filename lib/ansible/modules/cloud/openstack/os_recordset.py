@@ -78,7 +78,7 @@ EXAMPLES = '''
     name: www
     ttl: 7200
 
-# Delete recorset named "www.example.net."
+# Delete recordset named "www.example.net."
 - os_recordset:
     cloud: mycloud
     state: absent

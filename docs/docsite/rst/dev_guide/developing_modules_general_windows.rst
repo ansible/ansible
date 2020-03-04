@@ -178,7 +178,7 @@ When creating a new module there are a few things to keep in mind:
 - C# and PowerShell module utils achieve the same goal but C# allows a developer to implement low level tasks, such as calling the Win32 API, and can be faster in some cases
 - Ensure the code runs under Powershell v3 and higher on Windows Server 2008 and higher; if higher minimum Powershell or OS versions are required, ensure the documentation reflects this clearly
 - Ansible runs modules under strictmode version 2.0. Be sure to test with that enabled by putting ``Set-StrictMode -Version 2.0`` at the top of your dev script
-- Favour native Powershell cmdlets over executable calls if possible
+- Favor native Powershell cmdlets over executable calls if possible
 - Use the full cmdlet name instead of aliases, e.g. ``Remove-Item`` over ``rm``
 - Use named parameters with cmdlets, e.g. ``Remove-Item -Path C:\temp`` over ``Remove-Item C:\temp``
 
@@ -215,6 +215,7 @@ options set:
 - ``aliases``: A list of aliases for the module option
 - ``choices``: A list of valid values for the module option, if ``type=list`` then each list value is validated against the choices and not the list itself
 - ``default``: The default value for the module option if not set
+- ``deprecated_aliases``: A list of hashtables that define aliases that are deprecated and the versions they will be removed in. Each entry must contain the keys ``name`` and ``version``
 - ``elements``: When ``type=list``, this sets the type of each list value, the values are the same as ``type``
 - ``no_log``: Will sanitise the input value before being returned in the ``module_invocation`` return value
 - ``removed_in_version``: States when a deprecated module option is to be removed, a warning is displayed to the end user if set
@@ -255,7 +256,7 @@ When in doubt, look at some of the other core modules and see how things have be
 implemented there.
 
 Sometimes there are multiple ways that Windows offers to complete a task; this
-is the order to favour when writing modules:
+is the order to favor when writing modules:
 
 - Native Powershell cmdlets like ``Remove-Item -Path C:\temp -Recurse``
 - .NET classes like ``[System.IO.Path]::GetRandomFileName()``

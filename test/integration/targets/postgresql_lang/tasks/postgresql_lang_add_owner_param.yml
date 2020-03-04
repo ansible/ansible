@@ -1,0 +1,196 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- vars:
+    test_user1: alice
+    test_user2: bob
+    test_lang: plperl
+    non_existent_role: fake_role
+    task_parameters: &task_parameters
+      become_user: '{{ pg_user }}'
+      become: yes
+      register: result
+    pg_parameters: &pg_parameters
+      login_user: '{{ pg_user }}'
+      login_db: postgres 
+
+  block:
+  - name: Create roles for tests
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ item }}'
+    loop:
+    - '{{ test_user1 }}'
+    - '{{ test_user2 }}'
+
+  - name: Create lang with owner in check_mode
+    <<: *task_parameters
+    postgresql_lang:
+      <<: *pg_parameters
+      name: '{{ test_lang }}'
+      owner: '{{ test_user1 }}'
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == []
+
+  - name: Check that nothing was actually changed
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT r.rolname FROM pg_language l 
+        JOIN pg_roles r ON l.lanowner = r.oid 
+        WHERE l.lanname = '{{ test_lang }}'
+        AND r.rolname = '{{ test_user1 }}'
+
+  - assert:
+      that:
+      - result.rowcount == 0 
+
+  - name: Create lang with owner
+    <<: *task_parameters
+    postgresql_lang:
+      <<: *pg_parameters
+      name: '{{ test_lang }}'
+      owner: '{{ test_user1 }}'
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ['CREATE LANGUAGE "{{ test_lang }}"', 'ALTER LANGUAGE "{{ test_lang }}" OWNER TO {{ test_user1 }}']
+
+  - name: Check
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT r.rolname FROM pg_language l 
+        JOIN pg_roles r ON l.lanowner = r.oid 
+        WHERE l.lanname = '{{ test_lang }}'
+        AND r.rolname = '{{ test_user1 }}'
+
+  - assert:
+      that:
+      - result.rowcount == 1 
+
+  - name: Change lang owner in check_mode
+    <<: *task_parameters
+    postgresql_lang:
+      <<: *pg_parameters
+      name: '{{ test_lang }}'
+      owner: '{{ test_user2 }}'
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ['ALTER LANGUAGE "{{ test_lang }}" OWNER TO {{ test_user2 }}']
+
+  - name: Check that nothing was actually changed
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT r.rolname FROM pg_language l 
+        JOIN pg_roles r ON l.lanowner = r.oid 
+        WHERE l.lanname = '{{ test_lang }}'
+        AND r.rolname = '{{ test_user2 }}'
+
+  - assert:
+      that:
+      - result.rowcount == 0 
+
+  - name: Change lang owner
+    <<: *task_parameters
+    postgresql_lang:
+      <<: *pg_parameters
+      name: '{{ test_lang }}'
+      owner: '{{ test_user2 }}'
+
+  - assert:
+      that:
+      - result is changed
+      # TODO: the first elem of the returned list below
+      # looks like a bug, not related with the option owner, needs to be checked
+      - result.queries == ["UPDATE pg_language SET lanpltrusted = false WHERE lanname = '{{ test_lang }}'", 'ALTER LANGUAGE "{{ test_lang }}" OWNER TO {{ test_user2 }}']
+
+  - name: Check
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT r.rolname FROM pg_language l 
+        JOIN pg_roles r ON l.lanowner = r.oid 
+        WHERE l.lanname = '{{ test_lang }}'
+        AND r.rolname = '{{ test_user2 }}'
+
+  - assert:
+      that:
+      - result.rowcount == 1 
+
+  - name: Try to change lang owner again to the same role
+    <<: *task_parameters
+    postgresql_lang:
+      <<: *pg_parameters
+      name: '{{ test_lang }}'
+      owner: '{{ test_user2 }}'
+
+  - assert:
+      that:
+      - result is not changed
+      - result.queries == []
+
+  - name: Check
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT r.rolname FROM pg_language l 
+        JOIN pg_roles r ON l.lanowner = r.oid 
+        WHERE l.lanname = '{{ test_lang }}'
+        AND r.rolname = '{{ test_user2 }}'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Drop test lang with owner, must ignore
+    <<: *task_parameters
+    postgresql_lang:
+      <<: *pg_parameters
+      name: '{{ test_lang }}'
+      state: absent
+      owner: '{{ non_existent_role }}'
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["DROP LANGUAGE \"{{ test_lang }}\""]
+
+  - name: Check
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT r.rolname FROM pg_language l 
+        JOIN pg_roles r ON l.lanowner = r.oid 
+        WHERE l.lanname = '{{ test_lang }}'
+
+  - assert:
+      that:
+      - result.rowcount == 0
+
+  # Clean up
+  - name: Drop test roles
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ item }}'
+      state: absent
+    loop:
+    - '{{ test_user1 }}'
+    - '{{ test_user2 }}'

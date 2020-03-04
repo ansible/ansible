@@ -4,6 +4,9 @@
 # (c) 2015, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
@@ -152,7 +155,7 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
                     # delete the ssh key with matching fingerprint but wrong name
                     args['name'] = ssh_key['name']
                     self.query_api('deleteSSHKeyPair', **args)
-                    # First match for key retrievment will be the fingerprint.
+                    # First match for key retrievement will be the fingerprint.
                     # We need to make another lookup if there is a key with identical name.
                     self.ssh_key = None
                     ssh_key = self.get_ssh_key()

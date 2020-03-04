@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Jon Meran <jonathan.meran@sonos.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -21,30 +24,30 @@ author: Jon Meran (@jonmer85)
 options:
   job_definition_arn:
     description:
-      - The arn for the job definition
-
+      - The ARN for the job definition.
+    type: str
   job_definition_name:
     description:
-      - The name for the job definition
+      - The name for the job definition.
     required: true
-
+    type: str
   state:
     description:
       - Describes the desired state.
     default: "present"
     choices: ["present", "absent"]
-
+    type: str
   type:
     description:
-      - The type of job definition
+      - The type of job definition.
     required: true
-
+    type: str
   parameters:
     description:
       - Default parameter substitution placeholders to set in the job definition. Parameters are specified as a
         key-value pair mapping. Parameters in a SubmitJob request override any corresponding parameter defaults from
         the job definition.
-
+    type: dict
   image:
     description:
       - The image used to start a container. This string is passed directly to the Docker daemon. Images in the Docker
@@ -52,32 +55,36 @@ options:
         Up to 255 letters (uppercase and lowercase), numbers, hyphens, underscores, colons, periods, forward slashes,
         and number signs are allowed. This parameter maps to Image in the Create a container section of the Docker
         Remote API and the IMAGE parameter of docker run.
-
+    required: true
+    type: str
   vcpus:
     description:
       - The number of vCPUs reserved for the container. This parameter maps to CpuShares in the Create a container
         section of the Docker Remote API and the --cpu-shares option to docker run. Each vCPU is equivalent to
         1,024 CPU shares.
-
+    required: true
+    type: int
   memory:
     description:
       - The hard limit (in MiB) of memory to present to the container. If your container attempts to exceed the memory
         specified here, the container is killed. This parameter maps to Memory in the Create a container section of the
         Docker Remote API and the --memory option to docker run.
-
+    required: true
+    type: int
   command:
     description:
       - The command that is passed to the container. This parameter maps to Cmd in the Create a container section of
         the Docker Remote API and the COMMAND parameter to docker run. For more information,
-        see https://docs.docker.com/engine/reference/builder/#cmd.
-
+        see U(https://docs.docker.com/engine/reference/builder/#cmd).
+    type: list
+    elements: str
   job_role_arn:
     description:
       - The Amazon Resource Name (ARN) of the IAM role that the container can assume for AWS permissions.
-
+    type: str
   volumes:
     description:
-      - A list of data volumes used in a job. List of dictionaries.
+      - A list of data volumes used in a job.
     suboptions:
       host:
         description:
@@ -95,11 +102,12 @@ options:
         description:
           - The name of the volume. Up to 255 letters (uppercase and lowercase), numbers, hyphens, and underscores are
             allowed. This name is referenced in the sourceVolume parameter of container definition mountPoints.
-
+    type: list
+    elements: dict
   environment:
     description:
       - The environment variables to pass to a container. This parameter maps to Env in the Create a container section
-        of the Docker Remote API and the --env option to docker run. List of dictionaries.
+        of the Docker Remote API and the --env option to docker run.
     suboptions:
       name:
         description:
@@ -107,11 +115,12 @@ options:
       value:
         description:
           - The value of the key value pair. For environment variables, this is the value of the environment variable.
-
+    type: list
+    elements: dict
   mount_points:
     description:
       - The mount points for data volumes in your container. This parameter maps to Volumes in the Create a container
-        section of the Docker Remote API and the --volume option to docker run. List of dictionaries.
+        section of the Docker Remote API and the --volume option to docker run.
     suboptions:
       containerPath:
         description:
@@ -119,27 +128,28 @@ options:
       readOnly:
         description:
           - If this value is true , the container has read-only access to the volume; otherwise, the container can write
-             to the volume. The default value is false.
+             to the volume. The default value is C(false).
       sourceVolume:
         description:
           - The name of the volume to mount.
-
+    type: list
+    elements: dict
   readonly_root_filesystem:
     description:
       - When this parameter is true, the container is given read-only access to its root file system. This parameter
         maps to ReadonlyRootfs in the Create a container section of the Docker Remote API and the --read-only option
         to docker run.
-
+    type: str
   privileged:
     description:
       - When this parameter is true, the container is given elevated privileges on the host container instance
         (similar to the root user). This parameter maps to Privileged in the Create a container section of the
         Docker Remote API and the --privileged option to docker run.
-
+    type: str
   ulimits:
     description:
       - A list of ulimits to set in the container. This parameter maps to Ulimits in the Create a container section
-        of the Docker Remote API and the --ulimit option to docker run. List of dictionaries.
+        of the Docker Remote API and the --ulimit option to docker run.
     suboptions:
       hardLimit:
         description:
@@ -150,18 +160,19 @@ options:
       softLimit:
         description:
           - The soft limit for the ulimit type.
-
+    type: list
+    elements: dict
   user:
     description:
       - The user name to use inside the container. This parameter maps to User in the Create a container section of
         the Docker Remote API and the --user option to docker run.
-
+    type: str
   attempts:
     description:
       - Retry strategy - The number of times to move a job to the RUNNABLE status. You may specify between 1 and 10
         attempts. If attempts is greater than one, the job is retried if it fails until it has moved to RUNNABLE that
         many times.
-
+    type: int
 requirements:
     - boto3
 extends_documentation_fragment:
@@ -177,7 +188,7 @@ EXAMPLES = '''
     state: present
   tasks:
 - name: My Batch Job Definition
-  batch_job_definition:
+  aws_batch_job_definition:
     job_definition_name: My Batch Job Definition
     state: present
     type: container
@@ -205,7 +216,7 @@ output:
   description: "returns what action was taken, whether something was changed, invocation and response"
   returned: always
   sample:
-    batch_job_definition_action: none
+    aws_batch_job_definition_action: none
     changed: false
     response:
       job_definition_arn: "arn:aws:batch:...."
@@ -215,18 +226,14 @@ output:
   type: dict
 '''
 
-from ansible.module_utils._text import to_native
-from ansible.module_utils.aws.batch import AWSConnection, cc, set_api_params
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, HAS_BOTO3
+from ansible.module_utils.aws.batch import cc, set_api_params
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
-import traceback
-
 try:
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass  # Handled by HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -240,12 +247,12 @@ except ImportError:
 # logger.setLevel(logging.DEBUG)
 
 
-def validate_params(module, aws):
+def validate_params(module, batch_client):
     """
     Performs basic parameter validation.
 
     :param module:
-    :param aws:
+    :param batch_client:
     :return:
     """
     return
@@ -257,9 +264,9 @@ def validate_params(module, aws):
 #
 # ---------------------------------------------------------------------------------------------------
 
-def get_current_job_definition(module, connection):
+def get_current_job_definition(module, batch_client):
     try:
-        environments = connection.client().describe_job_definitions(
+        environments = batch_client.describe_job_definitions(
             jobDefinitionName=module.params['job_definition_name']
         )
         if len(environments['jobDefinitions']) > 0:
@@ -272,16 +279,15 @@ def get_current_job_definition(module, connection):
         return None
 
 
-def create_job_definition(module, aws):
+def create_job_definition(module, batch_client):
     """
         Adds a Batch job definition
 
         :param module:
-        :param aws:
+        :param batch_client:
         :return:
         """
 
-    client = aws.client('batch')
     changed = False
 
     # set API parameters
@@ -294,11 +300,10 @@ def create_job_definition(module, aws):
 
     try:
         if not module.check_mode:
-            client.register_job_definition(**api_params)
+            batch_client.register_job_definition(**api_params)
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error registering job definition: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Error registering job definition')
 
     return changed
 
@@ -323,25 +328,23 @@ def get_compute_environment_order_list(module):
     return compute_environment_order_list
 
 
-def remove_job_definition(module, aws):
+def remove_job_definition(module, batch_client):
     """
     Remove a Batch job definition
 
     :param module:
-    :param aws:
+    :param batch_client:
     :return:
     """
 
-    client = aws.client('batch')
     changed = False
 
     try:
         if not module.check_mode:
-            client.deregister_job_definition(jobDefinition=module.params['job_definition_arn'])
+            batch_client.deregister_job_definition(jobDefinition=module.params['job_definition_arn'])
         changed = True
-    except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error removing job definition: {0}'.format(to_native(e)),
-                         exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Error removing job definition')
     return changed
 
 
@@ -366,7 +369,7 @@ def job_definition_equal(module, current_definition):
     return equal
 
 
-def manage_state(module, aws):
+def manage_state(module, batch_client):
     changed = False
     current_state = 'absent'
     state = module.params['state']
@@ -377,7 +380,7 @@ def manage_state(module, aws):
     check_mode = module.check_mode
 
     # check if the job definition exists
-    current_job_definition = get_current_job_definition(module, aws)
+    current_job_definition = get_current_job_definition(module, batch_client)
     if current_job_definition:
         current_state = 'present'
 
@@ -385,21 +388,21 @@ def manage_state(module, aws):
         if current_state == 'present':
             # check if definition has changed and register a new version if necessary
             if not job_definition_equal(module, current_job_definition):
-                create_job_definition(module, aws)
+                create_job_definition(module, batch_client)
                 action_taken = 'updated with new version'
                 changed = True
         else:
             # Create Job definition
-            changed = create_job_definition(module, aws)
+            changed = create_job_definition(module, batch_client)
             action_taken = 'added'
 
-        response = get_current_job_definition(module, aws)
+        response = get_current_job_definition(module, batch_client)
         if not response:
             module.fail_json(msg='Unable to get job definition information after creating/updating')
     else:
         if current_state == 'present':
             # remove the Job definition
-            changed = remove_job_definition(module, aws)
+            changed = remove_job_definition(module, batch_client)
             action_taken = 'deregistered'
     return dict(changed=changed, batch_job_definition_action=action_taken, response=response)
 
@@ -417,45 +420,37 @@ def main():
     :return dict: ansible facts
     """
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            state=dict(required=False, default='present', choices=['present', 'absent']),
-            job_definition_name=dict(required=True),
-            job_definition_arn=dict(),
-            type=dict(required=True),
-            parameters=dict(type='dict'),
-            image=dict(required=True),
-            vcpus=dict(type='int', required=True),
-            memory=dict(type='int', required=True),
-            command=dict(type='list', default=[]),
-            job_role_arn=dict(),
-            volumes=dict(type='list', default=[]),
-            environment=dict(type='list', default=[]),
-            mount_points=dict(type='list', default=[]),
-            readonly_root_filesystem=dict(),
-            privileged=dict(),
-            ulimits=dict(type='list', default=[]),
-            user=dict(),
-            attempts=dict(type='int'),
-            region=dict(aliases=['aws_region', 'ec2_region'])
-        )
+    argument_spec = dict(
+        state=dict(required=False, default='present', choices=['present', 'absent']),
+        job_definition_name=dict(required=True),
+        job_definition_arn=dict(),
+        type=dict(required=True),
+        parameters=dict(type='dict'),
+        image=dict(required=True),
+        vcpus=dict(type='int', required=True),
+        memory=dict(type='int', required=True),
+        command=dict(type='list', default=[]),
+        job_role_arn=dict(),
+        volumes=dict(type='list', default=[]),
+        environment=dict(type='list', default=[]),
+        mount_points=dict(type='list', default=[]),
+        readonly_root_filesystem=dict(),
+        privileged=dict(),
+        ulimits=dict(type='list', default=[]),
+        user=dict(),
+        attempts=dict(type='int')
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
 
-    # validate dependencies
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required for this module.')
+    batch_client = module.client('batch')
 
-    aws = AWSConnection(module, ['batch'])
+    validate_params(module, batch_client)
 
-    validate_params(module, aws)
-
-    results = manage_state(module, aws)
+    results = manage_state(module, batch_client)
 
     module.exit_json(**camel_dict_to_snake_dict(results))
 

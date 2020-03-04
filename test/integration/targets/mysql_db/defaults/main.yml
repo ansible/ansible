@@ -6,3 +6,5 @@ db_user1: 'datauser1'
 db_user2: 'datauser2'
 
 tmp_dir: '/tmp'
+db_latin1_name: 'db_latin1'
+file4: 'latin1_file'

@@ -116,7 +116,7 @@ Switch ($audit_type_string)
 
 $CurrentRule = Get-AuditPolicy $GetString
 
-#exit if the audit_type is already set properly for the categroy
+#exit if the audit_type is already set properly for the category
 If (-not ($CurrentRule.Values | Where-Object {$_ -ne $audit_type_check}) )
 {
     $results.current_audit_policy = Get-AuditPolicy $GetString

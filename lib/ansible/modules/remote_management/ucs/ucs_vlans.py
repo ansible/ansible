@@ -16,7 +16,6 @@ module: ucs_vlans
 short_description: Configures VLANs on Cisco UCS Manager
 description:
 - Configures VLANs on Cisco UCS Manager.
-- Examples can be used with the UCS Platform Emulator U(https://communities.cisco.com/ucspe).
 extends_documentation_fragment: ucs
 options:
   state:

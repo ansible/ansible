@@ -48,7 +48,7 @@ options:
     suboptions:
       name:
         description:
-        - The name of the COntract to associate with.
+        - The name of the Contract to associate with.
         required: true
         type: str
       schema:
@@ -164,62 +164,62 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    template = module.params['template']
-    anp = module.params['anp']
-    epg = module.params['epg']
-    contract = module.params['contract']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    template = module.params.get('template')
+    anp = module.params.get('anp')
+    epg = module.params.get('epg')
+    contract = module.params.get('contract')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
     if contract:
         if contract.get('schema') is None:
             contract['schema'] = schema
-        contract['schema_id'] = mso.lookup_schema(contract['schema'])
+        contract['schema_id'] = mso.lookup_schema(contract.get('schema'))
         if contract.get('template') is None:
             contract['template'] = template
 
     # Get schema_id
     schema_obj = mso.get_obj('schemas', displayName=schema)
     if schema_obj:
-        schema_id = schema_obj['id']
+        schema_id = schema_obj.get('id')
     else:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
     schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
-    templates = [t['name'] for t in schema_obj['templates']]
+    templates = [t.get('name') for t in schema_obj.get('templates')]
     if template not in templates:
         mso.fail_json(msg="Provided template '{0}' does not exist. Existing templates: {1}".format(template, ', '.join(templates)))
     template_idx = templates.index(template)
 
     # Get ANP
-    anps = [a['name'] for a in schema_obj['templates'][template_idx]['anps']]
+    anps = [a.get('name') for a in schema_obj.get('templates')[template_idx]['anps']]
     if anp not in anps:
         mso.fail_json(msg="Provided anp '{0}' does not exist. Existing anps: {1}".format(anp, ', '.join(anps)))
     anp_idx = anps.index(anp)
 
     # Get EPG
-    epgs = [e['name'] for e in schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs']]
+    epgs = [e.get('name') for e in schema_obj.get('templates')[template_idx]['anps'][anp_idx]['epgs']]
     if epg not in epgs:
         mso.fail_json(msg="Provided epg '{epg}' does not exist. Existing epgs: {epgs}".format(epg=epg, epgs=', '.join(epgs)))
     epg_idx = epgs.index(epg)
 
     # Get Contract
     if contract:
-        contracts = [(c['contractRef'],
-                      c['relationshipType']) for c in schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['contractRelationships']]
+        contracts = [(c.get('contractRef'),
+                      c.get('relationshipType')) for c in schema_obj.get('templates')[template_idx]['anps'][anp_idx]['epgs'][epg_idx]['contractRelationships']]
         contract_ref = mso.contract_ref(**contract)
-        if (contract_ref, contract['type']) in contracts:
-            contract_idx = contracts.index((contract_ref, contract['type']))
+        if (contract_ref, contract.get('type')) in contracts:
+            contract_idx = contracts.index((contract_ref, contract.get('type')))
             contract_path = '/templates/{0}/anps/{1}/epgs/{2}/contractRelationships/{3}'.format(template, anp, epg, contract)
-            mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['contractRelationships'][contract_idx]
+            mso.existing = schema_obj.get('templates')[template_idx]['anps'][anp_idx]['epgs'][epg_idx]['contractRelationships'][contract_idx]
 
     if state == 'query':
         if not contract:
-            mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['contractRelationships']
+            mso.existing = schema_obj.get('templates')[template_idx]['anps'][anp_idx]['epgs'][epg_idx]['contractRelationships']
         elif not mso.existing:
             mso.fail_json(msg="Contract '{0}' not found".format(contract_ref))
         mso.exit_json()
@@ -235,11 +235,11 @@ def main():
 
     elif state == 'present':
         payload = dict(
-            relationshipType=contract['type'],
+            relationshipType=contract.get('type'),
             contractRef=dict(
-                contractName=contract['name'],
-                templateName=contract['template'],
-                schemaId=contract['schema_id'],
+                contractName=contract.get('name'),
+                templateName=contract.get('template'),
+                schemaId=contract.get('schema_id'),
             ),
         )
 

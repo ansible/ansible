@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -29,6 +32,10 @@ description:
     - Manages BGP peer configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@QijunPan)
+notes:
+  - This module requires the netconf system service be enabled on the remote device being managed.
+  - Recommended connection is C(netconf).
+  - This module also works with C(local) connections for legacy playbooks.
 options:
     state:
         description:
@@ -529,7 +536,8 @@ class BgpNeighbor(object):
 
         dual_as = module.params['dual_as']
         if dual_as != 'no_use':
-
+            if not fake_as:
+                module.fail_json(msg='fake_as must exist.')
             conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<dualAs></dualAs>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
@@ -938,7 +946,8 @@ class BgpNeighbor(object):
 
         prepend_global_as = module.params['prepend_global_as']
         if prepend_global_as != 'no_use':
-
+            if not fake_as:
+                module.fail_json(msg='fake_as must exist.')
             conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<prependGlobalAs></prependGlobalAs>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
@@ -958,7 +967,8 @@ class BgpNeighbor(object):
 
         prepend_fake_as = module.params['prepend_fake_as']
         if prepend_fake_as != 'no_use':
-
+            if not fake_as:
+                module.fail_json(msg='fake_as must exist.')
             conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<prependFakeAs></prependFakeAs>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
@@ -1473,7 +1483,7 @@ class BgpNeighbor(object):
         if local_if_name:
             conf_str += "<localIfName>%s</localIfName>" % local_if_name
 
-            cmd = "peer %s connect-interface local_if_name" % peer_addr
+            cmd = "peer %s connect-interface %s" % (peer_addr, local_if_name)
             cmds.append(cmd)
 
         ebgp_max_hop = module.params['ebgp_max_hop']
@@ -1580,14 +1590,20 @@ class BgpNeighbor(object):
         if mpls_local_ifnet_disable != 'no_use':
             conf_str += "<mplsLocalIfnetDisable>%s</mplsLocalIfnetDisable>" % mpls_local_ifnet_disable
 
+            if mpls_local_ifnet_disable == "false":
+                cmd = "undo peer %s mpls-local-ifnet disable" % peer_addr
+            else:
+                cmd = "peer %s mpls-local-ifnet disable" % peer_addr
+            cmds.append(cmd)
+
         prepend_global_as = module.params['prepend_global_as']
         if prepend_global_as != 'no_use':
             conf_str += "<prependGlobalAs>%s</prependGlobalAs>" % prepend_global_as
 
             if prepend_global_as == "true":
-                cmd = "peer %s public-as-only" % peer_addr
+                cmd = "peer %s local-as %s prepend-global-as" % (peer_addr, fake_as)
             else:
-                cmd = "undo peer %s public-as-only" % peer_addr
+                cmd = "undo peer %s local-as %s prepend-global-as" % (peer_addr, fake_as)
             cmds.append(cmd)
 
         prepend_fake_as = module.params['prepend_fake_as']
@@ -1595,9 +1611,9 @@ class BgpNeighbor(object):
             conf_str += "<prependFakeAs>%s</prependFakeAs>" % prepend_fake_as
 
             if prepend_fake_as == "true":
-                cmd = "peer %s prepend-local-as" % peer_addr
+                cmd = "peer %s local-as %s prepend-local-as" % (peer_addr, fake_as)
             else:
-                cmd = "undo peer %s prepend-local-as" % peer_addr
+                cmd = "undo peer %s local-as %s prepend-local-as" % (peer_addr, fake_as)
             cmds.append(cmd)
 
         conf_str += CE_MERGE_BGP_PEER_TAIL

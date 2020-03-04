@@ -20,12 +20,11 @@ using System.Web.Script.Serialization;
 // loaded in PSCore, ignore CS1702 so the code will ignore this warning
 //NoWarn -Name CS1702 -CLR Core
 
-//AssemblyReference -Name Newtonsoft.Json.dll -CLR Core
-//AssemblyReference -Name System.ComponentModel.Primitives.dll -CLR Core
-//AssemblyReference -Name System.Diagnostics.EventLog.dll -CLR Core
-//AssemblyReference -Name System.IO.FileSystem.AccessControl.dll -CLR Core
-//AssemblyReference -Name System.Security.Principal.Windows.dll -CLR Core
-//AssemblyReference -Name System.Security.AccessControl.dll -CLR Core
+//AssemblyReference -Type Newtonsoft.Json.JsonConvert -CLR Core
+//AssemblyReference -Type System.Diagnostics.EventLog -CLR Core
+//AssemblyReference -Type System.Security.AccessControl.NativeObjectSecurity -CLR Core
+//AssemblyReference -Type System.Security.AccessControl.DirectorySecurity -CLR Core
+//AssemblyReference -Type System.Security.Principal.IdentityReference -CLR Core
 
 //AssemblyReference -Name System.Web.Extensions.dll -CLR Framework
 
@@ -78,6 +77,7 @@ namespace Ansible.Basic
             { "aliases", new List<object>() { typeof(List<string>), typeof(List<string>) } },
             { "choices", new List<object>() { typeof(List<object>), typeof(List<object>) } },
             { "default", new List<object>() { null, null } },
+            { "deprecated_aliases", new List<object>() { typeof(List<Hashtable>), typeof(List<Hashtable>) } },
             { "elements", new List<object>() { null, null } },
             { "mutually_exclusive", new List<object>() { typeof(List<List<string>>), null } },
             { "no_log", new List<object>() { false, typeof(bool) } },
@@ -685,6 +685,27 @@ namespace Ansible.Basic
                     if (parameters.Contains(alias))
                         parameters[k] = parameters[alias];
                 }
+
+                List<Hashtable> deprecatedAliases = (List<Hashtable>)v["deprecated_aliases"];
+                foreach (Hashtable depInfo in deprecatedAliases)
+                {
+                    foreach (string keyName in new List<string> { "name", "version" })
+                    {
+                        if (!depInfo.ContainsKey(keyName))
+                        {
+                            string msg = String.Format("{0} is required in a deprecated_aliases entry", keyName);
+                            throw new ArgumentException(FormatOptionsContext(msg, " - "));
+                        }
+                    }
+                    string aliasName = (string)depInfo["name"];
+                    string depVersion = (string)depInfo["version"];
+
+                    if (parameters.Contains(aliasName))
+                    {
+                        string msg = String.Format("Alias '{0}' is deprecated. See the module docs for more information", aliasName);
+                        Deprecate(FormatOptionsContext(msg, " - "), depVersion);
+                    }
+                }
             }
 
             return aliasResults;
@@ -700,8 +721,9 @@ namespace Ansible.Basic
                 if ((bool)v["no_log"])
                 {
                     object noLogObject = parameters.Contains(k) ? parameters[k] : null;
-                    if (noLogObject != null)
-                        noLogValues.Add(noLogObject.ToString());
+                    string noLogString = noLogObject == null ? "" : noLogObject.ToString();
+                    if (!String.IsNullOrEmpty(noLogString))
+                        noLogValues.Add(noLogString);
                 }
 
                 object removedInVersion = v["removed_in_version"];
@@ -1045,7 +1067,7 @@ namespace Ansible.Basic
 
                 if (missing.Count > 0)
                 {
-                    string msg =  String.Format("missing parameter(s) required by '{0}': {1}", key, String.Join(", ", missing));
+                    string msg = String.Format("missing parameter(s) required by '{0}': {1}", key, String.Join(", ", missing));
                     FailJson(FormatOptionsContext(msg));
                 }
             }
@@ -1312,4 +1334,3 @@ namespace Ansible.Basic
         }
     }
 }
-

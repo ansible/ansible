@@ -196,3 +196,31 @@ notes:
   - Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
   - M(netapp_e_storage_system) may be utilized for configuring the systems managed by a WSP instance.
 '''
+
+    # Documentation fragment for AWSCVS
+    AWSCVS = """
+options:
+  api_key:
+    required: true
+    type: str
+    description:
+    - The access key to authenticate with the AWSCVS Web Services Proxy or Embedded Web Services API.
+  secret_key:
+    required: true
+    type: str
+    description:
+    - The secret_key to authenticate with the AWSCVS Web Services Proxy or Embedded Web Services API.
+  api_url:
+    required: true
+    type: str
+    description:
+    - The url to the AWSCVS Web Services Proxy or Embedded Web Services API.
+  validate_certs:
+    required: false
+    default: true
+    description:
+    - Should https certificates be validated?
+    type: bool
+notes:
+  - The modules prefixed with aws\\_cvs\\_netapp are built to Manage AWS Cloud Volume Service .
+"""

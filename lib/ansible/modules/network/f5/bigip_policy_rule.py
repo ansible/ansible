@@ -198,7 +198,7 @@ EXAMPLES = r'''
         - type: http_uri
           path_starts_with: /HomePage/
 
-- name: Remove all rules and confitions from the rule
+- name: Remove all rules and conditions from the rule
   bigip_policy_rule:
     policy: Policy-Foo
     name: rule1

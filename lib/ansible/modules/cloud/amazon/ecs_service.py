@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -22,13 +14,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ecs_service
-short_description: create, terminate, start or stop a service in ecs
+short_description: Create, terminate, start or stop a service in ECS
 description:
-  - Creates or terminates ecs services.
+  - Creates or terminates ECS. services.
 notes:
-  - the service role specified must be assumable (i.e. have a trust relationship for the ecs service, ecs.amazonaws.com)
-  - for details of the parameters and returns see U(https://boto3.readthedocs.io/en/latest/reference/services/ecs.html)
-  - An IAM role must have been previously created
+  - The service role specified must be assumable. (i.e. have a trust relationship for the ecs service, ecs.amazonaws.com)
+  - For details of the parameters and returns see U(https://boto3.readthedocs.io/en/latest/reference/services/ecs.html).
+  - An IAM role must have been previously created.
 version_added: "2.1"
 author:
     - "Mark Chance (@Java1Guy)"
@@ -40,119 +32,169 @@ requirements: [ json, botocore, boto3 ]
 options:
     state:
         description:
-          - The desired state of the service
+          - The desired state of the service.
         required: true
         choices: ["present", "absent", "deleting"]
+        type: str
     name:
         description:
-          - The name of the service
+          - The name of the service.
         required: true
+        type: str
     cluster:
         description:
-          - The name of the cluster in which the service exists
+          - The name of the cluster in which the service exists.
         required: false
+        type: str
     task_definition:
         description:
-          - The task definition the service will run. This parameter is required when state=present
+          - The task definition the service will run.
+          - This parameter is required when I(state=present).
         required: false
+        type: str
     load_balancers:
         description:
-          - The list of ELBs defined for this service
+          - The list of ELBs defined for this service.
         required: false
+        type: list
+        elements: str
     desired_count:
         description:
-          - The count of how many instances of the service. This parameter is required when state=present
+          - The count of how many instances of the service.
+          - This parameter is required when I(state=present).
         required: false
+        type: int
     client_token:
         description:
           - Unique, case-sensitive identifier you provide to ensure the idempotency of the request. Up to 32 ASCII characters are allowed.
         required: false
+        type: str
     role:
         description:
           - The name or full Amazon Resource Name (ARN) of the IAM role that allows your Amazon ECS container agent to make calls to your load balancer
-            on your behalf. This parameter is only required if you are using a load balancer with your service, in a network mode other than `awsvpc`.
+            on your behalf.
+          - This parameter is only required if you are using a load balancer with your service in a network mode other than C(awsvpc).
         required: false
+        type: str
     delay:
         description:
-          - The time to wait before checking that the service is available
+          - The time to wait before checking that the service is available.
         required: false
         default: 10
+        type: int
     repeat:
         description:
-          - The number of times to check that the service is available
+          - The number of times to check that the service is available.
         required: false
         default: 10
+        type: int
     force_new_deployment:
         description:
-          - Force deployment of service even if there are no changes
+          - Force deployment of service even if there are no changes.
         required: false
         version_added: 2.8
         type: bool
     deployment_configuration:
         description:
-          - Optional parameters that control the deployment_configuration; format is '{"maximum_percent":<integer>, "minimum_healthy_percent":<integer>}
+          - Optional parameters that control the deployment_configuration.
+          - Format is '{"maximum_percent":<integer>, "minimum_healthy_percent":<integer>}
         required: false
         version_added: 2.3
+        type: dict
+        suboptions:
+          maximum_percent:
+            type: int
+            description: Upper limit on the number of tasks in a service that are allowed in the RUNNING or PENDING state during a deployment.
+          minimum_healthy_percent:
+            type: int
+            description: A lower limit on the number of tasks in a service that must remain in the RUNNING state during a deployment.
     placement_constraints:
         description:
-          - The placement constraints for the tasks in the service
+          - The placement constraints for the tasks in the service.
         required: false
         version_added: 2.4
+        type: list
+        elements: dict
+        suboptions:
     placement_strategy:
         description:
-          - The placement strategy objects to use for tasks in your service. You can specify a maximum of 5 strategy rules per service
+          - The placement strategy objects to use for tasks in your service. You can specify a maximum of 5 strategy rules per service.
         required: false
         version_added: 2.4
+        type: list
+        elements: dict
+        suboptions:
+          type:
+            description: The type of placement strategy.
+            type: str
+          field:
+            description: The field to apply the placement strategy against.
+            type: str
     network_configuration:
         description:
-          - network configuration of the service. Only applicable for task definitions created with C(awsvpc) I(network_mode).
-          - assign_public_ip requires botocore >= 1.8.4
+          - Network configuration of the service. Only applicable for task definitions created with I(network_mode=awsvpc).
+          - I(assign_public_ip) requires botocore >= 1.8.4
+        type: dict
         suboptions:
           subnets:
             description:
               - A list of subnet IDs to associate with the task
             version_added: 2.6
+            type: list
+            elements: str
           security_groups:
             description:
               - A list of security group names or group IDs to associate with the task
             version_added: 2.6
+            type: list
+            elements: str
           assign_public_ip:
             description:
-              - Whether the task's elastic network interface receives a public IP address. This option requires botocore >= 1.8.4.
+              - Whether the task's elastic network interface receives a public IP address.
+              - This option requires botocore >= 1.8.4.
             type: bool
             version_added: 2.7
     launch_type:
         description:
-          - The launch type on which to run your service
+          - The launch type on which to run your service.
         required: false
         version_added: 2.7
         choices: ["EC2", "FARGATE"]
+        type: str
     health_check_grace_period_seconds:
         description:
-          - Seconds to wait before health checking the freshly added/updated services. This option requires botocore >= 1.8.20.
+          - Seconds to wait before health checking the freshly added/updated services.
+          - This option requires botocore >= 1.8.20.
         required: false
         version_added: 2.8
+        type: int
     service_registries:
         description:
-          - describes service disovery registries this service will register with.
+          - Describes service discovery registries this service will register with.
+        type: list
+        elements: dict
         required: false
         version_added: 2.8
         suboptions:
             container_name:
                 description:
-                  - container name for service disovery registration
+                  - container name for service discovery registration
+                type: str
             container_port:
                 description:
-                  - container port for service disovery registration
+                  - container port for service discovery registration
+                type: int
             arn:
                 description:
                   - Service discovery registry ARN
+                type: str
     scheduling_strategy:
         description:
           - The scheduling strategy, defaults to "REPLICA" if not given to preserve previous behavior
         required: false
         version_added: 2.8
         choices: ["DAEMON", "REPLICA"]
+        type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -267,7 +309,8 @@ service:
         deployments:
             description: list of service deployments
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
         deploymentConfiguration:
             description: dictionary of deploymentConfiguration
             returned: always
@@ -284,11 +327,13 @@ service:
         events:
             description: list of service events
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
         placementConstraints:
             description: List of placement constraints objects
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
             contains:
                 type:
                     description: The type of constraint. Valid values are distinctInstance and memberOf.
@@ -302,7 +347,8 @@ service:
         placementStrategy:
             description: List of placement strategy objects
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
             contains:
                 type:
                     description: The type of placement strategy. Valid values are random, spread and binpack.
@@ -314,15 +360,122 @@ service:
                                  such as attribute:ecs.availability-zone. For the binpack placement strategy, valid values are CPU and MEMORY.
                     returned: always
                     type: str
+
 ansible_facts:
     description: Facts about deleted service.
     returned: when deleting a service
     type: complex
     contains:
         service:
-            description: Details of deleted service in the same structure described above for service creation.
+            description: Details of deleted service.
             returned: when service existed and was deleted
             type: complex
+            contains:
+                clusterArn:
+                    description: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
+                    returned: always
+                    type: str
+                desiredCount:
+                    description: The desired number of instantiations of the task definition to keep running on the service.
+                    returned: always
+                    type: int
+                loadBalancers:
+                    description: A list of load balancer objects
+                    returned: always
+                    type: complex
+                    contains:
+                        loadBalancerName:
+                            description: the name
+                            returned: always
+                            type: str
+                        containerName:
+                            description: The name of the container to associate with the load balancer.
+                            returned: always
+                            type: str
+                        containerPort:
+                            description: The port on the container to associate with the load balancer.
+                            returned: always
+                            type: int
+                pendingCount:
+                    description: The number of tasks in the cluster that are in the PENDING state.
+                    returned: always
+                    type: int
+                runningCount:
+                    description: The number of tasks in the cluster that are in the RUNNING state.
+                    returned: always
+                    type: int
+                serviceArn:
+                    description: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region
+                                 of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example,
+                                 arn:aws:ecs:region :012345678910 :service/my-service .
+                    returned: always
+                    type: str
+                serviceName:
+                    description: A user-generated string used to identify the service
+                    returned: always
+                    type: str
+                status:
+                    description: The valid values are ACTIVE, DRAINING, or INACTIVE.
+                    returned: always
+                    type: str
+                taskDefinition:
+                    description: The ARN of a task definition to use for tasks in the service.
+                    returned: always
+                    type: str
+                deployments:
+                    description: list of service deployments
+                    returned: always
+                    type: list
+                    elements: dict
+                deploymentConfiguration:
+                    description: dictionary of deploymentConfiguration
+                    returned: always
+                    type: complex
+                    contains:
+                        maximumPercent:
+                            description: maximumPercent param
+                            returned: always
+                            type: int
+                        minimumHealthyPercent:
+                            description: minimumHealthyPercent param
+                            returned: always
+                            type: int
+                events:
+                    description: list of service events
+                    returned: always
+                    type: list
+                    elements: dict
+                placementConstraints:
+                    description: List of placement constraints objects
+                    returned: always
+                    type: list
+                    elements: dict
+                    contains:
+                        type:
+                            description: The type of constraint. Valid values are distinctInstance and memberOf.
+                            returned: always
+                            type: str
+                        expression:
+                            description: A cluster query language expression to apply to the constraint. Note you cannot specify an expression if
+                                         the constraint type is distinctInstance.
+                            returned: always
+                            type: str
+                placementStrategy:
+                    description: List of placement strategy objects
+                    returned: always
+                    type: list
+                    elements: dict
+                    contains:
+                        type:
+                            description: The type of placement strategy. Valid values are random, spread and binpack.
+                            returned: always
+                            type: str
+                        field:
+                            description: The field to apply the placement strategy against. For the spread placement strategy, valid values are instanceId
+                                         (or host, which has the same effect), or any platform or custom attribute that is applied to a container instance,
+                                         such as attribute:ecs.availability-zone. For the binpack placement strategy, valid values are CPU and MEMORY.
+                            returned: always
+                            type: str
 '''
 import time
 
@@ -332,13 +485,12 @@ DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
 }
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, map_complex_type, get_ec2_security_group_ids_from_names
 
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 class EcsServiceManager:
@@ -499,8 +651,7 @@ class EcsServiceManager:
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(required=True, choices=['present', 'absent', 'deleting']),
         name=dict(required=True, type='str'),
         cluster=dict(required=False, type='str'),
@@ -524,7 +675,7 @@ def main():
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         service_registries=dict(required=False, type='list', default=[]),
         scheduling_strategy=dict(required=False, choices=['DAEMON', 'REPLICA'])
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,
@@ -598,7 +749,7 @@ def main():
                         loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
 
                 if update:
-                    # check various parameters and boto versions and give a helpful erro in boto is not new enough for feature
+                    # check various parameters and boto versions and give a helpful error in boto is not new enough for feature
 
                     if module.params['scheduling_strategy']:
                         if not module.botocore_at_least('1.10.37'):

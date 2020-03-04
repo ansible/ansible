@@ -1,10 +1,29 @@
+---
 version: '1.0'
 groupings:
+  acme_account:
+  - acme
+  acme_account_info:
+  - acme
+  acme_account_facts:
+  - acme
+  acme_certificate:
+  - acme
+  acme_certificate_revoke:
+  - acme
+  acme_inspect:
+  - acme
+  aws_acm:
+  - aws
+  aws_acm_facts:
+  - aws
   aws_acm_info:
   - aws
   aws_api_gateway:
   - aws
   aws_application_scaling_policy:
+  - aws
+  aws_az_facts:
   - aws
   aws_az_info:
   - aws
@@ -13,6 +32,8 @@ groupings:
   aws_batch_job_definition:
   - aws
   aws_batch_job_queue:
+  - aws
+  aws_caller_facts:
   - aws
   aws_caller_info:
   - aws
@@ -52,11 +73,17 @@ groupings:
   - aws
   aws_kms:
   - aws
+  aws_kms_facts:
+  - aws
   aws_kms_info:
+  - aws
+  aws_region_facts:
   - aws
   aws_region_info:
   - aws
   aws_s3:
+  - aws
+  aws_s3_bucket_facts:
   - aws
   aws_s3_bucket_info:
   - aws
@@ -70,11 +97,19 @@ groupings:
   - aws
   aws_ses_rule_set:
   - aws
+  aws_sgw_facts:
+  - aws
   aws_sgw_info:
   - aws
   aws_ssm_parameter_store:
   - aws
+  aws_step_functions_state_machine:
+  - aws
+  aws_step_functions_state_machine_execution:
+  - aws
   aws_waf_condition:
+  - aws
+  aws_waf_facts:
   - aws
   aws_waf_info:
   - aws
@@ -84,11 +119,17 @@ groupings:
   - aws
   cloudformation:
   - aws
+  cloudformation_exports_info:
+  - aws
+  cloudformation_facts:
+  - aws
   cloudformation_info:
   - aws
   cloudformation_stack_set:
   - aws
   cloudfront_distribution:
+  - aws
+  cloudfront_facts:
   - aws
   cloudfront_info:
   - aws
@@ -102,7 +143,11 @@ groupings:
   - aws
   cloudwatchlogs_log_group:
   - aws
+  cloudwatchlogs_log_group_facts:
+  - aws
   cloudwatchlogs_log_group_info:
+  - aws
+  cloudwatchlogs_log_group_metric_filter:
   - aws
   cpm_plugconfig:
   - cpm
@@ -120,6 +165,50 @@ groupings:
   - aws
   dms_replication_subnet_group:
   - aws
+  docker_compose:
+  - docker
+  docker_config:
+  - docker
+  docker_container_info:
+  - docker
+  docker_container:
+  - docker
+  docker_host_info:
+  - docker
+  docker_image_facts:
+  - docker
+  docker_image_info:
+  - docker
+  docker_image:
+  - docker
+  docker_login:
+  - docker
+  docker_network_info:
+  - docker
+  docker_network:
+  - docker
+  docker_node_info:
+  - docker
+  docker_node:
+  - docker
+  docker_prune:
+  - docker
+  docker_secret:
+  - docker
+  docker_service:
+  - docker
+  docker_swarm_info:
+  - docker
+  docker_swarm:
+  - docker
+  docker_swarm_service_info:
+  - docker
+  docker_swarm_service:
+  - docker
+  docker_volume_info:
+  - docker
+  docker_volume:
+  - docker
   dynamodb_table:
   - aws
   dynamodb_ttl:
@@ -130,9 +219,13 @@ groupings:
   - aws
   ec2_ami_copy:
   - aws
+  ec2_ami_facts:
+  - aws
   ec2_ami_info:
   - aws
   ec2_asg:
+  - aws
+  ec2_asg_facts:
   - aws
   ec2_asg_info:
   - aws
@@ -140,13 +233,19 @@ groupings:
   - aws
   ec2_customer_gateway:
   - aws
+  ec2_customer_gateway_facts:
+  - aws
   ec2_customer_gateway_info:
   - aws
   ec2_eip:
   - aws
+  ec2_eip_facts:
+  - aws
   ec2_eip_info:
   - aws
   ec2_elb:
+  - aws
+  ec2_elb_facts:
   - aws
   ec2_elb_info:
   - aws
@@ -154,13 +253,19 @@ groupings:
   - aws
   ec2_eni:
   - aws
+  ec2_eni_facts:
+  - aws
   ec2_eni_info:
   - aws
   ec2_group:
   - aws
+  ec2_group_facts:
+  - aws
   ec2_group_info:
   - aws
   ec2_instance:
+  - aws
+  ec2_instance_facts:
   - aws
   ec2_instance_info:
   - aws
@@ -170,6 +275,8 @@ groupings:
   - aws
   ec2_lc:
   - aws
+  ec2_lc_facts:
+  - aws
   ec2_lc_info:
   - aws
   ec2_lc_find:
@@ -177,6 +284,8 @@ groupings:
   ec2_metric_alarm:
   - aws
   ec2_placement_group:
+  - aws
+  ec2_placement_group_facts:
   - aws
   ec2_placement_group_info:
   - aws
@@ -186,9 +295,13 @@ groupings:
   - aws
   ec2_snapshot_copy:
   - aws
+  ec2_snapshot_facts:
+  - aws
   ec2_snapshot_info:
   - aws
   ec2_tag:
+  - aws
+  ec2_tag_info:
   - aws
   ec2_transit_gateway:
   - aws
@@ -196,9 +309,13 @@ groupings:
   - aws
   ec2_vol:
   - aws
+  ec2_vol_facts:
+  - aws
   ec2_vol_info:
   - aws
   ec2_vpc_dhcp_option:
+  - aws
+  ec2_vpc_dhcp_option_facts:
   - aws
   ec2_vpc_dhcp_option_info:
   - aws
@@ -206,41 +323,61 @@ groupings:
   - aws
   ec2_vpc_endpoint:
   - aws
+  ec2_vpc_endpoint_facts:
+  - aws
   ec2_vpc_endpoint_info:
   - aws
   ec2_vpc_igw:
+  - aws
+  ec2_vpc_igw_facts:
   - aws
   ec2_vpc_igw_info:
   - aws
   ec2_vpc_nacl:
   - aws
+  ec2_vpc_nacl_facts:
+  - aws
   ec2_vpc_nacl_info:
   - aws
   ec2_vpc_nat_gateway:
+  - aws
+  ec2_vpc_nat_gateway_facts:
   - aws
   ec2_vpc_nat_gateway_info:
   - aws
   ec2_vpc_net:
   - aws
+  ec2_vpc_net_facts:
+  - aws
   ec2_vpc_net_info:
   - aws
   ec2_vpc_peer:
+  - aws
+  ec2_vpc_peering_facts:
   - aws
   ec2_vpc_peering_info:
   - aws
   ec2_vpc_route_table:
   - aws
+  ec2_vpc_route_table_facts:
+  - aws
   ec2_vpc_route_table_info:
   - aws
   ec2_vpc_subnet:
+  - aws
+  ec2_vpc_subnet_facts:
   - aws
   ec2_vpc_subnet_info:
   - aws
   ec2_vpc_vgw:
   - aws
+  ec2_vpc_vgw_facts:
+  - aws
   ec2_vpc_vgw_info:
   - aws
   ec2_vpc_vpn:
+  - aws
+  ec2_vpc_vpn_facts:
   - aws
   ec2_vpc_vpn_info:
   - aws
@@ -254,19 +391,29 @@ groupings:
   - aws
   ecs_service:
   - aws
+  ecs_service_facts:
+  - aws
   ecs_service_info:
+  - aws
+  ecs_tag:
   - aws
   ecs_task:
   - aws
   ecs_taskdefinition:
   - aws
+  ecs_taskdefinition_facts:
+  - aws
   ecs_taskdefinition_info:
   - aws
   efs:
   - aws
+  efs_facts:
+  - aws
   efs_info:
   - aws
   elasticache:
+  - aws
+  elasticache_facts:
   - aws
   elasticache_info:
   - aws
@@ -278,9 +425,13 @@ groupings:
   - aws
   elb_application_lb:
   - aws
+  elb_application_lb_facts:
+  - aws
   elb_application_lb_info:
   - aws
   elb_classic_lb:
+  - aws
+  elb_classic_lb_facts:
   - aws
   elb_classic_lb_info:
   - aws
@@ -290,7 +441,11 @@ groupings:
   - aws
   elb_target:
   - aws
+  elb_target_facts:
+  - aws
   elb_target_group:
+  - aws
+  elb_target_group_facts:
   - aws
   elb_target_group_info:
   - aws
@@ -306,19 +461,31 @@ groupings:
   - aws
   iam_managed_policy:
   - aws
+  iam_mfa_device_facts:
+  - aws
   iam_mfa_device_info:
   - aws
   iam_password_policy:
   - aws
   iam_policy:
   - aws
+  iam_policy_info:
+  - aws
   iam_role:
   - aws
+  iam_role_facts:
+  - aws
   iam_role_info:
+  - aws
+  iam_server_certificate_facts:
+  - aws
+  iam_saml_federation:
   - aws
   iam_server_certificate_info:
   - aws
   iam_user:
+  - aws
+  iam_user_info:
   - aws
   kinesis_stream:
   - aws
@@ -328,19 +495,27 @@ groupings:
   - aws
   lambda_event:
   - aws
+  lambda_facts:
+  - aws
   lambda_info:
   - aws
   lambda_policy:
   - aws
   lightsail:
   - aws
+  lightsail_keypair:
+  - aws
   rds:
   - aws
   rds_instance:
   - aws
+  rds_instance_facts:
+  - aws
   rds_instance_info:
   - aws
   rds_param_group:
+  - aws
+  rds_snapshot_facts:
   - aws
   rds_snapshot_info:
   - aws
@@ -350,11 +525,15 @@ groupings:
   - aws
   redshift_cross_region_snapshots:
   - aws
+  redshift_facts:
+  - aws
   redshift_info:
   - aws
   redshift_subnet_group:
   - aws
   route53:
+  - aws
+  route53_facts:
   - aws
   route53_info:
   - aws
@@ -384,139 +563,305 @@ groupings:
   - aws
   sts_session_token:
   - aws
+  gcp_appengine_firewall_rule:
+  - gcp
+  gcp_appengine_firewall_rule_info:
+  - gcp
+  gcp_bigquery_dataset:
+  - gcp
+  gcp_bigquery_dataset_info:
+  - gcp
+  gcp_bigquery_table:
+  - gcp
+  gcp_bigquery_table_info:
+  - gcp
+  gcp_cloudbuild_trigger:
+  - gcp
+  gcp_cloudbuild_trigger_info:
+  - gcp
+  gcp_cloudfunctions_cloud_function:
+  - gcp
+  gcp_cloudfunctions_cloud_function_info:
+  - gcp
+  gcp_cloudscheduler_job:
+  - gcp
+  gcp_cloudscheduler_job_info:
+  - gcp
+  gcp_cloudtasks_queue:
+  - gcp
+  gcp_cloudtasks_queue_info:
+  - gcp
   gcp_compute_address:
   - gcp
-  gcp_compute_address_facts:
+  gcp_compute_address_info:
+  - gcp
+  gcp_compute_autoscaler:
+  - gcp
+  gcp_compute_autoscaler_info:
   - gcp
   gcp_compute_backend_bucket:
   - gcp
-  gcp_compute_backend_bucket_facts:
+  gcp_compute_backend_bucket_info:
   - gcp
   gcp_compute_backend_service:
   - gcp
-  gcp_compute_backend_service_facts:
+  gcp_compute_backend_service_info:
   - gcp
   gcp_compute_disk:
   - gcp
-  gcp_compute_disk_facts:
+  gcp_compute_disk_info:
   - gcp
   gcp_compute_firewall:
   - gcp
-  gcp_compute_firewall_facts:
+  gcp_compute_firewall_info:
   - gcp
   gcp_compute_forwarding_rule:
   - gcp
-  gcp_compute_forwarding_rule_facts:
+  gcp_compute_forwarding_rule_info:
   - gcp
   gcp_compute_global_address:
   - gcp
-  gcp_compute_global_address_facts:
+  gcp_compute_global_address_info:
   - gcp
   gcp_compute_global_forwarding_rule:
   - gcp
-  gcp_compute_global_forwarding_rule_facts:
+  gcp_compute_global_forwarding_rule_info:
   - gcp
   gcp_compute_health_check:
   - gcp
-  gcp_compute_health_check_facts:
+  gcp_compute_health_check_info:
   - gcp
   gcp_compute_http_health_check:
   - gcp
-  gcp_compute_http_health_check_facts:
+  gcp_compute_http_health_check_info:
   - gcp
   gcp_compute_https_health_check:
   - gcp
-  gcp_compute_https_health_check_facts:
+  gcp_compute_https_health_check_info:
   - gcp
   gcp_compute_image:
   - gcp
-  gcp_compute_image_facts:
+  gcp_compute_image_info:
   - gcp
   gcp_compute_instance:
   - gcp
-  gcp_compute_instance_facts:
+  gcp_compute_instance_info:
   - gcp
   gcp_compute_instance_group:
   - gcp
-  gcp_compute_instance_group_facts:
+  gcp_compute_instance_group_info:
   - gcp
   gcp_compute_instance_group_manager:
   - gcp
-  gcp_compute_instance_group_manager_facts:
+  gcp_compute_instance_group_manager_info:
   - gcp
   gcp_compute_instance_template:
   - gcp
-  gcp_compute_instance_template_facts:
+  gcp_compute_instance_template_info:
+  - gcp
+  gcp_compute_interconnect_attachment:
+  - gcp
+  gcp_compute_interconnect_attachment_info:
   - gcp
   gcp_compute_network:
   - gcp
-  gcp_compute_network_facts:
+  gcp_compute_network_info:
+  - gcp
+  gcp_compute_network_endpoint_group:
+  - gcp
+  gcp_compute_network_endpoint_group_info:
+  - gcp
+  gcp_compute_node_group:
+  - gcp
+  gcp_compute_node_group_info:
+  - gcp
+  gcp_compute_node_template:
+  - gcp
+  gcp_compute_node_template_info:
+  - gcp
+  gcp_compute_region_backend_service:
+  - gcp
+  gcp_compute_region_backend_service_info:
+  - gcp
+  gcp_compute_region_disk:
+  - gcp
+  gcp_compute_region_disk_info:
+  - gcp
+  gcp_compute_reservation:
+  - gcp
+  gcp_compute_reservation_info:
   - gcp
   gcp_compute_route:
   - gcp
-  gcp_compute_route_facts:
+  gcp_compute_route_info:
   - gcp
-  gcp_compute_router_facts:
+  gcp_compute_router:
+  - gcp
+  gcp_compute_router_info:
+  - gcp
+  gcp_compute_snapshot:
+  - gcp
+  gcp_compute_snapshot_info:
   - gcp
   gcp_compute_ssl_certificate:
   - gcp
-  gcp_compute_ssl_certificate_facts:
+  gcp_compute_ssl_certificate_info:
   - gcp
   gcp_compute_ssl_policy:
   - gcp
-  gcp_compute_ssl_policy_facts:
+  gcp_compute_ssl_policy_info:
   - gcp
   gcp_compute_subnetwork:
   - gcp
-  gcp_compute_subnetwork_facts:
+  gcp_compute_subnetwork_info:
   - gcp
   gcp_compute_target_http_proxy:
   - gcp
-  gcp_compute_target_http_proxy_facts:
+  gcp_compute_target_http_proxy_info:
   - gcp
   gcp_compute_target_https_proxy:
   - gcp
-  gcp_compute_target_https_proxy_facts:
+  gcp_compute_target_https_proxy_info:
+  - gcp
+  gcp_compute_target_instance:
+  - gcp
+  gcp_compute_target_instance_info:
   - gcp
   gcp_compute_target_pool:
   - gcp
-  gcp_compute_target_pool_facts:
+  gcp_compute_target_pool_info:
   - gcp
   gcp_compute_target_ssl_proxy:
   - gcp
-  gcp_compute_target_ssl_proxy_facts:
+  gcp_compute_target_ssl_proxy_info:
   - gcp
   gcp_compute_target_tcp_proxy:
   - gcp
-  gcp_compute_target_tcp_proxy_facts:
+  gcp_compute_target_tcp_proxy_info:
   - gcp
   gcp_compute_target_vpn_gateway:
   - gcp
-  gcp_compute_target_vpn_gateway_facts:
+  gcp_compute_target_vpn_gateway_info:
   - gcp
   gcp_compute_url_map:
   - gcp
-  gcp_compute_url_map_facts:
+  gcp_compute_url_map_info:
   - gcp
   gcp_compute_vpn_tunnel:
   - gcp
-  gcp_compute_vpn_tunnel_facts:
+  gcp_compute_vpn_tunnel_info:
   - gcp
   gcp_container_cluster:
   - gcp
+  gcp_container_cluster_info:
+  - gcp
   gcp_container_node_pool:
+  - gcp
+  gcp_container_node_pool_info:
   - gcp
   gcp_dns_managed_zone:
   - gcp
+  gcp_dns_managed_zone_info:
+  - gcp
   gcp_dns_resource_record_set:
+  - gcp
+  gcp_dns_resource_record_set_info:
+  - gcp
+  gcp_filestore_instance:
+  - gcp
+  gcp_filestore_instance_info:
+  - gcp
+  gcp_iam_role:
+  - gcp
+  gcp_iam_role_info:
+  - gcp
+  gcp_iam_service_account:
+  - gcp
+  gcp_iam_service_account_info:
+  - gcp
+  gcp_iam_service_account_key:
+  - gcp
+  gcp_kms_crypto_key:
+  - gcp
+  gcp_kms_crypto_key_info:
+  - gcp
+  gcp_kms_key_ring:
+  - gcp
+  gcp_kms_key_ring_info:
+  - gcp
+  gcp_logging_metric:
+  - gcp
+  gcp_logging_metric_info:
+  - gcp
+  gcp_mlengine_model:
+  - gcp
+  gcp_mlengine_model_info:
+  - gcp
+  gcp_mlengine_version:
+  - gcp
+  gcp_mlengine_version_info:
   - gcp
   gcp_pubsub_subscription:
   - gcp
+  gcp_pubsub_subscription_info:
+  - gcp
   gcp_pubsub_topic:
+  - gcp
+  gcp_pubsub_topic_info:
+  - gcp
+  gcp_redis_instance:
+  - gcp
+  gcp_redis_instance_info:
+  - gcp
+  gcp_resourcemanager_project:
+  - gcp
+  gcp_resourcemanager_project_info:
+  - gcp
+  gcp_runtimeconfig_config:
+  - gcp
+  gcp_runtimeconfig_config_info:
+  - gcp
+  gcp_runtimeconfig_variable:
+  - gcp
+  gcp_runtimeconfig_variable_info:
+  - gcp
+  gcp_serviceusage_service:
+  - gcp
+  gcp_serviceusage_service_info:
+  - gcp
+  gcp_sourcerepo_repository:
+  - gcp
+  gcp_sourcerepo_repository_info:
+  - gcp
+  gcp_spanner_database:
+  - gcp
+  gcp_spanner_database_info:
+  - gcp
+  gcp_spanner_instance:
+  - gcp
+  gcp_spanner_instance_info:
+  - gcp
+  gcp_sql_database:
+  - gcp
+  gcp_sql_database_info:
+  - gcp
+  gcp_sql_instance:
+  - gcp
+  gcp_sql_instance_info:
+  - gcp
+  gcp_sql_user:
+  - gcp
+  gcp_sql_user_info:
   - gcp
   gcp_storage_bucket:
   - gcp
   gcp_storage_bucket_access_control:
+  - gcp
+  gcp_storage_object:
+  - gcp
+  gcp_tpu_node:
+  - gcp
+  gcp_tpu_node_info:
   - gcp
   azure_rm_acs:
   - azure
@@ -562,7 +907,11 @@ groupings:
   - azure
   azure_rm_loadbalancer_facts:
   - azure
+  azure_rm_managed_disk:
+  - azure
   azure_rm_manageddisk:
+  - azure
+  azure_rm_managed_disk_facts:
   - azure
   azure_rm_manageddisk_facts:
   - azure
@@ -593,6 +942,8 @@ groupings:
   azure_rm_resource_facts:
   - azure
   azure_rm_resourcegroup:
+  - azure
+  azure_rm_resourcegroup_facts:
   - azure
   azure_rm_resourcegroup_info:
   - azure
@@ -666,6 +1017,8 @@ groupings:
   - os
   os_flavor_facts:
   - os
+  os_flavor_info:
+  - os
   os_floating_ip:
   - os
   os_group:
@@ -673,6 +1026,8 @@ groupings:
   os_image:
   - os
   os_image_facts:
+  - os
+  os_image_info:
   - os
   os_ironic:
   - os
@@ -685,6 +1040,8 @@ groupings:
   os_keystone_domain:
   - os
   os_keystone_domain_facts:
+  - os
+  os_keystone_domain_info:
   - os
   os_keystone_endpoint:
   - os
@@ -702,6 +1059,8 @@ groupings:
   - os
   os_networks_facts:
   - os
+  os_networks_info:
+  - os
   os_nova_flavor:
   - os
   os_nova_host_aggregate:
@@ -714,11 +1073,15 @@ groupings:
   - os
   os_port_facts:
   - os
+  os_port_info:
+  - os
   os_project:
   - os
   os_project_access:
   - os
   os_project_facts:
+  - os
+  os_project_info:
   - os
   os_quota:
   - os
@@ -736,6 +1099,8 @@ groupings:
   - os
   os_server_facts:
   - os
+  os_server_info:
+  - os
   os_server_group:
   - os
   os_server_metadata:
@@ -748,9 +1113,13 @@ groupings:
   - os
   os_subnets_facts:
   - os
+  os_subnets_info:
+  - os
   os_user:
   - os
   os_user_facts:
+  - os
+  os_user_info:
   - os
   os_user_group:
   - os
@@ -762,3 +1131,415 @@ groupings:
   - os
   os_zone:
   - os
+  ovirt_affinity_group:
+  - ovirt
+  ovirt_affinity_label_facts:
+  - ovirt
+  ovirt_affinity_label_info:
+  - ovirt
+  ovirt_affinity_label:
+  - ovirt
+  ovirt_api_facts:
+  - ovirt
+  ovirt_api_info:
+  - ovirt
+  ovirt_auth:
+  - ovirt
+  ovirt_cluster_facts:
+  - ovirt
+  ovirt_cluster_info:
+  - ovirt
+  ovirt_cluster:
+  - ovirt
+  ovirt_datacenter_facts:
+  - ovirt
+  ovirt_datacenter_info:
+  - ovirt
+  ovirt_datacenter:
+  - ovirt
+  ovirt_disk_facts:
+  - ovirt
+  ovirt_disk_info:
+  - ovirt
+  ovirt_disk:
+  - ovirt
+  ovirt_event_facts:
+  - ovirt
+  ovirt_event_info:
+  - ovirt
+  ovirt_event:
+  - ovirt
+  ovirt_external_provider_facts:
+  - ovirt
+  ovirt_external_provider_info:
+  - ovirt
+  ovirt_external_provider:
+  - ovirt
+  ovirt_group_facts:
+  - ovirt
+  ovirt_group_info:
+  - ovirt
+  ovirt_group:
+  - ovirt
+  ovirt_host_facts:
+  - ovirt
+  ovirt_host_info:
+  - ovirt
+  ovirt_host_network:
+  - ovirt
+  ovirt_host_pm:
+  - ovirt
+  ovirt_host:
+  - ovirt
+  ovirt_host_storage_facts:
+  - ovirt
+  ovirt_host_storage_info:
+  - ovirt
+  ovirt_instance_type:
+  - ovirt
+  ovirt_job:
+  - ovirt
+  ovirt_mac_pool:
+  - ovirt
+  ovirt_network_facts:
+  - ovirt
+  ovirt_network_info:
+  - ovirt
+  ovirt_network:
+  - ovirt
+  ovirt_nic_facts:
+  - ovirt
+  ovirt_nic_info:
+  - ovirt
+  ovirt_nic:
+  - ovirt
+  ovirt_permission_facts:
+  - ovirt
+  ovirt_permission_info:
+  - ovirt
+  ovirt_permission:
+  - ovirt
+  ovirt_quota_facts:
+  - ovirt
+  ovirt_quota_info:
+  - ovirt
+  ovirt_quota:
+  - ovirt
+  ovirt_role:
+  - ovirt
+  ovirt_scheduling_policy_facts:
+  - ovirt
+  ovirt_scheduling_policy_info:
+  - ovirt
+  ovirt_snapshot_facts:
+  - ovirt
+  ovirt_snapshot_info:
+  - ovirt
+  ovirt_snapshot:
+  - ovirt
+  ovirt_storage_connection:
+  - ovirt
+  ovirt_storage_domain_facts:
+  - ovirt
+  ovirt_storage_domain_info:
+  - ovirt
+  ovirt_storage_domain:
+  - ovirt
+  ovirt_storage_template_facts:
+  - ovirt
+  ovirt_storage_template_info:
+  - ovirt
+  ovirt_storage_vm_facts:
+  - ovirt
+  ovirt_storage_vm_info:
+  - ovirt
+  ovirt_tag_facts:
+  - ovirt
+  ovirt_tag_info:
+  - ovirt
+  ovirt_tag:
+  - ovirt
+  ovirt_template_facts:
+  - ovirt
+  ovirt_template_info:
+  - ovirt
+  ovirt_template:
+  - ovirt
+  ovirt_user_facts:
+  - ovirt
+  ovirt_user_info:
+  - ovirt
+  ovirt_user:
+  - ovirt
+  ovirt_vm_facts:
+  - ovirt
+  ovirt_vm_info:
+  - ovirt
+  ovirt_vmpool_facts:
+  - ovirt
+  ovirt_vmpool_info:
+  - ovirt
+  ovirt_vmpool:
+  - ovirt
+  ovirt_vm:
+  - ovirt
+  ovirt_vnic_profile_info:
+  - ovirt
+  ovirt_vnic_profile:
+  - ovirt
+  test_module_defaults:
+  - test
+  vcenter_extension:
+  - vmware
+  vcenter_extension_info:
+  - vmware
+  vcenter_folder:
+  - vmware
+  vcenter_license:
+  - vmware
+  vmware_about_info:
+  - vmware
+  vmware_category:
+  - vmware
+  vmware_category_info:
+  - vmware
+  vmware_cfg_backup:
+  - vmware
+  vmware_cluster:
+  - vmware
+  vmware_cluster_drs:
+  - vmware
+  vmware_cluster_ha:
+  - vmware
+  vmware_cluster_info:
+  - vmware
+  vmware_cluster_vsan:
+  - vmware
+  vmware_content_deploy_template:
+  - vmware
+  vmware_content_library_info:
+  - vmware
+  vmware_content_library_manager:
+  - vmware
+  vmware_datacenter:
+  - vmware
+  vmware_datastore_cluster:
+  - vmware
+  vmware_datastore_info:
+  - vmware
+  vmware_datastore_maintenancemode:
+  - vmware
+  vmware_deploy_ovf:
+  - vmware
+  vmware_dns_config:
+  - vmware
+  vmware_drs_group:
+  - vmware
+  vmware_drs_group_info:
+  - vmware
+  vmware_drs_rule_info:
+  - vmware
+  vmware_dvs_host:
+  - vmware
+  vmware_dvs_portgroup:
+  - vmware
+  vmware_dvs_portgroup_find:
+  - vmware
+  vmware_dvs_portgroup_info:
+  - vmware
+  vmware_dvswitch:
+  - vmware
+  vmware_dvswitch_lacp:
+  - vmware
+  vmware_dvswitch_nioc:
+  - vmware
+  vmware_dvswitch_pvlans:
+  - vmware
+  vmware_dvswitch_uplink_pg:
+  - vmware
+  vmware_evc_mode:
+  - vmware
+  vmware_export_ovf:
+  - vmware
+  vmware_folder_info:
+  - vmware
+  vmware_guest:
+  - vmware
+  vmware_guest_boot_info:
+  - vmware
+  vmware_guest_boot_manager:
+  - vmware
+  vmware_guest_controller:
+  - vmware
+  vmware_guest_custom_attribute_defs:
+  - vmware
+  vmware_guest_custom_attributes:
+  - vmware
+  vmware_guest_customization_info:
+  - vmware
+  vmware_guest_disk:
+  - vmware
+  vmware_guest_disk_info:
+  - vmware
+  vmware_guest_file_operation:
+  - vmware
+  vmware_guest_find:
+  - vmware
+  vmware_guest_info:
+  - vmware
+  vmware_guest_move:
+  - vmware
+  vmware_guest_network:
+  - vmware
+  vmware_guest_powerstate:
+  - vmware
+  vmware_guest_register_operation:
+  - vmware
+  vmware_guest_screenshot:
+  - vmware
+  vmware_guest_sendkey:
+  - vmware
+  vmware_guest_serial_port:
+  - vmware
+  vmware_guest_snapshot:
+  - vmware
+  vmware_guest_snapshot_info:
+  - vmware
+  vmware_guest_tools_info:
+  - vmware
+  vmware_guest_tools_upgrade:
+  - vmware
+  vmware_guest_tools_wait:
+  - vmware
+  vmware_guest_video:
+  - vmware
+  vmware_guest_vnc:
+  - vmware
+  vmware_host:
+  - vmware
+  vmware_host_acceptance:
+  - vmware
+  vmware_host_active_directory:
+  - vmware
+  vmware_host_auto_start:
+  - vmware
+  vmware_host_capability_info:
+  - vmware
+  vmware_host_config_info:
+  - vmware
+  vmware_host_config_manager:
+  - vmware
+  vmware_host_datastore:
+  - vmware
+  vmware_host_dns:
+  - vmware
+  vmware_host_dns_info:
+  - vmware
+  vmware_host_facts:
+  - vmware
+  vmware_host_feature_info:
+  - vmware
+  vmware_host_firewall_info:
+  - vmware
+  vmware_host_firewall_manager:
+  - vmware
+  vmware_host_hyperthreading:
+  - vmware
+  vmware_host_ipv6:
+  - vmware
+  vmware_host_kernel_manager:
+  - vmware
+  vmware_host_lockdown:
+  - vmware
+  vmware_host_ntp:
+  - vmware
+  vmware_host_ntp_info:
+  - vmware
+  vmware_host_package_info:
+  - vmware
+  vmware_host_powermgmt_policy:
+  - vmware
+  vmware_host_powerstate:
+  - vmware
+  vmware_host_scanhba:
+  - vmware
+  vmware_host_service_info:
+  - vmware
+  vmware_host_service_manager:
+  - vmware
+  vmware_host_snmp:
+  - vmware
+  vmware_host_ssl_info:
+  - vmware
+  vmware_host_vmhba_info:
+  - vmware
+  vmware_host_vmnic_info:
+  - vmware
+  vmware_local_role_info:
+  - vmware
+  vmware_local_role_manager:
+  - vmware
+  vmware_local_user_info:
+  - vmware
+  vmware_local_user_manager:
+  - vmware
+  vmware_maintenancemode:
+  - vmware
+  vmware_migrate_vmk:
+  - vmware
+  vmware_object_role_permission:
+  - vmware
+  vmware_portgroup:
+  - vmware
+  vmware_portgroup_info:
+  - vmware
+  vmware_resource_pool:
+  - vmware
+  vmware_resource_pool_info:
+  - vmware
+  vmware_tag:
+  - vmware
+  vmware_tag_info:
+  - vmware
+  vmware_tag_manager:
+  - vmware
+  vmware_target_canonical_info:
+  - vmware
+  vmware_vcenter_settings:
+  - vmware
+  vmware_vcenter_statistics:
+  - vmware
+  vmware_vm_host_drs_rule:
+  - vmware
+  vmware_vm_info:
+  - vmware
+  vmware_vm_shell:
+  - vmware
+  vmware_vm_storage_policy_info:
+  - vmware
+  vmware_vm_vm_drs_rule:
+  - vmware
+  vmware_vm_vss_dvs_migrate:
+  - vmware
+  vmware_vmkernel:
+  - vmware
+  vmware_vmkernel_info:
+  - vmware
+  vmware_vmkernel_ip_config:
+  - vmware
+  vmware_vmotion:
+  - vmware
+  vmware_vsan_cluster:
+  - vmware
+  vmware_vsan_health_info:
+  - vmware
+  vmware_vspan_session:
+  - vmware
+  vmware_vswitch:
+  - vmware
+  vmware_vswitch_info:
+  - vmware
+  vsphere_copy:
+  - vmware
+  vsphere_file:
+  - vmware

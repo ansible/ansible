@@ -24,7 +24,7 @@ description:
        this is run.
      - Beware that there are very hard limits on the rate that
        you can call API Gateway's REST API.  You may need to patch
-       your boto.  See https://github.com/boto/boto3/issues/876
+       your boto.  See U(https://github.com/boto/boto3/issues/876)
        and discuss with your AWS rep.
      - swagger_file and swagger_text are passed directly on to AWS
        transparently whilst swagger_dict is an ansible dict which is
@@ -35,32 +35,82 @@ options:
   api_id:
     description:
       - The ID of the API you want to manage.
+    type: str
   state:
-    description:
-      - NOT IMPLEMENTED Create or delete API - currently we always create.
+    description: Create or delete API Gateway.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   swagger_file:
     description:
       - JSON or YAML file containing swagger definitions for API.
         Exactly one of swagger_file, swagger_text or swagger_dict must
         be present.
+    type: path
+    aliases: ['src', 'api_file']
   swagger_text:
     description:
       - Swagger definitions for API in JSON or YAML as a string direct
         from playbook.
+    type: str
   swagger_dict:
     description:
       - Swagger definitions API ansible dictionary which will be
         converted to JSON and uploaded.
+    type: json
   stage:
     description:
       - The name of the stage the API should be deployed to.
+    type: str
   deploy_desc:
     description:
       - Description of the deployment - recorded and visible in the
         AWS console.
     default: Automatic deployment by Ansible.
+    type: str
+  cache_enabled:
+    description:
+      - Enable API GW caching of backend responses. Defaults to false.
+    type: bool
+    default: false
+    version_added: '2.10'
+  cache_size:
+    description:
+      - Size in GB of the API GW cache, becomes effective when cache_enabled is true.
+    choices: ['0.5', '1.6', '6.1', '13.5', '28.4', '58.2', '118', '237']
+    type: str
+    default: '0.5'
+    version_added: '2.10'
+  stage_variables:
+    description:
+      - ENV variables for the stage. Define a dict of key values pairs for variables.
+    type: dict
+    version_added: '2.10'
+  stage_canary_settings:
+    description:
+      - Canary settings for the deployment of the stage.
+      - 'Dict with following settings:'
+      - 'percentTraffic: The percent (0-100) of traffic diverted to a canary deployment.'
+      - 'deploymentId: The ID of the canary deployment.'
+      - 'stageVariableOverrides: Stage variables overridden for a canary release deployment.'
+      - 'useStageCache: A Boolean flag to indicate whether the canary deployment uses the stage cache or not.'
+      - See docs U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/apigateway.html#APIGateway.Client.create_stage)
+    type: dict
+    version_added: '2.10'
+  tracing_enabled:
+    description:
+      - Specifies whether active tracing with X-ray is enabled for the API GW stage.
+    type: bool
+    version_added: '2.10'
+  endpoint_type:
+    description:
+      - Type of endpoint configuration, use C(EDGE) for an edge optimized API endpoint,
+      - C(REGIONAL) for just a regional deploy or PRIVATE for a private API.
+      - This will flag will only be used when creating a new API Gateway setup, not for updates.
+    choices: ['EDGE', 'REGIONAL', 'PRIVATE']
+    type: str
+    default: EDGE
+    version_added: '2.10'
 author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:
@@ -75,35 +125,57 @@ notes:
 '''
 
 EXAMPLES = '''
-# Update API resources for development
-- name: update API
+- name: Setup AWS API Gateway setup on AWS and deploy API definition
   aws_api_gateway:
-    api_id: 'abc123321cba'
-    state: present
-    swagger_file: my_api.yml
-
-# update definitions and deploy API to production
-- name: deploy API
-  aws_api_gateway:
-    api_id: 'abc123321cba'
-    state: present
     swagger_file: my_api.yml
     stage: production
+    cache_enabled: true
+    cache_size: '1.6'
+    tracing_enabled: true
+    endpoint_type: EDGE
+    state: present
+
+- name: Update API definition to deploy new version
+  aws_api_gateway:
+    api_id: 'abc123321cba'
+    swagger_file: my_api.yml
     deploy_desc: Make auth fix available.
+    cache_enabled: true
+    cache_size: '1.6'
+    endpoint_type: EDGE
+    state: present
+
+- name: Update API definitions and settings and deploy as canary
+  aws_api_gateway:
+    api_id: 'abc123321cba'
+    swagger_file: my_api.yml
+    cache_enabled: true
+    cache_size: '6.1'
+    canary_settings: { percentTraffic: 50.0, deploymentId: '123', useStageCache: True }
+    state: present
 '''
 
 RETURN = '''
-output:
-  description: the data returned by put_restapi in boto3
-  returned: success
-  type: dict
-  sample:
-    'data':
-      {
-          "id": "abc123321cba",
-          "name": "MY REST API",
-          "createdDate": 1484233401
-      }
+api_id:
+    description: API id of the API endpoint created
+    returned: success
+    type: str
+    sample: '0ln4zq7p86'
+configure_response:
+    description: AWS response from the API configure call
+    returned: success
+    type: dict
+    sample: { api_key_source: "HEADER", created_at: "2020-01-01T11:37:59+00:00", id: "0ln4zq7p86" }
+deploy_response:
+    description: AWS response from the API deploy call
+    returned: success
+    type: dict
+    sample: { created_date: "2020-01-01T11:36:59+00:00", id: "rptv4b", description: "Automatic deployment by Ansible." }
+resource_actions:
+    description: Actions performed against AWS API
+    returned: always
+    type: list
+    sample: ["apigateway:CreateRestApi", "apigateway:CreateDeployment", "apigateway:PutRestApi"]
 '''
 
 import json
@@ -128,6 +200,12 @@ def main():
         swagger_text=dict(type='str', default=None),
         stage=dict(type='str', default=None),
         deploy_desc=dict(type='str', default="Automatic deployment by Ansible."),
+        cache_enabled=dict(type='bool', default=False),
+        cache_size=dict(type='str', default='0.5', choices=['0.5', '1.6', '6.1', '13.5', '28.4', '58.2', '118', '237']),
+        stage_variables=dict(type='dict', default={}),
+        stage_canary_settings=dict(type='dict', default={}),
+        tracing_enabled=dict(type='bool', default=False),
+        endpoint_type=dict(type='str', default='EDGE', choices=['EDGE', 'REGIONAL', 'PRIVATE'])
     )
 
     mutually_exclusive = [['swagger_file', 'swagger_dict', 'swagger_text']]  # noqa: F841
@@ -143,8 +221,7 @@ def main():
     swagger_file = module.params.get('swagger_file')
     swagger_dict = module.params.get('swagger_dict')
     swagger_text = module.params.get('swagger_text')
-    stage = module.params.get('stage')
-    deploy_desc = module.params.get('deploy_desc')
+    endpoint_type = module.params.get('endpoint_type')
 
     client = module.client('apigateway')
 
@@ -155,12 +232,10 @@ def main():
 
     if state == "present":
         if api_id is None:
-            api_id = create_empty_api(module, client)
+            api_id = create_empty_api(module, client, endpoint_type)
         api_data = get_api_definitions(module, swagger_file=swagger_file,
                                        swagger_dict=swagger_dict, swagger_text=swagger_text)
-        conf_res, dep_res = ensure_api_in_correct_state(module, client, api_id=api_id,
-                                                        api_data=api_data, stage=stage,
-                                                        deploy_desc=deploy_desc)
+        conf_res, dep_res = ensure_api_in_correct_state(module, client, api_id, api_data)
     if state == "absent":
         del_res = delete_rest_api(module, client, api_id)
 
@@ -191,19 +266,19 @@ def get_api_definitions(module, swagger_file=None, swagger_dict=None, swagger_te
         apidata = swagger_text
 
     if apidata is None:
-        module.fail_json(msg='module error - failed to get API data')
+        module.fail_json(msg='module error - no swagger info provided')
     return apidata
 
 
-def create_empty_api(module, client):
+def create_empty_api(module, client, endpoint_type):
     """
-    creates a new empty API ready to be configured.  The description is
+    creates a new empty API ready to be configured. The description is
     temporarily set to show the API as incomplete but should be
     updated when the API is configured.
     """
     desc = "Incomplete API creation by ansible aws_api_gateway module"
     try:
-        awsret = create_api(client, name="ansible-temp-api", description=desc)
+        awsret = create_api(client, name="ansible-temp-api", description=desc, endpoint_type=endpoint_type)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
         module.fail_json_aws(e, msg="creating API")
     return awsret["id"]
@@ -211,19 +286,16 @@ def create_empty_api(module, client):
 
 def delete_rest_api(module, client, api_id):
     """
-    creates a new empty API ready to be configured.  The description is
-    temporarily set to show the API as incomplete but should be
-    updated when the API is configured.
+    Deletes entire REST API setup
     """
     try:
-        delete_response = delete_api(client, api_id=api_id)
+        delete_response = delete_api(client, api_id)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
         module.fail_json_aws(e, msg="deleting API {0}".format(api_id))
     return delete_response
 
 
-def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stage=None,
-                                deploy_desc=None):
+def ensure_api_in_correct_state(module, client, api_id, api_data):
     """Make sure that we have the API configured and deployed as instructed.
 
     This function first configures the API correctly uploading the
@@ -235,16 +307,16 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stag
 
     configure_response = None
     try:
-        configure_response = configure_api(client, api_data=api_data, api_id=api_id)
+        configure_response = configure_api(client, api_id, api_data=api_data)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
         module.fail_json_aws(e, msg="configuring API {0}".format(api_id))
 
     deploy_response = None
 
+    stage = module.params.get('stage')
     if stage:
         try:
-            deploy_response = create_deployment(client, api_id=api_id, stage=stage,
-                                                description=deploy_desc)
+            deploy_response = create_deployment(client, api_id, **module.params)
         except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
             msg = "deploying api {0} to stage {1}".format(api_id, stage)
             module.fail_json_aws(e, msg)
@@ -256,24 +328,47 @@ retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
 
 
 @AWSRetry.backoff(**retry_params)
-def create_api(client, name=None, description=None):
-    return client.create_rest_api(name="ansible-temp-api", description=description)
+def create_api(client, name=None, description=None, endpoint_type=None):
+    return client.create_rest_api(name="ansible-temp-api", description=description, endpointConfiguration={'types': [endpoint_type]})
 
 
 @AWSRetry.backoff(**retry_params)
-def delete_api(client, api_id=None):
+def delete_api(client, api_id):
     return client.delete_rest_api(restApiId=api_id)
 
 
 @AWSRetry.backoff(**retry_params)
-def configure_api(client, api_data=None, api_id=None, mode="overwrite"):
-    return client.put_rest_api(body=api_data, restApiId=api_id, mode=mode)
+def configure_api(client, api_id, api_data=None, mode="overwrite"):
+    return client.put_rest_api(restApiId=api_id, mode=mode, body=api_data)
 
 
 @AWSRetry.backoff(**retry_params)
-def create_deployment(client, api_id=None, stage=None, description=None):
-    # we can also get None as an argument so we don't do this as a default
-    return client.create_deployment(restApiId=api_id, stageName=stage, description=description)
+def create_deployment(client, rest_api_id, **params):
+    canary_settings = params.get('stage_canary_settings')
+
+    if canary_settings and len(canary_settings) > 0:
+        result = client.create_deployment(
+            restApiId=rest_api_id,
+            stageName=params.get('stage'),
+            description=params.get('deploy_desc'),
+            cacheClusterEnabled=params.get('cache_enabled'),
+            cacheClusterSize=params.get('cache_size'),
+            variables=params.get('stage_variables'),
+            canarySettings=canary_settings,
+            tracingEnabled=params.get('tracing_enabled')
+        )
+    else:
+        result = client.create_deployment(
+            restApiId=rest_api_id,
+            stageName=params.get('stage'),
+            description=params.get('deploy_desc'),
+            cacheClusterEnabled=params.get('cache_enabled'),
+            cacheClusterSize=params.get('cache_size'),
+            variables=params.get('stage_variables'),
+            tracingEnabled=params.get('tracing_enabled')
+        )
+
+    return result
 
 
 if __name__ == '__main__':

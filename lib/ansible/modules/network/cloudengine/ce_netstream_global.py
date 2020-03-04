@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -27,6 +30,9 @@ short_description: Manages global parameters of NetStream on HUAWEI CloudEngine 
 description:
     - Manages global parameters of NetStream on HUAWEI CloudEngine switches.
 author: YangYang (@QijunPan)
+notes:
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     type:
         description:
@@ -212,6 +218,7 @@ changed:
     sample: true
 '''
 
+import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import load_config
 from ansible.module_utils.network.cloudengine.ce import get_connection, rm_config_prefix
@@ -252,6 +259,7 @@ def get_config(module, flags):
 
     """Retrieves the current config from the device or cache
     """
+    time_stamp_regex = re.compile(r'\s*\d{4}-\d{1,2}-\d{1,2}\s+\d{2}\:\d{2}\:\d{2}\.\d+\s*')
     flags = [] if flags is None else flags
     if isinstance(flags, str):
         flags = [flags]
@@ -271,13 +279,14 @@ def get_config(module, flags):
         if "include-default" in flag:
             cfg = rm_config_prefix(cfg)
             break
+    lines = cfg.split('\n')
+    lines = [l for l in lines if time_stamp_regex.match(l) is None]
     if cfg.startswith('display'):
-        lines = cfg.split('\n')
         if len(lines) > 1:
-            return '\n'.join(lines[1:])
+            lines.pop(0)
         else:
             return ''
-    return cfg
+    return '\n'.join(lines)
 
 
 class NetStreamGlobal(object):
@@ -360,12 +369,13 @@ class NetStreamGlobal(object):
         sampler_tmp = dict()
         sampler_tmp1 = dict()
         flags = list()
-        exp = " | ignore-case  include ^netstream sampler random-packets"
+        exp = " | ignore-case include ^netstream sampler random-packets"
         flags.append(exp)
         config = get_config(self.module, flags)
         if not config:
             sampler_tmp["sampler_interval"] = "null"
             sampler_tmp["sampler_direction"] = "null"
+            sampler_tmp["interface"] = "null"
         else:
             config_list = config.split(' ')
             config_num = len(config_list)
@@ -389,12 +399,13 @@ class NetStreamGlobal(object):
                     sampler_tmp1 = dict()
                     config_mem_list = config_mem.split(' ')
                     config_num = len(config_mem_list)
-                    sampler_tmp1["sampler_direction"] = config_mem_list[
-                        config_num - 1]
-                    sampler_tmp1["sampler_interval"] = config_mem_list[
-                        config_num - 2]
-                    sampler_tmp1["interface"] = self.interface
-                    self.existing["sampler"].append(sampler_tmp1)
+                    if config_num > 1:
+                        sampler_tmp1["sampler_direction"] = config_mem_list[
+                            config_num - 1]
+                        sampler_tmp1["sampler_interval"] = config_mem_list[
+                            config_num - 2]
+                        sampler_tmp1["interface"] = self.interface
+                        self.existing["sampler"].append(sampler_tmp1)
 
     def get_exist_statistic_record(self):
         """get exist netstream statistic record parameter"""
@@ -426,7 +437,7 @@ class NetStreamGlobal(object):
                 config_mem = config_mem.lstrip()
                 statistic_tmp["statistics_record"] = list()
                 config_mem_list = config_mem.split(' ')
-                if str(config_mem_list[3]) == "ip":
+                if len(config_mem_list) > 3 and str(config_mem_list[3]) == "ip":
                     statistic_tmp["statistics_record"].append(
                         str(config_mem_list[2]))
             statistic_tmp["type"] = "ip"
@@ -435,7 +446,7 @@ class NetStreamGlobal(object):
                 statistic_tmp1["statistics_record"] = list()
                 config_mem = config_mem.lstrip()
                 config_mem_list = config_mem.split(' ')
-                if str(config_mem_list[3]) == "vxlan":
+                if len(config_mem_list) > 3 and str(config_mem_list[3]) == "vxlan":
                     statistic_tmp1["statistics_record"].append(
                         str(config_mem_list[2]))
             statistic_tmp1["type"] = "vxlan"
@@ -461,8 +472,9 @@ class NetStreamGlobal(object):
             for config_mem in config_list:
                 config_mem = config_mem.lstrip()
                 config_mem_list = config_mem.split(' ')
-                statistic_tmp1["statistics_direction"].append(
-                    str(config_mem_list[1]))
+                if len(config_mem_list) > 1:
+                    statistic_tmp1["statistics_direction"].append(
+                        str(config_mem_list[1]))
         statistic_tmp1["interface"] = self.interface
         self.existing["statistic"].append(statistic_tmp1)
 
@@ -487,10 +499,10 @@ class NetStreamGlobal(object):
             config_list = config.split('\n')
             for config_mem in config_list:
                 config_mem_list = config_mem.split(' ')
-                if str(config_mem_list[2]) == "ip":
+                if len(config_mem_list) > 2 and str(config_mem_list[2]) == "ip":
                     index_switch_tmp["index-switch"] = "32"
                     index_switch_tmp["type"] = "ip"
-                if str(config_mem_list[2]) == "vxlan":
+                if len(config_mem_list) > 2 and str(config_mem_list[2]) == "vxlan":
                     index_switch_tmp1["index-switch"] = "32"
                     index_switch_tmp1["type"] = "vxlan"
             self.existing["index-switch"].append(index_switch_tmp)
@@ -508,9 +520,9 @@ class NetStreamGlobal(object):
             config_list = config.split('\n')
             for config_mem in config_list:
                 config_mem_list = config_mem.split(' ')
-                if config_mem_list[3] == "ip":
+                if len(config_mem_list) > 3 and config_mem_list[3] == "ip":
                     self.existing["ip_record"].append(config_mem_list[2])
-                if config_mem_list[3] == "vxlan":
+                if len(config_mem_list) > 3 and config_mem_list[3] == "vxlan":
                     self.existing["vxlan_record"].append(config_mem_list[2])
 
     def get_end_sampler_interval(self):
@@ -519,7 +531,7 @@ class NetStreamGlobal(object):
         sampler_tmp = dict()
         sampler_tmp1 = dict()
         flags = list()
-        exp = " | ignore-case  include ^netstream sampler random-packets"
+        exp = " | ignore-case include ^netstream sampler random-packets"
         flags.append(exp)
         config = get_config(self.module, flags)
         if not config:
@@ -528,13 +540,14 @@ class NetStreamGlobal(object):
         else:
             config_list = config.split(' ')
             config_num = len(config_list)
-            sampler_tmp["sampler_direction"] = config_list[config_num - 1]
-            sampler_tmp["sampler_interval"] = config_list[config_num - 2]
+            if config_num > 1:
+                sampler_tmp["sampler_direction"] = config_list[config_num - 1]
+                sampler_tmp["sampler_interval"] = config_list[config_num - 2]
         sampler_tmp["interface"] = "all"
         self.end_state["sampler"].append(sampler_tmp)
         if self.interface != "all":
             flags = list()
-            exp = r" | ignore-case  section include ^#\s+interface %s" \
+            exp = r" | ignore-case section include ^#\s+interface %s" \
                   r" | include netstream sampler random-packets" % self.interface
             flags.append(exp)
             config = get_config(self.module, flags)
@@ -548,12 +561,13 @@ class NetStreamGlobal(object):
                     sampler_tmp1 = dict()
                     config_mem_list = config_mem.split(' ')
                     config_num = len(config_mem_list)
-                    sampler_tmp1["sampler_direction"] = config_mem_list[
-                        config_num - 1]
-                    sampler_tmp1["sampler_interval"] = config_mem_list[
-                        config_num - 2]
-                    sampler_tmp1["interface"] = self.interface
-                    self.end_state["sampler"].append(sampler_tmp1)
+                    if config_num > 1:
+                        sampler_tmp1["sampler_direction"] = config_mem_list[
+                            config_num - 1]
+                        sampler_tmp1["sampler_interval"] = config_mem_list[
+                            config_num - 2]
+                        sampler_tmp1["interface"] = self.interface
+                        self.end_state["sampler"].append(sampler_tmp1)
 
     def get_end_statistic_record(self):
         """get end netstream statistic record parameter"""
@@ -585,7 +599,7 @@ class NetStreamGlobal(object):
                 config_mem = config_mem.lstrip()
                 statistic_tmp["statistics_record"] = list()
                 config_mem_list = config_mem.split(' ')
-                if str(config_mem_list[3]) == "ip":
+                if len(config_mem_list) > 3 and str(config_mem_list[3]) == "ip":
                     statistic_tmp["statistics_record"].append(
                         str(config_mem_list[2]))
             statistic_tmp["type"] = "ip"
@@ -594,7 +608,7 @@ class NetStreamGlobal(object):
                 statistic_tmp1["statistics_record"] = list()
                 config_mem = config_mem.lstrip()
                 config_mem_list = config_mem.split(' ')
-                if str(config_mem_list[3]) == "vxlan":
+                if len(config_mem_list) > 3 and str(config_mem_list[3]) == "vxlan":
                     statistic_tmp1["statistics_record"].append(
                         str(config_mem_list[2]))
             statistic_tmp1["type"] = "vxlan"
@@ -620,8 +634,9 @@ class NetStreamGlobal(object):
             for config_mem in config_list:
                 config_mem = config_mem.lstrip()
                 config_mem_list = config_mem.split(' ')
-                statistic_tmp1["statistics_direction"].append(
-                    str(config_mem_list[1]))
+                if len(config_mem_list) > 1:
+                    statistic_tmp1["statistics_direction"].append(
+                        str(config_mem_list[1]))
         statistic_tmp1["interface"] = self.interface
         self.end_state["statistic"].append(statistic_tmp1)
 
@@ -646,10 +661,10 @@ class NetStreamGlobal(object):
             config_list = config.split('\n')
             for config_mem in config_list:
                 config_mem_list = config_mem.split(' ')
-                if str(config_mem_list[2]) == "ip":
+                if len(config_mem_list) > 2 and str(config_mem_list[2]) == "ip":
                     index_switch_tmp["index-switch"] = "32"
                     index_switch_tmp["type"] = "ip"
-                if str(config_mem_list[2]) == "vxlan":
+                if len(config_mem_list) > 2 and str(config_mem_list[2]) == "vxlan":
                     index_switch_tmp1["index-switch"] = "32"
                     index_switch_tmp1["type"] = "vxlan"
             self.end_state["index-switch"].append(index_switch_tmp)
@@ -843,13 +858,13 @@ class NetStreamGlobal(object):
                     tmp_list = statistic_tmp["statistics_record"]
                     if self.type == statistic_tmp["type"]:
                         if self.type == "ip":
-                            if len(tmp_list):
+                            if len(tmp_list) > 0:
                                 cmd = "netstream record %s ip" % tmp_list[0]
                                 self.cli_add_command(cmd, undo=True)
                             cmd = "netstream record %s ip" % self.statistics_record
                             self.cli_add_command(cmd)
                         if self.type == "vxlan":
-                            if len(tmp_list):
+                            if len(tmp_list) > 0:
                                 cmd = "netstream record %s vxlan inner-ip" % tmp_list[
                                     0]
                                 self.cli_add_command(cmd, undo=True)

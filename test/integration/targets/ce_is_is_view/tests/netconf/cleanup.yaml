@@ -1,0 +1,21 @@
+---
+- debug:
+    msg: "CLEANUP ce_is_is_view, deleted integration tests on connection={{ ansible_connection }}"
+
+- name: Get lacp config by ce_netconf.
+  ce_netconf:
+    rpc: get
+    cfg_xml: "<config>
+              <isiscomm xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                <isSites>
+                  <isSite operation=\"delete\">
+                    <instanceId>100</instanceId>
+                    <vpnName>_public_</vpnName>
+                    <description>ISIS</description>
+                  </isSite>
+                </isSites>
+              </isiscomm>
+            </config>"
+
+- debug:
+    msg: "END CLEANUP ce_is_is_view, deleted integration tests on connection={{ ansible_connection }}"

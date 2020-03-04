@@ -1,0 +1,69 @@
+---
+- debug:
+    msg: Start nxos_acls deleted integration tests connection={{ansible_connection}}"
+
+- include_tasks: populate_config.yaml
+
+- block:
+    - name: Deleted (All ACLs)
+      nxos_acls:
+        config:
+        state: deleted
+
+    - name: Gather acls facts
+      nxos_facts: &facts
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: acls
+
+    - assert:
+        that:
+          - "ansible_facts.network_resources == {}"
+
+    - include_tasks: populate_config.yaml
+
+    - name: Deleted
+      nxos_acls: &deleted
+        config:
+          - afi: ipv4
+
+          - afi: ipv6
+            acls:
+              - name: ACL1v6
+                aces:
+                  - grant: permit
+                    sequence: 10
+                    source:
+                      any: true
+                    destination:
+                      any: true
+                    protocol: sctp
+
+                  - sequence: 20
+        state: deleted
+      register: result
+
+    - assert:
+        that:
+          - "result.changed==True"
+          - "'no ip access-list ACL1v4' in result.commands"
+          - "'no ip access-list ACL2v4' in result.commands"
+          - "'ipv6 access-list ACL1v6' in result.commands"
+          - "'no 10 permit sctp any any' in result.commands"
+          - "'no 20' in result.commands"
+          - "result.commands | length == 5"
+
+    - name: Gather acls facts
+      nxos_facts: *facts
+
+    - name: Idempotence - deleted
+      nxos_acls: *deleted
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+
+  always:
+    - include_tasks: remove_config.yaml

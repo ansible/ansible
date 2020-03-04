@@ -1,0 +1,2 @@
+minor_changes:
+  - git - added an ``archive_prefix`` option to set a prefix to add to each file path in archive

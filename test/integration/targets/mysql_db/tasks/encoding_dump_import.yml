@@ -1,0 +1,78 @@
+---
+
+- set_fact: 
+    latin1_file1="{{tmp_dir}}/{{file}}"
+
+- name: Deleting Latin1 encoded Database
+  mysql_db:
+    name: '{{ db_latin1_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+
+- name: create Latin1 encoded database
+  mysql_db:
+    name: '{{ db_latin1_name }}'
+    state: present
+    encoding: latin1
+    login_unix_socket: '{{ mysql_socket }}'
+
+- name: create a table in Latin1 database
+  command: mysql {{ db_latin1_name }} -e 'create table testlatin1(id int, name varchar(100));'
+
+
+# Inserting a string in latin1 into table, , this string be tested later, 
+# so report any change of content in the test too
+- name: inserting data into Latin1 database
+  command: mysql {{ db_latin1_name }} -e "insert into testlatin1 value(47,'Amédée Bôlüt');"
+
+- name: selecting table
+  command: mysql {{ db_latin1_name }} -e "select * from testlatin1;"
+  register: output
+
+- name: Dumping a table in Latin1 database
+  mysql_db:
+    name: "{{ db_latin1_name }}"
+    encoding: latin1
+    target: "{{ latin1_file1 }}"
+    state: dump
+    login_unix_socket: '{{ mysql_socket }}'
+  register: dump_result
+  
+- assert:
+    that:
+    - result is changed
+
+- name: state dump - file name should exist
+  file: name={{ latin1_file1 }} state=file
+
+- name:  od the file and check of latin1 encoded string is present
+  shell: grep -a 47 {{ latin1_file1 }} | od -c |grep "A   m 351   d 351   e       B 364\|A   m 303 251   d 303 251   e       B 303"
+
+- name: Dropping {{ db_latin1_name }} database
+  mysql_db:
+    name: '{{ db_latin1_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+
+- name: Importing the latin1 mysql script
+  mysql_db:
+    state: import
+    encoding: latin1
+    name: '{{ db_latin1_name }}'
+    target: "{{ latin1_file1 }}"
+    login_unix_socket: '{{ mysql_socket }}'
+    
+- assert:
+    that:
+    - result is changed
+     
+- name: check encoding of table
+  shell: mysql {{ db_latin1_name }} -e "SHOW FULL COLUMNS FROM testlatin1;"
+  register: output
+  failed_when: '"latin1_swedish_ci" not in output.stdout'
+
+- name: remove database
+  mysql_db:
+    name: '{{ db_latin1_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'

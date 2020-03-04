@@ -56,7 +56,7 @@ options:
         version_added: "2.5"
     contains:
         description:
-            - One or more regex patterns which should be matched against the file content.
+            - A regular expression or pattern which should be matched against the file content.
         type: str
     paths:
         description:
@@ -216,7 +216,6 @@ import os
 import pwd
 import re
 import stat
-import sys
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -409,8 +408,7 @@ def main():
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
         if os.path.isdir(npath):
-            ''' ignore followlinks for python version < 2.6 '''
-            for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(npath)) or os.walk(npath, followlinks=params['follow']):
+            for root, dirs, files in os.walk(npath, followlinks=params['follow']):
                 if params['depth']:
                     depth = root.replace(npath.rstrip(os.path.sep), '').count(os.path.sep)
                     if files or dirs:

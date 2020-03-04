@@ -76,7 +76,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    name: "{{ ds1 }}"
+    name: "{{ ro_datastore }}"
   register: datastore_facts_0003
 
 - debug:
@@ -84,7 +84,7 @@
 
 - assert:
     that:
-      - "datastore_facts_0003['datastores'][0]['name'] == ds1"
+      - "datastore_facts_0003['datastores'][0]['name'] == ro_datastore"
       - "datastore_facts_0003['datastores'][0]['capacity'] is defined"
 
 - name: get list of extended facts about one datastore
@@ -94,7 +94,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    name: "{{ ds1 | basename }}"
+    name: "{{ ro_datastore }}"
     gather_nfs_mount_info: True
     gather_vmfs_mount_info: True
   register: datastore_facts_0004
@@ -104,7 +104,7 @@
 
 - assert:
     that:
-      - "datastore_facts_0004['datastores'][0]['name'] == ds1"
+      - "datastore_facts_0004['datastores'][0]['name'] == ro_datastore"
       - "datastore_facts_0004['datastores'][0]['capacity'] is defined"
 
 - name: get list of facts about one datastore in check mode
@@ -114,7 +114,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    name: "{{ ds1 | basename }}"
+    name: "{{ ro_datastore }}"
   register: datastore_facts_0005
 
 - debug:
@@ -122,5 +122,5 @@
 
 - assert:
     that:
-      - "datastore_facts_0005['datastores'][0]['name'] == ds1"
+      - "datastore_facts_0005['datastores'][0]['name'] == ro_datastore"
       - "datastore_facts_0005['datastores'][0]['capacity'] is defined"

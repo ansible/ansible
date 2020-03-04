@@ -502,7 +502,7 @@ class ElbManager(object):
             self._set_cross_az_load_balancing()
         if self._check_attribute_support('access_log'):
             self._set_access_log()
-        # add sitcky options
+        # add sticky options
         self.select_stickiness_policy()
 
         # ensure backend server policies are correct

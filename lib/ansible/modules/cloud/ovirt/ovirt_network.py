@@ -61,6 +61,7 @@ options:
     external_provider:
         description:
             - "Name of external network provider."
+            - "At first it tries to import the network when not found it will create network in external provider."
         version_added: 2.8
     vm_network:
         description:
@@ -169,15 +170,10 @@ from ansible.module_utils.ovirt import (
 
 
 class NetworksModule(BaseModule):
-    def import_external_network(self):
-        ons_service = self._connection.system_service().openstack_network_providers_service()
-        on_service = ons_service.provider_service(get_id_by_name(ons_service, self.param('external_provider')))
-        networks_service = on_service.networks_service()
-        network_service = networks_service.network_service(get_id_by_name(networks_service, self.param('name')))
-        network_service.import_(data_center=otypes.DataCenter(name=self._module.params['data_center']))
-        return {"network": get_dict_of_struct(network_service.get()), "changed": True}
-
     def build_entity(self):
+        if self.param('external_provider'):
+            ons_service = self._connection.system_service().openstack_network_providers_service()
+            on_service = ons_service.provider_service(get_id_by_name(ons_service, self.param('external_provider')))
         return otypes.Network(
             name=self._module.params['name'],
             comment=self._module.params['comment'],
@@ -193,6 +189,8 @@ class NetworksModule(BaseModule):
                 otypes.NetworkUsage.VM if self._module.params['vm_network'] else None
             ] if self._module.params['vm_network'] is not None else None,
             mtu=self._module.params['mtu'],
+            external_provider=otypes.OpenStackNetworkProvider(id=on_service.get().id)
+            if self.param('external_provider') else None,
         )
 
     def post_create(self, entity):
@@ -218,7 +216,6 @@ class NetworksModule(BaseModule):
         return (
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('name'), entity.name) and
-            equal(self._module.params.get('external_provider'), entity.external_provider) and
             equal(self._module.params.get('description'), entity.description) and
             equal(self._module.params.get('vlan_tag'), getattr(entity.vlan, 'id', None)) and
             equal(self._module.params.get('vm_network'), True if entity.usages else False) and
@@ -317,10 +314,19 @@ def main():
             'datacenter': module.params['data_center'],
         }
         if state == 'present':
-            if module.params.get('external_provider'):
-                ret = networks_module.import_external_network()
-            else:
-                ret = networks_module.create(search_params=search_params)
+            imported = False
+            if module.params.get('external_provider') and module.params.get('name') not in [net.name for net in networks_service.list()]:
+                # Try to import network
+                ons_service = connection.system_service().openstack_network_providers_service()
+                on_service = ons_service.provider_service(get_id_by_name(ons_service, module.params.get('external_provider')))
+                on_networks_service = on_service.networks_service()
+                if module.params.get('name') in [net.name for net in on_networks_service.list()]:
+                    network_service = on_networks_service.network_service(get_id_by_name(on_networks_service, module.params.get('name')))
+                    network_service.import_(data_center=otypes.DataCenter(name=module.params.get('data_center')))
+                    imported = True
+
+            ret = networks_module.create(search_params=search_params)
+            ret['changed'] = ret['changed'] or imported
             # Update clusters networks:
             if module.params.get('clusters') is not None:
                 for param_cluster in module.params.get('clusters'):

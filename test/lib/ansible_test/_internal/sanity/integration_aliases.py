@@ -2,7 +2,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import textwrap
 import re
 import os
@@ -33,12 +32,17 @@ from ..cloud import (
     get_cloud_platforms,
 )
 
+from ..io import (
+    read_text_file,
+)
+
 from ..util import (
     display,
 )
 
-from ..data import (
-    data_context,
+from ..util_common import (
+    write_json_test_results,
+    ResultType,
 )
 
 
@@ -108,8 +112,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         :rtype: list[str]
         """
         if not self._shippable_yml_lines:
-            with open(self.SHIPPABLE_YML, 'r') as shippable_yml_fd:
-                self._shippable_yml_lines = shippable_yml_fd.read().splitlines()
+            self._shippable_yml_lines = read_text_file(self.SHIPPABLE_YML).splitlines()
 
         return self._shippable_yml_lines
 
@@ -180,8 +183,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
 
         self.check_changes(args, results)
 
-        with open(os.path.join(data_context().results, 'bot', 'data-sanity-ci.json'), 'w') as results_fd:
-            json.dump(results, results_fd, sort_keys=True, indent=4)
+        write_json_test_results(ResultType.BOT, 'data-sanity-ci.json', results)
 
         messages = []
 
@@ -219,12 +221,14 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         messages += self.check_ci_group(
             targets=tuple(filter_targets(posix_targets, ['cloud/'], include=False, directories=False, errors=False)),
             find=self.format_shippable_group_alias('linux').replace('linux', 'posix'),
+            find_incidental=['shippable/posix/incidental/'],
         )
 
         for cloud in clouds:
             messages += self.check_ci_group(
                 targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], include=True, directories=False, errors=False)),
                 find=self.format_shippable_group_alias(cloud, 'cloud'),
+                find_incidental=['shippable/%s/incidental/' % cloud, 'shippable/cloud/incidental/'],
             )
 
         return messages
@@ -240,21 +244,28 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         messages += self.check_ci_group(
             targets=windows_targets,
             find=self.format_shippable_group_alias('windows'),
+            find_incidental=['shippable/windows/incidental/'],
         )
 
         return messages
 
-    def check_ci_group(self, targets, find):
+    def check_ci_group(self, targets, find, find_incidental=None):
         """
         :type targets: tuple[CompletionTarget]
         :type find: str
+        :type find_incidental: list[str] | None
         :rtype: list[SanityMessage]
         """
         all_paths = set(target.path for target in targets)
         supported_paths = set(target.path for target in filter_targets(targets, [find], include=True, directories=False, errors=False))
         unsupported_paths = set(target.path for target in filter_targets(targets, [self.UNSUPPORTED], include=True, directories=False, errors=False))
 
-        unassigned_paths = all_paths - supported_paths - unsupported_paths
+        if find_incidental:
+            incidental_paths = set(target.path for target in filter_targets(targets, find_incidental, include=True, directories=False, errors=False))
+        else:
+            incidental_paths = set()
+
+        unassigned_paths = all_paths - supported_paths - unsupported_paths - incidental_paths
         conflicting_paths = supported_paths & unsupported_paths
 
         unassigned_message = 'missing alias `%s` or `%s`' % (find.strip('/'), self.UNSUPPORTED.strip('/'))

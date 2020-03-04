@@ -78,7 +78,7 @@ if ((Get-Process -Name explorer -ErrorAction SilentlyContinue).Count -gt 0){
   }
 } else {
    $result.toast_sent = $false
-   $result.no_toast_sent_reason = 'No logged in users to notifiy'
+   $result.no_toast_sent_reason = 'No logged in users to notify'
 }
 
 $endsend_at = Get-Date | Out-String

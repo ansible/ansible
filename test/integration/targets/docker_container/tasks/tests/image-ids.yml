@@ -9,7 +9,7 @@
 - name: Pull images
   docker_image:
     name: "{{ image }}"
-    pull: true
+    source: pull
   loop:
     - "hello-world:latest"
     - "alpine:3.8"
@@ -63,6 +63,28 @@
     force_kill: yes
   register: create_4
 
+- name: Untag image
+  # Image will not be deleted since the container still uses it
+  docker_image:
+    name: alpine:3.8
+    force_absent: yes
+    state: absent
+
+- name: Create container with alpine image via name (check mode, will pull, same image)
+  docker_container:
+    image: alpine:3.8
+    name: "{{ cname }}"
+    state: present
+  register: create_5
+  check_mode: yes
+
+- name: Create container with alpine image via name (will pull, same image)
+  docker_container:
+    image: alpine:3.8
+    name: "{{ cname }}"
+    state: present
+  register: create_6
+
 - name: Cleanup
   docker_container:
     name: "{{ cname }}"
@@ -76,6 +98,10 @@
       - create_2 is not changed
       - create_3 is changed
       - create_4 is not changed
+      - create_5 is changed
+      - create_6 is changed
+      - create_6.container.Image == image_info.images[1].Id
+      - create_6.container.Id == create_4.container.Id  # make sure container wasn't recreated
 
 - name: set Digests
   set_fact:

@@ -140,12 +140,12 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    site = module.params['site']
-    template = module.params['template']
-    vrf = module.params['vrf']
-    region = module.params['region']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    site = module.params.get('site')
+    template = module.params.get('template')
+    vrf = module.params.get('vrf')
+    region = module.params.get('region')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
@@ -155,13 +155,13 @@ def main():
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
     schema_path = 'schemas/{id}'.format(**schema_obj)
-    schema_id = schema_obj['id']
+    schema_id = schema_obj.get('id')
 
     # Get site
     site_id = mso.lookup_site(site)
 
     # Get site_idx
-    sites = [(s['siteId'], s['templateName']) for s in schema_obj['sites']]
+    sites = [(s.get('siteId'), s.get('templateName')) for s in schema_obj.get('sites')]
     if (site_id, template) not in sites:
         mso.fail_json(msg="Provided site/template '{0}-{1}' does not exist. Existing sites/templates: {2}".format(site, template, ', '.join(sites)))
 
@@ -172,21 +172,21 @@ def main():
 
     # Get VRF
     vrf_ref = mso.vrf_ref(schema_id=schema_id, template=template, vrf=vrf)
-    vrfs = [v['vrfRef'] for v in schema_obj['sites'][site_idx]['vrfs']]
+    vrfs = [v.get('vrfRef') for v in schema_obj.get('sites')[site_idx]['vrfs']]
     if vrf_ref not in vrfs:
         mso.fail_json(msg="Provided vrf '{0}' does not exist. Existing vrfs: {1}".format(vrf, ', '.join(vrfs)))
     vrf_idx = vrfs.index(vrf_ref)
 
     # Get Region
-    regions = [r['name'] for r in schema_obj['sites'][site_idx]['vrfs'][vrf_idx]['regions']]
+    regions = [r.get('name') for r in schema_obj.get('sites')[site_idx]['vrfs'][vrf_idx]['regions']]
     if region is not None and region in regions:
         region_idx = regions.index(region)
         region_path = '/sites/{0}/vrfs/{1}/regions/{2}'.format(site_template, vrf, region)
-        mso.existing = schema_obj['sites'][site_idx]['vrfs'][vrf_idx]['regions'][region_idx]
+        mso.existing = schema_obj.get('sites')[site_idx]['vrfs'][vrf_idx]['regions'][region_idx]
 
     if state == 'query':
         if region is None:
-            mso.existing = schema_obj['sites'][site_idx]['vrfs'][vrf_idx]['regions']
+            mso.existing = schema_obj.get('sites')[site_idx]['vrfs'][vrf_idx]['regions']
         elif not mso.existing:
             mso.fail_json(msg="Region '{region}' not found".format(region=region))
         mso.exit_json()

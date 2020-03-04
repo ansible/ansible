@@ -8,7 +8,7 @@ DOCUMENTATION = r'''
     name: linode
     plugin_type: inventory
     author:
-      - Luke Murphy (@lwm)
+      - Luke Murphy (@decentral1se)
     short_description: Ansible dynamic inventory plugin for Linode.
     version_added: "2.8"
     requirements:

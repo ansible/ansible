@@ -24,18 +24,8 @@
     path: '{{ subversion_server_dir }}'
     state: directory
 
-- name: set SELinux security context for SVN folder
-  sefcontext:
-    target: '{{ subversion_server_dir }}(/.*)?'
-    setype: '{{ item }}'
-    state: present
-  when: ansible_selinux.status == "enabled"
-  with_items:
-  - httpd_sys_content_t
-  - httpd_sys_rw_content_t
-
-- name: apply new SELinux context to filesystem
-  command: restorecon -irv {{ subversion_server_dir | quote }}
+- name: setup selinux when enabled
+  include_tasks: setup_selinux.yml
   when: ansible_selinux.status == "enabled"
 
 - name: template out configuration file

@@ -208,6 +208,13 @@
 #
 - include: test_privs.yml current_privilege='INSERT,DELETE' current_append_privs=yes
 
+# Tests for the priv parameter with dict value (https://github.com/ansible/ansible/issues/57533)
+- include: test_priv_dict.yml
+
 - import_tasks: issue-29511.yaml
   tags:
     - issue-29511
+
+- import_tasks: issue-64560.yaml
+  tags:
+    - issue-64560

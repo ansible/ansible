@@ -1,3 +1,4 @@
+---
 - debug: msg="END cli_config/backup.yaml on connection={{ ansible_connection }}"
 
 - name: delete configurable backup file path
@@ -23,8 +24,8 @@
 
 - name: take config backup
   cli_config:
-    backup: yes
-  become: yes
+    backup: true
+  become: true
   register: result
 
 - assert:
@@ -44,11 +45,11 @@
 
 - name: take configuration backup in custom filename and directory path
   cli_config:
-    backup: yes
+    backup: true
     backup_options:
       filename: backup.cfg
       dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
-  become: yes
+  become: true
   register: result
 
 - assert:
@@ -67,10 +68,10 @@
 
 - name: take configuration backup in custom filename
   cli_config:
-    backup: yes
+    backup: true
     backup_options:
       filename: backup.cfg
-  become: yes
+  become: true
   register: result
 
 - assert:
@@ -89,10 +90,10 @@
 
 - name: take configuration backup in custom path and default filename
   cli_config:
-    backup: yes
+    backup: true
     backup_options:
       dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
-  become: yes
+  become: true
   register: result
 
 - assert:

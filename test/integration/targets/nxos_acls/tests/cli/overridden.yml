@@ -1,0 +1,99 @@
+---
+- debug:
+    msg: Start nxos_acls overridden integration tests connection={{ansible_connection}}"
+
+- include_tasks: populate_config.yaml
+
+- block:
+    - name: Overridden (first test)
+      nxos_acls:
+        config:
+          - afi: ipv4
+            acls:
+              - name: NewACL
+                aces:
+                  - grant: deny
+                    source:
+                      address: 192.0.2.0
+                      wildcard_bits: 0.0.255.255
+                    destination:
+                      any: true
+                    protocol: eigrp
+                  - remark: Example for overridden state
+        state: overridden
+      register: result
+
+    - assert:
+        that:
+          - "result.changed==True"
+          - "'no ip access-list ACL1v4' in result.commands"
+          - "'no ip access-list ACL2v4' in result.commands"
+          - "'no ipv6 access-list ACL1v6' in result.commands"
+          - "'no ipv6 access-list ACL2v6' in result.commands"
+          - "'ip access-list NewACL' in result.commands"
+          - "'deny eigrp 192.0.2.0 0.0.255.255 any' in result.commands"
+          - "'remark Example for overridden state' in result.commands"
+          - "result.commands|length==7"
+
+    - name: Gather acls post facts
+      nxos_facts: &facts
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources: acls
+
+    - assert:
+        that:
+          - "ansible_facts.network_resources.acls == result.after"
+
+    - include_tasks: populate_config.yaml
+
+    - name: Overridden (second test)
+      nxos_acls: &overridden
+        config:
+          - afi: ipv6
+            acls:
+              - name: ACL1v6
+                aces:
+                  - grant: deny
+                    protocol: udp
+                    destination:
+                      any: true
+                    source:
+                      host: 2001:db8:3431::12
+                      port_protocol:
+                        lt: 35
+                    sequence: 10
+        state: overridden
+      register: result
+
+    - assert:
+        that:
+          - "result.changed==True"
+          - "'no ip access-list ACL1v4' in result.commands"
+          - "'no ip access-list ACL2v4' in result.commands"
+          - "'no ipv6 access-list ACL2v6' in result.commands"
+          - "'no ip access-list NewACL' in result.commands"
+          - "'ipv6 access-list ACL1v6' in result.commands"
+          - "'no 10 permit sctp any any' in result.commands"
+          - "'no 20 remark IPv6 ACL' in result.commands"
+          - "'10 deny udp host 2001:db8:3431::12 lt 35 any' in result.commands"
+          - "result.commands|length==8"
+
+    - name: Gather acls post facts
+      nxos_facts: *facts
+
+    - assert:
+        that:
+          - "ansible_facts.network_resources.acls == result.after"
+
+    - name: Idempotence - overridden
+      nxos_acls: *overridden
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+
+  always:
+    - include_tasks: remove_config.yaml

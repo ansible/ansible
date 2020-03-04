@@ -53,6 +53,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 seealso:
 - name: APIC Management Information Model reference
@@ -198,6 +203,7 @@ def main():
         qinq=dict(type='str', choices=['core', 'disabled', 'edge']),
         vepa=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -211,14 +217,15 @@ def main():
 
     aci = ACIModule(module)
 
-    l2_policy = module.params['l2_policy']
-    vlan_scope = module.params['vlan_scope']
-    qinq = module.params['qinq']
+    l2_policy = module.params.get('l2_policy')
+    vlan_scope = module.params.get('vlan_scope')
+    qinq = module.params.get('qinq')
     if qinq is not None:
-        qinq = QINQ_MAPPING[qinq]
-    vepa = aci.boolean(module.params['vepa'], 'enabled', 'disabled')
-    description = module.params['description']
-    state = module.params['state']
+        qinq = QINQ_MAPPING.get(qinq)
+    vepa = aci.boolean(module.params.get('vepa'), 'enabled', 'disabled')
+    description = module.params.get('description')
+    state = module.params.get('state')
+    name_alias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(
@@ -239,6 +246,7 @@ def main():
                 descr=description,
                 vlanScope=vlan_scope,
                 qinq=qinq, vepa=vepa,
+                nameAlias=name_alias,
             ),
         )
 

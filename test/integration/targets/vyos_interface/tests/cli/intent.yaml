@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/intent.yaml on connection={{ ansible_connection }}" #"
+- debug: msg="START cli/intent.yaml on connection={{ ansible_connection }}"
 
 # To be able to run the lldp test we need to have a neighbor configured to talk to
 # In DCI & Zuul we (currently) only spin up a single network VM, so we can't configure a neighbor
@@ -30,7 +30,7 @@
 - name: Setup (interface is up)
   vyos_interface:
     name: eth1
-    enabled: True
+    enabled: true
     state: present
   register: result
 
@@ -48,7 +48,7 @@
   vyos_interface:
     name: eth0
     neighbors:
-    - port: eth0
+      - port: eth0
   when: run_lldp_tests
   register: result
 
@@ -61,7 +61,7 @@
   vyos_interface:
     name: eth1
     state: down
-  ignore_errors: yes
+  ignore_errors: true
   register: result
 
 - assert:
@@ -73,9 +73,9 @@
   vyos_interface:
     name: eth0
     neighbors:
-    - port: dummy_port
-      host: dummy_host
-  ignore_errors: yes
+      - port: dummy_port
+        host: dummy_host
+  ignore_errors: true
   when: run_lldp_tests
   register: result
 
@@ -89,7 +89,7 @@
 - name: Config + intent
   vyos_interface:
     name: eth1
-    enabled: False
+    enabled: false
     state: down
   register: result
 
@@ -100,9 +100,9 @@
 - name: Config + intent (fail)
   vyos_interface:
     name: eth1
-    enabled: False
+    enabled: false
     state: up
-  ignore_errors: yes
+  ignore_errors: true
   register: result
 
 - assert:
@@ -113,10 +113,10 @@
 - name: Aggregate config + intent (pass)
   vyos_interface:
     aggregate:
-    - name: eth1
-      enabled: True
-      state: up
-  ignore_errors: yes
+      - name: eth1
+        enabled: true
+        state: up
+  ignore_errors: true
   register: result
 
 - assert:
@@ -126,9 +126,9 @@
 - name: Check lldp neighbors intent aggregate arguments
   vyos_interface:
     aggregate:
-    - name: eth0
-      neighbors:
-      - port: eth0
+      - name: eth0
+        neighbors:
+          - port: eth0
   when: run_lldp_tests
   register: result
 
@@ -140,12 +140,12 @@
 - name: Check lldp neighbors intent aggregate arguments (failed)
   vyos_interface:
     aggregate:
-    - name: eth0
-      neighbors:
-      - port: eth0
-      - port: dummy_port
-        host: dummy_host
-  ignore_errors: yes
+      - name: eth0
+        neighbors:
+          - port: eth0
+          - port: dummy_port
+            host: dummy_host
+  ignore_errors: true
   when: run_lldp_tests
   register: result
 

@@ -95,7 +95,7 @@ EXAMPLES = r'''
     login: yes
     target: iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d
 
-- name: Discconnect from the cached named target
+- name: Disconnect from the cached named target
   open_iscsi:
     login: no
     target: iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d
@@ -252,7 +252,7 @@ def main():
 
             # target
             portal=dict(type='str', aliases=['ip']),
-            port=dict(type='str', default=3260),
+            port=dict(type='str', default='3260'),
             target=dict(type='str', aliases=['name', 'targetname']),
             node_auth=dict(type='str', default='CHAP'),
             node_user=dict(type='str'),

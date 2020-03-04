@@ -3,6 +3,9 @@
 # Copyright: (c) 2018, Shuang Wang <ooocamel@icloud.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -27,16 +30,20 @@ options:
     description:
       - name of repository.
     required: true
-  comment:
+    type: str
+  description:
     description:
       - description or comment of repository.
     required: false
+    aliases:
+      - comment
+    type: str
   state:
     description:
       - Specifies the state of repository.
     required: true
     choices: [ 'present', 'absent' ]
-
+    type: str
 extends_documentation_fragment:
   - aws
   - ec2
@@ -71,7 +78,7 @@ repository_metadata:
     creation_date:
       description: "The date and time the repository was created, in timestamp format."
       returned: when state is present
-      type: datetime
+      type: str
       sample: "2018-10-16T13:21:41.261000+09:00"
     last_modified_date:
       description: "The date and time the repository was last modified, in timestamp format."
@@ -102,7 +109,7 @@ response_metadata:
     http_headers:
       description: "http headers of http response"
       returned: always
-      type: complex
+      type: dict
     http_status_code:
       description: "http status code of http response"
       returned: always
@@ -150,12 +157,20 @@ class CodeCommit(object):
     def process(self):
         result = dict(changed=False)
 
-        if self._module.params['state'] == 'present' and not self._repository_exists():
-            if not self._module.check_mode:
-                result = self._create_repository()
-            result['changed'] = True
+        if self._module.params['state'] == 'present':
+            if not self._repository_exists():
+                if not self._check_mode:
+                    result = self._create_repository()
+                result['changed'] = True
+            else:
+                metadata = self._get_repository()['repositoryMetadata']
+                if metadata['repositoryDescription'] != self._module.params['description']:
+                    if not self._check_mode:
+                        self._update_repository()
+                    result['changed'] = True
+                result.update(self._get_repository())
         if self._module.params['state'] == 'absent' and self._repository_exists():
-            if not self._module.check_mode:
+            if not self._check_mode:
                 result = self._delete_repository()
             result['changed'] = True
         return result
@@ -172,11 +187,30 @@ class CodeCommit(object):
             self._module.fail_json_aws(e, msg="couldn't get repository")
         return False
 
+    def _get_repository(self):
+        try:
+            result = self._client.get_repository(
+                repositoryName=self._module.params['name']
+            )
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self._module.fail_json_aws(e, msg="couldn't get repository")
+        return result
+
+    def _update_repository(self):
+        try:
+            result = self._client.update_repository_description(
+                repositoryName=self._module.params['name'],
+                repositoryDescription=self._module.params['description']
+            )
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self._module.fail_json_aws(e, msg="couldn't create repository")
+        return result
+
     def _create_repository(self):
         try:
             result = self._client.create_repository(
                 repositoryName=self._module.params['name'],
-                repositoryDescription=self._module.params['comment']
+                repositoryDescription=self._module.params['description']
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self._module.fail_json_aws(e, msg="couldn't create repository")
@@ -196,7 +230,7 @@ def main():
     argument_spec = dict(
         name=dict(required=True),
         state=dict(choices=['present', 'absent'], required=True),
-        comment=dict(default='')
+        description=dict(default='', aliases=['comment'])
     )
 
     ansible_aws_module = AnsibleAWSModule(

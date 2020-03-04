@@ -1,0 +1,2 @@
+bugfixes:
+  - rabbitmq_publish - Fix to ensure the module works correctly for pika v1.0.0 and later. (https://github.com/ansible/ansible/pull/61960)

@@ -1,0 +1,2 @@
+minor_changes:
+  - ufw - accept ``interface_in`` and ``interface_out`` as parameters.

@@ -141,7 +141,7 @@ options:
     type: str
     version_added: "2.1"
 requirements:
-  - cron
+  - cron (or cronie on CentOS)
 author:
     - Dane Summers (@dsummersl)
     - Mike Grozak (@rhaido)
@@ -212,11 +212,8 @@ import re
 import sys
 import tempfile
 
-from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import shlex_quote
-
-
-CRONCMD = "/usr/bin/crontab"
 
 
 class CronTabError(Exception):
@@ -238,6 +235,7 @@ class CronTab(object):
         self.lines = None
         self.ansible = "#Ansible: "
         self.existing = ''
+        self.cron_cmd = self.module.get_bin_path('crontab', required=True)
 
         if cron_file:
             if os.path.isabs(cron_file):
@@ -514,14 +512,14 @@ class CronTab(object):
         user = ''
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(CRONCMD))
+                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(self.cron_cmd))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (shlex_quote(CRONCMD), shlex_quote(self.user))
+                return "%s -l %s" % (shlex_quote(self.cron_cmd), shlex_quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (CRONCMD, '-l', shlex_quote(self.user))
+                return "%s %s %s" % (self.cron_cmd, '-l', shlex_quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % shlex_quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, '-l')
+        return "%s %s %s" % (self.cron_cmd, user, '-l')
 
     def _write_execute(self, path):
         """
@@ -530,10 +528,11 @@ class CronTab(object):
         user = ''
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
-                return "chown %s %s ; su '%s' -c '%s %s'" % (shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), CRONCMD, shlex_quote(path))
+                return "chown %s %s ; su '%s' -c '%s %s'" % (
+                    shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), self.cron_cmd, shlex_quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % shlex_quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, shlex_quote(path))
+        return "%s %s %s" % (self.cron_cmd, user, shlex_quote(path))
 
 
 def main():
@@ -643,12 +642,15 @@ def main():
 
     # --- user input validation ---
 
+    if env and not name:
+        module.fail_json(msg="You must specify 'name' while working with environment variables (env=yes)")
+
     if (special_time or reboot) and \
        (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
         module.fail_json(msg="You must specify time and date fields or special time.")
 
     # cannot support special_time on solaris
-    if (special_time or reboot) and get_platform() == 'SunOS':
+    if (special_time or reboot) and platform.system() == 'SunOS':
         module.fail_json(msg="Solaris does not support special_time=... or @reboot")
 
     if cron_file and do_install:
@@ -669,7 +671,7 @@ def main():
         (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
         crontab.write(backup_file)
 
-    if crontab.cron_file and not name and not do_install:
+    if crontab.cron_file and not do_install:
         if module._diff:
             diff['after'] = ''
             diff['after_header'] = '/dev/null'

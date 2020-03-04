@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -28,6 +31,10 @@ short_description: Manages VXLAN virtual access point on HUAWEI CloudEngine Devi
 description:
     - Manages VXLAN Virtual access point on HUAWEI CloudEngine Devices.
 author: QijunPan (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     bridge_domain_id:
         description:
@@ -79,7 +86,7 @@ EXAMPLES = '''
 
   tasks:
 
-  - name: Create a papping between a VLAN and a BD
+  - name: Create a mapping between a VLAN and a BD
     ce_vxlan_vap:
       bridge_domain_id: 100
       bind_vlan_id: 99
@@ -291,7 +298,7 @@ def vlan_vid_to_bitmap(vid):
 
     vlan_bit = ['0'] * 1024
     int_vid = int(vid)
-    j = int_vid / 4
+    j = int_vid // 4
     bit_int = 0x8 >> (int_vid % 4)
     vlan_bit[j] = str(hex(bit_int))[2]
 
@@ -341,7 +348,7 @@ def is_vlan_in_bitmap(vid, bitmap):
     if is_vlan_bitmap_empty(bitmap):
         return False
 
-    i = int(vid) / 4
+    i = int(vid) // 4
     if i > len(bitmap):
         return False
 

@@ -2,19 +2,10 @@
 # (c) 2015, Allen Sanabria <asanabria@linuxdynasty.org>
 #
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 try:
     import boto3
@@ -52,7 +43,7 @@ class RetryTestCase(unittest.TestCase):
         def extend_failures():
             self.counter += 1
             if self.counter < 2:
-                raise botocore.exceptions.ClientError(err_msg, 'Could not find you')
+                raise botocore.exceptions.ClientError(err_msg, 'You did something wrong.')
             else:
                 return 'success'
 
@@ -62,13 +53,13 @@ class RetryTestCase(unittest.TestCase):
 
     def test_retry_once(self):
         self.counter = 0
-        err_msg = {'Error': {'Code': 'InstanceId.NotFound'}}
+        err_msg = {'Error': {'Code': 'InternalFailure'}}
 
         @AWSRetry.backoff(tries=2, delay=0.1)
         def retry_once():
             self.counter += 1
             if self.counter < 2:
-                raise botocore.exceptions.ClientError(err_msg, 'Could not find you')
+                raise botocore.exceptions.ClientError(err_msg, 'Something went wrong!')
             else:
                 return 'success'
 

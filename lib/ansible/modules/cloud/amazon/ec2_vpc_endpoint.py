@@ -17,7 +17,7 @@ short_description: Create and delete AWS VPC Endpoints.
 description:
   - Creates AWS VPC endpoints.
   - Deletes AWS VPC endpoints.
-  - This module support check mode.
+  - This module supports check mode.
 version_added: "2.4"
 requirements: [ boto3 ]
 options:
@@ -25,12 +25,14 @@ options:
     description:
       - Required when creating a VPC endpoint.
     required: false
+    type: str
   service:
     description:
       - An AWS supported vpc endpoint service. Use the M(ec2_vpc_endpoint_info)
         module to describe the supported endpoint services.
       - Required when creating an endpoint.
     required: false
+    type: str
   policy:
     description:
       - A properly formatted json policy as string, see
@@ -39,6 +41,7 @@ options:
       - Option when creating an endpoint. If not provided AWS will
         utilise a default policy which provides full access to the service.
     required: false
+    type: json
   policy_file:
     description:
       - The path to the properly json formatted policy file, see
@@ -48,6 +51,7 @@ options:
         utilise a default policy which provides full access to the service.
     required: false
     aliases: [ "policy_path" ]
+    type: path
   state:
     description:
         - present to ensure resource is created.
@@ -55,6 +59,7 @@ options:
     required: false
     default: present
     choices: [ "present", "absent"]
+    type: str
   wait:
     description:
       - When specified, will wait for either available status for state present.
@@ -70,20 +75,25 @@ options:
         behaviour from AWS.
     required: false
     default: 320
+    type: int
   route_table_ids:
     description:
       - List of one or more route table ids to attach to the endpoint. A route
         is added to the route table with the destination of the endpoint if
         provided.
     required: false
+    type: list
+    elements: str
   vpc_endpoint_id:
     description:
       - One or more vpc endpoint ids to remove from the AWS account
     required: false
+    type: str
   client_token:
     description:
       - Optional client token to ensure idempotency
     required: false
+    type: str
 author: Karen Cheng (@Etherdaemon)
 extends_documentation_fragment:
   - aws
@@ -105,7 +115,7 @@ EXAMPLES = '''
       - rtb-87654321
   register: new_vpc_endpoint
 
-- name: Create new vpc endpoint the default policy
+- name: Create new vpc endpoint with the default policy
   ec2_vpc_endpoint:
     state: present
     region: ap-southeast-2
@@ -131,7 +141,7 @@ EXAMPLES = '''
 - name: Delete newly created vpc endpoint
   ec2_vpc_endpoint:
     state: absent
-    nat_gateway_id: "{{ new_vpc_endpoint.result['VpcEndpointId'] }}"
+    vpc_endpoint_id: "{{ new_vpc_endpoint.result['VpcEndpointId'] }}"
     region: ap-southeast-2
 '''
 

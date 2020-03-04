@@ -1,0 +1,159 @@
+---
+- when:
+    - ansible_distribution == 'Ubuntu'
+  block:
+  - name: Create a new Zabbix template.
+    zabbix_template:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      template_name: ExampleHost
+      template_groups:
+        - 'Linux servers'
+        - 'Templates'
+      state: present
+    register: create_zabbix_template_result
+
+  - assert:
+      that:
+        - create_zabbix_template_result.changed is sameas true
+
+  - name: Gather Zabbix template infomation.
+    zabbix_template_info:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      template_name: ExampleHost
+      format: json
+    register: gather_template_result
+
+  - assert:
+      that:
+        - gather_template_result.template_json.zabbix_export.groups.0.name == 'Linux servers'
+        - gather_template_result.template_json.zabbix_export.groups.1.name == 'Templates'
+
+  - name: Add link_templates to Zabbix template.
+    zabbix_template:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      template_name: ExampleHost
+      template_groups:
+        - 'Linux servers'
+        - 'Templates'
+      link_templates:
+        - 'Template App Zabbix Proxy'
+        - 'Template Module Zabbix agent'
+      state: present
+    register: update_zabbix_template_result
+
+  - assert:
+      that:
+        - create_zabbix_template_result.changed is sameas true
+
+  - name: Gather Zabbix template infomation.
+    zabbix_template_info:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      template_name: ExampleHost
+      format: json
+    register: gather_template_result
+
+  - assert:
+      that:
+        - gather_template_result.template_json.zabbix_export.groups.0.name == 'Linux servers'
+        - gather_template_result.template_json.zabbix_export.groups.1.name == 'Templates'
+        - gather_template_result.template_json.zabbix_export.templates.0.templates.0.name == 'Template App Zabbix Proxy'
+        - gather_template_result.template_json.zabbix_export.templates.0.templates.1.name == 'Template Module Zabbix agent'
+
+  - name: Add macros to Zabbix template.
+    zabbix_template:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      template_name: ExampleHost
+      template_groups:
+        - 'Linux servers'
+        - 'Templates'
+      link_templates:
+        - 'Template App Zabbix Proxy'
+        - 'Template Module Zabbix agent'
+      macros:
+        - macro: '{$EXAMPLE_MACRO1}'
+          value: 1000
+        - macro: '{$EXAMPLE_MACRO2}'
+          value: 'text'
+      state: present
+    register: update_zabbix_template_result
+
+  - assert:
+      that:
+        - create_zabbix_template_result.changed is sameas true
+
+  - name: Gather Zabbix template infomation.
+    zabbix_template_info:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      template_name: ExampleHost
+      format: json
+    register: gather_template_result
+
+  - assert:
+      that:
+        - gather_template_result.template_json.zabbix_export.groups.0.name == 'Linux servers'
+        - gather_template_result.template_json.zabbix_export.groups.1.name == 'Templates'
+        - gather_template_result.template_json.zabbix_export.templates.0.templates.0.name == 'Template App Zabbix Proxy'
+        - gather_template_result.template_json.zabbix_export.templates.0.templates.1.name == 'Template Module Zabbix agent'
+        - gather_template_result.template_json.zabbix_export.templates.0.macros.0.macro == '{$EXAMPLE_MACRO1}'
+        - gather_template_result.template_json.zabbix_export.templates.0.macros.0.value == '1000'
+        - gather_template_result.template_json.zabbix_export.templates.0.macros.1.macro == '{$EXAMPLE_MACRO2}'
+        - gather_template_result.template_json.zabbix_export.templates.0.macros.1.value == 'text'
+
+  - name: Dump Zabbix template to XML format.
+    zabbix_template:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      template_name: ExampleHost
+      dump_format: xml
+      state: dump
+    register: template_dump_result
+
+  - debug: var=template_dump_result
+
+  - assert:
+      that:
+        - template_dump_result.deprecations is defined
+        - template_dump_result.deprecations.0.version == '2.14'
+
+  - name: Dump Zabbix template to JSON format.
+    zabbix_template:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      template_name: ExampleHost
+      dump_format: json
+      state: dump
+    register: template_dump_result
+
+  - debug: var=template_dump_result
+
+  - assert:
+      that:
+        - template_dump_result.deprecations is defined
+        - template_dump_result.deprecations.0.version == '2.14'
+
+  - name: Delete Zabbix template.
+    zabbix_template:
+      server_url: "{{ zabbix_server_url }}"
+      login_user: "{{ zabbix_login_user }}"
+      login_password: "{{ zabbix_login_password }}"
+      template_name: ExampleHost
+      state: absent
+    register: delete_zabbix_template_result
+
+  - assert:
+      that:
+        - delete_zabbix_template_result.changed is sameas true

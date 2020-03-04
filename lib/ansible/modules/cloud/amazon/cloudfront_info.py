@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -24,7 +16,7 @@ DOCUMENTATION = '''
 module: cloudfront_info
 short_description: Obtain facts about an AWS CloudFront distribution
 description:
-  - Gets information about an AWS CloudFront distribution
+  - Gets information about an AWS CloudFront distribution.
   - This module was called C(cloudfront_facts) before Ansible 2.9, returning C(ansible_facts).
     Note that the M(cloudfront_info) module no longer returns C(ansible_facts)!
 requirements:
@@ -38,98 +30,108 @@ options:
           - The id of the CloudFront distribution. Used with I(distribution), I(distribution_config),
             I(invalidation), I(streaming_distribution), I(streaming_distribution_config), I(list_invalidations).
         required: false
+        type: str
     invalidation_id:
         description:
-          - The id of the invalidation to get information about. Used with I(invalidation).
+          - The id of the invalidation to get information about.
+          - Used with I(invalidation).
         required: false
+        type: str
     origin_access_identity_id:
         description:
-          - The id of the cloudfront origin access identity to get information about.
+          - The id of the CloudFront origin access identity to get information about.
         required: false
-    web_acl_id:
-        description:
-          - Used with I(list_distributions_by_web_acl_id).
-        required: false
+        type: str
+#    web_acl_id:
+#        description:
+#          - Used with I(list_distributions_by_web_acl_id).
+#        required: false
+#        type: str
     domain_name_alias:
         description:
-          - Can be used instead of I(distribution_id) - uses the aliased CNAME for the cloudfront
+          - Can be used instead of I(distribution_id) - uses the aliased CNAME for the CloudFront
             distribution to get the distribution id where required.
         required: false
+        type: str
     all_lists:
         description:
-          - Get all cloudfront lists that do not require parameters.
+          - Get all CloudFront lists that do not require parameters.
         required: false
         default: false
         type: bool
     origin_access_identity:
         description:
-          - Get information about an origin access identity. Requires I(origin_access_identity_id)
-            to be specified.
+          - Get information about an origin access identity.
+          - Requires I(origin_access_identity_id) to be specified.
         required: false
         default: false
         type: bool
     origin_access_identity_config:
         description:
-          - Get the configuration information about an origin access identity. Requires
-            I(origin_access_identity_id) to be specified.
+          - Get the configuration information about an origin access identity.
+          - Requires I(origin_access_identity_id) to be specified.
         required: false
         default: false
         type: bool
     distribution:
         description:
-          - Get information about a distribution. Requires I(distribution_id) or I(domain_name_alias)
-            to be specified.
+          - Get information about a distribution.
+          - Requires I(distribution_id) or I(domain_name_alias) to be specified.
         required: false
         default: false
         type: bool
     distribution_config:
         description:
-          - Get the configuration information about a distribution. Requires I(distribution_id)
-            or I(domain_name_alias) to be specified.
+          - Get the configuration information about a distribution.
+          - Requires I(distribution_id) or I(domain_name_alias) to be specified.
         required: false
         default: false
         type: bool
     invalidation:
         description:
-            - Get information about an invalidation. Requires I(invalidation_id) to be specified.
+            - Get information about an invalidation.
+            - Requires I(invalidation_id) to be specified.
         required: false
         default: false
         type: bool
     streaming_distribution:
         description:
-            - Get information about a specified RTMP distribution. Requires I(distribution_id) or
-              I(domain_name_alias) to be specified.
+            - Get information about a specified RTMP distribution.
+            - Requires I(distribution_id) or I(domain_name_alias) to be specified.
         required: false
         default: false
         type: bool
     streaming_distribution_config:
         description:
             - Get the configuration information about a specified RTMP distribution.
-              Requires I(distribution_id) or I(domain_name_alias) to be specified.
+            - Requires I(distribution_id) or I(domain_name_alias) to be specified.
         required: false
         default: false
         type: bool
     list_origin_access_identities:
         description:
-            - Get a list of cloudfront origin access identities. Requires I(origin_access_identity_id) to be set.
+            - Get a list of CloudFront origin access identities.
+            - Requires I(origin_access_identity_id) to be set.
         required: false
         default: false
         type: bool
     list_distributions:
         description:
-            - Get a list of cloudfront distributions.
+            - Get a list of CloudFront distributions.
         required: false
         default: false
         type: bool
     list_distributions_by_web_acl_id:
         description:
-            - Get a list of distributions using web acl id as a filter. Requires I(web_acl_id) to be set.
+            - Get a list of distributions using web acl id as a filter.
+            - Requires I(web_acl_id) to be set.
         required: false
         default: false
         type: bool
     list_invalidations:
         description:
-            - Get a list of invalidations. Requires I(distribution_id) or I(domain_name_alias) to be specified.
+            - Get a list of invalidations.
+            - Requires I(distribution_id) or I(domain_name_alias) to be specified.
         required: false
         default: false
         type: bool
@@ -142,7 +144,7 @@ options:
     summary:
         description:
             - Returns a summary of all distributions, streaming distributions and origin_access_identities.
-              This is the default behaviour if no option is selected.
+            - This is the default behaviour if no option is selected.
         required: false
         default: false
         type: bool
@@ -197,7 +199,7 @@ EXAMPLES = '''
     distribution_id: my-cloudfront-distribution-id
     invalidation_id: my-cloudfront-invalidation-id
 
-# Get all information about a cloudfront origin access identity.
+# Get all information about a CloudFront origin access identity.
 - cloudfront_facts:
     origin_access_identity: true
     origin_access_identity_id: my-cloudfront-origin-access-identity-id
@@ -223,13 +225,13 @@ origin_access_identity_configuration:
     type: dict
 distribution:
     description: >
-      Facts about a cloudfront distribution. Requires I(distribution_id) or I(domain_name_alias)
+      Facts about a CloudFront distribution. Requires I(distribution_id) or I(domain_name_alias)
       to be specified. Requires I(origin_access_identity_id) to be set.
     returned: only if distribution is true
     type: dict
 distribution_config:
     description: >
-      Facts about a cloudfront distribution's config. Requires I(distribution_id) or I(domain_name_alias)
+      Facts about a CloudFront distribution's config. Requires I(distribution_id) or I(domain_name_alias)
       to be specified.
     returned: only if I(distribution_config) is true
     type: dict
@@ -257,7 +259,7 @@ summary:
     type: dict
 result:
     description: >
-        Result dict not nested under the cloudfront id to access results of module without the knowledge of that id
+        Result dict not nested under the CloudFront ID to access results of module without the knowledge of that id
         as figuring out the DistributionId is usually the reason one uses this module in the first place.
     returned: always
     type: dict
@@ -718,9 +720,9 @@ def main():
     result['changed'] = False
     result['cloudfront'].update(facts)
     if is_old_facts:
-        module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
+        module.exit_json(msg="Retrieved CloudFront facts.", ansible_facts=result)
     else:
-        module.exit_json(msg="Retrieved cloudfront info.", **result)
+        module.exit_json(msg="Retrieved CloudFront info.", **result)
 
 
 if __name__ == '__main__':

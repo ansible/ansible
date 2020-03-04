@@ -208,7 +208,7 @@ class AzureRMDevTestLabVirtualNetwork(AzureRMModuleBase):
             if self.check_mode:
                 return self.results
             self.delete_virtualnetwork()
-            # This currently doesnt' work as there is a bug in SDK / Service
+            # This currently doesn't work as there is a bug in SDK / Service
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
         else:

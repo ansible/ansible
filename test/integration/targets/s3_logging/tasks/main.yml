@@ -1,0 +1,203 @@
+---
+# Integration tests for s3_logging
+#
+# Notes:
+# - s3_logging doesn't support check_mode and the only output is 'changed'
+# - During initial testing we hit issues with boto reporting
+#   "You must give the log-delivery group WRITE and READ_ACP permissions
+#   to the target bucket"
+#   a long term solution might be to port s3_logging to AnsibleAWSModule
+#   so we can add retries
+#
+- module_defaults:
+    group/aws:
+      aws_access_key: '{{ aws_access_key | default(omit) }}'
+      aws_secret_key: '{{ aws_secret_key | default(omit) }}'
+      security_token: '{{ security_token | default(omit) }}'
+      region: '{{ aws_region | default(omit) }}'
+  block:
+
+  # ============================================================
+
+  - name: Try to enable logging without providing target_bucket
+    s3_logging:
+      state: present
+      name: '{{ test_bucket }}'
+    register: result
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - result is failed
+
+  # ============================================================
+  - name: Create simple s3_bucket to be logged
+    s3_bucket:
+      state: present
+      name: '{{ test_bucket }}'
+    register: output
+
+  - assert:
+      that:
+      - output is changed
+      - output.name == test_bucket
+
+  - name: Create simple s3_bucket as target for logs
+    s3_bucket:
+      state: present
+      name: '{{ log_bucket_1 }}'
+    register: output
+
+  - assert:
+      that:
+      - output is changed
+      - output.name == log_bucket_1
+
+  - name: Create simple s3_bucket as second target for logs
+    s3_bucket:
+      state: present
+      name: '{{ log_bucket_2 }}'
+    register: output
+
+  - assert:
+      that:
+      - output is changed
+      - output.name == log_bucket_2
+
+# ============================================================
+
+  - name: Enable logging
+    s3_logging:
+      state: present
+      name: '{{ test_bucket }}'
+      target_bucket: '{{ log_bucket_1 }}'
+    register: result
+
+  - assert:
+      that:
+      - result is changed
+
+  - name: Enable logging idempotency
+    s3_logging:
+      state: present
+      name: '{{ test_bucket }}'
+      target_bucket: '{{ log_bucket_1 }}'
+    register: result
+
+  - assert:
+      that:
+      - result is not changed
+
+# ============================================================
+
+  - name: Change logging bucket
+    s3_logging:
+      state: present
+      name: '{{ test_bucket }}'
+      target_bucket: '{{ log_bucket_2 }}'
+    register: result
+
+  - assert:
+      that:
+      - result is changed
+
+  - name: Change logging bucket idempotency
+    s3_logging:
+      state: present
+      name: '{{ test_bucket }}'
+      target_bucket: '{{ log_bucket_2 }}'
+    register: result
+
+  - assert:
+      that:
+      - result is not changed
+
+# ============================================================
+
+  - name: Change logging prefix
+    s3_logging:
+      state: present
+      name: '{{ test_bucket }}'
+      target_bucket: '{{ log_bucket_2 }}'
+      target_prefix: '/{{ resource_prefix }}/'
+    register: result
+
+  - assert:
+      that:
+      - result is changed
+
+  - name: Change logging prefix idempotency
+    s3_logging:
+      state: present
+      name: '{{ test_bucket }}'
+      target_bucket: '{{ log_bucket_2 }}'
+      target_prefix: '/{{ resource_prefix }}/'
+    register: result
+
+  - assert:
+      that:
+      - result is not changed
+
+# ============================================================
+
+  - name: Remove logging prefix
+    s3_logging:
+      state: present
+      name: '{{ test_bucket }}'
+      target_bucket: '{{ log_bucket_2 }}'
+    register: result
+
+  - assert:
+      that:
+      - result is changed
+
+  - name: Remove logging prefix idempotency
+    s3_logging:
+      state: present
+      name: '{{ test_bucket }}'
+      target_bucket: '{{ log_bucket_2 }}'
+    register: result
+
+  - assert:
+      that:
+      - result is not changed
+
+# ============================================================
+
+  - name: Disable logging
+    s3_logging:
+      state: absent
+      name: '{{ test_bucket }}'
+    register: result
+
+  - assert:
+      that:
+      - result is changed
+
+  - name: Disable logging idempotency
+    s3_logging:
+      state: absent
+      name: '{{ test_bucket }}'
+    register: result
+
+  - assert:
+      that:
+      - result is not changed
+
+# ============================================================
+  always:
+  - name: Delete bucket being logged
+    s3_bucket:
+      name: '{{ test_bucket }}'
+      state: absent
+    ignore_errors: yes
+  - name: Delete first bucket containing logs
+    s3_bucket:
+      name: '{{ log_bucket_1 }}'
+      state: absent
+    ignore_errors: yes
+  - name: Delete second bucket containing logs
+    s3_bucket:
+      name: '{{ log_bucket_2 }}'
+      state: absent
+    ignore_errors: yes

@@ -16,7 +16,6 @@ module: ucs_service_profile_template
 short_description: Configures Service Profile Templates on Cisco UCS Manager
 description:
 - Configures Service Profile Templates on Cisco UCS Manager.
-- Examples can be used with the UCS Platform Emulator U(https://communities.cisco.com/ucspe).
 extends_documentation_fragment: ucs
 options:
   state:
@@ -299,7 +298,7 @@ def check_storage_profile_props(ucs, module, dn):
         if mo_1.check_prop_match(**kwargs):
             props_match = True
     elif not module.params['storage_profile']:
-        # no stroage profile mo or desired state
+        # no storage profile mo or desired state
         props_match = True
 
     return props_match

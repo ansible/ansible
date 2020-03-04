@@ -1,8 +1,10 @@
 shippable/posix/group2
+skip/aix
 skip/osx
 skip/freebsd
 skip/rhel8.0
 skip/rhel8.0b
+skip/rhel8.1b
 skip/docker
 needs/root
 destructive

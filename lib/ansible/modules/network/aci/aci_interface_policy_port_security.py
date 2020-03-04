@@ -35,6 +35,13 @@ options:
     - Accepted values range between C(0) and C(12000).
     - The APIC defaults to C(0) when unset during creation.
     type: int
+  port_security_timeout:
+    version_added: '2.9'
+    description:
+    - The delay time in seconds before MAC learning is re-enabled
+    - Accepted values range between C(60) and C(3600)
+    - The APIC defaults to C(60) when unset during creation
+    type: int
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -42,6 +49,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 seealso:
 - name: APIC Management Information Model reference
@@ -60,6 +72,7 @@ EXAMPLES = r'''
     port_security: '{{ port_security }}'
     description: '{{ descr }}'
     max_end_points: '{{ max_end_points }}'
+    port_security_timeout: '{{ port_security_timeout }}'
   delegate_to: localhost
 '''
 
@@ -178,7 +191,9 @@ def main():
         port_security=dict(type='str', aliases=['name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         max_end_points=dict(type='int'),
+        port_security_timeout=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -190,12 +205,16 @@ def main():
         ],
     )
 
-    port_security = module.params['port_security']
-    description = module.params['description']
-    max_end_points = module.params['max_end_points']
+    port_security = module.params.get('port_security')
+    description = module.params.get('description')
+    max_end_points = module.params.get('max_end_points')
+    port_security_timeout = module.params.get('port_security_timeout')
+    name_alias = module.params.get('name_alias')
     if max_end_points is not None and max_end_points not in range(12001):
         module.fail_json(msg='The "max_end_points" must be between 0 and 12000')
-    state = module.params['state']
+    if port_security_timeout is not None and port_security_timeout not in range(60, 3601):
+        module.fail_json(msg='The "port_security_timeout" must be between 60 and 3600')
+    state = module.params.get('state')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -216,6 +235,7 @@ def main():
                 name=port_security,
                 descr=description,
                 maximum=max_end_points,
+                nameAlias=name_alias,
             ),
         )
 

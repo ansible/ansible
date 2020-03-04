@@ -162,6 +162,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Greg Crosby (@crosbygw)
 '''
 
 EXAMPLES = r'''
@@ -311,6 +312,7 @@ class Parameters(AnsibleF5Parameters):
         'mandatory_attributes',
         'chase_referrals',
         'manual_resume',
+        'target_username',
         'filter',
         'base',
     ]

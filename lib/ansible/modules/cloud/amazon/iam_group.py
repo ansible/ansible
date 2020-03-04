@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -23,7 +26,7 @@ DOCUMENTATION = '''
 module: iam_group
 short_description: Manage AWS IAM groups
 description:
-  - Manage AWS IAM groups
+  - Manage AWS IAM groups.
 version_added: "2.4"
 author:
 - Nick Aslanidis (@naslanidis)
@@ -33,28 +36,37 @@ options:
     description:
       - The name of the group to create.
     required: true
-  managed_policy:
+    type: str
+  managed_policies:
     description:
-      - A list of managed policy ARNs or friendly names to attach to the role. To embed an inline policy, use M(iam_policy).
+      - A list of managed policy ARNs or friendly names to attach to the role.
+      - To embed an inline policy, use M(iam_policy).
     required: false
+    type: list
+    elements: str
+    aliases: ['managed_policy']
   users:
     description:
       - A list of existing users to add as members of the group.
     required: false
+    type: list
+    elements: str
   state:
     description:
-      - Create or remove the IAM group
+      - Create or remove the IAM group.
     required: true
     choices: [ 'present', 'absent' ]
-  purge_policy:
+    type: str
+  purge_policies:
     description:
-      - Detach policy which not included in managed_policy list
+      - When I(purge_policies=true) any managed policies not listed in I(managed_policies) will be detatched.
     required: false
     default: false
     type: bool
+    aliases: ['purge_policy', 'purge_managed_policies']
   purge_users:
     description:
-      - Detach users which not included in users list
+      - When I(purge_users=true) users which are not included in I(users) will be detached.
     required: false
     default: false
     type: bool
@@ -75,14 +87,14 @@ EXAMPLES = '''
 # Create a group and attach a managed policy using its ARN
 - iam_group:
     name: testgroup1
-    managed_policy:
+    managed_policies:
       - arn:aws:iam::aws:policy/AmazonSNSFullAccess
     state: present
 
 # Create a group with users as members and attach a managed policy using its ARN
 - iam_group:
     name: testgroup1
-    managed_policy:
+    managed_policies:
       - arn:aws:iam::aws:policy/AmazonSNSFullAccess
     users:
       - test_user1
@@ -93,12 +105,12 @@ EXAMPLES = '''
 - iam_group:
     name: testgroup1
     state: present
-    purge_policy: true
+    purge_policies: true
 
 # Remove all group members from an existing group
 - iam_group:
     name: testgroup1
-    managed_policy:
+    managed_policies:
       - arn:aws:iam::aws:policy/AmazonSNSFullAccess
     purge_users: true
     state: present
@@ -111,56 +123,61 @@ EXAMPLES = '''
 
 '''
 RETURN = '''
-group:
-    description: dictionary containing all the group information
+iam_group:
+    description: dictionary containing all the group information including group membership
     returned: success
     type: complex
     contains:
-        arn:
-            description: the Amazon Resource Name (ARN) specifying the group
-            type: str
-            sample: "arn:aws:iam::1234567890:group/testgroup1"
-        create_date:
-            description: the date and time, in ISO 8601 date-time format, when the group was created
-            type: str
-            sample: "2017-02-08T04:36:28+00:00"
-        group_id:
-            description: the stable and unique string identifying the group
-            type: str
-            sample: AGPAIDBWE12NSFINE55TM
-        group_name:
-            description: the friendly name that identifies the group
-            type: str
-            sample: testgroup1
-        path:
-            description: the path to the group
-            type: str
-            sample: /
-users:
-    description: list containing all the group members
-    returned: success
-    type: complex
-    contains:
-        arn:
-            description: the Amazon Resource Name (ARN) specifying the user
-            type: str
-            sample: "arn:aws:iam::1234567890:user/test_user1"
-        create_date:
-            description: the date and time, in ISO 8601 date-time format, when the user was created
-            type: str
-            sample: "2017-02-08T04:36:28+00:00"
-        user_id:
-            description: the stable and unique string identifying the user
-            type: str
-            sample: AIDAIZTPY123YQRS22YU2
-        user_name:
-            description: the friendly name that identifies the user
-            type: str
-            sample: testgroup1
-        path:
-            description: the path to the user
-            type: str
-            sample: /
+        group:
+            description: dictionary containing all the group information
+            returned: success
+            type: complex
+            contains:
+                arn:
+                    description: the Amazon Resource Name (ARN) specifying the group
+                    type: str
+                    sample: "arn:aws:iam::1234567890:group/testgroup1"
+                create_date:
+                    description: the date and time, in ISO 8601 date-time format, when the group was created
+                    type: str
+                    sample: "2017-02-08T04:36:28+00:00"
+                group_id:
+                    description: the stable and unique string identifying the group
+                    type: str
+                    sample: AGPAIDBWE12NSFINE55TM
+                group_name:
+                    description: the friendly name that identifies the group
+                    type: str
+                    sample: testgroup1
+                path:
+                    description: the path to the group
+                    type: str
+                    sample: /
+        users:
+            description: list containing all the group members
+            returned: success
+            type: complex
+            contains:
+                arn:
+                    description: the Amazon Resource Name (ARN) specifying the user
+                    type: str
+                    sample: "arn:aws:iam::1234567890:user/test_user1"
+                create_date:
+                    description: the date and time, in ISO 8601 date-time format, when the user was created
+                    type: str
+                    sample: "2017-02-08T04:36:28+00:00"
+                user_id:
+                    description: the stable and unique string identifying the user
+                    type: str
+                    sample: AIDAIZTPY123YQRS22YU2
+                user_name:
+                    description: the friendly name that identifies the user
+                    type: str
+                    sample: testgroup1
+                path:
+                    description: the path to the user
+                    type: str
+                    sample: /
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -168,9 +185,9 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import AWSRetry
 
 try:
-    from botocore.exceptions import BotoCoreError, ClientError, ParamValidationError
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def compare_attached_group_policies(current_attached_policies, new_attached_policies):
@@ -221,10 +238,10 @@ def create_or_update_group(connection, module):
 
     params = dict()
     params['GroupName'] = module.params.get('name')
-    managed_policies = module.params.get('managed_policy')
+    managed_policies = module.params.get('managed_policies')
     users = module.params.get('users')
     purge_users = module.params.get('purge_users')
-    purge_policy = module.params.get('purge_policy')
+    purge_policies = module.params.get('purge_policies')
     changed = False
     if managed_policies:
         managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
@@ -255,7 +272,7 @@ def create_or_update_group(connection, module):
             current_attached_policies_arn_list.append(policy['PolicyArn'])
 
         # If managed_policies has a single empty element we want to remove all attached policies
-        if purge_policy:
+        if purge_policies:
             # Detach policies not present
             for policy_arn in list(set(current_attached_policies_arn_list) - set(managed_policies)):
                 changed = True
@@ -396,11 +413,11 @@ def main():
 
     argument_spec = dict(
         name=dict(required=True),
-        managed_policy=dict(default=[], type='list'),
+        managed_policies=dict(default=[], type='list', aliases=['managed_policy']),
         users=dict(default=[], type='list'),
         state=dict(choices=['present', 'absent'], required=True),
         purge_users=dict(default=False, type='bool'),
-        purge_policy=dict(default=False, type='bool')
+        purge_policies=dict(default=False, type='bool', aliases=['purge_policy', 'purge_managed_policies'])
     )
 
     module = AnsibleAWSModule(

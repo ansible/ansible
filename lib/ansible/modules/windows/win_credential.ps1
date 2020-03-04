@@ -378,8 +378,10 @@ namespace Ansible.CredentialManager
                     using (SafeMemoryBuffer attributes = new SafeMemoryBuffer(attributeBytes.Length))
                     {
                         if (attributeBytes.Length != 0)
+                        {
                             Marshal.Copy(attributeBytes, 0, attributes.DangerousGetHandle(), attributeBytes.Length);
-                        credential.Attributes = attributes.DangerousGetHandle();
+                            credential.Attributes = attributes.DangerousGetHandle();
+                        }
 
                         NativeHelpers.CredentialCreateFlags createFlags = 0;
                         if (preserveExisting)
@@ -588,10 +590,10 @@ if ($state -eq "absent") {
         $new_credential = New-Object -TypeName Ansible.CredentialManager.Credential
         $new_credential.Type = $type
         $new_credential.TargetName = $name
-        $new_credential.Comment = $comment
+        $new_credential.Comment = if ($comment) { $comment } else { [NullString]::Value }
         $new_credential.Secret = $secret
         $new_credential.Persist = $persistence
-        $new_credential.TargetAlias = $alias
+        $new_credential.TargetAlias = if ($alias) { $alias } else { [NullString]::Value }
         $new_credential.UserName = $username
 
         if ($null -ne $attributes) {

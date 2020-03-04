@@ -24,6 +24,7 @@ options:
   user_name:
     description:
       - The name of the user whose MFA devices will be listed
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2

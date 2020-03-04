@@ -338,7 +338,7 @@ class VMwareDeployOvf(PyVmomi):
             if datastore:
                 self.datastore = datastore
         else:
-            self.datastore = self.find_datastore_by_name(self.params['datastore'])
+            self.datastore = self.find_datastore_by_name(self.params['datastore'], self.datacenter)
 
         if not self.datastore:
             self.module.fail_json(msg='%(datastore)s could not be located' % self.params)

@@ -25,16 +25,24 @@ author:
     - Chen Leibovich (@chenl87)
 requirements: [ json, botocore, boto3 ]
 options:
+    state:
+        description: Whether a policy should be present or absent
+        required: yes
+        choices: ['absent', 'present']
+        type: str
     policy_name:
         description: The name of the scaling policy.
         required: yes
+        type: str
     service_namespace:
         description: The namespace of the AWS service.
         required: yes
         choices: ['ecs', 'elasticmapreduce', 'ec2', 'appstream', 'dynamodb']
+        type: str
     resource_id:
         description: The identifier of the resource associated with the scalable target.
         required: yes
+        type: str
     scalable_dimension:
         description: The scalable dimension associated with the scalable target.
         required: yes
@@ -46,26 +54,54 @@ options:
                    'dynamodb:table:WriteCapacityUnits',
                    'dynamodb:index:ReadCapacityUnits',
                    'dynamodb:index:WriteCapacityUnits']
+        type: str
     policy_type:
         description: The policy type.
         required: yes
         choices: ['StepScaling', 'TargetTrackingScaling']
+        type: str
     step_scaling_policy_configuration:
         description: A step scaling policy. This parameter is required if you are creating a policy and the policy type is StepScaling.
         required: no
+        type: dict
     target_tracking_scaling_policy_configuration:
-        description: A target tracking policy. This parameter is required if you are creating a new policy and the policy type is TargetTrackingScaling.
+        description:
+            - A target tracking policy. This parameter is required if you are creating a new policy and the policy type is TargetTrackingScaling.
+            - 'Full documentation of the suboptions can be found in the API documentation:'
+            - 'U(https://docs.aws.amazon.com/autoscaling/application/APIReference/API_TargetTrackingScalingPolicyConfiguration.html)'
         required: no
+        type: dict
+        suboptions:
+            CustomizedMetricSpecification:
+                description: The metric to use if using a customized metric.
+                type: dict
+            DisableScaleIn:
+                description: Whether scaling-in should be disabled.
+                type: bool
+            PredefinedMetricSpecification:
+                description: The metric to use if using a predefined metric.
+                type: dict
+            ScaleInCooldown:
+                description: The time (in seconds) to wait after scaling-in before another scaling action can occur.
+                type: int
+            ScaleOutCooldown:
+                description: The time (in seconds) to wait after scaling-out before another scaling action can occur.
+                type: int
+            TargetValue:
+                description: The target value for the metric
+                type: float
     minimum_tasks:
         description: The minimum value to scale to in response to a scale in event.
             This parameter is required if you are creating a first new policy for the specified service.
         required: no
         version_added: "2.6"
+        type: int
     maximum_tasks:
         description: The maximum value to scale to in response to a scale out event.
             This parameter is required if you are creating a first new policy for the specified service.
         required: no
         version_added: "2.6"
+        type: int
     override_task_capacity:
         description: Whether or not to override values of minimum and/or maximum tasks if it's already set.
         required: no
@@ -210,7 +246,8 @@ step_scaling_policy_configuration:
         step_adjustments:
             description: A set of adjustments that enable you to scale based on the size of the alarm breach
             returned: when state present and the policy type is StepScaling
-            type: list of complex
+            type: list
+            elements: dict
 target_tracking_scaling_policy_configuration:
     description: The target tracking policy.
     returned: when state present and the policy type is TargetTrackingScaling
@@ -253,7 +290,7 @@ creation_time:
 '''  # NOQA
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict, ec2_argument_spec
+from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict
 
 try:
     import botocore
@@ -443,8 +480,7 @@ def create_scaling_policy(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
+    argument_spec = dict(
         state=dict(type='str', required=True, choices=['present', 'absent']),
         policy_name=dict(type='str', required=True),
         service_namespace=dict(type='str', required=True, choices=['appstream', 'dynamodb', 'ec2', 'ecs', 'elasticmapreduce']),

@@ -254,7 +254,7 @@ fallback_lb_method:
   type: str
   sample: fewest-hops
 fallback_ip:
-  description: New fallback IP used when load balacing using the C(fallback_ip) method.
+  description: New fallback IP used when load balancing using the C(fallback_ip) method.
   returned: changed
   type: str
   sample: 10.10.10.10

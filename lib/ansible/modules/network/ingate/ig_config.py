@@ -268,7 +268,7 @@ add:
     href:
       description: The REST API URL to the added row
       returned: success
-      type: string
+      type: str
       sample: http://192.168.1.1/api/v1/misc/dns_servers/2
     data:
       description: Column names/values
@@ -288,7 +288,7 @@ delete:
     table:
       description: The name of the table
       returned: success
-      type: string
+      type: str
       sample: misc.dns_servers
     data:
       description: Column names/values
@@ -308,12 +308,12 @@ get:
     table:
       description: The name of the table
       returned: success
-      type: string
+      type: str
       sample: Testname
     href:
       description: The REST API URL to the row
       returned: success
-      type: string
+      type: str
       sample: http://192.168.1.1/api/v1/misc/dns_servers/1
     data:
       description: Column names/values
@@ -333,18 +333,18 @@ modify:
     table:
       description: The name of the table
       returned: success
-      type: string
+      type: str
       sample: Testname
     href:
       description: The REST API URL to the modified row
       returned: success
-      type: string
+      type: str
       sample: http://192.168.1.1/api/v1/misc/dns_servers/1
     data:
       description: Column names/values
       returned: success
       type: complex
-      gsample: {'number': '2', 'server': '10.48.254.33'}
+      sample: {'number': '2', 'server': '10.48.254.33'}
     id:
       description: The row id
       returned: success
@@ -358,7 +358,7 @@ revert:
     msg:
       description: The command status message
       returned: success
-      type: string
+      type: str
       sample: reverted the configuration to the last applied configuration.
 factory:
   description: A command status message
@@ -368,7 +368,7 @@ factory:
     msg:
       description: The command status message
       returned: success
-      type: string
+      type: str
       sample: reverted the configuration to the factory configuration.
 store:
   description: A command status message
@@ -378,7 +378,7 @@ store:
     msg:
       description: The command status message
       returned: success
-      type: string
+      type: str
       sample: Successfully applied and saved the configuration.
 return_rowid:
   description: The matched row id(s).
@@ -386,23 +386,23 @@ return_rowid:
   type: list
   sample: [1, 3]
 download:
-  description: Configuraton database and meta data
+  description: Configuration database and meta data
   returned: when C(download) is yes and success
   type: complex
   contains:
     config:
       description: The configuration database
       returned: success
-      type: string
+      type: str
     filename:
       description: A suggested name for the configuration
       returned: success
-      type: string
+      type: str
       sample: testname_2018-10-01T214040.cfg
     mimetype:
       description: The mimetype
       returned: success
-      type: string
+      type: str
       sample: application/x-config-database
 '''
 

@@ -170,7 +170,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network.ios.ios import get_config, load_config
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import ios_argument_spec
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.network.common.utils import conditional, remove_default_spec
 
@@ -466,7 +466,6 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

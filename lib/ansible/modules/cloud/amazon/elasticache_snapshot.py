@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: elasticache_snapshot
-short_description: Manage cache snapshots in Amazon Elasticache.
+short_description: Manage cache snapshots in Amazon ElastiCache
 description:
-  - Manage cache snapshots in Amazon Elasticache.
+  - Manage cache snapshots in Amazon ElastiCache.
   - Returns information about the specified snapshot.
 version_added: "2.3"
 author: "Sloane Hertel (@s-hertel)"
@@ -27,24 +27,31 @@ requirements: [ boto3, botocore ]
 options:
   name:
     description:
-      - The name of the snapshot we want to create, copy, delete
-    required: yes
+      - The name of the snapshot we want to create, copy, delete.
+    required: true
+    type: str
   state:
     description:
       - Actions that will create, destroy, or copy a snapshot.
+    required: true
     choices: ['present', 'absent', 'copy']
+    type: str
   replication_id:
     description:
       - The name of the existing replication group to make the snapshot.
+    type: str
   cluster_id:
     description:
       - The name of an existing cache cluster in the replication group to make the snapshot.
+    type: str
   target:
     description:
-      - The name of a snapshot copy
+      - The name of a snapshot copy.
+    type: str
   bucket:
     description:
-      - The s3 bucket to which the snapshot is exported
+      - The s3 bucket to which the snapshot is exported.
+    type: str
 """
 
 EXAMPLES = """
@@ -125,7 +132,7 @@ from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_ar
 
 
 def create(module, connection, replication_id, cluster_id, name):
-    """ Create an Elasticache backup. """
+    """ Create an ElastiCache backup. """
     try:
         response = connection.create_snapshot(ReplicationGroupId=replication_id,
                                               CacheClusterId=cluster_id,
@@ -141,7 +148,7 @@ def create(module, connection, replication_id, cluster_id, name):
 
 
 def copy(module, connection, name, target, bucket):
-    """ Copy an Elasticache backup. """
+    """ Copy an ElastiCache backup. """
     try:
         response = connection.copy_snapshot(SourceSnapshotName=name,
                                             TargetSnapshotName=target,
@@ -153,7 +160,7 @@ def copy(module, connection, name, target, bucket):
 
 
 def delete(module, connection, name):
-    """ Delete an Elasticache backup. """
+    """ Delete an ElastiCache backup. """
     try:
         response = connection.delete_snapshot(SnapshotName=name)
         changed = True

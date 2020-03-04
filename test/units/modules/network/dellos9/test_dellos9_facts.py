@@ -71,10 +71,10 @@ class TestDellos9Facts(TestDellos9Module):
         self.assertIn('hardware', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
-        self.assertEquals('dellos9_sw1', ansible_facts['ansible_net_hostname'])
+        self.assertEqual('dellos9_sw1', ansible_facts['ansible_net_hostname'])
         self.assertIn('fortyGigE 0/24', ansible_facts['ansible_net_interfaces'].keys())
-        self.assertEquals(3128820, ansible_facts['ansible_net_memtotal_mb'])
-        self.assertEquals(3125722, ansible_facts['ansible_net_memfree_mb'])
+        self.assertEqual(3128820, ansible_facts['ansible_net_memtotal_mb'])
+        self.assertEqual(3125722, ansible_facts['ansible_net_memfree_mb'])
 
     def test_dellos9_facts_gather_subset_config(self):
         set_module_args({'gather_subset': 'config'})
@@ -82,7 +82,7 @@ class TestDellos9Facts(TestDellos9Module):
         ansible_facts = result['ansible_facts']
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('config', ansible_facts['ansible_net_gather_subset'])
-        self.assertEquals('dellos9_sw1', ansible_facts['ansible_net_hostname'])
+        self.assertEqual('dellos9_sw1', ansible_facts['ansible_net_hostname'])
         self.assertIn('ansible_net_config', ansible_facts)
 
     def test_dellos9_facts_gather_subset_hardware(self):
@@ -91,9 +91,9 @@ class TestDellos9Facts(TestDellos9Module):
         ansible_facts = result['ansible_facts']
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('hardware', ansible_facts['ansible_net_gather_subset'])
-        self.assertEquals(['flash', 'fcmfs', 'nfsmount', 'ftp', 'tftp', 'scp', 'http', 'https'], ansible_facts['ansible_net_filesystems'])
-        self.assertEquals(3128820, ansible_facts['ansible_net_memtotal_mb'])
-        self.assertEquals(3125722, ansible_facts['ansible_net_memfree_mb'])
+        self.assertEqual(['flash', 'fcmfs', 'nfsmount', 'ftp', 'tftp', 'scp', 'http', 'https'], ansible_facts['ansible_net_filesystems'])
+        self.assertEqual(3128820, ansible_facts['ansible_net_memtotal_mb'])
+        self.assertEqual(3125722, ansible_facts['ansible_net_memfree_mb'])
 
     def test_dellos9_facts_gather_subset_interfaces(self):
         set_module_args({'gather_subset': 'interfaces'})
@@ -102,5 +102,5 @@ class TestDellos9Facts(TestDellos9Module):
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('fortyGigE 0/24', ansible_facts['ansible_net_interfaces'].keys())
-        self.assertEquals(['Ma 0/0'], list(ansible_facts['ansible_net_neighbors'].keys()))
+        self.assertEqual(['Ma 0/0'], list(ansible_facts['ansible_net_neighbors'].keys()))
         self.assertIn('ansible_net_interfaces', ansible_facts)

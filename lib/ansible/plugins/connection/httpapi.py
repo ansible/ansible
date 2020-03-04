@@ -77,14 +77,14 @@ options:
     default: True
     vars:
       - name: ansible_httpapi_validate_certs
-  timeout:
-    type: int
+  use_proxy:
+    type: boolean
+    version_added: "2.9"
     description:
-      - Sets the connection time, in seconds, for communicating with the
-        remote device.  This timeout is used as the default timeout value for
-        commands when issuing a command to the network CLI.  If the command
-        does not return in timeout seconds, an error is generated.
-    default: 120
+      - Whether to use https_proxy for requests.
+    default: True
+    vars:
+      - name: ansible_httpapi_use_proxy
   become:
     type: boolean
     description:
@@ -193,8 +193,9 @@ class Connection(NetworkConnectionBase):
 
             self.httpapi = httpapi_loader.get(self._network_os, self)
             if self.httpapi:
-                self._sub_plugin = {'type': 'httpapi', 'name': self._network_os, 'obj': self.httpapi}
-                self.queue_message('vvvv', 'loaded API plugin for network_os %s' % self._network_os)
+                self._sub_plugin = {'type': 'httpapi', 'name': self.httpapi._load_name, 'obj': self.httpapi}
+                self.queue_message('vvvv', 'loaded API plugin %s from path %s for network_os %s' %
+                                   (self.httpapi._load_name, self.httpapi._original_path, self._network_os))
             else:
                 raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
 
@@ -235,9 +236,9 @@ class Connection(NetworkConnectionBase):
             self.queue_message('vvv', "ESTABLISH HTTP(S) CONNECTFOR USER: %s TO %s" %
                                (self._play_context.remote_user, self._url))
             self.httpapi.set_become(self._play_context)
-            self.httpapi.login(self.get_option('remote_user'), self.get_option('password'))
-
             self._connected = True
+
+            self.httpapi.login(self.get_option('remote_user'), self.get_option('password'))
 
     def close(self):
         '''
@@ -256,7 +257,9 @@ class Connection(NetworkConnectionBase):
         Sends the command to the device over api
         '''
         url_kwargs = dict(
-            timeout=self.get_option('timeout'), validate_certs=self.get_option('validate_certs'),
+            timeout=self.get_option('persistent_command_timeout'),
+            validate_certs=self.get_option('validate_certs'),
+            use_proxy=self.get_option("use_proxy"),
             headers={},
         )
         url_kwargs.update(kwargs)

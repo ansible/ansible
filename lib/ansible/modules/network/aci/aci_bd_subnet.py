@@ -41,7 +41,7 @@ options:
   mask:
     description:
     - The subnet mask for the Subnet.
-    - This is the number assocated with CIDR notation.
+    - This is the number associated with CIDR notation.
     - For IPv4 addresses, accepted values range between C(0) and C(32).
     - For IPv6 addresses, accepted Values range between C(0) and C(128).
     type: int
@@ -62,7 +62,7 @@ options:
     type: str
   route_profile_l3_out:
     description:
-    - The L3 Out that contains the assocated Route Profile.
+    - The L3 Out that contains the associated Route Profile.
     type: str
   scope:
     description:
@@ -82,7 +82,7 @@ options:
     description:
     - Determines the Subnet's Control State.
     - The C(querier_ip) option is used to treat the gateway_ip as an IGMP querier source IP.
-    - The C(nd_ra) option is used to treate the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
+    - The C(nd_ra) option is used to treat the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
     - The C(no_gw) option is used to remove default gateway functionality from the gateway address.
     - The APIC defaults to C(nd_ra) when unset during creation.
     type: str
@@ -104,6 +104,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 notes:
 - The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
@@ -361,6 +366,7 @@ def main():
         subnet_control=dict(type='str', choices=['nd_ra', 'no_gw', 'querier_ip', 'unspecified']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -375,32 +381,33 @@ def main():
 
     aci = ACIModule(module)
 
-    description = module.params['description']
-    enable_vip = aci.boolean(module.params['enable_vip'])
-    tenant = module.params['tenant']
-    bd = module.params['bd']
-    gateway = module.params['gateway']
-    mask = module.params['mask']
+    description = module.params.get('description')
+    enable_vip = aci.boolean(module.params.get('enable_vip'))
+    tenant = module.params.get('tenant')
+    bd = module.params.get('bd')
+    gateway = module.params.get('gateway')
+    mask = module.params.get('mask')
     if mask is not None and mask not in range(0, 129):
-        # TODO: split checkes between IPv4 and IPv6 Addresses
+        # TODO: split checks between IPv4 and IPv6 Addresses
         module.fail_json(msg='Valid Subnet Masks are 0 to 32 for IPv4 Addresses and 0 to 128 for IPv6 addresses')
     if gateway is not None:
         gateway = '{0}/{1}'.format(gateway, str(mask))
-    subnet_name = module.params['subnet_name']
-    nd_prefix_policy = module.params['nd_prefix_policy']
-    preferred = aci.boolean(module.params['preferred'])
-    route_profile = module.params['route_profile']
-    route_profile_l3_out = module.params['route_profile_l3_out']
-    scope = module.params['scope']
+    subnet_name = module.params.get('subnet_name')
+    nd_prefix_policy = module.params.get('nd_prefix_policy')
+    preferred = aci.boolean(module.params.get('preferred'))
+    route_profile = module.params.get('route_profile')
+    route_profile_l3_out = module.params.get('route_profile_l3_out')
+    scope = module.params.get('scope')
     if scope is not None:
         if 'private' in scope and 'public' in scope:
             module.fail_json(msg="Parameter 'scope' cannot be both 'private' and 'public', got: %s" % scope)
         else:
             scope = ','.join(sorted(scope))
-    state = module.params['state']
-    subnet_control = module.params['subnet_control']
+    state = module.params.get('state')
+    subnet_control = module.params.get('subnet_control')
     if subnet_control:
         subnet_control = SUBNET_CONTROL_MAPPING[subnet_control]
+    name_alias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(
@@ -437,6 +444,7 @@ def main():
                 preferred=preferred,
                 scope=scope,
                 virtual=enable_vip,
+                nameAlias=name_alias,
             ),
             child_configs=[
                 {'fvRsBDSubnetToProfile': {'attributes': {'tnL3extOutName': route_profile_l3_out, 'tnRtctrlProfileName': route_profile}}},

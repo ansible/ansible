@@ -1,0 +1,2 @@
+minor_changes:
+- Correct datatype for state in vmware_host_lockdown module.

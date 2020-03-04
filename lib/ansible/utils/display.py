@@ -57,15 +57,30 @@ class FilterBlackList(logging.Filter):
         return not any(f.filter(record) for f in self.blacklist)
 
 
+class FilterUserInjector(logging.Filter):
+    """
+    This is a filter which injects the current user as the 'user' attribute on each record. We need to add this filter
+    to all logger handlers so that 3rd party libraries won't print an exception due to user not being defined.
+    """
+    username = getpass.getuser()
+
+    def filter(self, record):
+        record.user = FilterUserInjector.username
+        return True
+
+
 logger = None
 # TODO: make this a callback event instead
 if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=logging.INFO, format='%(asctime)s p=%(user)s u=%(process)d | %(message)s')
-        logger = logging.LoggerAdapter(logging.getLogger('ansible'), {'user': getpass.getuser()})
+        logging.basicConfig(filename=path, level=logging.DEBUG,
+                            format='%(asctime)s p=%(process)d u=%(user)s n=%(name)s | %(message)s')
+
+        logger = logging.getLogger('ansible')
         for handler in logging.root.handlers:
             handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
+            handler.addFilter(FilterUserInjector())
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
@@ -129,21 +144,22 @@ class Display(with_metaclass(Singleton, object)):
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
+    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
         """
 
         nocolor = msg
-        if color:
-            msg = stringc(msg, color)
 
         if not log_only:
-            if not msg.endswith(u'\n'):
+            if not msg.endswith(u'\n') and newline:
                 msg2 = msg + u'\n'
             else:
                 msg2 = msg
+
+            if color:
+                msg2 = stringc(msg2, color)
 
             msg2 = to_bytes(msg2, encoding=self._output_encoding(stderr=stderr))
             if sys.version_info >= (3,):
@@ -248,7 +264,7 @@ class Display(with_metaclass(Singleton, object)):
     def warning(self, msg, formatted=False):
 
         if not formatted:
-            new_msg = "\n[WARNING]: %s" % msg
+            new_msg = "[WARNING]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
             new_msg = "\n".join(wrapped) + "\n"
         else:

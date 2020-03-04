@@ -66,7 +66,7 @@ options:
     type: int
   description:
     description:
-    - Description for the End point rentention policy.
+    - Description for the End point retention policy.
     type: str
     aliases: [ descr ]
   state:
@@ -76,6 +76,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
@@ -264,6 +269,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         move_frequency=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -275,36 +281,37 @@ def main():
         ],
     )
 
-    epr_policy = module.params['epr_policy']
-    bounce_age = module.params['bounce_age']
+    epr_policy = module.params.get('epr_policy')
+    bounce_age = module.params.get('bounce_age')
     if bounce_age is not None and bounce_age != 0 and bounce_age not in range(150, 65536):
         module.fail_json(msg="The bounce_age must be a value of 0 or between 150 and 65535")
     if bounce_age == 0:
         bounce_age = 'infinite'
-    bounce_trigger = module.params['bounce_trigger']
+    bounce_trigger = module.params.get('bounce_trigger')
     if bounce_trigger is not None:
         bounce_trigger = BOUNCE_TRIG_MAPPING[bounce_trigger]
-    description = module.params['description']
-    hold_interval = module.params['hold_interval']
+    description = module.params.get('description')
+    hold_interval = module.params.get('hold_interval')
     if hold_interval is not None and hold_interval not in range(5, 65536):
         module.fail_json(msg="The hold_interval must be a value between 5 and 65535")
-    local_ep_interval = module.params['local_ep_interval']
+    local_ep_interval = module.params.get('local_ep_interval')
     if local_ep_interval is not None and local_ep_interval != 0 and local_ep_interval not in range(120, 65536):
         module.fail_json(msg="The local_ep_interval must be a value of 0 or between 120 and 65535")
     if local_ep_interval == 0:
         local_ep_interval = "infinite"
-    move_frequency = module.params['move_frequency']
+    move_frequency = module.params.get('move_frequency')
     if move_frequency is not None and move_frequency not in range(65536):
         module.fail_json(msg="The move_frequency must be a value between 0 and 65535")
     if move_frequency == 0:
         move_frequency = "none"
-    remote_ep_interval = module.params['remote_ep_interval']
+    remote_ep_interval = module.params.get('remote_ep_interval')
     if remote_ep_interval is not None and remote_ep_interval not in range(120, 65536):
         module.fail_json(msg="The remote_ep_interval must be a value of 0 or between 120 and 65535")
     if remote_ep_interval == 0:
         remote_ep_interval = "infinite"
-    state = module.params['state']
-    tenant = module.params['tenant']
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
+    name_alias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -336,6 +343,7 @@ def main():
                 localEpAgeIntvl=local_ep_interval,
                 remoteEpAgeIntvl=remote_ep_interval,
                 moveFreq=move_frequency,
+                nameAlias=name_alias,
             ),
         )
 

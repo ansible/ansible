@@ -23,33 +23,40 @@ options:
     description:
       - VPC id of the requesting VPC.
     required: false
+    type: str
   peering_id:
     description:
       - Peering connection id.
     required: false
+    type: str
   peer_region:
     description:
       - Region of the accepting VPC.
     required: false
     version_added: '2.5'
+    type: str
   peer_vpc_id:
     description:
       - VPC id of the accepting VPC.
     required: false
+    type: str
   peer_owner_id:
     description:
       - The AWS account number for cross account peering.
     required: false
+    type: str
   tags:
     description:
       - Dictionary of tags to look for and apply when creating a Peering Connection.
     required: false
+    type: dict
   state:
     description:
       - Create, delete, accept, reject a peering connection.
     required: false
     default: present
     choices: ['present', 'absent', 'accept', 'reject']
+    type: str
 author: Mike Mochan (@mmochan)
 extends_documentation_fragment:
     - aws

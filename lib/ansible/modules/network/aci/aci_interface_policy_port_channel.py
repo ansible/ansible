@@ -90,6 +90,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 seealso:
 - name: APIC Management Information Model reference
@@ -235,6 +240,7 @@ def main():
         suspend_individual=dict(type='bool'),
         symmetric_hash=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -246,28 +252,29 @@ def main():
         ],
     )
 
-    port_channel = module.params['port_channel']
-    description = module.params['description']
-    min_links = module.params['min_links']
+    port_channel = module.params.get('port_channel')
+    description = module.params.get('description')
+    min_links = module.params.get('min_links')
     if min_links is not None and min_links not in range(1, 17):
         module.fail_json(msg='The "min_links" must be a value between 1 and 16')
-    max_links = module.params['max_links']
+    max_links = module.params.get('max_links')
     if max_links is not None and max_links not in range(1, 17):
         module.fail_json(msg='The "max_links" must be a value between 1 and 16')
-    mode = module.params['mode']
-    state = module.params['state']
+    mode = module.params.get('mode')
+    state = module.params.get('state')
+    name_alias = module.params.get('name_alias')
 
     # Build ctrl value for request
     ctrl = []
-    if module.params['fast_select'] is True:
+    if module.params.get('fast_select') is True:
         ctrl.append('fast-sel-hot-stdby')
-    if module.params['graceful_convergence'] is True:
+    if module.params.get('graceful_convergence') is True:
         ctrl.append('graceful-conv')
-    if module.params['load_defer'] is True:
+    if module.params.get('load_defer') is True:
         ctrl.append('load-defer')
-    if module.params['suspend_individual'] is True:
+    if module.params.get('suspend_individual') is True:
         ctrl.append('susp-individual')
-    if module.params['symmetric_hash'] is True:
+    if module.params.get('symmetric_hash') is True:
         ctrl.append('symmetric-hash')
     if not ctrl:
         ctrl = None
@@ -296,6 +303,7 @@ def main():
                 minLinks=min_links,
                 maxLinks=max_links,
                 mode=mode,
+                nameAlias=name_alias,
             ),
         )
 

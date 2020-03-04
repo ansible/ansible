@@ -1,0 +1,36 @@
+---
+- debug:
+      msg: "START iosxr_l2_interfaces empty_config integration tests on connection={{ ansible_connection }}"
+
+- name: Merged with empty config should give appropriate error message
+  iosxr_l2_interfaces:
+    config:
+    state: merged
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - result.msg == 'value of config parameter must not be empty for state merged'
+
+- name: Replaced with empty config should give appropriate error message
+  iosxr_l2_interfaces:
+    config:
+    state: replaced
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - result.msg == 'value of config parameter must not be empty for state replaced'
+
+- name: Overridden with empty config should give appropriate error message
+  iosxr_l2_interfaces:
+    config:
+    state: overridden
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - result.msg == 'value of config parameter must not be empty for state overridden'

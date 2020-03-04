@@ -1,4 +1,15 @@
 ---
+- set_fact:
+    system_potentially_has_no_algorithm_support: "{{ ansible_os_family == 'FreeBSD' }}"
+
+- name: Validate privatekey1 idempotency and content returned
+  assert:
+    that:
+      - privatekey1_idempotence is not changed
+      - privatekey1.privatekey == lookup('file', output_dir ~ '/privatekey1.pem', rstrip=False)
+      - privatekey1.privatekey == privatekey1_idempotence.privatekey
+
+
 - name: Validate privatekey1 (test - RSA key with size 4096 bits)
   shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey1.pem  | grep Private | sed 's/\\(RSA *\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
   register: privatekey1
@@ -38,6 +49,13 @@
   assert:
     that:
       - privatekey4.stat.exists == False
+
+- name: Validate privatekey4 removal behavior
+  assert:
+    that:
+      - privatekey4_delete is changed
+      - privatekey4_delete.privatekey is none
+      - privatekey4_delete_idempotence is not changed
 
 
 - name: Validate privatekey5 (test - Passphrase protected key + idempotence)
@@ -108,17 +126,18 @@
 - name: Validate other type generation (just check changed)
   assert:
     that:
-    - item is changed
+    - (item is succeeded and item is changed) or
+      (item is failed and 'Cryptography backend does not support the algorithm required for ' in item.msg and system_potentially_has_no_algorithm_support)
   loop: "{{ privatekey_t1_generate.results }}"
   when: "'skip_reason' not in item"
   loop_control:
     label: "{{ item.item.type }}"
 
-
 - name: Validate other type generation idempotency
   assert:
     that:
-    - item is not changed
+    - (item is succeeded and item is not changed) or
+      (item is failed and 'Cryptography backend does not support the algorithm required for ' in item.msg and system_potentially_has_no_algorithm_support)
   loop: "{{ privatekey_t1_idempotency.results }}"
   when: "'skip_reason' not in item"
   loop_control:
@@ -160,3 +179,37 @@
       - privatekey_mode_3 is changed
       - privatekey_mode_3_stat.stat.mode == '0400'
       - privatekey_mode_1_stat.stat.mtime != privatekey_mode_3_stat.stat.mtime
+
+- name: Validate format 1
+  assert:
+    that:
+      - privatekey_fmt_1_step_1 is changed
+      - privatekey_fmt_1_step_2 is not changed
+      - privatekey_fmt_1_step_3 is not changed
+      - privatekey_fmt_1_step_4 is changed
+      - privatekey_fmt_1_step_5 is not changed
+      - privatekey_fmt_1_step_6 is not changed
+      - privatekey_fmt_1_step_7 is changed
+      - privatekey_fmt_1_step_8 is failed
+      - privatekey_fmt_1_step_9 is changed
+      - privatekey_fmt_1_step_9_before.public_key == privatekey_fmt_1_step_9_after.public_key
+  when: 'select_crypto_backend == "cryptography"'
+
+- name: Validate format 2 (failed)
+  assert:
+    that:
+      - system_potentially_has_no_algorithm_support
+      - privatekey_fmt_2_step_1 is failed
+      - "'Cryptography backend does not support the algorithm required for ' in privatekey_fmt_2_step_1.msg"
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=") and privatekey_fmt_2_step_1 is failed'
+
+- name: Validate format 2
+  assert:
+    that:
+      - privatekey_fmt_2_step_1 is succeeded and privatekey_fmt_2_step_1 is changed
+      - privatekey_fmt_2_step_2 is succeeded and privatekey_fmt_2_step_2 is not changed
+      - privatekey_fmt_2_step_3 is succeeded and privatekey_fmt_2_step_3 is changed
+      - privatekey_fmt_2_step_4 is succeeded and privatekey_fmt_2_step_4 is not changed
+      - privatekey_fmt_2_step_5 is succeeded and privatekey_fmt_2_step_5 is not changed
+      - privatekey_fmt_2_step_6 is succeeded and privatekey_fmt_2_step_6 is changed
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=") and privatekey_fmt_2_step_1 is not failed'

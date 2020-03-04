@@ -12,7 +12,7 @@ is the same as Ansible, it is just executed in a different manner. Since
 Ansible 2.4, the ``win_dsc`` module has been added and can be used to leverage
 existing DSC resources when interacting with a Windows host.
 
-More details on DSC can be viewed at `DSC Overview <https://docs.microsoft.com/en-us/powershell/dsc/overview>`_.
+More details on DSC can be viewed at `DSC Overview <https://docs.microsoft.com/en-us/powershell/scripting/dsc/overview/overview>`_.
 
 Host Requirements
 `````````````````
@@ -27,7 +27,7 @@ Why Use DSC?
 ````````````
 DSC and Ansible modules have a common goal which is to define and ensure the state of a
 resource. Because of
-this, resources like the DSC `File resource <https://docs.microsoft.com/en-us/powershell/dsc/fileresource>`_
+this, resources like the DSC `File resource <https://docs.microsoft.com/en-us/powershell/scripting/dsc/reference/resources/windows/fileresource>`_
 and Ansible ``win_file`` can be used to achieve the same result. Deciding which to use depends
 on the scenario.
 
@@ -59,9 +59,9 @@ How to Use DSC?
 ```````````````
 The ``win_dsc`` module takes in a free-form of options so that it changes
 according to the resource it is managing. A list of built in resources can be
-found at `resources <https://docs.microsoft.com/en-us/powershell/dsc/resources>`_.
+found at `resources <https://docs.microsoft.com/en-us/powershell/scripting/dsc/resources/resources>`_.
 
-Using the `Registry <https://docs.microsoft.com/en-us/powershell/dsc/registryresource>`_
+Using the `Registry <https://docs.microsoft.com/en-us/powershell/scripting/dsc/reference/resources/windows/registryresource>`_
 resource as an example, this is the DSC definition as documented by Microsoft:
 
 .. code-block:: powershell
@@ -84,7 +84,7 @@ used - in this case the ``resource_name`` should be set to ``Registry``. The
 installed; if left blank it will default to the latest version. The other
 options are parameters that are used to define the resource, such as ``Key`` and
 ``ValueName``. While the options in the task are not case sensitive,
-keeping the case as-is is recommended becuase it makes it easier to distinguish DSC
+keeping the case as-is is recommended because it makes it easier to distinguish DSC
 resource options from Ansible's ``win_dsc`` options.
 
 This is what the Ansible task version of the above DSC Registry resource would look like:
@@ -210,7 +210,7 @@ For example, to define a ``[CimInstance]`` value in Ansible:
       Windows: yes
 
 In the above example, the CIM instance is a representation of the class
-`MSFT_xWebAuthenticationInformation <https://github.com/PowerShell/xWebAdministration/blob/dev/DSCResources/MSFT_xWebsite/MSFT_xWebsite.schema.mof>`_.
+`MSFT_xWebAuthenticationInformation <https://github.com/dsccommunity/xWebAdministration/blob/master/source/DSCResources/MSFT_xWebSite/MSFT_xWebSite.schema.mof>`_.
 This class accepts four boolean variables, ``Anonymous``, ``Basic``,
 ``Digest``, and ``Windows``. The keys to use in a ``[CimInstance]`` depend on
 the class it represents. Please read through the documentation of the resource
@@ -265,7 +265,7 @@ like this example:
       Port: 80
       IPAddress: '*'
 
-The above example, is an array with two values of the class `MSFT_xWebBindingInformation <https://github.com/PowerShell/xWebAdministration/blob/dev/DSCResources/MSFT_xWebsite/MSFT_xWebsite.schema.mof>`_.
+The above example, is an array with two values of the class `MSFT_xWebBindingInformation <https://github.com/dsccommunity/xWebAdministration/blob/master/source/DSCResources/MSFT_xWebSite/MSFT_xWebSite.schema.mof>`_.
 When defining a ``[CimInstance[]]``, be sure to read the resource documentation
 to find out what keys to use in the definition.
 

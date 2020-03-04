@@ -3,13 +3,16 @@
 # Copyright (c) 2015 Mike Mochan
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
 module: aws_waf_condition
-short_description: create and delete WAF Conditions
+short_description: Create and delete WAF Conditions
 description:
   - Read the AWS documentation for WAF
     U(https://aws.amazon.com/documentation/waf/)
@@ -24,9 +27,10 @@ extends_documentation_fragment:
 options:
     name:
         description: Name of the Web Application Firewall condition to manage.
-        required: yes
+        required: true
+        type: str
     type:
-        description: the type of matching to perform.
+        description: The type of matching to perform.
         choices:
         - byte
         - geo
@@ -35,30 +39,93 @@ options:
         - size
         - sql
         - xss
+        type: str
+        required: true
     filters:
         description:
         - A list of the filters against which to match.
-        - For I(type)=C(byte), valid keys are C(field_to_match), C(position), C(header), C(transformation).
-        - For I(type)=C(geo), the only valid key is C(country).
-        - For I(type)=C(ip), the only valid key is C(ip_address).
-        - For I(type)=C(regex), valid keys are C(field_to_match), C(transformation) and C(regex_pattern).
-        - For I(type)=C(size), valid keys are C(field_to_match), C(transformation), C(comparison) and C(size).
-        - For I(type)=C(sql), valid keys are C(field_to_match) and C(transformation).
-        - For I(type)=C(xss), valid keys are C(field_to_match) and C(transformation).
-        - I(field_to_match) can be one of C(uri), C(query_string), C(header) C(method) and C(body).
-        - If I(field_to_match) is C(header), then C(header) must also be specified.
-        - I(transformation) can be one of C(none), C(compress_white_space), C(html_entity_decode), C(lowercase), C(cmd_line), C(url_decode).
-        - I(position), can be one of C(exactly), C(starts_with), C(ends_with), C(contains), C(contains_word).
-        - I(comparison) can be one of C(EQ), C(NE), C(LE), C(LT), C(GE), C(GT).
-        - I(target_string) is a maximum of 50 bytes.
-        - I(regex_pattern) is a dict with a C(name) key and C(regex_strings) list of strings to match.
+        - For I(type=byte), valid keys are I(field_to_match), I(position), I(header), I(transformation) and I(target_string).
+        - For I(type=geo), the only valid key is I(country).
+        - For I(type=ip), the only valid key is I(ip_address).
+        - For I(type=regex), valid keys are I(field_to_match), I(transformation) and I(regex_pattern).
+        - For I(type=size), valid keys are I(field_to_match), I(transformation), I(comparison) and I(size).
+        - For I(type=sql), valid keys are I(field_to_match) and I(transformation).
+        - For I(type=xss), valid keys are I(field_to_match) and I(transformation).
+        - Required when I(state=present).
+        type: list
+        elements: dict
+        suboptions:
+            field_to_match:
+                description:
+                - The field upon which to perform the match.
+                - Valid when I(type=byte), I(type=regex), I(type=sql) or I(type=xss).
+                type: str
+                choices: ['uri', 'query_string', 'header', 'method', 'body']
+            position:
+                description:
+                - Where in the field the match needs to occur.
+                - Only valid when I(type=byte).
+                type: str
+                choices: ['exactly', 'starts_with', 'ends_with', 'contains', 'contains_word']
+            header:
+                description:
+                - Which specific header should be matched.
+                - Required when I(field_to_match=header).
+                - Valid when I(type=byte).
+                type: str
+            transformation:
+                description:
+                - A transform to apply on the field prior to performing the match.
+                - Valid when I(type=byte), I(type=regex), I(type=sql) or I(type=xss).
+                type: str
+                choices: ['none', 'compress_white_space', 'html_entity_decode', 'lowercase', 'cmd_line', 'url_decode']
+            country:
+                description:
+                - Value of geo constraint (typically a two letter country code).
+                - The only valid key when I(type=geo).
+                type: str
+            ip_address:
+                description:
+                - An IP Address or CIDR to match.
+                - The only valid key when I(type=ip).
+                type: str
+            regex_pattern:
+                description:
+                - A dict describing the regular expressions used to perform the match.
+                - Only valid when I(type=regex).
+                type: dict
+                suboptions:
+                    name:
+                        description: A name to describe the set of patterns.
+                        type: str
+                    regex_strings:
+                        description: A list of regular expressions to match.
+                        type: list
+                        elements: str
+            comparison:
+                description:
+                - What type of comparison to perform.
+                - Only valid key when I(type=size).
+                type: str
+                choices: ['EQ', 'NE', 'LE', 'LT', 'GE', 'GT']
+            size:
+                description:
+                - The size of the field (in bytes).
+                - Only valid key when I(type=size).
+                type: int
+            target_string:
+                description:
+                - The string to search for.
+                - May be up to 50 bytes.
+                - Valid when I(type=byte).
+                type: str
     purge_filters:
         description:
         - Whether to remove existing filters from a condition if not passed in I(filters).
-        default: False
+        default: false
         type: bool
     waf_regional:
-        description: Whether to use waf_regional module. Defaults to false.
+        description: Whether to use waf-regional module.
         default: false
         required: no
         type: bool
@@ -69,6 +136,7 @@ options:
         - present
         - absent
         default: present
+        type: str
 
 '''
 
@@ -142,32 +210,32 @@ EXAMPLES = '''
 
 RETURN = '''
 condition:
-  description: condition returned by operation
+  description: Condition returned by operation.
   returned: always
   type: complex
   contains:
     condition_id:
-      description: type-agnostic ID for the condition
+      description: Type-agnostic ID for the condition.
       returned: when state is present
       type: str
       sample: dd74b1ff-8c06-4a4f-897a-6b23605de413
     byte_match_set_id:
-      description: ID for byte match set
+      description: ID for byte match set.
       returned: always
       type: str
       sample: c4882c96-837b-44a2-a762-4ea87dbf812b
     byte_match_tuples:
-      description: list of byte match tuples
+      description: List of byte match tuples.
       returned: always
       type: complex
       contains:
         field_to_match:
-          description: Field to match
+          description: Field to match.
           returned: always
           type: complex
           contains:
             data:
-              description: Which specific header (if type is header)
+              description: Which specific header (if type is header).
               type: str
               sample: content-type
             type:
@@ -175,32 +243,32 @@ condition:
               type: str
               sample: HEADER
         positional_constraint:
-          description: Position in the field to match
+          description: Position in the field to match.
           type: str
           sample: STARTS_WITH
         target_string:
-          description: String to look for
+          description: String to look for.
           type: str
           sample: Hello
         text_transformation:
-          description: Transformation to apply to the field before matching
+          description: Transformation to apply to the field before matching.
           type: str
           sample: NONE
     geo_match_constraints:
-      description: List of geographical constraints
+      description: List of geographical constraints.
       returned: when type is geo and state is present
       type: complex
       contains:
         type:
-          description: Type of geo constraint
+          description: Type of geo constraint.
           type: str
           sample: Country
         value:
-          description: Value of geo constraint (typically a country code)
+          description: Value of geo constraint (typically a country code).
           type: str
           sample: AT
     geo_match_set_id:
-      description: ID of the geo match set
+      description: ID of the geo match set.
       returned: when type is geo and state is present
       type: str
       sample: dd74b1ff-8c06-4a4f-897a-6b23605de413
@@ -210,46 +278,46 @@ condition:
       type: complex
       contains:
         type:
-          description: Type of IP address (IPV4 or IPV6)
+          description: Type of IP address (IPV4 or IPV6).
           returned: always
           type: str
           sample: IPV4
         value:
-          description: IP address
+          description: IP address.
           returned: always
           type: str
           sample: 10.0.0.0/8
     ip_set_id:
-      description: ID of condition
+      description: ID of condition.
       returned: when type is ip and state is present
       type: str
       sample: 78ad334a-3535-4036-85e6-8e11e745217b
     name:
-      description: Name of condition
+      description: Name of condition.
       returned: when state is present
       type: str
       sample: my_waf_condition
     regex_match_set_id:
-      description: ID of the regex match set
+      description: ID of the regex match set.
       returned: when type is regex and state is present
       type: str
       sample: 5ea3f6a8-3cd3-488b-b637-17b79ce7089c
     regex_match_tuples:
-      description: List of regex matches
+      description: List of regex matches.
       returned: when type is regex and state is present
       type: complex
       contains:
         field_to_match:
-          description: Field on which the regex match is applied
+          description: Field on which the regex match is applied.
           type: complex
           contains:
             type:
-              description: The field name
+              description: The field name.
               returned: when type is regex and state is present
               type: str
               sample: QUERY_STRING
         regex_pattern_set_id:
-          description: ID of the regex pattern
+          description: ID of the regex pattern.
           type: str
           sample: 6fdf7f2d-9091-445c-aef2-98f3c051ac9e
         text_transformation:
@@ -257,69 +325,69 @@ condition:
           type: str
           sample: NONE
     size_constraint_set_id:
-      description: ID of the size constraint set
+      description: ID of the size constraint set.
       returned: when type is size and state is present
       type: str
       sample: de84b4b3-578b-447e-a9a0-0db35c995656
     size_constraints:
-      description: List of size constraints to apply
+      description: List of size constraints to apply.
       returned: when type is size and state is present
       type: complex
       contains:
         comparison_operator:
-          description: Comparison operator to apply
+          description: Comparison operator to apply.
           type: str
           sample: GT
         field_to_match:
-          description: Field on which the size constraint is applied
+          description: Field on which the size constraint is applied.
           type: complex
           contains:
             type:
-              description: Field name
+              description: Field name.
               type: str
               sample: QUERY_STRING
         size:
-          description: size to compare against the field
+          description: Size to compare against the field.
           type: int
           sample: 300
         text_transformation:
-          description: transformation applied to the text before matching
+          description: Transformation applied to the text before matching.
           type: str
           sample: NONE
     sql_injection_match_set_id:
-      description: ID of the SQL injection match set
+      description: ID of the SQL injection match set.
       returned: when type is sql and state is present
       type: str
       sample: de84b4b3-578b-447e-a9a0-0db35c995656
     sql_injection_match_tuples:
-      description: List of SQL injection match sets
+      description: List of SQL injection match sets.
       returned: when type is sql and state is present
       type: complex
       contains:
         field_to_match:
-          description: Field on which the SQL injection match is applied
+          description: Field on which the SQL injection match is applied.
           type: complex
           contains:
             type:
-              description: Field name
+              description: Field name.
               type: str
               sample: QUERY_STRING
         text_transformation:
-          description: transformation applied to the text before matching
+          description: Transformation applied to the text before matching.
           type: str
           sample: URL_DECODE
     xss_match_set_id:
-      description: ID of the XSS match set
+      description: ID of the XSS match set.
       returned: when type is xss and state is present
       type: str
       sample: de84b4b3-578b-447e-a9a0-0db35c995656
     xss_match_tuples:
-      description: List of XSS match sets
+      description: List of XSS match sets.
       returned: when type is xss and state is present
       type: complex
       contains:
         field_to_match:
-          description: Field on which the XSS match is applied
+          description: Field on which the XSS match is applied.
           type: complex
           contains:
             type:
@@ -327,7 +395,7 @@ condition:
               type: str
               sample: QUERY_STRING
         text_transformation:
-          description: transformation applied to the text before matching
+          description: transformation applied to the text before matching.
           type: str
           sample: URL_DECODE
 '''
@@ -338,7 +406,6 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, compare_policies
 from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, MATCH_LOOKUP
 from ansible.module_utils.aws.waf import get_rule_with_backoff, list_rules_with_backoff, list_regional_rules_with_backoff
@@ -638,24 +705,20 @@ def main():
         ip_address=dict(),
         regex_pattern=dict(),
     )
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            type=dict(required=True, choices=['byte', 'geo', 'ip', 'regex', 'size', 'sql', 'xss']),
-            filters=dict(type='list'),
-            purge_filters=dict(type='bool', default=False),
-            waf_regional=dict(type='bool', default=False),
-            state=dict(default='present', choices=['present', 'absent']),
-        ),
+    argument_spec = dict(
+        name=dict(required=True),
+        type=dict(required=True, choices=['byte', 'geo', 'ip', 'regex', 'size', 'sql', 'xss']),
+        filters=dict(type='list'),
+        purge_filters=dict(type='bool', default=False),
+        waf_regional=dict(type='bool', default=False),
+        state=dict(default='present', choices=['present', 'absent']),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               required_if=[['state', 'present', ['filters']]])
     state = module.params.get('state')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     resource = 'waf' if not module.params['waf_regional'] else 'waf-regional'
-    client = boto3_conn(module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client(resource)
 
     condition = Condition(client, module)
 

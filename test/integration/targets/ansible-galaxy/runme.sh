@@ -4,7 +4,10 @@ set -eux -o pipefail
 
 ansible-playbook setup.yml "$@"
 
-trap 'ansible-playbook cleanup.yml' EXIT
+trap 'ansible-playbook ${ANSIBLE_PLAYBOOK_DIR}/cleanup.yml' EXIT
+
+# Very simple version test
+ansible-galaxy --version
 
 # Need a relative custom roles path for testing various scenarios of -p
 galaxy_relative_rolespath="my/custom/roles/path"
@@ -36,7 +39,6 @@ popd # "${galaxy_local_test_role_dir}"
 # Status message function (f_ to designate that it's a function)
 f_ansible_galaxy_status()
 {
-
     printf "\n\n\n### Testing ansible-galaxy: %s\n" "${@}"
 }
 
@@ -105,90 +107,135 @@ EOF
 popd # ${galaxy_testdir}
 rm -fr "${galaxy_testdir}"
 
+
+# Galaxy role list tests
+#
+# Basic tests to ensure listing roles works
+
+f_ansible_galaxy_status \
+    "role list"
+
+    ansible-galaxy role list | tee out.txt
+    ansible-galaxy role list test-role | tee -a out.txt
+
+    [[ $(grep -c '^- test-role' out.txt ) -eq 2 ]]
+
+
+# Properly list roles when the role name is a subset of the path, or the role
+# name is the same name as the parent directory of the role. Issue #67365
+#
+# ./parrot/parrot
+# ./parrot/arr
+# ./testing-roles/test
+
+f_ansible_galaxy_status \
+    "list roles where the role name is the same or a subset of the role path (#67365)"
+
+role_testdir=$(mktemp -d)
+pushd "${role_testdir}"
+
+    mkdir parrot
+    ansible-galaxy role init --init-path ./parrot parrot
+    ansible-galaxy role init --init-path ./parrot parrot-ship
+    ansible-galaxy role init --init-path ./parrot arr
+
+    ansible-galaxy role list -p ./parrot | tee out.txt
+
+    [[ $(grep -Ec '\- (parrot|arr)' out.txt) -eq 3 ]]
+    ansible-galaxy role list test-role | tee -a out.txt
+
+popd # ${role_testdir}
+rm -rf "${role_testdir}"
+
+
 #################################
 # ansible-galaxy collection tests
 #################################
+# TODO: Move these to ansible-galaxy-collection
 
-f_ansible_galaxy_status \
-    "collection init tests to make sure the relative dir logic works"
 galaxy_testdir=$(mktemp -d)
 pushd "${galaxy_testdir}"
 
-    ansible-galaxy collection init ansible_test.my_collection "$@"
+## ansible-galaxy collection list tests
 
-    # Test that the collection skeleton was created in the expected directory
-    for galaxy_collection_dir in "docs" "plugins" "roles"
-    do
-        [[ -d "${galaxy_testdir}/ansible_test/my_collection/${galaxy_collection_dir}" ]]
-    done
+# Create more collections and put them in various places
+f_ansible_galaxy_status \
+    "setting up for collection list tests"
 
-popd # ${galaxy_testdir}
-rm -fr "${galaxy_testdir}"
+rm -rf ansible_test/* install/*
+
+NAMES=(zoo museum airport)
+for n in "${NAMES[@]}"; do
+    ansible-galaxy collection init "ansible_test.$n"
+    ansible-galaxy collection build "ansible_test/$n"
+done
+
+ansible-galaxy collection install ansible_test-zoo-1.0.0.tar.gz
+ansible-galaxy collection install ansible_test-museum-1.0.0.tar.gz -p ./install
+ansible-galaxy collection install ansible_test-airport-1.0.0.tar.gz -p ./local
+
+# Change the collection version and install to another location
+sed -i -e 's#^version:.*#version: 2.5.0#' ansible_test/zoo/galaxy.yml
+ansible-galaxy collection build ansible_test/zoo
+ansible-galaxy collection install ansible_test-zoo-2.5.0.tar.gz -p ./local
+
+export ANSIBLE_COLLECTIONS_PATHS=~/.ansible/collections:${galaxy_testdir}/local
 
 f_ansible_galaxy_status \
-    "collection init tests to make sure the --init-path logic works"
-galaxy_testdir=$(mktemp -d)
-pushd "${galaxy_testdir}"
+    "collection list all collections"
 
-    ansible-galaxy collection init ansible_test.my_collection --init-path "${galaxy_testdir}/test" "$@"
+    ansible-galaxy collection list -p ./install | tee out.txt
 
-    # Test that the collection skeleton was created in the expected directory
-    for galaxy_collection_dir in "docs" "plugins" "roles"
-    do
-        [[ -d "${galaxy_testdir}/test/ansible_test/my_collection/${galaxy_collection_dir}" ]]
-    done
-
-popd # ${galaxy_testdir}
+    [[ $(grep -c ansible_test out.txt) -eq 4 ]]
 
 f_ansible_galaxy_status \
-    "collection build test creating artifact in current directory"
+    "collection list specific collection"
 
-pushd "${galaxy_testdir}/test/ansible_test/my_collection"
+    ansible-galaxy collection list -p ./install ansible_test.airport | tee out.txt
 
-    ansible-galaxy collection build "$@"
-
-    [[ -f "${galaxy_testdir}/test/ansible_test/my_collection/ansible_test-my_collection-1.0.0.tar.gz" ]]
-
-popd # ${galaxy_testdir}/ansible_test/my_collection
+    [[ $(grep -c 'ansible_test\.airport' out.txt) -eq 1 ]]
 
 f_ansible_galaxy_status \
-    "collection build test to make sure we can specify a relative path"
+    "collection list specific collection found in multiple places"
 
-pushd "${galaxy_testdir}"
+    ansible-galaxy collection list -p ./install ansible_test.zoo | tee out.txt
 
-    ansible-galaxy collection build "test/ansible_test/my_collection" "$@"
-
-    [[ -f "${galaxy_testdir}/ansible_test-my_collection-1.0.0.tar.gz" ]]
-
-    # Make sure --force works
-    ansible-galaxy collection build "test/ansible_test/my_collection" --force "$@"
-
-    [[ -f "${galaxy_testdir}/ansible_test-my_collection-1.0.0.tar.gz" ]]
+    [[ $(grep -c 'ansible_test\.zoo' out.txt) -eq 2 ]]
 
 f_ansible_galaxy_status \
-    "collection install from local tarball test"
+    "collection list all with duplicate paths"
 
-    ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install | tee out.txt
+    ansible-galaxy collection list -p ~/.ansible/collections | tee out.txt
 
-    [[ -f "${galaxy_testdir}/install/ansible_collections/ansible_test/my_collection/MANIFEST.json" ]]
-    grep "Installing 'ansible_test.my_collection:1.0.0' to .*" out.txt
-
+    [[ $(grep -c '# /root/.ansible/collections/ansible_collections' out.txt) -eq 1 ]]
 
 f_ansible_galaxy_status \
-    "collection install with existing collection and without --force"
+    "collection list invalid collection name"
 
-    ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install | tee out.txt
+    ansible-galaxy collection list -p ./install dirty.wraughten.name "$@" 2>&1 | tee out.txt || echo "expected failure"
 
-    [[ -f "${galaxy_testdir}/install/ansible_collections/ansible_test/my_collection/MANIFEST.json" ]]
-    grep "Skipping 'ansible_test.my_collection' as it is already installed" out.txt
+    grep 'ERROR! Invalid collection name' out.txt
 
 f_ansible_galaxy_status \
-    "collection install with existing collection and with --force"
+    "collection list path not found"
 
-    ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install --force | tee out.txt
+    ansible-galaxy collection list -p ./nope "$@" 2>&1 | tee out.txt || echo "expected failure"
 
-    [[ -f "${galaxy_testdir}/install/ansible_collections/ansible_test/my_collection/MANIFEST.json" ]]
-    grep "Installing 'ansible_test.my_collection:1.0.0' to .*" out.txt
+    grep '\[WARNING\]: - the configured path' out.txt
+
+f_ansible_galaxy_status \
+    "collection list missing ansible_collections dir inside path"
+
+    mkdir emptydir
+
+    ansible-galaxy collection list -p ./emptydir "$@"
+
+    rmdir emptydir
+
+unset ANSIBLE_COLLECTIONS_PATHS
+
+## end ansible-galaxy collection list
+
 
 popd # ${galaxy_testdir}
 

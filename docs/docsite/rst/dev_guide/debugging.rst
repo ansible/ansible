@@ -27,8 +27,8 @@ To debug a module running on a remote target (i.e. not ``localhost``):
 #. Take note of the directory Ansible used to store modules on the remote host. This directory is usually under the home directory of your ``ansible_user``, in the form ``~/.ansible/tmp/ansible-tmp-...``.
 #. SSH into the remote target after the playbook runs.
 #. Navigate to the directory you noted in step 3.
-#. Extract the module you want to debug from the zipped file that Ansible sent to the remote host: ``$ python AnsiballZ_my_test_module.py explode``. Ansible will expand the module into ``./debug-dir``. You can optionally run the zipped file by specifying ``python AnsiballZ_my_test_module.py``.
-#. Navigate to the debug directory: ``$ cd debug-dir``.
+#. Extract the module you want to debug from the zipped file that Ansible sent to the remote host: ``$ python AnsiballZ_my_test_module.py explode``. Ansible will expand the module into ``./debug_dir``. You can optionally run the zipped file by specifying ``python AnsiballZ_my_test_module.py``.
+#. Navigate to the debug directory: ``$ cd debug_dir``.
 #. Modify or set a breakpoint in ``__main__.py``.
 #. Ensure that the unzipped module is executable: ``$ chmod 755 __main__.py``.
 #. Run the unzipped module directly, passing the ``args`` file that contains the params that were originally passed: ``$ ./__main__.py args``. This approach is good for reproducing behavior as well as modifying the parameters for debugging.
@@ -118,7 +118,7 @@ When you look into the debug_dir you'll see a directory structure like this::
   files for any :mod:`ansible.module_utils` imports in the module but not
   any files from any other module.  So if your module uses
   :mod:`ansible.module_utils.url` Ansible will include it for you, but if
-  your module includes `requests <http://docs.python-requests.org/en/master/api/>`_ then you'll have to make sure that
+  your module includes `requests <https://requests.readthedocs.io/en/master/api/>`_ then you'll have to make sure that
   the python `requests library <https://pypi.org/project/requests/>`_ is installed on the system before running the
   module.  You can modify files in this directory if you suspect that the
   module is having a problem in some of this boilerplate code rather than in

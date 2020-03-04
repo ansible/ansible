@@ -1,0 +1,4 @@
+# the random_num is generated in a set_fact task at the start of the testsuite
+state_machine_name: "{{ resource_prefix }}_step_functions_state_machine_ansible_test_{{ random_num }}"
+step_functions_role_name: "ansible-test-sts-{{ resource_prefix }}-step_functions-role"
+execution_name: "{{ resource_prefix }}_sfn_execution"

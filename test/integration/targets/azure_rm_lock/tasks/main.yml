@@ -1,0 +1,99 @@
+- name: Create a virtual network
+  azure_rm_virtualnetwork:
+      name: mytestvirtualnetworklock
+      resource_group: "{{ resource_group }}"
+      address_prefixes_cidr:
+         - "10.1.0.0/16"
+  register: vn
+
+- name: Add lock to resource (check_mode)
+  azure_rm_lock:
+      name: keep
+      managed_resource_id: "{{ vn.state.id }}"
+      level: read_only
+  register: lock
+  check_mode: yes
+
+- assert:
+      that:
+          - lock.changed
+
+- name: Query lock
+  azure_rm_lock_info:
+      managed_resource_id: "{{ vn.state.id }}"
+  register: locks
+
+- assert:
+      that:
+          - locks.locks | length == 0
+
+- name: Add lock to resource
+  azure_rm_lock:
+      name: keep
+      managed_resource_id: "{{ vn.state.id }}"
+      level: read_only
+  register: lock
+
+- assert:
+      that:
+          - lock.changed
+          - lock.id
+
+- name: Query lock
+  azure_rm_lock_info:
+      name: keep
+      managed_resource_id: "{{ vn.state.id }}"
+  register: locks
+
+- assert:
+      that:
+          - locks.locks | length == 1
+
+- name: Update lock to resource (idempontent)
+  azure_rm_lock:
+      name: keep
+      managed_resource_id: "{{ vn.state.id }}"
+      level: read_only
+  register: lock1
+
+- assert:
+      that:
+          - not lock1.changed
+          - lock1.id == lock.id
+
+- name: Update lock level
+  azure_rm_lock:
+      name: keep
+      managed_resource_id: "{{ vn.state.id }}"
+      level: can_not_delete
+  register: lock
+
+- assert:
+      that:
+          - lock.changed
+          - lock.level == 'can_not_delete'
+
+- name: Delete lock
+  azure_rm_lock:
+      name: keep
+      managed_resource_id: "{{ vn.state.id }}"
+  register: lock
+
+- assert:
+      that:
+          - lock.changed
+
+- name: Query lock
+  azure_rm_lock_info:
+      managed_resource_id: "{{ vn.state.id }}"
+  register: locks
+
+- assert:
+      that:
+          - locks.locks | length == 0
+
+- name: Clean up
+  azure_rm_virtualnetwork:
+      name: mytestvirtualnetworklock
+      resource_group: "{{ resource_group }}"
+      state: absent

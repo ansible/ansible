@@ -16,11 +16,10 @@ __metaclass__ = type
 
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list, dict_diff, remove_empties
+from ansible.module_utils.network.common.utils import to_list, search_obj_in_list, dict_diff, remove_empties
 from ansible.module_utils.network.iosxr.facts.facts import Facts
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.iosxr. \
-    utils.utils import search_obj_in_list, dict_delete, pad_commands, flatten_dict
+from ansible.module_utils.network.iosxr.utils.utils import dict_delete, pad_commands, flatten_dict
 
 
 class Lldp_interfaces(ConfigBase):
@@ -103,6 +102,8 @@ class Lldp_interfaces(ConfigBase):
         """
         state = self._module.params['state']
         commands = []
+        if state in ('overridden', 'merged', 'replaced') and not want:
+            self._module.fail_json(msg='value of config parameter must not be empty for state {0}'.format(state))
 
         if state == 'overridden':
             commands.extend(

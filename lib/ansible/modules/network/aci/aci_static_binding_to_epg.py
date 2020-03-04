@@ -56,7 +56,7 @@ options:
     aliases: [ primary_vlan, primary_vlan_id ]
   deploy_immediacy:
     description:
-    - The Deployement Immediacy of Static EPG on PC, VPC or Interface.
+    - The Deployment Immediacy of Static EPG on PC, VPC or Interface.
     - The APIC defaults to C(lazy) when unset during creation.
     type: str
     choices: [ immediate, lazy ]
@@ -72,7 +72,7 @@ options:
     aliases: [ interface_mode_name, mode ]
   interface_type:
     description:
-    - The type of interface for the static EPG deployement.
+    - The type of interface for the static EPG deployment.
     type: str
     choices: [ fex, port_channel, switch_port, vpc ]
     default: switch_port
@@ -332,21 +332,21 @@ def main():
         ],
     )
 
-    tenant = module.params['tenant']
-    ap = module.params['ap']
-    epg = module.params['epg']
-    description = module.params['description']
-    encap_id = module.params['encap_id']
-    primary_encap_id = module.params['primary_encap_id']
-    deploy_immediacy = module.params['deploy_immediacy']
-    interface_mode = module.params['interface_mode']
-    interface_type = module.params['interface_type']
-    pod_id = module.params['pod_id']
-    leafs = module.params['leafs']
+    tenant = module.params.get('tenant')
+    ap = module.params.get('ap')
+    epg = module.params.get('epg')
+    description = module.params.get('description')
+    encap_id = module.params.get('encap_id')
+    primary_encap_id = module.params.get('primary_encap_id')
+    deploy_immediacy = module.params.get('deploy_immediacy')
+    interface_mode = module.params.get('interface_mode')
+    interface_type = module.params.get('interface_type')
+    pod_id = module.params.get('pod_id')
+    leafs = module.params.get('leafs')
     if leafs is not None:
         # Process leafs, and support dash-delimited leafs
         leafs = []
-        for leaf in module.params['leafs']:
+        for leaf in module.params.get('leafs'):
             # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
             leafs.extend(str(leaf).split('-'))
         if len(leafs) == 1:
@@ -360,9 +360,9 @@ def main():
             leafs = "-".join(leafs)
         else:
             module.fail_json(msg='The "leafs" parameter must not have more than 2 entries')
-    interface = module.params['interface']
-    extpaths = module.params['extpaths']
-    state = module.params['state']
+    interface = module.params.get('interface')
+    extpaths = module.params.get('extpaths')
+    state = module.params.get('state')
 
     if encap_id is not None:
         if encap_id not in range(1, 4097):

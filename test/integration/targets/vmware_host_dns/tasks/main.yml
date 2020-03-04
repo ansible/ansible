@@ -1,0 +1,28 @@
+# Test code for the vmware_host_dns module.
+# Copyright: (c) 2019, Mario Lenz <m@riolenz.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# This tests assume that all ESXi hosts either have a static or a dynamic DNS
+# configuration. They probably will fail if on host is 'static' and the other
+# is 'dhcp' configured.
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
+    - name: Gather DNS facts about ESXi Host
+      vmware_host_dns_info:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        esxi_hostname: "{{ item }}"
+        validate_certs: False
+      loop: "{{ esxi_hosts }}"
+      register: dns
+
+    - include_tasks: dhcp.yml
+      when: dns['results'][0]['hosts_dns_info'][esxi1]['dhcp']
+    - include_tasks: static.yml
+      when: not dns['results'][0]['hosts_dns_info'][esxi1]['dhcp']

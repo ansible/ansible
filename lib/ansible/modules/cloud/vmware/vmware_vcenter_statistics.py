@@ -132,6 +132,43 @@ from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 from ansible.module_utils._text import to_native
 
 
+# This is a helper class to sort the changes in a valid order
+# "Greater than" means a change has to happen after another one.
+# As an example, let's say self is daily (key == 1) and other is weekly (key == 2)
+class ChangeHelper:
+    def __init__(self, old, new):
+        self.key = new.key
+        self.old = old
+        self.new = new
+
+    def __eq__(self, other):
+        return ((self.key, self.new.enabled, self.new.level) ==
+                (other.key, other.new.enabled, other.new.level))
+
+    def __gt__(self, other):
+        if self.key < other.key:
+            # You cannot disable daily if weekly is enabled, so later
+            if self.new.enabled < other.old.enabled:
+                return True
+            # Enabling daily is OK if weekly is disabled
+            elif self.new.enabled > other.old.enabled:
+                return False
+            # Otherwise, decreasing the daily level below the current weekly level has to be done later
+            else:
+                return self.new.level < other.old.level
+        else:
+            return not (other > self)
+
+    def __ge__(self, other):
+        return (self > other) or (self == other)
+
+    def __lt__(self, other):
+        return not (self >= other)
+
+    def __le__(self, other):
+        return not (self > other)
+
+
 class VmwareVcenterStatistics(PyVmomi):
     """Manage statistics for a vCenter server"""
 
@@ -143,6 +180,12 @@ class VmwareVcenterStatistics(PyVmomi):
 
     def ensure(self):
         """Manage statistics for a vCenter server"""
+
+        DAILY_COUNTER = 1
+        WEEKLY_COUNTER = 2
+        MONTHLY_COUNTER = 3
+        YEARLY_COUNTER = 4
+
         result = dict(changed=False, msg='')
         past_day_enabled = self.params['interval_past_day'].get('enabled', True)
         past_day_seconds = self.params['interval_past_day'].get('interval_minutes', 5) * 60
@@ -204,8 +247,6 @@ class VmwareVcenterStatistics(PyVmomi):
         result['past_year_save_for'] = int(past_year_save_for_seconds / 31536000)
         result['past_year_level'] = past_year_level
         change_statistics_list = []
-        # We need to loop in a different order if we increase or decrease the statistic levels
-        increase_level = decrease_level = False
         perf_manager = self.content.perfManager
         for historical_interval in perf_manager.historicalInterval:
             # Statistics for past day
@@ -225,20 +266,21 @@ class VmwareVcenterStatistics(PyVmomi):
                     result['past_day_save_for_previous'] = int(historical_interval.length / 86400)
                 if historical_interval.level != past_day_level:
                     result['past_day_level_previous'] = historical_interval.level
-                    if historical_interval.level < past_day_level:
-                        increase_level = True
-                    elif historical_interval.level > past_day_level:
-                        decrease_level = True
+
                 change_statistics_list.append(
-                    vim.HistoricalInterval(
-                        key=1,
-                        samplingPeriod=past_day_seconds,
-                        name='Past day',
-                        length=past_day_save_for_seconds,
-                        level=past_day_level,
-                        enabled=past_day_enabled
+                    ChangeHelper(
+                        historical_interval,
+                        vim.HistoricalInterval(
+                            key=DAILY_COUNTER,
+                            samplingPeriod=past_day_seconds,
+                            name='Past day',
+                            length=past_day_save_for_seconds,
+                            level=past_day_level,
+                            enabled=past_day_enabled
+                        )
                     )
                 )
+
             # Statistics for past week
             if historical_interval.name == 'Past week' and (
                     historical_interval.samplingPeriod != past_week_seconds
@@ -256,20 +298,21 @@ class VmwareVcenterStatistics(PyVmomi):
                     result['past_week_save_for_previous'] = int(historical_interval.length / 604800)
                 if historical_interval.level != past_week_level:
                     result['past_week_level_previous'] = historical_interval.level
-                    if historical_interval.level < past_week_level:
-                        increase_level = True
-                    elif historical_interval.level > past_week_level:
-                        decrease_level = True
+
                 change_statistics_list.append(
-                    vim.HistoricalInterval(
-                        key=2,
-                        samplingPeriod=past_week_seconds,
-                        name='Past week',
-                        length=past_week_save_for_seconds,
-                        level=past_week_level,
-                        enabled=past_week_enabled
+                    ChangeHelper(
+                        historical_interval,
+                        vim.HistoricalInterval(
+                            key=WEEKLY_COUNTER,
+                            samplingPeriod=past_week_seconds,
+                            name='Past week',
+                            length=past_week_save_for_seconds,
+                            level=past_week_level,
+                            enabled=past_week_enabled
+                        )
                     )
                 )
+
             # Statistics for past month
             if historical_interval.name == 'Past month' and (
                     historical_interval.samplingPeriod != past_month_seconds
@@ -287,20 +330,21 @@ class VmwareVcenterStatistics(PyVmomi):
                     result['past_month_save_for_previous'] = int(historical_interval.length / 2592000)
                 if historical_interval.level != past_month_level:
                     result['past_month_level_previous'] = historical_interval.level
-                    if historical_interval.level < past_month_level:
-                        increase_level = True
-                    elif historical_interval.level > past_month_level:
-                        decrease_level = True
+
                 change_statistics_list.append(
-                    vim.HistoricalInterval(
-                        key=3,
-                        samplingPeriod=past_month_seconds,
-                        name='Past month',
-                        length=past_month_save_for_seconds,
-                        level=past_month_level,
-                        enabled=past_month_enabled
+                    ChangeHelper(
+                        historical_interval,
+                        vim.HistoricalInterval(
+                            key=MONTHLY_COUNTER,
+                            samplingPeriod=past_month_seconds,
+                            name='Past month',
+                            length=past_month_save_for_seconds,
+                            level=past_month_level,
+                            enabled=past_month_enabled
+                        )
                     )
                 )
+
             # Statistics for past year
             if historical_interval.name == 'Past year' and (
                     historical_interval.samplingPeriod != past_year_seconds
@@ -318,18 +362,18 @@ class VmwareVcenterStatistics(PyVmomi):
                     result['past_year_save_for_previous'] = int(historical_interval.length / 31536000)
                 if historical_interval.level != past_year_level:
                     result['past_year_level_previous'] = historical_interval.level
-                    if historical_interval.level < past_year_level:
-                        increase_level = True
-                    elif historical_interval.level > past_year_level:
-                        decrease_level = True
+
                 change_statistics_list.append(
-                    vim.HistoricalInterval(
-                        key=4,
-                        samplingPeriod=past_year_seconds,
-                        name='Past year',
-                        length=past_year_save_for_seconds,
-                        level=past_year_level,
-                        enabled=past_year_enabled
+                    ChangeHelper(
+                        historical_interval,
+                        vim.HistoricalInterval(
+                            key=YEARLY_COUNTER,
+                            samplingPeriod=past_year_seconds,
+                            name='Past year',
+                            length=past_year_save_for_seconds,
+                            level=past_year_level,
+                            enabled=past_year_enabled
+                        )
                     )
                 )
 
@@ -346,14 +390,9 @@ class VmwareVcenterStatistics(PyVmomi):
                 message = changed_list[0]
             message += changed_suffix
             if not self.module.check_mode:
-                if increase_level:
-                    # Loop in forward order (start with past day interval)
-                    for statistic in change_statistics_list:
-                        self.update_perf_interval(perf_manager, statistic)
-                if decrease_level:
-                    # Loop in reverse order (start with past year interval)
-                    for statistic in change_statistics_list[::-1]:
-                        self.update_perf_interval(perf_manager, statistic)
+                change_statistics_list.sort()
+                for statistic in change_statistics_list:
+                    self.update_perf_interval(perf_manager, statistic.new)
         else:
             message = "vCenter statistics already configured properly"
         result['changed'] = changed

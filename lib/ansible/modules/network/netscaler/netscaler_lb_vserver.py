@@ -287,7 +287,7 @@ options:
     cookiename:
         description:
             - >-
-                Use this parameter to specify the cookie name for C(COOKIE) peristence type. It specifies the name of
+                Use this parameter to specify the cookie name for C(COOKIE) persistence type. It specifies the name of
                 cookie with a maximum of 32 characters. If not specified, cookie name is internally generated.
 
 
@@ -315,7 +315,7 @@ options:
                 persistence sessions (persistence type RULE). Can be either an expression or the name of a named
                 expression.
             - "Example:"
-            - "C(HTTP.RES.HEADER(\\"setcookie\\").VALUE(0).TYPECAST_NVLIST_T('=',';').VALUE(\\"server1\\"))."
+            - 'C(HTTP.RES.HEADER("setcookie").VALUE(0).TYPECAST_NVLIST_T("=",";").VALUE("server1")).'
 
     persistmask:
         description:

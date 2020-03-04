@@ -43,6 +43,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
@@ -216,6 +221,7 @@ def main():
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -227,10 +233,11 @@ def main():
         ],
     )
 
-    filter_name = module.params['filter']
-    description = module.params['description']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    filter_name = module.params.get('filter')
+    description = module.params.get('description')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
+    name_alias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -256,6 +263,7 @@ def main():
             class_config=dict(
                 name=filter_name,
                 descr=description,
+                nameAlias=name_alias,
             ),
         )
 

@@ -1,6 +1,6 @@
 ---
 - debug:
-      msg: "START vyos_interfaces merged integration tests on connection={{ ansible_connection }}"
+    msg: "START vyos_interfaces merged integration tests on connection={{ ansible_connection }}"
 
 - include_tasks: _remove_config.yaml
 
@@ -56,4 +56,4 @@
         that:
           - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
   always:
-      - include_tasks: _remove_config.yaml
+    - include_tasks: _remove_config.yaml

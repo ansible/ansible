@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import re
+from copy import deepcopy
 
 
 def get_module_params_subsection(module_params, tms_config, resource_key=None):
@@ -155,7 +156,7 @@ def remove_duplicate_context(cmds):
         return remove_duplicate_context(cmds)
 
 
-def get_setval_path(module):
+def get_setval_path(module_or_path_data):
     ''' Build setval for path parameter based on playbook inputs
         Full Command:
           - path {name} depth {depth} query-condition {query_condition} filter-condition {filter_condition}
@@ -166,16 +167,84 @@ def get_setval_path(module):
           - query-condition {query_condition},
           - filter-condition {filter_condition}
     '''
-    path = module.params['config']['sensor_groups'][0].get('path')
+    if isinstance(module_or_path_data, dict):
+        path = module_or_path_data
+    else:
+        path = module_or_path_data.params['config']['sensor_groups'][0].get('path')
     if path is None:
         return path
 
     setval = 'path {name}'
     if 'depth' in path.keys():
-        setval = setval + ' depth {depth}'
+        if path.get('depth') != 'None':
+            setval = setval + ' depth {depth}'
     if 'query_condition' in path.keys():
-        setval = setval + ' query-condition {query_condition}'
+        if path.get('query_condition') != 'None':
+            setval = setval + ' query-condition {query_condition}'
     if 'filter_condition' in path.keys():
-        setval = setval + ' filter-condition {filter_condition}'
+        if path.get('filter_condition') != 'None':
+            setval = setval + ' filter-condition {filter_condition}'
 
     return setval
+
+
+def remove_duplicate_commands(commands_list):
+    # Remove any duplicate commands.
+    # pylint: disable=unnecessary-lambda
+    return sorted(set(commands_list), key=lambda x: commands_list.index(x))
+
+
+def massage_data(have_or_want):
+    # Massage non global into a data structure that is indexed by id and
+    # normalized for destination_groups, sensor_groups and subscriptions.
+    data = deepcopy(have_or_want)
+    massaged = {}
+    massaged['destination_groups'] = {}
+    massaged['sensor_groups'] = {}
+    massaged['subscriptions'] = {}
+    from pprint import pprint
+    for subgroup in ['destination_groups', 'sensor_groups', 'subscriptions']:
+        for item in data.get(subgroup, []):
+            id = str(item.get('id'))
+            if id not in massaged[subgroup].keys():
+                massaged[subgroup][id] = []
+            item.pop('id')
+            if not item:
+                item = None
+            else:
+                if item.get('destination'):
+                    if item.get('destination').get('port'):
+                        item['destination']['port'] = str(item['destination']['port'])
+                    if item.get('destination').get('protocol'):
+                        item['destination']['protocol'] = item['destination']['protocol'].lower()
+                    if item.get('destination').get('encoding'):
+                        item['destination']['encoding'] = item['destination']['encoding'].lower()
+                if item.get('path'):
+                    for key in ['filter_condition', 'query_condition', 'depth']:
+                        if item.get('path').get(key) == 'None':
+                            del item['path'][key]
+                    if item.get('path').get('depth') is not None:
+                        item['path']['depth'] = str(item['path']['depth'])
+                if item.get('destination_group'):
+                    item['destination_group'] = str(item['destination_group'])
+                if item.get('sensor_group'):
+                    if item.get('sensor_group').get('id'):
+                        item['sensor_group']['id'] = str(item['sensor_group']['id'])
+                    if item.get('sensor_group').get('sample_interval'):
+                        item['sensor_group']['sample_interval'] = str(item['sensor_group']['sample_interval'])
+                if item.get('destination_group') and item.get('sensor_group'):
+                    item_copy = deepcopy(item)
+                    del item_copy['sensor_group']
+                    del item['destination_group']
+                    massaged[subgroup][id].append(item_copy)
+                    massaged[subgroup][id].append(item)
+                    continue
+                if item.get('path') and item.get('data_source'):
+                    item_copy = deepcopy(item)
+                    del item_copy['data_source']
+                    del item['path']
+                    massaged[subgroup][id].append(item_copy)
+                    massaged[subgroup][id].append(item)
+                    continue
+            massaged[subgroup][id].append(item)
+    return massaged

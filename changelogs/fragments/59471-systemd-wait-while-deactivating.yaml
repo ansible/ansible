@@ -1,2 +1,0 @@
-bugfixes:
-  - systemd - wait for a service which is in deactivating state when using ``state=stopped`` (https://github.com/ansible/ansible/pull/59471)

@@ -114,7 +114,7 @@ options:
       - This argument specifies whether or not to collect all defaults
         when getting the remote device running config.  When enabled,
         the module will get the current config by issuing the command
-        C(show running-config all).
+        C(admin display-config detail).
     type: bool
     default: 'no'
     aliases: ['detail']
@@ -135,7 +135,7 @@ options:
     suboptions:
       filename:
         description:
-          - The filename to be used to store the backup configuration. If the the filename
+          - The filename to be used to store the backup configuration. If the filename
             is not given it will be generated based on the hostname, current time and date
             in format defined by <hostname>_config.<current-date>@<current-time>
       dir_path:

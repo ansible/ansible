@@ -61,6 +61,21 @@
         type: "bind"
   register: mounts_3
 
+- name: mounts (order idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: "/tmp/"
+        target: "/tmp/{{ volume_name_2 }}"
+        type: "bind"
+      - source: "{{ volume_name_1 }}"
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "volume"
+  register: mounts_4
+
 - name: mounts (empty)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -68,7 +83,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts: []
-  register: mounts_4
+  register: mounts_5
 
 - name: mounts (empty idempotency)
   docker_swarm_service:
@@ -77,7 +92,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts: []
-  register: mounts_5
+  register: mounts_6
 
 - name: cleanup
   docker_swarm_service:
@@ -90,8 +105,9 @@
       - mounts_1 is changed
       - mounts_2 is not changed
       - mounts_3 is changed
-      - mounts_4 is changed
-      - mounts_5 is not changed
+      - mounts_4 is not changed
+      - mounts_5 is changed
+      - mounts_6 is not changed
 
 ####################################################################
 ## mounts.readonly #################################################
@@ -539,6 +555,18 @@
   register: mounts_tmpfs_source_2
   ignore_errors: yes
 
+- name: mounts.source (not specified for tmpfs idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+  register: mounts_tmpfs_source_3
+  ignore_errors: yes
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -549,6 +577,7 @@
     that:
       - mounts_tmpfs_source_1 is changed
       - mounts_tmpfs_source_2 is not changed
+      - mounts_tmpfs_source_3 is not changed
   when: docker_py_version is version('2.6.0', '>=')
 - assert:
     that:

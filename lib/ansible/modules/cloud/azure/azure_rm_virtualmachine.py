@@ -162,7 +162,6 @@ options:
         choices:
             - ReadOnly
             - ReadWrite
-        default: ReadOnly
         aliases:
             - disk_caching
     os_disk_size_gb:
@@ -527,7 +526,7 @@ EXAMPLES = '''
     image:
       id: '{{image_id}}'
 
-- name: Create VM with spcified OS disk size
+- name: Create VM with specified OS disk size
   azure_rm_virtualmachine:
     resource_group: myResourceGroup
     name: big-os-disk
@@ -790,7 +789,7 @@ AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 def extract_names_from_blob_uri(blob_uri, storage_suffix):
     # HACK: ditch this once python SDK supports get by URI
-    m = re.match(r'^https://(?P<accountname>[^.]+)\.blob\.{0}/'
+    m = re.match(r'^https?://(?P<accountname>[^.]+)\.blob\.{0}/'
                  r'(?P<containername>[^/]+)/(?P<blobname>.+)$'.format(storage_suffix), blob_uri)
     if not m:
         raise Exception("unable to parse blob uri '%s'" % blob_uri)
@@ -819,8 +818,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             storage_account_name=dict(type='str', aliases=['storage_account']),
             storage_container_name=dict(type='str', aliases=['storage_container'], default='vhds'),
             storage_blob_name=dict(type='str', aliases=['storage_blob']),
-            os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite'],
-                                 default='ReadOnly'),
+            os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite']),
             os_disk_size_gb=dict(type='int'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'StandardSSD_LRS', 'Premium_LRS']),
             os_disk_name=dict(type='str'),
@@ -1129,7 +1127,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     powerstate_change = 'generalized'
 
                 vm_dict['zones'] = [int(i) for i in vm_dict['zones']] if 'zones' in vm_dict and vm_dict['zones'] else None
-                if self.zones != vm_dict['zones']:
+                if self.zones and self.zones != vm_dict['zones']:
                     self.log("CHANGED: virtual machine {0} zones".format(self.name))
                     differences.append('Zones')
                     changed = True
@@ -1204,10 +1202,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     self.log("Create virtual machine {0}".format(self.name))
                     self.results['actions'].append('Created VM {0}'.format(self.name))
 
-                    # Validate parameters
-                    if not self.admin_username:
-                        self.fail("Parameter error: admin_username required when creating a virtual machine.")
-
                     if self.os_type == 'Linux':
                         if disable_ssh_password and not self.ssh_public_keys:
                             self.fail("Parameter error: ssh_public_keys required when disabling SSH password.")
@@ -1244,6 +1238,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             requested_storage_uri,
                             self.storage_container_name,
                             self.storage_blob_name)
+                    # disk caching
+                    if not self.os_disk_caching:
+                        self.os_disk_caching = 'ReadOnly'
 
                     if not self.short_hostname:
                         self.short_hostname = self.name
@@ -1272,13 +1269,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if self.boot_diagnostics_present and self.boot_diagnostics['enabled']:
                         boot_diag_storage_account = self.get_boot_diagnostics_storage_account()
 
+                    os_profile = None
+                    if self.admin_username:
+                        os_profile = self.compute_models.OSProfile(
+                            admin_username=self.admin_username,
+                            computer_name=self.short_hostname,
+                        )
                     vm_resource = self.compute_models.VirtualMachine(
                         location=self.location,
                         tags=self.tags,
-                        os_profile=self.compute_models.OSProfile(
-                            admin_username=self.admin_username,
-                            computer_name=self.short_hostname,
-                        ),
+                        os_profile=os_profile,
                         hardware_profile=self.compute_models.HardwareProfile(
                             vm_size=self.vm_size
                         ),
@@ -1354,7 +1354,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         # Azure SDK (erroneously?) wants native string type for this
                         vm_resource.os_profile.custom_data = to_native(base64.b64encode(to_bytes(self.custom_data)))
 
-                    if self.os_type == 'Linux':
+                    if self.os_type == 'Linux' and os_profile:
                         vm_resource.os_profile.linux_configuration = self.compute_models.LinuxConfiguration(
                             disable_password_authentication=disable_ssh_password
                         )
@@ -1884,7 +1884,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         return True
 
     def delete_vm_storage(self, vhd_uris):
-        # FUTURE: figure out a cloud_env indepdendent way to delete these
+        # FUTURE: figure out a cloud_env independent way to delete these
         for uri in vhd_uris:
             self.log("Extracting info from blob uri '{0}'".format(uri))
             try:

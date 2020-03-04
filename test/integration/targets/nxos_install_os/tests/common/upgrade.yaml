@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_os_install upgrade"
-- debug: msg="Using provider={{ connection.transport }}"
   when: connection is defined
 
 - set_fact: image_dir='/Users/mwiebe/Projects/nxos_ansible/images/'

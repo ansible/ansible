@@ -59,7 +59,7 @@ options:
         type: bool
         description:
             - Have the module daemonize as the service itself might not do so properly.
-            - This is useful with badly written init scripts or deamons, which
+            - This is useful with badly written init scripts or daemons, which
               commonly manifests as the task hanging as it is still holding the
               tty or the service dying when the task is over as the connection
               closes the session.
@@ -87,27 +87,28 @@ EXAMPLES = '''
         - 5
 '''
 
-RETURN = '''
+RETURN = r'''
 results:
     description: results from actions taken
     returned: always
     type: complex
-    contains:
-        "attempts": 1
-        "changed": true
-        "name": "apache2"
-        "status": {
-            "enabled": {
-                "changed": true,
-                "rc": 0,
-                "stderr": "",
-                "stdout": ""
-            },
-            "stopped": {
-                "changed": true,
-                "rc": 0,
-                "stderr": "",
-                "stdout": "Stopping web server: apache2.\n"
+    sample: {
+            "attempts": 1,
+            "changed": true,
+            "name": "apache2",
+            "status": {
+                "enabled": {
+                    "changed": true,
+                    "rc": 0,
+                    "stderr": "",
+                    "stdout": ""
+                },
+                "stopped": {
+                    "changed": true,
+                    "rc": 0,
+                    "stderr": "",
+                    "stdout": "Stopping web server: apache2.\n"
+                }
             }
         }
 '''

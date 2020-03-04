@@ -108,10 +108,12 @@ def test_missing_ldap(laps_password):
     with pytest.raises(AnsibleLookupError) as err:
         lookup_loader.get('laps_password').run(["host"], domain="test")
 
-    assert str(err.value) == "Failed to import the required Python library (python-ldap) on %s's Python %s. See " \
-                             "https://pypi.org/project/python-ldap/ for more info. Please read module documentation " \
-                             "and install in the appropriate location. " \
-                             "Import Error: no import for you!" % (platform.node(), sys.executable)
+    assert str(err.value).startswith(
+        "Failed to import the required Python library (python-ldap) on %s's Python %s. See "
+        "https://pypi.org/project/python-ldap/ for more info. Please "
+        % (platform.node(), sys.executable)
+    )
+    assert str(err.value).endswith(". Import Error: no import for you!")
 
 
 def test_invalid_cert_mapping():

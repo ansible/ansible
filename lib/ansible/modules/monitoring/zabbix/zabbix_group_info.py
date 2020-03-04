@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-RETURN = '''
+RETURN = r'''
 ---
 host_groups:
   description: List of Zabbix groups.
@@ -21,7 +21,7 @@ host_groups:
   sample: [ { "flags": "0", "groupid": "33", "internal": "0", "name": "Hostgruup A" } ]
 '''
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_group_info
 short_description: Gather information about Zabbix hostgroup
@@ -33,18 +33,20 @@ author:
     - "Michael Miko (@RedWhiteMiko)"
 requirements:
     - "python >= 2.6"
-    - "zabbix-api >= 0.5.3"
+    - "zabbix-api >= 0.5.4"
 options:
     hostgroup_name:
         description:
             - Name of the hostgroup in Zabbix.
             - hostgroup is the unique identifier used and cannot be updated using this module.
         required: true
+        type: list
+        elements: str
 extends_documentation_fragment:
     - zabbix
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Get hostgroup info
   local_action:
     module: zabbix_group_info

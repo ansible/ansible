@@ -30,14 +30,14 @@
       esxi_hostname: '{{ esxi1 }}'
       validate_certs: no
       state: disabled
-    register: host_hyperthreading_facts
+    register: host_hyperthreading_info
 
-  - debug: var=host_hyperthreading_facts
+  - debug: var=host_hyperthreading_info
 
   - assert:
       that:
-        - host_hyperthreading_facts is defined
-        - host_hyperthreading_facts.changed
+        - host_hyperthreading_info is defined
+        - host_hyperthreading_info.changed
 
   - name: Disable Hyperthreading for a given host in check mode
     vmware_host_hyperthreading:
@@ -47,14 +47,14 @@
       esxi_hostname: '{{ esxi1 }}'
       validate_certs: no
       state: disabled
-    register: host_hyperthreading_facts_check_mode
+    register: host_hyperthreading_info_check_mode
     check_mode: yes
 
-  - debug: var=host_hyperthreading_facts_check_mode
+  - debug: var=host_hyperthreading_info_check_mode
 
   - assert:
       that:
-        - host_hyperthreading_facts_check_mode is defined
+        - host_hyperthreading_info_check_mode is defined
 
   - name: Disable Hyperthreading for all hosts in given cluster
     vmware_host_hyperthreading:
@@ -64,14 +64,14 @@
       cluster_name: "{{ ccr1 }}"
       validate_certs: no
       state: disabled
-    register: host_hyperthreading_facts
+    register: host_hyperthreading_info
 
-  - debug: var=host_hyperthreading_facts
+  - debug: var=host_hyperthreading_info
 
   - assert:
       that:
-        - host_hyperthreading_facts is defined
-        - host_hyperthreading_facts is changed
+        - host_hyperthreading_info is defined
+        - host_hyperthreading_info is changed
 
   - name: Enable Hyperthreading for all hosts in given cluster in check mode
     vmware_host_hyperthreading:
@@ -81,12 +81,12 @@
       cluster_name: "{{ ccr1 }}"
       validate_certs: no
       state: enabled
-    register: host_hyperthreading_facts_check_mode
+    register: host_hyperthreading_info_check_mode
     check_mode: yes
 
-  - debug: var=host_hyperthreading_facts_check_mode
+  - debug: var=host_hyperthreading_info_check_mode
 
   - assert:
       that:
-        - host_hyperthreading_facts_check_mode is defined
-        - host_hyperthreading_facts_check_mode.changed
+        - host_hyperthreading_info_check_mode is defined
+        - host_hyperthreading_info_check_mode.changed

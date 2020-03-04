@@ -21,7 +21,6 @@ __metaclass__ = type
 
 import os
 import time
-import glob
 import re
 
 from ansible.errors import AnsibleError
@@ -103,7 +102,7 @@ class ActionModule(_ActionModule):
             result['msg'] = copy_result.get('msg')
             return
 
-        result['backup_path'] = copy_result['dest']
+        result['backup_path'] = dest
         if copy_result.get('changed', False):
             result['changed'] = copy_result['changed']
 
@@ -160,8 +159,8 @@ class ActionModule(_ActionModule):
                     for role in dep_chain:
                         searchpath.append(role._role_path)
         searchpath.append(os.path.dirname(source))
-        self._templar.environment.loader.searchpath = searchpath
-        self._task.args['src'] = self._templar.template(template_data, convert_data=convert_data)
+        with self._templar.set_temporary_context(searchpath=searchpath):
+            self._task.args['src'] = self._templar.template(template_data, convert_data=convert_data)
 
     def _get_network_os(self, task_vars):
         if 'network_os' in self._task.args and self._task.args['network_os']:

@@ -82,83 +82,83 @@ class GCPUtilsTestCase(unittest.TestCase):
         # region, resource, entity, method
         input_url = 'https://www.googleapis.com/compute/v1/projects/myproject/regions/us-east1/instanceGroupManagers/my-mig/recreateInstances'
         actual = GCPUtils.parse_gcp_url(input_url)
-        self.assertEquals('compute', actual['service'])
-        self.assertEquals('v1', actual['api_version'])
-        self.assertEquals('myproject', actual['project'])
-        self.assertEquals('us-east1', actual['region'])
-        self.assertEquals('instanceGroupManagers', actual['resource_name'])
-        self.assertEquals('my-mig', actual['entity_name'])
-        self.assertEquals('recreateInstances', actual['method_name'])
+        self.assertEqual('compute', actual['service'])
+        self.assertEqual('v1', actual['api_version'])
+        self.assertEqual('myproject', actual['project'])
+        self.assertEqual('us-east1', actual['region'])
+        self.assertEqual('instanceGroupManagers', actual['resource_name'])
+        self.assertEqual('my-mig', actual['entity_name'])
+        self.assertEqual('recreateInstances', actual['method_name'])
 
         # zone, resource, entity, method
         input_url = 'https://www.googleapis.com/compute/v1/projects/myproject/zones/us-east1-c/instanceGroupManagers/my-mig/recreateInstances'
         actual = GCPUtils.parse_gcp_url(input_url)
-        self.assertEquals('compute', actual['service'])
-        self.assertEquals('v1', actual['api_version'])
-        self.assertEquals('myproject', actual['project'])
-        self.assertEquals('us-east1-c', actual['zone'])
-        self.assertEquals('instanceGroupManagers', actual['resource_name'])
-        self.assertEquals('my-mig', actual['entity_name'])
-        self.assertEquals('recreateInstances', actual['method_name'])
+        self.assertEqual('compute', actual['service'])
+        self.assertEqual('v1', actual['api_version'])
+        self.assertEqual('myproject', actual['project'])
+        self.assertEqual('us-east1-c', actual['zone'])
+        self.assertEqual('instanceGroupManagers', actual['resource_name'])
+        self.assertEqual('my-mig', actual['entity_name'])
+        self.assertEqual('recreateInstances', actual['method_name'])
 
         # global, resource
         input_url = 'https://www.googleapis.com/compute/v1/projects/myproject/global/urlMaps'
         actual = GCPUtils.parse_gcp_url(input_url)
-        self.assertEquals('compute', actual['service'])
-        self.assertEquals('v1', actual['api_version'])
-        self.assertEquals('myproject', actual['project'])
+        self.assertEqual('compute', actual['service'])
+        self.assertEqual('v1', actual['api_version'])
+        self.assertEqual('myproject', actual['project'])
         self.assertTrue('global' in actual)
         self.assertTrue(actual['global'])
-        self.assertEquals('urlMaps', actual['resource_name'])
+        self.assertEqual('urlMaps', actual['resource_name'])
 
         # global, resource, entity
         input_url = 'https://www.googleapis.com/compute/v1/projects/myproject/global/urlMaps/my-url-map'
         actual = GCPUtils.parse_gcp_url(input_url)
-        self.assertEquals('myproject', actual['project'])
+        self.assertEqual('myproject', actual['project'])
         self.assertTrue('global' in actual)
         self.assertTrue(actual['global'])
-        self.assertEquals('v1', actual['api_version'])
-        self.assertEquals('compute', actual['service'])
+        self.assertEqual('v1', actual['api_version'])
+        self.assertEqual('compute', actual['service'])
 
         # global URL, resource, entity, method_name
         input_url = 'https://www.googleapis.com/compute/v1/projects/myproject/global/backendServices/mybackendservice/getHealth'
         actual = GCPUtils.parse_gcp_url(input_url)
-        self.assertEquals('compute', actual['service'])
-        self.assertEquals('v1', actual['api_version'])
-        self.assertEquals('myproject', actual['project'])
+        self.assertEqual('compute', actual['service'])
+        self.assertEqual('v1', actual['api_version'])
+        self.assertEqual('myproject', actual['project'])
         self.assertTrue('global' in actual)
         self.assertTrue(actual['global'])
-        self.assertEquals('backendServices', actual['resource_name'])
-        self.assertEquals('mybackendservice', actual['entity_name'])
-        self.assertEquals('getHealth', actual['method_name'])
+        self.assertEqual('backendServices', actual['resource_name'])
+        self.assertEqual('mybackendservice', actual['entity_name'])
+        self.assertEqual('getHealth', actual['method_name'])
 
         # no location in URL
         input_url = 'https://www.googleapis.com/compute/v1/projects/myproject/targetHttpProxies/mytargetproxy/setUrlMap'
         actual = GCPUtils.parse_gcp_url(input_url)
-        self.assertEquals('compute', actual['service'])
-        self.assertEquals('v1', actual['api_version'])
-        self.assertEquals('myproject', actual['project'])
+        self.assertEqual('compute', actual['service'])
+        self.assertEqual('v1', actual['api_version'])
+        self.assertEqual('myproject', actual['project'])
         self.assertFalse('global' in actual)
-        self.assertEquals('targetHttpProxies', actual['resource_name'])
-        self.assertEquals('mytargetproxy', actual['entity_name'])
-        self.assertEquals('setUrlMap', actual['method_name'])
+        self.assertEqual('targetHttpProxies', actual['resource_name'])
+        self.assertEqual('mytargetproxy', actual['entity_name'])
+        self.assertEqual('setUrlMap', actual['method_name'])
 
         input_url = 'https://www.googleapis.com/compute/v1/projects/myproject/targetHttpProxies/mytargetproxy'
         actual = GCPUtils.parse_gcp_url(input_url)
-        self.assertEquals('compute', actual['service'])
-        self.assertEquals('v1', actual['api_version'])
-        self.assertEquals('myproject', actual['project'])
+        self.assertEqual('compute', actual['service'])
+        self.assertEqual('v1', actual['api_version'])
+        self.assertEqual('myproject', actual['project'])
         self.assertFalse('global' in actual)
-        self.assertEquals('targetHttpProxies', actual['resource_name'])
-        self.assertEquals('mytargetproxy', actual['entity_name'])
+        self.assertEqual('targetHttpProxies', actual['resource_name'])
+        self.assertEqual('mytargetproxy', actual['entity_name'])
 
         input_url = 'https://www.googleapis.com/compute/v1/projects/myproject/targetHttpProxies'
         actual = GCPUtils.parse_gcp_url(input_url)
-        self.assertEquals('compute', actual['service'])
-        self.assertEquals('v1', actual['api_version'])
-        self.assertEquals('myproject', actual['project'])
+        self.assertEqual('compute', actual['service'])
+        self.assertEqual('v1', actual['api_version'])
+        self.assertEqual('myproject', actual['project'])
         self.assertFalse('global' in actual)
-        self.assertEquals('targetHttpProxies', actual['resource_name'])
+        self.assertEqual('targetHttpProxies', actual['resource_name'])
 
         # test exceptions
         no_projects_input_url = 'https://www.googleapis.com/compute/v1/not-projects/myproject/global/backendServices/mybackendservice/getHealth'
@@ -368,4 +368,4 @@ class GCPUtilsTestCase(unittest.TestCase):
             'requestPath': '/'}
 
         actual = GCPUtils.filter_gcp_fields(input_data)
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)

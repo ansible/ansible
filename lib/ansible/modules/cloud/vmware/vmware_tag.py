@@ -99,7 +99,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-results:
+tag_status:
   description: dictionary of tag metadata
   returned: on success
   type: dict
@@ -176,10 +176,9 @@ class VmwareTag(VmwareRestClient):
 
         if tag_id:
             self.module.exit_json(changed=True,
-                                  results=dict(msg="Tag '%s' created." % tag_spec.name,
-                                               tag_id=tag_id))
+                                  tag_status=dict(msg="Tag '%s' created." % tag_spec.name, tag_id=tag_id))
         self.module.exit_json(changed=False,
-                              results=dict(msg="No tag created", tag_id=tag_id))
+                              tag_status=dict(msg="No tag created", tag_id=tag_id))
 
     def state_unchanged(self):
         """
@@ -210,7 +209,7 @@ class VmwareTag(VmwareRestClient):
             results['msg'] = 'Tag %s updated.' % self.tag_name
             changed = True
 
-        self.module.exit_json(changed=changed, results=results)
+        self.module.exit_json(changed=changed, tag_status=results)
 
     def state_delete_tag(self):
         """
@@ -223,8 +222,7 @@ class VmwareTag(VmwareRestClient):
         except Error as error:
             self.module.fail_json(msg="%s" % self.get_error_message(error))
         self.module.exit_json(changed=True,
-                              results=dict(msg="Tag '%s' deleted." % self.tag_name,
-                                           tag_id=tag_id))
+                              tag_status=dict(msg="Tag '%s' deleted." % self.tag_name, tag_id=tag_id))
 
     def check_tag_status(self):
         """
@@ -232,7 +230,13 @@ class VmwareTag(VmwareRestClient):
         Returns: 'present' if tag found, else 'absent'
 
         """
-        ret = 'present' if self.tag_name in self.global_tags else 'absent'
+        if 'category_id' in self.params:
+            if self.tag_name in self.global_tags and self.params['category_id'] == self.global_tags[self.tag_name]['tag_category_id']:
+                ret = 'present'
+            else:
+                ret = 'absent'
+        else:
+            ret = 'present' if self.tag_name in self.global_tags else 'absent'
         return ret
 
     def get_all_tags(self):
@@ -242,11 +246,12 @@ class VmwareTag(VmwareRestClient):
         """
         for tag in self.tag_service.list():
             tag_obj = self.tag_service.get(tag)
-            self.global_tags[tag_obj.name] = dict(tag_description=tag_obj.description,
-                                                  tag_used_by=tag_obj.used_by,
-                                                  tag_category_id=tag_obj.category_id,
-                                                  tag_id=tag_obj.id
-                                                  )
+            self.global_tags[tag_obj.name] = dict(
+                tag_description=tag_obj.description,
+                tag_used_by=tag_obj.used_by,
+                tag_category_id=tag_obj.category_id,
+                tag_id=tag_obj.id
+            )
 
 
 def main():

@@ -201,6 +201,8 @@ class CsCloudProvider(CloudProvider):
                 SECRET=credentials['secretkey'],
             )
 
+            display.sensitive.add(values['SECRET'])
+
         config = self._populate_config_template(config, values)
 
         self._write_config(config)
@@ -279,6 +281,8 @@ class CsCloudEnvironment(CloudEnvironment):
             CLOUDSTACK_SECRET=config['secret'],
             CLOUDSTACK_TIMEOUT=config['timeout'],
         )
+
+        display.sensitive.add(env_vars['CLOUDSTACK_SECRET'])
 
         ansible_vars = dict(
             cs_resource_prefix=self.resource_prefix,

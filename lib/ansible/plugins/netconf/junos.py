@@ -19,14 +19,31 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+netconf: junos
+short_description: Use junos netconf plugin to run netconf commands on Juniper JUNOS platform
+description:
+  - This junos plugin provides low level abstraction apis for
+    sending and receiving netconf commands from Juniper JUNOS network devices.
+version_added: "2.9"
+options:
+  ncclient_device_handler:
+    type: str
+    default: junos
+    description:
+      - Specifies the ncclient device handler name for Juniper junos network os. To
+        identify the ncclient device handler name refer ncclient library documentation.
+"""
+
 import json
 import re
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import string_types
 from ansible.errors import AnsibleConnectionFailure
-from ansible.plugins.netconf import NetconfBase
-from ansible.plugins.netconf import ensure_connected, ensure_ncclient
+from ansible.plugins.netconf import NetconfBase, ensure_ncclient
 
 try:
     from ncclient import manager
@@ -60,7 +77,6 @@ class Netconf(NetconfBase):
 
         return device_info
 
-    @ensure_connected
     def execute_rpc(self, name):
         """
         RPC to be execute on remote device
@@ -70,7 +86,6 @@ class Netconf(NetconfBase):
         return self.rpc(name)
 
     @ensure_ncclient
-    @ensure_connected
     def load_configuration(self, format='xml', action='merge', target='candidate', config=None):
         """
         Load given configuration on device
@@ -136,7 +151,6 @@ class Netconf(NetconfBase):
         m.close_session()
         return guessed_os
 
-    @ensure_connected
     def get_configuration(self, format='xml', filter=None):
         """
         Retrieve all or part of a specified configuration.
@@ -153,7 +167,6 @@ class Netconf(NetconfBase):
 
         return self.m.get_configuration(format=format, filter=filter).data_xml
 
-    @ensure_connected
     def compare_configuration(self, rollback=0):
         """
         Compare the candidate configuration with running configuration
@@ -164,12 +177,10 @@ class Netconf(NetconfBase):
         """
         return self.m.compare_configuration(rollback=rollback).data_xml
 
-    @ensure_connected
     def halt(self):
         """reboot the device"""
         return self.m.halt().data_xml
 
-    @ensure_connected
     def reboot(self):
         """reboot the device"""
         return self.m.reboot().data_xml
@@ -179,7 +190,6 @@ class Netconf(NetconfBase):
     # ncclient generic rpc() method to execute rpc on remote host.
     # Remove below method after the issue in ncclient is fixed.
     @ensure_ncclient
-    @ensure_connected
     def commit(self, confirmed=False, check=False, timeout=None, comment=None, synchronize=False, at_time=None):
         """
         Commit the candidate configuration as the device's new current configuration.

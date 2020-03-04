@@ -2,6 +2,9 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -16,8 +19,10 @@ description:
 author: Yang yang (@QijunPan)
 notes:
     - If no vrf is supplied, vrf is set to default.
-      If I(state=absent), the route will be removed, regardless of the
-      non-required parameters.
+    - If I(state=absent), the route will be removed, regardless of the non-required parameters.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     prefix:
         description:
@@ -471,8 +476,10 @@ class StaticRoute(object):
         if not self.changed:
             return
         if self.aftype == "v4":
+            aftype = "ip"
             maskstr = self.convert_len_to_mask(self.mask)
         else:
+            aftype = "ipv6"
             maskstr = self.mask
         if self.next_hop is None:
             next_hop = ''
@@ -493,38 +500,38 @@ class StaticRoute(object):
         if self.state == "present":
             if self.vrf != "_public_":
                 if self.destvrf != "_public_":
-                    self.updates_cmd.append('ip route-static vpn-instance %s %s %s vpn-instance %s %s'
-                                            % (vrf, self.prefix, maskstr, destvrf, next_hop))
+                    self.updates_cmd.append('%s route-static vpn-instance %s %s %s vpn-instance %s %s'
+                                            % (aftype, vrf, self.prefix, maskstr, destvrf, next_hop))
                 else:
-                    self.updates_cmd.append('ip route-static vpn-instance %s %s %s %s %s'
-                                            % (vrf, self.prefix, maskstr, nhp_interface, next_hop))
+                    self.updates_cmd.append('%s route-static vpn-instance %s %s %s %s %s'
+                                            % (aftype, vrf, self.prefix, maskstr, nhp_interface, next_hop))
             elif self.destvrf != "_public_":
-                self.updates_cmd.append('ip route-static %s %s vpn-instance %s %s'
-                                        % (self.prefix, maskstr, self.destvrf, next_hop))
+                self.updates_cmd.append('%s route-static %s %s vpn-instance %s %s'
+                                        % (aftype, self.prefix, maskstr, self.destvrf, next_hop))
             else:
-                self.updates_cmd.append('ip route-static %s %s %s %s'
-                                        % (self.prefix, maskstr, nhp_interface, next_hop))
+                self.updates_cmd.append('%s route-static %s %s %s %s'
+                                        % (aftype, self.prefix, maskstr, nhp_interface, next_hop))
             if self.pref:
-                self.updates_cmd.append(' preference %s' % (self.pref))
+                self.updates_cmd[0] += ' preference %s' % (self.pref)
             if self.tag:
-                self.updates_cmd.append(' tag %s' % (self.tag))
+                self.updates_cmd[0] += ' tag %s' % (self.tag)
             if self.description:
-                self.updates_cmd.append(' description %s' % (self.description))
+                self.updates_cmd[0] += ' description %s' % (self.description)
 
         if self.state == "absent":
             if self.vrf != "_public_":
                 if self.destvrf != "_public_":
-                    self.updates_cmd.append('undo ip route-static vpn-instance %s %s %s vpn-instance %s %s'
-                                            % (vrf, self.prefix, maskstr, destvrf, next_hop))
+                    self.updates_cmd.append('undo %s route-static vpn-instance %s %s %s vpn-instance %s %s'
+                                            % (aftype, vrf, self.prefix, maskstr, destvrf, next_hop))
                 else:
-                    self.updates_cmd.append('undo ip route-static vpn-instance %s %s %s %s %s'
-                                            % (vrf, self.prefix, maskstr, nhp_interface, next_hop))
+                    self.updates_cmd.append('undo %s route-static vpn-instance %s %s %s %s %s'
+                                            % (aftype, vrf, self.prefix, maskstr, nhp_interface, next_hop))
             elif self.destvrf != "_public_":
-                self.updates_cmd.append('undo ip route-static %s %s vpn-instance %s %s'
-                                        % (self.prefix, maskstr, self.destvrf, self.next_hop))
+                self.updates_cmd.append('undo %s route-static %s %s vpn-instance %s %s'
+                                        % (aftype, self.prefix, maskstr, self.destvrf, self.next_hop))
             else:
-                self.updates_cmd.append('undo ip route-static %s %s %s %s'
-                                        % (self.prefix, maskstr, nhp_interface, next_hop))
+                self.updates_cmd.append('undo %s route-static %s %s %s %s'
+                                        % (aftype, self.prefix, maskstr, nhp_interface, next_hop))
 
     def operate_static_route(self, version, prefix, mask, nhp_interface, next_hop, vrf, destvrf, state):
         """operate ipv4 static route"""

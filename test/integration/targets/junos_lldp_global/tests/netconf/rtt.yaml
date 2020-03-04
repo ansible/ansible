@@ -53,7 +53,7 @@
         address: 10.1.1.2
         transmit_delay: 500
         hold_multiplier: 5
-        enable: False
+        enabled: False
       state: replaced
     register: result
 

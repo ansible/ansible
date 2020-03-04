@@ -23,5 +23,7 @@
       tags: vpc_security_groups
     - include: ./test_restore_instance.yml  # TODO: snapshot, s3
       tags: restore
+    - include: ./test_snapshot.yml
+      tags: snapshot
     # TODO: uncomment after adding rds_cluster module
     #- include: ./test_aurora.yml

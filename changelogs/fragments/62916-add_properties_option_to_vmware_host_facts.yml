@@ -1,0 +1,2 @@
+minor_changes:
+  - vmware_host_facts - added ``properties`` and ``schema`` options.

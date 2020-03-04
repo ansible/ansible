@@ -184,6 +184,12 @@ vultr_api:
       returned: success
       type: int
       sample: 5
+    api_retry_max_delay:
+      description: Exponential backoff delay in seconds between retries up to this max delay value.
+      returned: success
+      type: int
+      sample: 12
+      version_added: '2.9'
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
@@ -280,7 +286,7 @@ vultr_server:
       type: str
       sample: "CentOS 6 x64"
     firewall_group:
-      description: Firewall group the server is assinged to
+      description: Firewall group the server is assigned to
       returned: success and available
       type: str
       sample: "CentOS 6 x64"
@@ -444,15 +450,6 @@ class AnsibleVultrServer(Vultr):
             resource='regions',
             use_cache=True,
             id_key='DCID',
-        )
-
-    def get_plan(self):
-        return self.query_resource_by_key(
-            key='name',
-            value=self.module.params.get('plan'),
-            resource='plans',
-            use_cache=True,
-            id_key='VPSPLANID',
         )
 
     def get_firewall_group(self):
@@ -636,7 +633,16 @@ class AnsibleVultrServer(Vultr):
         return server
 
     def _update_plan_setting(self, server, start_server):
-        plan = self.get_plan()
+        # Verify the exising plan is not discontined by Vultr and therefore won't be found by the API
+        server_plan = self.get_plan(plan=server.get('VPSPLANID'), optional=True)
+        if not server_plan:
+            plan = self.get_plan(optional=True)
+            if not plan:
+                self.module.warn("The plan used to create the server is not longer available as well as the desired plan. Assuming same plan, keeping as is.")
+                return server
+        else:
+            plan = self.get_plan()
+
         plan_changed = True if plan and plan['VPSPLANID'] != server.get('VPSPLANID') else False
         if plan_changed:
             server, warned = self._handle_power_status_for_update(server, start_server)

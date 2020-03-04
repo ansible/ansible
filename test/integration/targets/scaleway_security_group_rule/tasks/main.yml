@@ -1,6 +1,3 @@
-# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_security_group_rule
-
-
 - name: Create a scaleway security_group
   scaleway_security_group:
     state: present

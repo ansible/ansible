@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: vultr_block_storage_info
-short_description: Get infos about the Vultr block storage volumes available.
+short_description: Get information about the Vultr block storage volumes available.
 description:
   - Get infos about block storage volumes available in Vultr.
 version_added: "2.9"
@@ -57,6 +57,12 @@ vultr_api:
       returned: success
       type: int
       sample: 5
+    api_retry_max_delay:
+      description: Exponential backoff delay in seconds between retries up to this max delay value.
+      returned: success
+      type: int
+      sample: 12
+      version_added: '2.9'
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
@@ -96,7 +102,7 @@ vultr_block_storage_info:
       description: Date created of the block storage.
       returned: success
       type: str
-      sample: 2018-07-24 12:59:59
+      sample: "2018-07-24 12:59:59"
     status:
       description: Status of the block storage.
       returned: success

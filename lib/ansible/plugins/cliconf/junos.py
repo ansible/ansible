@@ -109,7 +109,7 @@ class Cliconf(CliconfBase):
         requests = []
 
         if replace:
-            candidate = 'load replace {0}'.format(replace)
+            candidate = 'load override {0}'.format(replace)
 
         for line in to_list(candidate):
             if not isinstance(line, Mapping):
@@ -133,8 +133,8 @@ class Cliconf(CliconfBase):
                 self.discard_changes()
 
         else:
-            for cmd in ['top', 'exit']:
-                self.send_command(cmd)
+            self.send_command('top')
+            self.discard_changes()
 
         resp['request'] = requests
         resp['response'] = results
@@ -193,7 +193,7 @@ class Cliconf(CliconfBase):
         resp = self.send_command(command)
 
         r = resp.splitlines()
-        if len(r) == 1 and '[edit]' in r[0]:
+        if len(r) == 1 and '[edit]' in r[0] or len(r) == 4 and r[1].startswith('- version'):
             resp = ''
 
         return resp
@@ -245,6 +245,14 @@ class Cliconf(CliconfBase):
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            self._update_cli_prompt_context(config_context='#')
 
     def _get_command_with_output(self, command, output):
         options_values = self.get_option_values()

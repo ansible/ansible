@@ -69,9 +69,17 @@ options:
       type: str
     destination_datastore:
       description:
-      - "Name of the destination datastore the virtual machine's vmdk should be moved on."
+      - Name of the destination datastore the virtual machine's vmdk should be moved on.
       aliases: ['datastore']
       version_added: 2.7
+      type: str
+    destination_resourcepool:
+      description:
+      - Name of the destination resource pool where the virtual machine should be running.
+      - Resource pool is required if vmotion is done between hosts which are part of different clusters or datacenters.
+      - if not passed, resource_pool object will be retrived from host_obj parent.
+      aliases: ['resource_pool']
+      version_added: '2.10'
       type: str
 extends_documentation_fragment: vmware.documentation
 '''
@@ -95,6 +103,17 @@ EXAMPLES = '''
     validate_certs: no
     moid: vm-42
     destination_host: 'destination_host_as_per_vcenter'
+  delegate_to: localhost
+
+- name: Perform vMotion of virtual machine to resource_pool
+  vmware_vmotion:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+    moid: vm-42
+    destination_host: 'destination_host_as_per_vcenter'
+    destination_resourcepool: 'destination_resourcepool_as_per_vcenter'
   delegate_to: localhost
 
 - name: Perform storage vMotion of of virtual machine
@@ -136,6 +155,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import (PyVmomi, find_hostsystem_by_name,
                                          find_vm_by_id, find_datastore_by_name,
+                                         find_resource_pool_by_name,
                                          vmware_argument_spec, wait_for_task, TaskError)
 
 
@@ -172,6 +192,18 @@ class VmotionManager(PyVmomi):
         if self.datastore_object is None and self.host_object is None:
             self.module.fail_json(msg="Unable to find destination datastore"
                                       " and destination host system.")
+
+        # Get Destination resourcepool
+        dest_resourcepool = self.params.get('destination_resourcepool', None)
+        self.resourcepool_object = None
+        if dest_resourcepool:
+            self.resourcepool_object = find_resource_pool_by_name(content=self.content,
+                                                                  resource_pool_name=dest_resourcepool)
+        elif not dest_resourcepool and dest_host_name:
+            self.resourcepool_object = self.host_object.parent.resourcePool
+        # Fail if resourcePool object is not found
+        if self.resourcepool_object is None:
+            self.module.fail_json(msg="Unable to destination resource pool object which is required")
 
         # Check if datastore is required, this check is required if destination
         # and source host system does not share same datastore.
@@ -271,7 +303,8 @@ class VmotionManager(PyVmomi):
         Migrate virtual machine and return the task.
         """
         relocate_spec = vim.vm.RelocateSpec(host=self.host_object,
-                                            datastore=self.datastore_object)
+                                            datastore=self.datastore_object,
+                                            pool=self.resourcepool_object)
         task_object = self.vm.Relocate(relocate_spec)
         return task_object
 
@@ -305,7 +338,8 @@ class VmotionManager(PyVmomi):
             self.module.fail_json(msg="Multiple virtual machines with same name %s found."
                                       " Please specify vm_uuid instead of vm_name." % self.vm_name)
 
-        self.vm = vms[0]
+        if vms:
+            self.vm = vms[0]
 
 
 def main():
@@ -317,6 +351,7 @@ def main():
             moid=dict(type='str'),
             use_instance_uuid=dict(type='bool', default=False),
             destination_host=dict(aliases=['destination']),
+            destination_resourcepool=dict(aliases=['resource_pool']),
             destination_datastore=dict(aliases=['datastore'])
         )
     )

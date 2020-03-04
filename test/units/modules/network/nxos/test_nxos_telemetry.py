@@ -609,6 +609,27 @@ class TestNxosTelemetryModule(TestNxosModule):
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
+    def test_tms_sensorgroup_quotes_merged_idempotent_n9k(self):
+        # Assumes feature telemetry is enabled
+        # TMS sensorgroup config is present with quotes in NX-API path.
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K_SGs.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        args = build_args([
+            {'id': '2',
+             'data_source': 'NX-API',
+             'path': {'name': '"show mac address-table count"', 'depth': 2},
+             },
+            {'id': '3',
+             'data_source': 'NX-API',
+             'path': {'name': '"show interface ethernet1/1-52"'},
+             },
+            {'id': '1',
+             'path': {'name': 'sys/procsys', 'depth': 1},
+             },
+        ], 'sensor_groups')
+        set_module_args(args, ignore_provider_arg)
+        self.execute_module(changed=False)
+
     def test_tms_sensorgroup_vxlan_idempotent_n9k(self):
         # TMS sensorgroup config present.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
@@ -869,12 +890,16 @@ class TestNxosTelemetryModule(TestNxosModule):
                 ],
                 'subscriptions': [
                     {'id': 5,
-                     'destination_group': 55,
-                     'sensor_group': {'id': 1, 'sample_interval': 1000},
+                     'destination_group': 88,
+                     'sensor_group': {'id': 77, 'sample_interval': 1000},
+                     },
+                    {'id': 5,
+                     'destination_group': 99,
+                     'sensor_group': {'id': 77, 'sample_interval': 1000},
                      },
                     {'id': 88,
-                     'destination_group': 3,
-                     'sensor_group': {'id': 4, 'sample_interval': 2000},
+                     'destination_group': 99,
+                     'sensor_group': {'id': 99, 'sample_interval': 2000},
                      },
                 ],
             }
@@ -900,11 +925,12 @@ class TestNxosTelemetryModule(TestNxosModule):
             'data-source DME',
             'path sys/bgp depth 0 query-condition query_condition_xyz filter-condition filter_condition_xyz',
             'subscription 5',
-            'dst-grp 55',
-            'snsr-grp 1 sample-interval 1000',
+            'dst-grp 88',
+            'dst-grp 99',
+            'snsr-grp 77 sample-interval 1000',
             'subscription 88',
-            'dst-grp 3',
-            'snsr-grp 4 sample-interval 2000'
+            'dst-grp 99',
+            'snsr-grp 99 sample-interval 2000'
         ])
 
     def test_telemetry_deleted_input_validation_n9k(self):
@@ -947,6 +973,272 @@ class TestNxosTelemetryModule(TestNxosModule):
             state='deleted',
         ), ignore_provider_arg)
         self.execute_module(changed=False)
+
+    def test_tms_replaced1_n9k(self):
+        # Assumes feature telemetry is enabled
+        # Modify global config and remove everything else
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        set_module_args(dict(
+            state='replaced',
+            config=dict(
+                certificate={'key': '/bootflash/sample.key', 'hostname': 'server.example.com'},
+                compression='gzip',
+                vrf='blue',
+            )
+        ), ignore_provider_arg)
+        self.execute_module(changed=True, commands=[
+            'telemetry',
+            'no subscription 3',
+            'no subscription 4',
+            'no subscription 5',
+            'no subscription 6',
+            'no subscription 7',
+            'no sensor-group 2',
+            'no sensor-group 55',
+            'no sensor-group 56',
+            'no destination-group 2',
+            'no destination-group 10',
+            'certificate /bootflash/sample.key server.example.com',
+            'destination-profile',
+            'no source-interface loopback55',
+            'use-vrf blue'
+        ])
+
+    def test_tms_replaced2_n9k(self):
+        # Assumes feature telemetry is enabled
+        # Remove/default all global config
+        # Modify destination-group 10, add 11 and 99, remove 2
+        # Modify sensor-group 55, 56
+        # remove all subscriptions
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        set_module_args({
+            'state': 'replaced',
+            'config': {
+                'destination_groups': [
+                    {'id': 10,
+                     'destination': {'ip': '192.168.1.1', 'port': '5001', 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                    {'id': 11,
+                     'destination': {'ip': '192.168.1.2', 'port': '6001', 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                    {'id': 99,
+                     'destination': {'ip': '192.168.1.2', 'port': '6001', 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                    {'id': '99',
+                     'destination': {'ip': '192.168.1.1', 'port': '5001', 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                ],
+                'sensor_groups': [
+                    {'id': 55,
+                     'data_source': 'NX-API',
+                     'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'query_condition_xyz', 'filter_condition': 'filter_condition_xyz'},
+                     },
+                    {'id': '56',
+                     'data_source': 'NX-API',
+                     'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'query_condition_xyz', 'filter_condition': 'filter_condition_xyz'},
+                     },
+                ],
+            }
+        }, ignore_provider_arg)
+        self.execute_module(changed=True, commands=[
+            'telemetry',
+            'no subscription 3',
+            'no subscription 5',
+            'no subscription 4',
+            'no subscription 7',
+            'no subscription 6',
+            'sensor-group 56',
+            'no data-source DME',
+            'no path environment',
+            'no path interface',
+            'no path resources',
+            'no path vxlan',
+            'no sensor-group 2',
+            'destination-group 10',
+            'no ip address 192.168.0.1 port 50001 protocol grpc encoding gpb',
+            'no ip address 192.168.0.2 port 60001 protocol grpc encoding gpb',
+            'no destination-group 2',
+            'destination-group 11',
+            'ip address 192.168.1.2 port 6001 protocol grpc encoding gpb',
+            'destination-group 10',
+            'ip address 192.168.1.1 port 5001 protocol grpc encoding gpb',
+            'destination-group 99',
+            'ip address 192.168.1.2 port 6001 protocol grpc encoding gpb',
+            'ip address 192.168.1.1 port 5001 protocol grpc encoding gpb',
+            'sensor-group 55',
+            'data-source NX-API',
+            'path sys/bgp depth 0 query-condition query_condition_xyz filter-condition filter_condition_xyz',
+            'sensor-group 56',
+            'data-source NX-API',
+            'path sys/bgp depth 0 query-condition query_condition_xyz filter-condition filter_condition_xyz',
+            'no certificate /bootflash/server.key localhost',
+            'no destination-profile'
+        ])
+
+    def test_tms_replaced3_n9k(self):
+        # Assumes feature telemetry is enabled
+        # Modify vrf global config, remove default all other global config.
+        # destination-group 2 destination '192.168.0.1' idempotent
+        # destination-group 2 destination '192.168.0.2' remove
+        # remove all other destination-groups
+        # Modify sensor-group 55 and delete all others
+        # Modify subscription 7, add 10 and delete all others
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        set_module_args({
+            'state': 'replaced',
+            'config': {
+                'vrf': 'blue',
+                'destination_groups': [
+                    {'id': 2,
+                     'destination': {'ip': '192.168.0.1', 'port': 50001, 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                ],
+                'sensor_groups': [
+                    {'id': 55,
+                     'data_source': 'NX-API',
+                     'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'query_condition_xyz', 'filter_condition': 'filter_condition_xyz'},
+                     },
+                ],
+                'subscriptions': [
+                    {'id': 7,
+                     'destination_group': 10,
+                     'sensor_group': {'id': 55, 'sample_interval': 1000},
+                     },
+                    {'id': 10,
+                     'destination_group': 2,
+                     'sensor_group': {'id': 55, 'sample_interval': 1000},
+                     },
+                ],
+            }
+        }, ignore_provider_arg)
+        self.execute_module(changed=True, commands=[
+            'telemetry',
+            'no subscription 3',
+            'no subscription 5',
+            'no subscription 4',
+            'subscription 7',
+            'no snsr-grp 2 sample-interval 1000',
+            'no subscription 6',
+            'no sensor-group 56',
+            'no sensor-group 2',
+            'no destination-group 10',
+            'destination-group 2',
+            'no ip address 192.168.0.2 port 60001 protocol grpc encoding gpb',
+            'sensor-group 55',
+            'data-source NX-API',
+            'path sys/bgp depth 0 query-condition query_condition_xyz filter-condition filter_condition_xyz',
+            'subscription 10',
+            'dst-grp 2',
+            'snsr-grp 55 sample-interval 1000',
+            'subscription 7',
+            'snsr-grp 55 sample-interval 1000',
+            'no certificate /bootflash/server.key localhost',
+            'destination-profile',
+            'no use-compression gzip',
+            'no source-interface loopback55',
+            'use-vrf blue'
+        ])
+
+    def test_tms_replaced_idempotent_n9k(self):
+        # Assumes feature telemetry is enabled
+        # Modify vrf global config, remove default all other global config.
+        # destination-group 2 destination '192.168.0.1' idempotent
+        # destination-group 2 destination '192.168.0.2' remove
+        # remove all other destination-groups
+        # Modify sensor-group 55 and delete all others
+        # Modify subscription 7, add 10 and delete all others
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        set_module_args({
+            'state': 'replaced',
+            'config': {
+                'certificate': {'key': '/bootflash/server.key', 'hostname': 'localhost'},
+                'compression': 'gzip',
+                'vrf': 'management',
+                'source_interface': 'loopback55',
+                'destination_groups': [
+                    {'id': 2,
+                     'destination': {'ip': '192.168.0.1', 'port': 50001, 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                    {'id': 2,
+                     'destination': {'ip': '192.168.0.2', 'port': 60001, 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                    {'id': 10,
+                     'destination': {'ip': '192.168.0.1', 'port': 50001, 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                    {'id': 10,
+                     'destination': {'ip': '192.168.0.2', 'port': 60001, 'protocol': 'GRPC', 'encoding': 'GPB'},
+                     },
+                ],
+                'sensor_groups': [
+                    {'id': 2,
+                     'data_source': 'DME',
+                     'path': {'name': 'boo', 'depth': 0},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'sys/ospf', 'depth': 0, 'query_condition': 'qc', 'filter_condition': 'fc'},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'interfaces', 'depth': 0},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'sys/bgp'},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'sys/bgp/inst', 'depth': 0, 'query_condition': 'foo', 'filter_condition': 'foo'},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]'},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'sys/bgp/inst/dom-default/peer-[20.20.20.11]/ent-[20.20.20.11]'},
+                     },
+                    {'id': 2,
+                     'path': {'name': 'too', 'depth': 0, 'filter_condition': 'foo'},
+                     },
+                    {'id': 55},
+                    {'id': 56,
+                     'data_source': 'DME',
+                     },
+                    {'id': 56,
+                     'path': {'name': 'environment'},
+                     },
+                    {'id': 56,
+                     'path': {'name': 'interface'},
+                     },
+                    {'id': 56,
+                     'path': {'name': 'resources'},
+                     },
+                    {'id': 56,
+                     'path': {'name': 'vxlan'},
+                     },
+                ],
+                'subscriptions': [
+                    {'id': 3},
+                    {'id': 4,
+                     'destination_group': 2,
+                     'sensor_group': {'id': 2, 'sample_interval': 1000},
+                     },
+                    {'id': 5,
+                     'destination_group': 2,
+                     },
+                    {'id': 5,
+                     'sensor_group': {'id': 2, 'sample_interval': 1000},
+                     },
+                    {'id': 6,
+                     'destination_group': 10,
+                     },
+                    {'id': 7,
+                     'destination_group': 10,
+                     'sensor_group': {'id': 2, 'sample_interval': 1000},
+                     },
+                ],
+            }
+        }, ignore_provider_arg)
+        self.execute_module(changed=False, commands=[])
 
 
 def build_args(data, type, state=None, check_mode=None):

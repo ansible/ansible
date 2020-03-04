@@ -1,0 +1,103 @@
+---
+- debug:
+    msg: "START ce_lacp presented integration tests on connection={{ ansible_connection }}"
+
+- name: present the provided configuration with the exisiting running configuration
+  ce_lacp: &present
+    mode: Dynamic
+    trunk_id: 10
+    preempt_enable: True
+    state_flapping: True
+    port_id_extension_enable: True
+    unexpected_mac_disable: True
+    system_id: 1111-2222-3333
+    timeout_type: Fast
+    fast_timeout: 12
+    mixed_rate_link_enable: True
+    preempt_delay: 12
+    collector_delay: 12
+    max_active_linknumber: 2
+    select: Prority
+    priority: 23
+    global_priority: 123
+  register: result
+
+- name: Assert the configuration is reflected on host
+  assert:
+    that:
+      - "result['changed'] == true"
+
+- name: Get lacp config by ce_netconf.
+  ce_netconf:
+    rpc: get
+    cfg_xml: "<filter type=\"subtree\">
+              <ifmtrunk xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                <TrunkIfs>
+                  <TrunkIf>
+                    <ifName>Eth-Trunk10</ifName>
+                    <workMode></workMode>
+                    <lacpTrunk>
+                      <isSupportPrmpt></isSupportPrmpt>
+                      <rcvTimeoutType></rcvTimeoutType>
+                      <fastTimeoutUserDefinedValue></fastTimeoutUserDefinedValue>
+                      <selectPortStd></selectPortStd>
+                      <promptDelay></promptDelay>
+                      <maxActiveNum></maxActiveNum>
+                      <collectMaxDelay></collectMaxDelay>
+                      <mixRateEnable></mixRateEnable>
+                      <dampStaFlapEn></dampStaFlapEn>
+                      <dampUnexpMacEn></dampUnexpMacEn>
+                      <trunkSysMac></trunkSysMac>
+                      <trunkPortIdExt></trunkPortIdExt>
+                    </lacpTrunk>
+                  </TrunkIf>
+                </TrunkIfs>
+              </ifmtrunk>
+            </filter>"
+  register: result_ifs_presentd
+
+- name: Get global lacp config by ce_netconf.
+  ce_netconf:
+    rpc: get
+    cfg_xml: "<filter type=\"subtree\">
+              <ifmtrunk xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                <lacpSysInfo>
+                  <priority></priority>
+                  <lacpMlagGlobal>
+                    <lacpMlagPriority></lacpMlagPriority>
+                    <lacpMlagSysId></lacpMlagSysId>
+                  </lacpMlagGlobal>
+                </lacpSysInfo>
+              </ifmtrunk>
+            </filter>"
+  register: result_global_presentd
+
+
+- name: present the provided configuration with the existing running configuration (IDEMPOTENT)
+  ce_lacp: *present
+  register: result_re_presentd
+
+- name: Assert that the previous task was idempotent
+  assert:
+    that:
+      - "result_re_presentd.changed == false"
+      - "'<workMode>Dynamic</workMode>' == result_ifs_presentd.end_state.result"
+      - "'<isSupportPrmpt>true</isSupportPrmpt>' == result_ifs_presentd.end_state.result"
+      - "'<rcvTimeoutType>Fast</rcvTimeoutType>' == result_ifs_presentd.end_state.result"
+      - "'<fastTimeoutUserDefinedValue>12</fastTimeoutUserDefinedValue>' == result_ifs_presentd.end_state.result"
+      - "'<selectPortStd>Prority</selectPortStd>' == result_ifs_presentd.end_state.result"
+      - "'<promptDelay>12</promptDelay>' == result_ifs_presentd.end_state.result"
+      - "'<maxActiveNum>2</maxActiveNum>' == result_ifs_presentd.end_state.result"
+      - "'<collectMaxDelay>12</collectMaxDelay>' in result_ifs_presentd.end_state.result"
+      - "'<mixRateEnable>true</mixRateEnable>' in result_ifs_presentd.end_state.result"
+      - "'<dampStaFlapEn>true</dampStaFlapEn>' in result_ifs_presentd.end_state.result"
+      - "'<dampUnexpMacEn>true</dampUnexpMacEn>' in result_ifs_presentd.end_state.result"
+      - "'<trunkSysMac>true</trunkSysMac>' in result_ifs_presentd.end_state.result"
+      - "'<trunkPortIdExt>true</trunkPortIdExt>' in result_ifs_presentd.end_state.result"
+      - "'<lacpMlagSysId>1111-2222-3333</lacpMlagSysId>' in result_global_presentd.end_state.result"
+      - "'<priority>123</priority>' in result_global_presentd.end_state.result"
+
+# after present, it should be deleted
+- include_tasks: delete.yaml
+- debug:
+    msg: "END ce_lacp presentd integration tests on connection={{ ansible_connection }}"

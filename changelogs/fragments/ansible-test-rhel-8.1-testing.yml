@@ -1,0 +1,2 @@
+minor_changes:
+    - ansible-test - switch from testing RHEL 8.0 and RHEL 8.1 Beta to RHEL 8.1

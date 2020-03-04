@@ -30,20 +30,21 @@ class TestIosBannerModule(TestIosModule):
     def setUp(self):
         super(TestIosBannerModule, self).setUp()
 
-        self.mock_exec_command = patch('ansible.modules.network.ios.ios_banner.exec_command')
-        self.exec_command = self.mock_exec_command.start()
+        self.mock_get_config = patch('ansible.modules.network.ios.ios_banner.get_config')
+        self.get_config = self.mock_get_config.start()
 
         self.mock_load_config = patch('ansible.modules.network.ios.ios_banner.load_config')
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
         super(TestIosBannerModule, self).tearDown()
-        self.mock_exec_command.stop()
+        self.mock_get_config.stop()
         self.mock_load_config.stop()
 
     def load_fixtures(self, commands=None):
-        self.exec_command.return_value = (0, load_fixture('ios_banner_show_banner.txt').strip(), None)
-        self.load_config.return_value = dict(diff=None, session='session')
+        def load_from_file(*args, **kwargs):
+            return load_fixture('ios_banner_show_running_config_ios12.txt')
+        self.get_config.side_effect = load_from_file
 
     def test_ios_banner_create(self):
         for banner_type in ('login', 'motd', 'exec', 'incoming', 'slip-ppp'):
@@ -57,6 +58,19 @@ class TestIosBannerModule(TestIosModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_ios_banner_nochange(self):
-        banner_text = load_fixture('ios_banner_show_banner.txt').strip()
+        banner_text = load_fixture('ios_banner_show_banner.txt')
         set_module_args(dict(banner='login', text=banner_text))
+        self.execute_module()
+
+
+class TestIosBannerIos12Module(TestIosBannerModule):
+
+    def load_fixtures(self, commands=None):
+        def load_from_file(*args, **kwargs):
+            return load_fixture('ios_banner_show_running_config_ios12.txt')
+        self.get_config.side_effect = load_from_file
+
+    def test_ios_banner_nochange(self):
+        banner_text = load_fixture('ios_banner_show_banner.txt')
+        set_module_args(dict(banner='exec', text=banner_text))
         self.execute_module()

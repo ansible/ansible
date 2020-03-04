@@ -33,8 +33,8 @@
     - name: Check that the provided kernel_module_name has kernel_module_option set
       assert:
         that:
-          - "'original_options' in my_results_01['ansible_module_results']['{{ esxi1 }}']"
-          - "my_results_01['ansible_module_results']['{{ esxi1 }}'].original_options == 'ipv6=0'"
+          - "'original_options' in my_results_01['host_kernel_status']['{{ esxi1 }}']"
+          - "my_results_01['host_kernel_status']['{{ esxi1 }}'].original_options == 'ipv6=0'"
 
     - name: host connected, module exists, same options for idempotence test
       vmware_host_kernel_manager:

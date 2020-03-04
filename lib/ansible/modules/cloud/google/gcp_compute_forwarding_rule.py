@@ -35,7 +35,7 @@ description:
   virtual machines to forward a packet to if it matches the given [IPAddress, IPProtocol,
   portRange] tuple.
 short_description: Creates a GCP ForwardingRule
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -98,20 +98,16 @@ options:
       field to "{{ name-of-resource }}"'
     required: false
     type: dict
-  ip_version:
-    description:
-    - ipVersion is not a valid field for regional forwarding rules.
-    - 'Some valid choices include: "IPV4", "IPV6"'
-    required: false
-    type: str
   load_balancing_scheme:
     description:
-    - 'This signifies what the ForwardingRule will be used for and can only take the
-      following values: INTERNAL, EXTERNAL The value of INTERNAL means that this will
-      be used for Internal Network Load Balancing (TCP, UDP). The value of EXTERNAL
-      means that this will be used for External Load Balancing (HTTP(S) LB, External
-      TCP/UDP LB, SSL Proxy) .'
-    - 'Some valid choices include: "INTERNAL", "EXTERNAL"'
+    - This signifies what the ForwardingRule will be used for and can be EXTERNAL,
+      INTERNAL, or INTERNAL_MANAGED. EXTERNAL is used for Classic Cloud VPN gateways,
+      protocol forwarding to VMs from an external IP address, and HTTP(S), SSL Proxy,
+      TCP Proxy, and Network TCP/UDP load balancers.
+    - INTERNAL is used for protocol forwarding to VMs from an internal IP address,
+      and internal TCP/UDP load balancers.
+    - INTERNAL_MANAGED is used for internal HTTP(S) load balancers.
+    - 'Some valid choices include: "EXTERNAL", "INTERNAL", "INTERNAL_MANAGED"'
     required: false
     type: str
   name:
@@ -187,7 +183,7 @@ options:
       }}"'
     required: false
     type: dict
-    version_added: 2.7
+    version_added: '2.7'
   all_ports:
     description:
     - For internal TCP/UDP load balancing (i.e. load balancing scheme is INTERNAL
@@ -196,7 +192,7 @@ options:
       Used with backend service. Cannot be set if port or portRange are set.
     required: false
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   network_tier:
     description:
     - 'The networking tier used for configuring this address. This field can take
@@ -205,7 +201,7 @@ options:
     - 'Some valid choices include: "PREMIUM", "STANDARD"'
     required: false
     type: str
-    version_added: 2.8
+    version_added: '2.8'
   service_label:
     description:
     - An optional prefix to the service name for this Forwarding Rule.
@@ -218,17 +214,63 @@ options:
     - This field is only used for INTERNAL load balancing.
     required: false
     type: str
-    version_added: 2.8
+    version_added: '2.8'
   region:
     description:
     - A reference to the region where the regional forwarding rule resides.
     - This field is not applicable to global forwarding rules.
     required: true
     type: str
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/forwardingRule)'
 - 'Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/network/forwarding-rules)'
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -319,18 +361,15 @@ backendService:
     load balancing.
   returned: success
   type: dict
-ipVersion:
-  description:
-  - ipVersion is not a valid field for regional forwarding rules.
-  returned: success
-  type: str
 loadBalancingScheme:
   description:
-  - 'This signifies what the ForwardingRule will be used for and can only take the
-    following values: INTERNAL, EXTERNAL The value of INTERNAL means that this will
-    be used for Internal Network Load Balancing (TCP, UDP). The value of EXTERNAL
-    means that this will be used for External Load Balancing (HTTP(S) LB, External
-    TCP/UDP LB, SSL Proxy) .'
+  - This signifies what the ForwardingRule will be used for and can be EXTERNAL, INTERNAL,
+    or INTERNAL_MANAGED. EXTERNAL is used for Classic Cloud VPN gateways, protocol
+    forwarding to VMs from an external IP address, and HTTP(S), SSL Proxy, TCP Proxy,
+    and Network TCP/UDP load balancers.
+  - INTERNAL is used for protocol forwarding to VMs from an internal IP address, and
+    internal TCP/UDP load balancers.
+  - INTERNAL_MANAGED is used for internal HTTP(S) load balancers.
   returned: success
   type: str
 name:
@@ -454,7 +493,6 @@ def main():
             ip_address=dict(type='str'),
             ip_protocol=dict(type='str'),
             backend_service=dict(type='dict'),
-            ip_version=dict(type='str'),
             load_balancing_scheme=dict(type='str'),
             name=dict(required=True, type='str'),
             network=dict(type='dict'),
@@ -535,7 +573,6 @@ def resource_to_request(module):
         u'IPAddress': module.params.get('ip_address'),
         u'IPProtocol': module.params.get('ip_protocol'),
         u'backendService': replace_resource_dict(module.params.get(u'backend_service', {}), 'selfLink'),
-        u'ipVersion': module.params.get('ip_version'),
         u'loadBalancingScheme': module.params.get('load_balancing_scheme'),
         u'name': module.params.get('name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
@@ -617,7 +654,6 @@ def response_to_hash(module, response):
         u'IPAddress': response.get(u'IPAddress'),
         u'IPProtocol': response.get(u'IPProtocol'),
         u'backendService': response.get(u'backendService'),
-        u'ipVersion': response.get(u'ipVersion'),
         u'loadBalancingScheme': response.get(u'loadBalancingScheme'),
         u'name': response.get(u'name'),
         u'network': response.get(u'network'),

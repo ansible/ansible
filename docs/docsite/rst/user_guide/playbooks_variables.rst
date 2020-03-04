@@ -30,6 +30,8 @@ Variable names should be letters, numbers, and underscores.  Variables should al
 
 ``foo-port``, ``foo port``, ``foo.port`` and ``12`` are not valid variable names.
 
+`Python keywords <https://docs.python.org/3/reference/lexical_analysis.html#keywords>`_  such as ``async`` and ``lambda`` are not valid variable names and thus must be avoided.
+
 YAML also supports dictionaries which map keys to values.  For instance::
 
   foo:
@@ -1007,7 +1009,7 @@ If multiple variables of the same name are defined in different places, they get
 Here is the order of precedence from least to greatest (the last listed variables winning prioritization):
 
   #. command line values (eg "-u user")
-  #. role defaults [1]_
+  #. role defaults (defined in role/defaults/main.yml) [1]_
   #. inventory file or script group vars [2]_
   #. inventory group_vars/all [3]_
   #. playbook group_vars/all [3]_
@@ -1044,7 +1046,7 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           If you define a variable twice in a play's ``vars:`` section, the second one wins.
 .. note:: The previous describes the default config ``hash_behaviour=replace``, switch to ``merge`` to only partially overwrite.
 .. note:: Group loading follows parent/child relationships. Groups of the same 'parent/child' level are then merged following alphabetical order.
-          This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
+          This last one can be superseded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
           This variable, ``ansible_group_priority``, can only be set in the inventory source and not in group_vars/ as the variable is used in the loading of group_vars/.
 
 Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords. See :ref:`general_precedence_rules` for more details. For example, if your inventory specifies ``ansible_user: ramon`` and you run::
@@ -1184,7 +1186,7 @@ This can often be used for things that might apply to some hosts multiple times.
            myname: John
 
 In this example, the same role was invoked multiple times.  It's quite likely there was
-no default for ``name`` supplied at all.  Ansible can warn you when variables aren't defined -- it's the default behavior in fact.
+no default for ``myname`` supplied at all.  Ansible can warn you when variables aren't defined -- it's the default behavior in fact.
 
 There are a few other things that go on with roles.
 
@@ -1229,7 +1231,7 @@ For information about advanced YAML syntax used to declare variables and have mo
        Best practices in playbooks
    :ref:`special_variables`
        List of special variables
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

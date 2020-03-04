@@ -25,13 +25,13 @@
 # PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 #
 import os
 import time
 import traceback
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 
 import json
@@ -96,6 +96,17 @@ class FortiOSHandler(object):
                 url += '?vdom=' + vdom
         return url
 
+    def mon_url(self, path, name, vdom=None, mkey=None):
+        url = '/api/v2/monitor/' + path + '/' + name
+        if mkey:
+            url = url + '/' + str(mkey)
+        if vdom:
+            if vdom == "global":
+                url += '?global=1'
+            else:
+                url += '?vdom=' + vdom
+        return url
+
     def schema(self, path, name, vdom=None):
         if vdom is None:
             url = self.cmdb_url(path, name) + "?action=schema"
@@ -106,11 +117,11 @@ class FortiOSHandler(object):
 
         if status == 200:
             if vdom == "global":
-                return json.loads(result_data.decode('utf-8'))[0]['results']
+                return json.loads(to_text(result_data))[0]['results']
             else:
-                return json.loads(result_data.decode('utf-8'))['results']
+                return json.loads(to_text(result_data))['results']
         else:
-            return json.loads(result_data.decode('utf-8'))
+            return json.loads(to_text(result_data))
 
     def get_mkeyname(self, path, name, vdom=None):
         schema = self.schema(path, name, vdom=vdom)
@@ -131,6 +142,20 @@ class FortiOSHandler(object):
             except KeyError:
                 return None
         return mkey
+
+    def get(self, path, name, vdom=None, mkey=None, parameters=None):
+        url = self.cmdb_url(path, name, vdom, mkey=mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, method='GET')
+
+        return self.formatresponse(result_data, vdom=vdom)
+
+    def monitor(self, path, name, vdom=None, mkey=None, parameters=None):
+        url = self.mon_url(path, name, vdom, mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, method='GET')
+
+        return self.formatresponse(result_data, vdom=vdom)
 
     def set(self, path, name, data, mkey=None, vdom=None, parameters=None):
 
@@ -158,6 +183,14 @@ class FortiOSHandler(object):
 
         return self.formatresponse(result_data, vdom=vdom)
 
+    def execute(self, path, name, data, vdom=None,
+                mkey=None, parameters=None, timeout=300):
+        url = self.mon_url(path, name, vdom, mkey=mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, data=json.dumps(data), method='POST', timeout=timeout)
+
+        return self.formatresponse(result_data, vdom=vdom)
+
     def delete(self, path, name, vdom=None, mkey=None, parameters=None, data=None):
         if not mkey:
             mkey = self.get_mkey(path, name, data, vdom=vdom)
@@ -167,10 +200,10 @@ class FortiOSHandler(object):
 
     def formatresponse(self, res, vdom=None):
         if vdom == "global":
-            resp = json.loads(res.decode('utf-8'))[0]
+            resp = json.loads(to_text(res))[0]
             resp['vdom'] = "global"
         else:
-            resp = json.loads(res.decode('utf-8'))
+            resp = json.loads(to_text(res))
         return resp
 
 # BEGIN DEPRECATED
@@ -220,7 +253,7 @@ class AnsibleFortios(object):
             try:
                 self.forti_device.open()
             except Exception as e:
-                self.module.fail_json(msg='Error connecting device. %s' % to_native(e),
+                self.module.fail_json(msg='Error connecting device. %s' % to_text(e),
                                       exception=traceback.format_exc())
 
     def load_config(self, path):
@@ -233,7 +266,7 @@ class AnsibleFortios(object):
                 running = f.read()
                 f.close()
             except IOError as e:
-                self.module.fail_json(msg='Error reading configuration file. %s' % to_native(e),
+                self.module.fail_json(msg='Error reading configuration file. %s' % to_text(e),
                                       exception=traceback.format_exc())
             self.forti_device.load_config(config_text=running, path=path)
 
@@ -243,7 +276,7 @@ class AnsibleFortios(object):
                 self.forti_device.load_config(path=path)
             except Exception as e:
                 self.forti_device.close()
-                self.module.fail_json(msg='Error reading running config. %s' % to_native(e),
+                self.module.fail_json(msg='Error reading running config. %s' % to_text(e),
                                       exception=traceback.format_exc())
 
         # set configs in object
@@ -269,7 +302,7 @@ class AnsibleFortios(object):
                     f.close()
                 except IOError as e:
                     self.module.fail_json(msg='Error writing configuration file. %s' %
-                                          to_native(e), exception=traceback.format_exc())
+                                          to_text(e), exception=traceback.format_exc())
             else:
                 try:
                     self.forti_device.commit()

@@ -44,9 +44,9 @@ class YamlTestUtils(object):
                                                       dumper=AnsibleDumper)
 
         # The gen 1 and gen 2 yaml strings
-        self.assertEquals(string_from_object_dump, string_from_object_dump_2)
+        self.assertEqual(string_from_object_dump, string_from_object_dump_2)
         # the gen 1 (orig) and gen 2 py object
-        self.assertEquals(obj, obj_2)
+        self.assertEqual(obj, obj_2)
 
         # again! gen 3... load strings into py objects
         stream_3 = io.StringIO(string_from_object_dump_2)
@@ -55,10 +55,10 @@ class YamlTestUtils(object):
 
         string_from_object_dump_3 = self._dump_string(obj_3, dumper=AnsibleDumper)
 
-        self.assertEquals(obj, obj_3)
+        self.assertEqual(obj, obj_3)
         # should be transitive, but...
-        self.assertEquals(obj_2, obj_3)
-        self.assertEquals(string_from_object_dump, string_from_object_dump_3)
+        self.assertEqual(obj_2, obj_3)
+        self.assertEqual(string_from_object_dump, string_from_object_dump_3)
 
     def _old_dump_load_cycle(self, obj):
         '''Dump the passed in object to yaml, load it back up, dump again, compare.'''

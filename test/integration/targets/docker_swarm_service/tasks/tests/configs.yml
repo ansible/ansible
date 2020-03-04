@@ -97,6 +97,20 @@
   register: configs_5
   ignore_errors: yes
 
+- name: configs (add idempotency no id and re-ordered)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_name: "{{ config_name_2 }}"
+        filename: "/tmp/{{ config_name_2 }}.txt"
+      - config_name: "{{ config_name_1 }}"
+        filename: "/tmp/{{ config_name_1 }}.txt"
+  register: configs_6
+  ignore_errors: yes
+
 - name: configs (empty)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -104,7 +118,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     configs: []
-  register: configs_6
+  register: configs_7
   ignore_errors: yes
 
 - name: configs (empty idempotency)
@@ -114,7 +128,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     configs: []
-  register: configs_7
+  register: configs_8
   ignore_errors: yes
 
 - name: cleanup
@@ -130,8 +144,9 @@
     - configs_3 is changed
     - configs_4 is not changed
     - configs_5 is not changed
-    - configs_6 is changed
-    - configs_7 is not changed
+    - configs_6 is not changed
+    - configs_7 is changed
+    - configs_8 is not changed
   when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.6.0', '>=')
 
 - assert:

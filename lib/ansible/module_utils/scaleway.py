@@ -118,10 +118,12 @@ class Scaleway(object):
     def send(self, method, path, data=None, headers=None, params=None):
         url = self._url_builder(path=path, params=params)
         self.warn(url)
-        data = self.module.jsonify(data)
 
         if headers is not None:
             self.headers.update(headers)
+
+        if self.headers['Content-Type'] == "application/json":
+            data = self.module.jsonify(data)
 
         resp, info = fetch_url(
             self.module, url, data=data, headers=self.headers, method=method,
@@ -161,14 +163,14 @@ class Scaleway(object):
 
 
 SCALEWAY_LOCATION = {
-    'par1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://cp-par1.scaleway.com'},
-    'EMEA-FR-PAR1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://cp-par1.scaleway.com'},
+    'par1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://api.scaleway.com/instance/v1/zones/fr-par-1'},
+    'EMEA-FR-PAR1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://api.scaleway.com/instance/v1/zones/fr-par-1'},
 
-    'ams1': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'},
-    'EMEA-NL-EVS': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'}
+    'ams1': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://api.scaleway.com/instance/v1/zones/nl-ams-1'},
+    'EMEA-NL-EVS': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://api.scaleway.com/instance/v1/zones/nl-ams-1'}
 }
 
-SCALEWAY_ENDPOINT = "https://api-world.scaleway.com"
+SCALEWAY_ENDPOINT = "https://api.scaleway.com"
 
 SCALEWAY_REGIONS = [
     "fr-par",

@@ -200,7 +200,7 @@ EXAMPLES = """
       username: "{{ username }}"
       password: "{{ password }}"
       controller: "{{ controller }}"
-    # On basis of cluster leader uuid dns_configs is set for that perticular leader cluster
+    # On basis of cluster leader uuid dns_configs is set for that particular leader cluster
     leader_cluster_uuid: "cluster-84aa795f-8f09-42bb-97a4-5103f4a53da9"
     name: "test-gslb"
     avi_api_update_method: patch
@@ -228,7 +228,7 @@ EXAMPLES = """
       username: "{{ username }}"
       password: "{{ password }}"
       controller: "{{ controller }}"
-    # On basis of cluster leader uuid dns_configs is set for that perticular leader cluster
+    # On basis of cluster leader uuid dns_configs is set for that particular leader cluster
     leader_cluster_uuid: "cluster-84aa795f-8f09-42bb-97a4-5103f4a53da9"
     name: "test-gslb"
     avi_api_update_method: patch

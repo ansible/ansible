@@ -46,6 +46,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 seealso:
 - name: APIC Management Information Model reference
@@ -185,6 +190,7 @@ def main():
         receive_state=dict(type='bool'),
         transmit_state=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -198,11 +204,12 @@ def main():
 
     aci = ACIModule(module)
 
-    lldp_policy = module.params['lldp_policy']
-    description = module.params['description']
-    receive_state = aci.boolean(module.params['receive_state'], 'enabled', 'disabled')
-    transmit_state = aci.boolean(module.params['transmit_state'], 'enabled', 'disabled')
-    state = module.params['state']
+    lldp_policy = module.params.get('lldp_policy')
+    description = module.params.get('description')
+    receive_state = aci.boolean(module.params.get('receive_state'), 'enabled', 'disabled')
+    transmit_state = aci.boolean(module.params.get('transmit_state'), 'enabled', 'disabled')
+    state = module.params.get('state')
+    name_alias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(
@@ -223,6 +230,7 @@ def main():
                 descr=description,
                 adminRxSt=receive_state,
                 adminTxSt=transmit_state,
+                nameAlias=name_alias,
             ),
         )
 

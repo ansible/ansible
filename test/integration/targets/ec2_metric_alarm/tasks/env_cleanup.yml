@@ -1,0 +1,94 @@
+- name: remove any instances in the test VPC
+  ec2_instance:
+    filters:
+      vpc_id: "{{ testing_vpc.vpc.id }}"
+    state: absent
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10
+
+- name: remove ENIs
+  ec2_eni_info:
+    filters:
+      vpc-id: "{{ testing_vpc.vpc.id }}"
+  register: enis
+
+- name: delete all ENIs
+  ec2_eni:
+    eni_id: "{{ item.id }}"
+    state: absent
+  until: removed is not failed
+  with_items: "{{ enis.network_interfaces }}"
+  ignore_errors: yes
+  retries: 10
+
+- name: remove the security group
+  ec2_group:
+    name: "{{ resource_prefix }}-sg"
+    description: a security group for ansible tests
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    state: absent
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10
+
+- name: remove routing rules
+  ec2_vpc_route_table:
+    state: absent
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    tags:
+      created: "{{ resource_prefix }}-route"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ igw.gateway_id }}"
+    subnets:
+      - "{{ testing_subnet_a.subnet.id }}"
+      - "{{ testing_subnet_b.subnet.id }}"
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10
+
+- name: remove internet gateway
+  ec2_vpc_igw:
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    state: absent
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10
+
+- name: remove subnet A
+  ec2_vpc_subnet:
+    state: absent
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    cidr: 10.22.32.0/24
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10
+
+- name: remove subnet B
+  ec2_vpc_subnet:
+    state: absent
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    cidr: 10.22.33.0/24
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10
+
+- name: remove the VPC
+  ec2_vpc_net:
+    name: "{{ resource_prefix }}-vpc"
+    cidr_block: 10.22.32.0/23
+    state: absent
+    tags:
+      Name: Ansible Testing VPC
+    tenancy: default
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10

@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -30,6 +33,10 @@ description:
       detect abnormal traffic, and locate the source of attack traffic,
       ensuring stable running of the network.
 author: QijunPan (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     agent_ip:
         description:
@@ -108,12 +115,16 @@ options:
         description:
             - Specifies the rate of sFlow packets sent from a card to the control plane.
               The value is an integer that ranges from 100 to 1500, in pps.
+        version_added: "2.10"
+        type: str
     rate_limit_slot:
         description:
             - Specifies the slot where the rate of output sFlow packets is limited.
               If this parameter is not specified, the rate of sFlow packets sent from
               all cards to the control plane is limited.
               The value is an integer or a string of characters.
+        version_added: "2.10"
+        type: str
     forward_enp_slot:
         description:
             - Enable the Embedded Network Processor (ENP) chip function.
@@ -122,6 +133,8 @@ options:
               If you set the sampling interval to be larger than 65535,
               the switch automatically restores it to 65535.
               The value is an integer or 'all'.
+        version_added: "2.10"
+        type: str
     state:
         description:
             - Determines whether the config should be present or not
@@ -206,7 +219,6 @@ import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
 
 CE_NC_GET_SFLOW = """
 <filter type="subtree">
@@ -350,33 +362,6 @@ def get_interface_type(interface):
     return iftype.lower()
 
 
-def get_rate_limit(config):
-    """get sflow management-plane export rate-limit info"""
-
-    get = re.findall(r"sflow management-plane export rate-limit ([0-9]+) slot ([0-9]+)", config)
-    if not get:
-        get = re.findall(r"sflow management-plane export rate-limit ([0-9]+)", config)
-        if not get:
-            return None
-        else:
-            return dict(rate_limit=get[0])
-    else:
-        limit = list()
-        for slot in get:
-            limit.append(dict(rate_limit=slot[0], slot_id=slot[1]))
-        return limit
-
-
-def get_forward_enp(config):
-    """get assign forward enp sflow enable slot info"""
-
-    get = re.findall(r"assign forward enp sflow enable slot (\S+)", config)
-    if not get:
-        return None
-    else:
-        return list(get)
-
-
 class Sflow(object):
     """Manages sFlow"""
 
@@ -443,47 +428,6 @@ class Sflow(object):
         if "<ok/>" not in rcv_xml:
             self.module.fail_json(msg='Error: %s failed.' % xml_name)
 
-    def cli_load_config(self, commands):
-        """load config by cli"""
-
-        if not self.module.check_mode:
-            load_config(self.module, commands)
-
-    def get_current_config(self):
-        """get current configuration"""
-
-        flags = list()
-        exp = ""
-        if self.rate_limit:
-            exp += "assign sflow management-plane export rate-limit %s" % self.rate_limit
-            if self.rate_limit_slot:
-                exp += " slot %s" % self.rate_limit_slot
-            exp += "$"
-
-        if self.forward_enp_slot:
-            if exp:
-                exp += "|"
-            exp += "assign forward enp sflow enable slot %s$" % self.forward_enp_slot
-
-        if exp:
-            exp = " | ignore-case include " + exp
-            flags.append(exp)
-            return get_config(self.module, flags)
-        else:
-            return ""
-
-    def cli_add_command(self, command, undo=False):
-        """add command to self.update_cmd and self.commands"""
-
-        if undo and command.lower() not in ["quit", "return"]:
-            cmd = "undo " + command
-        else:
-            cmd = command
-
-        self.commands.append(cmd)          # set to device
-        if command.lower() not in ["quit", "return"]:
-            self.updates_cmd.append(cmd)   # show updates result
-
     def get_sflow_dict(self):
         """ sflow config dict"""
 
@@ -506,7 +450,7 @@ class Sflow(object):
         root = ElementTree.fromstring(xml_str)
 
         # get source info
-        srcs = root.findall("data/sflow/sources/source")
+        srcs = root.findall("sflow/sources/source")
         if srcs:
             for src in srcs:
                 attrs = dict()
@@ -516,14 +460,14 @@ class Sflow(object):
                 sflow_dict["source"].append(attrs)
 
         # get agent info
-        agent = root.find("data/sflow/agents/agent")
+        agent = root.find("sflow/agents/agent")
         if agent:
             for attr in agent:
                 if attr.tag in ["family", "ipv4Addr", "ipv6Addr"]:
                     sflow_dict["agent"][attr.tag] = attr.text
 
         # get collector info
-        collectors = root.findall("data/sflow/collectors/collector")
+        collectors = root.findall("sflow/collectors/collector")
         if collectors:
             for collector in collectors:
                 attrs = dict()
@@ -534,21 +478,21 @@ class Sflow(object):
                 sflow_dict["collector"].append(attrs)
 
         # get sampling info
-        sample = root.find("data/sflow/samplings/sampling")
+        sample = root.find("sflow/samplings/sampling")
         if sample:
             for attr in sample:
                 if attr.tag in ["ifName", "collectorID", "direction", "length", "rate"]:
                     sflow_dict["sampling"][attr.tag] = attr.text
 
         # get counter info
-        counter = root.find("data/sflow/counters/counter")
+        counter = root.find("sflow/counters/counter")
         if counter:
             for attr in counter:
                 if attr.tag in ["ifName", "collectorID", "interval"]:
                     sflow_dict["counter"][attr.tag] = attr.text
 
         # get export info
-        export = root.find("data/sflow/exports/export")
+        export = root.find("sflow/exports/export")
         if export:
             for attr in export:
                 if attr.tag == "ExportRoute":
@@ -926,29 +870,6 @@ class Sflow(object):
 
         return xml_str
 
-    def config_assign(self):
-        """configure assign"""
-
-        # assign sflow management-plane export rate-limit rate-limit [ slot slot-id ]
-        if self.rate_limit:
-            cmd = "assign sflow management-plane export rate-limit %s" % self.rate_limit
-            if self.rate_limit_slot:
-                cmd += " slot %s" % self.rate_limit_slot
-            exist = is_config_exist(self.config, cmd)
-            if self.state == "present" and not exist:
-                self.cli_add_command(cmd)
-            elif self.state == "absent" and exist:
-                self.cli_add_command(cmd, undo=True)
-
-        # assign forward enp sflow enable slot { slot-id | all }
-        if self.forward_enp_slot:
-            cmd = "assign forward enp sflow enable slot %s" % self.forward_enp_slot
-            exist = is_config_exist(self.config, cmd)
-            if self.state == "present" and not exist:
-                self.cli_add_command(cmd)
-            elif self.state == "absent" and exist:
-                self.cli_add_command(cmd, undo=True)
-
     def netconf_load_config(self, xml_str):
         """load sflow config by netconf"""
 
@@ -1069,23 +990,9 @@ class Sflow(object):
                     self.module.fail_json(
                         msg="Error: sample_length is not ranges from 10 to 4294967295.")
 
-        # check rate_limit ranges from 100 to 1500 and check rate_limit_slot
-        if self.rate_limit:
-            if not self.rate_limit.isdigit():
-                self.module.fail_json(msg="Error: rate_limit is not digit.")
-            if int(self.rate_limit) < 100 or int(self.rate_limit) > 1500:
-                self.module.fail_json(
-                    msg="Error: rate_limit is not ranges from 100 to 1500.")
-            if self.rate_limit_slot and not self.rate_limit_slot.isdigit():
-                self.module.fail_json(
-                    msg="Error: rate_limit_slot is not digit.")
-
-        # check forward_enp_slot
-        if self.forward_enp_slot:
-            self.forward_enp_slot.lower()
-            if not self.forward_enp_slot.isdigit() and self.forward_enp_slot != "all":
-                self.module.fail_json(
-                    msg="Error: forward_enp_slot is invalid.")
+        if self.rate_limit or self.rate_limit_slot or self.forward_enp_slot:
+            self.module.fail_json(msg="Error: The following parameters cannot be configured"
+                                      "because XML mode is not supported:rate_limit,rate_limit_slot,forward_enp_slot.")
 
     def get_proposed(self):
         """get proposed info"""
@@ -1139,13 +1046,6 @@ class Sflow(object):
     def get_existing(self):
         """get existing info"""
 
-        if self.config:
-            if self.rate_limit:
-                self.existing["rate_limit"] = get_rate_limit(self.config)
-            if self.forward_enp_slot:
-                self.existing["forward_enp_slot"] = get_forward_enp(
-                    self.config)
-
         if not self.sflow_dict:
             return
 
@@ -1165,13 +1065,6 @@ class Sflow(object):
     def get_end_state(self):
         """get end state info"""
 
-        config = self.get_current_config()
-        if config:
-            if self.rate_limit:
-                self.end_state["rate_limit"] = get_rate_limit(config)
-            if self.forward_enp_slot:
-                self.end_state["forward_enp_slot"] = get_forward_enp(config)
-
         sflow_dict = self.get_sflow_dict()
         if not sflow_dict:
             return
@@ -1188,13 +1081,14 @@ class Sflow(object):
         if self.sflow_interface:
             self.end_state["sampling"] = sflow_dict["sampling"]
             self.end_state["counter"] = sflow_dict["counter"]
+        if self.existing == self.end_state:
+            self.changed = False
 
     def work(self):
         """worker"""
 
         self.check_params()
         self.sflow_dict = self.get_sflow_dict()
-        self.config = self.get_current_config()
         self.get_existing()
         self.get_proposed()
 
@@ -1219,13 +1113,6 @@ class Sflow(object):
                 xml_str += self.config_counter()
             if self.collector_id:
                 xml_str += self.config_collector()
-
-        if self.rate_limit or self.forward_enp_slot:
-            self.config_assign()
-
-        if self.commands:
-            self.cli_load_config(self.commands)
-            self.changed = True
 
         if xml_str:
             self.netconf_load_config(xml_str)
@@ -1252,9 +1139,9 @@ def main():
         source_ip=dict(required=False, type='str'),
         export_route=dict(required=False, type='str',
                           choices=['enable', 'disable']),
-        rate_limit=dict(required=False, type='str'),
-        rate_limit_slot=dict(required=False, type='str'),
-        forward_enp_slot=dict(required=False, type='str'),
+        rate_limit=dict(required=False, removed_in_version=2.13, type='str'),
+        rate_limit_slot=dict(required=False, removed_in_version=2.13, type='str'),
+        forward_enp_slot=dict(required=False, removed_in_version=2.13, type='str'),
         collector_id=dict(required=False, type='str', choices=['1', '2']),
         collector_ip=dict(required=False, type='str'),
         collector_ip_vpn=dict(required=False, type='str'),

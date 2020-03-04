@@ -1,0 +1,181 @@
+---
+- name: Create with passphrase1
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+    passphrase: "{{ cryptfile_passphrase1 }}"
+  become: yes
+
+- name: Open with passphrase1
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    passphrase: "{{ cryptfile_passphrase1 }}"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is not failed
+- name: Close
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+  become: yes
+
+- name: Give access with ambiguous new_ arguments
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+    passphrase: "{{ cryptfile_passphrase1 }}"
+    new_passphrase: "{{ cryptfile_passphrase2 }}"
+    new_keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+  ignore_errors: yes
+  register: new_try
+- assert:
+    that:
+      - new_try is failed
+
+- name: Try to open with passphrase2
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    passphrase: "{{ cryptfile_passphrase2 }}"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is failed
+
+- name: Give access to passphrase2
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+    passphrase: "{{ cryptfile_passphrase1 }}"
+    new_passphrase: "{{ cryptfile_passphrase2 }}"
+  become: yes
+
+- name: Open with passphrase2
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    passphrase: "{{ cryptfile_passphrase2 }}"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is not failed
+- name: Close
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+  become: yes
+
+- name: Try to open with keyfile1
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is failed
+
+- name: Give access to keyfile1 from passphrase1
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+    passphrase: "{{ cryptfile_passphrase1 }}"
+    new_keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+
+- name: Remove access with ambiguous remove_ arguments
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+    remove_keyfile: "{{ role_path }}/files/keyfile1"
+    remove_passphrase: "{{ cryptfile_passphrase1 }}"
+  become: yes
+  ignore_errors: yes
+  register: remove_try
+- assert:
+    that:
+      - remove_try is failed
+
+- name: Open with keyfile1
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is not failed
+- name: Close
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+  become: yes
+
+- name: Remove access for passphrase1
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+    remove_passphrase: "{{ cryptfile_passphrase1 }}"
+  become: yes
+
+- name: Try to open with passphrase1
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    passphrase: "{{ cryptfile_passphrase1 }}"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is failed
+
+- name: Try to open with passphrase3
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    passphrase: "{{ cryptfile_passphrase3 }}"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is failed
+
+- name: Give access to passphrase3 from keyfile1
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+    keyfile: "{{ role_path }}/files/keyfile1"
+    new_passphrase: "{{ cryptfile_passphrase3 }}"
+  become: yes
+
+- name: Open with passphrase3
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    passphrase: "{{ cryptfile_passphrase3 }}"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is not failed
+- name: Close
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+  become: yes

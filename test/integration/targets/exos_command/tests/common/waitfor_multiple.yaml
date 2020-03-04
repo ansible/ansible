@@ -1,0 +1,20 @@
+---
+- debug: msg="START common/waitfor_multiple.yaml on connection={{ ansible_connection }}"
+
+- name: run multiple commands and evaluate the output
+  exos_command:
+    commands:
+      - show version
+      - show ports no-refresh
+    wait_for:
+      - result[0] contains ExtremeXOS
+      - result[1] contains 20
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      
+
+- debug: msg="END common/waitfor_multiple.yaml on connection={{ ansible_connection }}"

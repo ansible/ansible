@@ -2,6 +2,10 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -11,7 +15,7 @@ DOCUMENTATION = '''
 
 module: cloudfront_distribution
 
-short_description: create, update and delete aws cloudfront distributions.
+short_description: Create, update and delete AWS CloudFront distributions.
 
 description:
     - Allows for easy creation, updating and deletion of CloudFront distributions.
@@ -34,39 +38,47 @@ options:
 
     state:
       description:
-        - The desired state of the distribution
-          present - creates a new distribution or updates an existing distribution.
-          absent - deletes an existing distribution.
+        - The desired state of the distribution.
+        - I(state=present) creates a new distribution or updates an existing distribution.
+        - I(state=absent) deletes an existing distribution.
       choices: ['present', 'absent']
       default: 'present'
+      type: str
 
     distribution_id:
       description:
-        - The id of the cloudfront distribution. This parameter can be exchanged with I(alias) or I(caller_reference) and is used in conjunction with I(e_tag).
+        - The ID of the CloudFront distribution.
+        - This parameter can be exchanged with I(alias) or I(caller_reference) and is used in conjunction with I(e_tag).
+      type: str
 
     e_tag:
       description:
         - A unique identifier of a modified or existing distribution. Used in conjunction with I(distribution_id).
-          Is determined automatically if not specified.
+        - Is determined automatically if not specified.
+      type: str
 
     caller_reference:
       description:
-        - A unique identifier for creating and updating cloudfront distributions. Each caller reference must be unique across all distributions. e.g. a caller
-          reference used in a web distribution cannot be reused in a streaming distribution. This parameter can be used instead of I(distribution_id)
+        - A unique identifier for creating and updating CloudFront distributions.
+        - Each caller reference must be unique across all distributions. e.g. a caller reference used in a web
+          distribution cannot be reused in a streaming distribution. This parameter can be used instead of I(distribution_id)
           to reference an existing distribution. If not specified, this defaults to a datetime stamp of the format
-          'YYYY-MM-DDTHH:MM:SS.ffffff'.
+          C(YYYY-MM-DDTHH:MM:SS.ffffff).
+      type: str
 
     tags:
       description:
-        - Should be input as a dict() of key-value pairs.
-          Note that numeric keys or values must be wrapped in quotes. e.g. "Priority:" '1'
+        - Should be input as a dict of key-value pairs.
+        - Note that numeric keys or values must be wrapped in quotes. e.g. "Priority:" '1'
+      type: dict
 
     purge_tags:
       description:
-        - Specifies whether existing tags will be removed before adding new tags. When I(purge_tags=yes), existing tags are removed and I(tags) are added, if
-          specified. If no tags are specified, it removes all existing tags for the distribution. When I(purge_tags=no), existing tags are kept and I(tags)
-          are added, if specified.
-      default: 'no'
+        - Specifies whether existing tags will be removed before adding new tags.
+        - When I(purge_tags=yes), existing tags are removed and I(tags) are added, if specified.
+          If no tags are specified, it removes all existing tags for the distribution.
+        - When I(purge_tags=no), existing tags are kept and I(tags) are added, if specified.
+      default: false
       type: bool
 
     alias:
@@ -74,227 +86,501 @@ options:
         - The name of an alias (CNAME) that is used in a distribution. This is used to effectively reference a distribution by its alias as an alias can only
           be used by one distribution per AWS account. This variable avoids having to provide the I(distribution_id) as well as
           the I(e_tag), or I(caller_reference) of an existing distribution.
+      type: str
 
     aliases:
       description:
-        - A I(list[]) of domain name aliases (CNAMEs) as strings to be used for the distribution. Each alias must be unique across all distribution for the AWS
-          account.
+        - A list) of domain name aliases (CNAMEs) as strings to be used for the distribution.
+        - Each alias must be unique across all distribution for the AWS account.
+      type: list
+      elements: str
 
     purge_aliases:
       description:
-        - Specifies whether existing aliases will be removed before adding new aliases. When I(purge_aliases=yes), existing aliases are removed and I(aliases)
-          are added.
-      default: 'no'
+        - Specifies whether existing aliases will be removed before adding new aliases.
+        - When I(purge_aliases=yes), existing aliases are removed and I(aliases) are added.
+      default: false
       type: bool
 
     default_root_object:
       description:
-        - A config element that specifies the path to request when the user requests the origin. e.g. if specified as 'index.html', this maps to
-          www.example.com/index.html when www.example.com is called by the user. This prevents the entire distribution origin from being exposed at the root.
+        - A config element that specifies the path to request when the user requests the origin.
+        - e.g. if specified as 'index.html', this maps to www.example.com/index.html when www.example.com is called by the user.
+        - This prevents the entire distribution origin from being exposed at the root.
+      type: str
 
     default_origin_domain_name:
       description:
-        - The domain name to use for an origin if no I(origins) have been specified. Should only be used on a first run of generating a distribution and not on
-          subsequent runs. Should not be used in conjunction with I(distribution_id), I(caller_reference) or I(alias).
+        - The domain name to use for an origin if no I(origins) have been specified.
+        - Should only be used on a first run of generating a distribution and not on
+          subsequent runs.
+        - Should not be used in conjunction with I(distribution_id), I(caller_reference) or I(alias).
+      type: str
 
     default_origin_path:
       description:
         - The default origin path to specify for an origin if no I(origins) have been specified. Defaults to empty if not specified.
+      type: str
 
     origins:
+      type: list
+      elements: dict
       description:
-        - A config element that is a I(list[]) of complex origin objects to be specified for the distribution. Used for creating and updating distributions.
-          Each origin item comprises the attributes
-            I(id)
-            I(domain_name) (defaults to default_origin_domain_name if not specified)
-            I(origin_path) (defaults to default_origin_path if not specified)
-            I(custom_headers[])
-              I(header_name)
-              I(header_value)
-            I(s3_origin_access_identity_enabled)
-            I(custom_origin_config)
-              I(http_port)
-              I(https_port)
-              I(origin_protocol_policy)
-              I(origin_ssl_protocols[])
-              I(origin_read_timeout)
-              I(origin_keepalive_timeout)
+        - A config element that is a list of complex origin objects to be specified for the distribution. Used for creating and updating distributions.
+      suboptions:
+        id:
+          description: A unique identifier for the origin or origin group. I(id) must be unique within the distribution.
+          type: str
+        domain_name:
+          description:
+            - The domain name which CloudFront will query as the origin.
+            - For more information see the CloudFront documentation
+              at U(https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-values-specify.html#DownloadDistValuesDomainName)
+          type: str
+        origin_path:
+          description: Tells CloudFront to request your content from a directory in your Amazon S3 bucket or your custom origin.
+          type: str
+        custom_headers:
+          description:
+            - Custom headers you wish to add to the request before passing it to the origin.
+            - For more information see the CloudFront documentation
+              at U(https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/forward-custom-headers.html)
+          type: list
+          elements: dict
+          suboptions:
+            header_name:
+              description: The name of a header that you want CloudFront to forward to your origin.
+              type: str
+            header_value:
+              description: The value for the header that you specified in the I(header_name) field.
+              type: str
+        s3_origin_access_identity_enabled:
+          description:
+            - Use an origin access identity to configure the origin so that viewers can only access objects in an Amazon S3 bucket through CloudFront.
+            - Will automatically create an Identity for you.
+            - See also U(https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PrivateContent.html).
+          type: bool
+        custom_origin_config:
+          description: Connection information about the origin.
+          type: dict
+          suboptions:
+            http_port:
+              description: The HTTP port the custom origin listens on.
+              type: int
+            https_port:
+              description: The HTTPS port the custom origin listens on.
+              type: int
+            origin_protocol_policy:
+              description: The origin protocol policy to apply to your origin.
+              type: str
+            origin_ssl_protocols:
+              description: A list of SSL/TLS protocols that you want CloudFront to use when communicating to the origin over HTTPS.
+              type: list
+              elements: str
+            origin_read_timeout:
+              description: A timeout (in seconds) when reading from your origin.
+              type: int
+            origin_keepalive_timeout:
+              description: A keep-alive timeout (in seconds).
+              type: int
 
     purge_origins:
-      description: Whether to remove any origins that aren't listed in I(origins)
+      description: Whether to remove any origins that aren't listed in I(origins).
       default: false
       type: bool
+
     default_cache_behavior:
+      type: dict
       description:
-        - A config element that is a complex object specifying the default cache behavior of the distribution. If not specified, the I(target_origin_id) is
-          defined as the I(target_origin_id) of the first valid I(cache_behavior) in I(cache_behaviors) with defaults.
-          The default cache behavior comprises the attributes
-            I(target_origin_id)
-            I(forwarded_values)
-              I(query_string)
-              I(cookies)
-                I(forward)
-                I(whitelisted_names)
-              I(headers[])
-              I(query_string_cache_keys[])
-              I(trusted_signers)
-                I(enabled)
-                I(items[])
-              I(viewer_protocol_policy)
-              I(min_ttl)
-              I(allowed_methods)
-                I(items[])
-                I(cached_methods[])
-              I(smooth_streaming)
-              I(default_ttl)
-              I(max_ttl)
-              I(compress)
-              I(lambda_function_associations[])
-                I(lambda_function_arn)
-                I(event_type)
-              I(field_level_encryption_id)
+        - A dict specifying the default cache behavior of the distribution.
+        - If not specified, the I(target_origin_id) is defined as the I(target_origin_id) of the first valid
+          I(cache_behavior) in I(cache_behaviors) with defaults.
+      suboptions:
+        target_origin_id:
+          description:
+            - The ID of the origin that you want CloudFront to route requests to
+              by default.
+          type: str
+        forwarded_values:
+          description:
+            - A dict that specifies how CloudFront handles query strings and cookies.
+          type: dict
+          suboptions:
+            query_string:
+              description:
+                - Indicates whether you want CloudFront to forward query strings
+                  to the origin that is associated with this cache behavior.
+              type: bool
+            cookies:
+              description: A dict that specifies whether you want CloudFront to forward cookies to the origin and, if so, which ones.
+              type: dict
+              suboptions:
+                forward:
+                  description:
+                    - Specifies which cookies to forward to the origin for this cache behavior.
+                    - Valid values are C(all), C(none), or C(whitelist).
+                  type: str
+                whitelisted_names:
+                  type: list
+                  elements: str
+                  description: A list of coockies to forward to the origin for this cache behavior.
+            headers:
+              description:
+              - A list of headers to forward to the origin for this cache behavior.
+              - To forward all headers use a list containing a single element '*' (C(['*']))
+              type: list
+              elements: str
+            query_string_cache_keys:
+              description:
+                - A list that contains the query string parameters you want CloudFront to use as a basis for caching for a cache behavior.
+              type: list
+              elements: str
+            trusted_signers:
+              description:
+                - A dict that specifies the AWS accounts that you want to allow to create signed URLs for private content.
+              type: dict
+              suboptions:
+                enabled:
+                  description: Whether you want to require viewers to use signed URLs to access the files specified by I(target_origin_id)
+                  type: bool
+                items:
+                  description: A list of trusted signers for this cache behavior.
+                  elements: str
+                  type: list
+            viewer_protocol_policy:
+              description:
+                - The protocol that viewers can use to access the files in the origin specified by I(target_origin_id).
+                - Valid values are C(allow-all), C(redirect-to-https) and C(https-only).
+              type: str
+            default_ttl:
+              description: The default amount of time that you want objects to stay in CloudFront caches.
+              type: int
+            max_ttl:
+              description: The maximum amount of time that you want objects to stay in CloudFront caches.
+              type: int
+            min_ttl:
+              description: The minimum amount of time that you want objects to stay in CloudFront caches.
+              type: int
+            allowed_methods:
+              description: A dict that controls which HTTP methods CloudFront processes and forwards.
+              type: dict
+              suboptions:
+                items:
+                  description: A list of HTTP methods that you want CloudFront to process and forward.
+                  type: list
+                  elements: str
+                cached_methods:
+                  description:
+                    - A list of HTTP methods that you want CloudFront to apply caching to.
+                    - This can either be C([GET,HEAD]), or C([GET,HEAD,OPTIONS]).
+                  type: list
+                  elements: str
+            smooth_streaming:
+              description:
+                - Whether you want to distribute media files in the Microsoft Smooth Streaming format.
+              type: bool
+            compress:
+              description:
+                - Whether you want CloudFront to automatically compress files.
+              type: bool
+            lambda_function_associations:
+              description:
+                - A list of Lambda function associations to use for this cache behavior.
+              type: list
+              elements: dict
+              suboptions:
+                lambda_function_arn:
+                  description: The ARN of the Lambda function.
+                  type: str
+                event_type:
+                  description:
+                    - Specifies the event type that triggers a Lambda function invocation.
+                    - This can be C(viewer-request), C(origin-request), C(origin-response) or C(viewer-response).
+                  type: str
+            field_level_encryption_id:
+              description:
+                - The field-level encryption configuration that you want CloudFront to use for encrypting specific fields of data.
+              type: str
 
     cache_behaviors:
+      type: list
+      elements: dict
       description:
-        - A config element that is a I(list[]) of complex cache behavior objects to be specified for the distribution. The order
-          of the list is preserved across runs unless C(purge_cache_behavior) is enabled.
-          Each cache behavior comprises the attributes
-            I(path_pattern)
-            I(target_origin_id)
-            I(forwarded_values)
-              I(query_string)
-              I(cookies)
-              I(forward)
-              I(whitelisted_names)
-              I(headers[])
-              I(query_string_cache_keys[])
-            I(trusted_signers)
-              I(enabled)
-              I(items[])
-            I(viewer_protocol_policy)
-            I(min_ttl)
-            I(allowed_methods)
-              I(items[])
-              I(cached_methods[])
-            I(smooth_streaming)
-            I(default_ttl)
-            I(max_ttl)
-            I(compress)
-            I(lambda_function_associations[])
-            I(field_level_encryption_id)
+        - A list of dictionaries describing the cache behaviors for the distribution.
+        - The order of the list is preserved across runs unless I(purge_cache_behaviors) is enabled.
+      suboptions:
+        path_pattern:
+          description:
+            - The pattern that specifies which requests to apply the behavior to.
+          type: str
+        target_origin_id:
+          description:
+            - The ID of the origin that you want CloudFront to route requests to
+              by default.
+          type: str
+        forwarded_values:
+          description:
+            - A dict that specifies how CloudFront handles query strings and cookies.
+          type: dict
+          suboptions:
+            query_string:
+              description:
+                - Indicates whether you want CloudFront to forward query strings
+                  to the origin that is associated with this cache behavior.
+              type: bool
+            cookies:
+              description: A dict that specifies whether you want CloudFront to forward cookies to the origin and, if so, which ones.
+              type: dict
+              suboptions:
+                forward:
+                  description:
+                    - Specifies which cookies to forward to the origin for this cache behavior.
+                    - Valid values are C(all), C(none), or C(whitelist).
+                  type: str
+                whitelisted_names:
+                  type: list
+                  elements: str
+                  description: A list of coockies to forward to the origin for this cache behavior.
+            headers:
+              description:
+              - A list of headers to forward to the origin for this cache behavior.
+              - To forward all headers use a list containing a single element '*' (C(['*']))
+              type: list
+              elements: str
+            query_string_cache_keys:
+              description:
+                - A list that contains the query string parameters you want CloudFront to use as a basis for caching for a cache behavior.
+              type: list
+              elements: str
+            trusted_signers:
+              description:
+                - A dict that specifies the AWS accounts that you want to allow to create signed URLs for private content.
+              type: dict
+              suboptions:
+                enabled:
+                  description: Whether you want to require viewers to use signed URLs to access the files specified by I(path_pattern) and I(target_origin_id)
+                  type: bool
+                items:
+                  description: A list of trusted signers for this cache behavior.
+                  elements: str
+                  type: list
+            viewer_protocol_policy:
+              description:
+                - The protocol that viewers can use to access the files in the origin specified by I(target_origin_id) when a request matches I(path_pattern).
+                - Valid values are C(allow-all), C(redirect-to-https) and C(https-only).
+              type: str
+            default_ttl:
+              description: The default amount of time that you want objects to stay in CloudFront caches.
+              type: int
+            max_ttl:
+              description: The maximum amount of time that you want objects to stay in CloudFront caches.
+              type: int
+            min_ttl:
+              description: The minimum amount of time that you want objects to stay in CloudFront caches.
+              type: int
+            allowed_methods:
+              description: A dict that controls which HTTP methods CloudFront processes and forwards.
+              type: dict
+              suboptions:
+                items:
+                  description: A list of HTTP methods that you want CloudFront to process and forward.
+                  type: list
+                  elements: str
+                cached_methods:
+                  description:
+                    - A list of HTTP methods that you want CloudFront to apply caching to.
+                    - This can either be C([GET,HEAD]), or C([GET,HEAD,OPTIONS]).
+                  type: list
+                  elements: str
+            smooth_streaming:
+              description:
+                - Whether you want to distribute media files in the Microsoft Smooth Streaming format.
+              type: bool
+            compress:
+              description:
+                - Whether you want CloudFront to automatically compress files.
+              type: bool
+            lambda_function_associations:
+              description:
+                - A list of Lambda function associations to use for this cache behavior.
+              type: list
+              elements: dict
+              suboptions:
+                lambda_function_arn:
+                  description: The ARN of the Lambda function.
+                  type: str
+                event_type:
+                  description:
+                    - Specifies the event type that triggers a Lambda function invocation.
+                    - This can be C(viewer-request), C(origin-request), C(origin-response) or C(viewer-response).
+                  type: str
+            field_level_encryption_id:
+              description:
+                - The field-level encryption configuration that you want CloudFront to use for encrypting specific fields of data.
+              type: str
+
 
     purge_cache_behaviors:
-      description: Whether to remove any cache behaviors that aren't listed in I(cache_behaviors). This switch
-        also allows the reordering of cache_behaviors.
+      description:
+        - Whether to remove any cache behaviors that aren't listed in I(cache_behaviors).
+        - This switch also allows the reordering of I(cache_behaviors).
       default: false
       type: bool
+
     custom_error_responses:
+      type: list
+      elements: dict
       description:
-        - A config element that is a I(list[]) of complex custom error responses to be specified for the distribution. This attribute configures custom http
-          error messages returned to the user.
-          Each custom error response object comprises the attributes
-            I(error_code)
-            I(response_page_path)
-            I(response_code)
-            I(error_caching_min_ttl)
+        - A config element that is a I(list[]) of complex custom error responses to be specified for the distribution.
+        - This attribute configures custom http error messages returned to the user.
+      suboptions:
+        error_code:
+          type: int
+          description: The error code the custom error page is for.
+        error_caching_min_ttl:
+          type: int
+          description: The length of time (in seconds) that CloudFront will cache status codes for.
+        response_code:
+          type: int
+          description:
+            - The HTTP status code that CloudFront should return to a user when the origin returns the HTTP status code specified by I(error_code).
+        response_page_path:
+          type: str
+          description:
+            - The path to the custom error page that you want CloudFront to return to a viewer when your origin returns
+              the HTTP status code specified by I(error_code).
 
     purge_custom_error_responses:
-      description: Whether to remove any custom error responses that aren't listed in I(custom_error_responses)
+      description: Whether to remove any custom error responses that aren't listed in I(custom_error_responses).
       default: false
       type: bool
+
     comment:
       description:
-        - A comment that describes the cloudfront distribution. If not specified, it defaults to a
-          generic message that it has been created with Ansible, and a datetime stamp.
+        - A comment that describes the CloudFront distribution.
+        - If not specified, it defaults to a generic message that it has been created with Ansible, and a datetime stamp.
+      type: str
 
     logging:
       description:
         - A config element that is a complex object that defines logging for the distribution.
-          The logging object comprises the attributes
-            I(enabled)
-            I(include_cookies)
-            I(bucket)
-            I(prefix)
+      suboptions:
+        enabled:
+          description: When I(enabled=true) CloudFront will log access to an S3 bucket.
+          type: bool
+        include_cookies:
+          description: When I(include_cookies=true) CloudFront will include cookies in the logs.
+          type: bool
+        bucket:
+          description: The S3 bucket to store the log in.
+          type: str
+        prefix:
+          description: A prefix to include in the S3 object names.
+          type: str
+      type: dict
 
     price_class:
       description:
         - A string that specifies the pricing class of the distribution. As per
           U(https://aws.amazon.com/cloudfront/pricing/)
-            I(price_class=PriceClass_100) consists of the areas
-              United States
-              Canada
-              Europe
-            I(price_class=PriceClass_200) consists of the areas
-              United States
-              Canada
-              Europe
-              Hong Kong, Philippines, S. Korea, Singapore & Taiwan
-              Japan
-              India
-            I(price_class=PriceClass_All) consists of the areas
-              United States
-              Canada
-              Europe
-              Hong Kong, Philippines, S. Korea, Singapore & Taiwan
-              Japan
-              India
-              South America
-              Australia
-      choices: ['PriceClass_100', 'PriceClass_200', 'PriceClass_All']
-      default: aws defaults this to 'PriceClass_All'
+        - I(price_class=PriceClass_100) consists of the areas United States, Canada and Europe.
+        - I(price_class=PriceClass_200) consists of the areas United States, Canada, Europe, Japan, India,
+          Hong Kong, Philippines, S. Korea, Singapore & Taiwan.
+        - I(price_class=PriceClass_All) consists of the areas United States, Canada, Europe, Japan, India,
+          South America, Australia, Hong Kong, Philippines, S. Korea, Singapore & Taiwan.
+        - AWS defaults this to C(PriceClass_All).
+        - Valid values are C(PriceClass_100), C(PriceClass_200) and C(PriceClass_All)
+      type: str
 
     enabled:
       description:
         - A boolean value that specifies whether the distribution is enabled or disabled.
-      default: 'yes'
+      default: false
       type: bool
 
     viewer_certificate:
+      type: dict
       description:
-        - A config element that is a complex object that specifies the encryption details of the distribution.
-          Comprises the following attributes
-            I(cloudfront_default_certificate)
-            I(iam_certificate_id)
-            I(acm_certificate_arn)
-            I(ssl_support_method)
-            I(minimum_protocol_version)
-            I(certificate)
-            I(certificate_source)
+        - A dict that specifies the encryption details of the distribution.
+      suboptions:
+        cloudfront_default_certificate:
+          type: bool
+          description:
+            - If you're using the CloudFront domain name for your distribution, such as C(123456789abcde.cloudfront.net)
+              you should set I(cloudfront_default_certificate=true)
+            - If I(cloudfront_default_certificate=true) do not set I(ssl_support_method).
+        iam_certificate_id:
+          type: str
+          description:
+            - The ID of a certificate stored in IAM to use for HTTPS connections.
+            - If I(iam_certificate_id) is set then you must also specify I(ssl_support_method)
+        acm_certificate_arn:
+          type: str
+          description:
+            - The ID of a certificate stored in ACM to use for HTTPS connections.
+            - If I(acm_certificate_id) is set then you must also specify I(ssl_support_method)
+        ssl_support_method:
+          type: str
+          description:
+            - How CloudFront should serve SSL certificates.
+            - Valid values are C(sni-only) for SNI, and C(vip) if CloudFront is configured to use a dedicated IP for your content.
+        minimum_protocol_version:
+          type: str
+          description:
+            - The security policy that you want CloudFront to use for HTTPS connections.
+            - See U(https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html)
+              for supported security policies.
 
     restrictions:
+      type: dict
       description:
         - A config element that is a complex object that describes how a distribution should restrict it's content.
-          The restriction object comprises the following attributes
-            I(geo_restriction)
-              I(restriction_type)
-              I(items[])
+      suboptions:
+        geo_restriction:
+          description: Apply a restriciton based on the location of the requester.
+          type: dict
+          suboptions:
+            restriction_type:
+              type: str
+              description:
+              - The method that you want to use to restrict distribution of your content by country.
+              - Valid values are C(none), C(whitelist), C(blacklist)
+            items:
+              description:
+              - A list of ISO 3166-1 two letter (Alpha 2) country codes that the
+                restriction should apply to.
+              - 'See the ISO website for a full list of codes U(https://www.iso.org/obp/ui/#search/code/)'
+              type: list
 
     web_acl_id:
       description:
-        - The id of a Web Application Firewall (WAF) Access Control List (ACL).
+        - The ID of a Web Application Firewall (WAF) Access Control List (ACL).
+      type: str
 
     http_version:
       description:
         - The version of the http protocol to use for the distribution.
-      choices: [ 'http1.1', 'http2' ]
-      default: aws defaults this to 'http2'
+        - AWS defaults this to C(http2).
+        - Valid values are C(http1.1) and C(http2)
+      type: str
 
     ipv6_enabled:
       description:
         - Determines whether IPv6 support is enabled or not.
       type: bool
-      default: 'no'
+      default: false
 
     wait:
       description:
         - Specifies whether the module waits until the distribution has completed processing the creation or update.
       type: bool
-      default: 'no'
+      default: false
 
     wait_timeout:
       description:
-        - Specifies the duration in seconds to wait for a timeout of a cloudfront create or update. Defaults to 1800 seconds (30 minutes).
+        - Specifies the duration in seconds to wait for a timeout of a cloudfront create or update.
       default: 1800
+      type: int
 
 '''
 
@@ -358,7 +644,7 @@ EXAMPLES = '''
 
 - cloudfront_distribution:
     state: present
-    caller_reference: unique test distribution id
+    caller_reference: unique test distribution ID
     origins:
         - id: 'my test origin-000111'
           domain_name: www.example.com
@@ -390,7 +676,7 @@ EXAMPLES = '''
       bucket: mylogbucket.s3.amazonaws.com
       prefix: myprefix/
     enabled: false
-    comment: this is a cloudfront distribution with logging
+    comment: this is a CloudFront distribution with logging
 
 # delete a distribution
 
@@ -401,272 +687,272 @@ EXAMPLES = '''
 
 RETURN = '''
 active_trusted_signers:
-  description: Key pair IDs that CloudFront is aware of for each trusted signer
+  description: Key pair IDs that CloudFront is aware of for each trusted signer.
   returned: always
   type: complex
   contains:
     enabled:
-      description: Whether trusted signers are in use
+      description: Whether trusted signers are in use.
       returned: always
       type: bool
       sample: false
     quantity:
-      description: Number of trusted signers
+      description: Number of trusted signers.
       returned: always
       type: int
       sample: 1
     items:
-      description: Number of trusted signers
+      description: Number of trusted signers.
       returned: when there are trusted signers
       type: list
       sample:
       - key_pair_id
 aliases:
-  description: Aliases that refer to the distribution
+  description: Aliases that refer to the distribution.
   returned: always
   type: complex
   contains:
     items:
-      description: List of aliases
+      description: List of aliases.
       returned: always
       type: list
       sample:
       - test.example.com
     quantity:
-      description: Number of aliases
+      description: Number of aliases.
       returned: always
       type: int
       sample: 1
 arn:
-  description: Amazon Resource Name of the distribution
+  description: Amazon Resource Name of the distribution.
   returned: always
   type: str
   sample: arn:aws:cloudfront::123456789012:distribution/E1234ABCDEFGHI
 cache_behaviors:
-  description: Cloudfront cache behaviors
+  description: CloudFront cache behaviors.
   returned: always
   type: complex
   contains:
     items:
-      description: List of cache behaviors
+      description: List of cache behaviors.
       returned: always
       type: complex
       contains:
         allowed_methods:
-          description: Methods allowed by the cache behavior
+          description: Methods allowed by the cache behavior.
           returned: always
           type: complex
           contains:
             cached_methods:
-              description: Methods cached by the cache behavior
+              description: Methods cached by the cache behavior.
               returned: always
               type: complex
               contains:
                 items:
-                  description: List of cached methods
+                  description: List of cached methods.
                   returned: always
                   type: list
                   sample:
                   - HEAD
                   - GET
                 quantity:
-                  description: Count of cached methods
+                  description: Count of cached methods.
                   returned: always
                   type: int
                   sample: 2
             items:
-              description: List of methods allowed by the cache behavior
+              description: List of methods allowed by the cache behavior.
               returned: always
               type: list
               sample:
               - HEAD
               - GET
             quantity:
-              description: Count of methods allowed by the cache behavior
+              description: Count of methods allowed by the cache behavior.
               returned: always
               type: int
               sample: 2
         compress:
-          description: Whether compression is turned on for the cache behavior
+          description: Whether compression is turned on for the cache behavior.
           returned: always
           type: bool
           sample: false
         default_ttl:
-          description: Default Time to Live of the cache behavior
+          description: Default Time to Live of the cache behavior.
           returned: always
           type: int
           sample: 86400
         forwarded_values:
-          description: Values forwarded to the origin for this cache behavior
+          description: Values forwarded to the origin for this cache behavior.
           returned: always
           type: complex
           contains:
             cookies:
-              description: Cookies to forward to the origin
+              description: Cookies to forward to the origin.
               returned: always
               type: complex
               contains:
                 forward:
-                  description: Which cookies to forward to the origin for this cache behavior
+                  description: Which cookies to forward to the origin for this cache behavior.
                   returned: always
                   type: str
                   sample: none
                 whitelisted_names:
-                  description: The names of the cookies to forward to the origin for this cache behavior
-                  returned: when I(forward) is C(whitelist)
+                  description: The names of the cookies to forward to the origin for this cache behavior.
+                  returned: when I(forward=whitelist)
                   type: complex
                   contains:
                     quantity:
-                      description: Count of cookies to forward
+                      description: Count of cookies to forward.
                       returned: always
                       type: int
                       sample: 1
                     items:
-                      description: List of cookies to forward
+                      description: List of cookies to forward.
                       returned: when list is not empty
                       type: list
                       sample: my_cookie
             headers:
-              description: Which headers are used to vary on cache retrievals
+              description: Which headers are used to vary on cache retrievals.
               returned: always
               type: complex
               contains:
                 quantity:
-                  description: Count of headers to vary on
+                  description: Count of headers to vary on.
                   returned: always
                   type: int
                   sample: 1
                 items:
-                  description: List of headers to vary on
+                  description: List of headers to vary on.
                   returned: when list is not empty
                   type: list
                   sample:
                   - Host
             query_string:
-              description: Whether the query string is used in cache lookups
+              description: Whether the query string is used in cache lookups.
               returned: always
               type: bool
               sample: false
             query_string_cache_keys:
-              description: Which query string keys to use in cache lookups
+              description: Which query string keys to use in cache lookups.
               returned: always
               type: complex
               contains:
                 quantity:
-                  description: Count of query string cache keys to use in cache lookups
+                  description: Count of query string cache keys to use in cache lookups.
                   returned: always
                   type: int
                   sample: 1
                 items:
-                  description: List of query string cache keys to use in cache lookups
+                  description: List of query string cache keys to use in cache lookups.
                   returned: when list is not empty
                   type: list
                   sample:
         lambda_function_associations:
-          description: Lambda function associations for a cache behavior
+          description: Lambda function associations for a cache behavior.
           returned: always
           type: complex
           contains:
             quantity:
-              description: Count of lambda function associations
+              description: Count of lambda function associations.
               returned: always
               type: int
               sample: 1
             items:
-              description: List of lambda function associations
+              description: List of lambda function associations.
               returned: when list is not empty
               type: list
               sample:
               - lambda_function_arn: arn:aws:lambda:123456789012:us-east-1/lambda/lambda-function
                 event_type: viewer-response
         max_ttl:
-          description: Maximum Time to Live
+          description: Maximum Time to Live.
           returned: always
           type: int
           sample: 31536000
         min_ttl:
-          description: Minimum Time to Live
+          description: Minimum Time to Live.
           returned: always
           type: int
           sample: 0
         path_pattern:
-          description: Path pattern that determines this cache behavior
+          description: Path pattern that determines this cache behavior.
           returned: always
           type: str
           sample: /path/to/files/*
         smooth_streaming:
-          description: Whether smooth streaming is enabled
+          description: Whether smooth streaming is enabled.
           returned: always
           type: bool
           sample: false
         target_origin_id:
-          description: Id of origin reference by this cache behavior
+          description: ID of origin reference by this cache behavior.
           returned: always
           type: str
           sample: origin_abcd
         trusted_signers:
-          description: Trusted signers
+          description: Trusted signers.
           returned: always
           type: complex
           contains:
             enabled:
-              description: Whether trusted signers are enabled for this cache behavior
+              description: Whether trusted signers are enabled for this cache behavior.
               returned: always
               type: bool
               sample: false
             quantity:
-              description: Count of trusted signers
+              description: Count of trusted signers.
               returned: always
               type: int
               sample: 1
         viewer_protocol_policy:
-          description: Policy of how to handle http/https
+          description: Policy of how to handle http/https.
           returned: always
           type: str
           sample: redirect-to-https
     quantity:
-      description: Count of cache behaviors
+      description: Count of cache behaviors.
       returned: always
       type: int
       sample: 1
 
 caller_reference:
-  description: Idempotency reference given when creating cloudfront distribution
+  description: Idempotency reference given when creating CloudFront distribution.
   returned: always
   type: str
   sample: '1484796016700'
 comment:
-  description: Any comments you want to include about the distribution
+  description: Any comments you want to include about the distribution.
   returned: always
   type: str
-  sample: 'my first cloudfront distribution'
+  sample: 'my first CloudFront distribution'
 custom_error_responses:
-  description: Custom error responses to use for error handling
+  description: Custom error responses to use for error handling.
   returned: always
   type: complex
   contains:
     items:
-      description: List of custom error responses
+      description: List of custom error responses.
       returned: always
       type: complex
       contains:
         error_caching_min_ttl:
-          description: Minimum time to cache this error response
+          description: Minimum time to cache this error response.
           returned: always
           type: int
           sample: 300
         error_code:
-          description: Origin response code that triggers this error response
+          description: Origin response code that triggers this error response.
           returned: always
           type: int
           sample: 500
         response_code:
-          description: Response code to return to the requester
+          description: Response code to return to the requester.
           returned: always
           type: str
           sample: '500'
         response_page_path:
-          description: Path that contains the error page to display
+          description: Path that contains the error page to display.
           returned: always
           type: str
           sample: /errors/5xx.html
@@ -676,310 +962,310 @@ custom_error_responses:
       type: int
       sample: 1
 default_cache_behavior:
-  description: Default cache behavior
+  description: Default cache behavior.
   returned: always
   type: complex
   contains:
     allowed_methods:
-      description: Methods allowed by the cache behavior
+      description: Methods allowed by the cache behavior.
       returned: always
       type: complex
       contains:
         cached_methods:
-          description: Methods cached by the cache behavior
+          description: Methods cached by the cache behavior.
           returned: always
           type: complex
           contains:
             items:
-              description: List of cached methods
+              description: List of cached methods.
               returned: always
               type: list
               sample:
               - HEAD
               - GET
             quantity:
-              description: Count of cached methods
+              description: Count of cached methods.
               returned: always
               type: int
               sample: 2
         items:
-          description: List of methods allowed by the cache behavior
+          description: List of methods allowed by the cache behavior.
           returned: always
           type: list
           sample:
           - HEAD
           - GET
         quantity:
-          description: Count of methods allowed by the cache behavior
+          description: Count of methods allowed by the cache behavior.
           returned: always
           type: int
           sample: 2
     compress:
-      description: Whether compression is turned on for the cache behavior
+      description: Whether compression is turned on for the cache behavior.
       returned: always
       type: bool
       sample: false
     default_ttl:
-      description: Default Time to Live of the cache behavior
+      description: Default Time to Live of the cache behavior.
       returned: always
       type: int
       sample: 86400
     forwarded_values:
-      description: Values forwarded to the origin for this cache behavior
+      description: Values forwarded to the origin for this cache behavior.
       returned: always
       type: complex
       contains:
         cookies:
-          description: Cookies to forward to the origin
+          description: Cookies to forward to the origin.
           returned: always
           type: complex
           contains:
             forward:
-              description: Which cookies to forward to the origin for this cache behavior
+              description: Which cookies to forward to the origin for this cache behavior.
               returned: always
               type: str
               sample: none
             whitelisted_names:
-              description: The names of the cookies to forward to the origin for this cache behavior
-              returned: when I(forward) is C(whitelist)
+              description: The names of the cookies to forward to the origin for this cache behavior.
+              returned: when I(forward=whitelist)
               type: complex
               contains:
                 quantity:
-                  description: Count of cookies to forward
+                  description: Count of cookies to forward.
                   returned: always
                   type: int
                   sample: 1
                 items:
-                  description: List of cookies to forward
+                  description: List of cookies to forward.
                   returned: when list is not empty
                   type: list
                   sample: my_cookie
         headers:
-          description: Which headers are used to vary on cache retrievals
+          description: Which headers are used to vary on cache retrievals.
           returned: always
           type: complex
           contains:
             quantity:
-              description: Count of headers to vary on
+              description: Count of headers to vary on.
               returned: always
               type: int
               sample: 1
             items:
-              description: List of headers to vary on
+              description: List of headers to vary on.
               returned: when list is not empty
               type: list
               sample:
               - Host
         query_string:
-          description: Whether the query string is used in cache lookups
+          description: Whether the query string is used in cache lookups.
           returned: always
           type: bool
           sample: false
         query_string_cache_keys:
-          description: Which query string keys to use in cache lookups
+          description: Which query string keys to use in cache lookups.
           returned: always
           type: complex
           contains:
             quantity:
-              description: Count of query string cache keys to use in cache lookups
+              description: Count of query string cache keys to use in cache lookups.
               returned: always
               type: int
               sample: 1
             items:
-              description: List of query string cache keys to use in cache lookups
+              description: List of query string cache keys to use in cache lookups.
               returned: when list is not empty
               type: list
               sample:
     lambda_function_associations:
-      description: Lambda function associations for a cache behavior
+      description: Lambda function associations for a cache behavior.
       returned: always
       type: complex
       contains:
         quantity:
-          description: Count of lambda function associations
+          description: Count of lambda function associations.
           returned: always
           type: int
           sample: 1
         items:
-          description: List of lambda function associations
+          description: List of lambda function associations.
           returned: when list is not empty
           type: list
           sample:
           - lambda_function_arn: arn:aws:lambda:123456789012:us-east-1/lambda/lambda-function
             event_type: viewer-response
     max_ttl:
-      description: Maximum Time to Live
+      description: Maximum Time to Live.
       returned: always
       type: int
       sample: 31536000
     min_ttl:
-      description: Minimum Time to Live
+      description: Minimum Time to Live.
       returned: always
       type: int
       sample: 0
     path_pattern:
-      description: Path pattern that determines this cache behavior
+      description: Path pattern that determines this cache behavior.
       returned: always
       type: str
       sample: /path/to/files/*
     smooth_streaming:
-      description: Whether smooth streaming is enabled
+      description: Whether smooth streaming is enabled.
       returned: always
       type: bool
       sample: false
     target_origin_id:
-      description: Id of origin reference by this cache behavior
+      description: ID of origin reference by this cache behavior.
       returned: always
       type: str
       sample: origin_abcd
     trusted_signers:
-      description: Trusted signers
+      description: Trusted signers.
       returned: always
       type: complex
       contains:
         enabled:
-          description: Whether trusted signers are enabled for this cache behavior
+          description: Whether trusted signers are enabled for this cache behavior.
           returned: always
           type: bool
           sample: false
         quantity:
-          description: Count of trusted signers
+          description: Count of trusted signers.
           returned: always
           type: int
           sample: 1
     viewer_protocol_policy:
-      description: Policy of how to handle http/https
+      description: Policy of how to handle http/https.
       returned: always
       type: str
       sample: redirect-to-https
 default_root_object:
   description: The object that you want CloudFront to request from your origin (for example, index.html)
-    when a viewer requests the root URL for your distribution
+    when a viewer requests the root URL for your distribution.
   returned: always
   type: str
   sample: ''
 diff:
-  description: Difference between previous configuration and new configuration
+  description: Difference between previous configuration and new configuration.
   returned: always
   type: dict
   sample: {}
 domain_name:
-  description: Domain name of cloudfront distribution
+  description: Domain name of CloudFront distribution.
   returned: always
   type: str
   sample: d1vz8pzgurxosf.cloudfront.net
 enabled:
-  description: Whether the cloudfront distribution is enabled or not
+  description: Whether the CloudFront distribution is enabled or not.
   returned: always
   type: bool
   sample: true
 http_version:
-  description: Version of HTTP supported by the distribution
+  description: Version of HTTP supported by the distribution.
   returned: always
   type: str
   sample: http2
 id:
-  description: Cloudfront distribution ID
+  description: CloudFront distribution ID.
   returned: always
   type: str
   sample: E123456ABCDEFG
 in_progress_invalidation_batches:
-  description: The number of invalidation batches currently in progress
+  description: The number of invalidation batches currently in progress.
   returned: always
   type: int
   sample: 0
 is_ipv6_enabled:
-  description: Whether IPv6 is enabled
+  description: Whether IPv6 is enabled.
   returned: always
   type: bool
   sample: true
 last_modified_time:
-  description: Date and time distribution was last modified
+  description: Date and time distribution was last modified.
   returned: always
   type: str
   sample: '2017-10-13T01:51:12.656000+00:00'
 logging:
-  description: Logging information
+  description: Logging information.
   returned: always
   type: complex
   contains:
     bucket:
-      description: S3 bucket logging destination
+      description: S3 bucket logging destination.
       returned: always
       type: str
       sample: logs-example-com.s3.amazonaws.com
     enabled:
-      description: Whether logging is enabled
+      description: Whether logging is enabled.
       returned: always
       type: bool
       sample: true
     include_cookies:
-      description: Whether to log cookies
+      description: Whether to log cookies.
       returned: always
       type: bool
       sample: false
     prefix:
-      description: Prefix added to logging object names
+      description: Prefix added to logging object names.
       returned: always
       type: str
       sample: cloudfront/test
 origins:
-  description: Origins in the cloudfront distribution
+  description: Origins in the CloudFront distribution.
   returned: always
   type: complex
   contains:
     items:
-      description: List of origins
+      description: List of origins.
       returned: always
       type: complex
       contains:
         custom_headers:
-          description: Custom headers passed to the origin
+          description: Custom headers passed to the origin.
           returned: always
           type: complex
           contains:
             quantity:
-              description: Count of headers
+              description: Count of headers.
               returned: always
               type: int
               sample: 1
         custom_origin_config:
-          description: Configuration of the origin
+          description: Configuration of the origin.
           returned: always
           type: complex
           contains:
             http_port:
-              description: Port on which HTTP is listening
+              description: Port on which HTTP is listening.
               returned: always
               type: int
               sample: 80
             https_port:
-              description: Port on which HTTPS is listening
+              description: Port on which HTTPS is listening.
               returned: always
               type: int
               sample: 443
             origin_keepalive_timeout:
-              description: Keep-alive timeout
+              description: Keep-alive timeout.
               returned: always
               type: int
               sample: 5
             origin_protocol_policy:
-              description: Policy of which protocols are supported
+              description: Policy of which protocols are supported.
               returned: always
               type: str
               sample: https-only
             origin_read_timeout:
-              description: Timeout for reads to the origin
+              description: Timeout for reads to the origin.
               returned: always
               type: int
               sample: 30
             origin_ssl_protocols:
-              description: SSL protocols allowed by the origin
+              description: SSL protocols allowed by the origin.
               returned: always
               type: complex
               contains:
                 items:
-                  description: List of SSL protocols
+                  description: List of SSL protocols.
                   returned: always
                   type: list
                   sample:
@@ -987,37 +1273,37 @@ origins:
                   - TLSv1.1
                   - TLSv1.2
                 quantity:
-                  description: Count of SSL protocols
+                  description: Count of SSL protocols.
                   returned: always
                   type: int
                   sample: 3
         domain_name:
-          description: Domain name of the origin
+          description: Domain name of the origin.
           returned: always
           type: str
           sample: test-origin.example.com
         id:
-          description: ID of the origin
+          description: ID of the origin.
           returned: always
           type: str
           sample: test-origin.example.com
         origin_path:
-          description: Subdirectory to prefix the request from the S3 or HTTP origin
+          description: Subdirectory to prefix the request from the S3 or HTTP origin.
           returned: always
           type: str
           sample: ''
     quantity:
-      description: Count of origins
+      description: Count of origins.
       returned: always
       type: int
       sample: 1
 price_class:
-  description: Price class of cloudfront distribution
+  description: Price class of CloudFront distribution.
   returned: always
   type: str
   sample: PriceClass_All
 restrictions:
-  description: Restrictions in use by Cloudfront
+  description: Restrictions in use by CloudFront.
   returned: always
   type: complex
   contains:
@@ -1027,63 +1313,63 @@ restrictions:
       type: complex
       contains:
         quantity:
-          description: Count of restrictions
+          description: Count of restrictions.
           returned: always
           type: int
           sample: 1
         items:
-          description: List of country codes allowed or disallowed
+          description: List of country codes allowed or disallowed.
           returned: always
           type: list
           sample: xy
         restriction_type:
-          description: Type of restriction
+          description: Type of restriction.
           returned: always
           type: str
           sample: blacklist
 status:
-  description: Status of the cloudfront distribution
+  description: Status of the CloudFront distribution.
   returned: always
   type: str
   sample: InProgress
 tags:
-  description: Distribution tags
+  description: Distribution tags.
   returned: always
   type: dict
   sample:
     Hello: World
 viewer_certificate:
-  description: Certificate used by cloudfront distribution
+  description: Certificate used by CloudFront distribution.
   returned: always
   type: complex
   contains:
     acm_certificate_arn:
-      description: ARN of ACM certificate
+      description: ARN of ACM certificate.
       returned: when certificate comes from ACM
       type: str
       sample: arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-1234-1234-abcd-123456abcdef
     certificate:
-      description: Reference to certificate
+      description: Reference to certificate.
       returned: always
       type: str
       sample: arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-1234-1234-abcd-123456abcdef
     certificate_source:
-      description: Where certificate comes from
+      description: Where certificate comes from.
       returned: always
       type: str
       sample: acm
     minimum_protocol_version:
-      description: Minimum SSL/TLS protocol supported by this distribution
+      description: Minimum SSL/TLS protocol supported by this distribution.
       returned: always
       type: str
       sample: TLSv1
     ssl_support_method:
-      description: Support for pre-SNI browsers or not
+      description: Support for pre-SNI browsers or not.
       returned: always
       type: str
       sample: sni-only
 web_acl_id:
-  description: ID of Web Access Control List (from WAF service)
+  description: ID of Web Access Control List (from WAF service).
   returned: always
   type: str
   sample: abcd1234-1234-abcd-abcd-abcd12345678
@@ -1093,10 +1379,8 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceManager
 from ansible.module_utils.common.dict_transformations import recursive_diff
-from ansible.module_utils.ec2 import get_aws_connection_info
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, compare_aws_tags
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
-from ansible.module_utils.ec2 import snake_dict_to_camel_dict, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import compare_aws_tags, ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, snake_dict_to_camel_dict
 import datetime
 
 try:
@@ -1110,7 +1394,7 @@ except ImportError:
 try:
     import botocore
 except ImportError:
-    pass
+    pass  # caught by AnsibleAWSModule
 
 
 def change_dict_key_name(dictionary, old_key, new_key):
@@ -1213,7 +1497,7 @@ def update_tags(client, module, existing_tags, valid_tags, purge_tags, arn):
 
 class CloudFrontValidationManager(object):
     """
-    Manages Cloudfront validations
+    Manages CloudFront validations
     """
 
     def __init__(self, module):
@@ -1575,11 +1859,12 @@ class CloudFrontValidationManager(object):
             self.module.fail_json_aws(e, msg="Error validating lambda function associations")
 
     def validate_field_level_encryption_id(self, config, field_level_encryption_id, cache_behavior):
-        # only set field_level_encryption_id if it's already set or if it was passed
         if field_level_encryption_id is not None:
             cache_behavior['field_level_encryption_id'] = field_level_encryption_id
         elif 'field_level_encryption_id' in config:
             cache_behavior['field_level_encryption_id'] = config.get('field_level_encryption_id')
+        else:
+            cache_behavior['field_level_encryption_id'] = ""
         return cache_behavior
 
     def validate_allowed_methods(self, config, allowed_methods, cache_behavior):
@@ -1803,17 +2088,15 @@ class CloudFrontValidationManager(object):
             attempts = 1 + int(wait_timeout / 60)
             waiter.wait(Id=distribution_id, WaiterConfig={'MaxAttempts': attempts})
         except botocore.exceptions.WaiterError as e:
-            self.module.fail_json(msg="Timeout waiting for cloudfront action. Waited for {0} seconds before timeout. "
-                                  "Error: {1}".format(to_text(wait_timeout), to_native(e)))
+            self.module.fail_json_aws(e, msg="Timeout waiting for CloudFront action."
+                                      " Waited for {0} seconds before timeout.".format(to_text(wait_timeout)))
 
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg="Error getting distribution {0}".format(distribution_id))
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(choices=['present', 'absent'], default='present'),
         caller_reference=dict(),
         comment=dict(),
@@ -1844,7 +2127,7 @@ def main():
         default_origin_path=dict(),
         wait=dict(default=False, type='bool'),
         wait_timeout=dict(default=1800, type='int')
-    ))
+    )
 
     result = {}
     changed = True
@@ -1859,8 +2142,7 @@ def main():
         ]
     )
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='cloudfront', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client('cloudfront')
 
     validation_mgr = CloudFrontValidationManager(module)
 

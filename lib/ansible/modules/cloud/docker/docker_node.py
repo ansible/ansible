@@ -59,6 +59,7 @@ options:
             - If I(labels_state) is C(replace) and I(labels) is not provided or empty then all labels assigned to
               node are removed and I(labels_to_remove) is ignored.
         type: list
+        elements: str
     availability:
         description: Node availability to assign. If not provided then node availability remains unchanged.
         choices:

@@ -27,11 +27,13 @@ options:
   name:
     description:
     - The name of the Scheduler.
+    type: str
     required: yes
     aliases: [ name, scheduler_name ]
   description:
     description:
     - Description for the Scheduler.
+    type: str
     aliases: [ descr ]
   recurring:
     description:
@@ -43,6 +45,7 @@ options:
   windowname:
     description:
        - This is the name for your what recurring or oneTime execution
+    type: str
   concurCap:
     description:
        - This is the amount of devices that can be executed on at a time
@@ -50,27 +53,37 @@ options:
   maxTime:
     description:
        - This is the amount MAX amount of time a process can be executed
+    type: str
   date:
     description:
        - This is the date and time that the scheduler will execute
+    type: str
   hour:
     description:
        - This set the hour of execution
+    type: int
   minute:
     description:
-       - This sets the minute of execution, used in conjuntion with hour
+       - This sets the minute of execution, used in conjunction with hour
+    type: int
   day:
     description:
        - This sets the day when execution will take place
+    type: str
     default: "every-day"
     choices: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday','Sunday', 'even-day', 'odd-day', 'every-day']
   state:
     description:
        - Use C(present) or C(absent) for adding or removing.
        - Use C(query) for listing an object or multiple objects.
+    type: str
     default: present
     choices: [ absent, present, query ]
-
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 
 author:
@@ -247,6 +260,7 @@ def main():
         minute=dict(type='int'),
         day=dict(type='str', default='every-day', choices=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
                                                            'Saturday', 'Sunday', 'every-day', 'even-day', 'odd-day']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -258,17 +272,18 @@ def main():
         ],
     )
 
-    state = module.params['state']
-    name = module.params['name']
-    windowname = module.params['windowname']
-    recurring = module.params['recurring']
-    date = module.params['date']
-    hour = module.params['hour']
-    minute = module.params['minute']
-    maxTime = module.params['maxTime']
-    concurCap = module.params['concurCap']
-    day = module.params['day']
-    description = module.params['description']
+    state = module.params.get('state')
+    name = module.params.get('name')
+    windowname = module.params.get('windowname')
+    recurring = module.params.get('recurring')
+    date = module.params.get('date')
+    hour = module.params.get('hour')
+    minute = module.params.get('minute')
+    maxTime = module.params.get('maxTime')
+    concurCap = module.params.get('concurCap')
+    day = module.params.get('day')
+    description = module.params.get('description')
+    name_alias = module.params.get('name_alias')
 
     if recurring:
         child_configs = [dict(trigRecurrWindowP=dict(attributes=dict(name=windowname, hour=hour, minute=minute,
@@ -298,6 +313,7 @@ def main():
             class_config=dict(
                 name=name,
                 descr=description,
+                nameAlias=name_alias,
             ),
             child_configs=child_configs,
 

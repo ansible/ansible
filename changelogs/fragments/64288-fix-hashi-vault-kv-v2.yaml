@@ -1,0 +1,2 @@
+bugfixes:
+- "hashi_vault - Fix KV v2 lookup to always return latest version"

@@ -1,0 +1,5 @@
+bugfixes:
+- "**SECURITY** - CVE-2019-14904 - solaris_zone module accepts zone name and performs actions related to that.
+   However, there is no user input validation done while performing actions. A malicious user could provide a
+   crafted zone name which allows executing commands into the server manipulating the module behaviour. Adding
+   user input validation as per Solaris Zone documentation fixes this issue."

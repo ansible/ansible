@@ -1,0 +1,57 @@
+# (c) 2018, Alexander Bethke <oolongbrothers@gmx.net>
+# (c) 2018, Ansible Project
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- block:
+
+  - import_tasks: setup.yml
+    become: true
+
+  # executable override
+
+  - name: Test executable override
+    flatpak_remote:
+      name: irrelevant
+      remote: irrelevant
+      state: present
+      executable: nothing-that-exists
+    ignore_errors: true
+    register: executable_override_result
+
+  - name: Verify executable override test result
+    assert:
+      that:
+        - "executable_override_result.failed == true"
+        - "executable_override_result.changed == false"
+      msg: "Specifying non-existing executable shall fail module execution"
+
+  - import_tasks: check_mode.yml
+    become: false
+
+  - import_tasks: test.yml
+    become: false
+    vars:
+      method: user
+
+  - import_tasks: test.yml
+    become: true
+    vars:
+      method: system
+
+  when: |
+      ansible_distribution == 'Fedora' or
+      ansible_distribution == 'Ubuntu' and not ansible_distribution_major_version | int < 16

@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: efs
 short_description: create and maintain EFS file systems
 description:
-    - Module allows create, search and destroy Amazon EFS file systems
+    - Module allows create, search and destroy Amazon EFS file systems.
 version_added: "2.2"
 requirements: [ boto3 ]
 author:
@@ -25,10 +25,9 @@ author:
 options:
     encrypt:
         description:
-            - A boolean value that, if true, creates an encrypted file system. This can not be modfied after the file
-              system is created.
+            - If I(encrypt=true) creates an encrypted file system. This can not be modified after the file system is created.
         type: bool
-        default: 'no'
+        default: false
         version_added: 2.5
     kms_key_id:
         description:
@@ -36,46 +35,63 @@ options:
               required if you want to use a non-default CMK. If this parameter is not specified, the default CMK for
               Amazon EFS is used. The key id can be Key ID, Key ID ARN, Key Alias or Key Alias ARN.
         version_added: 2.5
+        type: str
     purge_tags:
         description:
             - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter
               is not set then tags will not be modified.
         type: bool
-        default: 'yes'
+        default: true
         version_added: 2.5
     state:
         description:
-            - Allows to create, search and destroy Amazon EFS file system
+            - Allows to create, search and destroy Amazon EFS file system.
         default: 'present'
         choices: ['present', 'absent']
+        type: str
     name:
         description:
             - Creation Token of Amazon EFS file system. Required for create and update. Either name or ID required for delete.
+        type: str
     id:
         description:
             - ID of Amazon EFS. Either name or ID required for delete.
+        type: str
     performance_mode:
         description:
             - File system's performance mode to use. Only takes effect during creation.
         default: 'general_purpose'
         choices: ['general_purpose', 'max_io']
+        type: str
     tags:
         description:
             - "List of tags of Amazon EFS. Should be defined as dictionary
               In case of 'present' state with list of tags and existing EFS (matched by 'name'), tags of EFS will be replaced with provided data."
+        type: dict
     targets:
         description:
             - "List of mounted targets. It should be a list of dictionaries, every dictionary should include next attributes:
-                   - subnet_id - Mandatory. The ID of the subnet to add the mount target in.
-                   - ip_address - Optional. A valid IPv4 address within the address range of the specified subnet.
-                   - security_groups - Optional. List of security group IDs, of the form 'sg-xxxxxxxx'. These must be for the same VPC as subnet specified
                This data may be modified for existing EFS using state 'present' and new list of mount targets."
+        type: list
+        elements: dict
+        suboptions:
+            subnet_id:
+                required: true
+                description: The ID of the subnet to add the mount target in.
+            ip_address:
+                type: str
+                description: A valid IPv4 address within the address range of the specified subnet.
+            security_groups:
+                type: list
+                elements: str
+                description: List of security group IDs, of the form 'sg-xxxxxxxx'. These must be for the same VPC as subnet specified
     throughput_mode:
         description:
             - The throughput_mode for the file system to be created.
             - Requires botocore >= 1.10.57
         choices: ['bursting', 'provisioned']
         version_added: 2.8
+        type: str
     provisioned_throughput_in_mibps:
         description:
             - If the throughput_mode is provisioned, select the amount of throughput to provisioned in Mibps.
@@ -87,11 +103,12 @@ options:
             - "In case of 'present' state should wait for EFS 'available' life cycle state (of course, if current state not 'deleting' or 'deleted')
                In case of 'absent' state should wait for EFS 'deleted' life cycle state"
         type: bool
-        default: 'no'
+        default: false
     wait_timeout:
         description:
             - How long the module should wait (in seconds) for desired state before returning. Zero means wait as long as necessary.
         default: 0
+        type: int
 
 extends_documentation_fragment:
     - aws
@@ -104,7 +121,7 @@ EXAMPLES = '''
     state: present
     name: myTestEFS
     tags:
-        name: myTestNameTag
+        Name: myTestNameTag
         purpose: file-storage
     targets:
         - subnet_id: subnet-748c5d03
@@ -220,18 +237,15 @@ tags:
 
 from time import sleep
 from time import time as timestamp
-import traceback
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError as e:
-    pass  # Taken care of by ec2.HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
-from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict,
-                                      ec2_argument_spec, get_aws_connection_info, ansible_dict_to_boto3_tag_list,
-                                      compare_aws_tags, boto3_tag_list_to_ansible_dict)
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (compare_aws_tags, camel_dict_to_snake_dict,
+                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
 
 
 def _index_by_key(key, items):
@@ -247,10 +261,9 @@ class EFSConnection(object):
     STATE_DELETING = 'deleting'
     STATE_DELETED = 'deleted'
 
-    def __init__(self, module, region, **aws_connect_params):
-        self.connection = boto3_conn(module, conn_type='client',
-                                     resource='efs', region=region,
-                                     **aws_connect_params)
+    def __init__(self, module):
+        self.connection = module.client('efs')
+        region = module.region
 
         self.module = module
         self.region = region
@@ -424,12 +437,8 @@ class EFSConnection(object):
             try:
                 self.connection.create_file_system(**params)
                 changed = True
-            except ClientError as e:
-                self.module.fail_json(msg="Unable to create file system: {0}".format(to_native(e)),
-                                      exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-            except BotoCoreError as e:
-                self.module.fail_json(msg="Unable to create file system: {0}".format(to_native(e)),
-                                      exception=traceback.format_exc())
+            except (ClientError, BotoCoreError) as e:
+                self.module.fail_json_aws(e, msg="Unable to create file system.")
 
         # we always wait for the state to be available when creating.
         # if we try to take any actions on the file system before it's available
@@ -466,12 +475,8 @@ class EFSConnection(object):
                 try:
                     self.connection.update_file_system(FileSystemId=fs_id, **params)
                     changed = True
-                except ClientError as e:
-                    self.module.fail_json(msg="Unable to update file system: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                except BotoCoreError as e:
-                    self.module.fail_json(msg="Unable to update file system: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc())
+                except (ClientError, BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Unable to update file system.")
         return changed
 
     def converge_file_system(self, name, tags, purge_tags, targets, throughput_mode, provisioned_throughput_in_mibps):
@@ -490,12 +495,8 @@ class EFSConnection(object):
                         FileSystemId=fs_id,
                         TagKeys=tags_to_delete
                     )
-                except ClientError as e:
-                    self.module.fail_json(msg="Unable to delete tags: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                except BotoCoreError as e:
-                    self.module.fail_json(msg="Unable to delete tags: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc())
+                except (ClientError, BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Unable to delete tags.")
 
                 result = True
 
@@ -505,12 +506,8 @@ class EFSConnection(object):
                         FileSystemId=fs_id,
                         Tags=ansible_dict_to_boto3_tag_list(tags_need_modify)
                     )
-                except ClientError as e:
-                    self.module.fail_json(msg="Unable to create tags: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-                except BotoCoreError as e:
-                    self.module.fail_json(msg="Unable to create tags: {0}".format(to_native(e)),
-                                          exception=traceback.format_exc())
+                except (ClientError, BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Unable to create tags.")
 
                 result = True
 
@@ -693,8 +690,7 @@ def main():
     """
      Module action handler
     """
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         encrypt=dict(required=False, type="bool", default=False),
         state=dict(required=False, type='str', choices=["present", "absent"], default="present"),
         kms_key_id=dict(required=False, type='str', default=None),
@@ -708,14 +704,11 @@ def main():
         provisioned_throughput_in_mibps=dict(required=False, type='float'),
         wait=dict(required=False, type="bool", default=False),
         wait_timeout=dict(required=False, type="int", default=0)
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec)
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
+    module = AnsibleAWSModule(argument_spec=argument_spec)
 
-    region, _, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = EFSConnection(module, region, **aws_connect_params)
+    connection = EFSConnection(module)
 
     name = module.params.get('name')
     fs_id = module.params.get('id')

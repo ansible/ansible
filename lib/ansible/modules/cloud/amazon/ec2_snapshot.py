@@ -14,64 +14,73 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ec2_snapshot
-short_description: creates a snapshot from an existing volume
+short_description: Creates a snapshot from an existing volume
 description:
-    - creates an EC2 snapshot from an existing EBS volume
+    - Creates an EC2 snapshot from an existing EBS volume.
 version_added: "1.5"
 options:
   volume_id:
     description:
-      - volume from which to take the snapshot
+      - Volume from which to take the snapshot.
     required: false
+    type: str
   description:
     description:
-      - description to be applied to the snapshot
+      - Description to be applied to the snapshot.
     required: false
+    type: str
   instance_id:
     description:
-    - instance that has the required volume to snapshot mounted
+      - Instance that has the required volume to snapshot mounted.
     required: false
+    type: str
   device_name:
     description:
-    - device name of a mounted volume to be snapshotted
+      - Device name of a mounted volume to be snapshotted.
     required: false
+    type: str
   snapshot_tags:
     description:
-      - a hash/dictionary of tags to add to the snapshot
+      - A dictionary of tags to add to the snapshot.
+    type: dict
     required: false
     version_added: "1.6"
   wait:
     description:
-      - wait for the snapshot to be ready
+      - Wait for the snapshot to be ready.
     type: bool
     required: false
     default: yes
     version_added: "1.5.1"
   wait_timeout:
     description:
-      - how long before wait gives up, in seconds
-      - specify 0 to wait forever
+      - How long before wait gives up, in seconds.
+      - Specify 0 to wait forever.
     required: false
     default: 0
     version_added: "1.5.1"
+    type: int
   state:
     description:
-      - whether to add or create a snapshot
+      - Whether to add or create a snapshot.
     required: false
     default: present
     choices: ['absent', 'present']
     version_added: "1.9"
+    type: str
   snapshot_id:
     description:
-      - snapshot id to remove
+      - Snapshot id to remove.
     required: false
     version_added: "1.9"
+    type: str
   last_snapshot_min_age:
     description:
       - If the volume's most recent snapshot has started less than `last_snapshot_min_age' minutes ago, a new snapshot will not be created.
     required: false
     default: 0
     version_added: "2.0"
+    type: int
 
 author: "Will Thames (@willthames)"
 extends_documentation_fragment:
@@ -110,6 +119,29 @@ EXAMPLES = '''
     module: ec2_snapshot
     volume_id: vol-abcdef12
     last_snapshot_min_age: 60
+'''
+
+RETURN = '''
+snapshot_id:
+    description: The ID of the snapshot. Each snapshot receives a unique identifier when it is created.
+    type: str
+    returned: always
+    sample: snap-01234567
+tags:
+    description: Any tags assigned to the snapshot.
+    type: dict
+    returned: always
+    sample: "{ 'Name': 'instance-name' }"
+volume_id:
+    description: The ID of the volume that was used to create the snapshot.
+    type: str
+    returned: always
+    sample: vol-01234567
+volume_size:
+    description: The size of the volume, in GiB.
+    type: int
+    returned: always
+    sample: 8
 '''
 
 import time

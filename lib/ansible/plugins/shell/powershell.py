@@ -22,6 +22,7 @@ import re
 import shlex
 import pkgutil
 import xml.etree.ElementTree as ET
+import ntpath
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
@@ -93,14 +94,13 @@ class ShellModule(ShellBase):
         return ""
 
     def join_path(self, *args):
-        parts = []
-        for arg in args:
-            arg = self._unquote(arg).replace('/', '\\')
-            parts.extend([a for a in arg.split('\\') if a])
-        path = '\\'.join(parts)
-        if path.startswith('~'):
-            return path
-        return path
+        # use normpath() to remove doubled slashed and convert forward to backslashes
+        parts = [ntpath.normpath(self._unquote(arg)) for arg in args]
+
+        # Becuase ntpath.join treats any component that begins with a backslash as an absolute path,
+        # we have to strip slashes from at least the beginning, otherwise join will ignore all previous
+        # path components except for the drive.
+        return ntpath.join(parts[0], *[part.strip('\\') for part in parts[1:]])
 
     def get_remote_filename(self, pathname):
         # powershell requires that script files end with .ps1

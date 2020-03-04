@@ -190,7 +190,7 @@ options:
     suboptions:
       filename:
         description:
-          - The filename to be used to store the backup configuration. If the the filename
+          - The filename to be used to store the backup configuration. If the filename
             is not given it will be generated based on the hostname, current time and date
             in format defined by <hostname>_config.<current-date>@<current-time>
       dir_path:
@@ -342,13 +342,11 @@ from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.ios.ios import run_commands, get_config
 from ansible.module_utils.network.ios.ios import get_defaults_flag, get_connection
 from ansible.module_utils.network.ios.ios import ios_argument_spec
-from ansible.module_utils.network.ios.ios import check_args as ios_check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
 def check_args(module, warnings):
-    ios_check_args(module, warnings)
     if module.params['multiline_delimiter']:
         if len(module.params['multiline_delimiter']) != 1:
             module.fail_json(msg='multiline_delimiter value can only be a '

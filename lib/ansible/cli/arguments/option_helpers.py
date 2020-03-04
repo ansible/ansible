@@ -36,6 +36,15 @@ class AnsibleVersion(argparse.Action):
         parser.exit()
 
 
+class UnrecognizedArgument(argparse.Action):
+    def __init__(self, option_strings, dest, const=True, default=None, required=False, help=None, metavar=None, nargs=0):
+        super(UnrecognizedArgument, self).__init__(option_strings=option_strings, dest=dest, nargs=nargs, const=const,
+                                                   default=default, required=required, help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser.error('unrecognized arguments: %s' % option_string)
+
+
 class PrependListAction(argparse.Action):
     """A near clone of ``argparse._AppendAction``, but designed to prepend list values
     instead of appending.
@@ -214,7 +223,7 @@ def add_async_options(parser):
 
 def add_basedir_options(parser):
     """Add options for commands which can set a playbook basedir"""
-    parser.add_argument('--playbook-dir', default=None, dest='basedir', action='store',
+    parser.add_argument('--playbook-dir', default=C.config.get_config_value('PLAYBOOK_DIR'), dest='basedir', action='store',
                         help="Since this tool does not use playbooks, use this as a substitute playbook directory."
                              "This sets the relative path for many features including roles/ group_vars/ etc.")
 
@@ -354,7 +363,7 @@ def add_vault_options(parser):
     parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=str,
                         help='the vault identity to use')
     base_group = parser.add_mutually_exclusive_group()
-    base_group.add_argument('--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
+    base_group.add_argument('--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                             help='ask for vault password')
-    base_group.add_argument('--vault-password-file', default=[], dest='vault_password_files',
+    base_group.add_argument('--vault-password-file', '--vault-pass-file', default=[], dest='vault_password_files',
                             help="vault password file", type=unfrack_path(), action='append')

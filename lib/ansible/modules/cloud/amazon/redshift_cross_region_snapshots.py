@@ -3,6 +3,10 @@
 # Copyright: (c) 2018, JR Kerkstra <jrkerkstra@example.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -13,7 +17,7 @@ module: redshift_cross_region_snapshots
 short_description: Manage Redshift Cross Region Snapshots
 description:
   - Manage Redshift Cross Region Snapshots. Supports KMS-Encrypted Snapshots.
-  - For more information, see https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-snapshots.html#cross-region-snapshot-copy
+  - For more information, see U(https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-snapshots.html#cross-region-snapshot-copy)
 version_added: "2.8"
 author: JR Kerkstra (@captainkerk)
 options:
@@ -22,33 +26,37 @@ options:
       - The name of the cluster to configure cross-region snapshots for.
     required: true
     aliases: [ "cluster" ]
+    type: str
   state:
     description:
       - Create or remove the cross-region snapshot configuration.
-    required: true
     choices: [ "present", "absent" ]
     default: present
+    type: str
   region:
     description:
-      - The clusters region
+      - "The cluster's region."
     required: true
     aliases: [ "source" ]
+    type: str
   destination_region:
     description:
-      - The region to copy snapshots to
+      - The region to copy snapshots to.
     required: true
     aliases: [ "destination" ]
+    type: str
   snapshot_copy_grant:
     description:
-      - A grant for Amazon Redshift to use a master key in the destination region.
-      - See http://boto3.readthedocs.io/en/latest/reference/services/redshift.html#Redshift.Client.create_snapshot_copy_grant
-    required: false
+      - A grant for Amazon Redshift to use a master key in the I(destination_region).
+      - See U(http://boto3.readthedocs.io/en/latest/reference/services/redshift.html#Redshift.Client.create_snapshot_copy_grant)
     aliases: [ "copy_grant" ]
+    type: str
   snapshot_retention_period:
     description:
-      - Keep cross-region snapshots for N number of days
+      - The number of days to keep cross-region snapshots for.
     required: true
     aliases: [ "retention_period" ]
+    type: int
 requirements: [ "botocore", "boto3" ]
 extends_documentation_fragment:
   - ec2
@@ -68,7 +76,7 @@ EXAMPLES = '''
   redshift_cross_region_snapshots:
     cluster_name: whatever
     state: present
-    source: us-east-1
+    region: us-east-1
     destination: us-west-2
     copy_grant: 'my-grant-in-destination'
     retention_period: 10
@@ -84,7 +92,6 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec
 
 
 class SnapshotController(object):
@@ -140,16 +147,13 @@ def needs_update(actual, requested):
 
 
 def run_module():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            cluster_name=dict(type='str', required=True, aliases=['cluster']),
-            state=dict(type='str', choices=['present', 'absent'], default='present'),
-            region=dict(type='str', required=True, aliases=['source']),
-            destination_region=dict(type='str', required=True, aliases=['destination']),
-            snapshot_copy_grant=dict(type='str', aliases=['copy_grant']),
-            snapshot_retention_period=dict(type='int', required=True, aliases=['retention_period']),
-        )
+    argument_spec = dict(
+        cluster_name=dict(type='str', required=True, aliases=['cluster']),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
+        region=dict(type='str', required=True, aliases=['source']),
+        destination_region=dict(type='str', required=True, aliases=['destination']),
+        snapshot_copy_grant=dict(type='str', aliases=['copy_grant']),
+        snapshot_retention_period=dict(type='int', required=True, aliases=['retention_period']),
     )
 
     module = AnsibleAWSModule(

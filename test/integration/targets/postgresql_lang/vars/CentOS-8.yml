@@ -1,0 +1,3 @@
+postgresql_lang_packages:
+  - postgresql-plperl
+  - postgresql-plpython3

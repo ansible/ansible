@@ -5,6 +5,8 @@ __metaclass__ = type
 import json
 import os
 
+from . import types as t
+
 from .constants import (
     SOFT_RLIMIT_NOFILE,
 )
@@ -17,15 +19,20 @@ from .util import (
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_BIN_PATH,
+    ANSIBLE_SOURCE_ROOT,
 )
 
 from .util_common import (
+    create_temp_dir,
     run_command,
+    ResultType,
 )
 
 from .config import (
+    IntegrationConfig,
     PosixIntegrationConfig,
     EnvironmentConfig,
+    CommonConfig,
 )
 
 from .data import (
@@ -50,7 +57,7 @@ def ansible_environment(args, color=True, ansible_config=None):
 
     if not ansible_config:
         # use the default empty configuration unless one has been provided
-        ansible_config = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'ansible.cfg')
+        ansible_config = args.get_ansible_config()
 
     if not args.explain and not os.path.exists(ansible_config):
         raise ApplicationError('Configuration not found: %s' % ansible_config)
@@ -66,10 +73,19 @@ def ansible_environment(args, color=True, ansible_config=None):
         ANSIBLE_RETRY_FILES_ENABLED='false',
         ANSIBLE_CONFIG=ansible_config,
         ANSIBLE_LIBRARY='/dev/null',
-        PYTHONPATH=os.path.dirname(ANSIBLE_LIB_ROOT),
+        ANSIBLE_DEVEL_WARNING='false',  # Don't show warnings that CI is running devel
+        PYTHONPATH=get_ansible_python_path(),
         PAGER='/bin/cat',
         PATH=path,
     )
+
+    if isinstance(args, IntegrationConfig) and args.coverage:
+        # standard path injection is not effective for ansible-connection, instead the location must be configured
+        # ansible-connection only requires the injector for code coverage
+        # the correct python interpreter is already selected using the sys.executable used to invoke ansible
+        ansible.update(dict(
+            ANSIBLE_CONNECTION_PATH=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'injector', 'ansible-connection'),
+        ))
 
     if isinstance(args, PosixIntegrationConfig):
         ansible.update(dict(
@@ -81,7 +97,7 @@ def ansible_environment(args, color=True, ansible_config=None):
     if args.debug:
         env.update(dict(
             ANSIBLE_DEBUG='true',
-            ANSIBLE_LOG_PATH=os.path.join(data_context().results, 'logs', 'debug.log'),
+            ANSIBLE_LOG_PATH=os.path.join(ResultType.LOGS.name, 'debug.log'),
         ))
 
     if data_context().content.collection:
@@ -89,7 +105,88 @@ def ansible_environment(args, color=True, ansible_config=None):
             ANSIBLE_COLLECTIONS_PATHS=data_context().content.collection.root,
         ))
 
+    if data_context().content.is_ansible:
+        env.update(configure_plugin_paths(args))
+
     return env
+
+
+def configure_plugin_paths(args):  # type: (CommonConfig) -> t.Dict[str, str]
+    """Return environment variables with paths to plugins relevant for the current command."""
+    # temporarily require opt-in to this feature
+    # once collection migration has occurred this feature should always be enabled
+    if not isinstance(args, IntegrationConfig) or not args.enable_test_support:
+        return {}
+
+    support_path = os.path.join(ANSIBLE_SOURCE_ROOT, 'test', 'support', args.command)
+
+    # provide private copies of collections for integration tests
+    collection_root = os.path.join(support_path, 'collections')
+
+    env = dict(
+        ANSIBLE_COLLECTIONS_PATHS=collection_root,
+    )
+
+    # provide private copies of plugins for integration tests
+    plugin_root = os.path.join(support_path, 'plugins')
+
+    plugin_list = [
+        'action',
+        'become',
+        'cache',
+        'callback',
+        'cliconf',
+        'connection',
+        'filter',
+        'httpapi',
+        'inventory',
+        'lookup',
+        'netconf',
+        # 'shell' is not configurable
+        'strategy',
+        'terminal',
+        'test',
+        'vars',
+    ]
+
+    # most plugins follow a standard naming convention
+    plugin_map = dict(('%s_plugins' % name, name) for name in plugin_list)
+
+    # these plugins do not follow the standard naming convention
+    plugin_map.update(
+        doc_fragment='doc_fragments',
+        library='modules',
+        module_utils='module_utils',
+    )
+
+    env.update(dict(('ANSIBLE_%s' % key.upper(), os.path.join(plugin_root, value)) for key, value in plugin_map.items()))
+
+    # only configure directories which exist
+    env = dict((key, value) for key, value in env.items() if os.path.isdir(value))
+
+    return env
+
+
+def get_ansible_python_path():  # type: () -> str
+    """
+    Return a directory usable for PYTHONPATH, containing only the ansible package.
+    If a temporary directory is required, it will be cached for the lifetime of the process and cleaned up at exit.
+    """
+    if ANSIBLE_SOURCE_ROOT:
+        # when running from source there is no need for a temporary directory to isolate the ansible package
+        return os.path.dirname(ANSIBLE_LIB_ROOT)
+
+    try:
+        return get_ansible_python_path.python_path
+    except AttributeError:
+        pass
+
+    python_path = create_temp_dir(prefix='ansible-test-')
+    get_ansible_python_path.python_path = python_path
+
+    os.symlink(ANSIBLE_LIB_ROOT, os.path.join(python_path, 'ansible'))
+
+    return python_path
 
 
 def check_pyyaml(args, version):
@@ -97,14 +194,14 @@ def check_pyyaml(args, version):
     :type args: EnvironmentConfig
     :type version: str
     """
-    if version in CHECK_YAML_VERSIONS:
-        return
+    try:
+        return CHECK_YAML_VERSIONS[version]
+    except KeyError:
+        pass
 
     python = find_python(version)
-    stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'yamlcheck.py')], capture=True)
-
-    if args.explain:
-        return
+    stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'yamlcheck.py')],
+                                 capture=True, always=True)
 
     CHECK_YAML_VERSIONS[version] = result = json.loads(stdout)
 
@@ -115,3 +212,5 @@ def check_pyyaml(args, version):
         display.warning('PyYAML is not installed for interpreter: %s' % python)
     elif not cloader:
         display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python)
+
+    return result

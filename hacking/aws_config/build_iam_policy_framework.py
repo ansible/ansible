@@ -38,6 +38,9 @@
 #      ec2:DescribeSubnets, ec2:DescribeSecurityGroups, and ec2:DescribeInternetGateways, but AWS does not document this.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import json
 import requests
 import sys

@@ -144,7 +144,7 @@ options:
     suboptions:
       filename:
         description:
-          - The filename to be used to store the backup configuration. If the the filename
+          - The filename to be used to store the backup configuration. If the filename
             is not given it will be generated based on the hostname, current time and date
             in format defined by <hostname>_config.<current-date>@<current-time>
       dir_path:
@@ -371,7 +371,7 @@ def main():
         dir_path=dict(type='path')
     )
     argument_spec = dict(
-        lines=dict(type='list'),
+        lines=dict(aliases=['commands'], type='list'),
 
         src=dict(type='path'),
         src_format=dict(choices=['xml', 'text', 'set', 'json']),
@@ -448,7 +448,8 @@ def main():
                 if diff:
                     if commit:
                         kwargs = {
-                            'comment': module.params['comment']
+                            'comment': module.params['comment'],
+                            'check': module.params['check_commit']
                         }
 
                         confirm = module.params['confirm']

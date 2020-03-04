@@ -104,7 +104,7 @@ EXAMPLES = r'''
   - name: Add linux computer to Active Directory OU using a windows machine
     win_domain_computer:
       name: one_linux_server.my_org.local
-      sam_account_name: linux_server
+      sam_account_name: linux_server$
       dns_hostname: one_linux_server.my_org.local
       ou: "OU=servers,DC=my_org,DC=local"
       description: Example of linux server

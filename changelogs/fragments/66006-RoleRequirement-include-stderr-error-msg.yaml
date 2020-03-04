@@ -1,0 +1,2 @@
+bugfixes:
+  - RoleRequirement - include stderr in the error message if a scm command fails (https://github.com/ansible/ansible/issues/41336)

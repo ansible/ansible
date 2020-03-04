@@ -1,0 +1,88 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    name: "account{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create automation account
+  azure_rm_automationaccount:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+  check_mode: yes
+  register: output
+
+- assert:
+    that:
+        - output.changed
+
+- name: Create automation account
+  azure_rm_automationaccount:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+        - output.changed
+        - output.id
+
+- name: Create automation account
+  azure_rm_automationaccount:
+    name: "{{ name }}"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+        - not output.changed
+
+- name: Get automation account
+  azure_rm_automationaccount_facts:
+      name: "{{ name }}"
+      resource_group: "{{ resource_group }}"
+      list_statistics: yes
+      list_usages: yes
+      list_keys: yes
+  register: facts
+
+- assert:
+    that:
+        - facts.automation_accounts | length == 1
+        - facts.automation_accounts[0].keys
+        - facts.automation_accounts[0].usages
+        - facts.automation_accounts[0].statistics
+        - facts.automation_accounts[0].state == "Ok"
+
+- name: Delete account
+  azure_rm_automationaccount:
+        name: "{{ name }}"
+        resource_group: "{{ resource_group }}"
+        state: absent
+  check_mode: yes
+  register: output
+
+- assert:
+      that:
+            - output.changed
+
+- name: Delete account
+  azure_rm_automationaccount:
+        name: "{{ name }}"
+        resource_group: "{{ resource_group }}"
+        state: absent
+  register: output
+
+- assert:
+      that:
+            - output.changed
+
+- name: Delete account
+  azure_rm_automationaccount:
+        name: "{{ name }}"
+        resource_group: "{{ resource_group }}"
+        state: absent
+  register: output
+
+- assert:
+      that:
+            - not output.changed

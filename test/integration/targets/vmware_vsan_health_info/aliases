@@ -1,0 +1,4 @@
+cloud/vcenter
+unsupported
+needs/target/prepare_vmware_tests
+zuul/vmware/vcenter_only

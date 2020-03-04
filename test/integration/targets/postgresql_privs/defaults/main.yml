@@ -1,0 +1,8 @@
+db_name: ansible_db
+db_user1: ansible_db_user1
+db_user2: ansible_db_user2
+db_user3: ansible_db_user3
+db_user_with_dots1: role.with.dots1
+db_user_with_dots2: role.with.dots2
+db_session_role1: session_role1
+db_session_role2: session_role2

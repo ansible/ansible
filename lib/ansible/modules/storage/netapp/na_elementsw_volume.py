@@ -147,7 +147,7 @@ from ansible.module_utils.netapp_elementsw_module import NaElementSWModule
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     import solidfire.common
-except Exception:
+except ImportError:
     HAS_SF_SDK = False
 
 
@@ -162,7 +162,7 @@ class ElementOSVolume(object):
     def __init__(self):
         """
         Parse arguments, setup state variables,
-        check paramenters and ensure SDK is installed
+        check parameters and ensure SDK is installed
         """
         self._size_unit_map = netapp_utils.SF_BYTE_MAP
 

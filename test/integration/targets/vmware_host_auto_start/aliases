@@ -1,0 +1,5 @@
+cloud/vcenter
+skip/python2.6
+shippable/vcenter/group1
+needs/target/prepare_vmware_tests
+zuul/vmware/vcenter_1esxi

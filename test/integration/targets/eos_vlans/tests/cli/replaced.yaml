@@ -1,0 +1,41 @@
+---
+- include_tasks: reset_config.yml
+
+- set_fact:
+    config:
+      - vlan_id: 20
+        state: suspend
+        name: twentyreplaced
+    other_config:
+      - vlan_id: 10
+        name: ten
+
+- eos_facts:
+    gather_network_resources: vlans
+  become: yes
+
+- name: Replaces device configuration of listed vlans with provided configuration
+  eos_vlans:
+    config: "{{ config }}"
+    state: replaced
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.vlans|symmetric_difference(result.before) == []"
+
+- eos_facts:
+    gather_network_resources: vlans
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.vlans|symmetric_difference(result.after) == []"
+
+- set_fact:
+    expected_config: "{{ config }} + {{ other_config }}"
+
+- assert:
+    that:
+      - "expected_config|symmetric_difference(ansible_facts.network_resources.vlans) == []"

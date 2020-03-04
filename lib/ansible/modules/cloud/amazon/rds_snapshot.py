@@ -4,6 +4,9 @@
 # Copyright (c) 2017, 2018 Michael De La Rue
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -335,7 +338,7 @@ def main():
         required_if=[['state', 'present', ['db_instance_identifier']]]
     )
 
-    client = module.client('rds', retry_decorator=AWSRetry.jittered_backoff(retries=10))
+    client = module.client('rds', retry_decorator=AWSRetry.jittered_backoff(retries=10, catch_extra_error_codes=['DBSnapshotNotFound']))
 
     if module.params['state'] == 'absent':
         ret_dict = ensure_snapshot_absent(client, module)

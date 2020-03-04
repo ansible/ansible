@@ -21,7 +21,7 @@ short_description: Manages servers on the cloudscale.ch IaaS service
 description:
   - Create, update, start, stop and delete servers on the cloudscale.ch IaaS service.
 notes:
-  - Since version 2.8, I(uuid) and I(name) or not mututally exclusive anymore.
+  - Since version 2.8, I(uuid) and I(name) or not mutually exclusive anymore.
   - If I(uuid) option is provided, it takes precedence over I(name) for server selection. This allows to update the server's name.
   - If no I(uuid) option is provided, I(name) is used for server selection. If more than one server with this name exists, execution is aborted.
   - Only the I(name) and I(flavor) are evaluated for the update.
@@ -30,6 +30,7 @@ version_added: '2.3'
 author:
   - Gaudenz Steinlin (@gaudenz)
   - René Moser (@resmo)
+  - Denis Krienbühl (@href)
 options:
   state:
     description:
@@ -54,6 +55,12 @@ options:
   image:
     description:
       - Image used to create the server.
+    type: str
+  zone:
+    description:
+      - Zone in which the server resides (e.g. C(lgp1) or C(rma1)).
+    type: str
+    version_added: '2.10'
   volume_size_gb:
     description:
       - Size of the root volume in GB.
@@ -130,6 +137,7 @@ EXAMPLES = '''
     flavor: flex-4
     ssh_keys: ssh-rsa XXXXXXXXXX...XXXX ansible@cloudscale
     server_groups: shiny-group
+    zone: lpg1
     use_private_network: True
     bulk_volume_size_gb: 100
     api_token: xxxxxx
@@ -142,6 +150,7 @@ EXAMPLES = '''
     flavor: flex-8
     ssh_keys: ssh-rsa XXXXXXXXXXX ansible@cloudscale
     server_groups: shiny-group
+    zone: lpg1
     api_token: xxxxxx
 
 
@@ -210,13 +219,19 @@ state:
 flavor:
   description: The flavor that has been used for this server
   returned: success when not state == absent
-  type: str
-  sample: flex-8
+  type: dict
+  sample: { "slug": "flex-4", "name": "Flex-4", "vcpu_count": 2, "memory_gb": 4 }
 image:
   description: The image used for booting this server
   returned: success when not state == absent
-  type: str
-  sample: debian-8
+  type: dict
+  sample: { "default_username": "ubuntu", "name": "Ubuntu 18.04 LTS", "operating_system": "Ubuntu", "slug": "ubuntu-18.04" }
+zone:
+  description: The zone used for booting this server
+  returned: success when not state == absent
+  type: dict
+  sample: { 'slug': 'lpg1' }
+  version_added: '2.10'
 volumes:
   description: List of volumes attached to the server
   returned: success when not state == absent
@@ -510,6 +525,7 @@ def main():
         uuid=dict(),
         flavor=dict(),
         image=dict(),
+        zone=dict(),
         volume_size_gb=dict(type='int', default=10),
         bulk_volume_size_gb=dict(type='int'),
         ssh_keys=dict(type='list'),

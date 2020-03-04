@@ -41,6 +41,7 @@ options:
         referring to the path of the compose file on the target host
         or the YAML contents of a compose file nested as dictionary.
     type: list
+    # elements: raw
     default: []
   prune:
     description:
@@ -64,8 +65,8 @@ options:
     choices: ["always", "changed", "never"]
   absent_retries:
     description:
-      - If C(>0) and C(state==absent) the module will retry up to
-        C(absent_retries) times to delete the stack until all the
+      - If C(>0) and I(state) is C(absent) the module will retry up to
+        I(absent_retries) times to delete the stack until all the
         resources have been effectively deleted.
         If the last try still reports the stack as not completely
         removed the module will fail.
@@ -73,13 +74,16 @@ options:
     default: 0
   absent_retries_interval:
     description:
-      - Interval in seconds between C(absent_retries)
+      - Interval in seconds between consecutive I(absent_retries).
     type: int
     default: 1
 
 requirements:
   - jsondiff
   - pyyaml
+
+notes:
+  - Return values I(out) and I(err) have been deprecated and will be removed in Ansible 2.14. Use I(stdout) and I(stderr) instead.
 '''
 
 RETURN = '''
@@ -210,11 +214,11 @@ def main():
     module = AnsibleModule(
         argument_spec={
             'name': dict(type='str', required=True),
-            'compose': dict(type='list', default=[]),
+            'compose': dict(type='list', elements='raw', default=[]),
             'prune': dict(type='bool', default=False),
             'with_registry_auth': dict(type='bool', default=False),
             'resolve_image': dict(type='str', choices=['always', 'changed', 'never']),
-            'state': dict(tpye='str', default='present', choices=['present', 'absent']),
+            'state': dict(type='str', default='present', choices=['present', 'absent']),
             'absent_retries': dict(type='int', default=0),
             'absent_retries_interval': dict(type='int', default=1)
         },
@@ -260,8 +264,9 @@ def main():
 
         if rc != 0:
             module.fail_json(msg="docker stack up deploy command failed",
-                             out=out,
-                             rc=rc, err=err)
+                             rc=rc,
+                             out=out, err=err,  # Deprecated
+                             stdout=out, stderr=err)
 
         before_after_differences = json_diff(before_stack_services,
                                              after_stack_services)
@@ -273,10 +278,17 @@ def main():
                     before_after_differences.pop(k)
 
         if not before_after_differences:
-            module.exit_json(changed=False)
+            module.exit_json(
+                changed=False,
+                rc=rc,
+                stdout=out,
+                stderr=err)
         else:
             module.exit_json(
                 changed=True,
+                rc=rc,
+                stdout=out,
+                stderr=err,
                 stack_spec_diff=json_diff(before_stack_services,
                                           after_stack_services,
                                           dump=True))
@@ -286,11 +298,14 @@ def main():
             rc, out, err = docker_stack_rm(module, name, absent_retries, absent_retries_interval)
             if rc != 0:
                 module.fail_json(msg="'docker stack down' command failed",
-                                 out=out,
                                  rc=rc,
-                                 err=err)
+                                 out=out, err=err,  # Deprecated
+                                 stdout=out, stderr=err)
             else:
-                module.exit_json(changed=True, msg=out, err=err, rc=rc)
+                module.exit_json(changed=True,
+                                 msg=out, rc=rc,
+                                 err=err,  # Deprecated
+                                 stdout=out, stderr=err)
         module.exit_json(changed=False)
 
 

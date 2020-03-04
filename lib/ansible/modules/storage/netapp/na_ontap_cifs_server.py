@@ -170,6 +170,7 @@ class NetAppOntapcifsServer(object):
         cifs_server_info = netapp_utils.zapi.NaElement('cifs-server-get-iter')
         cifs_server_attributes = netapp_utils.zapi.NaElement('cifs-server-config')
         cifs_server_attributes.add_new_child('cifs-server', self.cifs_server_name)
+        cifs_server_attributes.add_new_child('vserver', self.vserver)
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(cifs_server_attributes)
         cifs_server_info.add_child_elem(query)

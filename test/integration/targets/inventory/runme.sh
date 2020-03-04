@@ -21,6 +21,13 @@ if [ "$?" != "1" ]; then
     exit 1
 fi
 
+# Ensure that non-existing limit file causes failure with rc 1
+ansible-playbook -i ../../inventory --limit @foo playbook.yml
+if [ "$?" != "1" ]; then
+    echo "Non-existing limit file should cause failure"
+    exit 1
+fi
+
 # Ensure that non-matching limit causes failure with rc 1
 ansible-playbook -i ../../inventory --limit @"${empty_limit_file}" playbook.yml
 

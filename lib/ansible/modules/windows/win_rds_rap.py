@@ -36,7 +36,7 @@ options:
     default: present
   description:
     description:
-      - Optionnal description of the resource authorization policy.
+      - Optional description of the resource authorization policy.
     type: str
   user_groups:
     description:

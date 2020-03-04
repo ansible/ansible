@@ -2,6 +2,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
+
 from . import types as t
 
 from .util import (
@@ -34,6 +36,23 @@ class Git:
         """
         cmd = ['diff', '--name-only', '--no-renames', '-z'] + args
         return self.run_git_split(cmd, '\0')
+
+    def get_submodule_paths(self):  # type: () -> t.List[str]
+        """Return a list of submodule paths recursively."""
+        cmd = ['submodule', 'status', '--recursive']
+        output = self.run_git_split(cmd, '\n')
+        submodule_paths = [re.search(r'^.[0-9a-f]+ (?P<path>[^ ]+)', line).group('path') for line in output]
+
+        # status is returned for all submodules in the current git repository relative to the current directory
+        # when the current directory is not the root of the git repository this can yield relative paths which are not below the current directory
+        # this can occur when multiple collections are in a git repo and some collections are submodules when others are not
+        # specifying "." as the path to enumerate would limit results to the current directory, but can cause the git command to fail with the error:
+        #   error: pathspec '.' did not match any file(s) known to git
+        # this can occur when the current directory contains no files tracked by git
+        # instead we'll filter out the relative paths, since we're only interested in those at or below the current directory
+        submodule_paths = [path for path in submodule_paths if not path.startswith('../')]
+
+        return submodule_paths
 
     def get_file_names(self, args):
         """

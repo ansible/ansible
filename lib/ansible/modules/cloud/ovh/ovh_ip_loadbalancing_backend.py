@@ -22,8 +22,8 @@ version_added: "2.2"
 author: Pascal Heraud (@pascalheraud)
 notes:
     - Uses the python OVH Api U(https://github.com/ovh/python-ovh).
-      You have to create an application (a key and secret) with a consummer
-      key as described into U(https://eu.api.ovh.com/g934.first_step_with_api)
+      You have to create an application (a key and secret) with a consumer
+      key as described into U(https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/)
 requirements:
     - ovh >  0.3.5
 options:
@@ -270,7 +270,7 @@ def main():
                                 .format(timeout))
                 except APIError as apiError:
                     module.fail_json(
-                        msg='Unable to call OVH api for updating the propbe of '
+                        msg='Unable to call OVH api for updating the probe of '
                             'the backend, check application key, secret, '
                             'consumerkey and parameters. Error returned by OVH api '
                             'was : {0}'

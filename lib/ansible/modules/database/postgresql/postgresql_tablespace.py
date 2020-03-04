@@ -20,9 +20,7 @@ DOCUMENTATION = r'''
 module: postgresql_tablespace
 short_description: Add or remove PostgreSQL tablespaces from remote hosts
 description:
-- Adds or removes PostgreSQL tablespaces from remote hosts
-  U(https://www.postgresql.org/docs/current/sql-createtablespace.html),
-  U(https://www.postgresql.org/docs/current/manage-ag-tablespaces.html).
+- Adds or removes PostgreSQL tablespaces from remote hosts.
 version_added: '2.8'
 options:
   tablespace:
@@ -58,13 +56,13 @@ options:
     description:
     - Dict of tablespace options to set. Supported from PostgreSQL 9.0.
     - For more information see U(https://www.postgresql.org/docs/current/sql-createtablespace.html).
-    - When reset is passed as an option's value, if the option was set previously, it will be removed
-      U(https://www.postgresql.org/docs/current/sql-altertablespace.html).
+    - When reset is passed as an option's value, if the option was set previously, it will be removed.
     type: dict
   rename_to:
     description:
     - New name of the tablespace.
     - The new name cannot begin with pg_, as such names are reserved for system tablespaces.
+    type: str
   session_role:
     description:
     - Switch to session_role after connecting. The specified session_role must
@@ -83,6 +81,20 @@ notes:
 - I(state=absent) and I(state=present) (the second one if the tablespace doesn't exist) do not
   support check mode because the corresponding PostgreSQL DROP and CREATE TABLESPACE commands
   can not be run inside the transaction block.
+
+seealso:
+- name: PostgreSQL tablespaces
+  description: General information about PostgreSQL tablespaces.
+  link: https://www.postgresql.org/docs/current/manage-ag-tablespaces.html
+- name: CREATE TABLESPACE reference
+  description: Complete reference of the CREATE TABLESPACE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createtablespace.html
+- name: ALTER TABLESPACE reference
+  description: Complete reference of the ALTER TABLESPACE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-altertablespace.html
+- name: DROP TABLESPACE reference
+  description: Complete reference of the DROP TABLESPACE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-droptablespace.html
 
 author:
 - Flavien Chantelot (@Dorn-)
@@ -237,16 +249,15 @@ class PgTablespace(object):
             query = ("SELECT r.rolname, (SELECT Null), %s "
                      "FROM pg_catalog.pg_tablespace AS t "
                      "JOIN pg_catalog.pg_roles AS r "
-                     "ON t.spcowner = r.oid "
-                     "WHERE t.spcname = '%s'" % (location, self.name))
+                     "ON t.spcowner = r.oid " % location)
         else:
             query = ("SELECT r.rolname, t.spcoptions, %s "
                      "FROM pg_catalog.pg_tablespace AS t "
                      "JOIN pg_catalog.pg_roles AS r "
-                     "ON t.spcowner = r.oid "
-                     "WHERE t.spcname = '%s'" % (location, self.name))
+                     "ON t.spcowner = r.oid " % location)
 
-        res = exec_sql(self, query, add_to_executed=False)
+        res = exec_sql(self, query + "WHERE t.spcname = %(name)s",
+                       query_params={'name': self.name}, add_to_executed=False)
 
         if not res:
             self.exists = False
@@ -368,7 +379,7 @@ class PgTablespace(object):
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
-        tablespace=dict(type='str', aliases=['name']),
+        tablespace=dict(type='str', required=True, aliases=['name']),
         state=dict(type='str', default="present", choices=["absent", "present"]),
         location=dict(type='path', aliases=['path']),
         owner=dict(type='str'),

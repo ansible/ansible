@@ -242,7 +242,7 @@ EXAMPLES = '''
       name: scale
       resource_group: myResourceGroup
 
-- name: Create an auto scale with compicated profile
+- name: Create an auto scale with complicated profile
   azure_rm_autoscale:
       target: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets
                /myVmss"

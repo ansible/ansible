@@ -2,6 +2,10 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -12,12 +16,12 @@ DOCUMENTATION = '''
 module: dms_replication_subnet_group
 short_description: creates or destroys a data migration services subnet group
 description:
-    - Creates or destroys a data migration services subnet group
+    - Creates or destroys a data migration services subnet group.
 version_added: "2.9"
 options:
     state:
         description:
-            - State of the subnet group
+            - State of the subnet group.
         default: present
         choices: ['present', 'absent']
         type: str
@@ -28,15 +32,19 @@ options:
               Must contain no more than 255 alphanumeric characters,
               periods, spaces, underscores, or hyphens. Must not be "default".
         type: str
+        required: true
     description:
         description:
             - The description for the subnet group.
         type: str
+        required: true
     subnet_ids:
         description:
             - A list containing the subnet ids for the replication subnet group,
-              needs to be at least 2 items in the list
+              needs to be at least 2 items in the list.
         type: list
+        elements: str
+        required: true
 author:
     - "Rui Moreira (@ruimoreira)"
 extends_documentation_fragment:
@@ -53,11 +61,10 @@ EXAMPLES = '''
 '''
 
 RETURN = ''' # '''
-__metaclass__ = type
+
 import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3, \
-    camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 try:
     import botocore
 except ImportError:
@@ -95,20 +102,8 @@ def replication_subnet_group_delete(module, connection):
     return connection.delete_replication_subnet_group(**delete_parameters)
 
 
-def get_dms_client(module, aws_connect_params, client_region, ec2_url):
-    client_params = dict(
-        module=module,
-        conn_type='client',
-        resource='dms',
-        region=client_region,
-        endpoint=ec2_url,
-        **aws_connect_params
-    )
-    return boto3_conn(**client_params)
-
-
 def replication_subnet_exists(subnet):
-    """ Returns boolean based on the existance of the endpoint
+    """ Returns boolean based on the existence of the endpoint
     :param endpoint: dict containing the described endpoint
     :return: bool
     """
@@ -140,7 +135,7 @@ def compare_params(module, param_described):
     """
     modparams = create_module_params(module)
     changed = False
-    # need to sanitize values that get retured from the API
+    # need to sanitize values that get returned from the API
     if 'VpcId' in param_described.keys():
         param_described.pop('VpcId')
     if 'SubnetGroupStatus' in param_described.keys():
@@ -200,13 +195,9 @@ def main():
     )
     exit_message = None
     changed = False
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     state = module.params.get('state')
-    aws_config_region, ec2_url, aws_connect_params = \
-        get_aws_connection_info(module, boto3=True)
-    dmsclient = get_dms_client(module, aws_connect_params, aws_config_region, ec2_url)
+    dmsclient = module.client('dms')
     subnet_group = describe_subnet_group(dmsclient,
                                          module.params.get('identifier'))
     if state == 'present':

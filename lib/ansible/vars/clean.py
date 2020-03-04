@@ -133,15 +133,12 @@ def clean_facts(facts):
 
     # next we remove any connection plugin specific vars
     for conn_path in connection_loader.all(path_only=True):
-        try:
-            conn_name = os.path.splitext(os.path.basename(conn_path))[0]
-            re_key = re.compile('^ansible_%s_' % conn_name)
-            for fact_key in fact_keys:
-                # most lightweight VM or container tech creates devices with this pattern, this avoids filtering them out
-                if (re_key.match(fact_key) and not fact_key.endswith(('_bridge', '_gwbridge'))) or re_key.startswith('ansible_become_'):
-                    remove_keys.add(fact_key)
-        except AttributeError:
-            pass
+        conn_name = os.path.splitext(os.path.basename(conn_path))[0]
+        re_key = re.compile('^ansible_%s_' % conn_name)
+        for fact_key in fact_keys:
+            # most lightweight VM or container tech creates devices with this pattern, this avoids filtering them out
+            if (re_key.match(fact_key) and not fact_key.endswith(('_bridge', '_gwbridge'))) or fact_key.startswith('ansible_become_'):
+                remove_keys.add(fact_key)
 
     # remove some KNOWN keys
     for hard in C.RESTRICTED_RESULT_KEYS + C.INTERNAL_RESULT_KEYS:

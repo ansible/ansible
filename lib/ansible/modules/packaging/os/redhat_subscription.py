@@ -251,7 +251,7 @@ subscribed_pool_ids:
     description: List of pool IDs to which system is now subscribed
     returned: success
     type: complex
-    contains: {
+    sample: {
         "8a85f9815ab905d3015ab928c7005de4": "1"
     }
 '''
@@ -515,7 +515,9 @@ class Rhsm(RegistrationBase):
 
         for pool_id, quantity in sorted(pool_ids.items()):
             if pool_id in available_pool_ids:
-                args = [SUBMAN_CMD, 'attach', '--pool', pool_id, '--quantity', quantity]
+                args = [SUBMAN_CMD, 'attach', '--pool', pool_id]
+                if quantity is not None:
+                    args.extend(['--quantity', to_native(quantity)])
                 rc, stderr, stdout = self.module.run_command(args, check_rc=True)
             else:
                 self.module.fail_json(msg='Pool ID: %s not in list of available pools' % pool_id)
@@ -839,8 +841,8 @@ def main():
                 module.fail_json(msg='Unable to parse pool_ids option.')
             pool_id, quantity = list(value.items())[0]
         else:
-            pool_id, quantity = value, 1
-        pool_ids[pool_id] = str(quantity)
+            pool_id, quantity = value, None
+        pool_ids[pool_id] = quantity
     consumer_type = module.params["consumer_type"]
     consumer_name = module.params["consumer_name"]
     consumer_id = module.params["consumer_id"]

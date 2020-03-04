@@ -1,7 +1,8 @@
-coverage >= 4.2, != 4.3.2 ; python_version <= '3.7' # features in 4.2+ required, avoid known bug in 4.3.2 on python 2.6
-coverage >= 4.5.4 ; python_version > '3.7' # coverage had a bug in < 4.5.4 that would cause unit tests to hang in Python 3.8
+coverage >= 4.2, < 5.0.0, != 4.3.2 ; python_version <= '3.7' # features in 4.2+ required, avoid known bug in 4.3.2 on python 2.6, coverage 5.0+ incompatible
+coverage >= 4.5.4, < 5.0.0 ; python_version > '3.7' # coverage had a bug in < 4.5.4 that would cause unit tests to hang in Python 3.8, coverage 5.0+ incompatible
 cryptography < 2.2 ; python_version < '2.7' # cryptography 2.2 drops support for python 2.6
 deepdiff < 4.0.0 ; python_version < '3' # deepdiff 4.0.0 and later require python 3
+jinja2 < 2.11 ; python_version < '2.7' # jinja2 2.11 and later require python 2.7 or later
 urllib3 < 1.24 ; python_version < '2.7' # urllib3 1.24 and later require python 2.7 or later
 pywinrm >= 0.3.0 # message encryption support
 sphinx < 1.6 ; python_version < '2.7' # sphinx 1.6 and later require python 2.7 or later
@@ -25,6 +26,7 @@ requests-credssp >= 0.1.0 # message encryption support
 voluptuous >= 0.11.0 # Schema recursion via Self
 openshift >= 0.6.2, < 0.9.0 # merge_type support
 virtualenv < 16.0.0 ; python_version < '2.7' # virtualenv 16.0.0 and later require python 2.7 or later
+pathspec < 0.6.0 ; python_version < '2.7' # pathspec 0.6.0 and later require python 2.7 or later
 pyopenssl < 18.0.0 ; python_version < '2.7' # pyOpenSSL 18.0.0 and later require python 2.7 or later
 pyfmg == 0.6.1 # newer versions do not pass current unit tests
 pyyaml < 5.1 ; python_version < '2.7' # pyyaml 5.1 and later require python 2.7 or later
@@ -35,7 +37,10 @@ xmltodict < 0.12.0 ; python_version < '2.7' # xmltodict 0.12.0 and later require
 lxml < 4.3.0 ; python_version < '2.7' # lxml 4.3.0 and later require python 2.7 or later
 pyvmomi < 6.0.0 ; python_version < '2.7' # pyvmomi 6.0.0 and later require python 2.7 or later
 pyone == 1.1.9 # newer versions do not pass current integration tests
-botocore >= 1.10.0 # adds support for the following AWS services: secretsmanager, fms, and acm-pca
+boto3 < 1.11 ; python_version < '2.7' # boto3 1.11 drops Python 2.6 support
+botocore >= 1.10.0, < 1.14 ; python_version < '2.7' # adds support for the following AWS services: secretsmanager, fms, and acm-pca; botocore 1.14 drops Python 2.6 support
+botocore >= 1.10.0 ; python_version >= '2.7' # adds support for the following AWS services: secretsmanager, fms, and acm-pca
+setuptools < 45 ; python_version <= '2.7' # setuptools 45 and later require python 3.5 or later
 
 # freeze pylint and its requirements for consistent test results
 astroid == 2.2.5
@@ -45,3 +50,4 @@ mccabe == 0.6.1
 pylint == 2.3.1
 typed-ast == 1.4.0  # 1.4.0 is required to compile on Python 3.8
 wrapt == 1.11.1
+semantic_version == 2.6.0 # newer versions are not supported on Python 2.6

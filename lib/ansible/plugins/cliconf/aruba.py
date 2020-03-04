@@ -72,7 +72,7 @@ class Cliconf(CliconfBase):
         if source == 'running':
             cmd = 'show running-config all'
         else:
-            cmd = 'show startup-config'
+            cmd = 'show configuration'
         return self.send_command(cmd)
 
     @enable_mode
@@ -86,3 +86,11 @@ class Cliconf(CliconfBase):
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            self._update_cli_prompt_context(config_context=')#')

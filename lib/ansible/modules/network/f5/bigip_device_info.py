@@ -1932,37 +1932,37 @@ gtm_pools:
       type: int
     qos_lcs:
       description:
-        - Weight assign to the Link Capacity performance factor when load balacing option
+        - Weight assign to the Link Capacity performance factor when load balancing option
           is QoS.
       returned: queried
       type: int
     qos_packet_rate:
       description:
-        - Weight assign to the Packet Rate performance factor when load balacing option
+        - Weight assign to the Packet Rate performance factor when load balancing option
           is QoS.
       returned: queried
       type: int
     qos_rtt:
       description:
-        - Weight assign to the Round Trip Time performance factor when load balacing option
+        - Weight assign to the Round Trip Time performance factor when load balancing option
           is QoS.
       returned: queried
       type: int
     qos_topology:
       description:
-        - Weight assign to the Topology performance factor when load balacing option
+        - Weight assign to the Topology performance factor when load balancing option
           is QoS.
       returned: queried
       type: int
     qos_vs_capacity:
       description:
-        - Weight assign to the Virtual Server performance factor when load balacing option
+        - Weight assign to the Virtual Server performance factor when load balancing option
           is QoS.
       returned: queried
       type: int
     qos_vs_score:
       description:
-        - Weight assign to the Virtual Server Score performance factor when load balacing
+        - Weight assign to the Virtual Server Score performance factor when load balancing
           option is QoS.
       returned: queried
       type: int
@@ -3225,7 +3225,7 @@ ltm_pools:
       type: str
       sample: pass-through
     current_sessions:
-      descriptions:
+      description:
         - Current sessions.
       returned: queried
       type: int
@@ -3671,72 +3671,72 @@ ltm_policies:
           returned: when conditions are defined in the rule.
           type: complex
           contains:
-          case_insensitive:
-            description:
-              - The value matched on is case insensitive.
-            returned: when defined in the condition.
-            type: bool
-            sample: no
-          case_sensitive:
-            description:
-              - The value matched on is case sensitive.
-            returned: when defined in the condition.
-            type: bool
-            sample: yes
-          contains_string:
-            description:
-              - The value matches if it contains a certain string.
-            returned: when defined in the condition.
-            type: bool
-            sample: yes
-          external:
-            description:
-              - The value matched on is from the external side of a connection.
-            returned: when defined in the condition.
-            type: bool
-            sample: yes
-          http_basic_auth:
-            description:
-              - This condition matches on basic HTTP authorization.
-            returned: when defined in the condition.
-            type: bool
-            sample: no
-          http_host:
-            description:
-              - This condition matches on an HTTP host.
-            returned: when defined in the condition.
-            type: bool
-            sample: yes
-          http_uri:
-            description:
-              - This condition matches on an HTTP URI.
-            returned: when defined in the condition.
-            type: bool
-            sample: no
-          request:
-            description:
-              - This policy will match on a request.
-            returned: when defined in the condition.
-            type: bool
-            sample: yes
-          username:
-            description:
-              - Matches on a username.
-            returned: when defined in the condition.
-            type: bool
-            sample: yes
-          all:
-            description:
-              - Matches all.
-            returned: when defined in the condition.
-            type: bool
-            sample: yes
-          values:
-            description:
-              - The specified values will be matched on.
-            returned: when defined in the condition.
-            type: list
-            sample: ['foo.bar.com', 'baz.cool.com']
+            case_insensitive:
+              description:
+                - The value matched on is case insensitive.
+              returned: when defined in the condition.
+              type: bool
+              sample: no
+            case_sensitive:
+              description:
+                - The value matched on is case sensitive.
+              returned: when defined in the condition.
+              type: bool
+              sample: yes
+            contains_string:
+              description:
+                - The value matches if it contains a certain string.
+              returned: when defined in the condition.
+              type: bool
+              sample: yes
+            external:
+              description:
+                - The value matched on is from the external side of a connection.
+              returned: when defined in the condition.
+              type: bool
+              sample: yes
+            http_basic_auth:
+              description:
+                - This condition matches on basic HTTP authorization.
+              returned: when defined in the condition.
+              type: bool
+              sample: no
+            http_host:
+              description:
+                - This condition matches on an HTTP host.
+              returned: when defined in the condition.
+              type: bool
+              sample: yes
+            http_uri:
+              description:
+                - This condition matches on an HTTP URI.
+              returned: when defined in the condition.
+              type: bool
+              sample: no
+            request:
+              description:
+                - This policy will match on a request.
+              returned: when defined in the condition.
+              type: bool
+              sample: yes
+            username:
+              description:
+                - Matches on a username.
+              returned: when defined in the condition.
+              type: bool
+              sample: yes
+            all:
+              description:
+                - Matches all.
+              returned: when defined in the condition.
+              type: bool
+              sample: yes
+            values:
+              description:
+                - The specified values will be matched on.
+              returned: when defined in the condition.
+              type: list
+              sample: ['foo.bar.com', 'baz.cool.com']
           sample: hash/dictionary of values
       sample: hash/dictionary of values
   sample: hash/dictionary of values
@@ -5586,7 +5586,7 @@ tcp_profiles:
       type: bool
       sample: no
     mptcp_rto_max:
-      decription:
+      description:
         - Specifies the number of RTOs (retransmission timeouts) before declaring
           the subflow dead.
       returned: queried
@@ -6070,7 +6070,7 @@ udp_profiles:
       description:
         - The Quality of Service level that the system assigns to
           UDP packets when sending them to clients.
-        - May be either numberic, or the value C(pass-through).
+        - May be either numeric, or the value C(pass-through).
       returned: queried
       type: str
       sample: pass-through

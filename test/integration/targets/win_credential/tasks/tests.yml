@@ -366,6 +366,52 @@
     that:
     - not remove_cred_again is changed
 
+# https://github.com/ansible/ansible/issues/67278
+- name: create credential with wildcard
+  win_credential:
+    name: '*.{{ test_hostname }}'
+    type: domain_password
+    username: DOMAIN\username
+    secret: password
+    state: present
+    persistence: enterprise
+  register: wildcard_cred
+  vars: *become_vars
+
+- name: get result of create credential with wildcard
+  test_cred_facts:
+    name: '*.{{ test_hostname }}'
+    type: domain_password
+  register: wildcard_cred_actual
+  vars: *become_vars
+
+- name: assert create credential with wildcard
+  assert:
+    that:
+    - wildcard_cred is changed
+    - wildcard_cred_actual.name == '*.' ~ test_hostname
+
+- name: remove credential with wildcard
+  win_credential:
+    name: '*.{{ test_hostname }}'
+    type: domain_password
+    state: absent
+  register: wildcard_remove
+  vars: *become_vars
+
+- name: get result of remove credential with wildcard
+  test_cred_facts:
+    name: '*.{{ test_hostname }}'
+    type: domain_password
+  register: wildcard_remove_actual
+  vars: *become_vars
+
+- name: assert remove credential with wildcard
+  assert:
+    that:
+    - wildcard_remove is changed
+    - not wildcard_remove_actual.exists
+
 - name: create generic password (check mode)
   win_credential:
     name: '{{ test_hostname }}'

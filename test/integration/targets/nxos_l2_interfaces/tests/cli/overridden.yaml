@@ -1,0 +1,72 @@
+---
+- debug:
+    msg: "Start nxos_l2_interfaces overridden integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: test_int2="{{ nxos_int2 }}"
+
+- name: setup1
+  cli_config: &cleanup
+    config: |
+      default interface {{ test_int1 }}
+      default interface {{ test_int2 }}
+  ignore_errors: yes
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        interface {{ test_int1 }}
+          switchport
+          switchport trunk allowed vlan 11
+        interface {{ test_int2 }}
+          switchport
+
+  - name: Gather l2_interfaces facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: l2_interfaces
+
+  - name: Overridden
+    nxos_l2_interfaces: &overridden
+      config:
+        - name: "{{ test_int2 }}"
+          access:
+            vlan: 6
+          trunk:
+            allowed_vlans: "10-12"
+      state: overridden
+    register: result
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.before)|length == 0"
+        - "result.changed == true"
+        - "'interface {{ test_int1 }}' in result.commands"
+        - "'no switchport trunk allowed vlan' in result.commands"
+        - "'interface {{ test_int2 }}' in result.commands"
+        - "'switchport access vlan 6' in result.commands"
+        - "'switchport trunk allowed vlan 10,11,12' in result.commands"
+
+  - name: Gather l2_interfaces post facts
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.after)|length == 0"
+
+  - name: Idempotence - Overridden
+    nxos_l2_interfaces: *overridden
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *cleanup
+    ignore_errors: yes

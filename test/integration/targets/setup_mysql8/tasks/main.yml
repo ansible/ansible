@@ -1,0 +1,18 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Setup MySQL 8:
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - '{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml'
+        - '{{ ansible_facts.os_family }}.yml'
+        - 'default.yml'
+      paths: vars
+
+- import_tasks: setup_mysql8.yml
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - ansible_facts.distribution_major_version is version_compare('7', '>=')

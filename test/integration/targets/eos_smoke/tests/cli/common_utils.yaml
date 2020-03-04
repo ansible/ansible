@@ -10,7 +10,6 @@
   eos_config:
     lines:
     - no ip route 192.168.3.0/24 192.168.0.1
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 
@@ -19,7 +18,6 @@
     address: 192.168.3.0/24
     next_hop: 192.168.0.1
     admin_distance: 2
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -34,7 +32,6 @@
     address: 192.168.3.0/250
     next_hop: 192.168.0.1
     admin_distance: 2
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -48,7 +45,6 @@
   eos_config:
     lines:
     - no ip route 192.168.3.0/24 192.168.0.1
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 
@@ -65,7 +61,6 @@
     state: up
     tx_rate: ge(0)
     rx_rate: ge(0)
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result

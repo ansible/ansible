@@ -9,6 +9,11 @@
 - debug:
     msg: "Using container name prefix {{ cname_prefix }}"
 
+# Install netaddr
+- name: Install netaddr for ipaddr filter
+  pip:
+    name: netaddr
+
 # Run the tests
 - block:
   - include_tasks: run-test.yml

@@ -1,0 +1,119 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Needs for further tests:
+- name: Stop slave
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: stopslave
+
+- name: Reset slave all
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: resetslaveall
+
+# Get master log file and log pos:
+- name: Get master status
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ master_port }}"
+    mode: getmaster
+  register: master_status
+
+# Test changemaster mode:
+- name: Run replication with channel
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: changemaster
+    master_host: 127.0.0.1
+    master_port: "{{ master_port }}"
+    master_user: "{{ replication_user }}"
+    master_password: "{{ replication_pass }}"
+    master_log_file: "{{ master_status.File }}"
+    master_log_pos: "{{ master_status.Position }}"
+    channel: "{{ test_channel }}"
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["CHANGE MASTER TO MASTER_HOST='127.0.0.1',MASTER_USER='replication_user',MASTER_PASSWORD='********',MASTER_PORT=3306,MASTER_LOG_FILE='{{ master_status.File }}',MASTER_LOG_POS={{ master_status.Position }} FOR CHANNEL '{{ test_channel }}'"]
+
+# Test startslave mode:
+- name: Start slave with channel
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: startslave
+    channel: '{{ test_channel }}'
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["START SLAVE FOR CHANNEL '{{ test_channel }}'"]
+
+# Test getslave mode:
+- name: Get standby status with channel
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: getslave
+    channel: '{{ test_channel }}'
+  register: slave_status
+
+- assert:
+    that:
+    - slave_status.Is_Slave == true
+    - slave_status.Master_Host == '127.0.0.1'
+    - slave_status.Exec_Master_Log_Pos == master_status.Position
+    - slave_status.Master_Port == {{ master_port }}
+    - slave_status.Last_IO_Errno == 0
+    - slave_status.Last_IO_Error == ''
+    - slave_status.Channel_Name == '{{ test_channel }}'
+    - slave_status is not changed
+
+# Test stopslave mode:
+- name: Stop slave with channel
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: stopslave
+    channel: '{{ test_channel }}'
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["STOP SLAVE FOR CHANNEL '{{ test_channel }}'"]
+
+# Test reset
+- name: Reset slave with channel
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: resetslave
+    channel: '{{ test_channel }}'
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["RESET SLAVE FOR CHANNEL '{{ test_channel }}'"]
+
+# Test reset all
+- name: Reset slave all with channel
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: resetslaveall
+    channel: '{{ test_channel }}'
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["RESET SLAVE ALL FOR CHANNEL '{{ test_channel }}'"]

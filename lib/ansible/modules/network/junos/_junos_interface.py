@@ -80,7 +80,7 @@ options:
     description: List of Interfaces definitions.
   state:
     description:
-      - State of the Interface configuration, C(up) idicates present and
+      - State of the Interface configuration, C(up) indicates present and
         operationally up and C(down) indicates present and operationally C(down)
     default: present
     choices: ['present', 'absent', 'up', 'down']

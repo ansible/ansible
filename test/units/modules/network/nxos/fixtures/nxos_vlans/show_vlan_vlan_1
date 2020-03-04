@@ -1,0 +1,16 @@
+{
+  "TABLE_vlanbrief": {
+    "ROW_vlanbrief": {
+      "vlanshowbr-vlanid": "1", "vlanshowbr-vlanid-utf": "1",
+      "vlanshowbr-vlanname": "default",
+      "vlanshowbr-vlanstate": "active",
+      "vlanshowbr-shutstate": "noshutdown"
+    },
+  },
+  "TABLE_mtuinfo": {
+    "ROW_mtuinfo": {
+      "vlanshowinfo-vlanid": "1", "vlanshowinfo-media-type": "enet",
+      "vlanshowinfo-vlanmode": "ce-vlan"
+    },
+  }
+}

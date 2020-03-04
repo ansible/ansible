@@ -93,7 +93,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi
+from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi, is_boolean, is_integer, is_truthy
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import integer_types, string_types
 
@@ -105,26 +105,6 @@ class VmwareConfigManager(PyVmomi):
         esxi_host_name = self.params.get('esxi_hostname', None)
         self.options = self.params.get('options', dict())
         self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
-
-    @staticmethod
-    def is_integer(value, type_of='int'):
-        try:
-            VmomiSupport.vmodlTypes[type_of](value)
-            return True
-        except (TypeError, ValueError):
-            return False
-
-    @staticmethod
-    def is_boolean(value):
-        if str(value).lower() in ['true', 'on', 'yes', 'false', 'off', 'no']:
-            return True
-        return False
-
-    @staticmethod
-    def is_truthy(value):
-        if str(value).lower() in ['true', 'on', 'yes']:
-            return True
-        return False
 
     def set_host_configuration_facts(self):
         changed_list = []
@@ -146,12 +126,12 @@ class VmwareConfigManager(PyVmomi):
                 if option_key in host_facts:
                     # We handle all supported types here so we can give meaningful errors.
                     option_type = host_facts[option_key]['option_type']
-                    if self.is_boolean(option_value) and isinstance(option_type, vim.option.BoolOption):
-                        option_value = self.is_truthy(option_value)
-                    elif (isinstance(option_value, integer_types) or self.is_integer(option_value))\
+                    if is_boolean(option_value) and isinstance(option_type, vim.option.BoolOption):
+                        option_value = is_truthy(option_value)
+                    elif (isinstance(option_value, integer_types) or is_integer(option_value))\
                             and isinstance(option_type, vim.option.IntOption):
                         option_value = VmomiSupport.vmodlTypes['int'](option_value)
-                    elif (isinstance(option_value, integer_types) or self.is_integer(option_value, 'long'))\
+                    elif (isinstance(option_value, integer_types) or is_integer(option_value, 'long'))\
                             and isinstance(option_type, vim.option.LongOption):
                         option_value = VmomiSupport.vmodlTypes['long'](option_value)
                     elif isinstance(option_value, float) and isinstance(option_type, vim.option.FloatOption):

@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -24,79 +16,100 @@ DOCUMENTATION = '''
 module: ecs_taskdefinition
 short_description: register a task definition in ecs
 description:
-    - Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS)
+    - Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS).
 version_added: "2.0"
 author: Mark Chance (@Java1Guy)
 requirements: [ json, botocore, boto3 ]
 options:
     state:
         description:
-            - State whether the task definition should exist or be deleted
+            - State whether the task definition should exist or be deleted.
         required: true
         choices: ['present', 'absent']
+        type: str
     arn:
         description:
-            - The arn of the task description to delete
+            - The ARN of the task description to delete.
         required: false
+        type: str
     family:
         description:
-            - A Name that would be given to the task definition
+            - A Name that would be given to the task definition.
         required: false
+        type: str
     revision:
         description:
-            - A revision number for the task definition
+            - A revision number for the task definition.
         required: False
+        type: int
     force_create:
         description:
-            - Always create new task definition
+            - Always create new task definition.
         required: False
         version_added: 2.5
         type: bool
     containers:
         description:
-            - A list of containers definitions
+            - A list of containers definitions.
         required: False
+        type: list
+        elements: str
     network_mode:
         description:
             - The Docker networking mode to use for the containers in the task.
             - C(awsvpc) mode was added in Ansible 2.5
+            - Windows containers must use I(network_mode=default), which will utilize docker NAT networking.
+            - Setting I(network_mode=default) for a Linux container will use bridge mode.
         required: false
         default: bridge
-        choices: [ 'bridge', 'host', 'none', 'awsvpc' ]
+        choices: [ 'default', 'bridge', 'host', 'none', 'awsvpc' ]
         version_added: 2.3
+        type: str
     task_role_arn:
         description:
             - The Amazon Resource Name (ARN) of the IAM role that containers in this task can assume. All containers in this task are granted
               the permissions that are specified in this role.
         required: false
         version_added: 2.3
+        type: str
     execution_role_arn:
         description:
             - The Amazon Resource Name (ARN) of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.
         required: false
         version_added: 2.7
+        type: str
     volumes:
         description:
-            - A list of names of volumes to be attached
+            - A list of names of volumes to be attached.
         required: False
+        type: list
+        elements: dict
+        suboptions:
+            name:
+                type: str
+                description: The name of the volume.
+                required: true
     launch_type:
         description:
-            - The launch type on which to run your task
+            - The launch type on which to run your task.
         required: false
         version_added: 2.7
+        type: str
         choices: ["EC2", "FARGATE"]
     cpu:
         description:
             - The number of cpu units used by the task. If using the EC2 launch type, this field is optional and any value can be used.
-              If using the Fargate launch type, this field is required and you must use one of [256, 512, 1024, 2048, 4096]
+            - If using the Fargate launch type, this field is required and you must use one of C(256), C(512), C(1024), C(2048), C(4096).
         required: false
         version_added: 2.7
+        type: str
     memory:
         description:
             - The amount (in MiB) of memory used by the task. If using the EC2 launch type, this field is optional and any value can be used.
-              If using the Fargate launch type, this field is required and is limited by the cpu
+            - If using the Fargate launch type, this field is required and is limited by the cpu.
         required: false
         version_added: 2.7
+        type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -173,6 +186,30 @@ EXAMPLES = '''
     memory: 1024
     state: present
     network_mode: awsvpc
+
+# Create Task Definition with Environment Variables and Secrets
+- name: Create task definition
+  ecs_taskdefinition:
+    family: nginx
+    containers:
+    - name: nginx
+      essential: true
+      image: "nginx"
+      environment:
+        - name: "PORT"
+          value: "8080"
+      secrets:
+        # For variables stored in Secrets Manager
+        - name: "NGINX_HOST"
+          valueFrom: "arn:aws:secretsmanager:us-west-2:123456789012:secret:nginx/NGINX_HOST"
+        # For variables stored in Parameter Store
+        - name: "API_KEY"
+          valueFrom: "arn:aws:ssm:us-west-2:123456789012:parameter/nginx/API_KEY"
+    launch_type: FARGATE
+    cpu: 512
+    memory: 1GB
+    state: present
+    network_mode: awsvpc
 '''
 RETURN = '''
 taskdefinition:
@@ -183,12 +220,11 @@ taskdefinition:
 
 try:
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils._text import to_text
 
 
@@ -198,8 +234,7 @@ class EcsTaskManager:
     def __init__(self, module):
         self.module = module
 
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        self.ecs = module.client('ecs')
 
     def describe_task(self, task_name):
         try:
@@ -232,10 +267,11 @@ class EcsTaskManager:
         params = dict(
             family=family,
             taskRoleArn=task_role_arn,
-            networkMode=network_mode,
             containerDefinitions=container_definitions,
             volumes=volumes
         )
+        if network_mode != 'default':
+            params['networkMode'] = network_mode
         if cpu:
             params['cpu'] = cpu
         if memory:
@@ -290,30 +326,26 @@ class EcsTaskManager:
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(required=True, choices=['present', 'absent']),
         arn=dict(required=False, type='str'),
         family=dict(required=False, type='str'),
         revision=dict(required=False, type='int'),
         force_create=dict(required=False, default=False, type='bool'),
         containers=dict(required=False, type='list'),
-        network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none', 'awsvpc'], type='str'),
+        network_mode=dict(required=False, default='bridge', choices=['default', 'bridge', 'host', 'none', 'awsvpc'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
         execution_role_arn=dict(required=False, default='', type='str'),
         volumes=dict(required=False, type='list'),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         cpu=dict(),
         memory=dict(required=False, type='str')
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,
                               required_if=[('launch_type', 'FARGATE', ['cpu', 'memory'])]
                               )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
 
     task_to_describe = None
     task_mgr = EcsTaskManager(module)
@@ -348,7 +380,7 @@ def main():
         existing_definitions_in_family = task_mgr.describe_task_definitions(module.params['family'])
 
         if 'revision' in module.params and module.params['revision']:
-            # The definition specifies revision. We must gurantee that an active revision of that number will result from this.
+            # The definition specifies revision. We must guarantee that an active revision of that number will result from this.
             revision = int(module.params['revision'])
 
             # A revision has been explicitly specified. Attempt to locate a matching revision
@@ -357,7 +389,7 @@ def main():
 
             if existing and existing['status'] != "ACTIVE":
                 # We cannot reactivate an inactive revision
-                module.fail_json(msg="A task in family '%s' already exists for revsion %d, but it is inactive" % (family, revision))
+                module.fail_json(msg="A task in family '%s' already exists for revision %d, but it is inactive" % (family, revision))
             elif not existing:
                 if not existing_definitions_in_family and revision != 1:
                     module.fail_json(msg="You have specified a revision of %d but a created revision would be 1" % revision)

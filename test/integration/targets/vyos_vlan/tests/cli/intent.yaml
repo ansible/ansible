@@ -35,8 +35,8 @@
     vlan_id: 100
     interfaces: eth0
     associated_interfaces:
-    - eth0
-    - eth1
+      - eth0
+      - eth1
   register: result
 
 - assert:
@@ -47,10 +47,10 @@
   vyos_vlan:
     vlan_id: 100
     associated_interfaces:
-    - eth3
-    - eth4
+      - eth3
+      - eth4
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:

@@ -53,7 +53,7 @@ EXAMPLES = '''
 
 RETURN = '''
 stdout:
-    description: Returns the mysql variable supplied with it's associted value.
+    description: Returns the mysql variable supplied with it's associated value.
     returned: Returns the current variable and value, or the newly set value
               for the variable supplied..
     type: dict
@@ -119,6 +119,10 @@ def check_config(variable, value, cursor):
 
     cursor.execute(query_string, query_data)
     check_count = cursor.fetchone()
+
+    if isinstance(check_count, tuple):
+        return int(check_count[0]) > 0
+
     return (int(check_count['variable_count']) > 0)
 
 
@@ -197,11 +201,11 @@ def main():
 
     cursor = None
     try:
-        cursor = mysql_connect(module,
-                               login_user,
-                               login_password,
-                               config_file,
-                               cursor_class=mysql_driver.cursors.DictCursor)
+        cursor, db_conn = mysql_connect(module,
+                                        login_user,
+                                        login_password,
+                                        config_file,
+                                        cursor_class='DictCursor')
     except mysql_driver.Error as e:
         module.fail_json(
             msg="unable to connect to ProxySQL Admin Module.. %s" % to_native(e)

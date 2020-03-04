@@ -49,16 +49,23 @@ A great documentation GitHub issue or PR includes:
 
 - a specific title
 - a detailed description of the problem (even for a PR - it's hard to evaluate a suggested change unless we know what problem it's meant to solve)
-- links to other information (related issues/PRs, external documentation, pages on docs.ansible.com, etc.)
+- links to other information (related issues/PRs, external documentation, pages on docs.ansible.com, and so on.)
 
-Before you open a complex documentation PR
-==========================================
+
+Verifying your documentation PR
+================================
 
 If you make multiple changes to the documentation, or add more than a line to it, before you open a pull request, please:
 
 #. Check that your text follows our :ref:`style_guide`.
 #. Test your changes for rST errors.
 #. Build the page, and preferably the entire documentation site, locally.
+
+
+Setting up your environment to build documentation locally
+----------------------------------------------------------
+
+To build documentation locally, ensure you have a working :ref:`development environment <environment_setup>`.
 
 To work with documentation on your local machine, you need to have python-3.5 or greater and the
 following packages installed:
@@ -75,9 +82,18 @@ following packages installed:
 - sphinx-notfound-page
 - straight.plugin
 
+These required packages are listed in two :file:`requirements.txt` files to make installation easier:
+
+.. code-block:: bash
+
+    pip install --user -r requirements.txt
+    pip install --user -r docs/docsite/requirements.txt
+
+You can drop ``--user`` if you have set up a virtual environment (venv/virtenv).
+
 .. note::
 
-    On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work wth ``sphinx``.
+    On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work with ``sphinx``.
 
 .. _testing_documentation_locally:
 
@@ -183,4 +199,5 @@ The Documentation Working Group is just getting started, please visit the `commu
 
 .. seealso::
    :ref:`More about testing module documentation <testing_module_documentation>`
+
    :ref:`More about documenting modules <module_documenting>`

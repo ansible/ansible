@@ -13,6 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -33,7 +36,7 @@ options:
   names:
     description:
       - List of ELB names to gather information about. Pass this option to gather information about a set of ELBs, otherwise, all ELBs are returned.
-    aliases: ['elb_ids', 'ec2_elbs']
+    type: list
 extends_documentation_fragment:
     - aws
     - ec2
@@ -141,14 +144,9 @@ elbs:
         vpc_id: vpc-c248fda4
 '''
 
-import traceback
-
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
     AWSRetry,
-    boto3_conn,
-    ec2_argument_spec,
-    get_aws_connection_info,
     camel_dict_to_snake_dict,
     boto3_tag_list_to_ansible_dict
 )
@@ -156,7 +154,7 @@ from ansible.module_utils.ec2 import (
 try:
     import botocore
 except ImportError:
-    pass
+    pass  # caught by AnsibleAWSModule
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
@@ -197,18 +195,15 @@ def lb_instance_health(connection, load_balancer_name, instances, state):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         names={'default': [], 'type': 'list'}
-    )
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True)
     if module._name == 'elb_classic_lb_facts':
         module.deprecate("The 'elb_classic_lb_facts' module has been renamed to 'elb_classic_lb_info'", version='2.13')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module, conn_type='client', resource='elb', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('elb')
 
     try:
         elbs = list_elbs(connection, module.params.get('names'))

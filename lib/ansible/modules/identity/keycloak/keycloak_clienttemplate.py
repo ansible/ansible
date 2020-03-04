@@ -29,7 +29,7 @@ description:
       to your needs and a user having the expected roles.
 
     - The names of module options are snake_cased versions of the camelCase ones found in the
-      Keycloak API and its documentation at U(http://www.keycloak.org/docs-api/3.3/rest-api/)
+      Keycloak API and its documentation at U(https://www.keycloak.org/docs-api/8.0/rest-api/index.html)
 
     - The Keycloak API does not always enforce for only sensible settings to be used -- you can set
       SAML-specific settings on an OpenID Connect client for instance and vice versa. Be careful.
@@ -246,7 +246,8 @@ end_state:
     }
 '''
 
-from ansible.module_utils.keycloak import KeycloakAPI, camel, keycloak_argument_spec
+from ansible.module_utils.identity.keycloak.keycloak import KeycloakAPI, camel, \
+    keycloak_argument_spec, get_token, KeycloakError
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -289,7 +290,19 @@ def main():
     result = dict(changed=False, msg='', diff={}, proposed={}, existing={}, end_state={})
 
     # Obtain access token, initialize API
-    kc = KeycloakAPI(module)
+    try:
+        connection_header = get_token(
+            base_url=module.params.get('auth_keycloak_url'),
+            validate_certs=module.params.get('validate_certs'),
+            auth_realm=module.params.get('auth_realm'),
+            client_id=module.params.get('auth_client_id'),
+            auth_username=module.params.get('auth_username'),
+            auth_password=module.params.get('auth_password'),
+            client_secret=module.params.get('auth_client_secret'),
+        )
+    except KeycloakError as e:
+        module.fail_json(msg=str(e))
+    kc = KeycloakAPI(module, connection_header)
 
     realm = module.params.get('realm')
     state = module.params.get('state')

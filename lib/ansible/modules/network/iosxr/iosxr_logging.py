@@ -23,8 +23,12 @@ short_description: Configuration management of system logging services on networ
 description:
   - This module provides declarative management configuration of system logging (syslog)
     on Cisco IOS XR devices.
+requirements:
+    - ncclient >= 0.5.3 when using netconf
+    - lxml >= 4.1.1 when using netconf
 notes:
-  - Tested against IOS XRv 6.1.2
+  - This module works with connection C(network_cli) and C(netconf). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
+  - Tested against IOS XRv 6.1.3
 options:
   dest:
     description:
@@ -564,9 +568,6 @@ class NCConfiguration(ConfigBase):
 
         prefix_ele = etree_find(running, 'host-name-prefix')
         have_prefix = prefix_ele.text if prefix_ele is not None else None
-
-        console_enable_ele = etree_find(running, 'enable-console-logging')
-        have_console_enable = console_enable_ele.text if console_enable_ele is not None else None
 
         file_params = list()
         host_params = list()

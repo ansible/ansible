@@ -279,16 +279,16 @@ def main():
         ],
     )
 
-    ap = module.params['ap']
-    contract = module.params['contract']
-    contract_type = module.params['contract_type']
-    epg = module.params['epg']
-    priority = module.params['priority']
-    provider_match = module.params['provider_match']
+    ap = module.params.get('ap')
+    contract = module.params.get('contract')
+    contract_type = module.params.get('contract_type')
+    epg = module.params.get('epg')
+    priority = module.params.get('priority')
+    provider_match = module.params.get('provider_match')
     if provider_match is not None:
         provider_match = PROVIDER_MATCH_MAPPING[provider_match]
-    state = module.params['state']
-    tenant = module.params['tenant']
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci_class = ACI_CLASS_MAPPING[contract_type]["class"]
     aci_rn = ACI_CLASS_MAPPING[contract_type]["rn"]

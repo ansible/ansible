@@ -33,7 +33,7 @@ module: gcp_cloudscheduler_job_info
 description:
 - Gather info for GCP Job
 short_description: Gather info for GCP Job
-version_added: 2.9
+version_added: '2.9'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -45,7 +45,54 @@ options:
     - Region where the scheduler job resides .
     required: true
     type: str
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
+notes:
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -247,6 +294,46 @@ resources:
             are not supported, but a header value can contain commas.
           returned: success
           type: dict
+        oauthToken:
+          description:
+          - Contains information needed for generating an OAuth token.
+          - This type of authorization should be used when sending requests to a GCP
+            endpoint.
+          returned: success
+          type: complex
+          contains:
+            serviceAccountEmail:
+              description:
+              - Service account email to be used for generating OAuth token.
+              - The service account must be within the same project as the job.
+              returned: success
+              type: str
+            scope:
+              description:
+              - OAuth scope to be used for generating OAuth access token. If not specified,
+                "U(https://www.googleapis.com/auth/cloud-platform") will be used.
+              returned: success
+              type: str
+        oidcToken:
+          description:
+          - Contains information needed for generating an OpenID Connect token.
+          - This type of authorization should be used when sending requests to third
+            party endpoints or Cloud Run.
+          returned: success
+          type: complex
+          contains:
+            serviceAccountEmail:
+              description:
+              - Service account email to be used for generating OAuth token.
+              - The service account must be within the same project as the job.
+              returned: success
+              type: str
+            audience:
+              description:
+              - Audience to be used when generating OIDC token. If not specified,
+                the URI specified in target will be used.
+              returned: success
+              type: str
     region:
       description:
       - Region where the scheduler job resides .
@@ -271,12 +358,7 @@ def main():
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
 
-    items = fetch_list(module, collection(module))
-    if items.get('jobs'):
-        items = items.get('jobs')
-    else:
-        items = []
-    return_value = {'resources': items}
+    return_value = {'resources': fetch_list(module, collection(module))}
     module.exit_json(**return_value)
 
 
@@ -286,8 +368,7 @@ def collection(module):
 
 def fetch_list(module, link):
     auth = GcpSession(module, 'cloudscheduler')
-    response = auth.get(link)
-    return return_if_object(module, response)
+    return auth.list(link, return_if_object, array_name='jobs')
 
 
 def return_if_object(module, response):

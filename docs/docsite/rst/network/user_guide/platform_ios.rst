@@ -12,7 +12,6 @@ Connections Available
 ================================================================================
 
 .. table::
-    :widths: auto
     :class: documentation-table
 
     ====================  ==========================================
@@ -73,3 +72,7 @@ Example CLI Task
      when: ansible_network_os == 'ios'
 
 .. include:: shared_snippets/SSH_warning.txt
+
+.. seealso::
+
+       :ref:`timeout_options`

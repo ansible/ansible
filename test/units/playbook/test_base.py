@@ -26,6 +26,7 @@ from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 from ansible.playbook import base
+from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 
 from units.mock.loader import DictDataLoader
 
@@ -76,12 +77,10 @@ class TestBase(unittest.TestCase):
     def _assert_copy(self, orig, copy):
         self.assertIsInstance(copy, self.ClassUnderTest)
         self.assertIsInstance(copy, base.Base)
-        self.assertEquals(len(orig._valid_attrs),
-                          len(copy._valid_attrs))
+        self.assertEqual(len(orig._valid_attrs), len(copy._valid_attrs))
 
         sentinel = 'Empty DS'
-        self.assertEquals(getattr(orig, '_ds', sentinel),
-                          getattr(copy, '_ds', sentinel))
+        self.assertEqual(getattr(orig, '_ds', sentinel), getattr(copy, '_ds', sentinel))
 
     def test_copy_empty(self):
         copy = self.b.copy()
@@ -166,20 +165,20 @@ class TestBase(unittest.TestCase):
         # environment is supposed to be  a list. This
         # seems like it shouldn't work?
         ret = self.b.load_data(ds)
-        self.assertEquals(True, ret._attributes['environment'])
+        self.assertEqual(True, ret._attributes['environment'])
 
     def test_post_validate(self):
         ds = {'environment': [],
               'port': 443}
         b = self._base_validate(ds)
-        self.assertEquals(b.port, 443)
-        self.assertEquals(b.environment, [])
+        self.assertEqual(b.port, 443)
+        self.assertEqual(b.environment, [])
 
     def test_post_validate_invalid_attr_types(self):
         ds = {'environment': [],
               'port': 'some_port'}
         b = self._base_validate(ds)
-        self.assertEquals(b.port, 'some_port')
+        self.assertEqual(b.port, 'some_port')
 
     def test_squash(self):
         data = self.b.serialize()
@@ -195,7 +194,7 @@ class TestBase(unittest.TestCase):
               'vars': {'var_2_key': 'var_2_value',
                        'var_1_key': 'var_1_value'}}
         b = self._base_validate(ds)
-        self.assertEquals(b.vars['var_1_key'], 'var_1_value')
+        self.assertEqual(b.vars['var_1_key'], 'var_1_value')
 
     def test_vars_list_of_dicts(self):
         ds = {'environment': [],
@@ -203,7 +202,7 @@ class TestBase(unittest.TestCase):
                        {'var_1_key': 'var_1_value'}]
               }
         b = self._base_validate(ds)
-        self.assertEquals(b.vars['var_1_key'], 'var_1_value')
+        self.assertEqual(b.vars['var_1_key'], 'var_1_value')
 
     def test_vars_not_dict_or_list(self):
         ds = {'environment': [],
@@ -229,7 +228,7 @@ class TestBase(unittest.TestCase):
               'vars': None
               }
         b = self._base_validate(ds)
-        self.assertEquals(b.vars, {})
+        self.assertEqual(b.vars, {})
 
     def test_validate_empty(self):
         self.b.validate()
@@ -239,8 +238,8 @@ class TestBase(unittest.TestCase):
         # not sure why these exist, but here are tests anyway
         loader = self.b.get_loader()
         variable_manager = self.b.get_variable_manager()
-        self.assertEquals(loader, self.b._loader)
-        self.assertEquals(variable_manager, self.b._variable_manager)
+        self.assertEqual(loader, self.b._loader)
+        self.assertEqual(variable_manager, self.b._variable_manager)
 
 
 class TestExtendValue(unittest.TestCase):
@@ -251,60 +250,60 @@ class TestExtendValue(unittest.TestCase):
         value_list = ['first', 'second']
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(value_list, new_value_list)
-        self.assertEquals(value_list + new_value_list, ret)
+        self.assertEqual(value_list + new_value_list, ret)
 
     def test_extend_value_list_newlist_prepend(self):
         b = base.Base()
         value_list = ['first', 'second']
         new_value_list = ['new_first', 'new_second']
         ret_prepend = b._extend_value(value_list, new_value_list, prepend=True)
-        self.assertEquals(new_value_list + value_list, ret_prepend)
+        self.assertEqual(new_value_list + value_list, ret_prepend)
 
     def test_extend_value_newlist_list(self):
         b = base.Base()
         value_list = ['first', 'second']
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(new_value_list, value_list)
-        self.assertEquals(new_value_list + value_list, ret)
+        self.assertEqual(new_value_list + value_list, ret)
 
     def test_extend_value_newlist_list_prepend(self):
         b = base.Base()
         value_list = ['first', 'second']
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(new_value_list, value_list, prepend=True)
-        self.assertEquals(value_list + new_value_list, ret)
+        self.assertEqual(value_list + new_value_list, ret)
 
     def test_extend_value_string_newlist(self):
         b = base.Base()
         some_string = 'some string'
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(some_string, new_value_list)
-        self.assertEquals([some_string] + new_value_list, ret)
+        self.assertEqual([some_string] + new_value_list, ret)
 
     def test_extend_value_string_newstring(self):
         b = base.Base()
         some_string = 'some string'
         new_value_string = 'this is the new values'
         ret = b._extend_value(some_string, new_value_string)
-        self.assertEquals([some_string, new_value_string], ret)
+        self.assertEqual([some_string, new_value_string], ret)
 
     def test_extend_value_list_newstring(self):
         b = base.Base()
         value_list = ['first', 'second']
         new_value_string = 'this is the new values'
         ret = b._extend_value(value_list, new_value_string)
-        self.assertEquals(value_list + [new_value_string], ret)
+        self.assertEqual(value_list + [new_value_string], ret)
 
     def test_extend_value_none_none(self):
         b = base.Base()
         ret = b._extend_value(None, None)
-        self.assertEquals(len(ret), 0)
+        self.assertEqual(len(ret), 0)
         self.assertFalse(ret)
 
     def test_extend_value_none_list(self):
         b = base.Base()
         ret = b._extend_value(None, ['foo'])
-        self.assertEquals(ret, ['foo'])
+        self.assertEqual(ret, ['foo'])
 
 
 class ExampleException(Exception):
@@ -408,13 +407,13 @@ class TestBaseSubClass(TestBase):
     def test_attr_bool(self):
         ds = {'test_attr_bool': True}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_bool, True)
+        self.assertEqual(bsc.test_attr_bool, True)
 
     def test_attr_int(self):
         MOST_RANDOM_NUMBER = 37
         ds = {'test_attr_int': MOST_RANDOM_NUMBER}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_int, MOST_RANDOM_NUMBER)
+        self.assertEqual(bsc.test_attr_int, MOST_RANDOM_NUMBER)
 
     def test_attr_int_del(self):
         MOST_RANDOM_NUMBER = 37
@@ -427,14 +426,14 @@ class TestBaseSubClass(TestBase):
         roughly_pi = 4.0
         ds = {'test_attr_float': roughly_pi}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_float, roughly_pi)
+        self.assertEqual(bsc.test_attr_float, roughly_pi)
 
     def test_attr_percent(self):
         percentage = '90%'
         percentage_float = 90.0
         ds = {'test_attr_percent': percentage}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_percent, percentage_float)
+        self.assertEqual(bsc.test_attr_percent, percentage_float)
 
     # This method works hard and gives it its all and everything it's got. It doesn't
     # leave anything on the field. It deserves to pass. It has earned it.
@@ -443,7 +442,7 @@ class TestBaseSubClass(TestBase):
         percentage_float = 110.11
         ds = {'test_attr_percent': percentage}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_percent, percentage_float)
+        self.assertEqual(bsc.test_attr_percent, percentage_float)
 
     # This method is just here for the paycheck.
     def test_attr_percent_60_no_percent_sign(self):
@@ -451,32 +450,32 @@ class TestBaseSubClass(TestBase):
         percentage_float = 60.0
         ds = {'test_attr_percent': percentage}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_percent, percentage_float)
+        self.assertEqual(bsc.test_attr_percent, percentage_float)
 
     def test_attr_set(self):
         test_set = set(['first_string_in_set', 'second_string_in_set'])
         ds = {'test_attr_set': test_set}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_set, test_set)
+        self.assertEqual(bsc.test_attr_set, test_set)
 
     def test_attr_set_string(self):
         test_data = ['something', 'other']
         test_value = ','.join(test_data)
         ds = {'test_attr_set': test_value}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_set, set(test_data))
+        self.assertEqual(bsc.test_attr_set, set(test_data))
 
     def test_attr_set_not_string_or_list(self):
         test_value = 37.1
         ds = {'test_attr_set': test_value}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_set, set([test_value]))
+        self.assertEqual(bsc.test_attr_set, set([test_value]))
 
     def test_attr_dict(self):
         test_dict = {'a_different_key': 'a_different_value'}
         ds = {'test_attr_dict': test_dict}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_dict, test_dict)
+        self.assertEqual(bsc.test_attr_dict, test_dict)
 
     def test_attr_dict_string(self):
         test_value = 'just_some_random_string'
@@ -517,7 +516,7 @@ class TestBaseSubClass(TestBase):
         ds = {'remote_user': 'testuser'}
         bsc = self._base_validate(ds)
         # TODO: attemp to verify we called parent gettters etc
-        self.assertEquals(bsc.remote_user, 'testuser')
+        self.assertEqual(bsc.remote_user, 'testuser')
 
     def test_attr_example_undefined(self):
         ds = {'test_attr_example': '{{ some_var_that_shouldnt_exist_to_test_omit }}'}
@@ -528,14 +527,14 @@ class TestBaseSubClass(TestBase):
         ds = {'name': '{{ some_var_that_shouldnt_exist_to_test_omit }}'}
         bsc = self._base_validate(ds)
         # the attribute 'name' is special cases in post_validate
-        self.assertEquals(bsc.name, '{{ some_var_that_shouldnt_exist_to_test_omit }}')
+        self.assertEqual(bsc.name, '{{ some_var_that_shouldnt_exist_to_test_omit }}')
 
     def test_subclass_validate_method(self):
         ds = {'test_attr_list': ['string_list_item_1', 'string_list_item_2'],
               'test_attr_example': 'the_test_attr_example_value_string'}
         # Not throwing an exception here is the test
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_example, 'the_test_attr_example_value_string')
+        self.assertEqual(bsc.test_attr_example, 'the_test_attr_example_value_string')
 
     def test_subclass_validate_method_invalid(self):
         ds = {'test_attr_example': [None]}
@@ -544,13 +543,13 @@ class TestBaseSubClass(TestBase):
     def test_attr_none(self):
         ds = {'test_attr_none': 'foo'}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_none, None)
+        self.assertEqual(bsc.test_attr_none, None)
 
     def test_attr_string(self):
         the_string_value = "the new test_attr_string_value"
         ds = {'test_attr_string': the_string_value}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_string, the_string_value)
+        self.assertEqual(bsc.test_attr_string, the_string_value)
 
     def test_attr_string_invalid_list(self):
         ds = {'test_attr_string': ['The new test_attr_string', 'value, however in a list']}
@@ -560,7 +559,7 @@ class TestBaseSubClass(TestBase):
         the_string_value = "the new test_attr_string_required_value"
         ds = {'test_attr_string_required': the_string_value}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_string_required, the_string_value)
+        self.assertEqual(bsc.test_attr_string_required, the_string_value)
 
     def test_attr_list_invalid(self):
         ds = {'test_attr_list': {}}
@@ -570,18 +569,18 @@ class TestBaseSubClass(TestBase):
         string_list = ['foo', 'bar']
         ds = {'test_attr_list': string_list}
         bsc = self._base_validate(ds)
-        self.assertEquals(string_list, bsc._attributes['test_attr_list'])
+        self.assertEqual(string_list, bsc._attributes['test_attr_list'])
 
     def test_attr_list_none(self):
         ds = {'test_attr_list': None}
         bsc = self._base_validate(ds)
-        self.assertEquals(None, bsc._attributes['test_attr_list'])
+        self.assertEqual(None, bsc._attributes['test_attr_list'])
 
     def test_attr_list_no_listof(self):
         test_list = ['foo', 'bar', 123]
         ds = {'test_attr_list_no_listof': test_list}
         bsc = self._base_validate(ds)
-        self.assertEquals(test_list, bsc._attributes['test_attr_list_no_listof'])
+        self.assertEqual(test_list, bsc._attributes['test_attr_list_no_listof'])
 
     def test_attr_list_required(self):
         string_list = ['foo', 'bar']
@@ -591,7 +590,7 @@ class TestBaseSubClass(TestBase):
         fake_loader = DictDataLoader({})
         templar = Templar(loader=fake_loader)
         bsc.post_validate(templar)
-        self.assertEquals(string_list, bsc._attributes['test_attr_list_required'])
+        self.assertEqual(string_list, bsc._attributes['test_attr_list_required'])
 
     def test_attr_list_required_empty_string(self):
         string_list = [""]
@@ -607,16 +606,25 @@ class TestBaseSubClass(TestBase):
         a_list = ['some string']
         ds = {'test_attr_unknown_isa': a_list}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_unknown_isa, a_list)
+        self.assertEqual(bsc.test_attr_unknown_isa, a_list)
 
     def test_attr_method(self):
         ds = {'test_attr_method': 'value from the ds'}
         bsc = self._base_validate(ds)
         # The value returned by the subclasses _get_attr_test_attr_method
-        self.assertEquals(bsc.test_attr_method, 'foo bar')
+        self.assertEqual(bsc.test_attr_method, 'foo bar')
 
     def test_attr_method_missing(self):
         a_string = 'The value set from the ds'
         ds = {'test_attr_method_missing': a_string}
         bsc = self._base_validate(ds)
-        self.assertEquals(bsc.test_attr_method_missing, a_string)
+        self.assertEqual(bsc.test_attr_method_missing, a_string)
+
+    def test_get_validated_value_string_rewrap_unsafe(self):
+        attribute = FieldAttribute(isa='string')
+        value = AnsibleUnsafeText(u'bar')
+        templar = Templar(None)
+        bsc = self.ClassUnderTest()
+        result = bsc.get_validated_value('foo', attribute, value, templar)
+        self.assertIsInstance(result, AnsibleUnsafeText)
+        self.assertEqual(result, AnsibleUnsafeText(u'bar'))

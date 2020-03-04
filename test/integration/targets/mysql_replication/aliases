@@ -1,0 +1,8 @@
+destructive
+shippable/posix/group4
+# Make sure that this test runs in a different group than mariadb_replication!
+skip/aix
+skip/osx
+skip/freebsd
+skip/rhel
+needs/root

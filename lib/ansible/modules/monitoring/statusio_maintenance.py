@@ -99,8 +99,8 @@ options:
             - The maintenance id number when deleting a maintenance window
     minutes:
         description:
-            - The length of time in UTC that the maintenance will run \
-            (starting from playbook runtime)
+            - The length of time in UTC that the maintenance will run
+              (starting from playbook runtime)
         default: 10
     start_date:
         description:

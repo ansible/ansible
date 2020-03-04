@@ -1,0 +1,225 @@
+- name: Tests when the hosts have a static DNS config
+  block:
+    # Testcase 0001: Ensure DNS config directly on the host is idempotent for static
+    - name: Ensure static DNS config is idempotent when done directly on the host
+      vmware_host_dns:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        validate_certs: False
+        type: 'static'
+        host_name: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['host_name'] }}"
+        domain: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['domain_name'] }}"
+        dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
+        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
+      register: vmware_host_dns_result_0001
+
+    - name: Ensure DNS config wasn't changed
+      assert:
+        that:
+          - vmware_host_dns_result_0001 is not changed
+
+    # Testcase 0002: Ensure changing the hostname directly on the host works
+    - name: Ensure changing the hostname directly on the host works
+      vmware_host_dns:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        validate_certs: False
+        type: 'static'
+        host_name: newname
+        domain: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['domain_name'] }}"
+        dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
+        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
+      register: vmware_host_dns_result_0002
+
+    - name: Ensure DNS config was changed
+      assert:
+        that:
+          - vmware_host_dns_result_0002 is changed
+
+    # Testcase 0003: Ensure changing the domain directly on the host works
+    - name: Ensure changing the domain directly on the host works
+      vmware_host_dns:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        validate_certs: False
+        type: 'static'
+        host_name: newname
+        domain: new.domain
+        dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
+        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
+      register: vmware_host_dns_result_0003
+
+    - name: Ensure DNS config was changed
+      assert:
+        that:
+          - vmware_host_dns_result_0003 is changed
+
+    # Testcase 0004: Ensure changing the DNS servers directly on the host works
+    - name: Ensure changing the domain directly on the host works
+      vmware_host_dns:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        validate_certs: False
+        type: 'static'
+        host_name: newname
+        domain: new.domain
+        dns_servers:
+          - 1.2.3.4
+          - 5.6.7.8
+        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
+      register: vmware_host_dns_result_0004
+
+    - name: Ensure DNS config was changed
+      assert:
+        that:
+          - vmware_host_dns_result_0004 is changed
+
+    # Testcase 0005: Ensure changing the search domain directly on the host works
+    - name: Ensure changing the domain directly on the host works
+      vmware_host_dns:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        validate_certs: False
+        type: 'static'
+        host_name: newname
+        domain: new.domain
+        dns_servers:
+          - 1.2.3.4
+          - 5.6.7.8
+        search_domains:
+          - subdomain.example.local
+          - example.local
+      register: vmware_host_dns_result_0005
+
+    - name: Ensure DNS config was changed
+      assert:
+        that:
+          - vmware_host_dns_result_0005 is changed
+
+    # Revert to original DNS configuration with a different search_domains
+    - name: Revert to original DNS configuration
+      vmware_host_dns:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        validate_certs: False
+        type: 'static'
+        host_name: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['host_name'] }}"
+        domain: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['domain_name'] }}"
+        dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
+        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
+
+    # Testcase 0006: Ensure DNS config on the cluster is idempotent for static
+    - name: Apply configuration on a cluster
+      vmware_host_dns:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        cluster_name: "{{ ccr1 }}"
+        validate_certs: False
+        type: 'static'
+        search_domains: "different-search-domain"
+      register: vmware_host_dns_result_0006
+
+    - name: Ensure configuration has changed
+      assert:
+        that:
+          - vmware_host_dns_result_0006 is changed
+
+    - name: Revert to original DNS configuration
+      vmware_host_dns:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        validate_certs: False
+        type: 'static'
+        host_name: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['host_name'] }}"
+        domain: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['domain_name'] }}"
+        dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
+        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
+
+    # Testcase 0007: Ensure changing the domain on the cluster works
+    - name: Ensure changing the domain on the cluster works
+      vmware_host_dns:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        cluster_name: "{{ ccr1 }}"
+        validate_certs: False
+        type: 'static'
+        domain: new.domain
+        dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
+        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
+      register: vmware_host_dns_result_0007
+
+    - name: Ensure DNS config was changed
+      assert:
+        that:
+          - vmware_host_dns_result_0007 is changed
+
+    # Testcase 0008: Ensure changing the DNS servers on the cluster works
+    - name: Ensure changing the DNS servers on the cluster works
+      vmware_host_dns:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        cluster_name: "{{ ccr1 }}"
+        validate_certs: False
+        type: 'static'
+        domain: new.domain
+        dns_servers:
+          - 1.2.3.4
+          - 5.6.7.8
+        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
+      register: vmware_host_dns_result_0008
+
+    - name: Ensure DNS config was changed
+      assert:
+        that:
+          - vmware_host_dns_result_0008 is changed
+
+    # Testcase 0009: Ensure changing the search domains on the cluster works
+    - name: Ensure changing the search domains on the cluster works
+      vmware_host_dns:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        cluster_name: "{{ ccr1 }}"
+        validate_certs: False
+        type: 'static'
+        domain: new.domain
+        dns_servers:
+          - 1.2.3.4
+          - 5.6.7.8
+        search_domains:
+          - subdomain.example.local
+          - example.local
+      register: vmware_host_dns_result_0009
+
+    - name: Ensure DNS config was changed
+      assert:
+        that:
+          - vmware_host_dns_result_0009 is changed
+
+  always:
+    # Revert to original DNS configuration
+    - name: Revert to original DNS configuration
+      vmware_host_dns:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        esxi_hostname: "{{ item }}"
+        validate_certs: False
+        type: 'static'
+        host_name: "{{ dns['results'][index]['hosts_dns_info'][item]['host_name'] }}"
+        domain: "{{ dns['results'][index]['hosts_dns_info'][item]['domain_name'] }}"
+        dns_servers: "{{ dns['results'][index]['hosts_dns_info'][item]['ip_address'] }}"
+        search_domains: "{{ dns['results'][index]['hosts_dns_info'][item]['search_domain'] }}"
+      loop: "{{ esxi_hosts }}"
+      loop_control:
+        index_var: index

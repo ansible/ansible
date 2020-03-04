@@ -1,0 +1,2 @@
+minor_changes:
+- Ansible.Basic.cs - Added support for ``deprecated_aliases`` to deprecated aliases in a standard way

@@ -3,9 +3,13 @@
 db_name: 'data'
 user_name_1: 'db_user1'
 user_name_2: 'db_user2'
+user_name_3: 'db_user3'
 
 user_password_1: 'gadfFDSdtTU^Sdfuj'
 user_password_2: 'jkFKUdfhdso78yi&td'
+user_password_3: 'jkFKUdfhdso78yi&tk'
+
+root_password: 'zevuR6oPh7'
 
 db_names:
     - clientdb

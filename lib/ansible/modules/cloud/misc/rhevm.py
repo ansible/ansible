@@ -41,7 +41,7 @@ options:
         default: 127.0.0.1
     port:
         description:
-            - The port on which the API is reacheable.
+            - The port on which the API is reachable.
         type: int
         default: 443
     insecure_api:

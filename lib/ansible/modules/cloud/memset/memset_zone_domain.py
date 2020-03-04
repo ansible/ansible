@@ -165,7 +165,7 @@ def delete_zone_domain(args=None, payload=None):
         if not has_failed:
             has_changed = True
             memset_api = response.json()
-            # unset msg as we don't want to return unecessary info to the user.
+            # unset msg as we don't want to return unnecessary info to the user.
             msg = None
 
     return(has_failed, has_changed, memset_api, msg)

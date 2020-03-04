@@ -51,6 +51,7 @@ options:
   location:
     description:
     - Location of the site.
+    type: dict
     suboptions:
       latitude:
         description:
@@ -162,16 +163,16 @@ def main():
         ],
     )
 
-    apic_username = module.params['apic_username']
-    apic_password = module.params['apic_password']
-    apic_site_id = module.params['apic_site_id']
-    site = module.params['site']
-    location = module.params['location']
+    apic_username = module.params.get('apic_username')
+    apic_password = module.params.get('apic_password')
+    apic_site_id = module.params.get('apic_site_id')
+    site = module.params.get('site')
+    location = module.params.get('location')
     if location is not None:
-        latitude = module.params['location']['latitude']
-        longitude = module.params['location']['longitude']
-    state = module.params['state']
-    urls = module.params['urls']
+        latitude = module.params.get('location')['latitude']
+        longitude = module.params.get('location')['longitude']
+    state = module.params.get('state')
+    urls = module.params.get('urls')
 
     mso = MSOModule(module)
 
@@ -179,13 +180,13 @@ def main():
     path = 'sites'
 
     # Convert labels
-    labels = mso.lookup_labels(module.params['labels'], 'site')
+    labels = mso.lookup_labels(module.params.get('labels'), 'site')
 
     # Query for mso.existing object(s)
     if site:
         mso.existing = mso.get_obj(path, name=site)
         if mso.existing:
-            site_id = mso.existing['id']
+            site_id = mso.existing.get('id')
             # If we found an existing object, continue with it
             path = 'sites/{id}'.format(id=site_id)
     else:

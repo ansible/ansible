@@ -7,7 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -72,7 +71,7 @@ options:
       - Enable booting from specified disk. C((ide|sata|scsi|virtio)\d+)
   clone:
     description:
-      - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for intiating the clone.
+      - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for initiating the clone.
   cores:
     description:
       - Specify number of cores per socket.
@@ -223,7 +222,7 @@ options:
     description:
       - Specifies guest operating system. This is used to enable special optimization/features for specific operating systems.
       - The l26 is Linux 2.6/3.X Kernel.
-    choices: ['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']
+    choices: ['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'win10', 'l24', 'l26', 'solaris']
     default: l26
   parallel:
     description:
@@ -302,7 +301,7 @@ options:
   state:
     description:
       - Indicates desired state of the instance.
-      - If C(current), the current state of the VM will be fecthed. You can access it with C(results.status)
+      - If C(current), the current state of the VM will be fetched. You can access it with C(results.status)
     choices: ['present', 'started', 'absent', 'stopped', 'restarted','current']
     default: present
   storage:
@@ -332,7 +331,7 @@ options:
     default: 30
   update:
     description:
-      - If C(yes), the VM will be update with new value.
+      - If C(yes), the VM will be updated with new value.
       - Cause of the operations of the API and security reasons, I have disabled the update of the following parameters
       - C(net, virtio, ide, sata, scsi). Per example updating C(net) update the MAC address and C(virtio) create always new disk...
     type: bool
@@ -580,6 +579,7 @@ import os
 import re
 import time
 import traceback
+from distutils.version import LooseVersion
 
 try:
     from proxmoxer import ProxmoxAPI
@@ -783,6 +783,11 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
     return False
 
 
+def proxmox_version(proxmox):
+    apireturn = proxmox.version.get()
+    return LooseVersion(apireturn['version'])
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -828,7 +833,7 @@ def main():
             numa=dict(type='dict'),
             numa_enabled=dict(type='bool'),
             onboot=dict(type='bool', default='yes'),
-            ostype=dict(default='l26', choices=['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']),
+            ostype=dict(default='l26', choices=['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'win10', 'l24', 'l26', 'solaris']),
             parallel=dict(type='dict'),
             pool=dict(type='str'),
             protection=dict(type='bool'),
@@ -898,7 +903,7 @@ def main():
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
         global VZ_TYPE
         global PVE_MAJOR_VERSION
-        PVE_MAJOR_VERSION = 3 if float(proxmox.version.get()['version']) < 4.0 else 4
+        PVE_MAJOR_VERSION = 3 if proxmox_version(proxmox) < LooseVersion('4.0') else 4
     except Exception as e:
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 

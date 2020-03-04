@@ -115,7 +115,7 @@ class NetAppONTAPCGSnapshot(object):
         """
         This is duplicated from na_ontap_snapshot
         Checks to see if a snapshot exists or not
-        :return: Return True if a snapshot exists, false if it dosn't
+        :return: Return True if a snapshot exists, false if it doesn't
         """
         # TODO: Remove this method and import snapshot module and
         # call get after re-factoring __init__ across all the modules
@@ -133,6 +133,7 @@ class NetAppONTAPCGSnapshot(object):
         snapshot_info_obj = netapp_utils.zapi.NaElement("snapshot-info")
         snapshot_info_obj.add_new_child("name", self.snapshot)
         snapshot_info_obj.add_new_child("volume", volume)
+        snapshot_info_obj.add_new_child("vserver", self.vserver)
         query.add_child_elem(snapshot_info_obj)
         snapshot_obj.add_child_elem(query)
         result = self.server.invoke_successfully(snapshot_obj, True)

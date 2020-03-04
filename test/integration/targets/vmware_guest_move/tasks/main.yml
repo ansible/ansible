@@ -31,7 +31,7 @@
     name: '{{ virtual_machines[0].name }}'
     # Depends-On: https://github.com/ansible/ansible/pull/55237
     dest_folder: '{{ dest_folder.result.path }}'
-  register: vm_facts_0001
+  register: vm_info_0001
 
 
 # Testcase 0002: Move vm and get OK status (Already Moved)
@@ -45,19 +45,19 @@
     datacenter: '{{ dc1 }}'
     name: '{{ virtual_machines[0].name }}'
     dest_folder: '{{ dest_folder.result.path }}'
-  register: vm_facts_0002
+  register: vm_info_0002
 
 - debug:
-    msg: "{{ vm_facts_0001 }}"
+    msg: "{{ vm_info_0001 }}"
 
 - debug:
-    msg: "{{ vm_facts_0002 }}"
+    msg: "{{ vm_info_0002 }}"
 
 - name: Make sure changes are done
   assert:
     that:
-      - vm_facts_0001.changed
-      - not vm_facts_0002.changed
+      - vm_info_0001.changed
+      - not vm_info_0002.changed
 
 - <<: *vm_move
   name: Move VM in check mode

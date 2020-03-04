@@ -1,0 +1,3 @@
+bugfixes:
+- postgres.py - add a new keyword argument ``query_params`` (https://github.com/ansible/ansible/pull/64661).
+- postgresql_idx.py - use the ``query_params`` arg of exec_sql function (https://github.com/ansible/ansible/pull/64661).

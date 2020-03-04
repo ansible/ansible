@@ -1,0 +1,2 @@
+minor_changes:
+    - Added missing backing_disk_mode information about disk which was removed by mistake in vmware_guest_disk_info.

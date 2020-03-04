@@ -288,12 +288,12 @@ settings:
       type: bool
       sample: true
     use_unified_scheduling_engine:
-      description: Whether the task will use the unifed scheduling engine.
+      description: Whether the task will use the unified scheduling engine.
       returned: ''
       type: bool
       sample: false
     volatile:
-      description: Whether thet ask is volatile.
+      description: Whether the task is volatile.
       returned: ''
       type: bool
       sample: false

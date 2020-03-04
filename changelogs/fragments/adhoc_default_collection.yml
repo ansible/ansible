@@ -1,0 +1,2 @@
+bugfixes:
+  - adhoc CLI - when playbook-dir is specified and inside a collection, use default collection logic to resolve modules/actions

@@ -3,16 +3,24 @@
 # Copyright: (c) 2016, Red Hat, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 
 class ModuleDocFragment(object):
 
-    # facts standard oVirt documentation fragment
+    # info standard oVirt documentation fragment
     DOCUMENTATION = r'''
+deprecated:
+    removed_in: "2.10"
+    why: When migrating to collection we decided to use only _info modules.
+    alternative: Use M(ovirt_info) instead
 options:
     fetch_nested:
         description:
             - If I(yes) the module will fetch additional data from the API.
-            - It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other
+            - It will fetch only IDs of nested entity. It doesn't fetch multiple levels of nested attributes.
+              Only the attributes of the current entity. User can configure to fetch other
               attributes of the nested entities by specifying C(nested_attributes).
         type: bool
         version_added: "2.3"

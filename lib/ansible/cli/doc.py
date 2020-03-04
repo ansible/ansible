@@ -20,7 +20,7 @@ from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native
-from ansible.module_utils.common._collections_compat import Sequence
+from ansible.module_utils.common._collections_compat import Container, Sequence
 from ansible.module_utils.six import string_types
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub
@@ -34,6 +34,14 @@ display = Display()
 
 def jdump(text):
     display.display(json.dumps(text, sort_keys=True, indent=4))
+
+
+class RemovedPlugin(Exception):
+    pass
+
+
+class PluginNotFound(Exception):
+    pass
 
 
 class DocCLI(CLI):
@@ -180,28 +188,52 @@ class DocCLI(CLI):
             if len(context.CLIARGS['args']) == 0:
                 raise AnsibleOptionsError("Incorrect options passed")
 
-            # process command line list
+            # get the docs for plugins in the command line list
+            plugin_docs = {}
+            for plugin in context.CLIARGS['args']:
+                try:
+                    doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, loader, search_paths)
+                except PluginNotFound:
+                    display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
+                    continue
+                except RemovedPlugin:
+                    display.warning("%s %s has been removed\n" % (plugin_type, plugin))
+                    continue
+                except Exception as e:
+                    display.vvv(traceback.format_exc())
+                    raise AnsibleError("%s %s missing documentation (or could not parse"
+                                       " documentation): %s\n" %
+                                       (plugin_type, plugin, to_native(e)))
+
+                if not doc:
+                    # The doc section existed but was empty
+                    continue
+
+                plugin_docs[plugin] = {'doc': doc, 'examples': plainexamples,
+                                       'return': returndocs, 'metadata': metadata}
+
             if do_json:
-                dump = {}
-                for plugin in context.CLIARGS['args']:
-                    doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, loader, plugin_type, search_paths)
+                # Some changes to how json docs are formatted
+                for plugin, doc_data in plugin_docs.items():
                     try:
-                        returndocs = yaml.load(returndocs)
+                        doc_data['return'] = yaml.load(doc_data['return'])
                     except Exception:
                         pass
-                    if doc:
-                        dump[plugin] = {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
-                jdump(dump)
-            else:
-                text = ''
-                for plugin in context.CLIARGS['args']:
-                    textret = DocCLI.format_plugin_doc(plugin, loader, plugin_type, search_paths)
 
+                jdump(plugin_docs)
+
+            else:
+                # Some changes to how plain text docs are formatted
+                text = []
+                for plugin, doc_data in plugin_docs.items():
+                    textret = DocCLI.format_plugin_doc(plugin, plugin_type,
+                                                       doc_data['doc'], doc_data['examples'],
+                                                       doc_data['return'], doc_data['metadata'])
                     if textret:
-                        text += textret
+                        text.append(textret)
 
                 if text:
-                    DocCLI.pager(text)
+                    DocCLI.pager(''.join(text))
 
         return 0
 
@@ -261,55 +293,58 @@ class DocCLI(CLI):
         return clean_ns
 
     @staticmethod
-    def _get_plugin_doc(plugin, loader, plugin_type, search_paths):
+    def _get_plugin_doc(plugin, loader, search_paths):
+        # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+        filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
+        if filename is None:
+            raise PluginNotFound('%s was not found in %s' % (plugin, search_paths))
 
-        doc = plainexamples = returndocs = metadata = {}
-        try:
-            # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-            filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
-            if filename is None:
-                display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
-                return
+        doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0))
 
-            if not any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
-                doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0))
-                doc['filename'] = filename
+        # If the plugin existed but did not have a DOCUMENTATION element and was not removed, it's
+        # an error
+        if doc is None:
+            # doc may be None when the module has been removed.  Calling code may choose to
+            # handle that but we can't.
+            if 'status' in metadata and isinstance(metadata['status'], Container):
+                if 'removed' in metadata['status']:
+                    raise RemovedPlugin('%s has been removed' % plugin)
 
-        except Exception as e:
-            display.vvv(traceback.format_exc())
-            raise AnsibleError("%s %s missing documentation (or could not parse documentation): %s\n" % (plugin_type, plugin, to_native(e)))
+                # Backwards compat: no documentation but valid metadata (or no metadata, which results in using the default metadata).
+                # Probably should make this an error in 2.10
+                return {}, {}, {}, metadata
+            else:
+                # If metadata is invalid, warn but don't error
+                display.warning(u'%s has an invalid ANSIBLE_METADATA field' % plugin)
+
+            raise ValueError('%s did not contain a DOCUMENTATION attribute' % plugin)
+
+        doc['filename'] = filename
         return doc, plainexamples, returndocs, metadata
 
     @staticmethod
-    def format_plugin_doc(plugin, loader, plugin_type, search_paths):
-        text = ''
+    def format_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
+        # assign from other sections
+        doc['plainexamples'] = plainexamples
+        doc['returndocs'] = returndocs
+        doc['metadata'] = metadata
 
-        doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, loader, plugin_type, search_paths)
-        if doc is not None:
-
-            # assign from other sections
-            doc['plainexamples'] = plainexamples
-            doc['returndocs'] = returndocs
-            doc['metadata'] = metadata
-
-            # generate extra data
-            if plugin_type == 'module':
-                # is there corresponding action plugin?
-                if plugin in action_loader:
-                    doc['action'] = True
-                else:
-                    doc['action'] = False
-            doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
-            if 'docuri' in doc:
-                doc['docuri'] = doc[plugin_type].replace('_', '-')
-
-            if context.CLIARGS['show_snippet'] and plugin_type == 'module':
-                text += DocCLI.get_snippet_text(doc)
+        # generate extra data
+        if plugin_type == 'module':
+            # is there corresponding action plugin?
+            if plugin in action_loader:
+                doc['action'] = True
             else:
-                text += DocCLI.get_man_text(doc)
+                doc['action'] = False
 
-        elif 'removed' in metadata['status']:
-            display.warning("%s %s has been removed\n" % (plugin_type, plugin))
+        doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
+        if 'docuri' in doc:
+            doc['docuri'] = doc[plugin_type].replace('_', '-')
+
+        if context.CLIARGS['show_snippet'] and plugin_type == 'module':
+            text = DocCLI.get_snippet_text(doc)
+        else:
+            text = DocCLI.get_man_text(doc)
 
         return text
 
@@ -472,9 +507,13 @@ class DocCLI(CLI):
             text.append("%s %s" % (opt_leadin, o))
 
             if isinstance(opt['description'], list):
-                for entry in opt['description']:
+                for entry_idx, entry in enumerate(opt['description'], 1):
+                    if not isinstance(entry, string_types):
+                        raise AnsibleError("Expected string in description of %s at index %s, got %s" % (o, entry_idx, type(entry)))
                     text.append(textwrap.fill(DocCLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             else:
+                if not isinstance(opt['description'], string_types):
+                    raise AnsibleError("Expected string in description of %s, got %s" % (o, type(opt['description'])))
                 text.append(textwrap.fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             del opt['description']
 

@@ -32,10 +32,8 @@ DOCUMENTATION = '''
 module: gcp_compute_region_disk_info
 description:
 - Gather info for GCP RegionDisk
-- This module was called C(gcp_compute_region_disk_facts) before Ansible 2.9. The
-  usage has not changed.
 short_description: Gather info for GCP RegionDisk
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -53,7 +51,54 @@ options:
     - A reference to the region where the disk resides.
     required: true
     type: str
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
+notes:
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -102,7 +147,7 @@ resources:
       type: str
     lastDetachTimestamp:
       description:
-      - Last dettach timestamp in RFC3339 text format.
+      - Last detach timestamp in RFC3339 text format.
       returned: success
       type: str
     labels:
@@ -242,18 +287,10 @@ import json
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str'), region=dict(required=True, type='str')))
 
-    if module._name == 'gcp_compute_region_disk_facts':
-        module.deprecate("The 'gcp_compute_region_disk_facts' module has been renamed to 'gcp_compute_region_disk_info'", version='2.13')
-
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
-    items = fetch_list(module, collection(module), query_options(module.params['filters']))
-    if items.get('items'):
-        items = items.get('items')
-    else:
-        items = []
-    return_value = {'resources': items}
+    return_value = {'resources': fetch_list(module, collection(module), query_options(module.params['filters']))}
     module.exit_json(**return_value)
 
 
@@ -263,8 +300,7 @@ def collection(module):
 
 def fetch_list(module, link, query):
     auth = GcpSession(module, 'compute')
-    response = auth.get(link, params={'filter': query})
-    return return_if_object(module, response)
+    return auth.list(link, return_if_object, array_name='items', params={'filter': query})
 
 
 def query_options(filters):

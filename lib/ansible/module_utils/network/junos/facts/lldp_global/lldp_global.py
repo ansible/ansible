@@ -17,6 +17,7 @@ from copy import deepcopy
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.junos.argspec.lldp_global.lldp_global import Lldp_globalArgs
+from ansible.module_utils.network.junos.utils.utils import get_resource_config
 from ansible.module_utils.six import string_types
 try:
     from lxml import etree
@@ -63,7 +64,7 @@ class Lldp_globalFacts(object):
                     </protocols>
                 </configuration>
                 """
-            data = connection.get_configuration(filter=config_filter)
+            data = get_resource_config(connection, config_filter=config_filter)
 
         if isinstance(data, string_types):
             data = etree.fromstring(to_bytes(data, errors='surrogate_then_replace'))

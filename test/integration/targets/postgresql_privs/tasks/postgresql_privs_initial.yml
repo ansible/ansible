@@ -1,0 +1,382 @@
+# The tests below were added initially and moved here
+# from the shared target called ``postgresql`` by @Andersson007 <aaklychkov@mail.ru>.
+# You can see modern examples of CI tests in postgresql_publication directory, for example.
+
+#
+# Test settings privileges
+#
+- name: Create db
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: "{{ db_name }}"
+    state: "present"
+    login_user: "{{ pg_user }}"
+
+- name: Create some tables on the db
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "create table test_table1 (field text);" | psql {{ db_name }}
+
+- become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "create table test_table2 (field text);" | psql {{ db_name }}
+
+- vars:
+    db_password: 'secretù' # use UTF-8
+  block:
+    - name: Create a user with some permissions on the db
+      become_user: "{{ pg_user }}"
+      become: yes
+      postgresql_user:
+        name: "{{ db_user1 }}"
+        encrypted: 'yes'
+        password: "md5{{ (db_password ~ db_user1) | hash('md5')}}"
+        db: "{{ db_name }}"
+        priv: 'test_table1:INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER/test_table2:INSERT/CREATE,CONNECT,TEMP'
+        login_user: "{{ pg_user }}"
+
+    - include_tasks: pg_authid_not_readable.yml
+
+- name: Check that the user has the requested permissions (table1)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
+  register: result_table1
+
+- name: Check that the user has the requested permissions (table2)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
+  register: result_table2
+
+- name: Check that the user has the requested permissions (database)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
+  register: result_database
+
+- assert:
+    that:
+      - "result_table1.stdout_lines[-1] == '(7 rows)'"
+      - "'INSERT' in result_table1.stdout"
+      - "'SELECT' in result_table1.stdout"
+      - "'UPDATE' in result_table1.stdout"
+      - "'DELETE' in result_table1.stdout"
+      - "'TRUNCATE' in result_table1.stdout"
+      - "'REFERENCES' in result_table1.stdout"
+      - "'TRIGGER' in result_table1.stdout"
+      - "result_table2.stdout_lines[-1] == '(1 row)'"
+      - "'INSERT' == '{{ result_table2.stdout_lines[-2] | trim }}'"
+      - "result_database.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user1 }}=CTc/{{ pg_user }}' in result_database.stdout_lines[-2]"
+
+- name: Add another permission for the user
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    encrypted: 'yes'
+    password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
+    db: "{{ db_name }}"
+    priv: 'test_table2:select'
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: Check that ansible reports it changed the user
+  assert:
+    that:
+      - result is changed
+
+- name: Check that the user has the requested permissions (table2)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
+  register: result_table2
+
+- assert:
+    that:
+      - "result_table2.stdout_lines[-1] == '(2 rows)'"
+      - "'INSERT' in result_table2.stdout"
+      - "'SELECT' in result_table2.stdout"
+
+#
+# Test priv setting via postgresql_privs module
+# (Depends on state from previous _user privs tests)
+#
+
+- name: Revoke a privilege
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    type: "table"
+    state: "absent"
+    roles: "{{ db_user1 }}"
+    privs: "INSERT"
+    objs: "test_table2"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: Check that ansible reports it changed the user
+  assert:
+    that:
+      - result is changed
+
+- name: Check that the user has the requested permissions (table2)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
+  register: result_table2
+
+- assert:
+    that:
+      - "result_table2.stdout_lines[-1] == '(1 row)'"
+      - "'SELECT' == '{{ result_table2.stdout_lines[-2] | trim }}'"
+
+- name: Revoke many privileges on multiple tables
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    state: "absent"
+    roles: "{{ db_user1 }}"
+    privs: "INSERT,select,UPDATE,TRUNCATE,REFERENCES,TRIGGER,delete"
+    objs: "test_table2,test_table1"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: Check that ansible reports it changed the user
+  assert:
+    that:
+      - result is changed
+
+- name: Check that permissions were revoked (table1)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
+  register: result_table1
+
+- name: Check that permissions were revoked (table2)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
+  register: result_table2
+
+- assert:
+    that:
+      - "result_table1.stdout_lines[-1] == '(0 rows)'"
+      - "result_table2.stdout_lines[-1] == '(0 rows)'"
+
+- name: Revoke database privileges
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    type: "database"
+    state: "absent"
+    roles: "{{ db_user1 }}"
+    privs: "Create,connect,TEMP"
+    objs: "{{ db_name }}"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Check that the user has the requested permissions (database)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
+  register: result_database
+
+- assert:
+    that:
+      - "result_database.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user1 }}' not in result_database.stdout"
+
+- name: Grant database privileges
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    type: "database"
+    state: "present"
+    roles: "{{ db_user1 }}"
+    privs: "CREATE,connect"
+    objs: "{{ db_name }}"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: Check that ansible reports it changed the user
+  assert:
+    that:
+      - result is changed
+
+- name: Check that the user has the requested permissions (database)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
+  register: result_database
+
+- assert:
+    that:
+      - "result_database.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user1 }}=Cc' in result_database.stdout"
+
+- name: Grant a single privilege on a table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    state: "present"
+    roles: "{{ db_user1 }}"
+    privs: "INSERT"
+    objs: "test_table1"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Check that permissions were added (table1)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
+  register: result_table1
+
+- assert:
+    that:
+      - "result_table1.stdout_lines[-1] == '(1 row)'"
+      - "'{{ result_table1.stdout_lines[-2] | trim }}' == 'INSERT'"
+
+- name: Grant many privileges on multiple tables
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    state: "present"
+    roles: "{{ db_user1 }}"
+    privs: 'INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,trigger'
+    objs: "test_table2,test_table1"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Check that permissions were added (table1)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
+  register: result_table1
+
+- name: Check that permissions were added (table2)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
+  register: result_table2
+
+- assert:
+    that:
+      - "result_table1.stdout_lines[-1] == '(7 rows)'"
+      - "'INSERT' in result_table1.stdout"
+      - "'SELECT' in result_table1.stdout"
+      - "'UPDATE' in result_table1.stdout"
+      - "'DELETE' in result_table1.stdout"
+      - "'TRUNCATE' in result_table1.stdout"
+      - "'REFERENCES' in result_table1.stdout"
+      - "'TRIGGER' in result_table1.stdout"
+      - "result_table2.stdout_lines[-1] == '(7 rows)'"
+      - "'INSERT' in result_table2.stdout"
+      - "'SELECT' in result_table2.stdout"
+      - "'UPDATE' in result_table2.stdout"
+      - "'DELETE' in result_table2.stdout"
+      - "'TRUNCATE' in result_table2.stdout"
+      - "'REFERENCES' in result_table2.stdout"
+      - "'TRIGGER' in result_table2.stdout"
+
+# Check passing roles with dots
+# https://github.com/ansible/ansible/issues/63204
+- name: Create roles for further tests
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: "{{ item }}"
+  loop:
+  - "{{ db_user_with_dots1 }}"
+  - "{{ db_user_with_dots2 }}"
+
+- name: Pass role with dots in its name to roles parameter
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    state: "present"
+    roles: "{{ db_user_with_dots1 }}"
+    privs: "INSERT"
+    objs: "test_table1"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Check that permissions were added (table1)
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user_with_dots1 }}' and table_name='test_table1'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# We don't need to check anything here, only that nothing failed
+- name: Pass role with dots in its name to target_roles parameter
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    state: "present"
+    roles: "{{ db_user_with_dots1 }}"
+    privs: "INSERT"
+    objs: TABLES
+    type: default_privs
+    target_roles: "{{ db_user_with_dots2 }}"
+
+#
+# Cleanup
+#
+- name: Cleanup db
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: "{{ db_name }}"
+    state: "absent"
+    login_user: "{{ pg_user }}"
+
+- name: Check that database was destroyed
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"
+
+- name: Cleanup test user
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    name: "{{ item }}"
+    state: 'absent'
+    login_user: "{{ pg_user }}"
+    db: postgres
+  loop:
+  - "{{ db_user1 }}"
+  - "{{ db_user2 }}"
+  - "{{ db_user3 }}"
+  - "{{ db_user_with_dots1 }}"
+  - "{{ db_user_with_dots2 }}"
+
+- name: Check that they were removed
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"

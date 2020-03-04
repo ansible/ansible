@@ -1,0 +1,58 @@
+---
+- debug:
+    msg: "Start nxos_hsrp_interfaces overridden integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: test_int2="{{ nxos_int2 }}"
+- set_fact:
+    bfd_enable: enable
+    bfd_disable: disable
+  when: platform is not search('N35')
+
+- block:
+  - name: setup1
+    cli_config: &setup_teardown
+      config: |
+        no feature bfd
+        no feature hsrp
+        default interface {{ test_int1 }}
+        default interface {{ test_int2 }}
+
+  - name: setup2
+    cli_config:
+      config: |
+        feature bfd
+        feature hsrp
+        interface {{ test_int1 }}
+          no switchport
+        interface {{ test_int2 }}
+          no switchport
+          hsrp bfd
+
+  - name: Overridden
+    nxos_hsrp_interfaces: &overridden
+      config:
+        - name: "{{ test_int1 }}"
+          bfd: "{{ bfd_enable|default(omit)}}"
+      state: overridden
+    register: result
+
+  - assert:
+      that:
+        - result.changed == true
+        - result.commands[1] == 'no hsrp bfd'   # test_int2 reset to defaults
+        - result.commands[3] == 'hsrp bfd'      # test_int1 set to playval
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+
+  - name: Idempotence - Overridden
+    nxos_hsrp_interfaces: *overridden
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *setup_teardown

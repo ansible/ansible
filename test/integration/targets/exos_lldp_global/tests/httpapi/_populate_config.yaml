@@ -1,0 +1,7 @@
+---
+- name: Populate Config
+  exos_config:
+    lines:
+      - configure lldp transmit-interval 50
+      - configure lldp ports all no-advertise all-tlvs
+      - configure lldp ports all advertise system-name system-description system-capabilities

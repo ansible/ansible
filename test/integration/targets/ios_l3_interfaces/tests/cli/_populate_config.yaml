@@ -1,0 +1,12 @@
+---
+- name: Populate Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      interface GigabitEthernet 0/1
+      ip address 203.0.113.27 255.255.255.0
+      interface GigabitEthernet 0/2
+      ip address 192.0.2.1 255.255.255.0 secondary
+      ip address 192.0.2.2 255.255.255.0
+      ipv6 address 2001:db8:0:3::/64

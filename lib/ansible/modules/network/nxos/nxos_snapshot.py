@@ -136,7 +136,7 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 
 
 def execute_show_command(command, module):
@@ -320,9 +320,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
                            supports_check_mode=True)
-
-    warnings = list()
-    check_args(module, warnings)
 
     action = module.params['action']
     comparison_results_file = module.params['comparison_results_file']

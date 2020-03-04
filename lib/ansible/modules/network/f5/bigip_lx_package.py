@@ -27,7 +27,7 @@ options:
         and you intend to use this module in a C(role), it is recommended that you use
         the C({{ role_path }}) variable. An example is provided in the C(EXAMPLES) section.
       - When C(state) is C(absent), it is not necessary for the package to exist on the
-        Ansible controller. If the full path to the package is provided, the fileame will
+        Ansible controller. If the full path to the package is provided, the filename will
         specifically be cherry picked from it to properly remove the package.
     type: path
   state:

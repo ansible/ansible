@@ -129,7 +129,7 @@ from ansible.module_utils.manageiq import ManageIQ, manageiq_argument_spec
 
 class ManageIQAlert(object):
     """ Represent a ManageIQ alert. Can be initialized with both the format
-    we recieve from the server and the format we get from the user.
+    we receive from the server and the format we get from the user.
     """
     def __init__(self, alert):
         self.description = alert['description']
@@ -257,7 +257,7 @@ class ManageIQAlerts(object):
                 # the result to the expected result.
                 if new_alert_obj == ManageIQAlert(result):
                     # success!
-                    msg = "Alert {description} upated successfully: {details}"
+                    msg = "Alert {description} updated successfully: {details}"
                     msg = msg.format(description=existing_alert['description'], details=result)
 
                     return dict(changed=True, msg=msg)
@@ -294,7 +294,7 @@ def main():
         expression=dict(type='dict'),
         options=dict(type='dict'),
         enabled=dict(type='bool'),
-        state=dict(require=False, default='present',
+        state=dict(required=False, default='present',
                    choices=['present', 'absent']),
     )
     # add the manageiq connection arguments to the arguments

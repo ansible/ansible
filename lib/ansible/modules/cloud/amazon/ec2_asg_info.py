@@ -26,6 +26,7 @@ options:
     description:
       - The prefix or name of the auto scaling group(s) you are searching for.
       - "Note: This is a regular expression match with implicit '^' (beginning of string). Append '$' for a complete name match."
+    type: str
     required: false
   tags:
     description:
@@ -33,6 +34,7 @@ options:
         A dictionary/hash of tags in the format { tag1_name: 'tag1_value', tag2_name: 'tag2_value' } to match against the auto scaling
         group(s) you are searching for.
     required: false
+    type: dict
 extends_documentation_fragment:
     - aws
     - ec2
@@ -221,13 +223,12 @@ termination_policies:
 import re
 
 try:
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (get_aws_connection_info, boto3_conn, ec2_argument_spec,
-                                      camel_dict_to_snake_dict, HAS_BOTO3)
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 
 def match_asg_tags(tags_to_match, asg):
@@ -333,14 +334,14 @@ def find_asgs(conn, module, name=None, tags=None):
     try:
         asgs_paginator = conn.get_paginator('describe_auto_scaling_groups')
         asgs = asgs_paginator.paginate().build_full_result()
-    except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to describe AutoScalingGroups')
 
     if not asgs:
         return asgs
+
     try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        elbv2 = boto3_conn(module, conn_type='client', resource='elbv2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        elbv2 = module.client('elbv2')
     except ClientError as e:
         # This is nice to have, not essential
         elbv2 = None
@@ -379,6 +380,10 @@ def find_asgs(conn, module, name=None, tags=None):
                     except ClientError as e:
                         if e.response['Error']['Code'] == 'TargetGroupNotFound':
                             asg['target_group_names'] = []
+                        else:
+                            module.fail_json_aws(e, msg="Failed to describe Target Groups")
+                    except BotoCoreError as e:
+                        module.fail_json_aws(e, msg="Failed to describe Target Groups")
             else:
                 asg['target_group_names'] = []
             matched_asgs.append(asg)
@@ -388,28 +393,18 @@ def find_asgs(conn, module, name=None, tags=None):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(type='str'),
-            tags=dict(type='dict'),
-        )
+    argument_spec = dict(
+        name=dict(type='str'),
+        tags=dict(type='dict'),
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec)
     if module._name == 'ec2_asg_facts':
         module.deprecate("The 'ec2_asg_facts' module has been renamed to 'ec2_asg_info'", version='2.13')
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     asg_name = module.params.get('name')
     asg_tags = module.params.get('tags')
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        autoscaling = boto3_conn(module, conn_type='client', resource='autoscaling', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+    autoscaling = module.client('autoscaling')
 
     results = find_asgs(autoscaling, module, name=asg_name, tags=asg_tags)
     module.exit_json(results=results)

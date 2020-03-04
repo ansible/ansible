@@ -60,13 +60,6 @@ class ValidateModulesTest(SanitySingleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        if data_context().content.is_ansible:
-            ignore_codes = ()
-        else:
-            ignore_codes = ((
-                'E502',  # only ansible content requires __init__.py for module subdirectories
-            ))
-
         env = ansible_environment(args, color=False)
 
         settings = self.load_processor(args)
@@ -80,12 +73,15 @@ class ValidateModulesTest(SanitySingleVersion):
             '--arg-spec',
         ] + paths
 
-        if args.base_branch:
-            cmd.extend([
-                '--base-branch', args.base_branch,
-            ])
+        if data_context().content.collection:
+            cmd.extend(['--collection', data_context().content.collection.directory])
         else:
-            display.warning('Cannot perform module comparison against the base branch. Base branch not detected when running locally.')
+            if args.base_branch:
+                cmd.extend([
+                    '--base-branch', args.base_branch,
+                ])
+            else:
+                display.warning('Cannot perform module comparison against the base branch. Base branch not detected when running locally.')
 
         try:
             stdout, stderr = run_command(args, cmd, env=env, capture=True)
@@ -114,11 +110,10 @@ class ValidateModulesTest(SanitySingleVersion):
                     line=int(item['line']) if 'line' in item else 0,
                     column=int(item['column']) if 'column' in item else 0,
                     level='error',
-                    code='E%s' % item['code'],
+                    code='%s' % item['code'],
                     message=item['msg'],
                 ))
 
-        errors = [error for error in errors if error.code not in ignore_codes]
         errors = settings.process_errors(errors, paths)
 
         if errors:

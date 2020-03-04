@@ -44,6 +44,22 @@ options:
     description:
     - The VRF associated to this ANP.
     type: dict
+    suboptions:
+      name:
+        description:
+        - The name of the VRF to associate with.
+        required: true
+        type: str
+      schema:
+        description:
+        - The schema that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current schema.
+        type: str
+      template:
+        description:
+        - The template that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current template.
+        type: str
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -128,40 +144,40 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    template = module.params['template']
-    externalepg = module.params['externalepg']
-    display_name = module.params['display_name']
-    vrf = module.params['vrf']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    template = module.params.get('template')
+    externalepg = module.params.get('externalepg')
+    display_name = module.params.get('display_name')
+    vrf = module.params.get('vrf')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
     # Get schema_id
     schema_obj = mso.get_obj('schemas', displayName=schema)
     if schema_obj:
-        schema_id = schema_obj['id']
+        schema_id = schema_obj.get('id')
     else:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
     schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
-    templates = [t['name'] for t in schema_obj['templates']]
+    templates = [t.get('name') for t in schema_obj.get('templates')]
     if template not in templates:
         mso.fail_json(msg="Provided template '{0}' does not exist. Existing templates: {1}".format(template, ', '.join(templates)))
     template_idx = templates.index(template)
 
     # Get external EPGs
-    externalepgs = [e['name'] for e in schema_obj['templates'][template_idx]['externalEpgs']]
+    externalepgs = [e.get('name') for e in schema_obj.get('templates')[template_idx]['externalEpgs']]
 
     if externalepg is not None and externalepg in externalepgs:
         externalepg_idx = externalepgs.index(externalepg)
-        mso.existing = schema_obj['templates'][template_idx]['externalEpgs'][externalepg_idx]
+        mso.existing = schema_obj.get('templates')[template_idx]['externalEpgs'][externalepg_idx]
 
     if state == 'query':
         if externalepg is None:
-            mso.existing = schema_obj['templates'][template_idx]['externalEpgs']
+            mso.existing = schema_obj.get('templates')[template_idx]['externalEpgs']
         elif not mso.existing:
             mso.fail_json(msg="External EPG '{externalepg}' not found".format(externalepg=externalepg))
         mso.exit_json()

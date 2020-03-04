@@ -1,0 +1,12 @@
+postgresql_packages:
+  - postgresql11-server
+  - py36-psycopg2
+
+pg_dir: /var/db/postgres/data11
+pg_hba_location: "{{ pg_dir }}/pg_hba.conf"
+pg_ver: 11
+pg_user: postgres
+pg_group: postgres
+
+locale_latin_suffix: .ISO8859-1
+locale_utf8_suffix: .UTF-8

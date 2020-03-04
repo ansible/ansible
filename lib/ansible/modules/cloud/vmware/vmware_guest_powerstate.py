@@ -75,7 +75,7 @@ options:
     type: str
   scheduled_at:
     description:
-    - Date and time in string format at which specificed task needs to be performed.
+    - Date and time in string format at which specified task needs to be performed.
     - "The required format for date and time - 'dd/mm/yyyy hh:mm'."
     - Scheduling task requires vCenter server. A standalone ESXi server does not support this option.
     type: str
@@ -263,7 +263,7 @@ def main():
                                                                                          vm.name,
                                                                                          to_native(e.msg)))
             except vim.fault.DuplicateName as e:
-                module.exit_json(chanaged=False, details=to_native(e.msg))
+                module.exit_json(changed=False, details=to_native(e.msg))
             except vmodl.fault.InvalidArgument as e:
                 module.fail_json(msg="Failed to create scheduled task %s as specifications "
                                      "given are invalid: %s" % (module.params.get('state'),

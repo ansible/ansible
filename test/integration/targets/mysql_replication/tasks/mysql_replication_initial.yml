@@ -1,0 +1,191 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Preparation:
+- name: Create user for replication
+  shell: "echo \"GRANT REPLICATION SLAVE ON *.* TO '{{ replication_user }}'@'localhost' IDENTIFIED BY '{{ replication_pass }}'; FLUSH PRIVILEGES;\" | mysql -P {{ master_port }} -h 127.0.0.1"
+
+- name: Create test database
+  mysql_db:
+    login_host: 127.0.0.1
+    login_port: '{{ master_port }}'
+    state: present
+    name: '{{ test_db }}'
+
+- name: Dump all databases from the master
+  shell: 'mysqldump -P {{ master_port }} -h 127.0.0.1 --all-databases --master-data=2 > {{ dump_path }}'
+
+- name: Restore the dump to the standby
+  shell: 'mysql -P {{ standby_port }} -h 127.0.0.1 < {{ dump_path }}'
+
+# Test getmaster mode:
+- name: Get master status
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ master_port }}"
+    mode: getmaster
+  register: master_status
+
+- assert:
+    that:
+    - master_status.Is_Master == true
+    - master_status.Position != 0
+    - master_status is not changed
+
+# Test startslave fails without changemaster first. This needs fail_on_error
+- name: Start slave and fail because master is not specified; failing on error as requested
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: startslave
+    fail_on_error: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is failed
+
+# Test startslave doesn't fail if fail_on_error: no
+- name: Start slave and fail without propagating it to ansible as we were asked not to
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: startslave
+    fail_on_error: no
+  register: result
+
+- assert:
+    that:
+    - result is not failed
+
+# Test startslave doesn't fail if there is no fail_on_error.
+# This is suboptimal because nothing happens, but it's the old behavior.
+- name: Start slave and fail without propagating it to ansible as previous versions did not fail on error
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: startslave
+  register: result
+
+- assert:
+    that:
+    - result is not failed
+
+# Test changemaster mode:
+# master_ssl_ca will be set as '' to check the module's behaviour for #23976,
+# must be converted to an empty string
+- name: Run replication
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: changemaster
+    master_host: 127.0.0.1
+    master_port: "{{ master_port }}"
+    master_user: "{{ replication_user }}"
+    master_password: "{{ replication_pass }}"
+    master_log_file: "{{ master_status.File }}"
+    master_log_pos: "{{ master_status.Position }}"
+    master_ssl_ca: ''
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["CHANGE MASTER TO MASTER_HOST='127.0.0.1',MASTER_USER='replication_user',MASTER_PASSWORD='********',MASTER_PORT=3306,MASTER_LOG_FILE='{{ master_status.File }}',MASTER_LOG_POS={{ master_status.Position }},MASTER_SSL_CA=''"]
+
+# Test startslave mode:
+- name: Start slave
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: startslave
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["START SLAVE"]
+
+# Test getslave mode:
+- name: Get standby status
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: getslave
+  register: slave_status
+
+- assert:
+    that:
+    - slave_status.Is_Slave == true
+    - slave_status.Master_Host == '127.0.0.1'
+    - slave_status.Exec_Master_Log_Pos == master_status.Position
+    - slave_status.Master_Port == {{ master_port }}
+    - slave_status.Last_IO_Errno == 0
+    - slave_status.Last_IO_Error == ''
+    - slave_status is not changed
+
+# Create test table and add data to it:
+- name: Create test table
+  shell: "echo \"CREATE TABLE {{ test_table }} (id int);\" | mysql -P {{ master_port }} -h 127.0.0.1 {{ test_db }}"
+
+- name: Insert data
+  shell: >
+    echo "INSERT INTO {{ test_table }} (id) VALUES (1), (2), (3); FLUSH LOGS;" |
+    mysql -P {{ master_port }} -h 127.0.0.1 {{ test_db }}
+
+- name: Small pause to be sure the bin log, which was flushed previously, reached the slave
+  pause:
+    seconds: 2
+
+# Test master log pos has been changed:
+- name: Get standby status
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: getslave
+  register: slave_status
+
+# master_status.Position is not actual and it has been changed by the prev step,
+# so slave_status.Exec_Master_Log_Pos must be different:
+- assert:
+    that:
+    - slave_status.Exec_Master_Log_Pos != master_status.Position
+
+- name: Start slave that is already running
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: startslave
+    fail_on_error: true
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+
+# Test stopslave mode:
+- name: Stop slave
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: stopslave
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ["STOP SLAVE"]
+
+# Test stopslave mode:
+- name: Stop slave that is no longer running
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ standby_port }}"
+    mode: stopslave
+    fail_on_error: true
+  register: result
+
+- assert:
+    that:
+    - result is not changed

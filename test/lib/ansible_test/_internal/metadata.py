@@ -2,13 +2,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from . import types as t
 
 from .util import (
     display,
     is_shippable,
+)
+
+from .io import (
+    write_json_file,
+    read_json_file,
 )
 
 from .diff import (
@@ -72,8 +75,7 @@ class Metadata:
 
         display.info('>>> Metadata: %s\n%s' % (path, data), verbosity=3)
 
-        with open(path, 'w') as data_fd:
-            json.dump(data, data_fd, sort_keys=True, indent=4)
+        write_json_file(path, data)
 
     @staticmethod
     def from_file(path):
@@ -81,9 +83,7 @@ class Metadata:
         :type path: str
         :rtype: Metadata
         """
-        with open(path, 'r') as data_fd:
-            data = json.load(data_fd)
-
+        data = read_json_file(path)
         return Metadata.from_dict(data)
 
     @staticmethod

@@ -1,16 +1,171 @@
-- name: Clean slate
-  import_tasks: clean.yml
+- name: create test directory
+  win_file:
+    path: '{{ win_unzip_dir }}\output'
+    state: directory
 
-- name: Test in normal mode
-  import_tasks: tests.yml
-  vars:
-    in_check_mode: no
+- name: create local zip file with non-ascii chars
+  script: create_zip.py {{ output_dir + '/win_unzip.zip' | quote }}
+  delegate_to: localhost
 
-- name: Clean slate
-  import_tasks: clean.yml
+- name: copy across zip to Windows host
+  win_copy:
+    src: '{{ output_dir }}/win_unzip.zip'
+    dest: '{{ win_unzip_dir }}\win_unzip.zip'
 
-- name: Test in check-mode
-  import_tasks: tests.yml
-  vars:
-    in_check_mode: yes
+- name: unarchive zip (check)
+  win_unzip:
+    src: '{{ win_unzip_dir }}\win_unzip.zip'
+    dest: '{{ win_unzip_dir }}\output'
+  register: unzip_check
   check_mode: yes
+
+- name: get result of unarchive zip (check)
+  win_stat:
+    path: '{{ win_unzip_dir }}\output\café.txt'
+  register: unzip_actual_check
+
+- name: assert result of unarchive zip (check)
+  assert:
+    that:
+    - unzip_check is changed
+    - not unzip_check.removed
+    - not unzip_actual_check.stat.exists
+
+- name: unarchive zip
+  win_unzip:
+    src: '{{ win_unzip_dir }}\win_unzip.zip'
+    dest: '{{ win_unzip_dir }}\output'
+  register: unzip
+
+- name: get result of unarchive zip
+  slurp:
+    path: '{{ win_unzip_dir }}\output\café.txt'
+  register: unzip_actual
+
+- name: assert result of unarchive zip
+  assert:
+    that:
+    - unzip is changed
+    - not unzip.removed
+    - unzip_actual.content | b64decode == 'café.txt'
+
+# Module is not idempotent, will always change without creates
+- name: unarchive zip again without creates
+  win_unzip:
+    src: '{{ win_unzip_dir }}\win_unzip.zip'
+    dest: '{{ win_unzip_dir }}\output'
+  register: unzip_again
+
+- name: assert unarchive zip again without creates
+  assert:
+    that:
+    - unzip_again is changed
+    - not unzip_again.removed
+
+- name: unarchive zip with creates
+  win_unzip:
+    src: '{{ win_unzip_dir }}\win_unzip.zip'
+    dest: '{{ win_unzip_dir }}\outout'
+    creates: '{{ win_unzip_dir }}\output\café.txt'
+  register: unzip_again_creates
+
+- name: assert unarchive zip with creates
+  assert:
+    that:
+    - not unzip_again_creates is changed
+    - not unzip_again_creates.removed
+
+- name: unarchive zip with delete (check)
+  win_unzip:
+    src: '{{ win_unzip_dir }}\win_unzip.zip'
+    dest: '{{ win_unzip_dir }}\output'
+    delete_archive: yes
+  register: unzip_delete_check
+  check_mode: yes
+
+- name: get result of unarchive zip with delete (check)
+  win_stat:
+    path: '{{ win_unzip_dir }}\win_unzip.zip'
+  register: unzip_delete_actual_check
+
+- name: assert unarchive zip with delete (check)
+  assert:
+    that:
+    - unzip_delete_check is changed
+    - unzip_delete_check.removed
+    - unzip_delete_actual_check.stat.exists
+
+- name: unarchive zip with delete
+  win_unzip:
+    src: '{{ win_unzip_dir }}\win_unzip.zip'
+    dest: '{{ win_unzip_dir }}\output'
+    delete_archive: yes
+  register: unzip_delete
+
+- name: get result of unarchive zip with delete
+  win_stat:
+    path: '{{ win_unzip_dir }}\win_unzip.zip'
+  register: unzip_delete_actual
+
+- name: assert unarchive zip with delete
+  assert:
+    that:
+    - unzip_delete is changed
+    - unzip_delete.removed
+    - not unzip_delete_actual.stat.exists
+
+# Path traversal tests (CVE-2020-1737)
+- name: Create zip files
+  script: create_crafty_zip_files.py {{ output_dir }}
+  delegate_to: localhost
+
+- name: Copy zip files to Windows host
+  win_copy:
+    src: "{{ output_dir }}/{{ item }}.zip"
+    dest: "{{ win_unzip_dir }}/"
+  loop:
+    - hat1
+    - hat2
+    - handcuffs
+    - prison
+
+- name: Perform first trick
+  win_unzip:
+    src: '{{ win_unzip_dir }}\hat1.zip'
+    dest: '{{ win_unzip_dir }}\output'
+  register: hat_trick1
+
+- name: Check for file
+  win_stat:
+    path: '{{ win_unzip_dir }}\output\rabbit.txt'
+  register: rabbit
+
+- name: Perform next tricks (which should all fail)
+  win_unzip:
+    src: '{{ win_unzip_dir }}\{{ item }}.zip'
+    dest: '{{ win_unzip_dir }}\output'
+  ignore_errors: yes
+  register: escape
+  loop:
+    - hat2
+    - handcuffs
+    - prison
+
+- name: Search for files
+  win_find:
+    recurse: yes
+    paths:
+      - '{{ win_unzip_dir }}'
+    patterns:
+      - '*houdini.txt'
+      - '*rabbit.txt'
+  register: files
+
+- name: Check results
+  assert:
+    that:
+      - rabbit.stat.exists
+      - hat_trick1 is success
+      - escape.results | map(attribute='failed') | unique | list == [True]
+      - files.matched == 1
+      - files.files[0]['filename'] == 'rabbit.txt'

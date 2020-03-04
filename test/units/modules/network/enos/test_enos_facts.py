@@ -67,10 +67,10 @@ class TestEnosFacts(TestEnosModule):
         self.assertIn('hardware', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
-        self.assertEquals('test1', ansible_facts['ansible_net_hostname'])
+        self.assertEqual('test1', ansible_facts['ansible_net_hostname'])
         self.assertIn('MGT', ansible_facts['ansible_net_interfaces'].keys())
-        self.assertEquals(3992.75390625, ansible_facts['ansible_net_memtotal_mb'])
-        self.assertEquals(3383.109375, ansible_facts['ansible_net_memfree_mb'])
+        self.assertEqual(3992.75390625, ansible_facts['ansible_net_memtotal_mb'])
+        self.assertEqual(3383.109375, ansible_facts['ansible_net_memfree_mb'])
 
     def test_enos_facts_gather_subset_config(self):
         set_module_args({'gather_subset': 'config'})
@@ -78,5 +78,5 @@ class TestEnosFacts(TestEnosModule):
         ansible_facts = result['ansible_facts']
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('config', ansible_facts['ansible_net_gather_subset'])
-        self.assertEquals('test1', ansible_facts['ansible_net_hostname'])
+        self.assertEqual('test1', ansible_facts['ansible_net_hostname'])
         self.assertIn('ansible_net_config', ansible_facts)

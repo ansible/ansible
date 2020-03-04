@@ -25,14 +25,17 @@ options:
     description:
       - The Amazon Resource Name (ARN) of the load balancer.
     required: false
+    type: str
   target_group_arns:
     description:
       - The Amazon Resource Names (ARN) of the target groups.
     required: false
+    type: list
   names:
     description:
       - The names of the target groups.
     required: false
+    type: list
   collect_targets_health:
     description:
       - When set to "yes", output contains targets health description
@@ -162,7 +165,7 @@ target_groups:
                 health_check_port:
                     description: The port to check target health.
                     returned: always
-                    type: string
+                    type: str
                     sample: '80'
                 target:
                     description: The target metadata.
@@ -172,7 +175,7 @@ target_groups:
                         id:
                             description: The ID of the target.
                             returned: always
-                            type: string
+                            type: str
                             sample: i-0123456789
                         port:
                             description: The port to use to connect with the target.
@@ -187,7 +190,7 @@ target_groups:
                         state:
                             description: The state of the target health.
                             returned: always
-                            type: string
+                            type: str
                             sample: healthy
         target_group_name:
             description: The name of the target group.

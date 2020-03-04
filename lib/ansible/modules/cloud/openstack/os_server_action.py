@@ -154,7 +154,7 @@ def main():
                 json={'os-stop': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
-                module.exit_json(changed=True)
+            module.exit_json(changed=True)
 
         if action == 'start':
             if not _system_state_change(action, status):
@@ -165,7 +165,7 @@ def main():
                 json={'os-start': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
-                module.exit_json(changed=True)
+            module.exit_json(changed=True)
 
         if action == 'pause':
             if not _system_state_change(action, status):
@@ -176,7 +176,7 @@ def main():
                 json={'pause': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
-                module.exit_json(changed=True)
+            module.exit_json(changed=True)
 
         elif action == 'unpause':
             if not _system_state_change(action, status):

@@ -1,0 +1,3 @@
+bugfixes:
+- "openssl_certificate - When provider is ``entrust``, use a ``connection: keep-alive`` header for ECS API connections."
+- "ecs_certificate - Always specify header ``connection: keep-alive`` for ECS API connections."

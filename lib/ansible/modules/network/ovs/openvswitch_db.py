@@ -42,7 +42,7 @@ options:
     record:
         required: true
         description:
-            - Identifies the recoard in the table.
+            - Identifies the record in the table.
     col:
         required: true
         description:

@@ -201,72 +201,75 @@ if ($state -eq "absent") {
         }
     }
 
-    # Modify pool based on parameters
-    foreach ($attribute in $attributes.GetEnumerator()) {
-        $attribute_key = $attribute.Name
-        $new_raw_value = $attribute.Value
-        $new_value = Convert-ToPropertyValue -pool $pool -attribute_key $attribute_key -attribute_value $new_raw_value
+    # Cannot run the below in check mode if the pool did not always exist
+    if ($pool) {
+        # Modify pool based on parameters
+        foreach ($attribute in $attributes.GetEnumerator()) {
+            $attribute_key = $attribute.Name
+            $new_raw_value = $attribute.Value
+            $new_value = Convert-ToPropertyValue -pool $pool -attribute_key $attribute_key -attribute_value $new_raw_value
 
-        $current_raw_value = Get-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -ErrorAction SilentlyContinue
-        $current_value = Convert-ToPropertyValue -pool $pool -attribute_key $attribute_key -attribute_value $current_raw_value
+            $current_raw_value = Get-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -ErrorAction SilentlyContinue
+            $current_value = Convert-ToPropertyValue -pool $pool -attribute_key $attribute_key -attribute_value $current_raw_value
 
-        $changed = Compare-Values -current $current_value -new $new_value
-        if ($changed -eq $true) {
-            if ($new_value -is [Array]) {
-                try {
-                    Clear-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -WhatIf:$check_mode
-                } catch {
-                    Fail-Json -obj $result -message "Failed to clear attribute to Web App Pool $name. Attribute: $attribute_key, Exception: $($_.Exception.Message)"
-                }
-                foreach ($value in $new_value) {
+            $changed = Compare-Values -current $current_value -new $new_value
+            if ($changed -eq $true) {
+                if ($new_value -is [Array]) {
                     try {
-                        New-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value @{value=$value} -WhatIf:$check_mode > $null
+                        Clear-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -WhatIf:$check_mode
                     } catch {
-                        Fail-Json -obj $result -message "Failed to add new attribute to Web App Pool $name. Attribute: $attribute_key, Value: $value, Exception: $($_.Exception.Message)"
+                        Fail-Json -obj $result -message "Failed to clear attribute to Web App Pool $name. Attribute: $attribute_key, Exception: $($_.Exception.Message)"
+                    }
+                    foreach ($value in $new_value) {
+                        try {
+                            New-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value @{value=$value} -WhatIf:$check_mode > $null
+                        } catch {
+                            Fail-Json -obj $result -message "Failed to add new attribute to Web App Pool $name. Attribute: $attribute_key, Value: $value, Exception: $($_.Exception.Message)"
+                        }
+                    }
+                } else {
+                    try {
+                        Set-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value $new_value -WhatIf:$check_mode
+                    } catch {
+                        Fail-Json $result "Failed to set attribute to Web App Pool $name. Attribute: $attribute_key, Value: $new_value, Exception: $($_.Exception.Message)"
                     }
                 }
-            } else {
-                try {
-                    Set-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value $new_value -WhatIf:$check_mode
-                } catch {
-                    Fail-Json $result "Failed to set attribute to Web App Pool $name. Attribute: $attribute_key, Value: $new_value, Exception: $($_.Exception.Message)"
-                }
+                $result.changed = $true
             }
-            $result.changed = $true
         }
-    }
 
-    # Set the state of the pool
-    if ($pool.State -eq "Stopped") {
-        if ($state -eq "started" -or $state -eq "restarted") {
-            if (-not $check_mode) {
-                try {
-                    Start-WebAppPool -Name $name > $null
-                } catch {
-                    Fail-Json $result "Failed to start Web App Pool $($name): $($_.Exception.Message)"
+        # Set the state of the pool
+        if ($pool.State -eq "Stopped") {
+            if ($state -eq "started" -or $state -eq "restarted") {
+                if (-not $check_mode) {
+                    try {
+                        Start-WebAppPool -Name $name > $null
+                    } catch {
+                        Fail-Json $result "Failed to start Web App Pool $($name): $($_.Exception.Message)"
+                    }
                 }
+                $result.changed = $true
             }
-            $result.changed = $true
-        }
-    } else {
-        if ($state -eq "stopped") {
-            if (-not $check_mode) {
-                try {
-                    Stop-WebAppPool -Name $name > $null
-                } catch {
-                    Fail-Json $result "Failed to stop Web App Pool $($name): $($_.Exception.Message)"
+        } else {
+            if ($state -eq "stopped") {
+                if (-not $check_mode) {
+                    try {
+                        Stop-WebAppPool -Name $name > $null
+                    } catch {
+                        Fail-Json $result "Failed to stop Web App Pool $($name): $($_.Exception.Message)"
+                    }
                 }
-            }
-            $result.changed = $true
-        } elseif ($state -eq "restarted") {
-            if (-not $check_mode) {
-                try {
-                    Restart-WebAppPool -Name $name > $null
-                } catch {
-                    Fail-Json $result "Failed to restart Web App Pool $($name): $($_.Exception.Message)"
+                $result.changed = $true
+            } elseif ($state -eq "restarted") {
+                if (-not $check_mode) {
+                    try {
+                        Restart-WebAppPool -Name $name > $null
+                    } catch {
+                        Fail-Json $result "Failed to restart Web App Pool $($name): $($_.Exception.Message)"
+                    }
                 }
+                $result.changed = $true
             }
-            $result.changed = $true
         }
     }
 }

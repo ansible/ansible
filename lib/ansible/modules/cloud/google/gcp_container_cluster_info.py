@@ -32,10 +32,8 @@ DOCUMENTATION = '''
 module: gcp_container_cluster_info
 description:
 - Gather info for GCP Cluster
-- This module was called C(gcp_container_cluster_facts) before Ansible 2.9. The usage
-  has not changed.
 short_description: Gather info for GCP Cluster
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -50,8 +48,55 @@ options:
     aliases:
     - region
     - zone
-    version_added: 2.8
-extends_documentation_fragment: gcp
+    version_added: '2.8'
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
+notes:
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -470,6 +515,79 @@ resources:
           - Constraint enforced on the max num of pods per node.
           returned: success
           type: str
+    ipAllocationPolicy:
+      description:
+      - Configuration for controlling how IPs are allocated in the cluster.
+      returned: success
+      type: complex
+      contains:
+        useIpAliases:
+          description:
+          - Whether alias IPs will be used for pod IPs in the cluster.
+          returned: success
+          type: bool
+        createSubnetwork:
+          description:
+          - Whether a new subnetwork will be created automatically for the cluster.
+          returned: success
+          type: bool
+        subnetworkName:
+          description:
+          - A custom subnetwork name to be used if createSubnetwork is true.
+          - If this field is empty, then an automatic name will be chosen for the
+            new subnetwork.
+          returned: success
+          type: str
+        clusterSecondaryRangeName:
+          description:
+          - The name of the secondary range to be used for the cluster CIDR block.
+            The secondary range will be used for pod IP addresses.
+          - This must be an existing secondary range associated with the cluster subnetwork
+            .
+          returned: success
+          type: str
+        servicesSecondaryRangeName:
+          description:
+          - The name of the secondary range to be used as for the services CIDR block.
+            The secondary range will be used for service ClusterIPs. This must be
+            an existing secondary range associated with the cluster subnetwork.
+          returned: success
+          type: str
+        clusterIpv4CidrBlock:
+          description:
+          - The IP address range for the cluster pod IPs. If this field is set, then
+            cluster.cluster_ipv4_cidr must be left blank.
+          - This field is only applicable when useIpAliases is true.
+          - Set to blank to have a range chosen with the default size.
+          - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+          returned: success
+          type: str
+        nodeIpv4CidrBlock:
+          description:
+          - The IP address range of the instance IPs in this cluster.
+          - This is applicable only if createSubnetwork is true.
+          - Set to blank to have a range chosen with the default size.
+          - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+          returned: success
+          type: str
+        servicesIpv4CidrBlock:
+          description:
+          - The IP address range of the services IPs in this cluster. If blank, a
+            range will be automatically chosen with the default size.
+          - This field is only applicable when useIpAliases is true.
+          - Set to blank to have a range chosen with the default size.
+          - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+          returned: success
+          type: str
+        tpuIpv4CidrBlock:
+          description:
+          - The IP address range of the Cloud TPUs in this cluster. If unspecified,
+            a range will be automatically chosen with the default size.
+          - This field is only applicable when useIpAliases is true.
+          - If unspecified, the range will use the default size.
+          - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+          returned: success
+          type: str
     endpoint:
       description:
       - The IP address of this cluster's master endpoint.
@@ -559,6 +677,34 @@ resources:
           - Human-friendly representation of the condition.
           returned: success
           type: str
+    masterAuthorizedNetworksConfig:
+      description:
+      - Configuration for controlling how IPs are allocated in the cluster.
+      returned: success
+      type: complex
+      contains:
+        enabled:
+          description:
+          - Whether or not master authorized networks is enabled.
+          returned: success
+          type: bool
+        cidrBlocks:
+          description:
+          - Define up to 50 external networks that could access Kubernetes master
+            through HTTPS.
+          returned: success
+          type: complex
+          contains:
+            displayName:
+              description:
+              - Optional field used to identify cidr blocks.
+              returned: success
+              type: str
+            cidrBlock:
+              description:
+              - Block specified in CIDR notation.
+              returned: success
+              type: str
     location:
       description:
       - The location where the cluster is deployed.
@@ -580,18 +726,10 @@ import json
 def main():
     module = GcpModule(argument_spec=dict(location=dict(required=True, type='str', aliases=['region', 'zone'])))
 
-    if module._name == 'gcp_container_cluster_facts':
-        module.deprecate("The 'gcp_container_cluster_facts' module has been renamed to 'gcp_container_cluster_info'", version='2.13')
-
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
 
-    items = fetch_list(module, collection(module))
-    if items.get('clusters'):
-        items = items.get('clusters')
-    else:
-        items = []
-    return_value = {'resources': items}
+    return_value = {'resources': fetch_list(module, collection(module))}
     module.exit_json(**return_value)
 
 
@@ -601,8 +739,7 @@ def collection(module):
 
 def fetch_list(module, link):
     auth = GcpSession(module, 'container')
-    response = auth.get(link)
-    return return_if_object(module, response)
+    return auth.list(link, return_if_object, array_name='clusters')
 
 
 def return_if_object(module, response):

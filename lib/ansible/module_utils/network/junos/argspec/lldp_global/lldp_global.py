@@ -37,7 +37,7 @@ class Lldp_globalArgs(object):
         pass
 
     argument_spec = {'config': {'options': {'address': {'type': 'str'},
-                                            'enable': {'type': 'bool'},
+                                            'enabled': {'type': 'bool'},
                                             'hold_multiplier': {'type': 'int'},
                                             'interval': {'type': 'int'},
                                             'transmit_delay': {'type': 'int'}},

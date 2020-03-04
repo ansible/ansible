@@ -27,20 +27,27 @@ options:
     group:
         description:
             - This is the name of the firmware group
+        type: str
         required: true
     node:
         description:
             - The node to be added to the firmware group - the value equals the NodeID
+        type: str
         required: true
     state:
         description:
             - Use C(present) or C(absent) for adding or removing.
             - Use C(query) for listing an object or multiple objects.
+        type: str
         default: present
         choices: [ absent, present, query ]
-
+    name_alias:
+        version_added: '2.10'
+        description:
+            - The alias for the current object. This relates to the nameAlias field in ACI.
+        type: str
 extends_documentation_fragment:
-    - ACI
+    - aci
 
 author:
     - Steven Gerhart (@sgerhart)
@@ -183,6 +190,7 @@ def main():
         group=dict(type='str', aliases=['group']),  # Not required for querying all objects
         node=dict(type='str', aliases=['node']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -194,9 +202,10 @@ def main():
         ],
     )
 
-    state = module.params['state']
-    group = module.params['group']
-    node = module.params['node']
+    state = module.params.get('state')
+    group = module.params.get('group')
+    node = module.params.get('node')
+    name_alias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -223,6 +232,7 @@ def main():
             class_config=dict(
                 from_=node,
                 to_=node,
+                nameAlias=name_alias,
             ),
 
 

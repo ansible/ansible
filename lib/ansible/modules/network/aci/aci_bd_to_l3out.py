@@ -190,10 +190,10 @@ def main():
         ],
     )
 
-    bd = module.params['bd']
-    l3out = module.params['l3out']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    bd = module.params.get('bd')
+    l3out = module.params.get('l3out')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci = ACIModule(module)
     aci.construct_url(

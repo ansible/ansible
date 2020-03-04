@@ -110,6 +110,10 @@ class L3_interfaces(ConfigBase):
         """
         commands = []
         state = self._module.params['state']
+
+        if state in ('merged', 'replaced', 'overridden') and not want:
+            self._module.fail_json(msg='value of config parameter must not be empty for state {0}'.format(state))
+
         if state == 'overridden':
             commands.extend(self._state_overridden(want=want, have=have))
 

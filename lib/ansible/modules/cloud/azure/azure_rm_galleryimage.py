@@ -17,169 +17,160 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_galleryimage
 version_added: '2.9'
-short_description: Manage Azure SIG Image instance.
+short_description: Manage Azure SIG Image instance
 description:
-  - 'Create, update and delete instance of Azure SIG Image.'
+    - Create, update and delete instance of Azure SIG Image.
 options:
-  resource_group:
-    description:
-      - The name of the resource group.
-    required: true
-    type: str
-  gallery_name:
-    description:
-      - >-
-        The name of the Shared Image Gallery in which the Image Definition is to
-        be created.
-    required: true
-    type: str
-  name:
-    description:
-      - >-
-        The name of the gallery Image Definition to be created or updated. The
-        allowed characters are alphabets and numbers with dots, dashes, and
-        periods allowed in the middle. The maximum length is 80 characters.
-    required: true
-    type: str
-  location:
-    description:
-      - Resource location
-    type: str
-  description:
-    description:
-      - >-
-        The description of this gallery Image Definition resource. This property
-        is updatable.
-    type: str
-  eula:
-    description:
-      - The Eula agreement for the gallery Image Definition.
-    type: str
-  privacy_statement_uri:
-    description:
-      - The privacy statement uri.
-    type: str
-  release_note_uri:
-    description:
-      - The release note uri.
-    type: str
-  os_type:
-    description:
-      - >-
-        This property allows you to specify the type of the OS that is included
-        in the disk when creating a VM from a managed image.
-    choices:
-      - windows
-      - linux
-    required: true
-    type: str
-  os_state:
-    description:
-      - The allowed values for OS State are 'Generalized'.
-    choices:
-      - generalized
-      - specialized
-    required: true
-    type: str
-  end_of_life_date:
-    description:
-      - >-
-        The end of life date of the gallery Image Definition. This property can
-        be used for decommissioning purposes. This property is updatable.
-        Format should be according to ISO-8601, for instance "2019-06-26".
-    type: str
-  identifier:
-    description:
-      - Image identifier.
-    required: true
-    type: dict
-    suboptions:
-      publisher:
+    resource_group:
         description:
-          - The name of the gallery Image Definition publisher.
+            - The name of the resource group.
         required: true
         type: str
-      offer:
+    gallery_name:
         description:
-          - The name of the gallery Image Definition offer.
+            - The name of the Shared Image Gallery in which the Image Definition is to be created.
         required: true
         type: str
-      sku:
+    name:
         description:
-          - The name of the gallery Image Definition SKU.
+            - The name of the gallery Image Definition to be created or updated.
+            - The allowed characters are alphabets and numbers with dots, dashes, and periods allowed in the middle.
+            - The maximum length is 80 characters.
         required: true
         type: str
-  recommended:
+    location:
+        description:
+            - Resource location.
+        type: str
     description:
-      - Recommended parameter values.
-    type: dict
-    suboptions:
-      v_cpus:
         description:
-          - Number of virtual CPUs.
+            - The description of this gallery Image Definition resource. This property is updatable.
+        type: str
+    eula:
+        description:
+            - The Eula agreement for the gallery Image Definition.
+        type: str
+    privacy_statement_uri:
+        description:
+            - The privacy statement uri.
+        type: str
+    release_note_uri:
+        description:
+            - The release note uri.
+        type: str
+    os_type:
+        description:
+            - This property allows you to specify the type of the OS that is included in the disk when creating a VM from a managed image.
+        choices:
+            - windows
+            - linux
+        required: true
+        type: str
+    os_state:
+        description:
+            - The allowed values for OS State are C(generalized).
+        choices:
+            - generalized
+            - specialized
+        required: true
+        type: str
+    end_of_life_date:
+        description:
+            - The end of life date of the gallery Image Definition.
+            - This property can be used for decommissioning purposes.
+            - This property is updatable.
+            - Format should be according to ISO-8601, for instance "2019-06-26".
+        type: str
+    identifier:
+        description:
+            - Image identifier.
+        required: true
         type: dict
         suboptions:
-          min:
-            description:
-              - The minimum number of the resource.
-            type: int
-          max:
-            description:
-              - The maximum number of the resource.
-            type: int
-      memory:
+            publisher:
+                description:
+                    - The name of the gallery Image Definition publisher.
+                required: true
+                type: str
+            offer:
+                 description:
+                     - The name of the gallery Image Definition offer.
+                 required: true
+                 type: str
+            sku:
+                description:
+                    - The name of the gallery Image Definition SKU.
+                required: true
+                type: str
+    recommended:
         description:
-          - Memory.
+            - Recommended parameter values.
         type: dict
         suboptions:
-          min:
-            description:
-              - The minimum number of the resource.
-            type: int
-          max:
-            description:
-              - The maximum number of the resource.
-            type: int
-  disallowed:
-    description:
-      - Disalloved parameter values.
-    type: dict
-    suboptions:
-      disk_types:
+            v_cpus:
+                description:
+                    - Number of virtual CPUs.
+                type: dict
+                suboptions:
+                    min:
+                        description:
+                            - The minimum number of the resource.
+                        type: int
+                    max:
+                        description:
+                            - The maximum number of the resource.
+                        type: int
+            memory:
+                description:
+                    - Memory.
+                type: dict
+                suboptions:
+                    min:
+                        description:
+                            - The minimum number of the resource.
+                        type: int
+                    max:
+                        description:
+                            - The maximum number of the resource.
+                        type: int
+    disallowed:
         description:
-          - A list of disallowed disk types.
-        type: list
-  purchase_plan:
-    description:
-      - Purchase plan.
-    type: dict
-    suboptions:
-      name:
+            - Disallowed parameter values.
+        type: dict
+        suboptions:
+            disk_types:
+                description:
+                    - A list of disallowed disk types.
+                type: list
+    purchase_plan:
         description:
-          - The plan ID.
+            - Purchase plan.
+        type: dict
+        suboptions:
+            name:
+                description:
+                    - The plan ID.
+                type: str
+            publisher:
+                description:
+                    - The publisher ID.
+                type: str
+            product:
+                description:
+                    - The product ID.
+                type: str
+    state:
+        description:
+            - Assert the state of the GalleryImage.
+            - Use C(present) to create or update an GalleryImage and C(absent) to delete it.
+        default: present
+        choices:
+            - absent
+            - present
         type: str
-      publisher:
-        description:
-          - The publisher ID.
-        type: str
-      product:
-        description:
-          - The product ID.
-        type: str
-  state:
-    description:
-      - Assert the state of the GalleryImage.
-      - >-
-        Use C(present) to create or update an GalleryImage and C(absent) to
-        delete it.
-    default: present
-    choices:
-      - absent
-      - present
-    type: str
 extends_documentation_fragment:
-  - azure
-  - azure_tags
+    - azure
+    - azure_tags
 author:
   - Zim Kalinowski (@zikalino)
 
@@ -202,11 +193,11 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-  description:
-    - Resource Id
-  returned: always
-  type: str
-  sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGalle
+    description:
+        - Resource ID.
+    returned: always
+    type: str
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGalle
            ry1283/images/myImage"
 '''
 
@@ -379,7 +370,7 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
 
         self.body = {}
         self.query_parameters = {}
-        self.query_parameters['api-version'] = '2019-03-01'
+        self.query_parameters['api-version'] = '2019-07-01'
         self.header_parameters = {}
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 

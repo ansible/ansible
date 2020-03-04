@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -30,29 +33,38 @@ options:
     choices:
       - present
       - absent
+    type: str
+    required: true
   name:
     description:
       - The name of the Direct Connect connection. This is required to create a
-        new connection. To recreate or delete a connection I(name) or I(connection_id)
-        is required.
+        new connection.
+      - One of I(connection_id) or I(name) must be specified.
+    type: str
   connection_id:
     description:
-      - The ID of the Direct Connect connection. I(name) or I(connection_id) is
-        required to recreate or delete a connection. Modifying attributes of a
-        connection with I(forced_update) will result in a new Direct Connect connection ID.
+      - The ID of the Direct Connect connection.
+      - Modifying attributes of a connection with I(forced_update) will result in a new Direct Connect connection ID.
+      - One of I(connection_id) or I(name) must be specified.
+    type: str
   location:
     description:
-      -  Where the Direct Connect connection is located. Required when I(state=present).
+      - Where the Direct Connect connection is located.
+      - Required when I(state=present).
+    type: str
   bandwidth:
     description:
-      - The bandwidth of the Direct Connect connection. Required when I(state=present).
+      - The bandwidth of the Direct Connect connection.
+      - Required when I(state=present).
     choices:
       - 1Gbps
       - 10Gbps
+    type: str
   link_aggregation_group:
     description:
       - The ID of the link aggregation group you want to associate with the connection.
-        This is optional in case a stand-alone connection is desired.
+      - This is optional when a stand-alone connection is desired.
+    type: str
   forced_update:
     description:
       - To modify bandwidth or location the connection will need to be deleted and recreated.

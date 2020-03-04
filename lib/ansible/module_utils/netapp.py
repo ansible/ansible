@@ -134,6 +134,16 @@ def ontap_sf_host_argument_spec():
     )
 
 
+def aws_cvs_host_argument_spec():
+
+    return dict(
+        api_url=dict(required=True, type='str'),
+        validate_certs=dict(required=False, type='bool', default=True),
+        api_key=dict(required=True, type='str'),
+        secret_key=dict(required=True, type='str')
+    )
+
+
 def create_sf_connection(module, port=None):
     hostname = module.params['hostname']
     username = module.params['username']
@@ -293,20 +303,20 @@ class NetAppESeriesModule(object):
         """
         if not self.is_web_services_valid_cache:
 
-            url_parts = list(urlparse(self.url))
-            if not url_parts[0] or not url_parts[1]:
+            url_parts = urlparse(self.url)
+            if not url_parts.scheme or not url_parts.netloc:
                 self.module.fail_json(msg="Failed to provide valid API URL. Example: https://192.168.1.100:8443/devmgr/v2. URL [%s]." % self.url)
 
-            if url_parts[0] not in ["http", "https"]:
+            if url_parts.scheme not in ["http", "https"]:
                 self.module.fail_json(msg="Protocol must be http or https. URL [%s]." % self.url)
 
-            self.url = "%s://%s/" % (url_parts[0], url_parts[1])
+            self.url = "%s://%s/" % (url_parts.scheme, url_parts.netloc)
             about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
             rc, data = request(about_url, timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, ignore_errors=True, **self.creds)
 
             if rc != 200:
                 self.module.warn("Failed to retrieve web services about information! Retrying with secure ports. Array Id [%s]." % self.ssid)
-                self.url = "https://%s:8443/" % url_parts[1].split(":")[0]
+                self.url = "https://%s:8443/" % url_parts.netloc.split(":")[0]
                 about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
                 try:
                     rc, data = request(about_url, timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, **self.creds)
@@ -378,7 +388,12 @@ class NetAppESeriesModule(object):
 
 
 def create_multipart_formdata(files, fields=None, send_8kb=False):
-    """Create the data for a multipart/form request."""
+    """Create the data for a multipart/form request.
+
+    :param list(list) files: list of lists each containing (name, filename, path).
+    :param list(list) fields: list of lists each containing (key, value).
+    :param bool send_8kb: only sends the first 8kb of the files (default: False).
+    """
     boundary = "---------------------------" + "".join([str(random.randint(0, 9)) for x in range(27)])
     data_parts = list()
     data = None
@@ -570,7 +585,7 @@ class OntapRestAPI(object):
             response.raise_for_status()
             json_dict, json_error = get_json(response)
         except requests.exceptions.HTTPError as err:
-            junk, json_error = get_json(response)
+            __, json_error = get_json(response)
             if json_error is None:
                 self.log_error(status_code, 'HTTP error: %s' % err)
                 error_details = str(err)
@@ -605,17 +620,30 @@ class OntapRestAPI(object):
         method = 'DELETE'
         return self.send_request(method, api, params, json=data)
 
-    def is_rest(self):
+    def _is_rest(self, used_unsupported_rest_properties=None):
         if self.use_rest == "Always":
-            return True
-        if self.use_rest == 'Never':
-            return False
+            if used_unsupported_rest_properties:
+                error = "REST API currently does not support '%s'" % \
+                        ', '.join(used_unsupported_rest_properties)
+                return True, error
+            else:
+                return True, None
+        if self.use_rest == 'Never' or used_unsupported_rest_properties:
+            # force ZAPI if requested or if some parameter requires it
+            return False, None
         method = 'HEAD'
         api = 'cluster/software'
-        status_code, junk = self.send_request(method, api, params=None, return_status_code=True)
+        status_code, __ = self.send_request(method, api, params=None, return_status_code=True)
         if status_code == 200:
-            return True
-        return False
+            return True, None
+        return False, None
+
+    def is_rest(self, used_unsupported_rest_properties=None):
+        ''' only return error if there is a reason to '''
+        use_rest, error = self._is_rest(used_unsupported_rest_properties)
+        if used_unsupported_rest_properties is None:
+            return use_rest
+        return use_rest, error
 
     def log_error(self, status_code, message):
         self.errors.append(message)
@@ -623,3 +651,94 @@ class OntapRestAPI(object):
 
     def log_debug(self, status_code, content):
         self.debug_logs.append((status_code, content))
+
+
+class AwsCvsRestAPI(object):
+    def __init__(self, module, timeout=60):
+        self.module = module
+        self.api_key = self.module.params['api_key']
+        self.secret_key = self.module.params['secret_key']
+        self.api_url = self.module.params['api_url']
+        self.verify = self.module.params['validate_certs']
+        self.timeout = timeout
+        self.url = 'https://' + self.api_url + '/v1/'
+        self.check_required_library()
+
+    def check_required_library(self):
+        if not HAS_REQUESTS:
+            self.module.fail_json(msg=missing_required_lib('requests'))
+
+    def send_request(self, method, api, params, json=None):
+        ''' send http request and process reponse, including error conditions '''
+        url = self.url + api
+        status_code = None
+        content = None
+        json_dict = None
+        json_error = None
+        error_details = None
+        headers = {
+            'Content-type': "application/json",
+            'api-key': self.api_key,
+            'secret-key': self.secret_key,
+            'Cache-Control': "no-cache",
+        }
+
+        def get_json(response):
+            ''' extract json, and error message if present '''
+            try:
+                json = response.json()
+
+            except ValueError:
+                return None, None
+            success_code = [200, 201, 202]
+            if response.status_code not in success_code:
+                error = json.get('message')
+            else:
+                error = None
+            return json, error
+        try:
+            response = requests.request(method, url, headers=headers, timeout=self.timeout, json=json)
+            status_code = response.status_code
+            # If the response was successful, no Exception will be raised
+            json_dict, json_error = get_json(response)
+        except requests.exceptions.HTTPError as err:
+            __, json_error = get_json(response)
+            if json_error is None:
+                error_details = str(err)
+        except requests.exceptions.ConnectionError as err:
+            error_details = str(err)
+        except Exception as err:
+            error_details = str(err)
+        if json_error is not None:
+            error_details = json_error
+
+        return json_dict, error_details
+
+    # If an error was reported in the json payload, it is handled below
+    def get(self, api, params=None):
+        method = 'GET'
+        return self.send_request(method, api, params)
+
+    def post(self, api, data, params=None):
+        method = 'POST'
+        return self.send_request(method, api, params, json=data)
+
+    def patch(self, api, data, params=None):
+        method = 'PATCH'
+        return self.send_request(method, api, params, json=data)
+
+    def put(self, api, data, params=None):
+        method = 'PUT'
+        return self.send_request(method, api, params, json=data)
+
+    def delete(self, api, data, params=None):
+        method = 'DELETE'
+        return self.send_request(method, api, params, json=data)
+
+    def get_state(self, jobId):
+        """ Method to get the state of the job """
+        method = 'GET'
+        response, status_code = self.get('Jobs/%s' % jobId)
+        while str(response['state']) not in 'done':
+            response, status_code = self.get('Jobs/%s' % jobId)
+        return 'done'

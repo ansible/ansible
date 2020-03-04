@@ -19,6 +19,7 @@
 # ============================================================
 - set_fact:
     db_file_name="{{tmp_dir}}/{{file}}"
+    wrong_sql_file="{{tmp_dir}}/wrong.sql"
     dump_file1="{{tmp_dir}}/{{file2}}"
     dump_file2="{{tmp_dir}}/{{file3}}"
 
@@ -63,12 +64,17 @@
     ignore_tables:
         - "{{ db_name }}.department"
     login_unix_socket: '{{ mysql_socket }}'
+    force: yes
+    master_data: 1
+    skip_lock_tables: yes
+    dump_extra_args: --skip-triggers
   register: result
 
 - name: assert successful completion of dump operation
   assert:
     that:
-       - "result.changed == true"
+    - result is changed
+    - result.executed_commands[0] is search("mysqldump --force --socket={{ mysql_socket }} {{ db_name }} --skip-lock-tables --quick --ignore-table={{ db_name }}.department --master-data=1 --skip-triggers")
 
 - name: state dump/import - file name should exist
   file: name={{ db_file_name }} state=file
@@ -277,6 +283,44 @@
        - "'47' in result.stdout"
        - "'Joe Smith' in result.stdout"
 
+##########################
+# Test ``force`` parameter
+##########################
+
+- name: create wrong sql file
+  shell: echo 'CREATE TABLE hello (id int); CREATE ELBAT ehlo (int id);' >> '{{ wrong_sql_file }}'
+
+- name: try to import without force parameter, must fail
+  mysql_db:
+    name: '{{ db_name }}'
+    state: import
+    target: '{{ wrong_sql_file }}'
+    login_unix_socket: '{{ mysql_socket }}'
+    force: no
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.failed == true
+
+- name: try to import with force parameter
+  mysql_db:
+    name: '{{ db_name }}'
+    state: import
+    target: '{{ wrong_sql_file }}'
+    login_unix_socket: '{{ mysql_socket }}'
+    force: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+
+##########
+# Clean up
+##########
+
 - name: remove database name
   mysql_db:
     name: '{{ db_name }}'
@@ -291,6 +335,9 @@
 
 - name: remove file name
   file: name={{ db_file_name }}  state=absent
+
+- name: remove file name
+  file: name={{ wrong_sql_file }}  state=absent
 
 - name: remove dump file1
   file: name={{ dump_file1 }}  state=absent

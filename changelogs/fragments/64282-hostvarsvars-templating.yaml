@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - HostVarsVars - Template the __repr__ value (https://github.com/ansible/ansible/issues/64128).

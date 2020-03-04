@@ -79,31 +79,29 @@ extends_documentation_fragment: junos
 EXAMPLES = """
 - name: configure VLAN ID and name
   junos_vlan:
-    vlan_name: test
+    name: test
     vlan_id: 20
-    name: test-vlan
 
 - name: Link to logical layer 3 interface
   junos_vlan:
-    vlan_name: test
+    name: test
     vlan_id: 20
     l3-interface: vlan.20
-    name: test-vlan
 
 - name: remove VLAN configuration
   junos_vlan:
-    vlan_name: test
+    name: test
     state: absent
 
 - name: deactive VLAN configuration
   junos_vlan:
-    vlan_name: test
+    name: test
     state: present
     active: False
 
 - name: activate VLAN configuration
   junos_vlan:
-    vlan_name: test
+    name: test
     state: present
     active: True
 

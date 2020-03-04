@@ -1,0 +1,7 @@
+cloud/aws
+destructive
+shippable/aws/group4
+non_local
+needs/root
+needs/target/connection
+disabled

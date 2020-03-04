@@ -234,8 +234,7 @@ def create_jks(module, name, openssl_bin, keytool_bin, keystore_path, password):
 
 
 def update_jks_perm(module, keystore_path):
-    module.params['path'] = keystore_path
-    file_args = module.load_file_common_arguments(module.params)
+    file_args = module.load_file_common_arguments(module.params, path=keystore_path)
     module.set_fs_attributes_if_different(file_args, False)
 
 

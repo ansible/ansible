@@ -922,7 +922,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def stop_instance(self):
         instance = self.get_instance()
-        # in check mode instance may not be instanciated
+        # in check mode instance may not be instantiated
         if instance:
             if instance['state'].lower() in ['stopping', 'stopped']:
                 return instance
@@ -939,7 +939,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def start_instance(self):
         instance = self.get_instance()
-        # in check mode instance may not be instanciated
+        # in check mode instance may not be instantiated
         if instance:
             if instance['state'].lower() in ['starting', 'running']:
                 return instance
@@ -960,7 +960,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def restart_instance(self):
         instance = self.get_instance()
-        # in check mode instance may not be instanciated
+        # in check mode instance may not be instantiated
         if instance:
             if instance['state'].lower() in ['running', 'starting']:
                 self.result['changed'] = True
@@ -978,7 +978,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
     def restore_instance(self):
         instance = self.get_instance()
         self.result['changed'] = True
-        # in check mode instance may not be instanciated
+        # in check mode instance may not be instantiated
         if instance:
             args = {}
             args['templateid'] = self.get_template_or_iso(key='id')

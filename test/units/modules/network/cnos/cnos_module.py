@@ -64,9 +64,13 @@ class TestCnosModule(unittest.TestCase):
 
         self.test_log = tempfile.mkstemp(prefix='ansible-test-cnos-module-', suffix='.log')[1]
 
+        self.mock_sleep = patch('time.sleep')
+        self.mock_sleep.start()
+
     def tearDown(self):
         super(TestCnosModule, self).tearDown()
 
+        self.mock_sleep.stop()
         os.remove(self.test_log)
 
     def execute_module(self, failed=False, changed=False, commands=None,

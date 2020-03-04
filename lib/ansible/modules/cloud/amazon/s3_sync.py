@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -32,7 +35,8 @@ options:
     description:
     - sync direction.
     default: 'push'
-    choices: [ push ]
+    choices: [ 'push' ]
+    type: str
   file_change_strategy:
     description:
     - Difference determination method to allow changes-only syncing. Unlike rsync, files are not patched- they are fully skipped or fully uploaded.
@@ -41,32 +45,45 @@ options:
     - force will always upload all files.
     required: false
     default: 'date_size'
-    choices: [ force, checksum, date_size ]
+    choices: [ 'force', 'checksum', 'date_size' ]
+    type: str
   bucket:
     description:
     - Bucket name.
     required: true
+    type: str
   key_prefix:
     description:
     - In addition to file path, prepend s3 path with this prefix. Module will add slash at end of prefix if necessary.
     required: false
+    type: str
   file_root:
     description:
     - File/directory path for synchronization. This is a local path.
     - This root path is scrubbed from the key name, so subdirectories will remain as keys.
     required: true
+    type: path
   permission:
     description:
     - Canned ACL to apply to synced files.
     - Changing this ACL only changes newly synced files, it does not trigger a full reupload.
     required: false
-    choices: [ '', private, public-read, public-read-write, authenticated-read, aws-exec-read, bucket-owner-read, bucket-owner-full-control ]
+    choices:
+    - 'private'
+    - 'public-read'
+    - 'public-read-write'
+    - 'authenticated-read'
+    - 'aws-exec-read'
+    - 'bucket-owner-read'
+    - 'bucket-owner-full-control'
+    type: str
   mime_map:
     description:
     - >
       Dict entry from extension to MIME type. This will override any default/sniffed MIME type.
       For example C({".txt": "application/text", ".yml": "application/text"})
     required: false
+    type: dict
   include:
     description:
     - Shell pattern-style file matching.
@@ -74,6 +91,7 @@ options:
     - For multiple patterns, comma-separate them.
     required: false
     default: "*"
+    type: str
   exclude:
     description:
     - Shell pattern-style file matching.
@@ -81,13 +99,14 @@ options:
     - For multiple patterns, comma-separate them.
     required: false
     default: ".*"
+    type: str
   cache_control:
     description:
-    - This is a string.
     - Cache-Control header set on uploaded objects.
-    - Directives are separated by commmas.
+    - Directives are separated by commas.
     required: false
     version_added: "2.4"
+    type: str
   delete:
     description:
     - Remove remote files that exist in bucket but are not present in the file root.
@@ -95,6 +114,10 @@ options:
     default: no
     version_added: "2.4"
     type: bool
+  retries:
+    description:
+      - The I(retries) option does nothing and will be removed in Ansible 2.14.
+    type: str
 
 requirements:
   - boto3 >= 1.4.4
@@ -130,7 +153,7 @@ EXAMPLES = '''
 
 RETURN = '''
 filelist_initial:
-  description: file listing (dicts) from inital globbing
+  description: file listing (dicts) from initial globbing
   returned: always
   type: list
   sample: [{
@@ -356,7 +379,7 @@ def determine_mimetypes(filelist, override_map):
         localfile = fileentry['fullpath']
 
         # reminder: file extension is '.txt', not 'txt'.
-        _, file_extension = os.path.splitext(localfile)
+        file_extension = os.path.splitext(localfile)[1]
         if override_map and override_map.get(file_extension):
             # override? use it.
             retentry['mime_type'] = override_map[file_extension]
@@ -489,7 +512,7 @@ def main():
         file_root=dict(required=True, type='path'),
         permission=dict(required=False, choices=['private', 'public-read', 'public-read-write', 'authenticated-read',
                                                  'aws-exec-read', 'bucket-owner-read', 'bucket-owner-full-control']),
-        retries=dict(required=False),
+        retries=dict(required=False, removed_in_version='2.14'),
         mime_map=dict(required=False, type='dict'),
         exclude=dict(required=False, default=".*"),
         include=dict(required=False, default="*"),

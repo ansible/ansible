@@ -88,7 +88,7 @@ if ($state -eq "absent") {
 
     $diff_text = $null
     if ($null -ne $group) {
-        # will be overriden later if no change actually occurs
+        # will be overridden later if no change actually occurs
         $diff_text += "[$name]`n"
 
         # change the path of the group
@@ -237,7 +237,7 @@ if ($state -eq "absent") {
             }
         }
 
-        # make sure our diff text is null if no change occured
+        # make sure our diff text is null if no change occurred
         if ($result.changed -eq $false) {
             $diff_text = $null
         }

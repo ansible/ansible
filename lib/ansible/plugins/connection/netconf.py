@@ -82,14 +82,6 @@ options:
       - name: ANSIBLE_PRIVATE_KEY_FILE
     vars:
       - name: ansible_private_key_file
-  timeout:
-    type: int
-    description:
-      - Sets the connection time, in seconds, for communicating with the
-        remote device.  This timeout is used as the default timeout value when
-        awaiting a response after issuing a call to a RPC.  If the RPC
-        does not return in timeout seconds, an error is generated.
-    default: 120
   look_for_keys:
     default: True
     description:
@@ -186,9 +178,10 @@ import json
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.plugins.loader import netconf_loader
-from ansible.plugins.connection import NetworkConnectionBase
+from ansible.plugins.connection import NetworkConnectionBase, ensure_connect
 
 try:
     from ncclient import manager
@@ -203,14 +196,6 @@ except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompat
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
-NETWORK_OS_DEVICE_PARAM_MAP = {
-    "nxos": "nexus",
-    "ios": "default",
-    "dellos10": "default",
-    "sros": "alu",
-    "ce": "huawei"
-}
-
 
 class Connection(NetworkConnectionBase):
     """NetConf connections"""
@@ -222,19 +207,20 @@ class Connection(NetworkConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         # If network_os is not specified then set the network os to auto
-        # This will be used to trigger the the use of guess_network_os when connecting.
+        # This will be used to trigger the use of guess_network_os when connecting.
         self._network_os = self._network_os or 'auto'
 
-        netconf = netconf_loader.get(self._network_os, self)
-        if netconf:
-            self._sub_plugin = {'type': 'netconf', 'name': self._network_os, 'obj': netconf}
-            self.queue_message('log', 'loaded netconf plugin for network_os %s' % self._network_os)
+        self.netconf = netconf_loader.get(self._network_os, self)
+        if self.netconf:
+            self._sub_plugin = {'type': 'netconf', 'name': self.netconf._load_name, 'obj': self.netconf}
+            self.queue_message('vvvv', 'loaded netconf plugin %s from path %s for network_os %s' %
+                               (self.netconf._load_name, self.netconf._original_path, self._network_os))
         else:
-            netconf = netconf_loader.get("default", self)
-            self._sub_plugin = {'type': 'netconf', 'name': 'default', 'obj': netconf}
+            self.netconf = netconf_loader.get("default", self)
+            self._sub_plugin = {'type': 'netconf', 'name': 'default', 'obj': self.netconf}
             self.queue_message('display', 'unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
-        self.queue_message('log', 'network_os is set to %s' % self._network_os)
 
+        self.queue_message('log', 'network_os is set to %s' % self._network_os)
         self._manager = None
         self.key_filename = None
         self._ssh_config = None
@@ -262,12 +248,14 @@ class Connection(NetworkConnectionBase):
         else:
             return super(Connection, self).exec_command(cmd, in_data, sudoable)
 
+    @property
+    @ensure_connect
+    def manager(self):
+        return self._manager
+
     def _connect(self):
         if not HAS_NCCLIENT:
-            raise AnsibleError(
-                'The required "ncclient" python library is required to use the netconf connection type: %s.\n'
-                'Please run pip install ncclient' % to_native(NCCLIENT_IMP_ERR)
-            )
+            raise AnsibleError("%s: %s" % (missing_required_lib("ncclient"), to_native(NCCLIENT_IMP_ERR)))
 
         self.queue_message('log', 'ssh connection done, starting ncclient')
 
@@ -301,8 +289,12 @@ class Connection(NetworkConnectionBase):
             # Network os not discovered. Set it to default
             self.queue_message('vvv', 'Unable to discover network_os. Falling back to default.')
             self._network_os = 'default'
-
-        device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
+        try:
+            ncclient_device_handler = self.netconf.get_option('ncclient_device_handler')
+        except KeyError:
+            ncclient_device_handler = 'default'
+        self.queue_message('vvv', 'identified ncclient device handler: %s.' % ncclient_device_handler)
+        device_params = {'name': ncclient_device_handler}
 
         try:
             port = self._play_context.port or 830
@@ -325,7 +317,7 @@ class Connection(NetworkConnectionBase):
             self._manager._timeout = self.get_option('persistent_command_timeout')
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(to_native(exc))
-        except ImportError as exc:
+        except ImportError:
             raise AnsibleError("connection=netconf is not supported on {0}".format(self._network_os))
 
         if not self._manager.connected:

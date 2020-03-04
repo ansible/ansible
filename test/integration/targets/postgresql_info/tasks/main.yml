@@ -1,0 +1,7 @@
+# For testing getting publication and subscription info
+- import_tasks: setup_publication.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18'
+
+# Initial CI tests of postgresql_info module
+- import_tasks: postgresql_info_initial.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version >= '18'

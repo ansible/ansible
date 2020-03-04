@@ -43,6 +43,7 @@ EXAMPLES = '''
 '''
 
 import os
+import platform
 import socket
 import traceback
 
@@ -50,9 +51,8 @@ from ansible.module_utils.basic import (
     AnsibleModule,
     get_distribution,
     get_distribution_version,
-    get_platform,
-    load_platform_subclass,
 )
+from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils._text import to_native
 
@@ -86,12 +86,12 @@ class UnimplementedStrategy(object):
         self.unimplemented_error()
 
     def unimplemented_error(self):
-        platform = get_platform()
+        system = platform.system()
         distribution = get_distribution()
         if distribution is not None:
-            msg_platform = '%s (%s)' % (platform, distribution)
+            msg_platform = '%s (%s)' % (system, distribution)
         else:
-            msg_platform = platform
+            msg_platform = system
         self.module.fail_json(
             msg='hostname module cannot be used on platform %s' % msg_platform)
 
@@ -111,7 +111,8 @@ class Hostname(object):
     strategy_class = UnimplementedStrategy
 
     def __new__(cls, *args, **kwargs):
-        return load_platform_subclass(Hostname, args, kwargs)
+        new_cls = get_platform_subclass(Hostname)
+        return super(cls, new_cls).__new__(new_cls)
 
     def __init__(self, module):
         self.module = module
@@ -155,8 +156,10 @@ class GenericStrategy(object):
 
     def __init__(self, module):
         self.module = module
-        self.hostname_cmd = self.module.get_bin_path('hostname', True)
         self.changed = False
+        self.hostname_cmd = self.module.get_bin_path('hostnamectl', False)
+        if not self.hostname_cmd:
+            self.hostname_cmd = self.module.get_bin_path('hostname', True)
 
     def update_current_and_permanent_hostname(self):
         self.update_current_hostname()
@@ -374,7 +377,7 @@ class SystemdStrategy(GenericStrategy):
     """
 
     def get_current_hostname(self):
-        cmd = ['hostname']
+        cmd = [self.hostname_cmd, '--transient', 'status']
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
@@ -383,13 +386,13 @@ class SystemdStrategy(GenericStrategy):
     def set_current_hostname(self, name):
         if len(name) > 64:
             self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
-        cmd = ['hostnamectl', '--transient', 'set-hostname', name]
+        cmd = [self.hostname_cmd, '--transient', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
     def get_permanent_hostname(self):
-        cmd = ['hostnamectl', '--static', 'status']
+        cmd = [self.hostname_cmd, '--static', 'status']
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
@@ -398,11 +401,11 @@ class SystemdStrategy(GenericStrategy):
     def set_permanent_hostname(self, name):
         if len(name) > 64:
             self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
-        cmd = ['hostnamectl', '--pretty', 'set-hostname', name]
+        cmd = [self.hostname_cmd, '--pretty', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
-        cmd = ['hostnamectl', '--static', 'set-hostname', name]
+        cmd = [self.hostname_cmd, '--static', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
@@ -607,6 +610,18 @@ class OpenSUSELeapHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class OpenSUSETumbleweedHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Opensuse-tumbleweed'
+    strategy_class = SystemdStrategy
+
+
+class AsteraHostname(Hostname):
+    platform = 'Linux'
+    distribution = '"astralinuxce"'
+    strategy_class = SystemdStrategy
+
+
 class ArchHostname(Hostname):
     platform = 'Linux'
     distribution = 'Arch'
@@ -616,6 +631,12 @@ class ArchHostname(Hostname):
 class ArchARMHostname(Hostname):
     platform = 'Linux'
     distribution = 'Archarm'
+    strategy_class = SystemdStrategy
+
+
+class ManjaroHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Manjaro'
     strategy_class = SystemdStrategy
 
 
@@ -635,6 +656,12 @@ class ClearLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Clear-linux-os'
     strategy_class = SystemdStrategy
+
+
+class CloudlinuxserverHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Cloudlinuxserver'
+    strategy_class = RedHatStrategy
 
 
 class CloudlinuxHostname(Hostname):
@@ -676,6 +703,12 @@ class AmazonLinuxHostname(Hostname):
 class DebianHostname(Hostname):
     platform = 'Linux'
     distribution = 'Debian'
+    strategy_class = DebianStrategy
+
+
+class KylinHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Kylin'
     strategy_class = DebianStrategy
 
 
@@ -766,6 +799,18 @@ class NetBSDHostname(Hostname):
 class NeonHostname(Hostname):
     platform = 'Linux'
     distribution = 'Neon'
+    strategy_class = DebianStrategy
+
+
+class OsmcHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Osmc'
+    strategy_class = SystemdStrategy
+
+
+class VoidLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Void'
     strategy_class = DebianStrategy
 
 

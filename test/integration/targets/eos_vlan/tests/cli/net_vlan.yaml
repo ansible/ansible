@@ -8,7 +8,6 @@
   eos_config:
     lines:
       - no vlan 4000
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 
@@ -17,7 +16,6 @@
     vlan_id: 4000
     name: vlan-4000
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -34,7 +32,6 @@
   eos_config:
     lines:
       - no vlan 4000
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 

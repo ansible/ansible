@@ -43,6 +43,18 @@ options:
             - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
         type: bool
         default: "yes"
+    update_cache_retries:
+        description:
+        - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
+        type: int
+        default: 5
+        version_added: '2.10'
+    update_cache_retry_max_delay:
+        description:
+        - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max delay in seconds.
+        type: int
+        default: 12
+        version_added: '2.10'
     validate_certs:
         description:
             - If C(no), SSL certificates for the target repo will not be validated. This should only be used
@@ -109,6 +121,8 @@ import re
 import sys
 import tempfile
 import copy
+import random
+import time
 
 try:
     import apt
@@ -478,6 +492,17 @@ def get_add_ppa_signing_key_callback(module):
         return _run_command
 
 
+def revert_sources_list(sources_before, sources_after, sourceslist_before):
+    '''Revert the sourcelist files to their previous state.'''
+
+    # First remove any new files that were created:
+    for filename in set(sources_after.keys()).difference(sources_before.keys()):
+        if os.path.exists(filename):
+            os.remove(filename)
+    # Now revert the existing files to their former state:
+    sourceslist_before.save()
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -485,6 +510,8 @@ def main():
             state=dict(type='str', default='present', choices=['absent', 'present']),
             mode=dict(type='raw'),
             update_cache=dict(type='bool', default=True, aliases=['update-cache']),
+            update_cache_retries=dict(type='int', default=5),
+            update_cache_retry_max_delay=dict(type='int', default=12),
             filename=dict(type='str'),
             # This should not be needed, but exists as a failsafe
             install_python_apt=dict(type='bool', default=True),
@@ -544,18 +571,31 @@ def main():
         try:
             sourceslist.save()
             if update_cache:
-                cache = apt.Cache()
-                cache.update()
+                err = ''
+                update_cache_retries = module.params.get('update_cache_retries')
+                update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
+                randomize = random.randint(0, 1000) / 1000.0
+
+                for retry in range(update_cache_retries):
+                    try:
+                        cache = apt.Cache()
+                        cache.update()
+                        break
+                    except apt.cache.FetchFailedException as e:
+                        err = to_native(e)
+
+                    # Use exponential backoff with a max fail count, plus a little bit of randomness
+                    delay = 2 ** retry + randomize
+                    if delay > update_cache_retry_max_delay:
+                        delay = update_cache_retry_max_delay + randomize
+                    time.sleep(delay)
+                else:
+                    revert_sources_list(sources_before, sources_after, sourceslist_before)
+                    module.fail_json(msg='Failed to update apt cache: %s' % (err if err else 'unknown reason'))
+
         except (OSError, IOError) as err:
-            # Revert the sourcelist files to their previous state.
-            # First remove any new files that were created:
-            for filename in set(sources_after.keys()).difference(sources_before.keys()):
-                if os.path.exists(filename):
-                    os.remove(filename)
-            # Now revert the existing files to their former state:
-            sourceslist_before.save()
-            # Return an error message.
-            module.fail_json(msg='apt cache update failed')
+            revert_sources_list(sources_before, sources_after, sourceslist_before)
+            module.fail_json(msg=to_native(err))
 
     module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
 

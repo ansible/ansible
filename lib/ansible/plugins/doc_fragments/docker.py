@@ -75,7 +75,7 @@ options:
     tls:
         description:
             - Secure the connection to the API by using TLS without verifying the authenticity of the Docker host
-              server. Note that if C(tls_verify) is set to C(yes) as well, it will take precedence.
+              server. Note that if I(validate_certs) is set to C(yes) as well, it will take precedence.
             - If the value is not specified in the task, the value of environment variable C(DOCKER_TLS) will be used
               instead. If the environment variable is not set, the default value will be used.
         type: bool
@@ -99,7 +99,7 @@ notes:
     You can define C(DOCKER_HOST), C(DOCKER_TLS_HOSTNAME), C(DOCKER_API_VERSION), C(DOCKER_CERT_PATH), C(DOCKER_SSL_VERSION),
     C(DOCKER_TLS), C(DOCKER_TLS_VERIFY) and C(DOCKER_TIMEOUT). If you are using docker machine, run the script shipped
     with the product that sets up the environment. It will set these variables for you. See
-    U(https://docker-py.readthedocs.io/en/stable/machine/) for more details.
+    U(https://docs.docker.com/machine/reference/env/) for more details.
   - When connecting to Docker daemon with TLS, you might need to install additional Python packages.
     For the Docker SDK for Python, version 2.4 or newer, this can be done by installing C(docker[tls]) with M(pip).
   - Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions.
@@ -116,7 +116,7 @@ requirements:
      Python module has been superseded by L(docker,https://pypi.org/project/docker/)
      (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
      For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
-     install the C(docker) Python module. Note that both modules should I(not)
+     install the C(docker) Python module. Note that both modules should *not*
      be installed at the same time. Also note that when both modules are installed
      and one of them is uninstalled, the other might no longer function and a
      reinstall of it is required."
@@ -132,5 +132,5 @@ requirements:
   - "Docker SDK for Python: Please note that the L(docker-py,https://pypi.org/project/docker-py/)
      Python module has been superseded by L(docker,https://pypi.org/project/docker/)
      (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-     This module does I(not) work with docker-py."
+     This module does *not* work with docker-py."
 '''

@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ecs_service_info
-short_description: list or describe services in ecs
+short_description: List or describe services in ECS
 description:
-    - Lists or describes services in ecs.
+    - Lists or describes services in ECS.
     - This module was called C(ecs_service_facts) before Ansible 2.9, returning C(ansible_facts).
       Note that the M(ecs_service_info) module no longer returns C(ansible_facts)!
 version_added: "2.1"
@@ -28,24 +28,26 @@ options:
         description:
             - Set this to true if you want detailed information about the services.
         required: false
-        default: 'false'
+        default: false
         type: bool
     events:
         description:
-            - Whether to return ECS service events. Only has an effect if C(details) is true.
+            - Whether to return ECS service events. Only has an effect if I(details=true).
         required: false
-        default: 'true'
+        default: true
         type: bool
         version_added: "2.6"
     cluster:
         description:
             - The cluster ARNS in which to list the services.
         required: false
-        default: 'default'
+        type: str
     service:
         description:
             - One or more services to get details for
         required: false
+        type: list
+        elements: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -125,20 +127,22 @@ services:
         deployments:
             description: list of service deployments
             returned: always
-            type: list of complex
+            type: list
+            elements: dict
         events:
             description: list of service events
             returned: when events is true
-            type: list of complex
+            type: list
+            elements: dict
 '''  # NOQA
 
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, AWSRetry
+from ansible.module_utils.ec2 import AWSRetry
 
 
 class EcsServiceManager:
@@ -215,13 +219,12 @@ def chunks(l, n):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         details=dict(type='bool', default=False),
         events=dict(type='bool', default=True),
         cluster=dict(),
         service=dict(type='list')
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     is_old_facts = module._name == 'ecs_service_facts'

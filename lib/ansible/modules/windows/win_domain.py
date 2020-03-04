@@ -41,6 +41,12 @@ options:
     - If not set then the default path is C(%SYSTEMROOT%\NTDS).
     type: path
     version_added: '2.5'
+  log_path:
+    description:
+    - Specifies the fully qualified, non-UNC path to a directory on a fixed disk of the local computer where the log file for this operation is written.
+    - If not set then the default path is C(%SYSTEMROOT%\NTDS).
+    type: path
+    version_added: '2.10'
   sysvol_path:
     description:
     - The path to a directory on a fixed disk of the Windows host where the
@@ -71,6 +77,12 @@ options:
     type: str
     choices: [ Win2003, Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold ]
     version_added: '2.8'
+  install_dns:
+    description:
+    - Whether to install the DNS service when creating the domain controller.
+    type: bool
+    default: yes
+    version_added: '2.10'
 seealso:
 - module: win_domain_controller
 - module: win_domain_computer

@@ -1,0 +1,85 @@
+# Test playbook for the listen_ports_facts module
+# Copyright: (c) 2019, Nathan Davison <ndavison85@gmail.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: install netstat and netcat on deb
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - net-tools
+    - netcat
+  when: ansible_os_family == "Debian"
+
+- name: install netstat and netcat on rh < 7
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - net-tools
+    - nc.x86_64
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int < 7
+
+- name: install netstat and netcat on rh >= 7
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - net-tools
+    - nmap-ncat
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7
+
+- name: start UDP server on port 5555
+  command: nc -u -l -p 5555
+  async: 1000
+  poll: 0
+  when: (ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7) or ansible_os_family == "Debian"
+
+- name: start UDP server on port 5555
+  command: nc -u -l 5555
+  async: 1000
+  poll: 0
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int < 7
+
+- name: start TCP server on port 5556
+  command: "nc -l -p 5556"
+  async: 1000
+  poll: 0
+  when: (ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7) or ansible_os_family == "Debian"
+
+- name: start TCP server on port 5556
+  command: "nc -l 5556"
+  async: 1000
+  poll: 0
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int < 7
+
+- name: Gather listening ports facts
+  listen_ports_facts:
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
+
+- name: check for ansible_facts.udp_listen exists
+  assert:
+    that: ansible_facts.udp_listen is defined
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
+
+- name: check for ansible_facts.tcp_listen exists
+  assert:
+    that: ansible_facts.tcp_listen is defined
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
+
+- name: check TCP 5556 is in listening ports
+  assert:
+    that: 5556 in ansible_facts.tcp_listen | map(attribute='port') | sort | list
+  when: (ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7) or ansible_os_family == "Debian"
+
+- name: check UDP 5555 is in listening ports
+  assert:
+    that: 5555 in ansible_facts.udp_listen | map(attribute='port') | sort | list
+  when: (ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7) or ansible_os_family == "Debian"
+
+- name: kill all async commands
+  command: "kill -9 {{ item.pid }}"
+  loop: "{{ [tcp_listen, udp_listen]|flatten }}"
+  when: item.name == 'nc'
+  ignore_errors: true

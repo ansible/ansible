@@ -17,7 +17,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import copy
 import os
 import re
 import uuid
@@ -25,7 +24,7 @@ import hashlib
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_bytes
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.utils.display import Display
@@ -37,15 +36,16 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         socket_path = None
-        play_context = copy.deepcopy(self._play_context)
-        play_context.network_os = self._get_network_os(task_vars)
+        self._get_network_os(task_vars)
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
-        if play_context.connection != 'network_cli':
+        if persistent_connection != 'network_cli':
             # It is supported only with network_cli
             result['failed'] = True
-            result['msg'] = ('please use network_cli connection type for net_get module')
+            result['msg'] = ('connection type %s is not valid for net_get module,'
+                             ' please use fully qualified name of network_cli connection type' % self._play_context.connection)
             return result
 
         try:
@@ -66,33 +66,31 @@ class ActionModule(ActionBase):
         if proto is None:
             proto = 'scp'
 
-        sock_timeout = play_context.timeout
-
         if socket_path is None:
             socket_path = self._connection.socket_path
 
         conn = Connection(socket_path)
+        sock_timeout = conn.get_option('persistent_command_timeout')
 
         try:
             changed = self._handle_existing_file(conn, src, dest, proto, sock_timeout)
             if changed is False:
-                result['changed'] = False
+                result['changed'] = changed
                 result['destination'] = dest
                 return result
         except Exception as exc:
-            result['msg'] = ('Warning: exception %s idempotency check failed. Check '
-                             'dest' % exc)
+            result['msg'] = ('Warning: %s idempotency check failed. Check dest' % exc)
 
         try:
-            out = conn.get_file(
+            conn.get_file(
                 source=src, destination=dest,
                 proto=proto, timeout=sock_timeout
             )
         except Exception as exc:
             result['failed'] = True
-            result['msg'] = ('Exception received : %s' % exc)
+            result['msg'] = 'Exception received: %s' % exc
 
-        result['changed'] = True
+        result['changed'] = changed
         result['destination'] = dest
         return result
 
@@ -117,27 +115,37 @@ class ActionModule(ActionBase):
         return filename
 
     def _handle_existing_file(self, conn, source, dest, proto, timeout):
+        """
+        Determines whether the source and destination file match.
+
+        :return: False if source and dest both exist and have matching sha1 sums, True otherwise.
+        """
         if not os.path.exists(dest):
             return True
+
         cwd = self._loader.get_basedir()
         filename = str(uuid.uuid4())
         tmp_dest_file = os.path.join(cwd, filename)
         try:
-            out = conn.get_file(
+            conn.get_file(
                 source=source, destination=tmp_dest_file,
                 proto=proto, timeout=timeout
             )
-        except Exception as exc:
-            os.remove(tmp_dest_file)
-            raise Exception(exc)
+        except ConnectionError as exc:
+            error = to_text(exc)
+            if error.endswith("No such file or directory"):
+                if os.path.exists(tmp_dest_file):
+                    os.remove(tmp_dest_file)
+                return True
 
         try:
             with open(tmp_dest_file, 'r') as f:
                 new_content = f.read()
             with open(dest, 'r') as f:
                 old_content = f.read()
-        except (IOError, OSError) as ioexc:
-            raise IOError(ioexc)
+        except (IOError, OSError):
+            os.remove(tmp_dest_file)
+            raise
 
         sha1 = hashlib.sha1()
         old_content_b = to_bytes(old_content, errors='surrogate_or_strict')
@@ -151,8 +159,7 @@ class ActionModule(ActionBase):
         os.remove(tmp_dest_file)
         if checksum_old == checksum_new:
             return False
-        else:
-            return True
+        return True
 
     def _get_working_path(self):
         cwd = self._loader.get_basedir()

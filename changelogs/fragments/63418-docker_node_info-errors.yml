@@ -1,0 +1,3 @@
+bugfixes:
+- "docker_node_info - improve error handling when service inspection fails, for example because node name being ambiguous
+   (https://github.com/ansible/ansible/issues/63353, PR https://github.com/ansible/ansible/pull/63418)."

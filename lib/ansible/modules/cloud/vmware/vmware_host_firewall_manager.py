@@ -99,23 +99,24 @@ EXAMPLES = r'''
         - name: gdbserver
           enabled: True
           allowed_hosts:
-            - all_ip: False
-              ip_address:
-                192.168.20.10
+            all_ip: False
+            ip_address:
+              - 192.168.20.10
+              - 192.168.20.11
         - name: CIMHttpServer
           enabled: True
           allowed_hosts:
-            - all_ip: False
-              ip_network:
-                192.168.100.0/24
+            all_ip: False
+            ip_network:
+              - 192.168.100.0/24
         - name: remoteSerialPort
           enabled: True
           allowed_hosts:
-            - all_ip: False
-              ip_address:
-                192.168.100.11
-              ip_network:
-                192.168.200.0/24
+            all_ip: False
+            ip_address:
+              - 192.168.100.11
+            ip_network:
+              - 192.168.200.0/24
   delegate_to: localhost
 '''
 
@@ -173,7 +174,18 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi
 from ansible.module_utils._text import to_native
-from ansible.module_utils.compat import ipaddress
+import socket
+
+
+def is_ipaddress(value):
+    try:
+        socket.inet_aton(value)
+    except socket.error:
+        try:
+            socket.inet_pton(socket.AF_INET6, value)
+        except socket.error:
+            return False
+    return True
 
 
 class VmwareFirewallManager(PyVmomi):
@@ -203,6 +215,43 @@ class VmwareFirewallManager(PyVmomi):
                     temp_rule_dict['allowed_hosts'] = rule_allow_host
                     self.firewall_facts[host.name][rule_set_obj.key] = temp_rule_dict
 
+    def check_params(self):
+        rules_by_host = {}
+        for host in self.hosts:
+            rules_by_host[host.name] = self.firewall_facts[host.name].keys()
+
+        for rule_option in self.rule_options:
+            rule_name = rule_option.get('name')
+            if rule_name is None:
+                self.module.fail_json(msg="Please specify rule.name for rule set"
+                                          " as it is required parameter.")
+            hosts_with_rule_name = [h for h, r in rules_by_host.items() if rule_name in r]
+            hosts_without_rule_name = set([i.name for i in self.hosts]) - set(hosts_with_rule_name)
+            if hosts_without_rule_name:
+                self.module.fail_json(msg="rule named '%s' wasn't found on hosts: %s" % (
+                    rule_name, hosts_without_rule_name))
+
+            if 'enabled' not in rule_option:
+                self.module.fail_json(msg="Please specify rules.enabled for rule set"
+                                          " %s as it is required parameter." % rule_name)
+
+            allowed_hosts = rule_option.get('allowed_hosts', {})
+            ip_addresses = allowed_hosts.get('ip_address', [])
+            ip_networks = allowed_hosts.get('ip_network', [])
+            for ip_address in ip_addresses:
+                try:
+                    is_ipaddress(ip_address)
+                except ValueError:
+                    self.module.fail_json(msg="The provided IP address %s is not a valid IP"
+                                              " for the rule %s" % (ip_address, rule_name))
+
+            for ip_network in ip_networks:
+                try:
+                    is_ipaddress(ip_network)
+                except ValueError:
+                    self.module.fail_json(msg="The provided IP network %s is not a valid network"
+                                              " for the rule %s" % (ip_network, rule_name))
+
     def ensure(self):
         """
         Function to ensure rule set configuration
@@ -216,47 +265,15 @@ class VmwareFirewallManager(PyVmomi):
             firewall_system = host.configManager.firewallSystem
             if firewall_system is None:
                 continue
-
-            results['rule_set_state'][host.name] = dict()
-
+            results['rule_set_state'][host.name] = {}
             for rule_option in self.rule_options:
                 rule_name = rule_option.get('name', None)
-                if rule_name is None:
-                    self.module.fail_json(msg="Please specify rule.name for rule set"
-                                              " as it is required parameter.")
-                if rule_name not in self.firewall_facts[host.name]:
-                    self.module.fail_json(msg="rule named '%s' wasn't found." % rule_name)
-
-                rule_enabled = rule_option.get('enabled', None)
-                if rule_enabled is None:
-                    self.module.fail_json(msg="Please specify rules.enabled for rule set"
-                                              " %s as it is required parameter." % rule_name)
-
-                # validate IP addresses are valid
-                rule_config = rule_option.get('allowed_hosts', None)
-
-                if 'ip_address' in rule_config[0].keys():
-                    for ip_addr in rule_config[0]['ip_address']:
-                        try:
-                            ip = ipaddress.ip_address(ip_addr)
-                        except ValueError:
-                            self.module.fail_json(msg="The provided IP address %s is not a valid IP"
-                                                      " for the rule %s" % (ip_addr, rule_name))
-
-                # validate provided subnets are valid networks
-                if 'ip_network' in rule_config[0].keys():
-                    for ip_net in rule_config[0]['ip_network']:
-                        try:
-                            network_validation = ipaddress.ip_network(ip_net)
-                        except ValueError:
-                            self.module.fail_json(msg="The provided network %s is not a valid network"
-                                                      " for the rule %s" % (ip_net, rule_name))
 
                 current_rule_state = self.firewall_facts[host.name][rule_name]['enabled']
-                if current_rule_state != rule_enabled:
+                if current_rule_state != rule_option['enabled']:
                     try:
                         if not self.module.check_mode:
-                            if rule_enabled:
+                            if rule_option['enabled']:
                                 firewall_system.EnableRuleset(id=rule_name)
                             else:
                                 firewall_system.DisableRuleset(id=rule_name)
@@ -264,27 +281,31 @@ class VmwareFirewallManager(PyVmomi):
                         enable_disable_changed = True
                     except vim.fault.NotFound as not_found:
                         self.module.fail_json(msg="Failed to enable rule set %s as"
-                                                  " rule set id is unknown : %s" % (rule_name,
-                                                                                    to_native(not_found.msg)))
+                                                  " rule set id is unknown : %s" % (
+                                                      rule_name,
+                                                      to_native(not_found.msg)))
                     except vim.fault.HostConfigFault as host_config_fault:
                         self.module.fail_json(msg="Failed to enabled rule set %s as an internal"
                                                   " error happened while reconfiguring"
-                                                  " rule set : %s" % (rule_name,
-                                                                      to_native(host_config_fault.msg)))
+                                                  " rule set : %s" % (
+                                                      rule_name,
+                                                      to_native(host_config_fault.msg)))
 
                 # save variables here for comparison later and change tracking
                 # also covers cases where inputs may be null
                 permitted_networking = self.firewall_facts[host.name][rule_name]
                 rule_allows_all = permitted_networking['allowed_hosts']['all_ip']
-                playbook_allows_all = rule_config[0]['all_ip']
-                rule_allowed_ip = set(permitted_networking['allowed_hosts']['ip_address'])
-                playbook_allowed_ip = set(rule_config[0].get('ip_address', ''))
+                rule_allowed_ips = set(permitted_networking['allowed_hosts']['ip_address'])
                 rule_allowed_networks = set(permitted_networking['allowed_hosts']['ip_network'])
-                playbook_allowed_networks = set(rule_config[0].get('ip_network', ''))
+
+                allowed_hosts = rule_option.get('allowed_hosts', {})
+                playbook_allows_all = allowed_hosts.get('all_ip', False)
+                playbook_allowed_ips = set(allowed_hosts.get('ip_address', []))
+                playbook_allowed_networks = set(allowed_hosts.get('ip_network', []))
 
                 # compare what is configured on the firewall rule with what the playbook provides
                 allowed_all_ips_different = bool(rule_allows_all != playbook_allows_all)
-                ip_list_different = bool(rule_allowed_ip != playbook_allowed_ip)
+                ip_list_different = bool(rule_allowed_ips != playbook_allowed_ips)
                 ip_network_different = bool(rule_allowed_networks != playbook_allowed_networks)
 
                 # apply everything here in one function call
@@ -295,16 +316,16 @@ class VmwareFirewallManager(PyVmomi):
                             # setup spec
                             firewall_spec = vim.host.Ruleset.RulesetSpec()
                             firewall_spec.allowedHosts = vim.host.Ruleset.IpList()
-                            firewall_spec.allowedHosts.allIp = rule_config[0].get('all_ip', True)
-                            firewall_spec.allowedHosts.ipAddress = rule_config[0].get('ip_address', None)
+                            firewall_spec.allowedHosts.allIp = playbook_allows_all
+                            firewall_spec.allowedHosts.ipAddress = list(playbook_allowed_ips)
                             firewall_spec.allowedHosts.ipNetwork = []
 
-                            if 'ip_network' in rule_config[0].keys():
-                                for allowed_network in rule_config[0].get('ip_network', None):
-                                    tmp_ip_network_spec = vim.host.Ruleset.IpNetwork()
-                                    tmp_ip_network_spec.network = allowed_network.split("/")[0]
-                                    tmp_ip_network_spec.prefixLength = int(allowed_network.split("/")[1])
-                                    firewall_spec.allowedHosts.ipNetwork.append(tmp_ip_network_spec)
+                            for i in playbook_allowed_networks:
+                                address, mask = i.split('/')
+                                tmp_ip_network_spec = vim.host.Ruleset.IpNetwork()
+                                tmp_ip_network_spec.network = address
+                                tmp_ip_network_spec.prefixLength = int(mask)
+                                firewall_spec.allowedHosts.ipNetwork.append(tmp_ip_network_spec)
 
                             firewall_system.UpdateRuleset(id=rule_name, spec=firewall_spec)
                     except vim.fault.NotFound as not_found:
@@ -317,23 +338,26 @@ class VmwareFirewallManager(PyVmomi):
                                                   " rule set : %s" % (rule_name,
                                                                       to_native(host_config_fault.msg)))
                     except vim.fault.RuntimeFault as runtime_fault:
-                        self.module.fail_json(msg="Failed to conifgure the rule set %s as a runtime"
+                        self.module.fail_json(msg="Failed to configure the rule set %s as a runtime"
                                                   " error happened while applying the reconfiguration:"
                                                   " %s" % (rule_name, to_native(runtime_fault.msg)))
 
-                results['rule_set_state'][host.name][rule_name] = dict(current_state=rule_enabled,
-                                                                       previous_state=current_rule_state,
-                                                                       desired_state=rule_enabled,
-                                                                       current_allowed_all=playbook_allows_all,
-                                                                       previous_allowed_all=permitted_networking['allowed_hosts']['all_ip'],
-                                                                       desired_allowed_all=playbook_allows_all,
-                                                                       current_allowed_ip=playbook_allowed_ip,
-                                                                       previous_allowed_ip=set(permitted_networking['allowed_hosts']['ip_address']),
-                                                                       desired_allowed_ip=playbook_allowed_ip,
-                                                                       current_allowed_networks=playbook_allowed_networks,
-                                                                       previous_allowed_networks=set(permitted_networking['allowed_hosts']['ip_network']),
-                                                                       desired_allowed_networks=playbook_allowed_networks
-                                                                       )
+                results['rule_set_state'][host.name][rule_name] = {
+                    'current_state': rule_option['enabled'],
+                    'previous_state': current_rule_state,
+                    'desired_state': rule_option['enabled'],
+                    'allowed_hosts': {
+                        'current_allowed_all': playbook_allows_all,
+                        'previous_allowed_all': permitted_networking['allowed_hosts']['all_ip'],
+                        'desired_allowed_all': playbook_allows_all,
+                        'current_allowed_ip': playbook_allowed_ips,
+                        'previous_allowed_ip': set(permitted_networking['allowed_hosts']['ip_address']),
+                        'desired_allowed_ip': playbook_allowed_ips,
+                        'current_allowed_networks': playbook_allowed_networks,
+                        'previous_allowed_networks': set(permitted_networking['allowed_hosts']['ip_network']),
+                        'desired_allowed_networks': playbook_allowed_networks,
+                    }
+                }
 
         if enable_disable_changed or allowed_ip_changed:
             fw_change_list.append(True)
@@ -359,7 +383,16 @@ def main():
         supports_check_mode=True
     )
 
+    for rule_option in module.params.get("rules", []):
+        if 'allowed_hosts' in rule_option:
+            if isinstance(rule_option['allowed_hosts'], list):
+                if len(rule_option['allowed_hosts']) == 1:
+                    allowed_hosts = rule_option['allowed_hosts'][0]
+                    rule_option['allowed_hosts'] = allowed_hosts
+                    module.deprecate('allowed_hosts should be a dict, not a list', '2.13')
+
     vmware_firewall_manager = VmwareFirewallManager(module)
+    vmware_firewall_manager.check_params()
     vmware_firewall_manager.ensure()
 
 

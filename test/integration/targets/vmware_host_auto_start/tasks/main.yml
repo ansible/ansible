@@ -1,0 +1,57 @@
+# Test code for the vmware_host_auto_start Operations.
+# Copyright: (c) 2019, sky-joker <sky.jokerxx@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+        setup_datastore: true
+
+    - name: Move the ESXi hosts out of the cluster
+      vmware_host:
+        datacenter_name: '{{ dc1 }}'
+        esxi_hostname: '{{ item }}'
+        esxi_username: '{{ esxi_user }}'
+        esxi_password: '{{ esxi_password }}'
+        folder: '/DC0/host'
+        state: present
+      with_items: "{{ esxi_hosts }}"
+
+    - name: Disable the Maintenance Mode
+      vmware_maintenancemode:
+        esxi_hostname: '{{ item }}'
+        state: absent
+      with_items: "{{ esxi_hosts }}"
+
+    - name: Create VM on esxi1
+      vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter: "{{ dc1 }}"
+        validate_certs: no
+        name: '{{ item }}'
+        folder: vm
+        esxi_hostname: "{{ esxi1 }}"
+        state: present
+        guest_id: centos7_64Guest
+        disk:
+        - size_gb: 1
+          type: thin
+          datastore: '{{ rw_datastore }}'
+        hardware:
+          version: latest
+          memory_mb: 1024
+          num_cpus: 1
+          scsi: paravirtual
+      with_items: ['test_vm1', 'test_vm2']
+
+    - include_tasks: reset_auto_start_config.yml
+    - include: vcenter_auto_start_ops.yml
+    - include_tasks: reset_auto_start_config.yml
+    - include: esxi_auto_start_ops.yml
+  always:
+    - include_tasks: reset_auto_start_config.yml

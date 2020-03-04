@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -23,20 +26,21 @@ options:
     description:
       - The name for the placement group.
     required: true
+    type: str
   state:
     description:
       - Create or delete placement group.
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   strategy:
     description:
       - Placement group strategy. Cluster will cluster instances into a
         low-latency group in a single Availability Zone, while Spread spreads
         instances across underlying hardware.
-    required: false
     default: cluster
     choices: [ 'cluster', 'spread' ]
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -87,10 +91,7 @@ placement_group:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (AWSRetry,
-                                      boto3_conn,
-                                      ec2_argument_spec,
-                                      get_aws_connection_info)
+from ansible.module_utils.ec2 import AWSRetry
 try:
     from botocore.exceptions import (BotoCoreError, ClientError)
 except ImportError:
@@ -163,13 +164,10 @@ def delete_placement_group(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(type='str'),
-            state=dict(default='present', choices=['present', 'absent']),
-            strategy=dict(default='cluster', choices=['cluster', 'spread'])
-        )
+    argument_spec = dict(
+        name=dict(required=True, type='str'),
+        state=dict(default='present', choices=['present', 'absent']),
+        strategy=dict(default='cluster', choices=['cluster', 'spread'])
     )
 
     module = AnsibleAWSModule(
@@ -177,12 +175,7 @@ def main():
         supports_check_mode=True
     )
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(
-        module, boto3=True)
-
-    connection = boto3_conn(module,
-                            resource='ec2', conn_type='client',
-                            region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ec2')
 
     state = module.params.get("state")
 

@@ -13,7 +13,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $category_names = Get-AnsibleParam -obj $params -name "category_names" -type "list" -default @("CriticalUpdates", "SecurityUpdates", "UpdateRollups")
 $log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "installed" -validateset "installed", "searched"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "installed" -validateset "installed", "searched", "downloaded"
 $blacklist = Get-AnsibleParam -obj $params -name "blacklist" -type "list"
 $whitelist = Get-AnsibleParam -obj $params -name "whitelist" -type "list"
 $server_selection = Get-AnsibleParam -obj $params -name "server_selection" -type "string" -default "default" -validateset "default", "managed_server", "windows_update"
@@ -296,6 +296,14 @@ $update_script_block = {
             $update_index++
         }
 
+        # Early exit for download-only
+        if ($state -eq "downloaded") {
+            Write-DebugLog -msg "Downloaded $($updates_to_install.Count) updates..."
+            $result.failed = $false
+            $result.msg = "Downloaded $($updates_to_install.Count) updates"
+            return $result
+        }
+
         Write-DebugLog -msg "Installing updates..."
         # install as a batch so the reboot manager will suppress intermediate reboots
 
@@ -576,7 +584,7 @@ if ($wua_available) {
     Write-DebugLog -msg "WUA is available in current logon process, running natively"
     $result = Start-Natively -common_functions $common_functions -script $update_script_block
 } else {
-    Write-DebugLog -msg "WUA is not avialable in current logon process, running with scheduled task"
+    Write-DebugLog -msg "WUA is not available in current logon process, running with scheduled task"
     $result = Start-AsScheduledTask -common_functions $common_functions -script $update_script_block
 }
 

@@ -143,7 +143,7 @@ Try {
     }
 
     # Set run state
-    if (($state -eq 'stopped') -and ($site.State -eq 'Started'))
+    if ((($state -eq 'stopped') -or ($state -eq 'restarted')) -and ($site.State -eq 'Started'))
     {
       Stop-Website -Name $name -ErrorAction Stop
       $result.changed = $true

@@ -18,6 +18,7 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import pytest
 from copy import copy
@@ -89,8 +90,8 @@ def test_lookup_variable(mocker):
     boto3_double.Session.return_value.client.return_value.get_parameters.return_value = simple_variable_success_response
     boto3_client_double = boto3_double.Session.return_value.client
 
-    with mocker.patch.object(boto3, 'session', boto3_double):
-        retval = lookup.run(["simple_variable"], {}, **dummy_credentials)
+    mocker.patch.object(boto3, 'session', boto3_double)
+    retval = lookup.run(["simple_variable"], {}, **dummy_credentials)
     assert(retval[0] == "simplevalue")
     boto3_client_double.assert_called_with('ssm', 'eu-west-1', aws_access_key_id='notakey',
                                            aws_secret_access_key="notasecret", aws_session_token=None)
@@ -105,10 +106,10 @@ def test_path_lookup_variable(mocker):
     get_path_fn.return_value = path_success_response
     boto3_client_double = boto3_double.Session.return_value.client
 
-    with mocker.patch.object(boto3, 'session', boto3_double):
-        args = copy(dummy_credentials)
-        args["bypath"] = 'true'
-        retval = lookup.run(["/testpath"], {}, **args)
+    mocker.patch.object(boto3, 'session', boto3_double)
+    args = copy(dummy_credentials)
+    args["bypath"] = 'true'
+    retval = lookup.run(["/testpath"], {}, **args)
     assert(retval[0]["/testpath/won"] == "simple_value_won")
     assert(retval[0]["/testpath/too"] == "simple_value_too")
     boto3_client_double.assert_called_with('ssm', 'eu-west-1', aws_access_key_id='notakey',
@@ -128,8 +129,8 @@ def test_return_none_for_missing_variable(mocker):
     boto3_double = mocker.MagicMock()
     boto3_double.Session.return_value.client.return_value.get_parameters.return_value = missing_variable_response
 
-    with mocker.patch.object(boto3, 'session', boto3_double):
-        retval = lookup.run(["missing_variable"], {}, **dummy_credentials)
+    mocker.patch.object(boto3, 'session', boto3_double)
+    retval = lookup.run(["missing_variable"], {}, **dummy_credentials)
     assert(retval[0] is None)
 
 
@@ -144,8 +145,8 @@ def test_match_retvals_to_call_params_even_with_some_missing_variables(mocker):
     boto3_double = mocker.MagicMock()
     boto3_double.Session.return_value.client.return_value.get_parameters.return_value = some_missing_variable_response
 
-    with mocker.patch.object(boto3, 'session', boto3_double):
-        retval = lookup.run(["simple", "missing_variable", "/testpath/won", "simple"], {}, **dummy_credentials)
+    mocker.patch.object(boto3, 'session', boto3_double)
+    retval = lookup.run(["simple", "missing_variable", "/testpath/won", "simple"], {}, **dummy_credentials)
     assert(retval == ["simple_value", None, "simple_value_won", "simple_value"])
 
 
@@ -161,5 +162,5 @@ def test_warn_denied_variable(mocker):
     boto3_double.Session.return_value.client.return_value.get_parameters.side_effect = ClientError(error_response, operation_name)
 
     with pytest.raises(AnsibleError):
-        with mocker.patch.object(boto3, 'session', boto3_double):
-            lookup.run(["denied_variable"], {}, **dummy_credentials)
+        mocker.patch.object(boto3, 'session', boto3_double)
+        lookup.run(["denied_variable"], {}, **dummy_credentials)

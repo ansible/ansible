@@ -5,9 +5,16 @@ __metaclass__ = type
 import ast
 import os
 
+from . import types as t
+
+from .io import (
+    read_binary_file,
+)
+
 from .util import (
     display,
     ApplicationError,
+    is_subdir,
 )
 
 from .data import (
@@ -35,13 +42,8 @@ def get_python_module_utils_imports(compile_targets):
     for target in compile_targets:
         imports_by_target_path[target.path] = extract_python_module_utils_imports(target.path, module_utils)
 
-    def recurse_import(import_name, depth=0, seen=None):
-        """Recursively expand module_utils imports from module_utils files.
-        :type import_name: str
-        :type depth: int
-        :type seen: set[str] | None
-        :rtype set[str]
-        """
+    def recurse_import(import_name, depth=0, seen=None):  # type: (str, int, t.Optional[t.Set[str]]) -> t.Set[str]
+        """Recursively expand module_utils imports from module_utils files."""
         display.info('module_utils import: %s%s' % ('  ' * depth, import_name), verbosity=4)
 
         if seen is None:
@@ -132,7 +134,7 @@ def get_python_module_utils_name(path):  # type: (str) -> str
     if path.endswith('/__init__.py'):
         path = os.path.dirname(path)
 
-    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.sep, '.')
+    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.path.sep, '.')
 
     return name
 
@@ -163,20 +165,22 @@ def extract_python_module_utils_imports(path, module_utils):
     :type module_utils: set[str]
     :rtype: set[str]
     """
-    with open(path, 'r') as module_fd:
-        code = module_fd.read()
+    # Python code must be read as bytes to avoid a SyntaxError when the source uses comments to declare the file encoding.
+    # See: https://www.python.org/dev/peps/pep-0263
+    # Specifically: If a Unicode string with a coding declaration is passed to compile(), a SyntaxError will be raised.
+    code = read_binary_file(path)
 
-        try:
-            tree = ast.parse(code)
-        except SyntaxError as ex:
-            # Treat this error as a warning so tests can be executed as best as possible.
-            # The compile test will detect and report this syntax error.
-            display.warning('%s:%s Syntax error extracting module_utils imports: %s' % (path, ex.lineno, ex.msg))
-            return set()
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as ex:
+        # Treat this error as a warning so tests can be executed as best as possible.
+        # The compile test will detect and report this syntax error.
+        display.warning('%s:%s Syntax error extracting module_utils imports: %s' % (path, ex.lineno, ex.msg))
+        return set()
 
-        finder = ModuleUtilFinder(path, module_utils)
-        finder.visit(tree)
-        return finder.imports
+    finder = ModuleUtilFinder(path, module_utils)
+    finder.visit(tree)
+    return finder.imports
 
 
 class ModuleUtilFinder(ast.NodeVisitor):
@@ -248,7 +252,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
 
             name = '.'.join(name.split('.')[:-1])
 
-        if self.path.startswith('test/'):
+        if is_subdir(self.path, data_context().content.test_path):
             return  # invalid imports in tests are ignored
 
         # Treat this error as a warning so tests can be executed as best as possible.

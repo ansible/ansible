@@ -38,6 +38,11 @@ $stderrFile = Get-AnsibleParam -obj $params -name "stderr_file" -type "path"
 
 $executable = Get-AnsibleParam -obj $params -name "executable" -type "path" -default "nssm.exe"
 
+$app_rotate_bytes = Get-AnsibleParam -obj $params -name "app_rotate_bytes" -type "int" -default 104858
+$app_rotate_online = Get-AnsibleParam -obj $params -name "app_rotate_online" -type "int" -default 0 -validateset 0,1
+$app_stop_method_console = Get-AnsibleParam -obj $params -name "app_stop_method_console" -type "int"
+$app_stop_method_skip = Get-AnsibleParam -obj $params -name "app_stop_method_skip" -type "int" -validateset 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+
 # Deprecated options since 2.8. Remove in 2.12
 $startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset $start_modes_map.Keys -resultobj $result
 $dependencies = Get-AnsibleParam -obj $params -name "dependencies" -type "list"
@@ -439,14 +444,14 @@ if ($state -eq 'absent') {
         Update-NssmServiceParameter -parameter "AppRotateFiles" -value 1 @common_params
 
         #don't rotate until the service restarts
-        Update-NssmServiceParameter -parameter "AppRotateOnline" -value 0 @common_params
+        Update-NssmServiceParameter -parameter "AppRotateOnline" -value $app_rotate_online @common_params
 
         #both of the below conditions must be met before rotation will happen
         #minimum age before rotating
         Update-NssmServiceParameter -parameter "AppRotateSeconds" -value 86400 @common_params
 
         #minimum size before rotating
-        Update-NssmServiceParameter -parameter "AppRotateBytes" -value 104858 @common_params
+        Update-NssmServiceParameter -parameter "AppRotateBytes" -value $app_rotate_bytes @common_params
 
 
         ############## DEPRECATED block since 2.8. Remove in 2.12 ##############
@@ -471,6 +476,16 @@ if ($state -eq 'absent') {
         }
         ########################################################################
 
+        # Added per users` requests
+        if ($null -ne $app_stop_method_console)
+        {
+            Update-NssmServiceParameter -parameter "AppStopMethodConsole" -value $app_stop_method_console @common_params
+        }
+
+        if ($null -ne $app_stop_method_skip)
+        {
+            Update-NssmServiceParameter -parameter "AppStopMethodSkip" -value $app_stop_method_skip @common_params
+        }
     }
 }
 

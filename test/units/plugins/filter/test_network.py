@@ -20,11 +20,8 @@ __metaclass__ = type
 import os
 import sys
 
-import pytest
-
 from units.compat import unittest
-from ansible.plugins.filter.network import (HAS_PASSLIB, parse_xml, type5_pw, hash_salt,
-                                            comp_type5, vlan_parser)
+from ansible.plugins.filter.network import parse_xml, type5_pw, hash_salt, comp_type5, vlan_parser
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'network')
 
@@ -83,7 +80,6 @@ class TestNetworkParseFilter(unittest.TestCase):
         self.assertEqual("parse_xml works on string input, but given input of : %s" % type(output), str(e.exception))
 
 
-@pytest.mark.skipif(not HAS_PASSLIB, reason="Current type5_pw filter needs passlib to function")
 class TestNetworkType5(unittest.TestCase):
 
     def test_defined_salt_success(self):
@@ -143,11 +139,10 @@ class TestHashSalt(unittest.TestCase):
     def test_unparseable_salt(self):
         password = '$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
         with self.assertRaises(Exception) as e:
-            parsed = hash_salt(password)
+            hash_salt(password)
         self.assertEqual("Could not parse salt out password correctly from $nTc1$Z28sUTcWfXlvVe2x.3XAa.", str(e.exception))
 
 
-@pytest.mark.skipif(not HAS_PASSLIB, reason="Current comp_type5 filter needs passlib to function")
 class TestCompareType5(unittest.TestCase):
 
     def test_compare_type5_boolean(self):

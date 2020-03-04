@@ -74,6 +74,9 @@ options:
                 description:
                     - The VM Size of each of the Agent Pool VM's (e.g. C(Standard_F1) / C(Standard_D2v2)).
                 required: true
+            vnet_subnet_id:
+                description:
+                    - Id of subnet for Agent Pool VM's Network Interfaces
             os_disk_size_gb:
                 description:
                     - Size of the OS disk.
@@ -195,7 +198,7 @@ options:
                         type: bool
                     subnet_resource_id:
                         description:
-                            - Subnet associdated to the cluster.
+                            - Subnet associated to the cluster.
         version_added: "2.8"
 
 extends_documentation_fragment:
@@ -215,6 +218,7 @@ EXAMPLES = '''
         location: eastus
         resource_group: myResourceGroup
         dns_prefix: akstest
+        kubernetes_version: 1.14.6
         linux_profile:
           admin_username: azureuser
           ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
@@ -254,7 +258,7 @@ state:
         dns_prefix: aks9860bdcd89
         id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
         kube_config: "......"
-        kubernetes_version: 1.13.5
+        kubernetes_version: 1.14.6
         linux_profile:
            admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADA.....

@@ -13,6 +13,18 @@ target="shippable/windows/group${group}/"
 stage="${S:-prod}"
 provider="${P:-default}"
 
+# detect the post migration ansible/ansible repo and enable test support plugins
+if [ -f lib/ansible/config/routing.yml ]; then
+    # this option is only useful for ansible/ansible (not collections) and should not be used prior to migration (except for incidental tests)
+    enable_test_support=--enable-test-support
+
+    if ! ansible-test windows-integration "${target}" --list-targets > /dev/null 2>&1; then
+        # allow tests to pass when windows groups do not exist after migration, making preparation for migration easier
+        echo "Nothing to do since there are no tests after migration for: ${target}"
+        exit
+    fi
+fi
+
 # python versions to test in order
 # python 2.7 runs full tests while other versions run minimal tests
 python_versions=(
@@ -93,5 +105,6 @@ for version in "${python_versions[@]}"; do
     ansible-test windows-integration --color -v --retry-on-error "${ci}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
         "${platforms[@]}" --changed-all-target "${changed_all_target}" --changed-all-mode "${changed_all_mode}" \
         --docker default --python "${version}" \
+        ${enable_test_support:+"$enable_test_support"} \
         --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done

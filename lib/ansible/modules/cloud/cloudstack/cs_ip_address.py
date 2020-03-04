@@ -5,6 +5,9 @@
 # Copyright (c) 2015, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
@@ -67,7 +70,7 @@ options:
     description:
       - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
       - Tags can be used as an unique identifier for the IP Addresses.
-      - In this case, at least one of them must be unique to ensure idempontency.
+      - In this case, at least one of them must be unique to ensure idempotency.
     type: list
     aliases: [ tag ]
     version_added: '2.6'
@@ -80,7 +83,7 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- name: Associate an IP address conditonally
+- name: Associate an IP address conditionally
   cs_ip_address:
     network: My Network
   register: ip_address

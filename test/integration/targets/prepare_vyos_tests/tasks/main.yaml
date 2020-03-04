@@ -5,7 +5,9 @@
   vars:
     lines: |
       set interfaces ethernet eth0 address dhcp
+      set interfaces ethernet eth0 speed auto
+      set interfaces ethernet eth0 duplex auto
       set interfaces ethernet eth1
       set interfaces ethernet eth2
       delete interfaces loopback lo
-  ignore_errors: yes
+  ignore_errors: true

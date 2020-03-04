@@ -20,8 +20,6 @@ short_description: Change an owner of PostgreSQL database object
 description:
 - Change an owner of PostgreSQL database object.
 - Also allows to reassign the ownership of database objects owned by a database role to another role.
-- For more information about REASSIGN OWNED BY command
-  see U(https://www.postgresql.org/docs/current/sql-reassign-owned.html).
 version_added: '2.8'
 
 options:
@@ -40,7 +38,6 @@ options:
     - Type of a database object.
     - Mutually exclusive with I(reassign_owned_by).
     type: str
-    required: yes
     choices: [ database, function, matview, sequence, schema, table, tablespace, view ]
     aliases:
     - type
@@ -48,12 +45,12 @@ options:
     description:
     - The list of role names. The ownership of all the objects within the current database,
       and of all shared objects (databases, tablespaces), owned by this role(s) will be reassigned to I(owner).
-    - Pay attention - it reassignes all objects owned by this role(s) in the I(db)!
+    - Pay attention - it reassigns all objects owned by this role(s) in the I(db)!
     - If role(s) exists, always returns changed True.
     - Cannot reassign ownership of objects that are required by the database system.
-    - For more information see U(https://www.postgresql.org/docs/current/sql-reassign-owned.html).
     - Mutually exclusive with C(obj_type).
     type: list
+    elements: str
   fail_on_role:
     description:
     - If C(yes), fail when I(reassign_owned_by) role does not exist.
@@ -74,6 +71,13 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
+seealso:
+- module: postgresql_user
+- module: postgresql_privs
+- module: postgresql_membership
+- name: PostgreSQL REASSIGN OWNED command reference
+  description: Complete reference of the PostgreSQL REASSIGN OWNED command documentation.
+  link: https://www.postgresql.org/docs/current/sql-reassign-owned.html
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
@@ -157,7 +161,7 @@ class PgOwnership(object):
 
     Arguments:
         module (AnsibleModule): Object of Ansible module class.
-        cursor (psycopg2.connect.cursor): Cursor object for interraction with the database.
+        cursor (psycopg2.connect.cursor): Cursor object for interaction with the database.
         role (str): Role name to set as a new owner of objects.
 
     Important:
@@ -270,49 +274,51 @@ class PgOwnership(object):
     def __is_owner(self):
         """Return True if self.role is the current object owner."""
         if self.obj_type == 'table':
-            query = ("SELECT 1 FROM pg_tables WHERE tablename = '%s' "
-                     "AND tableowner = '%s'" % (self.obj_name, self.role))
+            query = ("SELECT 1 FROM pg_tables "
+                     "WHERE tablename = %(obj_name)s "
+                     "AND tableowner = %(role)s")
 
         elif self.obj_type == 'database':
             query = ("SELECT 1 FROM pg_database AS d "
                      "JOIN pg_roles AS r ON d.datdba = r.oid "
-                     "WHERE d.datname = '%s' "
-                     "AND r.rolname = '%s'" % (self.obj_name, self.role))
+                     "WHERE d.datname = %(obj_name)s "
+                     "AND r.rolname = %(role)s")
 
         elif self.obj_type == 'function':
             query = ("SELECT 1 FROM pg_proc AS f "
                      "JOIN pg_roles AS r ON f.proowner = r.oid "
-                     "WHERE f.proname = '%s' "
-                     "AND r.rolname = '%s'" % (self.obj_name, self.role))
+                     "WHERE f.proname = %(obj_name)s "
+                     "AND r.rolname = %(role)s")
 
         elif self.obj_type == 'sequence':
             query = ("SELECT 1 FROM pg_class AS c "
                      "JOIN pg_roles AS r ON c.relowner = r.oid "
-                     "WHERE c.relkind = 'S' AND c.relname = '%s' "
-                     "AND r.rolname = '%s'" % (self.obj_name, self.role))
+                     "WHERE c.relkind = 'S' AND c.relname = %(obj_name)s "
+                     "AND r.rolname = %(role)s")
 
         elif self.obj_type == 'schema':
             query = ("SELECT 1 FROM information_schema.schemata "
-                     "WHERE schema_name = '%s' "
-                     "AND schema_owner = '%s'" % (self.obj_name, self.role))
+                     "WHERE schema_name = %(obj_name)s "
+                     "AND schema_owner = %(role)s")
 
         elif self.obj_type == 'tablespace':
             query = ("SELECT 1 FROM pg_tablespace AS t "
                      "JOIN pg_roles AS r ON t.spcowner = r.oid "
-                     "WHERE t.spcname = '%s' "
-                     "AND r.rolname = '%s'" % (self.obj_name, self.role))
+                     "WHERE t.spcname = %(obj_name)s "
+                     "AND r.rolname = %(role)s")
 
         elif self.obj_type == 'view':
             query = ("SELECT 1 FROM pg_views "
-                     "WHERE viewname = '%s' "
-                     "AND viewowner = '%s'" % (self.obj_name, self.role))
+                     "WHERE viewname = %(obj_name)s "
+                     "AND viewowner = %(role)s")
 
         elif self.obj_type == 'matview':
             query = ("SELECT 1 FROM pg_matviews "
-                     "WHERE matviewname = '%s' "
-                     "AND matviewowner = '%s'" % (self.obj_name, self.role))
+                     "WHERE matviewname = %(obj_name)s "
+                     "AND matviewowner = %(role)s")
 
-        return exec_sql(self, query, add_to_executed=False)
+        query_params = {'obj_name': self.obj_name, 'role': self.role}
+        return exec_sql(self, query, query_params, add_to_executed=False)
 
     def __set_db_owner(self):
         """Set the database owner."""
@@ -363,8 +369,10 @@ class PgOwnership(object):
         self.changed = exec_sql(self, query, ddl=True)
 
     def __role_exists(self, role):
-        """Return True if role exists, otherwise return Fasle."""
-        return exec_sql(self, "SELECT 1 FROM pg_roles WHERE rolname = '%s'" % role, add_to_executed=False)
+        """Return True if role exists, otherwise return False."""
+        query_params = {'role': role}
+        query = "SELECT 1 FROM pg_roles WHERE rolname = %(role)s"
+        return exec_sql(self, query, query_params, add_to_executed=False)
 
 
 # ===========================================
@@ -379,7 +387,7 @@ def main():
         obj_name=dict(type='str'),
         obj_type=dict(type='str', aliases=['type'], choices=[
             'database', 'function', 'matview', 'sequence', 'schema', 'table', 'tablespace', 'view']),
-        reassign_owned_by=dict(type='list'),
+        reassign_owned_by=dict(type='list', elements='str'),
         fail_on_role=dict(type='bool', default=True),
         db=dict(type='str', aliases=['login_db']),
         session_role=dict(type='str'),

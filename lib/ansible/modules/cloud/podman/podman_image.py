@@ -67,11 +67,11 @@ DOCUMENTATION = """
         - tls_verify
     password:
       description:
-        - Password to use when authenticating to remote regstries.
+        - Password to use when authenticating to remote registries.
       type: str
     username:
       description:
-        - username to use when authenticating to remote regstries.
+        - username to use when authenticating to remote registries.
       type: str
     auth_file:
       description:
@@ -86,7 +86,7 @@ DOCUMENTATION = """
       suboptions:
         annotation:
           description:
-            - Dictionory of key=value pairs to add to the image. Only works with OCI images. Ignored for Docker containers.
+            - Dictionary of key=value pairs to add to the image. Only works with OCI images. Ignored for Docker containers.
           type: str
         force_rm:
           description:
@@ -207,7 +207,7 @@ EXAMPLES = """
     push_args:
       dest: quay.io/acme
 
-- name: Build and push an image to mulitple registries
+- name: Build and push an image to multiple registries
   podman_image:
     name: "{{ item }}"
     path: /path/to/build/dir
@@ -217,7 +217,7 @@ EXAMPLES = """
     - quay.io/acme/nginx
     - docker.io/acme/nginx
 
-- name: Build and push an image to mulitple registries with separate parameters
+- name: Build and push an image to multiple registries with separate parameters
   podman_image:
     name: "{{ item.name }}"
     tag: "{{ item.tag }}"
@@ -489,6 +489,10 @@ class PodmanImageManager(object):
         if self.auth_file:
             args.extend(['--authfile', self.auth_file])
 
+        if self.username and self.password:
+            cred_string = '{user}:{password}'.format(user=self.username, password=self.password)
+            args.extend(['--creds', cred_string])
+
         if self.validate_certs:
             args.append('--tls-verify')
 
@@ -589,7 +593,7 @@ class PodmanImageManager(object):
             if '/' not in self.name:
                 self.module.fail_json(msg="'push_args['dest']' is required when pushing images that do not have the remote registry in the image name")
 
-        # If the push destinaton contains the image name and/or the tag
+        # If the push destination contains the image name and/or the tag
         # remove it and warn since it's not needed.
         elif regexp.search(dest):
             dest = regexp.sub('', dest)

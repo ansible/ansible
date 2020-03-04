@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: xenserver_guest
-short_description: Manages virtual machines running on Citrix XenServer host or pool
+short_description: Manages virtual machines running on Citrix Hypervisor/XenServer host or pool
 description: >
    This module can be used to create new virtual machines from templates or other virtual machines,
    modify various virtual machine components like network and disk, rename a virtual machine and
@@ -24,10 +24,11 @@ author:
 - Bojan Vitnik (@bvitnik) <bvitnik@mainstream.rs>
 notes:
 - Minimal supported version of XenServer is 5.6.
-- Module was tested with XenServer 6.5, 7.1 and 7.2.
-- 'XenAPI Python library can be acquired from XenServer SDK (downloadable from Citrix website) or by running C(pip install XenAPI) (possibly very old
-   version, not compatible with Python 3.x). Latest version can also be acquired from GitHub:
-   https://raw.githubusercontent.com/xapi-project/xen-api/master/scripts/examples/python/XenAPI.py'
+- Module was tested with XenServer 6.5, 7.1, 7.2, 7.6, Citrix Hypervisor 8.0, XCP-ng 7.6 and 8.0.
+- 'To acquire XenAPI Python library, just run C(pip install XenAPI) on your Ansible Control Node. The library can also be found inside
+   Citrix Hypervisor/XenServer SDK (downloadable from Citrix website). Copy the XenAPI.py file from the SDK to your Python site-packages on your
+   Ansible Control Node to use it. Latest version of the library can also be acquired from GitHub:
+   U(https://raw.githubusercontent.com/xapi-project/xen-api/master/scripts/examples/python/XenAPI/XenAPI.py)'
 - 'If no scheme is specified in C(hostname), module defaults to C(http://) because C(https://) is problematic in most setups. Make sure you are
    accessing XenServer host in trusted environment or use C(https://) scheme explicitly.'
 - 'To use C(https://) scheme for C(hostname) you have to either import host certificate to your OS certificate store or use C(validate_certs: no)
@@ -36,16 +37,16 @@ notes:
   XenServer 7.0 or newer for Windows guests by using official XenServer Guest agent support for network configuration. The module will try to
   detect if such support is available and utilize it, else it will use a custom method of configuration via xenstore. Since XenServer Guest
   agent only support None and Static types of network configuration, where None means DHCP configured interface, C(networks.type) and C(networks.type6)
-  values C(none) and C(dhcp) have same effect.
-  More info here: https://xenserver.org/blog/entry/set-windows-guest-vm-static-ip-address-in-xenserver.html'
+  values C(none) and C(dhcp) have same effect. More info here:
+  U(https://www.citrix.com/community/citrix-developer/citrix-hypervisor-developer/citrix-hypervisor-developing-products/citrix-hypervisor-staticip.html)'
 - 'On platforms without official support for network configuration inside a guest OS, network parameters will be written to xenstore
   C(vm-data/networks/<vif_device>) key. Parameters can be inspected by using C(xenstore ls) and C(xenstore read) tools on \*nix guests or trough
   WMI interface on Windows guests. They can also be found in VM facts C(instance.xenstore_data) key as returned by the module. It is up to the user
   to implement a boot time scripts or custom agent that will read the parameters from xenstore and configure network with given parameters.
   Take note that for xenstore data to become available inside a guest, a VM restart is needed hence module will require VM restart if any
   parameter is changed. This is a limitation of XenAPI and xenstore. Considering these limitations, network configuration trough xenstore is most
-  useful for bootstraping newly deployed VMs, much less for reconfiguring existing ones.
-  More info here: https://support.citrix.com/article/CTX226713'
+  useful for bootstraping newly deployed VMs, much less for reconfiguring existing ones. More info here:
+  U(https://support.citrix.com/article/CTX226713)'
 requirements:
 - python >= 2.6
 - XenAPI
@@ -116,7 +117,7 @@ options:
   disks:
     description:
     - A list of disks to add to VM.
-    - All parameters are case sensetive.
+    - All parameters are case sensitive.
     - Removing or detaching existing disks of VM is not supported.
     - 'Required parameters per entry:'
     - ' - C(size_[tb,gb,mb,kb,b]) (integer): Disk storage size in specified unit. VM needs to be shut down to reconfigure this parameter.'
@@ -139,7 +140,7 @@ options:
   networks:
     description:
     - A list of networks (in the order of the NICs).
-    - All parameters are case sensetive.
+    - All parameters are case sensitive.
     - 'Required parameters per entry:'
     - ' - C(name) (string): Name of a XenServer network to attach the network interface to. You can also use C(name_label) as an alias.'
     - 'Optional parameters per entry (used for VM hardware):'
@@ -708,7 +709,11 @@ class XenServerVM(XenServerObject):
                             }
 
                             new_disk_vbd['VDI'] = self.xapi_session.xenapi.VDI.create(new_disk_vdi)
-                            self.xapi_session.xenapi.VBD.create(new_disk_vbd)
+                            vbd_ref_new = self.xapi_session.xenapi.VBD.create(new_disk_vbd)
+
+                            if self.vm_params['power_state'].lower() == "running":
+                                self.xapi_session.xenapi.VBD.plug(vbd_ref_new)
+
                     elif change.get('cdrom'):
                         vm_cdrom_params_list = [cdrom_params for cdrom_params in self.vm_params['VBDs'] if cdrom_params['type'] == "CD"]
 

@@ -1,0 +1,256 @@
+---
+# Tests for EC2 Snapshot
+#
+# Tests ec2_snapshot:
+# - Snapshot creation
+# - Create with last_snapshot_min_age
+# - Snapshot deletion
+#
+# Tests ec2_snapshot_info:
+# - Listing snapshots for filter: tag
+#
+# Possible Bugs:
+# - check_mode not supported
+#
+- name: Integration testing for ec2_snapshot
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+
+  block:
+    - ec2_ami_info:
+        owners: amazon
+        filters:
+          architecture: x86_64
+          virtualization-type: hvm
+          root-device-type: ebs
+          name: "amzn-ami-hvm*"
+      register: amis
+
+    - name: Setup an instance for testing
+      ec2_instance:
+        name: '{{ resource_prefix }}'
+        instance_type: t2.nano
+        image_id: "{{ (amis.images | sort(attribute='creation_date') | last).image_id }}"
+        wait: yes
+        volumes:
+          - device_name: /dev/xvda
+            ebs:
+              volume_size: 8
+              delete_on_termination: true
+      register: instance
+
+    - set_fact:
+        volume_id: '{{ instance.instances[0].block_device_mappings[0].ebs.volume_id }}'
+        instance_id: '{{ instance.instances[0].instance_id }}'
+        device_name: '{{ instance.instances[0].block_device_mappings[0].device_name }}'
+
+#    JR: Check mode not supported
+#    - name: Take snapshot (check mode)
+#      ec2_snapshot:
+#        instance_id: '{{ instance_id }}'
+#        check_mode: true
+#        snapshot_tags:
+#          Test: '{{ resource_prefix }}'
+#      register: result
+#    - assert:
+#        that:
+#          - result is changed
+
+    - name: Take snapshot of volume
+      ec2_snapshot:
+        volume_id: '{{ volume_id }}'
+      register: result
+
+    # The Name tag is created automatically as the instance_name; ie the resource_prefix
+    - name: Get info about snapshots
+      ec2_snapshot_info:
+        filters:
+          "tag:Name": '{{ resource_prefix }}'
+      register: info_result
+
+    - assert:
+        that:
+          - result is changed
+          - info_result.snapshots| length == 1
+          - info_result.snapshots[0].snapshot_id == result.snapshot_id
+          - info_result.snapshots[0].volume_id == result.volume_id
+          - info_result.snapshots[0].volume_size == result.volume_size
+          - info_result.snapshots[0].tags == result.tags
+
+#    JR: Check mode not supported
+#    - name: Take snapshot if most recent >1hr (False) (check mode)
+#      ec2_snapshot:
+#        volume_id: '{{ volume_id }}'
+#        snapshot_tags:
+#          Name: '{{ resource_prefix }}'
+#        last_snapshot_min_age: 60
+#        check_mode: true
+#      register: result
+#    - assert:
+#        that:
+#          - result is not changed
+
+    - name: Take snapshot if most recent >1hr (False)
+      ec2_snapshot:
+        volume_id: '{{ volume_id }}'
+        last_snapshot_min_age: 60
+      register: result
+
+    - name: Get info about snapshots
+      ec2_snapshot_info:
+        filters:
+          "tag:Name": '{{ resource_prefix }}'
+      register: info_result
+
+    - assert:
+        that:
+          - result is not changed
+          - info_result.snapshots| length == 1
+
+    - name: Pause so we can do a last_snapshot_min_age test
+      pause:
+        minutes: 1
+
+#    JR: Check mode not supported
+#    - name: Take snapshot if most recent >1min (True) (check mode)
+#      ec2_snapshot:
+#        volume_id: '{{ volume_id }}'
+#        snapshot_tags:
+#          Name: '{{ resource_prefix }}'
+#        last_snapshot_min_age: 1
+#        check_mode: true
+#      register: result
+#    - assert:
+#        that:
+#          - result is changed
+
+    - name: Take snapshot if most recent >1min (True)
+      ec2_snapshot:
+        volume_id: '{{ volume_id }}'
+        last_snapshot_min_age: 1
+      register: result
+
+    - name: Get info about snapshots
+      ec2_snapshot_info:
+        filters:
+          "tag:Name": '{{ resource_prefix }}'
+      register: info_result
+
+    - assert:
+        that:
+          - result is changed
+          - info_result.snapshots| length == 2
+          - '"{{ result.snapshot_id }}" in "{{ info_result| json_query("snapshots[].snapshot_id") }}"'
+
+#    JR: Check mode not supported
+#    - name: Take snapshot with a tag (check mode)
+#      ec2_snapshot:
+#        volume_id: '{{ volume_id }}'
+#        snapshot_tags:
+#          MyTag: '{{ resource_prefix }}'
+#      register: result
+#    - assert:
+#        that:
+#          - result is changed
+
+    #  Wait at least 15 seconds between concurrent volume snapshots.
+    - name: Prevent SnapshotCreationPerVolumeRateExceeded errors
+      pause:
+        seconds: 15
+
+    - name: Take snapshot and tag it
+      ec2_snapshot:
+        volume_id: '{{ volume_id }}'
+        snapshot_tags:
+          MyTag: '{{ resource_prefix }}'
+      register: tagged_result
+
+    - name: Get info about snapshots by tag
+      ec2_snapshot_info:
+        filters:
+          "tag:MyTag": '{{ resource_prefix }}'
+      register: tag_info_result
+
+    - set_fact:
+        tagged_snapshot_id: '{{ tag_info_result.snapshots[0].snapshot_id }}'
+
+    - assert:
+        that:
+          - tagged_result is changed
+          - tagged_result.tags| length == 2
+          - tag_info_result.snapshots| length == 1
+          - tagged_result.tags.MyTag == "{{ resource_prefix }}"
+          - '"{{ tagged_result.snapshot_id }}" == "{{ tagged_snapshot_id }}"'
+
+    - name: Get info about all snapshots for this test
+      ec2_snapshot_info:
+        filters:
+          "tag:Name": '{{ resource_prefix }}'
+      register: info_result
+
+    - assert:
+        that:
+          - info_result.snapshots| length == 3
+
+    - name: Delete the tagged snapshot
+      ec2_snapshot:
+        state: absent
+        snapshot_id: '{{ tagged_snapshot_id }}'
+
+    - name: Get info about all snapshots for this test
+      ec2_snapshot_info:
+        filters:
+          "tag:Name": '{{ resource_prefix }}'
+      register: info_result
+
+    - assert:
+        that:
+          - info_result.snapshots| length == 2
+          - '"{{ tagged_snapshot_id }}" not in "{{ info_result| json_query("snapshots[].snapshot_id") }}"'
+
+    - name: Delete snapshots
+      ec2_snapshot:
+        state: absent
+        snapshot_id: '{{ item.snapshot_id }}'
+      with_items: '{{ info_result.snapshots }}'
+
+    - name: Get info about all snapshots for this test
+      ec2_snapshot_info:
+        filters:
+          "tag:Name": '{{ resource_prefix }}'
+      register: info_result
+
+    - assert:
+        that:
+          - info_result.snapshots| length == 0
+
+  always:
+
+    - name: Snapshots to delete
+      ec2_snapshot_info:
+        filters:
+          "tag:Name": '{{ resource_prefix }}'
+      register: tagged_snapshots
+
+    - name: Delete tagged snapshots
+      ec2_snapshot:
+        state: absent
+        snapshot_id: '{{ item.snapshot_id }}'
+      with_items: '{{ tagged_snapshots.snapshots }}'
+      ignore_errors: true
+
+    - name: Delete instance
+      ec2_instance:
+        instance_ids: '{{ instance_id }}'
+        state: absent
+      ignore_errors: true
+
+    - name: Delete volume
+      ec2_vol:
+        id: '{{ volume_id }}'
+        state: absent
+      ignore_errors: true

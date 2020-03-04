@@ -192,13 +192,13 @@ options:
     suboptions:
       filename:
         description:
-          - The filename to be used to store the backup configuration. If the the filename
+          - The filename to be used to store the backup configuration. If the filename
             is not given it will be generated based on the hostname, current time and date
             in format defined by <hostname>_config.<current-date>@<current-time>
       dir_path:
         description:
           - This option provides the path ending with directory name in which the backup
-            configuration file will be stored. If the directory does not exit it will be first
+            configuration file will be stored. If the directory does not exist it will be
             created and the filename is either the value of C(filename) or default filename
             as described in C(filename) options description. If the path value is not given
             in that case a I(backup) directory will be created in the current working directory
@@ -308,7 +308,6 @@ from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands, get_connection
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
-from ansible.module_utils.network.nxos.nxos import check_args as nxos_check_args
 from ansible.module_utils.network.common.utils import to_list
 
 
@@ -408,7 +407,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    nxos_check_args(module, warnings)
 
     result = {'changed': False, 'warnings': warnings}
 

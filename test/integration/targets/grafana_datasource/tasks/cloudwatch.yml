@@ -1,0 +1,67 @@
+---
+
+- name: Create cloudwatch datasource
+  grafana_datasource:
+    name: "datasource-cloudwatch"
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    org_id: "1"
+    ds_type: "cloudwatch"
+    url: "http://monitoring.us-west-1.amazonaws.com"
+    aws_auth_type: "keys"
+    aws_default_region: "us-west-1"
+    aws_access_key: "speakFriendAndEnter"
+    aws_secret_key: "mel10n"
+    aws_custom_metrics_namespaces: "n1,n2"
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.name == 'datasource-cloudwatch'"
+      - "result.msg == 'Datasource datasource-cloudwatch created : Datasource added'"
+
+- name: Check cloudwatch datasource creation idempotency
+  grafana_datasource:
+    name: "datasource-cloudwatch"
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    org_id: "1"
+    ds_type: "cloudwatch"
+    url: "http://monitoring.us-west-1.amazonaws.com"
+    aws_auth_type: "keys"
+    aws_default_region: "us-west-1"
+    aws_access_key: "speakFriendAndEnter"
+    aws_secret_key: "mel10n"
+    aws_custom_metrics_namespaces: "n1,n2"
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      # Idempotency is not working currently
+      # "result.changed == false"
+      - "result.name == 'datasource-cloudwatch'"
+      - "result.after.access == 'proxy'"
+      - "result.after.basicAuth == false"
+      - "result.after.database == None"
+      - "result.after.isDefault == false"
+      - "result.after.jsonData.authType == 'keys'"
+      - "result.after.jsonData.customMetricsNamespaces == 'n1,n2'"
+      - "result.after.jsonData.defaultRegion == 'us-west-1'"
+      - "result.after.jsonData.tlsAuth == false"
+      - "result.after.jsonData.tlsAuthWithCACert == false"
+      - "result.after.name == 'datasource-cloudwatch'"
+      - "result.after.orgId == 1"
+      - "result.after.password == ''"
+      - "result.after.type == 'cloudwatch'"
+      - "result.after.url == 'http://monitoring.us-west-1.amazonaws.com'"
+      - "result.after.user == ''"
+      - "result.after.withCredentials == false"

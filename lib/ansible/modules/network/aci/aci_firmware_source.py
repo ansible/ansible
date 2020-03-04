@@ -55,6 +55,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 seealso:
 - name: APIC Management Information Model reference
@@ -225,6 +230,7 @@ def main():
         url_password=dict(type='str', no_log=True),
         url_protocol=dict(type='str', default='scp', choices=['http', 'local', 'scp', 'usbkey'], aliases=['url_proto']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -236,13 +242,14 @@ def main():
         ],
     )
 
-    polling_interval = module.params['polling_interval']
-    url_protocol = module.params['url_protocol']
-    state = module.params['state']
-    source = module.params['source']
-    url = module.params['url']
-    url_password = module.params['url_password']
-    url_username = module.params['url_username']
+    polling_interval = module.params.get('polling_interval')
+    url_protocol = module.params.get('url_protocol')
+    state = module.params.get('state')
+    source = module.params.get('source')
+    url = module.params.get('url')
+    url_password = module.params.get('url_password')
+    url_username = module.params.get('url_username')
+    name_alias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -265,6 +272,7 @@ def main():
                 pollingInterval=polling_interval,
                 proto=url_protocol,
                 user=url_username,
+                nameAlias=name_alias,
             ),
         )
 

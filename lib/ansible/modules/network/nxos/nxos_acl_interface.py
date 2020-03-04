@@ -79,12 +79,12 @@ commands:
 import re
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def check_for_acl_int_present(module, name, intf, direction):
-    # Need to Captitalize the interface name as the nxos
+    # Need to Capitalize the interface name as the nxos
     # output has capitalization
     command = [{
         'command': 'show running-config aclmgr | section {0}'.format(intf.title()),
@@ -153,7 +153,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     results = dict(changed=False, warnings=warnings)
 

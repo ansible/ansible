@@ -2,6 +2,10 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -19,14 +23,17 @@ options:
     description:
       - Name of the s3 bucket
     required: true
+    type: str
   rules:
     description:
       - Cors rules to put on the s3 bucket
+    type: list
   state:
     description:
       - Create or remove cors on the s3 bucket
     required: true
     choices: [ 'present', 'absent' ]
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -92,15 +99,10 @@ rules:
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except Exception:
-    # handled by HAS_BOTO3 check in main
-    pass
+    pass  # Handled by AnsibleAWSModule
 
-import traceback
-
-from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info,
-                                      camel_dict_to_snake_dict, snake_dict_to_camel_dict, compare_policies)
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import snake_dict_to_camel_dict, compare_policies
 
 
 def create_or_update_bucket_cors(connection, module):
@@ -122,17 +124,8 @@ def create_or_update_bucket_cors(connection, module):
     if changed:
         try:
             cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': new_camel_rules})
-        except ClientError as e:
-            module.fail_json(
-                msg="Unable to update CORS for bucket {0}: {1}".format(name, to_native(e)),
-                exception=traceback.format_exc(),
-                **camel_dict_to_snake_dict(e.response)
-            )
-        except BotoCoreError as e:
-            module.fail_json(
-                msg=to_native(e),
-                exception=traceback.format_exc()
-            )
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg="Unable to update CORS for bucket {0}".format(name))
 
     module.exit_json(changed=changed, name=name, rules=rules)
 
@@ -145,40 +138,23 @@ def destroy_bucket_cors(connection, module):
     try:
         cors = connection.delete_bucket_cors(Bucket=name)
         changed = True
-    except ClientError as e:
-        module.fail_json(
-            msg="Unable to delete CORS for bucket {0}: {1}".format(name, to_native(e)),
-            exception=traceback.format_exc(),
-            **camel_dict_to_snake_dict(e.response)
-        )
-    except BotoCoreError as e:
-        module.fail_json(
-            msg=to_native(e),
-            exception=traceback.format_exc()
-        )
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg="Unable to delete CORS for bucket {0}".format(name))
 
     module.exit_json(changed=changed)
 
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True, type='str'),
-            rules=dict(type='list'),
-            state=dict(type='str', choices=['present', 'absent'], required=True)
-        )
+    argument_spec = dict(
+        name=dict(required=True, type='str'),
+        rules=dict(type='list'),
+        state=dict(type='str', choices=['present', 'absent'], required=True)
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec)
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
-
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='s3',
-                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client('s3')
 
     state = module.params.get("state")
 

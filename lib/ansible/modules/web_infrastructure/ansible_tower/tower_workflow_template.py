@@ -34,7 +34,7 @@ options:
       version_added: "2.9"
     ask_inventory:
       description:
-        - Propmt user for inventory on launch.
+        - Prompt user for inventory on launch.
       type: bool
       version_added: "2.9"
     description:
@@ -80,11 +80,11 @@ extends_documentation_fragment: tower
 EXAMPLES = '''
 - tower_workflow_template:
     name: Workflow Template
-    description: My very first Worflow Template
+    description: My very first Workflow Template
     organization: My optional Organization
     schema: "{{ lookup('file', 'my_workflow.json') }}"
 
-- tower_worflow_template:
+- tower_workflow_template:
     name: Workflow Template
     state: absent
 '''

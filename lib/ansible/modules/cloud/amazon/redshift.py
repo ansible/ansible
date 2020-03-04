@@ -21,117 +21,158 @@ module: redshift
 version_added: "2.2"
 short_description: create, delete, or modify an Amazon Redshift instance
 description:
-  - Creates, deletes, or modifies amazon Redshift cluster instances.
+  - Creates, deletes, or modifies Amazon Redshift cluster instances.
 options:
   command:
     description:
       - Specifies the action to take.
     required: true
     choices: [ 'create', 'facts', 'delete', 'modify' ]
+    type: str
   identifier:
     description:
       - Redshift cluster identifier.
     required: true
+    type: str
   node_type:
     description:
-      - The node type of the cluster. Must be specified when command=create.
-    choices: ['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc1.8xlarge', 'dc2.large', 'dc2.8xlarge',
-              'dw1.xlarge', 'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge']
+      - The node type of the cluster.
+      - Require when I(command=create).
+    choices: ['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large','dc2.large',
+              'dc1.8xlarge', 'dw1.xlarge', 'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge']
+    type: str
   username:
     description:
-      - Master database username. Used only when command=create.
+      - Master database username.
+      - Used only when I(command=create).
+    type: str
   password:
     description:
-      - Master database password. Used only when command=create.
+      - Master database password.
+      - Used only when I(command=create).
+    type: str
   cluster_type:
     description:
       - The type of cluster.
     choices: ['multi-node', 'single-node' ]
     default: 'single-node'
+    type: str
   db_name:
     description:
       - Name of the database.
+    type: str
   availability_zone:
     description:
-      - availability zone in which to launch cluster
+      - Availability zone in which to launch cluster.
     aliases: ['zone', 'aws_zone']
+    type: str
   number_of_nodes:
     description:
-      - Number of nodes. Only used when cluster_type=multi-node.
+      - Number of nodes.
+      - Only used when I(cluster_type=multi-node).
+    type: int
   cluster_subnet_group_name:
     description:
-      - which subnet to place the cluster
+      - Which subnet to place the cluster.
     aliases: ['subnet']
+    type: str
   cluster_security_groups:
     description:
-      - in which security group the cluster belongs
+      - In which security group the cluster belongs.
+    type: list
+    elements: str
     aliases: ['security_groups']
   vpc_security_group_ids:
     description:
       - VPC security group
     aliases: ['vpc_security_groups']
+    type: list
+    elements: str
   skip_final_cluster_snapshot:
     description:
-      - skip a final snapshot before deleting the cluster. Used only when command=delete.
+      - Skip a final snapshot before deleting the cluster.
+      - Used only when I(command=delete).
     aliases: ['skip_final_snapshot']
-    default: 'no'
+    default: false
     version_added: "2.4"
+    type: bool
   final_cluster_snapshot_identifier:
     description:
-      - identifier of the final snapshot to be created before deleting the cluster. If this parameter is provided,
-        final_cluster_snapshot_identifier must be false. Used only when command=delete.
+      - Identifier of the final snapshot to be created before deleting the cluster.
+      - If this parameter is provided, I(skip_final_cluster_snapshot) must be C(false).
+      - Used only when I(command=delete).
     aliases: ['final_snapshot_id']
     version_added: "2.4"
+    type: str
   preferred_maintenance_window:
     description:
-      - maintenance window
+      - 'Maintenance window in format of C(ddd:hh24:mi-ddd:hh24:mi).  (Example: C(Mon:22:00-Mon:23:15))'
+      - Times are specified in UTC.
+      - If not specified then a random 30 minute maintenance window is assigned.
     aliases: ['maintance_window', 'maint_window']
+    type: str
   cluster_parameter_group_name:
     description:
-      - name of the cluster parameter group
+      - Name of the cluster parameter group.
     aliases: ['param_group_name']
+    type: str
   automated_snapshot_retention_period:
     description:
-      - period when the snapshot take place
+      - The number of days that automated snapshots are retained.
     aliases: ['retention_period']
+    type: int
   port:
     description:
-      - which port the cluster is listining
+      - Which port the cluster is listening on.
+    type: int
   cluster_version:
     description:
-      - which version the cluster should have
+      - Which version the cluster should have.
     aliases: ['version']
     choices: ['1.0']
+    type: str
   allow_version_upgrade:
     description:
-      - flag to determinate if upgrade of version is possible
+      - When I(allow_version_upgrade=true) the cluster may be automatically
+        upgraded during the maintenance window.
     aliases: ['version_upgrade']
-    default: 'yes'
+    default: true
+    type: bool
   publicly_accessible:
     description:
-      - if the cluster is accessible publicly or not
-    default: 'no'
+      - If the cluster is accessible publicly or not.
+    default: false
+    type: bool
   encrypted:
     description:
-      -  if the cluster is encrypted or not
-    default: 'no'
+      - If the cluster is encrypted or not.
+    default: false
+    type: bool
   elastic_ip:
     description:
-      - if the cluster has an elastic IP or not
+      - An Elastic IP to use for the cluster.
+    type: str
   new_cluster_identifier:
     description:
       - Only used when command=modify.
     aliases: ['new_identifier']
+    type: str
   wait:
     description:
-      - When command=create, modify or restore then wait for the database to enter the 'available' state.
-        When command=delete wait for the database to be terminated.
+      - When I(command=create), I(command=modify) or I(command=restore) then wait for the database to enter the 'available' state.
+      - When I(command=delete) wait for the database to be terminated.
     type: bool
-    default: 'no'
+    default: false
   wait_timeout:
     description:
-      - how long before wait gives up, in seconds
+      - When I(wait=true) defines how long in seconds before giving up.
     default: 300
+    type: int
+  enhanced_vpc_routing:
+    description:
+      - Whether the cluster should have enhanced VPC routing enabled.
+    default: false
+    type: bool
 requirements: [ 'boto3' ]
 extends_documentation_fragment:
   - aws
@@ -172,7 +213,7 @@ cluster:
             type: float
             sample: 1430158536.308
         status:
-            description: Stutus of the cluster.
+            description: Status of the cluster.
             returned: success
             type: str
             sample: "available"
@@ -214,19 +255,20 @@ cluster:
         enhanced_vpc_routing:
             description: status of the enhanced vpc routing feature.
             returned: success
-            type: boolean
+            type: bool
 '''
 
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, snake_dict_to_camel_dict
+    pass  # caught by AnsibleAWSModule
+
+from ansible.module_utils.ec2 import AWSRetry, snake_dict_to_camel_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 
 
 def _collect_facts(resource):
-    """Transfrom cluster information to dict."""
+    """Transform cluster information to dict."""
     facts = {
         'identifier': resource['ClusterIdentifier'],
         'status': resource['ClusterStatus'],
@@ -260,6 +302,45 @@ def _collect_facts(resource):
         facts['availability_zone'] = resource['AvailabilityZone']
 
     return facts
+
+
+@AWSRetry.jittered_backoff()
+def _describe_cluster(redshift, identifier):
+    '''
+    Basic wrapper around describe_clusters with a retry applied
+    '''
+    return redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+
+
+@AWSRetry.jittered_backoff()
+def _create_cluster(redshift, **kwargs):
+    '''
+    Basic wrapper around create_cluster with a retry applied
+    '''
+    return redshift.create_cluster(**kwargs)
+
+
+# Simple wrapper around delete, try to avoid throwing an error if some other
+# operation is in progress
+@AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidClusterState'])
+def _delete_cluster(redshift, **kwargs):
+    '''
+    Basic wrapper around delete_cluster with a retry applied.
+    Explicitly catches 'InvalidClusterState' (~ Operation in progress) so that
+    we can still delete a cluster if some kind of change operation was in
+    progress.
+    '''
+    return redshift.delete_cluster(**kwargs)
+
+
+@AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidClusterState'])
+def _modify_cluster(redshift, **kwargs):
+    '''
+    Basic wrapper around modify_cluster with a retry applied.
+    Explicitly catches 'InvalidClusterState' (~ Operation in progress) for cases
+    where another modification is still in progress
+    '''
+    return redshift.modify_cluster(**kwargs)
 
 
 def create_cluster(module, redshift):
@@ -299,15 +380,16 @@ def create_cluster(module, redshift):
         params['d_b_name'] = d_b_name
 
     try:
-        redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+        _describe_cluster(redshift, identifier)
         changed = False
     except is_boto3_error_code('ClusterNotFound'):
         try:
-            redshift.create_cluster(ClusterIdentifier=identifier,
-                                    NodeType=node_type,
-                                    MasterUsername=username,
-                                    MasterUserPassword=password,
-                                    **snake_dict_to_camel_dict(params, capitalize_first=True))
+            _create_cluster(redshift,
+                            ClusterIdentifier=identifier,
+                            NodeType=node_type,
+                            MasterUsername=username,
+                            MasterUserPassword=password,
+                            **snake_dict_to_camel_dict(params, capitalize_first=True))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Failed to create cluster")
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
@@ -323,7 +405,7 @@ def create_cluster(module, redshift):
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Timeout waiting for the cluster creation")
     try:
-        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+        resource = _describe_cluster(redshift, identifier)
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Failed to describe cluster")
 
@@ -340,7 +422,7 @@ def describe_cluster(module, redshift):
     identifier = module.params.get('identifier')
 
     try:
-        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+        resource = _describe_cluster(redshift, identifier)
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Error describing cluster")
 
@@ -368,10 +450,10 @@ def delete_cluster(module, redshift):
                 params[p] = module.params.get(p)
 
     try:
-        redshift.delete_cluster(
+        _delete_cluster(
+            redshift,
             ClusterIdentifier=identifier,
-            **snake_dict_to_camel_dict(params, capitalize_first=True)
-        )
+            **snake_dict_to_camel_dict(params, capitalize_first=True))
     except is_boto3_error_code('ClusterNotFound'):
         return(False, {})
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
@@ -418,8 +500,10 @@ def modify_cluster(module, redshift):
     # enhanced_vpc_routing parameter change needs an exclusive request
     if module.params.get('enhanced_vpc_routing') is not None:
         try:
-            redshift.modify_cluster(ClusterIdentifier=identifier,
-                                    EnhancedVpcRouting=module.params.get('enhanced_vpc_routing'))
+            _modify_cluster(
+                redshift,
+                ClusterIdentifier=identifier,
+                EnhancedVpcRouting=module.params.get('enhanced_vpc_routing'))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Couldn't modify redshift cluster %s " % identifier)
     if wait:
@@ -437,8 +521,10 @@ def modify_cluster(module, redshift):
 
     # change the rest
     try:
-        redshift.modify_cluster(ClusterIdentifier=identifier,
-                                **snake_dict_to_camel_dict(params, capitalize_first=True))
+        _modify_cluster(
+            redshift,
+            ClusterIdentifier=identifier,
+            **snake_dict_to_camel_dict(params, capitalize_first=True))
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Couldn't modify redshift cluster %s " % identifier)
 
@@ -456,7 +542,7 @@ def modify_cluster(module, redshift):
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Timeout waiting for cluster modification")
     try:
-        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+        resource = _describe_cluster(redshift, identifier)
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier)
 
@@ -464,8 +550,7 @@ def modify_cluster(module, redshift):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         command=dict(choices=['create', 'facts', 'delete', 'modify'], required=True),
         identifier=dict(required=True),
         node_type=dict(choices=['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge',
@@ -474,7 +559,7 @@ def main():
                                 'dw2.large', 'dw2.8xlarge'], required=False),
         username=dict(required=False),
         password=dict(no_log=True, required=False),
-        db_name=dict(require=False),
+        db_name=dict(required=False),
         cluster_type=dict(choices=['multi-node', 'single-node'], default='single-node'),
         cluster_security_groups=dict(aliases=['security_groups'], type='list'),
         vpc_security_group_ids=dict(aliases=['vpc_security_groups'], type='list'),
@@ -497,7 +582,7 @@ def main():
         enhanced_vpc_routing=dict(type='bool', default=False),
         wait=dict(type='bool', default=False),
         wait_timeout=dict(type='int', default=300),
-    ))
+    )
 
     required_if = [
         ('command', 'delete', ['skip_final_cluster_snapshot']),
@@ -516,7 +601,7 @@ def main():
     final_cluster_snapshot_identifier = module.params.get('final_cluster_snapshot_identifier')
     # can't use module basic required_if check for this case
     if command == 'delete' and skip_final_cluster_snapshot is False and final_cluster_snapshot_identifier is None:
-        module.fail_json(msg="Need to specifiy final_cluster_snapshot_identifier if skip_final_cluster_snapshot is False")
+        module.fail_json(msg="Need to specify final_cluster_snapshot_identifier if skip_final_cluster_snapshot is False")
 
     conn = module.client('redshift')
 

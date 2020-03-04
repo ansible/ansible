@@ -32,10 +32,8 @@ DOCUMENTATION = '''
 module: gcp_compute_route_info
 description:
 - Gather info for GCP Route
-- This module was called C(gcp_compute_route_facts) before Ansible 2.9. The usage
-  has not changed.
 short_description: Gather info for GCP Route
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -48,7 +46,54 @@ options:
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
     type: list
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
+notes:
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -111,18 +156,19 @@ resources:
     nextHopGateway:
       description:
       - URL to a gateway that should handle matching packets.
-      - 'Currently, you can only specify the internet gateway, using a full or partial
-        valid URL: * U(https://www.googleapis.com/compute/v1/projects/project/global/gateways/default-internet-gateway)
-        * projects/project/global/gateways/default-internet-gateway * global/gateways/default-internet-gateway
-        .'
+      - 'Currently, you can only specify the internet gateway, using a full or partial valid URL:'
+      - ' * https://www.googleapis.com/compute/v1/projects/project/global/gateways/default-internet-gateway'
+      - ' * projects/project/global/gateways/default-internet-gateway'
+      - ' * global/gateways/default-internet-gateway'
       returned: success
       type: str
     nextHopInstance:
       description:
       - URL to an instance that should handle matching packets.
-      - 'You can specify this as a full or partial URL. For example: * U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
-        instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
-        .'
+      - 'You can specify this as a full or partial URL. For example:'
+      - ' * https://www.googleapis.com/compute/v1/projects/project/zones/zone/instances/instance'
+      - ' * projects/project/zones/zone/instances/instance'
+      - ' * zones/zone/instances/instance'
       returned: success
       type: dict
     nextHopIp:
@@ -140,6 +186,16 @@ resources:
       - URL to a Network that should handle matching packets.
       returned: success
       type: str
+    nextHopIlb:
+      description:
+      - The URL to a forwarding rule of type loadBalancingScheme=INTERNAL that should
+        handle matching packets.
+      - 'You can only specify the forwarding rule as a partial or full URL. For example,
+        the following are all valid URLs: U(https://www.googleapis.com/compute/v1/projects/project/regions/region/forwardingRules/forwardingRule)
+        regions/region/forwardingRules/forwardingRule Note that this can only be used
+        when the destinationRange is a public (non-RFC 1918) IP CIDR range.'
+      returned: success
+      type: dict
 '''
 
 ################################################################################
@@ -156,18 +212,10 @@ import json
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str')))
 
-    if module._name == 'gcp_compute_route_facts':
-        module.deprecate("The 'gcp_compute_route_facts' module has been renamed to 'gcp_compute_route_info'", version='2.13')
-
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
-    items = fetch_list(module, collection(module), query_options(module.params['filters']))
-    if items.get('items'):
-        items = items.get('items')
-    else:
-        items = []
-    return_value = {'resources': items}
+    return_value = {'resources': fetch_list(module, collection(module), query_options(module.params['filters']))}
     module.exit_json(**return_value)
 
 
@@ -177,8 +225,7 @@ def collection(module):
 
 def fetch_list(module, link, query):
     auth = GcpSession(module, 'compute')
-    response = auth.get(link, params={'filter': query})
-    return return_if_object(module, response)
+    return auth.list(link, return_if_object, array_name='items', params={'filter': query})
 
 
 def query_options(filters):

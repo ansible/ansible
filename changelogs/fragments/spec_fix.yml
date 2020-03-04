@@ -1,0 +1,2 @@
+minor_changes:
+- Fixed typos in various modules regarding argument_spec data types.

@@ -22,10 +22,14 @@
     state: directory
 
 # firewalld service operation test cases
-- import_tasks: service_test_cases.yml
+- include_tasks: service_test_cases.yml
+  # Skipping on CentOS 8 due to https://github.com/ansible/ansible/issues/64750
+  when: not (ansible_facts.distribution == "CentOS" and ansible_distribution_major_version is version('8', '=='))
 
 # firewalld port operation test cases
-- import_tasks: port_test_cases.yml
+- include_tasks: port_test_cases.yml
+  # Skipping on CentOS 8 due to https://github.com/ansible/ansible/issues/64750
+  when: not (ansible_facts.distribution == "CentOS" and ansible_distribution_major_version is version('8', '=='))
 
 # firewalld source operation test cases
 - import_tasks: source_test_cases.yml

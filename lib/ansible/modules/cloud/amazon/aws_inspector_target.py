@@ -2,6 +2,9 @@
 # Copyright (c) 2018 Dennis Conrad for Sainsbury's
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -21,6 +24,7 @@ options:
       - The user-defined name that identifies the assessment target.  The name
         must be unique within the AWS account.
     required: true
+    type: str
   state:
     description:
       - The state of the assessment target.
@@ -28,10 +32,12 @@ options:
       - absent
       - present
     default: present
+    type: str
   tags:
     description:
       - Tags of the EC2 instances to be added to the assessment target.
       - Required if C(state=present).
+    type: dict
 extends_documentation_fragment:
   - aws
   - ec2
@@ -98,7 +104,6 @@ updated_at:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.ec2 import (
-    HAS_BOTO3,
     ansible_dict_to_boto3_tag_list,
     boto3_tag_list_to_ansible_dict,
     camel_dict_to_snake_dict,
@@ -108,7 +113,7 @@ from ansible.module_utils.ec2 import (
 try:
     import botocore
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
@@ -126,9 +131,6 @@ def main():
         supports_check_mode=False,
         required_if=required_if,
     )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 and botocore are required for this module')
 
     name = module.params.get('name')
     state = module.params.get('state').lower()

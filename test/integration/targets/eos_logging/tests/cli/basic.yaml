@@ -107,12 +107,35 @@
     that:
       - 'result.changed == false'
 
+- name: Set up logging facility alone
+  eos_logging:
+    facility: local2
+    state: present
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging facility local2" in result.commands'
+
+- name: Set up logging facility (idempotent)
+  eos_logging:
+    facility: local2
+    state: present
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
 - name: remove logging as collection tearDown
   eos_logging:
     aggregate:
       - { dest: console, level: warnings, state: absent }
       - { dest: buffered, level: informational, size: 4096, state: absent }
-      - { facility: local7, state: absent }
+      - { facility: local2, state: absent }
   become: yes
   register: result
 
@@ -121,4 +144,4 @@
       - 'result.changed == true'
       - '"no logging console" in result.commands'
       - '"no logging buffered" in result.commands'
-      - '"no logging facility local7" in result.commands'
+      - '"no logging facility local2" in result.commands'

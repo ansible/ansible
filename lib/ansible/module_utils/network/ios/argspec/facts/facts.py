@@ -18,14 +18,7 @@ class FactsArgs(object):
     def __init__(self, **kwargs):
         pass
 
-    choices = [
-        'all',
-        '!all',
-        'interfaces',
-        '!interfaces'
-    ]
-
     argument_spec = {
         'gather_subset': dict(default=['!config'], type='list'),
-        'gather_network_resources': dict(choices=choices, type='list'),
+        'gather_network_resources': dict(type='list'),
     }

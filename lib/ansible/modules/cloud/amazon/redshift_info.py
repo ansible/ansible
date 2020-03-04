@@ -17,7 +17,7 @@ module: redshift_info
 author: "Jens Carl (@j-carl)"
 short_description: Gather information about Redshift cluster(s)
 description:
-  - Gather information about Redshift cluster(s)
+  - Gather information about Redshift cluster(s).
   - This module was called C(redshift_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.4"
 requirements: [ boto3 ]
@@ -28,11 +28,13 @@ options:
       - "This is a regular expression match with implicit '^'. Append '$' for a complete match."
     required: false
     aliases: ['name', 'identifier']
+    type: str
   tags:
     description:
       - "A dictionary/hash of tags in the format { tag1_name: 'tag1_value', tag2_name: 'tag2_value' }
        to match against the security group(s) you are searching for."
     required: false
+    type: dict
 extends_documentation_fragment:
     - ec2
     - aws
@@ -278,16 +280,14 @@ iam_roles:
 '''
 
 import re
-import traceback
 
 try:
-    from botocore.exception import ClientError
+    from botocore.exception import BotoCoreError, ClientError
 except ImportError:
-    pass  # will be picked up from imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 
 def match_tags(tags_to_match, cluster):
@@ -304,8 +304,8 @@ def find_clusters(conn, module, identifier=None, tags=None):
     try:
         cluster_paginator = conn.get_paginator('describe_clusters')
         clusters = cluster_paginator.paginate().build_full_result()
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to fetch clusters.')
 
     matched_clusters = []
 
@@ -330,14 +330,11 @@ def find_clusters(conn, module, identifier=None, tags=None):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            cluster_identifier=dict(type='str', aliases=['identifier', 'name']),
-            tags=dict(type='dict')
-        )
+    argument_spec = dict(
+        cluster_identifier=dict(type='str', aliases=['identifier', 'name']),
+        tags=dict(type='dict')
     )
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
@@ -347,14 +344,7 @@ def main():
     cluster_identifier = module.params.get('cluster_identifier')
     cluster_tags = module.params.get('tags')
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        redshift = boto3_conn(module, conn_type='client', resource='redshift', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    redshift = module.client('redshift')
 
     results = find_clusters(redshift, module, identifier=cluster_identifier, tags=cluster_tags)
     module.exit_json(results=results)

@@ -1,0 +1,482 @@
+- name: AWS ACM integration test
+  module_defaults:
+    group/aws:
+      aws_region: "{{ aws_region }}"
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+  block:
+  # just check this task doesn't fail
+  # I'm not sure if I can assume there aren't already other certs in this account
+  - name: list certs
+    aws_acm_info:
+    register: list_all
+    failed_when: list_all.certificates is not defined
+
+  - name: ensure absent cert which doesn't exist - first time
+    aws_acm:
+      name_tag: "{{ item.name }}"
+      state: absent
+    with_items: "{{ local_certs }}"
+
+  # just in case it actually existed and was deleted last task
+  # check we don't fail when deleting nothing
+  - name: ensure absent cert which doesn't exist - second time
+    aws_acm:
+      name_tag: "{{ item.name }}"
+      state: absent
+    with_items: "{{ local_certs }}"
+    register: absent_start_two
+    failed_when: absent_start_two.changed
+
+  - name: list cert which shouldn't exist
+    aws_acm_info:
+      tags:
+        Name: "{{ item.name }}"
+    register: list_tag
+    with_items: "{{ local_certs }}"
+    failed_when: list_tag.certificates | length > 0
+
+  - name: check directory was made
+    assert:
+      that:
+       - remote_tmp_dir is defined
+
+  # https://github.com/vbotka/ansible-certificate/blob/master/tasks/cert-self-signed.yml
+  - name: Generate private key for local certs
+    openssl_privatekey:
+      path: "{{ item.priv_key }}"
+      type: RSA
+      size: 2048 # ACM doesn't work properly with 4096
+    with_items: "{{ local_certs }}"
+
+  - name: Generate an OpenSSL Certificate Signing Request for own certs
+    openssl_csr:
+      path: "{{ item.csr }}"
+      privatekey_path: "{{ item.priv_key }}"
+      common_name: "{{ item.domain }}"
+    with_items: "{{ local_certs }}"
+
+  - name: Generate a Self Signed OpenSSL certificate for own certs
+    openssl_certificate:
+      provider: selfsigned
+      path: "{{ item.cert }}"
+      csr_path: "{{ item.csr }}"
+      privatekey_path: "{{ item.priv_key }}"
+      signature_algorithms:
+        - 'sha256WithRSAEncryption'
+        # - 'sha512WithRSAEncryption'
+    with_items: "{{ local_certs }}"
+
+  # now upload that certificate
+  - name: upload certificates first time
+    aws_acm:
+      name_tag: "{{ item.name }}"
+      certificate: "{{ lookup('file', item.cert ) }}"
+      private_key: "{{ lookup('file', item.priv_key ) }}"
+      state: present
+    register: upload
+    with_items: "{{ local_certs }}"
+    until: upload is succeeded
+    retries: 5
+    delay: 10
+
+  - assert:
+      that:
+        - prev_task.certificate.arn is defined
+        - ('arn:aws:acm:123' | regex_search( 'arn:aws:acm:' )) is defined # check this works like s.startswith('arn')
+        - (prev_task.certificate.arn | regex_search( 'arn:aws:acm:' )) is defined
+        - prev_task.certificate.domain_name == original_cert.domain
+        - prev_task.changed
+    with_items: "{{ upload.results }}"
+    vars:
+      original_cert: "{{ item.item }}"
+      prev_task: "{{ item }}"
+
+  - name: fetch data about cert just uploaded, by ARN
+    aws_acm_info:
+      certificate_arn: "{{ item.certificate.arn }}"
+    register: fetch_after_up
+    with_items: "{{ upload.results }}"
+
+  - name: check output of prior task (fetch data about cert just uploaded, by ARN)
+    assert:
+      that:
+      - fetch_after_up_result.certificates | length == 1
+      - fetch_after_up_result.certificates[0].certificate_arn == upload_result.certificate.arn
+      - fetch_after_up_result.certificates[0].domain_name == original_cert.domain
+      - (fetch_after_up_result.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', ''))
+        ==
+        (lookup( 'file', original_cert.cert ) | replace( ' ', '' ) | replace( '\n', '' ))
+      - "'Name' in fetch_after_up_result.certificates[0].tags"
+      - fetch_after_up_result.certificates[0].tags['Name'] == original_cert.name
+    with_items: "{{ fetch_after_up.results }}"
+    vars:
+      fetch_after_up_result: "{{ item }}" # corresponding result from task registered as fetch_after_up
+      upload_result: "{{ item.item }}" # corresponding result from task registered as upload
+      original_cert: "{{ item.item.item }}"
+
+  - name: fetch data about cert just uploaded, by name
+    aws_acm_info:
+      tags:
+        Name: "{{ original_cert.name }}"
+    register: fetch_after_up_name
+    with_items: "{{ upload.results }}"
+    vars:
+      upload_result: "{{ item }}"
+      original_cert: "{{ item.item }}"
+
+  - name: check fetched data of cert we just uploaded
+    assert:
+      that:
+      - fetch_after_up_name_result.certificates | length == 1
+      - fetch_after_up_name_result.certificates[0].certificate_arn == upload_result.certificate.arn
+      - fetch_after_up_name_result.certificates[0].domain_name == original_cert.domain
+      - (fetch_after_up_name_result.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', ''))
+        ==
+        (lookup('file', original_cert.cert ) | replace( ' ', '' ) | replace( '\n', ''))
+      - "'Name' in fetch_after_up_name_result.certificates[0].tags"
+      - fetch_after_up_name_result.certificates[0].tags['Name'] == original_cert.name
+    with_items: "{{ fetch_after_up_name.results }}"
+    vars:
+      fetch_after_up_name_result: "{{ item }}" # corresponding result from task registered as fetch_after_up_name
+      upload_result: "{{ item.item }}" # corresponding result from task registered as upload
+      original_cert: "{{ item.item.item }}"
+
+
+  - name: fetch data about cert just uploaded, by domain name
+    aws_acm_info:
+      domain_name: "{{ original_cert.domain }}"
+    register: fetch_after_up_domain
+    with_items: "{{ upload.results }}"
+    vars:
+      original_cert: "{{ item.item }}"
+
+  - name: compare fetched data of cert just uploaded to upload task
+    assert:
+      that:
+      - fetch_after_up_domain_result.certificates | length == 1
+      - fetch_after_up_domain_result.certificates[0].certificate_arn == upload_result.certificate.arn
+      - fetch_after_up_domain_result.certificates[0].domain_name == original_cert.domain
+      - (fetch_after_up_domain_result.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', ''))
+        ==
+        (lookup('file', original_cert.cert ) | replace( ' ', '' ) | replace( '\n', ''))
+      - "'Name' in fetch_after_up_domain_result.certificates[0].tags"
+      - fetch_after_up_domain_result.certificates[0].tags['Name'] == original_cert.name
+    with_items: "{{ fetch_after_up_domain.results }}"
+    vars:
+      fetch_after_up_domain_result: "{{ item }}"
+      upload_result: "{{ item.item }}"
+      original_cert: "{{ item.item.item }}"
+
+
+  # now upload that certificate
+  - name: upload certificates again, check not changed
+    aws_acm:
+      name_tag: "{{ item.name }}"
+      certificate: "{{ lookup('file', item.cert ) }}"
+      private_key: "{{ lookup('file', item.priv_key ) }}"
+      state: present
+    register: upload2
+    with_items: "{{ local_certs }}"
+    failed_when: upload2.changed
+
+
+  - name: update first cert with body of the second, first time
+    aws_acm:
+      state: present
+      name_tag: "{{ local_certs[0].name }}"
+      certificate: "{{ lookup('file', local_certs[1].cert ) }}"
+      private_key: "{{ lookup('file', local_certs[1].priv_key ) }}"
+    register: overwrite
+
+  - name: check output of previous task (update first cert with body of the second, first time)
+    assert:
+      that:
+      - overwrite.certificate.arn is defined
+      - overwrite.certificate.arn | regex_search( 'arn:aws:acm:' ) is defined
+      - overwrite.certificate.arn == upload.results[0].certificate.arn
+      - overwrite.certificate.domain_name == local_certs[1].domain
+      - overwrite.changed
+
+  - name: check update was sucessfull
+    aws_acm_info:
+      tags:
+        Name: "{{ local_certs[0].name }}"
+    register: fetch_after_overwrite
+
+  - name: check output of update fetch
+    assert:
+      that:
+        - fetch_after_overwrite.certificates | length == 1
+        - fetch_after_overwrite.certificates[0].certificate_arn == fetch_after_up.results[0].certificates[0].certificate_arn
+        - fetch_after_overwrite.certificates[0].domain_name == local_certs[1].domain
+        - (fetch_after_overwrite.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', '')) == (lookup('file', local_certs[1].cert )| replace( ' ', '' ) | replace( '\n', ''))
+        - "'Name' in fetch_after_overwrite.certificates[0].tags"
+        - fetch_after_overwrite.certificates[0].tags['Name'] == local_certs[0].name
+
+  - name: fetch other cert
+    aws_acm_info:
+      tags:
+        Name: "{{ local_certs[1].name }}"
+    register: check_after_overwrite
+
+  - name: check other cert unaffected
+    assert:
+      that:
+      - check_after_overwrite.certificates | length == 1
+      - check_after_overwrite.certificates[0].certificate_arn == fetch_after_up.results[1].certificates[0].certificate_arn
+      - check_after_overwrite.certificates[0].domain_name == local_certs[1].domain
+      - (check_after_overwrite.certificates[0].certificate  | replace( ' ', '' ) | replace( '\n', '')) == (lookup('file', local_certs[1].cert ) | replace( ' ', '' ) | replace( '\n', ''))
+      - "'Name' in check_after_overwrite.certificates[0].tags"
+      - check_after_overwrite.certificates[0].tags['Name'] == local_certs[1].name
+
+  - name: update first cert with body of the second again
+    aws_acm:
+      state: present
+      name_tag: "{{ local_certs[0].name }}"
+      certificate: "{{ lookup('file', local_certs[1].cert ) }}"
+      private_key: "{{ lookup('file', local_certs[1].priv_key ) }}"
+    register: overwrite2
+
+  - name: check output of previous task (update first cert with body of the second again)
+    assert:
+      that:
+      - overwrite2.certificate.arn is defined
+      - overwrite2.certificate.arn | regex_search( 'arn:aws:acm:' ) is defined
+      - overwrite2.certificate.arn == upload.results[0].certificate.arn
+      - overwrite2.certificate.domain_name == local_certs[1].domain
+      - not overwrite2.changed
+
+  - name: delete certs 1 and 2
+    aws_acm:
+      state: absent
+      domain_name: "{{ local_certs[1].domain }}"
+    register: delete_both
+
+  - name: test prev task
+    assert:
+      that:
+        - delete_both.arns is defined
+        - check_after_overwrite.certificates[0].certificate_arn in delete_both.arns
+        - upload.results[0].certificate.arn in delete_both.arns
+        - delete_both.changed
+
+  - name: fetch info for certs 1 and 2
+    aws_acm_info:
+      tags:
+        Name: "{{ local_certs[item].name }}"
+    register: check_del_one
+    with_items:
+      - 0
+      - 1
+    # There is the chance that we're running as the deletion is in progress,
+    # this could trigger ResourceNotFoundException allow a single retry to cope
+    # with this.
+    retries: 2
+    until:
+    - check_del_one is not failed
+    - check_del_one.certificates | length == 0
+    delay: 10
+
+  - name: check certs 1 and 2 were already deleted
+    with_items: "{{ check_del_one.results }}"
+    assert:
+      that: item.certificates | length == 0
+
+  - name: check cert 3 not deleted
+    aws_acm_info:
+      tags:
+        Name: "{{ local_certs[2].name }}"
+    register: check_del_one_remain
+    failed_when: check_del_one_remain.certificates | length != 1
+
+  - name: delete cert 3
+    aws_acm:
+      state: absent
+      domain_name: "{{ local_certs[2].domain }}"
+    register: delete_third
+
+  - name: check cert 3 deletion went as expected
+    assert:
+      that:
+      - delete_third.arns is defined
+      - delete_third.arns | length == 1
+      - delete_third.arns[0] == upload.results[2].certificate.arn
+      - delete_third.changed
+
+  - name: check cert 3 was deleted
+    aws_acm_info:
+      tags:
+        Name: "{{ local_certs[2].name }}"
+    register: check_del_three
+    failed_when: check_del_three.certificates | length != 0
+
+  - name: delete cert 3 again
+    aws_acm:
+      state: absent
+      domain_name: "{{ local_certs[2].domain }}"
+    register: delete_third
+
+  - name: check deletion of cert 3 not changed, because already deleted
+    assert:
+      that:
+      - delete_third.arns is defined
+      - delete_third.arns | length == 0
+      - not delete_third.changed
+
+  - name: check directory was made
+    assert:
+      that:
+       - remote_tmp_dir is defined
+
+  - name: Generate private key for cert to be chained
+    openssl_privatekey:
+      path: "{{ chained_cert.priv_key }}"
+      type: RSA
+      size: 2048 # ACM doesn't work properly with 4096
+
+  - name: Generate two OpenSSL Certificate Signing Requests for cert to be chained
+    openssl_csr:
+      path: "{{ item.csr }}"
+      privatekey_path: "{{ chained_cert.priv_key }}"
+      common_name: "{{ chained_cert.domain }}"
+    with_items: "{{ chained_cert.chains }}"
+
+
+  - name: Sign new certs with cert 0 and 1
+    openssl_certificate:
+      provider: ownca
+      path: "{{ item.cert }}"
+      csr_path: "{{ item.csr }}"
+      ownca_path: "{{ local_certs[item.ca].cert }}"
+      ownca_privatekey_path: "{{ local_certs[item.ca].priv_key }}"
+      signature_algorithms:
+        - 'sha256WithRSAEncryption'
+        # - 'sha512WithRSAEncryption'
+    with_items: "{{ chained_cert.chains }}"
+
+  - name: check files exist (for next task)
+    file:
+      path: "{{ item }}"
+      state: file
+    with_items:
+      - "{{ local_certs[chained_cert.chains[0].ca].cert }}"
+      - "{{ local_certs[chained_cert.chains[1].ca].cert }}"
+      - "{{ chained_cert.chains[0].cert }}"
+      - "{{ chained_cert.chains[1].cert }}"
+
+  - name: Find chains
+    certificate_complete_chain:
+      input_chain: "{{ lookup('file', item.cert ) }}"
+      root_certificates:
+      - "{{ local_certs[item.ca].cert }}"
+    with_items: "{{ chained_cert.chains }}"
+    register: chains
+
+  - name: upload chained cert, first chain, first time
+    aws_acm:
+      name_tag: "{{ chained_cert.name }}"
+      certificate: "{{ lookup('file', chained_cert.chains[0].cert ) }}"
+      certificate_chain: "{{ chains.results[0].complete_chain | join('\n') }}"
+      private_key: "{{ lookup('file', chained_cert.priv_key ) }}"
+      state: present
+    register: upload_chain
+    failed_when: not upload_chain.changed
+
+  - name: fetch chain of cert we just uploaded
+    aws_acm_info:
+      tags:
+        Name: "{{ chained_cert.name }}"
+    register: check_chain
+
+  - name: check chain of cert we just uploaded
+    assert:
+      that:
+        - (check_chain.certificates[0].certificate_chain | replace( ' ', '' ) | replace( '\n', ''))
+          ==
+          ( chains.results[0].complete_chain | join( '\n' ) | replace( ' ', '' ) | replace( '\n', '') )
+        - (check_chain.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', ''))
+          ==
+          ( lookup('file', chained_cert.chains[0].cert ) | replace( ' ', '' ) | replace( '\n', '') )
+
+  - name: upload chained cert again, check not changed
+    aws_acm:
+      name_tag: "{{ chained_cert.name }}"
+      certificate: "{{ lookup('file', chained_cert.chains[0].cert ) }}"
+      certificate_chain: "{{ chains.results[0].complete_chain | join('\n') }}"
+      private_key: "{{ lookup('file', chained_cert.priv_key ) }}"
+      state: present
+    register: upload_chain_2
+
+  - name: check previous task not changed
+    assert:
+      that:
+        - upload_chain_2.certificate.arn == upload_chain.certificate.arn
+        - not upload_chain_2.changed
+
+  - name: upload chained cert, different chain
+    aws_acm:
+      name_tag: "{{ chained_cert.name }}"
+      certificate: "{{ lookup('file', chained_cert.chains[1].cert ) }}"
+      certificate_chain: "{{ chains.results[1].complete_chain | join('\n') }}"
+      private_key: "{{ lookup('file', chained_cert.priv_key ) }}"
+      state: present
+    register: upload_chain_3
+
+  - name: check uploading with different chain is changed
+    assert:
+      that:
+      - upload_chain_3.changed
+      - upload_chain_3.certificate.arn == upload_chain.certificate.arn
+
+  - name: fetch info about chain of cert we just updated
+    aws_acm_info:
+      tags:
+        Name: "{{ chained_cert.name }}"
+    register: check_chain_2
+
+  - name: check chain of cert we just uploaded
+    assert:
+      that:
+        - (check_chain_2.certificates[0].certificate_chain | replace( ' ', '' ) | replace( '\n', ''))
+          ==
+          ( chains.results[1].complete_chain | join( '\n' ) | replace( ' ', '' ) | replace( '\n', '') )
+        - (check_chain_2.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', ''))
+          ==
+          ( lookup('file', chained_cert.chains[1].cert ) | replace( ' ', '' ) | replace( '\n', '') )
+
+  - name: delete chained cert
+    aws_acm:
+      name_tag: "{{ chained_cert.name }}"
+      state: absent
+    register: delete_chain_3
+
+  - name: check deletion of chained cert 3 is changed
+    assert:
+      that:
+      - delete_chain_3.changed
+      - upload_chain.certificate.arn in delete_chain_3.arns
+
+
+  always:
+
+  - name: delete first bunch of certificates
+    aws_acm:
+      name_tag: "{{ item.name }}"
+      state: absent
+    with_items: "{{ local_certs }}"
+    ignore_errors: yes
+
+  - name: delete chained cert
+    aws_acm:
+      state: absent
+      name_tag: "{{ chained_cert.name }}"
+    ignore_errors: yes
+
+
+  - name: deleting local directory with test artefacts
+    file:
+      path: "{{ remote_tmp_dir }}"
+      state: directory
+    ignore_errors: yes

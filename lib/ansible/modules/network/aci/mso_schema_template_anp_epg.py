@@ -68,16 +68,37 @@ options:
         description:
         - The template that defines the referenced BD.
         type: str
+  vrf:
+    version_added: '2.9'
+    description:
+    - The VRF associated to this ANP.
+    type: dict
+    suboptions:
+      name:
+        description:
+        - The name of the VRF to associate with.
+        required: true
+        type: str
+      schema:
+        description:
+        - The schema that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current schema.
+        type: str
+      template:
+        description:
+        - The template that defines the referenced VRF.
+        type: str
   subnets:
     description:
     - The subnets associated to this ANP.
     type: list
     suboptions:
-      ip:
+      subnet:
         description:
         - The IP range in CIDR notation.
         type: str
         required: true
+        aliases: [ ip ]
       description:
         description:
         - The description of this subnet.
@@ -111,9 +132,15 @@ options:
     choices: [ enforced, unenforced ]
   intersite_multicaste_source:
     description:
-    - Whether intersite multicase source is enabled.
+    - Whether intersite multicast source is enabled.
     - When not specified, this parameter defaults to C(no).
     type: bool
+  preferred_group:
+    description:
+    - Whether this EPG is added to preferred group or not.
+    - When not specified, this parameter defaults to C(no).
+    type: bool
+    version_added: 2.9
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -139,7 +166,24 @@ EXAMPLES = r'''
     template: Template 1
     anp: ANP 1
     epg: EPG 1
+    bd:
+     name: bd1
+    vrf:
+     name: vrf1
     state: present
+  delegate_to: localhost
+
+- name: Add a new EPG with preferred group.
+  mso_schema_template_anp_epg:
+    host: mso_host
+    username: admin
+    password: SomeSecretPassword
+    schema: Schema 1
+    template: Template 1
+    anp: ANP 1
+    epg: EPG 1
+    state: present
+    preferred_group: yes
   delegate_to: localhost
 
 - name: Remove an EPG
@@ -151,6 +195,10 @@ EXAMPLES = r'''
     template: Template 1
     anp: ANP 1
     epg: EPG 1
+    bd:
+     name: bd1
+    vrf:
+     name: vrf1
     state: absent
   delegate_to: localhost
 
@@ -163,6 +211,10 @@ EXAMPLES = r'''
     template: Template 1
     anp: ANP 1
     epg: EPG 1
+    bd:
+     name: bd1
+    vrf:
+     name: vrf1
     state: query
   delegate_to: localhost
   register: query_result
@@ -175,6 +227,11 @@ EXAMPLES = r'''
     schema: Schema 1
     template: Template 1
     anp: ANP 1
+    epg: EPG 1
+    bd:
+     name: bd1
+    vrf:
+     name: vrf1
     state: query
   delegate_to: localhost
   register: query_result
@@ -195,12 +252,14 @@ def main():
         anp=dict(type='str', required=True),
         epg=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         bd=dict(type='dict', options=mso_reference_spec()),
+        vrf=dict(type='dict', options=mso_reference_spec()),
         display_name=dict(type='str'),
         useg_epg=dict(type='bool'),
         intra_epg_isolation=dict(type='str', choices=['enforced', 'unenforced']),
         intersite_multicaste_source=dict(type='bool'),
         subnets=dict(type='list', options=mso_subnet_spec()),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        preferred_group=dict(type='bool'),
     )
 
     module = AnsibleModule(
@@ -212,50 +271,52 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    template = module.params['template']
-    anp = module.params['anp']
-    epg = module.params['epg']
-    display_name = module.params['display_name']
-    bd = module.params['bd']
-    useg_epg = module.params['useg_epg']
-    intra_epg_isolation = module.params['intra_epg_isolation']
-    intersite_multicaste_source = module.params['intersite_multicaste_source']
-    subnets = module.params['subnets']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    template = module.params.get('template')
+    anp = module.params.get('anp')
+    epg = module.params.get('epg')
+    display_name = module.params.get('display_name')
+    bd = module.params.get('bd')
+    vrf = module.params.get('vrf')
+    useg_epg = module.params.get('useg_epg')
+    intra_epg_isolation = module.params.get('intra_epg_isolation')
+    intersite_multicaste_source = module.params.get('intersite_multicaste_source')
+    subnets = module.params.get('subnets')
+    state = module.params.get('state')
+    preferred_group = module.params.get('preferred_group')
 
     mso = MSOModule(module)
 
     # Get schema_id
     schema_obj = mso.get_obj('schemas', displayName=schema)
     if schema_obj:
-        schema_id = schema_obj['id']
+        schema_id = schema_obj.get('id')
     else:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
     schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
-    templates = [t['name'] for t in schema_obj['templates']]
+    templates = [t.get('name') for t in schema_obj.get('templates')]
     if template not in templates:
         mso.fail_json(msg="Provided template '{0}' does not exist. Existing templates: {1}".format(template, ', '.join(templates)))
     template_idx = templates.index(template)
 
     # Get ANP
-    anps = [a['name'] for a in schema_obj['templates'][template_idx]['anps']]
+    anps = [a.get('name') for a in schema_obj.get('templates')[template_idx]['anps']]
     if anp not in anps:
         mso.fail_json(msg="Provided anp '{0}' does not exist. Existing anps: {1}".format(anp, ', '.join(anps)))
     anp_idx = anps.index(anp)
 
     # Get EPG
-    epgs = [e['name'] for e in schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs']]
+    epgs = [e.get('name') for e in schema_obj.get('templates')[template_idx]['anps'][anp_idx]['epgs']]
     if epg is not None and epg in epgs:
         epg_idx = epgs.index(epg)
-        mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]
+        mso.existing = schema_obj.get('templates')[template_idx]['anps'][anp_idx]['epgs'][epg_idx]
 
     if state == 'query':
         if epg is None:
-            mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs']
+            mso.existing = schema_obj.get('templates')[template_idx]['anps'][anp_idx]['epgs']
         elif not mso.existing:
             mso.fail_json(msg="EPG '{epg}' not found".format(epg=epg))
         mso.exit_json()
@@ -272,6 +333,7 @@ def main():
 
     elif state == 'present':
         bd_ref = mso.make_reference(bd, 'bd', schema_id, template)
+        vrf_ref = mso.make_reference(vrf, 'vrf', schema_id, template)
         subnets = mso.make_subnets(subnets)
 
         if display_name is None and not mso.existing:
@@ -288,6 +350,8 @@ def main():
             contractRelationships=[],
             subnets=subnets,
             bdRef=bd_ref,
+            preferredGroup=preferred_group,
+            vrfRef=vrf_ref,
         )
 
         mso.sanitize(payload, collate=True)

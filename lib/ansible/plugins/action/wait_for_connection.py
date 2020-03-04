@@ -79,6 +79,9 @@ class ActionModule(ActionBase):
         def ping_module_test(connect_timeout):
             ''' Test ping module, if available '''
             display.vvv("wait_for_connection: attempting ping module test")
+            # re-run interpreter discovery if we ran it in the first iteration
+            if self._discovered_interpreter_key:
+                task_vars['ansible_facts'].pop(self._discovered_interpreter_key, None)
             # call connection reset between runs if it's there
             try:
                 self._connection.reset()
@@ -106,7 +109,7 @@ class ActionModule(ActionBase):
                 self.do_until_success_or_timeout(self._connection.transport_test, timeout, connect_timeout, what_desc="connection port up", sleep=sleep)
 
             # Use the ping module test to determine end-to-end connectivity
-            self.do_until_success_or_timeout(ping_module_test, timeout, connect_timeout, what_desc="ping module test success", sleep=sleep)
+            self.do_until_success_or_timeout(ping_module_test, timeout, connect_timeout, what_desc="ping module test", sleep=sleep)
 
         except TimedOutException as e:
             result['failed'] = True
@@ -114,5 +117,8 @@ class ActionModule(ActionBase):
 
         elapsed = datetime.now() - start
         result['elapsed'] = elapsed.seconds
+
+        # remove a temporary path we created
+        self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result

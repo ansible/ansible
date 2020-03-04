@@ -1,0 +1,97 @@
+---
+- debug:
+    msg: "START ce_mdn_interface presented integration tests on connection={{ ansible_connection }}"
+# set up default before test 
+- name: clean up default configuration with the exisiting running configuration
+  ce_mdn_interface:
+    lldpenable: disabled
+    mdnstatus: disabled
+    ifname: 10GE1/0/1
+
+- name: present the provided configuration with the exisiting running configuration
+  ce_mdn_interface: &present
+    lldpenable: enabled
+    mdnstatus: rxOnly
+    ifname: 10GE1/0/1
+  register: result
+
+- name: Assert the configuration is reflected on host
+  assert:
+    that:
+      - "result['changed'] == true"
+
+- name: Get mdnInterface config by ce_netconf.
+  ce_netconf: &get_config
+    rpc: get
+    cfg_xml: "<filter type=\"subtree\">
+              <lldp xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                <mdnInterfaces>
+                  <mdnInterface>
+                    <ifName>10GE1/0/1</ifName>
+                    <mdnStatus></mdnStatus>
+                  </mdnInterface>
+                </mdnInterfaces>
+              </lldp>
+            </filter>"
+  register: result_xml
+
+- name: Get lldp enabled config by ce_netconf.
+  ce_netconf: &get_config_lldp
+    rpc: get
+    cfg_xml: "<filter type=\"subtree\">
+              <lldp xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                <lldpSys>
+                  <lldpEnable></lldpEnable>
+                </lldpSys>
+              </lldp>
+            /filter>"
+  register: result_xml_lldp
+
+
+- name: present the provided configuration with the existing running configuration (IDEMPOTENT)
+  ce_mdn_interface: *present
+  register: repeat
+
+- name: Assert that the previous task was idempotent
+  assert:
+    that:
+      - "repeat.changed == false"
+      - "'<mdnStatus>rxOnly</mdnStatus>' in result_xml.end_state.result"
+      - "'<lldpEnable>enabled</lldpEnable>' in result_xml_lldp.end_state.result"
+
+- name: absent the provided configuration with the exisiting running configuration
+  ce_mdn_interface: &absent
+    lldpenable: disabled
+    mdnstatus: disabled
+    ifname: 10GE1/0/1
+    state: absent
+  register: result
+
+
+- name: Assert the configuration is reflected on host
+  assert:
+    that:
+      - "result['changed'] == true"
+
+- name: absent the provided configuration with the existing running configuration (REPEAT)
+  ce_mdn_interface: *absent
+  register: repeat
+
+- name: Get mdnInterface config by ce_netconf.
+  ce_netconf: *get_config
+  register: result_xml
+
+- name: Get lldp enabled config by ce_netconf.
+  ce_netconf: *get_config
+  register: result_xml_lldp
+
+- name: Assert that the previous task was idempotent
+  assert:
+    that:
+      - "result['changed'] == false"
+      - "'<mdnStatus>disabled</mdnStatus>' not in result_xml.end_state.result"
+      - "'<lldpEnable>disabled</lldpEnable>' in result_xml_lldp.end_state.result"
+# after present, isis 100 should be deleted
+
+- debug:
+    msg: "END ce_mdn_interface resentd integration tests on connection={{ ansible_connection }}"

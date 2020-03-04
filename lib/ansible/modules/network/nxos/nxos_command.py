@@ -103,6 +103,15 @@ EXAMPLES = """
     commands:
       - command: show version
         output: json
+
+- name: run commands that require answering a prompt
+  nxos_command:
+    commands:
+      - configure terminal
+      - command: 'no feature npv'
+        prompt: 'Do you want to continue'
+        answer: 'y'
+
 """
 
 RETURN = """
@@ -128,7 +137,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.parsing import Conditional, FailedConditionalError
 from ansible.module_utils.network.common.utils import transform_commands, to_lines
-from ansible.module_utils.network.nxos.nxos import check_args, nxos_argument_spec, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, run_commands
 
 
 def parse_commands(module, warnings):
@@ -174,7 +183,6 @@ def main():
 
     warnings = list()
     result = {'changed': False, 'warnings': warnings}
-    check_args(module, warnings)
     commands = parse_commands(module, warnings)
     wait_for = module.params['wait_for'] or list()
 

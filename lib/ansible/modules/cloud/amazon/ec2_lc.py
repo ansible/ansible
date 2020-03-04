@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -26,8 +18,8 @@ module: ec2_lc
 short_description: Create or delete AWS Autoscaling Launch Configurations
 
 description:
-  - Can create or delete AWS Autoscaling Configurations
-  - Works with the ec2_asg module to manage Autoscaling Groups
+  - Can create or delete AWS Autoscaling Configurations.
+  - Works with the ec2_asg module to manage Autoscaling Groups.
 
 notes:
   - Amazon ASG Autoscaling Launch Configurations are immutable once created, so modifying the configuration after it is changed will not modify the
@@ -43,89 +35,164 @@ author:
 options:
   state:
     description:
-      - Register or deregister the instance
+      - Register or deregister the instance.
     default: present
     choices: ['present', 'absent']
+    type: str
   name:
     description:
-      - Unique name for configuration
+      - Unique name for configuration.
     required: true
+    type: str
   instance_type:
     description:
-      - Instance type to use for the instance
-    required: true
+      - Instance type to use for the instance.
+      - Required when creating a new Launch Configuration.
+    type: str
   image_id:
     description:
-      - The AMI unique identifier to be used for the group
+      - The AMI unique identifier to be used for the group.
+    type: str
   key_name:
     description:
-      - The SSH key name to be used for access to managed instances
+      - The SSH key name to be used for access to managed instances.
+    type: str
   security_groups:
     description:
       - A list of security groups to apply to the instances. Since version 2.4 you can specify either security group names or IDs or a mix.  Previous
         to 2.4, for VPC instances, specify security group IDs and for EC2-Classic, specify either security group names or IDs.
+    type: list
+    elements: str
   volumes:
     description:
-      - A list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io
-        device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less
-        than 1 will be interpreted as a request not to create the volume.
+      - A list dictionaries defining the volumes to create.
+      - For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
+    type: list
+    elements: dict
+    suboptions:
+      device_name:
+        type: str
+        description:
+          - The name for the volume (For example C(/dev/sda)).
+        required: true
+      no_device:
+        type: bool
+        description:
+          - When I(no_device=true) the device will not be created.
+      snapshot:
+        type: str
+        description:
+          - The ID of an EBS snapshot to copy when creating the volume.
+          - Mutually exclusive with the I(ephemeral) parameter.
+      ephemeral:
+        type: str
+        description:
+          - Whether the volume should be ephemeral.
+          - Data on ephemeral volumes is lost when the instance is stopped.
+          - Mutually exclusive with the I(snapshot) parameter.
+      volume_size:
+        type: int
+        description:
+          - The size of the volume (in GiB).
+          - Required unless one of I(ephemeral), I(snapshot) or I(no_device) is set.
+      volume_type:
+        type: str
+        description:
+          - The type of volume to create.
+          - See
+            U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html) for more information on the available volume types.
+      delete_on_termination:
+        type: bool
+        default: false
+        description:
+          - Whether the volume should be automatically deleted when the instance
+            is terminated.
+      iops:
+        type: int
+        description:
+          - The number of IOPS per second to provision for the volume.
+          - Required when I(volume_type=io1).
+      encrypted:
+        type: bool
+        default: false
+        description:
+          - Whether the volume should be encrypted using the 'aws/ebs' KMS CMK.
   user_data:
     description:
       - Opaque blob of data which is made available to the ec2 instance. Mutually exclusive with I(user_data_path).
+    type: str
   user_data_path:
     description:
       - Path to the file that contains userdata for the ec2 instances. Mutually exclusive with I(user_data).
     version_added: "2.3"
+    type: path
   kernel_id:
     description:
-      - Kernel id for the EC2 instance
+      - Kernel id for the EC2 instance.
+    type: str
   spot_price:
     description:
       - The spot price you are bidding. Only applies for an autoscaling group with spot instances.
+    type: float
   instance_monitoring:
     description:
       - Specifies whether instances are launched with detailed monitoring.
     type: bool
-    default: 'no'
+    default: false
   assign_public_ip:
     description:
       - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address
         to each instance launched in a Amazon VPC.
     version_added: "1.8"
+    type: bool
   ramdisk_id:
     description:
       - A RAM disk id for the instances.
     version_added: "1.8"
+    type: str
   instance_profile_name:
     description:
       - The name or the Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instances.
     version_added: "1.8"
+    type: str
   ebs_optimized:
     description:
       - Specifies whether the instance is optimized for EBS I/O (true) or not (false).
     default: false
     version_added: "1.8"
+    type: bool
   classic_link_vpc_id:
     description:
       - Id of ClassicLink enabled VPC
     version_added: "2.0"
+    type: str
   classic_link_vpc_security_groups:
     description:
       - A list of security group IDs with which to associate the ClassicLink VPC instances.
     version_added: "2.0"
+    type: list
+    elements: str
   vpc_id:
     description:
       - VPC ID, used when resolving security group names to IDs.
     version_added: "2.4"
+    type: str
   instance_id:
     description:
-      - The Id of a running instance to use as a basis for a launch configuration. Can be used in place of image_id and instance_type.
+      - The Id of a running instance to use as a basis for a launch configuration. Can be used in place of I(image_id) and I(instance_type).
     version_added: "2.4"
+    type: str
   placement_tenancy:
     description:
-      - Determines whether the instance runs on single-tenant harware or not.
-    default: 'default'
+      - Determines whether the instance runs on single-tenant hardware or not.
+      - When not set AWS will default to C(default).
     version_added: "2.4"
+    type: str
+    choices: ['default', 'dedicated']
+  associate_public_ip_address:
+    description:
+      - The I(associate_public_ip_address) option does nothing and will be removed in Ansible 2.14.
+    type: bool
 
 extends_documentation_fragment:
     - aws
@@ -182,6 +249,30 @@ EXAMPLES = '''
     volumes:
     - device_name: /dev/sdf
       no_device: true
+
+- name: Use EBS snapshot ID for volume
+  block:
+  - name: Set Volume Facts
+    set_fact:
+      volumes:
+      - device_name: /dev/sda1
+        volume_size: 20
+        ebs:
+          snapshot: snap-XXXX
+          volume_type: gp2
+          delete_on_termination: true
+          encrypted: no
+
+  - name: Create launch configuration
+    ec2_lc:
+      name: lc1
+      image_id: ami-xxxx
+      assign_public_ip: yes
+      instance_type: t2.medium
+      key_name: my-key
+      security_groups: "['sg-xxxx']"
+      volumes: "{{ volumes }}"
+    register: lc_info
 '''
 
 RETURN = '''
@@ -228,8 +319,8 @@ result:
     associate_public_ip_address:
       description: (EC2-VPC) Indicates whether to assign a public IP address to each instance.
       returned: when I(state=present)
-      type: NoneType
-      sample: null
+      type: bool
+      sample: false
     block_device_mappings:
       description: A block device mapping, which specifies the block devices.
       returned: when I(state=present)
@@ -248,8 +339,7 @@ result:
             snapshot_id:
               description: The ID of the snapshot.
               returned: when I(state=present)
-              type: NoneType
-              sample: null
+              type: str
             volume_size:
               description: The volume size, in GiB.
               returned: when I(state=present)
@@ -258,13 +348,12 @@ result:
         virtual_name:
           description: The name of the virtual device (for example, ephemeral0).
           returned: when I(state=present)
-          type: NoneType
-          sample: null
+          type: str
+          sample: ephemeral0
     classic_link_vpc_id:
       description: The ID of a ClassicLink-enabled VPC to link your EC2-Classic instances to.
       returned: when I(state=present)
-      type: NoneType
-      sample: null
+      type: str
     classic_link_vpc_security_groups:
       description: The IDs of one or more security groups for the VPC specified in ClassicLinkVPCId.
       returned: when I(state=present)
@@ -308,8 +397,7 @@ result:
     iops:
       description: The number of I/O operations per second (IOPS) to provision for the volume.
       returned: when I(state=present)
-      type: NoneType
-      sample: null
+      type: int
     kernel_id:
       description: The ID of the kernel associated with the AMI.
       returned: when I(state=present)
@@ -349,8 +437,7 @@ result:
     spot_price:
       description: The price to bid when launching Spot Instances.
       returned: when I(state=present)
-      type: NoneType
-      sample: null
+      type: float
     use_block_device_types:
       description: Indicates whether to suppress a device mapping.
       returned: when I(state=present)
@@ -364,8 +451,8 @@ result:
     volume_type:
       description: The volume type (one of standard, io1, gp2).
       returned: when I(state=present)
-      type: NoneType
-      sample: null
+      type: str
+      sample: io1
 security_groups:
   description: The security groups to associate with the instances.
   returned: when I(state=present)
@@ -589,7 +676,7 @@ def main():
             ramdisk_id=dict(),
             instance_profile_name=dict(),
             ebs_optimized=dict(default=False, type='bool'),
-            associate_public_ip_address=dict(type='bool'),
+            associate_public_ip_address=dict(type='bool', removed_in_version='2.14'),
             instance_monitoring=dict(default=False, type='bool'),
             assign_public_ip=dict(type='bool'),
             classic_link_vpc_security_groups=dict(type='list'),

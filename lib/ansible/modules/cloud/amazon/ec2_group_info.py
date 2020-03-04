@@ -25,12 +25,13 @@ author:
 options:
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See \
-      U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSecurityGroups.html) for \
-      possible filters. Filter names and values are case sensitive. You can also use underscores (_) \
-      instead of dashes (-) in the filter keys, which will take precedence in case of conflict.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
+        U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSecurityGroups.html) for
+        possible filters. Filter names and values are case sensitive. You can also use underscores (_)
+        instead of dashes (-) in the filter keys, which will take precedence in case of conflict.
     required: false
     default: {}
+    type: dict
 notes:
   - By default, the module will return all security groups. To limit results use the appropriate filters.
 
@@ -94,52 +95,29 @@ security_groups:
     sample:
 '''
 
-import traceback
-
 try:
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, HAS_BOTO3, get_aws_connection_info,
-                                      boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_filter_list,
-                                      camel_dict_to_snake_dict)
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict)
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            filters=dict(default={}, type='dict')
-        )
+    argument_spec = dict(
+        filters=dict(default={}, type='dict')
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._name == 'ec2_group_facts':
         module.deprecate("The 'ec2_group_facts' module has been renamed to 'ec2_group_info'", version='2.13')
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        connection = boto3_conn(
-            module,
-            conn_type='client',
-            resource='ec2',
-            region=region,
-            endpoint=ec2_url,
-            **aws_connect_params
-        )
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = module.client('ec2')
 
     # Replace filter key underscores with dashes, for compatibility, except if we're dealing with tags
     sanitized_filters = module.params.get("filters")
-    for key in sanitized_filters:
+    for key in list(sanitized_filters):
         if not key.startswith("tag:"):
             sanitized_filters[key.replace("_", "-")] = sanitized_filters.pop(key)
 
@@ -147,8 +125,8 @@ def main():
         security_groups = connection.describe_security_groups(
             Filters=ansible_dict_to_boto3_filter_list(sanitized_filters)
         )
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to describe security groups')
 
     snaked_security_groups = []
     for security_group in security_groups['SecurityGroups']:

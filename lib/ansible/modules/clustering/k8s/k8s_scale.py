@@ -26,7 +26,7 @@ author:
     - "Fabian von Feilitzsch (@fabianvf)"
 
 description:
-  - Similar to the kubectl scale command. Use to set the number of replicas for a Deployment, ReplicatSet,
+  - Similar to the kubectl scale command. Use to set the number of replicas for a Deployment, ReplicaSet,
     or Replication Controller, or the parallelism attribute of a Job. Supports check mode.
 
 extends_documentation_fragment:

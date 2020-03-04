@@ -20,7 +20,9 @@ import json
 
 from itertools import chain
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 
@@ -43,8 +45,7 @@ class Cliconf(CliconfBase):
             device_info['network_os_model'] = match.group(1)
 
         reply = self.get('show host name')
-        reply = to_text(reply, errors='surrogate_or_strict').strip()
-        device_info['network_os_hostname'] = reply
+        device_info['network_os_hostname'] = to_text(reply, errors='surrogate_or_strict').strip()
 
         return device_info
 
@@ -68,7 +69,47 @@ class Cliconf(CliconfBase):
     def discard_changes(self, *args, **kwargs):
         self.send_command('discard')
 
+    def run_commands(self, commands=None, check_rc=True):
+        if commands is None:
+            raise ValueError("'commands' value is required")
+
+        responses = list()
+        for cmd in to_list(commands):
+            if not isinstance(cmd, Mapping):
+                cmd = {'command': cmd}
+
+            output = cmd.pop('output', None)
+            if output:
+                raise ValueError("'output' value %s is not supported for run_commands" % output)
+
+            try:
+                out = self.send_command(**cmd)
+            except AnsibleConnectionFailure as e:
+                if check_rc:
+                    raise
+                out = getattr(e, 'err', e)
+
+            responses.append(out)
+
+        return responses
+
+    def get_device_operations(self):
+        return {
+            'supports_diff_replace': False,
+            'supports_commit': True,
+            'supports_rollback': False,
+            'supports_defaults': False,
+            'supports_onbox_diff': False,
+            'supports_commit_comment': True,
+            'supports_multiline_delimiter': False,
+            'supports_diff_match': False,
+            'supports_diff_ignore_lines': False,
+            'supports_generate_diff': False,
+            'supports_replace': False
+        }
+
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
-        result['rpc'] += ['commit', 'discard_changes']
+        result['rpc'] += ['commit', 'discard_changes', 'run_commands']
+        result['device_operations'] = self.get_device_operations()
         return json.dumps(result)

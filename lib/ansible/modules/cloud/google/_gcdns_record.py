@@ -425,7 +425,7 @@ def create_record(module, gcdns, zone, record):
             except LibcloudError:
                 # We deleted the old record, couldn't create the new record, and
                 # couldn't roll back. That really sucks. We'll dump the original
-                # record to the failure output so the user can resore it if
+                # record to the failure output so the user can restore it if
                 # necessary.
                 module.fail_json(
                     msg='error updating record, and could not restore original record, ' +

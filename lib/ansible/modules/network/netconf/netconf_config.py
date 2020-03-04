@@ -91,11 +91,13 @@ options:
     version_added: "2.7"
   error_option:
     description:
-    - This option control the netconf server action after a error is occured while editing the configuration.
-      If the value is I(stop-on-error) abort the config edit on first error, if value is I(continue-on-error)
-      it continues to process configuration data on error, error is recorded and negative response is generated
-      if any errors occur. If value is C(rollback-on-error) it rollback to the original configuration in case
-      any error occurs, this requires the remote Netconf server to support the :rollback-on-error capability.
+    - This option controls the netconf server action after an error occurs while editing the configuration.
+    - If I(error_option=stop-on-error), abort the config edit on first error.
+    - If I(error_option=continue-on-error), continue to process configuration data on error.
+      The error is recorded and negative response is generated if any errors occur.
+    - If I(error_option=rollback-on-error), rollback to the original configuration if
+      any error occurs.
+      This requires the remote Netconf server to support the I(error_option=rollback-on-error) capability.
     default: stop-on-error
     choices: ['stop-on-error', 'continue-on-error', 'rollback-on-error']
     version_added: "2.7"
@@ -135,7 +137,7 @@ options:
   validate:
     description:
       - This boolean flag if set validates the content of datastore given in C(target) option.
-        For this option to work remote Netconf server shoule support :validate capability.
+        For this option to work remote Netconf server should support :validate capability.
     type: bool
     default: False
     version_added: "2.7"
@@ -153,7 +155,7 @@ options:
     suboptions:
       filename:
         description:
-          - The filename to be used to store the backup configuration. If the the filename
+          - The filename to be used to store the backup configuration. If the filename
             is not given it will be generated based on the hostname, current time and date
             in format defined by <hostname>_config.<current-date>@<current-time>
       dir_path:
@@ -167,6 +169,15 @@ options:
         type: path
     type: dict
     version_added: "2.8"
+  get_filter:
+    description:
+      - This argument specifies the XML string which acts as a filter to restrict the portions of
+        the data retrieved from the remote device when comparing the before and after state of the
+        device following calls to edit_config. When not specified, the entire configuration or
+        state data is returned for comparison depending on the value of C(source) option. The C(get_filter)
+        value can be either XML string or XPath, if the filter is in XPath format the NETCONF server
+        running on remote host should support xpath capability else it will result in an error.
+    version_added: "2.10"
 requirements:
   - "ncclient"
 notes:
@@ -252,10 +263,26 @@ from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.netconf.netconf import get_capabilities, get_config, sanitize_xml
 
+import sys
 try:
-    from lxml.etree import tostring
+    from lxml.etree import tostring, fromstring, XMLSyntaxError
 except ImportError:
-    from xml.etree.ElementTree import tostring
+    from xml.etree.ElementTree import tostring, fromstring
+    if sys.version_info < (2, 7):
+        from xml.parsers.expat import ExpatError as XMLSyntaxError
+    else:
+        from xml.etree.ElementTree import ParseError as XMLSyntaxError
+
+
+def get_filter_type(filter):
+    if not filter:
+        return None
+    else:
+        try:
+            fromstring(filter)
+            return 'subtree'
+        except XMLSyntaxError:
+            return 'xpath'
 
 
 def main():
@@ -281,6 +308,7 @@ def main():
         delete=dict(type='bool', default=False),
         commit=dict(type='bool', default=True),
         validate=dict(type='bool', default=False),
+        get_filter=dict(),
     )
 
     # deprecated options
@@ -318,6 +346,8 @@ def main():
     confirm = module.params['confirm']
     validate = module.params['validate']
     save = module.params['save']
+    filter = module.params['get_filter']
+    filter_type = get_filter_type(filter)
 
     conn = Connection(module._socket_path)
     capabilities = get_capabilities(module)
@@ -353,6 +383,11 @@ def main():
     if validate and not operations.get('supports_validate', False):
         module.fail_json(msg='validate is not supported by this netconf server')
 
+    if filter_type == 'xpath' and not operations.get('supports_xpath', False):
+        module.fail_json(msg="filter value '%s' of type xpath is not supported on this device" % filter)
+
+    filter_spec = (filter_type, filter) if filter_type else None
+
     if lock == 'never':
         execute_lock = False
     elif target in operations.get('lock_datastore', []):
@@ -369,7 +404,7 @@ def main():
     locked = False
     try:
         if module.params['backup']:
-            response = get_config(module, target, lock=execute_lock)
+            response = get_config(module, target, filter_spec, lock=execute_lock)
             before = to_text(tostring(response), errors='surrogate_then_replace').strip()
             result['__backup__'] = before.strip()
         if validate:
@@ -396,7 +431,7 @@ def main():
                 conn.lock(target=target)
                 locked = True
             if before is None:
-                before = to_text(conn.get_config(source=target), errors='surrogate_then_replace').strip()
+                before = to_text(conn.get_config(source=target, filter=filter_spec), errors='surrogate_then_replace').strip()
 
             kwargs = {
                 'config': config,
@@ -409,7 +444,7 @@ def main():
             conn.edit_config(**kwargs)
 
             if supports_commit and module.params['commit']:
-                after = to_text(conn.get_config(source='candidate'), errors='surrogate_then_replace').strip()
+                after = to_text(conn.get_config(source='candidate', filter=filter_spec), errors='surrogate_then_replace').strip()
                 if not module.check_mode:
                     confirm_timeout = confirm if confirm > 0 else None
                     confirmed_commit = True if confirm_timeout else False
@@ -418,7 +453,7 @@ def main():
                     conn.discard_changes()
 
             if after is None:
-                after = to_text(conn.get_config(source='running'), errors='surrogate_then_replace').strip()
+                after = to_text(conn.get_config(source='running', filter=filter_spec), errors='surrogate_then_replace').strip()
 
             sanitized_before = sanitize_xml(before)
             sanitized_after = sanitize_xml(after)

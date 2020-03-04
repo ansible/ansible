@@ -8,13 +8,6 @@ The arg spec for the eos facts module.
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-CHOICES = [
-    'all',
-    '!all',
-    'interfaces',
-    '!interfaces',
-]
-
 
 class FactsArgs(object):
     """ The arg spec for the eos facts module
@@ -25,5 +18,5 @@ class FactsArgs(object):
 
     argument_spec = {
         'gather_subset': dict(default=['!config'], type='list'),
-        'gather_network_resources': dict(choices=CHOICES, type='list'),
+        'gather_network_resources': dict(type='list'),
     }

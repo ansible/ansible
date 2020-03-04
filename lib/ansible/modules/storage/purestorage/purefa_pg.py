@@ -63,8 +63,8 @@ options:
       to connect to.
     - Note that all replicated protection groups are asynchronous.
     - Target arrays or offload targets must already be connected to the source array.
-    - Maximum number of targets per Portection Group is 4, assuming your
-      configuration suppors this.
+    - Maximum number of targets per Protection Group is 4, assuming your
+      configuration supports this.
     type: list
     version_added: '2.8'
 extends_documentation_fragment:

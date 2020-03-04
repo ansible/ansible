@@ -38,6 +38,11 @@
     that:
       - privatekey1.stdout == '4096'
 
+- name: Validate privatekey1 idempotence
+  assert:
+    that:
+      - privatekey1_idem_result is not changed
+
 
 - name: Validate privatekey2 (test - RSA key with size 2048 bits)
   shell: "ssh-keygen -lf {{ output_dir }}/privatekey2 | grep -o -E '^[0-9]+'"
@@ -81,10 +86,17 @@
       - output_regenerated_via_force is changed
 
 
-- name: Verify that broken key will be regenerated
+- name: Verify that broken key will cause failure
   assert:
     that:
-      - output_broken is changed
+      - output_broken is failed
+      - "'Unable to read the key. The key is protected with a passphrase or broken.' in output_broken.msg"
+
+
+- name: Verify that broken key will be regenerated if force=yes is specified
+  assert:
+    that:
+      - output_broken_force is changed
 
 
 - name: Verify that read-only key will be regenerated
@@ -107,3 +119,14 @@
   assert:
     that:
       - privatekey7_modified_result.comment == 'test_modified@privatekey7'
+
+- name: Check that password protected key made module fail
+  assert:
+    that:
+      - privatekey8_result is failed
+      - "'Unable to read the key. The key is protected with a passphrase or broken.' in privatekey8_result.msg"
+
+- name: Check that password protected key was regenerated with force=yes
+  assert:
+    that:
+      - privatekey8_result_force is changed

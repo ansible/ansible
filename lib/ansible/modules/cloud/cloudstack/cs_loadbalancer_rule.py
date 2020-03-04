@@ -5,6 +5,9 @@
 # (c) 2015, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
@@ -104,6 +107,16 @@ options:
       - "To delete all tags, set a empty list e.g. I(tags: [])."
     type: list
     aliases: [ tag ]
+  network:
+    description:
+      - Name of the network.
+    type: str
+    version_added: '2.9'
+  vpc:
+    description:
+      - Name of the VPC.
+    type: str
+    version_added: '2.9'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -282,6 +295,7 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
                 'cidrlist': self.module.params.get('cidr'),
                 'description': self.module.params.get('description'),
                 'protocol': self.module.params.get('protocol'),
+                'networkid': self.get_network(key='id'),
             })
             res = self.query_api('createLoadBalancerRule', **args)
 
@@ -338,6 +352,8 @@ def main():
         zone=dict(),
         domain=dict(),
         account=dict(),
+        vpc=dict(),
+        network=dict(),
         poll_async=dict(type='bool', default=True),
     ))
 

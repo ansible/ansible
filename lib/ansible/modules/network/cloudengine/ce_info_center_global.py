@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -29,6 +32,10 @@ description:
     - This module offers the ability to be output to the log buffer, log file, console, terminal, or log host on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     info_center_enable:
         description:
@@ -952,25 +959,28 @@ class InfoCenterGlobal(object):
             cmd += " ipv6 %s" % self.server_ip
         if self.server_domain:
             cmd += " domain %s" % self.server_domain
-        if self.vrf_name:
-            if self.vrf_name != "_public_":
-                cmd += " vpn-instance %s" % self.vrf_name
-        if self.level:
-            cmd += " level %s" % self.level
-        if self.server_port:
-            cmd += " port %s" % self.server_port
-        if self.facility:
-            cmd += " facility %s" % self.facility
         if self.channel_id:
             cmd += " channel %s" % self.channel_id
         if self.channel_name:
             cmd += " channel %s" % self.channel_name
-        if self.timestamp:
-            cmd += " %s" % self.timestamp
-        if self.transport_mode:
-            cmd += " transport %s" % self.transport_mode
+        if self.vrf_name:
+            if self.vrf_name != "_public_":
+                cmd += " vpn-instance %s" % self.vrf_name
         if self.source_ip:
             cmd += " source-ip %s" % self.source_ip
+        if self.facility:
+            cmd += " facility %s" % self.facility
+        if self.server_port:
+            cmd += " port %s" % self.server_port
+        if self.level:
+            cmd += " level %s" % self.level
+        if self.timestamp:
+            if self.timestamp == "localtime":
+                cmd += " local-time"
+            else:
+                cmd += " utc"
+        if self.transport_mode:
+            cmd += " transport %s" % self.transport_mode
         if self.ssl_policy_name:
             cmd += " ssl-policy %s" % self.ssl_policy_name
         self.updates_cmd.append(cmd)
@@ -1025,24 +1035,6 @@ class InfoCenterGlobal(object):
         if self.vrf_name:
             if self.vrf_name != "_public_":
                 cmd += " vpn-instance %s" % self.vrf_name
-        if self.level:
-            cmd += " level %s" % self.level
-        if self.server_port:
-            cmd += " port %s" % self.server_port
-        if self.facility:
-            cmd += " facility %s" % self.facility
-        if self.channel_id:
-            cmd += " channel %s" % self.channel_id
-        if self.channel_name:
-            cmd += " channel %s" % self.channel_name
-        if self.timestamp:
-            cmd += " %s" % self.timestamp
-        if self.transport_mode:
-            cmd += " transport %s" % self.transport_mode
-        if self.source_ip:
-            cmd += " source-ip %s" % self.source_ip
-        if self.ssl_policy_name:
-            cmd += " ssl-policy %s" % self.ssl_policy_name
         self.updates_cmd.append(cmd)
         self.changed = True
 
@@ -1217,13 +1209,13 @@ class InfoCenterGlobal(object):
 
         if self.state == "present":
             if self.packet_priority:
-                if self.packet_priority != "0" and self.cur_global_info["packetPriority"] != self.packet_priority:
+                if self.cur_global_info["packetPriority"] != self.packet_priority:
                     cmd = "info-center syslog packet-priority %s" % self.packet_priority
                     self.updates_cmd.append(cmd)
                     self.changed = True
         if self.state == "absent":
             if self.packet_priority:
-                if self.packet_priority != "0" and self.cur_global_info["packetPriority"] == self.packet_priority:
+                if self.cur_global_info["packetPriority"] == self.packet_priority:
                     cmd = "undo info-center syslog packet-priority %s" % self.packet_priority
                     self.updates_cmd.append(cmd)
                     self.changed = True
@@ -1268,8 +1260,7 @@ class InfoCenterGlobal(object):
         conf_str = CE_NC_MERGE_LOG_FILE_INFO_HEADER
         if self.logfile_max_num:
             if self.state == "present":
-                if self.cur_logfile_info["maxFileNum"] != self.logfile_max_num:
-                    logfile_max_num = self.logfile_max_num
+                logfile_max_num = self.logfile_max_num
             else:
                 if self.logfile_max_num != "200" and self.cur_logfile_info["maxFileNum"] == self.logfile_max_num:
                     logfile_max_num = "200"
@@ -1278,8 +1269,7 @@ class InfoCenterGlobal(object):
         if self.logfile_max_size:
             logfile_max_size = "32"
             if self.state == "present":
-                if self.cur_logfile_info["maxFileSize"] != self.logfile_max_size:
-                    logfile_max_size = self.logfile_max_size
+                logfile_max_size = self.logfile_max_size
             else:
                 if self.logfile_max_size != "32" and self.cur_logfile_info["maxFileSize"] == self.logfile_max_size:
                     logfile_max_size = "32"
@@ -1567,6 +1557,8 @@ class InfoCenterGlobal(object):
             if self.server_domain_info:
                 self.end_state["server_domain_info"] = self.server_domain_info[
                     "serverAddressInfos"]
+        if self.end_state == self.existing:
+            self.changed = False
 
     def work(self):
         """worker"""

@@ -6,5 +6,3 @@
 # Upgrade using NX-API
 - include: httpapi.yaml
   when: ansible_connection == 'httpapi'
-- include: nxapi.yaml
-  when: ansible_connection == 'local'

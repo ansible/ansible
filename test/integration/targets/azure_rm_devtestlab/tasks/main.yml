@@ -104,7 +104,7 @@
   azure_rm_devtestlabpolicy:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
-    policy_set_name: myDtlPolicySet
+    policy_set_name: default
     name: myDtlPolicy
     fact_name: user_owned_lab_vm_count
     threshold: 5
@@ -120,7 +120,7 @@
   azure_rm_devtestlabpolicy:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
-    policy_set_name: myDtlPolicySet
+    policy_set_name: default
     name: myDtlPolicy
     fact_name: user_owned_lab_vm_count
     threshold: 5
@@ -136,7 +136,7 @@
   azure_rm_devtestlabpolicy:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
-    policy_set_name: myDtlPolicySet
+    policy_set_name: default
     name: myDtlPolicy
     fact_name: user_owned_lab_vm_count
     threshold: 6
@@ -152,7 +152,7 @@
   azure_rm_devtestlabpolicy:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
-    policy_set_name: myDtlPolicySet
+    policy_set_name: default
     name: myDtlPolicy
     state: absent
   register: output
@@ -352,7 +352,7 @@
 - name:
   set_fact:
     artifact_source:
-      - source_name: "{{ artifacts_name }}"
+      - source_name: "public repo"
         source_path: "/Artifacts/linux-install-mongodb"
   when: "github_token | length > 0"
 

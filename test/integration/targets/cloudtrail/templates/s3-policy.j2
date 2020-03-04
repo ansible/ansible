@@ -1,0 +1,34 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CloudTrailCheckAcl",
+      "Effect": "Allow",
+      "Principal": { "Service": "cloudtrail.amazonaws.com" },
+      "Action": "s3:GetBucketAcl",
+      "Resource": "arn:aws:s3:::{{ bucket_name }}",
+    },
+    {
+      "Sid": "CloudTrailWriteLogs",
+      "Effect": "Allow",
+      "Principal": { "Service": "cloudtrail.amazonaws.com" },
+      "Action": "s3:PutObject",
+      "Resource": [
+        "arn:aws:s3:::{{ bucket_name }}/AWSLogs/{{ aws_caller_info.account }}/*",
+        "arn:aws:s3:::{{ bucket_name }}/{{ cloudtrail_prefix }}*/AWSLogs/{{ aws_caller_info.account }}/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "s3:x-amz-acl": "bucket-owner-full-control"
+        }
+      }
+    },
+    {
+      "Sid": "AnsibleTestManage",
+      "Effect": "Allow",
+      "Principal": { "AWS": "{{ aws_caller_info.arn }}" },
+      "Action": "*",
+      "Resource": "arn:aws:s3:::{{ bucket_name }}"
+    }
+  ]
+}

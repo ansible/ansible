@@ -11,7 +11,7 @@
 
 - name: set a single IPv4 address (check mode)
   win_dns_client:
-    adapter_name: '{{ network_adapter_name }}'
+    adapter_names: '{{ network_adapter_name }}'
     ipv4_addresses: 192.168.34.5
   register: set_single_check
   check_mode: yes
@@ -29,7 +29,7 @@
 
 - name: set a single IPv4 address
   win_dns_client:
-    adapter_name: '{{ network_adapter_name }}'
+    adapter_names: '{{ network_adapter_name }}'
     ipv4_addresses: 192.168.34.5
   register: set_single
 
@@ -46,7 +46,7 @@
 
 - name: set a single IPv4 address (idempotent)
   win_dns_client:
-    adapter_name: '{{ network_adapter_name }}'
+    adapter_names: '{{ network_adapter_name }}'
     ipv4_addresses: 192.168.34.5
   register: set_single_again
 
@@ -57,7 +57,7 @@
 
 - name: change IPv4 address to another value (check mode)
   win_dns_client:
-    adapter_name: '{{ network_adapter_name }}'
+    adapter_names: '{{ network_adapter_name }}'
     ipv4_addresses: 192.168.34.6
   register: change_single_check
   check_mode: yes
@@ -75,7 +75,7 @@
 
 - name: change IPv4 address to another value
   win_dns_client:
-    adapter_name: '{{ network_adapter_name }}'
+    adapter_names: '{{ network_adapter_name }}'
     ipv4_addresses: 192.168.34.6
   register: change_single
 
@@ -92,7 +92,7 @@
 
 - name: set multiple IPv4 addresses (check mode)
   win_dns_client:
-    adapter_name: '{{ network_adapter_name }}'
+    adapter_names: '{{ network_adapter_name }}'
     ipv4_addresses:
     - 192.168.34.7
     - 192.168.34.8
@@ -112,7 +112,7 @@
 
 - name: set multiple IPv4 addresses
   win_dns_client:
-    adapter_name: '{{ network_adapter_name }}'
+    adapter_names: '{{ network_adapter_name }}'
     ipv4_addresses:
     - 192.168.34.7
     - 192.168.34.8
@@ -131,7 +131,7 @@
 
 - name: set multiple IPv4 addresses (idempotent)
   win_dns_client:
-    adapter_name: '{{ network_adapter_name }}'
+    adapter_names: '{{ network_adapter_name }}'
     ipv4_addresses:
     - 192.168.34.7
     - 192.168.34.8
@@ -144,7 +144,7 @@
 
 - name: reset IPv4 DNS back to DHCP (check mode)
   win_dns_client:
-    adapter_name: '{{ network_adapter_name }}'
+    adapter_names: '{{ network_adapter_name }}'
     ipv4_addresses: []
   register: set_dhcp_check
   check_mode: yes
@@ -162,7 +162,7 @@
 
 - name: reset IPv4 DNS back to DHCP
   win_dns_client:
-    adapter_name: '{{ network_adapter_name }}'
+    adapter_names: '{{ network_adapter_name }}'
     ipv4_addresses: []
   register: set_dhcp
 
@@ -176,3 +176,42 @@
     that:
     - set_dhcp is changed
     - set_dhcp_actual.stdout_lines == []
+
+- name: reset IPv4 DNS back to DHCP (idempotent)
+  win_dns_client:
+    adapter_names: '{{ network_adapter_name }}'
+    ipv4_addresses: []
+  register: set_dhcp_again
+
+- name: assert reset IPv4 DNS back to DHCP (idempotent)
+  assert:
+    that:
+      - set_dhcp_again is not changed
+
+# Legacy WMI does not support setting IPv6 addresses so we can only test this on newer hosts that have the new cmdlets
+- name: check if server supports IPv6
+  win_shell: if (Get-Command -Name Get-NetAdapter -ErrorAction SilentlyContinue) { $true } else { $false }
+  changed_when: no
+  register: new_os
+
+- name: run IPv6 tests
+  when: new_os.stdout | trim | bool
+  block:
+  - name: set IPv6 DNS address
+    win_dns_client:
+      adapter_names: '{{ network_adapter_name }}'
+      dns_servers:
+      - 2001:db8::1
+      - 2001:db8::2
+    register: set_ipv6
+
+  - name: get result of set IPv6 DNS address
+    win_shell: (Get-DnsClientServerAddress -InterfaceAlias '{{ network_adapter_name }}' -AddressFAmily IPv6).ServerAddresses
+    changed_when: no
+    register: set_ipv6_actual
+
+  - name: assert set IPv6 DNS address
+    assert:
+      that:
+      - set_ipv6 is changed
+      - set_ipv6_actual.stdout_lines == ['2001:db8::1', '2001:db8::2']

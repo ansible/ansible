@@ -1,0 +1,2 @@
+minor_changes:
+- 'ec2_vol_info: Code cleanup and use of the AWSRetry decorator to improve stability'

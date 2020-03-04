@@ -24,10 +24,13 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpnGateways.html) for possible filters.
+    type: dict
   vpn_gateway_ids:
     description:
       - Get details of a specific Virtual Gateway ID. This value should be provided as a list.
+    type: list
+    elements: str
 author: "Nick Aslanidis (@naslanidis)"
 extends_documentation_fragment:
     - aws

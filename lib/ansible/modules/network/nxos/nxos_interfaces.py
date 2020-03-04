@@ -63,7 +63,6 @@ options:
             Set the value to C(true) to administratively enable the interface
             or C(false) to disable it
         type: bool
-        default: true
       speed:
         description:
           - Interface link speed. Applicable for Ethernet interfaces only.
@@ -97,7 +96,7 @@ options:
 
   state:
     description:
-      - The state the configuration should be left in
+      - The state of the configuration after module completion
     type: str
     choices:
       - merged
@@ -238,14 +237,14 @@ EXAMPLES = """
 """
 RETURN = """
 before:
-  description: The configuration prior to the model invocation.
+  description: The configuration as structured data prior to module invocation.
   returned: always
   type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
-  description: The resulting configuration model invocation.
+  description: The configuration as structured data after module completion.
   returned: when changed
   type: list
   sample: >

@@ -1,0 +1,8 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Setup PostgreSQL master-standby replication into one container:
+- import_tasks: setup_postgresql_cluster.yml
+  when:
+  - ansible_distribution == 'Ubuntu'
+  - ansible_distribution_major_version >= '18'

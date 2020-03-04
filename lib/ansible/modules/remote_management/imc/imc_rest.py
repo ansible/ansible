@@ -247,7 +247,7 @@ input:
   sample: |
     <configConfMo><inConfig><computeRackUnit dn="sys/rack-unit-1" admin_Power="down"/></inConfig></configConfMo>
 output:
-  description: RAW XML output eceived from the Cisco IMC, with error details
+  description: RAW XML output received from the Cisco IMC, with error details
   returned: failed
   type: str
   sample: >

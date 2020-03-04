@@ -1,0 +1,78 @@
+---
+- debug:
+    msg: "START ios_acl_interfaces round trip integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+
+    - name: Apply the provided configuration (Base config)
+      ios_acl_interfaces:
+        config:
+          - name: GigabitEthernet0/1
+            access_groups:
+              - afi: ipv4
+                acls:
+                  - name: 110
+                    direction: in
+                  - name: 123
+                    direction: out
+              - afi: ipv6
+                acls:
+                  - name: temp_v6
+                    direction: in
+                  - name: test_v6
+                    direction: out
+          - name: GigabitEthernet0/2
+            access_groups:
+              - afi: ipv4
+                acls:
+                  - name: 110
+                    direction: in
+                  - name: 123
+                    direction: out
+        state: merged
+      register: base_config
+
+    - name: Gather acl interfaces facts
+      ios_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources:
+          - acl_interfaces
+
+    - name: Apply the provided configuration (config to be reverted)
+      ios_acl_interfaces:
+        config:
+          - name: GigabitEthernet0/1
+            access_groups:
+              - afi: ipv4
+                acls:
+                  - name: 100
+                    direction: out
+                  - name: 110
+                    direction: in
+        state: overridden
+      register: result
+
+    - assert:
+        that:
+          - "result.commands|length == 8"
+          - "result.changed == true"
+          - "result.commands|symmetric_difference(overridden.commands) == []"
+
+    - name: Revert back to base config using facts round trip
+      ios_acl_interfaces:
+        config: "{{ ansible_facts['network_resources']['acl_interfaces'] }}"
+        state: overridden
+      register: revert
+
+    - assert:
+        that:
+          - "revert.commands|length == 8"
+          - "revert.changed == true"
+          - "revert.commands|symmetric_difference(rtt.commands) == []"
+
+  always:
+    - include_tasks: _remove_config.yaml

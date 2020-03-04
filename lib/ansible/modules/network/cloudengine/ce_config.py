@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -31,6 +34,9 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with CloudEngine configuration sections in
     a deterministic way.  This module works with CLI transports.
+notes:
+  - Recommended connection is C(network_cli).
+  - This module also works with C(local) connections for legacy playbooks.
 options:
   lines:
     description:
@@ -133,7 +139,7 @@ options:
     suboptions:
       filename:
         description:
-          - The filename to be used to store the backup configuration. If the the filename
+          - The filename to be used to store the backup configuration. If the filename
             is not given it will be generated based on the hostname, current time and date
             in format defined by <hostname>_config.<current-date>@<current-time>
       dir_path:
@@ -220,6 +226,7 @@ backup_path:
   sample: /playbooks/ansible/backup/ce_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError, Connection
 from ansible.module_utils.network.common.config import NetworkConfig as _NetworkConfig
 from ansible.module_utils.network.common.config import dumps, ConfigLine, ignore_line
 from ansible.module_utils.network.cloudengine.ce import get_config, run_commands, exec_command, cli_err_msg
@@ -232,71 +239,70 @@ def check_args(module, warnings):
     ce_check_args(module, warnings)
 
 
+def not_user_view(prompt):
+    return prompt is not None and prompt.strip().startswith("[")
+
+
+def command_level(command):
+    regex_level = re.search(r"^(\s*)\S+", command)
+    if regex_level is not None:
+        level = str(regex_level.group(1))
+        return len(level)
+    return 0
+
+
 def _load_config(module, config):
     """Sends configuration commands to the remote device
     """
+    connection = Connection(module._socket_path)
     rc, out, err = exec_command(module, 'mmi-mode enable')
     if rc != 0:
         module.fail_json(msg='unable to set mmi-mode enable', output=err)
     rc, out, err = exec_command(module, 'system-view immediately')
     if rc != 0:
         module.fail_json(msg='unable to enter system-view', output=err)
+    current_view_prompt = system_view_prompt = connection.get_prompt()
 
     for index, cmd in enumerate(config):
+        level = command_level(cmd)
+        current_view_prompt = connection.get_prompt()
         rc, out, err = exec_command(module, cmd)
         if rc != 0:
             print_msg = cli_err_msg(cmd.strip(), err)
-            exec_command(module, "quit")
-            rc, out, err = exec_command(module, cmd)
-            if rc != 0:
-                print_msg1 = cli_err_msg(cmd.strip(), err)
-                if not re.findall(r"unrecognized command found", print_msg1):
-                    print_msg = print_msg1
-                exec_command(module, "return")
-                exec_command(module, "system-view immediately")
+            # re-try command max 3 times
+            for i in (1, 2, 3):
+                current_view_prompt = connection.get_prompt()
+                if current_view_prompt != system_view_prompt and not_user_view(current_view_prompt):
+                    exec_command(module, "quit")
+                    current_view_prompt = connection.get_prompt()
+                    # if current view is system-view, break.
+                    if current_view_prompt == system_view_prompt and level > 0:
+                        break
+                elif current_view_prompt == system_view_prompt or not not_user_view(current_view_prompt):
+                    break
                 rc, out, err = exec_command(module, cmd)
-                if rc != 0:
-                    print_msg2 = cli_err_msg(cmd.strip(), err)
-                    if not re.findall(r"unrecognized command found", print_msg2):
-                        print_msg = print_msg2
-                    module.fail_json(msg=print_msg)
-
-    rc, out, err = exec_command(module, 'return')
-    if rc != 0:
-        module.fail_json(msg='unable to return', output=err)
-    rc, out, err = exec_command(module, 'undo mmi-mode enable')
-    if rc != 0:
-        module.fail_json(msg='unable to undo mmi-mode enable', output=err)
-
-
-def conversion_src(module):
-    src_list = module.params['src'].split('\n')
-    src_list_organize = []
-    if src_list[0].strip() == '#':
-        src_list.pop(0)
-    for per_config in src_list:
-        if per_config.strip() == '#':
-            src_list_organize.append('quit')
-        else:
-            src_list_organize.append(per_config)
-    src_str = '\n'.join(src_list_organize)
-    return src_str
+                if rc == 0:
+                    print_msg = None
+                    break
+            if print_msg is not None:
+                module.fail_json(msg=print_msg)
 
 
 def get_running_config(module):
     contents = module.params['config']
     if not contents:
-        flags = []
+        command = "display current-configuration "
         if module.params['defaults']:
-            flags.append('include-default')
-        contents = get_config(module, flags=flags)
+            command += 'include-default'
+        resp = run_commands(module, command)
+        contents = resp[0]
     return NetworkConfig(indent=1, contents=contents)
 
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        config = conversion_src(module)
+        config = module.params['src']
         candidate.load(config)
     elif module.params['lines']:
         parents = module.params['parents'] or list()
@@ -311,14 +317,17 @@ def run(module, result):
     candidate = get_candidate(module)
 
     if match != 'none':
-        config = get_running_config(module)
+        before = get_running_config(module)
         path = module.params['parents']
-        configobjs = candidate.difference(config, match=match, replace=replace, path=path)
+        configobjs = candidate.difference(before, match=match, replace=replace, path=path)
     else:
         configobjs = candidate.items
 
     if configobjs:
-        commands = dumps(configobjs, 'commands').split('\n')
+        out_type = "commands"
+        if module.params["src"] is not None:
+            out_type = "raw"
+        commands = dumps(configobjs, out_type).split('\n')
 
         if module.params['lines']:
             if module.params['before']:
@@ -340,8 +349,34 @@ def run(module, result):
                 load_config(module, commands)
             else:
                 _load_config(module, commands)
-
-        result['changed'] = True
+        if match != "none":
+            after = get_running_config(module)
+            path = module.params["parents"]
+            if path is not None and match != 'line':
+                before_objs = before.get_block(path)
+                after_objs = after.get_block(path)
+                update = []
+                if len(before_objs) == len(after_objs):
+                    for b_item, a_item in zip(before_objs, after_objs):
+                        if b_item != a_item:
+                            update.append(a_item.text)
+                else:
+                    update = [item.text for item in after_objs]
+                if len(update) == 0:
+                    result["changed"] = False
+                    result['updates'] = []
+                else:
+                    result["changed"] = True
+                    result['updates'] = update
+            else:
+                configobjs = after.difference(before, match=match, replace=replace, path=path)
+                if len(configobjs) > 0:
+                    result["changed"] = True
+                else:
+                    result["changed"] = False
+                    result['updates'] = []
+        else:
+            result['changed'] = True
 
 
 class NetworkConfig(_NetworkConfig):
@@ -452,8 +487,9 @@ def main():
 
     if module.params['save']:
         if not module.check_mode:
-            run_commands(module, ['save'])
-        result['changed'] = True
+            run_commands(module, ['return', 'mmi-mode enable', 'save'])
+            result["changed"] = True
+    run_commands(module, ['return', 'undo mmi-mode enable'])
 
     module.exit_json(**result)
 

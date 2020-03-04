@@ -1,70 +1,125 @@
+---
 - name: set up aws connection info
-  set_fact:
-    aws_connection_info: &aws_connection_info
+  module_defaults:
+    group/aws:
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
+      security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
-  no_log: yes
+  block:
+  - name: ensure ansible user exists
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
 
-- name: ensure ansible user exists
-  iam_user:
-    name: AnsibleTestUser
-    state: present
-    <<: *aws_connection_info
+  - name: ensure group exists
+    iam_group:
+      name: '{{ test_group }}'
+      users:
+        - '{{ test_user }}'
+      state: present
+    register: iam_group
 
-- name: ensure group exists
-  iam_group:
-    name: ansible_test
-    users:
-      - AnsibleTestUser
-    state: present
-    <<: *aws_connection_info
-  register: iam_group
+  - assert:
+      that:
+        - iam_group.iam_group.users
+        - iam_group is changed
 
-- assert:
-    that:
-      - iam_group.users
+  - name: add non existent user to group
+    iam_group:
+      name: '{{ test_group }}'
+      users:
+        - '{{ test_user }}'
+        - NonExistentUser
+      state: present
+    ignore_errors: yes
+    register: iam_group
 
-- name: add non existent user to group
-  iam_group:
-    name: ansible_test
-    users:
-      - AnsibleTestUser
-      - NonExistentUser
-    state: present
-    <<: *aws_connection_info
-  ignore_errors: yes
-  register: iam_group
+  - name: assert that adding non existent user to group fails with helpful message
+    assert:
+      that:
+        - iam_group is failed
+        - iam_group.msg.startswith("Couldn't add user NonExistentUser to group {{ test_group }}")
 
-- name: assert that adding non existent user to group fails with helpful message
-  assert:
-    that:
-      - iam_group is failed
-      - iam_group.msg.startswith("Couldn't add user NonExistentUser to group ansible_test")
+  - name: remove a user
+    iam_group:
+      name: '{{ test_group }}'
+      purge_users: True
+      users: []
+      state: present
+    register: iam_group
 
-- name: remove a user
-  iam_group:
-    name: ansible_test
-    purge_users: True
-    users: []
-    state: present
-    <<: *aws_connection_info
-  register: iam_group
+  - assert:
+      that:
+        - iam_group is changed
+        - not iam_group.iam_group.users
 
-- assert:
-    that:
-      - iam_group.changed
-      - not iam_group.users
+  - name: re-remove a user (no change)
+    iam_group:
+      name: '{{ test_group }}'
+      purge_users: True
+      users: []
+      state: present
+    register: iam_group
 
-- name: remove group
-  iam_group:
-    name: ansible_test
-    state: absent
-    <<: *aws_connection_info
+  - assert:
+      that:
+        - iam_group is not changed
+        - not iam_group.iam_group.users
 
-- name: remove ansible user
-  iam_user:
-    name: AnsibleTestUser
-    state: absent
-    <<: *aws_connection_info
+  - name: Add the user again
+    iam_group:
+      name: '{{ test_group }}'
+      users:
+        - '{{ test_user }}'
+      state: present
+    register: iam_group
+
+  - assert:
+      that:
+        - iam_group is changed
+        - iam_group.iam_group.users
+
+  - name: Re-add the user
+    iam_group:
+      name: '{{ test_group }}'
+      users:
+        - '{{ test_user }}'
+      state: present
+    register: iam_group
+
+  - assert:
+      that:
+        - iam_group is not changed
+        - iam_group.iam_group.users
+
+  - name: remove group
+    iam_group:
+      name: '{{ test_group }}'
+      state: absent
+    register: iam_group
+
+  - assert:
+      that:
+        - iam_group is changed
+
+  - name: re-remove group
+    iam_group:
+      name: '{{ test_group }}'
+      state: absent
+    register: iam_group
+
+  - assert:
+      that:
+        - iam_group is not changed
+
+  always:
+  - name: remove group
+    iam_group:
+      name: '{{ test_group }}'
+      state: absent
+
+  - name: remove ansible user
+    iam_user:
+      name: '{{ test_user }}'
+      state: absent

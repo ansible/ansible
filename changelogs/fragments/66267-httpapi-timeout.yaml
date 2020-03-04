@@ -1,0 +1,5 @@
+bugfixes:
+- Fix httpapi timeout value to read from persistent_command_timeout as intended.
+
+minor_changes:
+- Remove timeout option from httpapi, netconf, & network_cli connections, as they were unused.

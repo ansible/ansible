@@ -1,0 +1,49 @@
+---
+- debug:
+    msg: "START junos_interfaces groups integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- set_fact:
+    expected_group_output:
+      - name: ge-0/0/11
+        description: "within test group"
+        enabled: true
+      - name: ge-0/0/12
+        description: "global interface config"
+        enabled: true
+      - name: fxp0
+        enabled: true
+
+- name: "Teardown delete interface configuration"
+  junos_config: &delete_interface_config
+    lines:
+      - delete apply-groups test
+      - delete groups test interfaces ge-0/0/11
+      - delete interfaces ge-0/0/12
+
+- block:
+    - name: "Setup interface configuration"
+      junos_config:
+        lines:
+          - set groups test interfaces ge-0/0/11 description "within test group"
+          - set apply-groups test
+          - set interfaces ge-0/0/12 description "global interface config"
+
+    - name: "get junos interfaces facts"
+      junos_facts:
+        gather_subset: min
+        gather_network_resources: interfaces
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ expected_group_output | symmetric_difference(result['ansible_facts']['ansible_network_resources']['interfaces'])|length == 0 }}"
+
+  always:
+    - name: "Teardown delete interface configuration"
+      junos_config: *delete_interface_config
+
+- debug:
+    msg: "END junos_interfaces merged integration tests on connection={{ ansible_connection }}"

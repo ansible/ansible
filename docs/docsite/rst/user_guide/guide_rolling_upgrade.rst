@@ -39,7 +39,9 @@ Site deployment
 ===============
 
 Let's start with ``site.yml``. This is our site-wide deployment playbook. It can be used to initially deploy the site, as well
-as push updates to all of the servers::
+as push updates to all of the servers:
+
+.. code-block:: yaml
 
     ---
     # This playbook deploys the whole application stack in this site.
@@ -114,7 +116,9 @@ Configuration: group variables
 Group variables are variables that are applied to groups of servers. They can be used in templates and in
 playbooks to customize behavior and to provide easily-changed settings and parameters. They are stored in
 a directory called ``group_vars`` in the same location as your inventory.
-Here is lamp_haproxy's ``group_vars/all`` file. As you might expect, these variables are applied to all of the machines in your inventory::
+Here is lamp_haproxy's ``group_vars/all`` file. As you might expect, these variables are applied to all of the machines in your inventory:
+
+.. code-block:: yaml
 
    ---
    httpd_port: 80
@@ -124,7 +128,9 @@ This is a YAML file, and you can create lists and dictionaries for more complex 
 In this case, we are just setting two variables, one for the port for the web server, and one for the
 NTP server that our machines should use for time synchronization.
 
-Here's another group variables file. This is ``group_vars/dbservers`` which applies to the hosts in the ``dbservers`` group::
+Here's another group variables file. This is ``group_vars/dbservers`` which applies to the hosts in the ``dbservers`` group:
+
+.. code-block:: yaml
 
    ---
    mysqlservice: mysqld
@@ -135,7 +141,9 @@ Here's another group variables file. This is ``group_vars/dbservers`` which appl
 
 If you look in the example, there are group variables for the ``webservers`` group and the ``lbservers`` group, similarly.
 
-These variables are used in a variety of places. You can use them in playbooks, like this, in ``roles/db/tasks/main.yml``::
+These variables are used in a variety of places. You can use them in playbooks, like this, in ``roles/db/tasks/main.yml``:
+
+.. code-block:: yaml
 
    - name: Create Application Database
      mysql_db:
@@ -150,7 +158,9 @@ These variables are used in a variety of places. You can use them in playbooks, 
        host: '%'
        state: present
 
-You can also use these variables in templates, like this, in ``roles/common/templates/ntp.conf.j2``::
+You can also use these variables in templates, like this, in ``roles/common/templates/ntp.conf.j2``:
+
+.. code-block:: text
 
    driftfile /var/lib/ntp/drift
 
@@ -202,14 +212,18 @@ refers to orchestration as 'conducting machines like an orchestra', and has a pr
 
 Ansible has the capability to do operations on multi-tier applications in a coordinated way, making it easy to orchestrate a sophisticated zero-downtime rolling upgrade of our web application. This is implemented in a separate playbook, called ``rolling_update.yml``.
 
-Looking at the playbook, you can see it is made up of two plays. The first play is very simple and looks like this::
+Looking at the playbook, you can see it is made up of two plays. The first play is very simple and looks like this:
+
+.. code-block:: yaml
 
    - hosts: monitoring
      tasks: []
 
 What's going on here, and why are there no tasks? You might know that Ansible gathers "facts" from the servers before operating upon them. These facts are useful for all sorts of things: networking information, OS/distribution versions, etc. In our case, we need to know something about all of the monitoring servers in our environment before we perform the update, so this simple play forces a fact-gathering step on our monitoring servers. You will see this pattern sometimes, and it's a useful trick to know.
 
-The next part is the update play. The first part looks like this::
+The next part is the update play. The first part looks like this:
+
+.. code-block:: yaml
 
    - hosts: webservers
      user: root
@@ -217,21 +231,23 @@ The next part is the update play. The first part looks like this::
 
 This is just a normal play definition, operating on the ``webservers`` group. The ``serial`` keyword tells Ansible how many servers to operate on at once. If it's not specified, Ansible will parallelize these operations up to the default "forks" limit specified in the configuration file. But for a zero-downtime rolling upgrade, you may not want to operate on that many hosts at once. If you had just a handful of webservers, you may want to set ``serial`` to 1, for one host at a time. If you have 100, maybe you could set ``serial`` to 10, for ten at a time.
 
-Here is the next part of the update play::
+Here is the next part of the update play:
 
-  pre_tasks:
-  - name: disable nagios alerts for this host webserver service
-    nagios:
-      action: disable_alerts
-      host: "{{ inventory_hostname }}"
-      services: webserver
-    delegate_to: "{{ item }}"
-    loop: "{{ groups.monitoring }}"
+.. code-block:: yaml
 
-  - name: disable the server in haproxy
-    shell: echo "disable server myapplb/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
-    delegate_to: "{{ item }}"
-    loop: "{{ groups.lbservers }}"
+   pre_tasks:
+   - name: disable nagios alerts for this host webserver service
+     nagios:
+       action: disable_alerts
+       host: "{{ inventory_hostname }}"
+       services: webserver
+     delegate_to: "{{ item }}"
+     loop: "{{ groups.monitoring }}"
+
+   - name: disable the server in haproxy
+     shell: echo "disable server myapplb/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
+     delegate_to: "{{ item }}"
+     loop: "{{ groups.lbservers }}"
 
 .. note::
    - The ``serial`` keyword forces the play to be executed in 'batches'. Each batch counts as a full play with a subselection of hosts.
@@ -243,28 +259,32 @@ The ``delegate_to`` and ``loop`` arguments, used together, cause Ansible to loop
 
 Note that the HAProxy step looks a little complicated.  We're using HAProxy in this example because it's freely available, though if you have (for instance) an F5 or Netscaler in your infrastructure (or maybe you have an AWS Elastic IP setup?), you can use modules included in core Ansible to communicate with them instead.  You might also wish to use other monitoring modules instead of nagios, but this just shows the main goal of the 'pre tasks' section -- take the server out of monitoring, and take it out of rotation.
 
-The next step simply re-applies the proper roles to the web servers. This will cause any configuration management declarations in ``web`` and ``base-apache`` roles to be applied to the web servers, including an update of the web application code itself. We don't have to do it this way--we could instead just purely update the web application, but this is a good example of how roles can be used to reuse tasks::
+The next step simply re-applies the proper roles to the web servers. This will cause any configuration management declarations in ``web`` and ``base-apache`` roles to be applied to the web servers, including an update of the web application code itself. We don't have to do it this way--we could instead just purely update the web application, but this is a good example of how roles can be used to reuse tasks:
 
-  roles:
-  - common
-  - base-apache
-  - web
+.. code-block:: yaml
 
-Finally, in the ``post_tasks`` section, we reverse the changes to the Nagios configuration and put the web server back in the load balancing pool::
+   roles:
+   - common
+   - base-apache
+   - web
 
-  post_tasks:
-  - name: Enable the server in haproxy
-    shell: echo "enable server myapplb/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
-    delegate_to: "{{ item }}"
-    loop: "{{ groups.lbservers }}"
+Finally, in the ``post_tasks`` section, we reverse the changes to the Nagios configuration and put the web server back in the load balancing pool:
 
-  - name: re-enable nagios alerts
-    nagios:
-      action: enable_alerts
-      host: "{{ inventory_hostname }}"
-      services: webserver
-    delegate_to: "{{ item }}"
-    loop: "{{ groups.monitoring }}"
+.. code-block:: yaml
+
+   post_tasks:
+   - name: Enable the server in haproxy
+     shell: echo "enable server myapplb/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
+     delegate_to: "{{ item }}"
+     loop: "{{ groups.lbservers }}"
+
+   - name: re-enable nagios alerts
+     nagios:
+       action: enable_alerts
+       host: "{{ inventory_hostname }}"
+       services: webserver
+     delegate_to: "{{ item }}"
+     loop: "{{ groups.monitoring }}"
 
 Again, if you were using a Netscaler or F5 or Elastic Load Balancer, you would just substitute in the appropriate modules instead.
 

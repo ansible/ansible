@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -33,7 +36,9 @@ description:
     with C(ansible_net_<fact>).  The facts module will always collect a
     base set of facts from the device and can enable or disable
     collection of additional facts.
-
+notes:
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
   gather_subset:
     description:
@@ -253,7 +258,7 @@ class Hardware(FactsBase):
 
         data = self.responses[0]
         if data:
-            self.facts['filesystems'] = re.findall(r'^Directory of (.*)/', data)[0]
+            self.facts['filesystems'] = re.findall(r'Directory of (.*)/', data)[0]
             self.facts['flash_total'] = re.findall(r'(.*) total', data)[0].replace(",", "")
             self.facts['flash_free'] = re.findall(r'total \((.*) free\)', data)[0].replace(",", "")
 

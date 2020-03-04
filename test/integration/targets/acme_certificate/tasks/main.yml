@@ -1,5 +1,76 @@
 ---
 - block:
+  - name: Obtain root and intermediate certificates
+    get_url:
+      url: "http://{{ acme_host }}:5000/{{ item.0 }}-certificate-for-ca/{{ item.1 }}"
+      dest: "{{ output_dir }}/acme-{{ item.0 }}-{{ item.1 }}.pem"
+    loop: "{{ query('nested', types, root_numbers) }}"
+
+  - name: Analyze root certificates
+    openssl_certificate_info:
+      path: "{{ output_dir }}/acme-root-{{ item }}.pem"
+    loop: "{{ root_numbers }}"
+    register: acme_roots
+
+  - name: Analyze intermediate certificates
+    openssl_certificate_info:
+      path: "{{ output_dir }}/acme-intermediate-{{ item }}.pem"
+    loop: "{{ root_numbers }}"
+    register: acme_intermediates
+
+  - set_fact:
+      x__: "{{ item | dict2items | selectattr('key', 'in', interesting_keys) | list | items2dict }}"
+      y__: "{{ lookup('file', output_dir ~ '/acme-root-' ~ item.item ~ '.pem', rstrip=False) }}"
+    loop: "{{ acme_roots.results }}"
+    register: acme_roots_tmp
+
+  - set_fact:
+      x__: "{{ item | dict2items | selectattr('key', 'in', interesting_keys) | list | items2dict }}"
+      y__: "{{ lookup('file', output_dir ~ '/acme-intermediate-' ~ item.item ~ '.pem', rstrip=False) }}"
+    loop: "{{ acme_intermediates.results }}"
+    register: acme_intermediates_tmp
+
+  - set_fact:
+      acme_roots: "{{ acme_roots_tmp.results | map(attribute='ansible_facts.x__') | list }}"
+      acme_root_certs: "{{ acme_roots_tmp.results | map(attribute='ansible_facts.y__') | list }}"
+      acme_intermediates: "{{ acme_intermediates_tmp.results | map(attribute='ansible_facts.x__') | list }}"
+      acme_intermediate_certs: "{{ acme_intermediates_tmp.results | map(attribute='ansible_facts.y__') | list }}"
+
+  vars:
+    types:
+      - root
+      - intermediate
+    root_numbers:
+      # The number 3 comes from here: https://github.com/ansible/acme-test-container/blob/master/run.sh#L12
+      - 0
+      - 1
+      - 2
+      - 3
+    interesting_keys:
+      - authority_key_identifier
+      - subject_key_identifier
+      - issuer
+      - subject
+      #- serial_number
+      #- public_key_fingerprints
+
+- name: ACME root certificate info
+  debug:
+    var: acme_roots
+
+#- name: ACME root certificates as PEM
+#  debug:
+#    var: acme_root_certs
+
+- name: ACME intermediate certificate info
+  debug:
+    var: acme_intermediates
+
+#- name: ACME intermediate certificates as PEM
+#  debug:
+#    var: acme_intermediate_certs
+
+- block:
   - name: Running tests with OpenSSL backend
     include_tasks: impl.yml
     vars:

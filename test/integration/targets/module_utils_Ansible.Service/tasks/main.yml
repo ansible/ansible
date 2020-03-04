@@ -1,0 +1,9 @@
+---
+- name: test Ansible.Service.cs
+  ansible_service_tests:
+  register: ansible_service_test
+
+- name: assert test Ansible.Service.cs
+  assert:
+    that:
+    - ansible_service_test.data == "success"

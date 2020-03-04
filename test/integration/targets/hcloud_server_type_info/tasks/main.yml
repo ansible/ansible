@@ -1,0 +1,38 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: test gather hcloud server type infos
+  hcloud_server_type_info:
+  register: hcloud_server_types
+- name: verify test gather hcloud server type infos
+  assert:
+    that:
+      - hcloud_server_types.hcloud_server_type_info| list | count > 2
+
+- name: test gather hcloud server type infos in check mode
+  hcloud_server_type_info:
+  check_mode: yes
+  register: hcloud_server_types
+
+- name: verify test gather hcloud server type infos in check mode
+  assert:
+    that:
+      - hcloud_server_types.hcloud_server_type_info| list | count > 2
+
+- name: test gather hcloud server type infos with name
+  hcloud_server_type_info:
+    name: "{{hcloud_server_type_name}}"
+  register: hcloud_server_types
+- name: verify test gather hcloud server type with name
+  assert:
+    that:
+      - hcloud_server_types.hcloud_server_type_info|selectattr('name','equalto','{{ hcloud_server_type_name }}') | list | count == 1
+
+- name: test gather hcloud server type infos with correct id
+  hcloud_server_type_info:
+    id: "{{hcloud_server_type_id}}"
+  register: hcloud_server_types
+- name: verify test gather hcloud server type with correct id
+  assert:
+    that:
+      - hcloud_server_types.hcloud_server_type_info|selectattr('name','equalto','{{ hcloud_server_type_name }}') | list | count == 1

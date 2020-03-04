@@ -1,0 +1,35 @@
+# Test code for the vmware_host_auto_start Operations.
+# Copyright: (c) 2019, sky-joker <sky.jokerxx@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: "Reset powerInfo for autoStart parameters of {{ test_vm1 }}."
+  vmware_host_auto_start:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    name: test_vm1
+    power_info:
+      start_action: none
+
+- name: "Reset powerInfo for autoStart parameters of {{ test_vm2 }}"
+  vmware_host_auto_start:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    name: test_vm2
+    power_info:
+      start_action: none
+
+- name: Reset autoStart defaults parameters.
+  vmware_host_auto_start:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: "{{ esxi1 }}"
+    system_defaults:
+      enabled: no

@@ -1,0 +1,51 @@
+---
+- debug:
+    msg: "Start eos_acl_interfaces merged integration tests ansible_connection={{ ansible_connection }}"
+
+
+- block:
+
+  - name: merge given acl interfaces configuration
+    eos_acl_interfaces: &merged
+      config:
+        - name: "{{ Interfaces['int1'] }}"
+          access_groups:
+            - afi: ipv4
+              acls:
+                - name: aclv401
+                  direction: in
+                - name: aclv402
+                  direction: out
+            - afi: ipv6
+              acls:
+                - name: aclv601
+                  direction: out
+        - name: "{{ Interfaces['int2'] }}"
+          access_groups:
+            - afi: ipv6
+              acls:
+                - name: aclv601
+                  direction: in
+      state: merged
+    become: yes
+    register: result
+
+  - assert:
+      that:
+        - "result.commands|length == 6"
+        - "result.changed == true"
+        - "result.commands|symmetric_difference(merged.commands) == []"
+
+  - name: Idempotency check
+    eos_acl_interfaces: *merged
+    become: yes
+    register: result
+
+  - assert:
+      that:
+        - "result.commands|length == 0"
+        - "result.changed == false"
+
+
+  always:
+    - include_tasks: _remove_config.yaml

@@ -2,21 +2,26 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
 module: elasticache_info
-short_description: Retrieve information for AWS Elasticache clusters
+short_description: Retrieve information for AWS ElastiCache clusters
 description:
-  - Retrieve information from AWS Elasticache clusters
+  - Retrieve information from AWS ElastiCache clusters
   - This module was called C(elasticache_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.5"
 options:
   name:
     description:
-      - The name of an Elasticache cluster
+      - The name of an ElastiCache cluster.
+    type: str
 
 author:
   - Will Thames (@willthames)
@@ -26,17 +31,17 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: obtain all Elasticache information
+- name: obtain all ElastiCache information
   elasticache_info:
 
-- name: obtain all information for a single Elasticache cluster
+- name: obtain all information for a single ElastiCache cluster
   elasticache_info:
     name: test_elasticache
 '''
 
 RETURN = '''
 elasticache_clusters:
-  description: List of elasticache clusters
+  description: List of ElastiCache clusters
   returned: always
   type: complex
   contains:
@@ -56,17 +61,17 @@ elasticache_clusters:
       type: str
       sample: abcd-1234-001
     cache_cluster_status:
-      description: Status of Elasticache cluster
+      description: Status of ElastiCache cluster
       returned: always
       type: str
       sample: available
     cache_node_type:
-      description: Instance type of Elasticache nodes
+      description: Instance type of ElastiCache nodes
       returned: always
       type: str
       sample: cache.t2.micro
     cache_nodes:
-      description: List of Elasticache nodes in the cluster
+      description: List of ElastiCache nodes in the cluster
       returned: always
       type: complex
       contains:
@@ -105,13 +110,13 @@ elasticache_clusters:
               returned: always
               type: int
               sample: 6379
-        parameter_grou_status:
+        parameter_group_status:
           description: Status of the Cache Parameter Group
           returned: always
           type: str
           sample: in-sync
     cache_parameter_group:
-      description: Contents of the Cache Parameter GGroup
+      description: Contents of the Cache Parameter Group
       returned: always
       type: complex
       contains:
@@ -137,7 +142,7 @@ elasticache_clusters:
       sample:
         - 'sg-abcd1234'
     cache_subnet_group_name:
-      description: Elasticache Subnet Group used by the cache
+      description: ElastiCache Subnet Group used by the cache
       returned: always
       type: str
       sample: abcd-subnet-group
@@ -147,12 +152,12 @@ elasticache_clusters:
       type: str
       sample: 'https://console.aws.amazon.com/elasticache/home#client-download:'
     engine:
-      description: Engine used by elasticache
+      description: Engine used by ElastiCache
       returned: always
       type: str
       sample: redis
     engine_version:
-      description: Version of elasticache engine
+      description: Version of ElastiCache engine
       returned: always
       type: str
       sample: 3.2.4
@@ -197,7 +202,7 @@ elasticache_clusters:
       type: str
       sample: replication-001
     security_groups:
-      description: List of Security Groups associated with Elasticache
+      description: List of Security Groups associated with ElastiCache
       returned: always
       type: complex
       contains:
@@ -212,24 +217,23 @@ elasticache_clusters:
           type: str
           sample: active
     tags:
-      description: Tags applied to the elasticache cluster
+      description: Tags applied to the ElastiCache cluster
       returned: always
       type: complex
+      contains: {}
       sample:
         Application: web
         Environment: test
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
-from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import get_aws_connection_info, camel_dict_to_snake_dict, AWSRetry, boto3_tag_list_to_ansible_dict
 
 
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 @AWSRetry.exponential_backoff()
@@ -256,9 +260,7 @@ def get_elasticache_tags_with_backoff(client, cluster_id):
 
 def get_aws_account_id(module):
     try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        client = boto3_conn(module, conn_type='client', resource='sts',
-                            region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        client = module.client('sts')
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Can't authorize connection")
 
@@ -268,7 +270,8 @@ def get_aws_account_id(module):
         module.fail_json_aws(e, msg="Couldn't obtain AWS account id")
 
 
-def get_elasticache_clusters(client, module, region):
+def get_elasticache_clusters(client, module):
+    region = get_aws_connection_info(module, boto3=True)[0]
     try:
         clusters = describe_cache_clusters_with_backoff(client, cluster_id=module.params.get('name'))
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -291,21 +294,16 @@ def get_elasticache_clusters(client, module, region):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=False),
-        )
+    argument_spec = dict(
+        name=dict(required=False),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._name == 'elasticache_facts':
         module.deprecate("The 'elasticache_facts' module has been renamed to 'elasticache_info'", version='2.13')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='elasticache',
-                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client('elasticache')
 
-    module.exit_json(elasticache_clusters=get_elasticache_clusters(client, module, region))
+    module.exit_json(elasticache_clusters=get_elasticache_clusters(client, module))
 
 
 if __name__ == '__main__':

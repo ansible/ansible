@@ -34,22 +34,24 @@ options:
     description:
     - The ID for the launch template, can be used for all cases except creating a new Launch Template.
     aliases: [id]
+    type: str
   template_name:
     description:
     - The template name. This must be unique in the region-account combination you are using.
     aliases: [name]
+    type: str
   default_version:
     description:
     - Which version should be the default when users spin up new instances based on this template? By default, the latest version will be made the default.
+    type: str
     default: latest
   state:
     description:
-    - Whether the launch template should exist or not. To delete only a
-      specific version of a launch template, combine I(state=absent) with
-      the I(version) option. By default, I(state=absent) will remove all
-      versions of the template.
+    - Whether the launch template should exist or not.
+    - Deleting specific versions of a launch template is not supported at this time.
     choices: [present, absent]
     default: present
+    type: str
   block_device_mappings:
     description:
     - The block device mapping. Supplying both a snapshot ID and an encryption
@@ -58,11 +60,15 @@ options:
       created from a snapshot. If a snapshot is the basis for the volume, it
       contains data by definition and its encryption status cannot be changed
       using this action.
+    type: list
+    elements: dict
     suboptions:
       device_name:
         description: The device name (for example, /dev/sdh or xvdh).
+        type: str
       no_device:
         description: Suppresses the specified device included in the block device mapping of the AMI.
+        type: str
       virtual_name:
         description: >
           The virtual device name (ephemeralN). Instance store volumes are
@@ -70,8 +76,10 @@ options:
           store volumes can specify mappings for ephemeral0 and ephemeral1. The
           number of available instance store volumes depends on the instance
           type. After you connect to the instance, you must mount the volume.
+        type: str
       ebs:
         description: Parameters used to automatically set up EBS volumes when the instance is launched.
+        type: dict
         suboptions:
           delete_on_termination:
             description: Indicates whether the EBS volume is deleted on instance termination.
@@ -82,6 +90,7 @@ options:
               can only be attached to instances that support Amazon EBS
               encryption. If you are creating a volume from a snapshot, you
               can't specify an encryption value.
+            type: bool
           iops:
             description:
             - The number of I/O operations per second (IOPS) that the volume
@@ -96,36 +105,45 @@ options:
               Condition: This parameter is required for requests to create io1
               volumes; it is not used in requests to create gp2, st1, sc1, or
               standard volumes.
+            type: int
           kms_key_id:
             description: The ARN of the AWS Key Management Service (AWS KMS) CMK used for encryption.
+            type: str
           snapshot_id:
-            description: The ID of the snapshot to create the volume from
+            description: The ID of the snapshot to create the volume from.
+            type: str
           volume_size:
             description:
             - The size of the volume, in GiB.
             - "Default: If you're creating the volume from a snapshot and don't specify a volume size, the default is the snapshot size."
+            type: int
           volume_type:
             description: The volume type
+            type: str
   cpu_options:
     description:
     - Choose CPU settings for the EC2 instances that will be created with this template.
     - For more information, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-optimize-cpu.html)
+    type: dict
     suboptions:
       core_count:
         description: The number of CPU cores for the instance.
+        type: int
       threads_per_core:
         description: >
           The number of threads per CPU core. To disable Intel Hyper-Threading
           Technology for the instance, specify a value of 1. Otherwise, specify
           the default value of 2.
+        type: int
   credit_specification:
     description: The credit option for CPU usage of the instance. Valid for T2 or T3 instances only.
+    type: dict
     suboptions:
       cpu_credits:
         description: >
           The credit option for CPU usage of a T2 or T3 instance. Valid values
-          are I(standard) and I(unlimited).
-        choices: [standard, unlimited]
+          are C(standard) and C(unlimited).
+        type: str
   disable_api_termination:
     description: >
       This helps protect instances from accidental termination. If set to true,
@@ -142,69 +160,86 @@ options:
       charges apply when using an EBS-optimized instance.
     type: bool
   elastic_gpu_specifications:
+    type: list
+    elements: dict
     description: Settings for Elastic GPU attachments. See U(https://aws.amazon.com/ec2/elastic-gpus/) for details.
     suboptions:
       type:
         description: The type of Elastic GPU to attach
+        type: str
   iam_instance_profile:
     description: >
       The name or ARN of an IAM instance profile. Requires permissions to
       describe existing instance roles to confirm ARN is properly formed.
+    type: str
   image_id:
     description: >
       The AMI ID to use for new instances launched with this template. This
       value is region-dependent since AMIs are not global resources.
+    type: str
   instance_initiated_shutdown_behavior:
     description: >
       Indicates whether an instance stops or terminates when you initiate
       shutdown from the instance using the operating system shutdown command.
     choices: [stop, terminate]
+    type: str
   instance_market_options:
     description: Options for alternative instance markets, currently only the spot market is supported.
+    type: dict
     suboptions:
       market_type:
         description: The market type. This should always be 'spot'.
+        type: str
       spot_options:
-        description: Spot-market specific settings
+        description: Spot-market specific settings.
+        type: dict
         suboptions:
           block_duration_minutes:
             description: >
               The required duration for the Spot Instances (also known as Spot
               blocks), in minutes. This value must be a multiple of 60 (60,
               120, 180, 240, 300, or 360).
+            type: int
           instance_interruption_behavior:
-            description: The behavior when a Spot Instance is interrupted. The default is I(terminate)
+            description: The behavior when a Spot Instance is interrupted. The default is C(terminate).
             choices: [hibernate, stop, terminate]
+            type: str
           max_price:
             description: The highest hourly price you're willing to pay for this Spot Instance.
+            type: str
           spot_instance_type:
             description: The request type to send.
             choices: [one-time, persistent]
-    type: dict
+            type: str
   instance_type:
     description: >
-      The instance type, such as I(c5.2xlarge). For a full list of instance types, see
-      http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html
+      The instance type, such as C(c5.2xlarge). For a full list of instance types, see
+      U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html).
+    type: str
   kernel_id:
     description: >
       The ID of the kernel. We recommend that you use PV-GRUB instead of
       kernels and RAM disks. For more information, see
       U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UserProvidedkernels.html)
+    type: str
   key_name:
     description:
-    - The name of the key pair. You can create a key pair using
-      I(CreateKeyPair) or I(ImportKeyPair).
+    - The name of the key pair. You can create a key pair using M(ec2_key).
     - If you do not specify a key pair, you can't connect to the instance
       unless you choose an AMI that is configured to allow users another way to
       log in.
+    type: str
   monitoring:
-    description: Settings for instance monitoring
+    description: Settings for instance monitoring.
+    type: dict
     suboptions:
       enabled:
         type: bool
         description: Whether to turn on detailed monitoring for new instances. This will incur extra charges.
   network_interfaces:
     description: One or more network interfaces.
+    type: list
+    elements: dict
     suboptions:
       associate_public_ip_address:
         description: Associates a public IPv4 address with eth0 for a new network interface.
@@ -214,63 +249,71 @@ options:
         type: bool
       description:
         description: A description for the network interface.
+        type: str
       device_index:
         description: The device index for the network interface attachment.
+        type: int
       groups:
-        description: List of security group IDs to include on this instance
+        description: List of security group IDs to include on this instance.
+        type: list
+        elements: str
       ipv6_address_count:
         description: >
           The number of IPv6 addresses to assign to a network interface. Amazon
           EC2 automatically selects the IPv6 addresses from the subnet range.
           You can't use this option if specifying the I(ipv6_addresses) option.
+        type: int
       ipv6_addresses:
         description: >
           A list of one or more specific IPv6 addresses from the IPv6 CIDR
           block range of your subnet. You can't use this option if you're
           specifying the I(ipv6_address_count) option.
+        type: list
+        elements: str
       network_interface_id:
         description: The eni ID of a network interface to attach.
+        type: str
       private_ip_address:
         description: The primary private IPv4 address of the network interface.
-      private_ip_addresses:
-        description: One or more private IPv4 addresses.
-        suboptions:
-          primary:
-            description: >
-              Indicates whether the private IPv4 address is the primary private
-              IPv4 address. Only one IPv4 address can be designated as primary.
-          private_ip_address:
-            description: The primary private IPv4 address of the network interface.
+        type: str
       subnet_id:
         description: The ID of the subnet for the network interface.
-      secondary_private_ip_address_count:
-        description: The number of secondary private IPv4 addresses to assign to a network interface.
+        type: str
   placement:
     description: The placement group settings for the instance.
+    type: dict
     suboptions:
       affinity:
         description: The affinity setting for an instance on a Dedicated Host.
+        type: str
       availability_zone:
         description: The Availability Zone for the instance.
+        type: str
       group_name:
         description: The name of the placement group for the instance.
+        type: str
       host_id:
         description: The ID of the Dedicated Host for the instance.
+        type: str
       tenancy:
         description: >
           The tenancy of the instance (if the instance is running in a VPC). An
           instance with a tenancy of dedicated runs on single-tenant hardware.
+        type: str
   ram_disk_id:
     description: >
       The ID of the RAM disk to launch the instance with. We recommend that you
       use PV-GRUB instead of kernels and RAM disks. For more information, see
       U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UserProvidedkernels.html)
+    type: str
   security_group_ids:
     description: A list of security group IDs (VPC or EC2-Classic) that the new instances will be added to.
     type: list
+    elements: str
   security_groups:
     description: A list of security group names (VPC or EC2-Classic) that the new instances will be added to.
     type: list
+    elements: str
   tags:
     type: dict
     description:
@@ -283,27 +326,33 @@ options:
       U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html) and Windows
       U(http://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-instance-metadata.html#instancedata-add-user-data)
       documentation on user-data.
+    type: str
 '''
 
 EXAMPLES = '''
-- name: Make instance with an instance_role
+- name: Create an ec2 launch template
   ec2_launch_template:
-    name: "test-with-instance-role"
-    image_id: "ami-foobarbaz"
+    name: "my_template"
+    image_id: "ami-04b762b4289fba92b"
     key_name: my_ssh_key
     instance_type: t2.micro
     iam_instance_profile: myTestProfile
     disable_api_termination: true
 
-- name: Make one with a different instance type, but leave the older version as default
+- name: >
+    Create a new version of an existing ec2 launch template with a different instance type,
+    while leaving an older version as the default version
   ec2_launch_template:
-    name: "test-with-instance-role"
-    image_id: "ami-foobarbaz"
+    name: "my_template"
     default_version: 1
-    key_name: my_ssh_key
     instance_type: c5.4xlarge
-    iam_instance_profile: myTestProfile
-    disable_api_termination: true
+
+- name: Delete an ec2 launch template
+  ec2_launch_template:
+    name: "my_template"
+    state: absent
+
+# This module does not yet allow deletion of specific versions of launch templates
 '''
 
 RETURN = '''
@@ -382,7 +431,7 @@ def params_to_launch_data(module, template_params):
                     in template_params['tags'].items()
                 ]
             }
-            for r_type in ('instance', 'network-interface', 'volume')
+            for r_type in ('instance', 'volume')
         ]
         del template_params['tags']
     if module.params.get('iam_instance_profile'):
@@ -430,7 +479,7 @@ def delete_template(module):
 
 
 def create_or_update(module, template_options):
-    ec2 = module.client('ec2', retry_decorator=AWSRetry.jittered_backoff())
+    ec2 = module.client('ec2', retry_decorator=AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidLaunchTemplateId.NotFound']))
     template, template_versions = existing_templates(module)
     out = {}
     lt_data = params_to_launch_data(module, dict((k, v) for k, v in module.params.items() if k in template_options))
@@ -507,6 +556,10 @@ def format_module_output(module):
             int(v['version_number']) == int(template['latest_version_number'])
         )
     ][0]
+    if "version_number" in output['default_template']:
+        output['default_version'] = output['default_template']['version_number']
+    if "version_number" in output['latest_template']:
+        output['latest_version'] = output['latest_template']['version_number']
     return output
 
 

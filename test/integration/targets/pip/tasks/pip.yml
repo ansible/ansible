@@ -80,16 +80,8 @@
 
 - name: now put it back in case someone wanted it (like us!)
   pip:
-    name: "{{ item }}"
+    name: "{{ pip_test_packages  }}"
     state: present
-  with_items: "{{ pip_test_packages }}"
-  register: squash_param
-
-- name: check that list has been condensed
-  assert:
-    that:
-      - squash_param.results|length == 1
-      - squash_param.results[0].name|sort == pip_test_packages|sort
 
 # Test virtualenv installations
 
@@ -504,7 +496,11 @@
 
   - name: install distribute in the virtualenv
     pip:
-      name: distribute
+      # using -c for constraints is not supported as long as tests are executed using the centos6 container
+      # since the pip version in the venv is not upgraded and is too old (6.0.8)
+      name:
+        - distribute
+        - setuptools<45  # setuptools 45 and later require python 3.5 or later
       virtualenv: "{{ output_dir }}/pipenv"
       state: present
 

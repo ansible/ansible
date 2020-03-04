@@ -1,0 +1,480 @@
+---
+- name: set up aws connection info
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
+  - name: ensure improper usage of parameters fails gracefully
+    iam_user_info:
+      path: '{{ test_path }}'
+      group: '{{ test_group }}'
+    ignore_errors: yes
+    register: iam_user_info_path_group
+  - assert:
+      that:
+        - iam_user_info_path_group is failed
+        - 'iam_user_info_path_group.msg == "parameters are mutually exclusive: group|path"'
+
+  - name: ensure exception handling fails as expected
+    iam_user_info:
+      region: 'bogus'
+      path: ''
+    ignore_errors: yes
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info is failed
+        - '"user" in iam_user_info.msg'
+
+  - name: ensure exception handling fails as expected with group
+    iam_user_info:
+      region: 'bogus'
+      group: '{{ test_group }}'
+    ignore_errors: yes
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info is failed
+        - '"group" in iam_user_info.msg'
+
+  - name: ensure exception handling fails as expected with default path
+    iam_user_info:
+      region: 'bogus'
+    ignore_errors: yes
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info is failed
+        - '"path" in iam_user_info.msg'
+
+  - name: create test user (check mode)
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+    check_mode: yes
+    register: iam_user
+
+  - name: assert that the user would be created
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: create test user
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+    register: iam_user
+
+  - name: assert that the user is created
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: ensure test user exists (no change)
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+    register: iam_user
+
+  - name: assert that the user wasn't changed
+    assert:
+      that:
+        - iam_user is not changed
+
+  - name: ensure the info used to validate other tests is valid
+    set_fact:
+        test_iam_user: '{{ iam_user.iam_user.user }}'
+  - assert:
+      that:
+        - 'test_iam_user.arn.startswith("arn:aws:iam")'
+        - 'test_iam_user.arn.endswith("user/" + test_user )'
+        - test_iam_user.create_date is not none
+        - test_iam_user.path == '{{ test_path }}'
+        - test_iam_user.user_id is not none
+        - test_iam_user.user_name == '{{ test_user }}'
+
+  - name: get info on IAM user(s)
+    iam_user_info:
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info.iam_users | length != 0
+
+  - name: get info on IAM user(s) with name
+    iam_user_info:
+      name: '{{ test_user }}'
+    register: iam_user_info
+  - debug: var=iam_user_info
+  - assert:
+      that:
+        - iam_user_info.iam_users | length == 1
+        - iam_user_info.iam_users[0].arn == test_iam_user.arn
+        - iam_user_info.iam_users[0].create_date == test_iam_user.create_date
+        - iam_user_info.iam_users[0].path == test_iam_user.path
+        - iam_user_info.iam_users[0].user_id == test_iam_user.user_id
+        - iam_user_info.iam_users[0].user_name == test_iam_user.user_name
+
+  - name: get info on IAM user(s) on path
+    iam_user_info:
+      path: '{{ test_path }}'
+      name: '{{ test_user }}'
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info.iam_users | length == 1
+        - iam_user_info.iam_users[0].arn == test_iam_user.arn
+        - iam_user_info.iam_users[0].create_date == test_iam_user.create_date
+        - iam_user_info.iam_users[0].path == test_iam_user.path
+        - iam_user_info.iam_users[0].user_id == test_iam_user.user_id
+        - iam_user_info.iam_users[0].user_name == test_iam_user.user_name
+
+  # ===========================================
+  # Test Managed Policy management
+  #
+  # Use a couple of benign policies for testing:
+  # - AWSDenyAll
+  # - ServiceQuotasReadOnlyAccess
+  #
+  - name: attach managed policy to user (check mode)
+    check_mode: yes
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/AWSDenyAll
+    register: iam_user
+
+  - name: assert that the user is changed
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: attach managed policy to user
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/AWSDenyAll
+    register: iam_user
+
+  - name: assert that the user is changed
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: ensure managed policy is attached to user (no change)
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/AWSDenyAll
+    register: iam_user
+
+  - name: assert that the user hasn't changed
+    assert:
+      that:
+        - iam_user is not changed
+
+  - name: attach different managed policy to user (check mode)
+    check_mode: yes
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: no
+    register: iam_user
+
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: attach different managed policy to user
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: no
+    register: iam_user
+
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: Check first policy wasn't purged
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSDenyAll
+      purge_policy: no
+    register: iam_user
+
+  - name: assert that the user hasn't changed
+    assert:
+      that:
+        - iam_user is not changed
+
+  - name: Check that managed policy order doesn't matter
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/AWSDenyAll
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: no
+    register: iam_user
+
+  - name: assert that the user hasn't changed
+    assert:
+      that:
+        - iam_user is not changed
+
+  - name: Check that policy doesn't require full ARN path
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - AWSDenyAll
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: no
+    register: iam_user
+
+  - name: assert that the user hasn't changed
+    assert:
+      that:
+        - iam_user is not changed
+
+  - name: Remove one of the managed policies - with purge (check mode)
+    check_mode: yes
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: yes
+    register: iam_user
+
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: Remove one of the managed policies - with purge
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: yes
+    register: iam_user
+
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: Check we only have the one policy attached
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: yes
+    register: iam_user
+
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is not changed
+
+  - name: ensure group exists
+    iam_group:
+      name: '{{ test_group }}'
+      users:
+        - '{{ test_user }}'
+      state: present
+    register: iam_group
+
+  - assert:
+      that:
+        - iam_group.changed
+        - iam_group.iam_group.users
+
+  - name: get info on IAM user(s) in group
+    iam_user_info:
+      group: '{{ test_group }}'
+      name: '{{ test_user }}'
+    register: iam_user_info
+
+  - assert:
+      that:
+        - iam_user_info.iam_users | length == 1
+        - iam_user_info.iam_users[0].arn == test_iam_user.arn
+        - iam_user_info.iam_users[0].create_date == test_iam_user.create_date
+        - iam_user_info.iam_users[0].path == test_iam_user.path
+        - iam_user_info.iam_users[0].user_id == test_iam_user.user_id
+        - iam_user_info.iam_users[0].user_name == test_iam_user.user_name
+
+  - name: remove user from group
+    iam_group:
+      name: '{{ test_group }}'
+      purge_users: True
+      users: []
+      state: present
+    register: iam_group
+
+  - name: get info on IAM user(s) after removing from group
+    iam_user_info:
+      group: '{{ test_group }}'
+      name: '{{ test_user }}'
+    register: iam_user_info
+
+  - name: assert empty list of users for group are returned
+    assert:
+      that:
+        - iam_user_info.iam_users | length == 0
+
+  - name: ensure ansible users exist
+    iam_user:
+      name: '{{ item }}'
+      state: present
+    with_items: '{{ test_users }}'
+
+  - name: get info on multiple IAM user(s)
+    iam_user_info:
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info.iam_users | length != 0
+
+  - name: ensure multiple user group exists with single user
+    iam_group:
+      name: '{{ test_group }}'
+      users:
+        - '{{ test_user }}'
+      state: present
+    register: iam_group
+
+  - name: get info on IAM user(s) in group
+    iam_user_info:
+      group: '{{ test_group }}'
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info.iam_users | length == 1
+
+  - name: add all users to group
+    iam_group:
+      name: '{{ test_group }}'
+      users: '{{ test_users }}'
+      state: present
+    register: iam_group
+
+  - name: get info on multiple IAM user(s) in group
+    iam_user_info:
+      group: '{{ test_group }}'
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info.iam_users | length == test_users | length
+
+  - name: purge users from group
+    iam_group:
+      name: '{{ test_group }}'
+      purge_users: True
+      users: []
+      state: present
+    register: iam_group
+
+  - name: ensure info is empty for empty group
+    iam_user_info:
+      group: '{{ test_group }}'
+    register: iam_user_info
+  - assert:
+      that:
+        - iam_user_info.iam_users | length == 0
+
+  - name: get info on IAM user(s) after removing from group
+    iam_user_info:
+      group: '{{ test_group }}'
+    register: iam_user_info
+
+  - name: assert empty list of users for group are returned
+    assert:
+      that:
+        - iam_user_info.iam_users | length == 0
+
+  - name: remove group
+    iam_group:
+      name: '{{ test_group }}'
+      state: absent
+    register: iam_group
+
+  - name: assert that group was removed
+    assert:
+      that:
+        - iam_group.changed
+        - iam_group
+
+  - name: Test remove group again (idempotency)
+    iam_group:
+      name: "{{ test_group }}"
+      state: absent
+    register: iam_group
+
+  - name: assert that group remove is not changed
+    assert:
+      that:
+        - not iam_group.changed
+
+  - name: Remove user with attached policy
+    iam_user:
+      name: "{{ test_user }}"
+      state: absent
+    register: iam_user
+
+  - name: get info on IAM user(s) after deleting
+    iam_user_info:
+      group: '{{ test_user }}'
+    ignore_errors: yes
+    register: iam_user_info
+
+  - name: Assert user was removed
+    assert:
+      that:
+        - iam_user.changed
+        - "'cannot be found' in iam_user_info.msg"
+
+  - name: Remove user with attached policy (idempotent)
+    iam_user:
+      name: "{{ test_user }}"
+      state: absent
+    ignore_errors: yes
+    register: iam_user
+
+  - name: Assert user was removed
+    assert:
+      that:
+        - not iam_user.changed
+
+  always:
+  - name: remove group
+    iam_group:
+      name: '{{ test_group }}'
+      state: absent
+    ignore_errors: yes
+
+  - name: remove ansible users
+    iam_user:
+      name: '{{ item }}'
+      state: absent
+    with_items: '{{ test_users }}'
+    ignore_errors: yes

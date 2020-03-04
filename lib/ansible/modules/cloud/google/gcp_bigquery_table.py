@@ -33,7 +33,7 @@ module: gcp_bigquery_table
 description:
 - A Table that belongs to a Dataset .
 short_description: Creates a GCP Table
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -66,9 +66,18 @@ options:
         type: str
       table_id:
         description:
-        - The ID of the the table.
+        - The ID of the table.
         required: false
         type: str
+  clustering:
+    description:
+    - One or more fields on which data should be clustered. Only top-level, non-repeated,
+      simple-type fields are supported. When you cluster a table using multiple columns,
+      the order of columns you specify is important. The order of the specified columns
+      determines the sort order of the data.
+    required: false
+    type: list
+    version_added: '2.9'
   description:
     description:
     - A user-friendly description of the dataset.
@@ -90,6 +99,13 @@ options:
     - Name of the table.
     required: false
     type: str
+  num_rows:
+    description:
+    - The number of rows of data in this table, excluding any data in the streaming
+      buffer.
+    required: false
+    type: int
+    version_added: '2.9'
   view:
     description:
     - The view definition.
@@ -130,6 +146,16 @@ options:
         - Number of milliseconds for which to keep the storage for a partition.
         required: false
         type: int
+      field:
+        description:
+        - If not set, the table is partitioned by pseudo column, referenced via either
+          '_PARTITIONTIME' as TIMESTAMP type, or '_PARTITIONDATE' as DATE type. If
+          field is specified, the table is instead partitioned by this field. The
+          field must be a top-level TIMESTAMP or DATE field. Its mode must be NULLABLE
+          or REQUIRED.
+        required: false
+        type: str
+        version_added: '2.9'
       type:
         description:
         - The only type supported is DAY, which will generate one partition per day.
@@ -434,7 +460,43 @@ options:
     - Name of the dataset.
     required: false
     type: str
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -482,9 +544,17 @@ tableReference:
       type: str
     tableId:
       description:
-      - The ID of the the table.
+      - The ID of the table.
       returned: success
       type: str
+clustering:
+  description:
+  - One or more fields on which data should be clustered. Only top-level, non-repeated,
+    simple-type fields are supported. When you cluster a table using multiple columns,
+    the order of columns you specify is important. The order of the specified columns
+    determines the sort order of the data.
+  returned: success
+  type: list
 creationTime:
   description:
   - The time when this dataset was created, in milliseconds since the epoch.
@@ -543,6 +613,12 @@ numRows:
     buffer.
   returned: success
   type: int
+requirePartitionFilter:
+  description:
+  - If set to true, queries over this table require a partition filter that can be
+    used for partition elimination to be specified.
+  returned: success
+  type: bool
 type:
   description:
   - Describes the table type.
@@ -588,6 +664,14 @@ timePartitioning:
       - Number of milliseconds for which to keep the storage for a partition.
       returned: success
       type: int
+    field:
+      description:
+      - If not set, the table is partitioned by pseudo column, referenced via either
+        '_PARTITIONTIME' as TIMESTAMP type, or '_PARTITIONDATE' as DATE type. If field
+        is specified, the table is instead partitioned by this field. The field must
+        be a top-level TIMESTAMP or DATE field. Its mode must be NULLABLE or REQUIRED.
+      returned: success
+      type: str
     type:
       description:
       - The only type supported is DAY, which will generate one partition per day.
@@ -916,10 +1000,12 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             table_reference=dict(type='dict', options=dict(dataset_id=dict(type='str'), project_id=dict(type='str'), table_id=dict(type='str'))),
+            clustering=dict(type='list', elements='str'),
             description=dict(type='str'),
             friendly_name=dict(type='str'),
             labels=dict(type='dict'),
             name=dict(type='str'),
+            num_rows=dict(type='int'),
             view=dict(
                 type='dict',
                 options=dict(
@@ -929,7 +1015,7 @@ def main():
                     ),
                 ),
             ),
-            time_partitioning=dict(type='dict', options=dict(expiration_ms=dict(type='int'), type=dict(type='str'))),
+            time_partitioning=dict(type='dict', options=dict(expiration_ms=dict(type='int'), field=dict(type='str'), type=dict(type='str'))),
             schema=dict(
                 type='dict',
                 options=dict(
@@ -1069,10 +1155,12 @@ def resource_to_request(module):
     request = {
         u'kind': 'bigquery#table',
         u'tableReference': TableTablereference(module.params.get('table_reference', {}), module).to_request(),
+        u'clustering': module.params.get('clustering'),
         u'description': module.params.get('description'),
         u'friendlyName': module.params.get('friendly_name'),
         u'labels': module.params.get('labels'),
         u'name': module.params.get('name'),
+        u'numRows': module.params.get('num_rows'),
         u'view': TableView(module.params.get('view', {}), module).to_request(),
         u'timePartitioning': TableTimepartitioning(module.params.get('time_partitioning', {}), module).to_request(),
         u'schema': TableSchema(module.params.get('schema', {}), module).to_request(),
@@ -1145,6 +1233,7 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'tableReference': TableTablereference(response.get(u'tableReference', {}), module).from_response(),
+        u'clustering': response.get(u'clustering'),
         u'creationTime': response.get(u'creationTime'),
         u'description': response.get(u'description'),
         u'friendlyName': response.get(u'friendlyName'),
@@ -1156,6 +1245,7 @@ def response_to_hash(module, response):
         u'numBytes': response.get(u'numBytes'),
         u'numLongTermBytes': response.get(u'numLongTermBytes'),
         u'numRows': response.get(u'numRows'),
+        u'requirePartitionFilter': response.get(u'requirePartitionFilter'),
         u'type': response.get(u'type'),
         u'view': TableView(response.get(u'view', {}), module).from_response(),
         u'timePartitioning': TableTimepartitioning(response.get(u'timePartitioning', {}), module).from_response(),
@@ -1251,10 +1341,14 @@ class TableTimepartitioning(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'expirationMs': self.request.get('expiration_ms'), u'type': self.request.get('type')})
+        return remove_nones_from_dict(
+            {u'expirationMs': self.request.get('expiration_ms'), u'field': self.request.get('field'), u'type': self.request.get('type')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({u'expirationMs': self.request.get(u'expirationMs'), u'type': self.request.get(u'type')})
+        return remove_nones_from_dict(
+            {u'expirationMs': self.request.get(u'expirationMs'), u'field': self.request.get(u'field'), u'type': self.request.get(u'type')}
+        )
 
 
 class TableStreamingbuffer(object):

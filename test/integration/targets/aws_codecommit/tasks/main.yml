@@ -1,61 +1,100 @@
 ---
-- block:
-  # ============================================================
-  - name: set connection information for all tasks
-    set_fact:
-      aws_connection_info: &aws_connection_info
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region }}"
-    no_log: true
-  # ============================================================
-  - name: Create a repository
-    aws_codecommit:
-      name: "{{ resource_prefix }}_repo"
-      comment: original comment
-      state: present
-      <<: *aws_connection_info
-    register: output
-  - assert:
-      that:
-        - output is changed
-        - output.repositoryName == '{{ resource_prefix }}_repo'
-        - output.repositoryDescription == 'original comment'
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
   # ============================================================
   - name: Create a repository (CHECK MODE)
     aws_codecommit:
-      name: "{{ resource_prefix }}_check_repo"
-      comment: original comment
+      name: "{{ resource_prefix }}_repo"
+      description: original comment
       state: present
-      <<: *aws_connection_info
     register: output
     check_mode: yes
   - assert:
       that:
         - output is changed
-        - output.repositoryName == '{{ resource_prefix }}_check_repo'
-        - output.repositoryDescription == 'original comment'
+
+  - name: Create a repository
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      description: original comment
+      state: present
+    register: output
+  - assert:
+      that:
+        - output is changed
+        - output.repository_metadata.repository_name == '{{ resource_prefix }}_repo'
+        - output.repository_metadata.repository_description == 'original comment'
+
+  - name: No-op update to repository
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      description: original comment
+      state: present
+    register: output
+  - assert:
+      that:
+        - output is not changed
+        - output.repository_metadata.repository_name == '{{ resource_prefix }}_repo'
+        - output.repository_metadata.repository_description == 'original comment'
+
+  - name: Update repository description (CHECK MODE)
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      description: new comment
+      state: present
+    register: output
+    check_mode: yes
+  - assert:
+      that:
+        - output is changed
+        - output.repository_metadata.repository_name == '{{ resource_prefix }}_repo'
+        - output.repository_metadata.repository_description == 'original comment'
+
+  - name: Update repository description
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      description: new comment
+      state: present
+    register: output
+  - assert:
+      that:
+        - output is changed
+        - output.repository_metadata.repository_name == '{{ resource_prefix }}_repo'
+        - output.repository_metadata.repository_description == 'new comment'
+
   # ============================================================
   - name: Delete  a repository (CHECK MODE)
     aws_codecommit:
       name: "{{ resource_prefix }}_repo"
       state: absent
-      <<: *aws_connection_info
     register: output
     check_mode: yes
   - assert:
       that:
         - output is changed
+
   - name: Delete  a repository
     aws_codecommit:
       name: "{{ resource_prefix }}_repo"
       state: absent
-      <<: *aws_connection_info
     register: output
   - assert:
       that:
         - output is changed
+
+  - name: Delete a non-existent repository
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      state: absent
+    register: output
+  - assert:
+      that:
+        - output is not changed
 
   always:
      ###### TEARDOWN STARTS HERE ######
@@ -63,5 +102,4 @@
       aws_codecommit:
         name: "{{ resource_prefix }}_repo"
         state: absent
-        <<: *aws_connection_info
       ignore_errors: yes

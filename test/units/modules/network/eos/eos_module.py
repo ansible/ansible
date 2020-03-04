@@ -37,7 +37,6 @@ def load_fixture(name):
 
     with open(path) as f:
         data = f.read()
-
     try:
         data = json.loads(data)
     except Exception:
@@ -49,9 +48,12 @@ def load_fixture(name):
 
 class TestEosModule(ModuleTestCase):
 
-    def execute_module(self, failed=False, changed=False, commands=None, inputs=None, sort=True, defaults=False, transport='cli'):
+    def execute_module(self, failed=False, changed=False, commands=None, inputs=None, sort=True, defaults=False, transport='cli', filename=None):
 
-        self.load_fixtures(commands, transport=transport)
+        if filename is None:
+            self.load_fixtures(commands, transport=transport)
+        else:
+            self.load_fixtures(commands, transport=transport, filename=filename)
 
         if failed:
             result = self.failed()
@@ -59,7 +61,6 @@ class TestEosModule(ModuleTestCase):
         else:
             result = self.changed(changed)
             self.assertEqual(result['changed'], changed, result)
-
         if commands is not None:
             if transport == 'eapi':
                 cmd = []
@@ -98,5 +99,5 @@ class TestEosModule(ModuleTestCase):
         self.assertEqual(result['changed'], changed, result)
         return result
 
-    def load_fixtures(self, commands=None, transport='cli'):
+    def load_fixtures(self, commands=None, transport='cli', filename=None):
         pass

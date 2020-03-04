@@ -1,17 +1,9 @@
 #!/usr/bin/python
 #
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -23,7 +15,7 @@ DOCUMENTATION = '''
 module: ec2_customer_gateway
 short_description: Manage an AWS customer gateway
 description:
-    - Manage an AWS customer gateway
+    - Manage an AWS customer gateway.
 version_added: "2.2"
 author: Michael Baydoun (@MichaelBaydoun)
 requirements: [ botocore, boto3 ]
@@ -36,26 +28,31 @@ notes:
 options:
   bgp_asn:
     description:
-      - Border Gateway Protocol (BGP) Autonomous System Number (ASN), required when state=present.
+      - Border Gateway Protocol (BGP) Autonomous System Number (ASN), required when I(state=present).
+    type: int
   ip_address:
     description:
       - Internet-routable IP address for customers gateway, must be a static address.
     required: true
+    type: str
   name:
     description:
       - Name of the customer gateway.
     required: true
+    type: str
   routing:
     description:
       - The type of routing.
     choices: ['static', 'dynamic']
     default: dynamic
     version_added: '2.4'
+    type: str
   state:
     description:
       - Create or terminate the Customer Gateway.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -104,13 +101,12 @@ gateway.customer_gateways:
         state:
             description: state of gateway.
             returned: when gateway exists and is available.
-            state: available
+            sample: available
             type: str
         tags:
-            description: any tags on the gateway.
+            description: Any tags on the gateway.
             returned: when gateway exists and is available, and when tags exist.
-            state: available
-            type: str
+            type: list
         type:
             description: encryption type.
             returned: when gateway exists and is available.

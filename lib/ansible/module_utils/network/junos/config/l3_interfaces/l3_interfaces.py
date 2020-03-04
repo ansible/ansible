@@ -81,7 +81,7 @@ class L3_interfaces(ConfigBase):
                 if self._module._diff:
                     result['diff'] = {'prepared': diff}
 
-        result['xml'] = config_xmls
+        result['commands'] = config_xmls
 
         changed_interfaces_facts = self.get_l3_interfaces_facts()
 

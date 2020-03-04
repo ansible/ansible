@@ -1,0 +1,17 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      interface GigabitEthernet 0/1
+      no lacp port-priority
+      interface GigabitEthernet 0/2
+      no lacp port-priority
+      interface Port-channel 10
+      no lacp fast-switchover
+      no lacp max-bundle
+      interface Port-channel 40
+      no lacp fast-switchover
+      no lacp max-bundle
+  when: ansible_net_version != "15.6(2)T"

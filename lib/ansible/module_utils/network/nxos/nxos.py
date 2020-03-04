@@ -41,7 +41,7 @@ from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.config import CustomNetworkConfig
-from ansible.module_utils.six import iteritems, string_types, PY2, PY3
+from ansible.module_utils.six import iteritems, PY2, PY3
 from ansible.module_utils.urls import fetch_url
 
 try:
@@ -81,48 +81,17 @@ nxos_provider_spec = {
     'transport': dict(type='str', default='cli', choices=['cli', 'nxapi'])
 }
 nxos_argument_spec = {
-    'provider': dict(type='dict', options=nxos_provider_spec),
+    'provider': dict(type='dict', options=nxos_provider_spec, removed_in_version=2.14),
 }
-nxos_top_spec = {
-    'host': dict(type='str', removed_in_version=2.9),
-    'port': dict(type='int', removed_in_version=2.9),
-
-    'username': dict(type='str', removed_in_version=2.9),
-    'password': dict(type='str', no_log=True, removed_in_version=2.9),
-    'ssh_keyfile': dict(type='str', removed_in_version=2.9),
-
-    'authorize': dict(type='bool', fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE'])),
-    'auth_pass': dict(type='str', no_log=True, removed_in_version=2.9),
-
-    'use_ssl': dict(type='bool', removed_in_version=2.9),
-    'validate_certs': dict(type='bool', removed_in_version=2.9),
-    'timeout': dict(type='int', removed_in_version=2.9),
-
-    'transport': dict(type='str', choices=['cli', 'nxapi'], removed_in_version=2.9)
-}
-nxos_argument_spec.update(nxos_top_spec)
 
 
 def get_provider_argspec():
     return nxos_provider_spec
 
 
-def check_args(module, warnings):
-    pass
-
-
-def load_params(module):
-    provider = module.params.get('provider') or dict()
-    for key, value in iteritems(provider):
-        if key in nxos_provider_spec:
-            if module.params.get(key) is None and value is not None:
-                module.params[key] = value
-
-
 def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
-        load_params(module)
         if is_local_nxapi(module):
             conn = LocalNxapi(module)
         else:
@@ -282,13 +251,14 @@ class LocalNxapi:
         self._device_configs = {}
         self._module_context = {}
 
-        self._module.params['url_username'] = self._module.params['username']
-        self._module.params['url_password'] = self._module.params['password']
+        provider = self._module.params.get("provider") or {}
+        self._module.params['url_username'] = provider.get('username')
+        self._module.params['url_password'] = provider.get('password')
 
-        host = self._module.params['host']
-        port = self._module.params['port']
+        host = provider.get('host')
+        port = provider.get('port')
 
-        if self._module.params['use_ssl']:
+        if provider.get('use_ssl'):
             proto = 'https'
             port = port or 443
         else:
@@ -359,7 +329,7 @@ class LocalNxapi:
 
         headers = {'Content-Type': 'application/json'}
         result = list()
-        timeout = self._module.params['timeout']
+        timeout = self._module.params['provider']['timeout']
         use_proxy = self._module.params['provider']['use_proxy']
 
         for req in requests:
@@ -633,6 +603,8 @@ class HttpApi:
             if opts.get('ignore_timeout') and code:
                 responses.append(code)
                 return responses
+            elif opts.get('catch_clierror') and '400' in code:
+                return [code, err]
             elif code and 'no graceful-restart' in err:
                 if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
                     msg = ['']
@@ -739,13 +711,14 @@ class NxosCmdRef:
           multiplier: 3
     """
 
-    def __init__(self, module, cmd_ref_str):
+    def __init__(self, module, cmd_ref_str, ref_only=False):
         """Initialize cmd_ref from yaml data."""
+
         self._module = module
         self._check_imports()
         self._yaml_load(cmd_ref_str)
         self.cache_existing = None
-        self.present_states = ['present', 'merged']
+        self.present_states = ['present', 'merged', 'replaced']
         self.absent_states = ['absent', 'deleted']
         ref = self._ref
 
@@ -754,10 +727,12 @@ class NxosCmdRef:
         ref['_proposed'] = []
         ref['_context'] = []
         ref['_resource_key'] = None
-        ref['_state'] = module.params.get('state', 'present')
-        self.feature_enable()
-        self.get_platform_defaults()
-        self.normalize_defaults()
+
+        if not ref_only:
+            ref['_state'] = module.params.get('state', 'present')
+            self.feature_enable()
+            self.get_platform_defaults()
+            self.normalize_defaults()
 
     def __getitem__(self, key=None):
         if key is None:
@@ -1116,8 +1091,6 @@ class NxosCmdRef:
 
             # Multiple Instances:
             if isinstance(existing, dict) and multiple:
-                item_found = False
-
                 for ekey, evalue in existing.items():
                     if isinstance(evalue, dict):
                         # Remove values set to string 'None' from dvalue
@@ -1150,7 +1123,8 @@ class NxosCmdRef:
 
         # Remove any duplicate commands before returning.
         # pylint: disable=unnecessary-lambda
-        return sorted(set(proposed), key=lambda x: proposed.index(x))
+        cmds = sorted(set(proposed), key=lambda x: proposed.index(x))
+        return cmds
 
 
 def nxosCmdRef_import_check():
@@ -1176,10 +1150,10 @@ def is_text(cmd):
 
 
 def is_local_nxapi(module):
-    transport = module.params.get('transport')
     provider = module.params.get('provider')
-    provider_transport = provider['transport'] if provider else None
-    return 'nxapi' in (transport, provider_transport)
+    if provider:
+        return provider.get("transport") == 'nxapi'
+    return False
 
 
 def to_command(module, commands):
@@ -1293,6 +1267,37 @@ def get_interface_type(interface):
         return 'nve'
     else:
         return 'unknown'
+
+
+def default_intf_enabled(name='', sysdefs=None, mode=None):
+    """Get device/version/interface-specific default 'enabled' state.
+    L3:
+     - Most L3 intfs default to 'shutdown'. Loopbacks default to 'no shutdown'.
+     - Some legacy platforms default L3 intfs to 'no shutdown'.
+    L2:
+     - User-System-Default 'system default switchport shutdown' defines the
+       enabled state for L2 intf's. USD defaults may be different on some platforms.
+     - An intf may be explicitly defined as L2 with 'switchport' or it may be
+       implicitly defined as L2 when USD 'system default switchport' is defined.
+    """
+    if not name:
+        return None
+    if sysdefs is None:
+        sysdefs = {}
+    default = False
+
+    if re.search('port-channel|loopback', name):
+        default = True
+    else:
+        if mode is None:
+            # intf 'switchport' cli is not present so use the user-system-default
+            mode = sysdefs.get('mode')
+
+        if mode == 'layer3':
+            default = sysdefs.get('L3_enabled')
+        elif mode == 'layer2':
+            default = sysdefs.get('L2_enabled')
+    return default
 
 
 def read_module_context(module):

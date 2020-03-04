@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -29,6 +32,9 @@ description:
     - Manages applying ACLs to interfaces on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@QijunPan)
+notes:
+  - Recommended connection is C(network_cli).
+  - This module also works with C(local) connections for legacy playbooks.
 options:
     acl_name:
         description:
@@ -122,7 +128,7 @@ updates:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config, exec_command
+from ansible.module_utils.network.cloudengine.ce import get_config, exec_command, cli_err_msg
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
@@ -231,11 +237,31 @@ class AclInterface(object):
                 end.append(item.strip())
             self.end_state["acl interface"] = end
 
+    def load_config(self, config):
+        """Sends configuration commands to the remote device"""
+
+        rc, out, err = exec_command(self.module, 'mmi-mode enable')
+        if rc != 0:
+            self.module.fail_json(msg='unable to set mmi-mode enable', output=err)
+        rc, out, err = exec_command(self.module, 'system-view immediately')
+        if rc != 0:
+            self.module.fail_json(msg='unable to enter system-view', output=err)
+
+        for cmd in config:
+            rc, out, err = exec_command(self.module, cmd)
+            if rc != 0:
+                if "unrecognized command found" in err.lower():
+                    self.module.fail_json(msg="Error:The parameter is incorrect or the interface does not support this parameter.")
+                else:
+                    self.module.fail_json(msg=cli_err_msg(cmd.strip(), err))
+
+        exec_command(self.module, 'return')
+
     def cli_load_config(self, commands):
         """ Cli method to load config """
 
         if not self.module.check_mode:
-            load_config(self.module, commands)
+            self.load_config(commands)
 
     def work(self):
         """ Work function """

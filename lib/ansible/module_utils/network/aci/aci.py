@@ -32,6 +32,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import base64
 import json
 import os
@@ -118,13 +121,13 @@ class ACIModule(object):
             self.module.warn('Enable debug output because ANSIBLE_DEBUG was set.')
             self.params['output_level'] = 'debug'
 
-        if self.params['private_key']:
+        if self.params.get('private_key'):
             # Perform signature-based authentication, no need to log on separately
             if not HAS_OPENSSL:
                 self.module.fail_json(msg='Cannot use signature-based authentication because pyopenssl is not available')
-            elif self.params['password'] is not None:
+            elif self.params.get('password') is not None:
                 self.module.warn("When doing ACI signatured-based authentication, providing parameter 'password' is not required")
-        elif self.params['password']:
+        elif self.params.get('password'):
             # Perform password-based authentication, log on using password
             self.login()
         else:
@@ -163,27 +166,27 @@ class ACIModule(object):
 
         # Set method for further use
         state_map = dict(absent='delete', present='post', query='get')
-        self.params['method'] = state_map[self.params['state']]
+        self.params['method'] = state_map.get(self.params.get('state'))
 
     def login(self):
         ''' Log in to APIC '''
 
         # Perform login request
-        if 'port' in self.params and self.params['port'] is not None:
+        if self.params.get('port') is not None:
             url = '%(protocol)s://%(host)s:%(port)s/api/aaaLogin.json' % self.params
         else:
             url = '%(protocol)s://%(host)s/api/aaaLogin.json' % self.params
-        payload = {'aaaUser': {'attributes': {'name': self.params['username'], 'pwd': self.params['password']}}}
+        payload = {'aaaUser': {'attributes': {'name': self.params.get('username'), 'pwd': self.params.get('password')}}}
         resp, auth = fetch_url(self.module, url,
                                data=json.dumps(payload),
                                method='POST',
-                               timeout=self.params['timeout'],
-                               use_proxy=self.params['use_proxy'])
+                               timeout=self.params.get('timeout'),
+                               use_proxy=self.params.get('use_proxy'))
 
         # Handle APIC response
-        if auth['status'] != 200:
-            self.response = auth['msg']
-            self.status = auth['status']
+        if auth.get('status') != 200:
+            self.response = auth.get('msg')
+            self.status = auth.get('status')
             try:
                 # APIC error
                 self.response_json(auth['body'])
@@ -193,13 +196,13 @@ class ACIModule(object):
                 self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % auth)
 
         # Retain cookie for later use
-        self.headers['Cookie'] = resp.headers['Set-Cookie']
+        self.headers['Cookie'] = resp.headers.get('Set-Cookie')
 
     def cert_auth(self, path=None, payload='', method=None):
         ''' Perform APIC signature-based authentication, not the expected SSL client certificate authentication. '''
 
         if method is None:
-            method = self.params['method'].upper()
+            method = self.params.get('method').upper()
 
         # NOTE: ACI documentation incorrectly uses complete URL
         if path is None:
@@ -210,43 +213,43 @@ class ACIModule(object):
             payload = ''
 
         # Check if we got a private key. This allows the use of vaulting the private key.
-        if self.params['private_key'].startswith('-----BEGIN PRIVATE KEY-----'):
+        if self.params.get('private_key').startswith('-----BEGIN PRIVATE KEY-----'):
             try:
-                sig_key = load_privatekey(FILETYPE_PEM, self.params['private_key'])
+                sig_key = load_privatekey(FILETYPE_PEM, self.params.get('private_key'))
             except Exception:
                 self.module.fail_json(msg="Cannot load provided 'private_key' parameter.")
             # Use the username as the certificate_name value
-            if self.params['certificate_name'] is None:
-                self.params['certificate_name'] = self.params['username']
-        elif self.params['private_key'].startswith('-----BEGIN CERTIFICATE-----'):
-            self.module.fail_json(msg="Provided 'private_key' parameter value appears to be a certificate. Please correct.")
+            if self.params.get('certificate_name') is None:
+                self.params['certificate_name'] = self.params.get('username')
+        elif self.params.get('private_key').startswith('-----BEGIN CERTIFICATE-----'):
+            self.module.fail_json(msg="Provided 'private_key' parameter value appears to be a certificate.")
         else:
             # If we got a private key file, read from this file.
             # NOTE: Avoid exposing any other credential as a filename in output...
-            if not os.path.exists(self.params['private_key']):
+            if not os.path.exists(self.params.get('private_key')):
                 self.module.fail_json(msg="The provided private key file does not appear to exist. Is it a filename?")
             try:
-                with open(self.params['private_key'], 'r') as fh:
+                with open(self.params.get('private_key'), 'r') as fh:
                     private_key_content = fh.read()
             except Exception:
-                self.module.fail_json(msg="Cannot open private key file '%s'." % self.params['private_key'])
+                self.module.fail_json(msg="Cannot open private key file '%(private_key)s'." % self.params)
             if private_key_content.startswith('-----BEGIN PRIVATE KEY-----'):
                 try:
                     sig_key = load_privatekey(FILETYPE_PEM, private_key_content)
                 except Exception:
-                    self.module.fail_json(msg="Cannot load private key file '%s'." % self.params['private_key'])
+                    self.module.fail_json(msg="Cannot load private key file '%(private_key)s'." % self.params)
                 # Use the private key basename (without extension) as certificate_name
-                if self.params['certificate_name'] is None:
-                    self.params['certificate_name'] = os.path.basename(os.path.splitext(self.params['private_key'])[0])
+                if self.params.get('certificate_name') is None:
+                    self.params['certificate_name'] = os.path.basename(os.path.splitext(self.params.get('private_key'))[0])
             elif private_key_content.startswith('-----BEGIN CERTIFICATE-----'):
-                self.module.fail_json(msg="Provided private key file %s appears to be a certificate. Please correct." % self.params['private_key'])
+                self.module.fail_json(msg="Provided private key file '%(private_key)s' appears to be a certificate." % self.params)
             else:
-                self.module.fail_json(msg="Provided private key file '%s' does not appear to be a private key. Please correct." % self.params['private_key'])
+                self.module.fail_json(msg="Provided private key file '%(private_key)s' does not appear to be a private key." % self.params)
 
         # NOTE: ACI documentation incorrectly adds a space between method and path
         sig_request = method + path + payload
         sig_signature = base64.b64encode(sign(sig_key, sig_request, 'sha256'))
-        sig_dn = 'uni/userext/user-%s/usercert-%s' % (self.params['username'], self.params['certificate_name'])
+        sig_dn = 'uni/userext/user-%(username)s/usercert-%(certificate_name)s' % self.params
         self.headers['Cookie'] = 'APIC-Certificate-Algorithm=v1.0; ' +\
                                  'APIC-Certificate-DN=%s; ' % sig_dn +\
                                  'APIC-Certificate-Fingerprint=fingerprint; ' +\
@@ -263,11 +266,10 @@ class ACIModule(object):
             return
 
         # Extract JSON API output
-        try:
-            self.imdata = jsondata['imdata']
-        except KeyError:
+        self.imdata = jsondata.get('imdata')
+        if self.imdata is None:
             self.imdata = dict()
-        self.totalCount = int(jsondata['totalCount'])
+        self.totalCount = int(jsondata.get('totalCount'))
 
         # Handle possible APIC error information
         self.response_error()
@@ -286,11 +288,10 @@ class ACIModule(object):
             return
 
         # Reformat as ACI does for JSON API output
-        try:
-            self.imdata = xmldata['imdata']['children']
-        except KeyError:
+        self.imdata = xmldata.get('imdata', {}).get('children')
+        if self.imdata is None:
             self.imdata = dict()
-        self.totalCount = int(xmldata['imdata']['attributes']['totalCount'])
+        self.totalCount = int(xmldata.get('imdata', {}).get('attributes', {}).get('totalCount'))
 
         # Handle possible APIC error information
         self.response_error()
@@ -301,8 +302,8 @@ class ACIModule(object):
         # Handle possible APIC error information
         if self.totalCount != '0':
             try:
-                self.error = self.imdata[0]['error']['attributes']
-            except (KeyError, IndexError):
+                self.error = self.imdata[0].get('error').get('attributes')
+            except (AttributeError, IndexError, KeyError):
                 pass
 
     def request(self, path, payload=None):
@@ -312,28 +313,28 @@ class ACIModule(object):
         self.define_method()
         self.path = path
 
-        if 'port' in self.params and self.params['port'] is not None:
+        if self.params.get('port') is not None:
             self.url = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
         else:
             self.url = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
-        if self.params['private_key']:
+        if self.params.get('private_key'):
             self.cert_auth(path=path, payload=payload)
 
         # Perform request
         resp, info = fetch_url(self.module, self.url,
                                data=payload,
                                headers=self.headers,
-                               method=self.params['method'].upper(),
-                               timeout=self.params['timeout'],
-                               use_proxy=self.params['use_proxy'])
+                               method=self.params.get('method').upper(),
+                               timeout=self.params.get('timeout'),
+                               use_proxy=self.params.get('use_proxy'))
 
-        self.response = info['msg']
-        self.status = info['status']
+        self.response = info.get('msg')
+        self.status = info.get('status')
 
         # Handle APIC response
-        if info['status'] != 200:
+        if info.get('status') != 200:
             try:
                 # APIC error
                 self.response_json(info['body'])
@@ -349,13 +350,13 @@ class ACIModule(object):
 
         self.path = path
 
-        if 'port' in self.params and self.params['port'] is not None:
+        if self.params.get('port') is not None:
             self.url = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
         else:
             self.url = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
-        if self.params['private_key']:
+        if self.params.get('private_key'):
             self.cert_auth(path=path, method='GET')
 
         # Perform request
@@ -363,13 +364,13 @@ class ACIModule(object):
                                 data=None,
                                 headers=self.headers,
                                 method='GET',
-                                timeout=self.params['timeout'],
-                                use_proxy=self.params['use_proxy'])
+                                timeout=self.params.get('timeout'),
+                                use_proxy=self.params.get('use_proxy'))
 
         # Handle APIC response
-        if query['status'] != 200:
-            self.response = query['msg']
-            self.status = query['status']
+        if query.get('status') != 200:
+            self.response = query.get('msg')
+            self.status = query.get('status')
             try:
                 # APIC error
                 self.response_json(query['body'])
@@ -380,7 +381,7 @@ class ACIModule(object):
 
         query = json.loads(resp.read())
 
-        return json.dumps(query['imdata'], sort_keys=True, indent=2) + '\n'
+        return json.dumps(query.get('imdata'), sort_keys=True, indent=2) + '\n'
 
     def request_diff(self, path, payload=None):
         ''' Perform a request, including a proper diff output '''
@@ -390,7 +391,7 @@ class ACIModule(object):
         # TODO: Check if we can use the request output for the 'after' diff
         self.result['diff']['after'] = self.query(path)
 
-        if self.result['diff']['before'] != self.result['diff']['after']:
+        if self.result.get('diff', {}).get('before') != self.result.get('diff', {}).get('after'):
             self.result['changed'] = True
 
     # TODO: This could be designed to update existing keys
@@ -409,21 +410,21 @@ class ACIModule(object):
         ''' Build an APIC filter based on obj_class and key-value pairs '''
         accepted_params = dict((k, v) for (k, v) in params.items() if v is not None)
         if len(accepted_params) == 1:
-            return ','.join('eq({0}.{1}, "{2}")'.format(obj_class, k, v) for (k, v) in accepted_params.items())
+            return ','.join('eq({0}.{1},"{2}")'.format(obj_class, k, v) for (k, v) in accepted_params.items())
         elif len(accepted_params) > 1:
-            return 'and(' + ','.join(['eq({0}.{1}, "{2}")'.format(obj_class, k, v) for (k, v) in accepted_params.items()]) + ')'
+            return 'and(' + ','.join(['eq({0}.{1},"{2}")'.format(obj_class, k, v) for (k, v) in accepted_params.items()]) + ')'
 
     def _deep_url_path_builder(self, obj):
-        target_class = obj['target_class']
-        target_filter = obj['target_filter']
-        subtree_class = obj['subtree_class']
-        subtree_filter = obj['subtree_filter']
-        object_rn = obj['object_rn']
-        mo = obj['module_object']
-        add_subtree_filter = obj['add_subtree_filter']
-        add_target_filter = obj['add_target_filter']
+        target_class = obj.get('target_class')
+        target_filter = obj.get('target_filter')
+        subtree_class = obj.get('subtree_class')
+        subtree_filter = obj.get('subtree_filter')
+        object_rn = obj.get('object_rn')
+        mo = obj.get('module_object')
+        add_subtree_filter = obj.get('add_subtree_filter')
+        add_target_filter = obj.get('add_target_filter')
 
-        if self.module.params['state'] in ('absent', 'present') and mo is not None:
+        if self.module.params.get('state') in ('absent', 'present') and mo is not None:
             self.path = 'api/mo/uni/{0}.json'.format(object_rn)
             self.update_qs({'rsp-prop-include': 'config-only'})
 
@@ -443,7 +444,7 @@ class ACIModule(object):
                 self.update_qs(
                     {'rsp-subtree-filter': self.build_filter(subtree_class, subtree_filter)})
 
-        if 'port' in self.params and self.params['port'] is not None:
+        if self.params.get('port') is not None:
             self.url = '{protocol}://{host}:{port}/{path}'.format(
                 path=self.path, **self.module.params)
 
@@ -458,7 +459,7 @@ class ACIModule(object):
     def _deep_url_parent_object(self, parent_objects, parent_class):
 
         for parent_object in parent_objects:
-            if parent_object['aci_class'] is parent_class:
+            if parent_object.get('aci_class') is parent_class:
                 return parent_object
 
         return None
@@ -491,11 +492,11 @@ class ACIModule(object):
         else:
             self.child_classes = set(child_classes)
 
-        target_parent_class = target_object['parent_class']
-        target_class = target_object['aci_class']
-        target_rn = target_object['aci_rn']
-        target_filter = target_object['target_filter']
-        target_module_object = target_object['module_object']
+        target_parent_class = target_object.get('parent_class')
+        target_class = target_object.get('aci_class')
+        target_rn = target_object.get('aci_rn')
+        target_filter = target_object.get('target_filter')
+        target_module_object = target_object.get('module_object')
 
         url_path_object = dict(
             target_class=target_class,
@@ -524,11 +525,11 @@ class ACIModule(object):
                     parent_objects=parent_objects, parent_class=current_parent_class)
 
                 if parent_object is not None:
-                    parent_parent_class = parent_object['parent_class']
-                    parent_class = parent_object['aci_class']
-                    parent_rn = parent_object['aci_rn']
-                    parent_filter = parent_object['target_filter']
-                    parent_module_object = parent_object['module_object']
+                    parent_parent_class = parent_object.get('parent_class')
+                    parent_class = parent_object.get('aci_class')
+                    parent_rn = parent_object.get('aci_rn')
+                    parent_filter = parent_object.get('target_filter')
+                    parent_module_object = parent_object.get('module_object')
 
                     if is_first_parent:
                         is_single_parent = True
@@ -541,8 +542,7 @@ class ACIModule(object):
 
                     if parent_module_object is not None:
                         if rn_builder is not None:
-                            rn_builder = '{0}/{1}'.format(parent_rn,
-                                                          rn_builder)
+                            rn_builder = '{0}/{1}'.format(parent_rn, rn_builder)
                         else:
                             rn_builder = parent_rn
 
@@ -628,7 +628,7 @@ class ACIModule(object):
         else:
             self._construct_url_1(root_class)
 
-        if 'port' in self.params and self.params['port'] is not None:
+        if self.params.get('port') is not None:
             self.url = '{protocol}://{host}:{port}/{path}'.format(path=self.path, **self.module.params)
         else:
             self.url = '{protocol}://{host}/{path}'.format(path=self.path, **self.module.params)
@@ -641,12 +641,12 @@ class ACIModule(object):
         """
         This method is used by construct_url when the object is the top-level class.
         """
-        obj_class = obj['aci_class']
-        obj_rn = obj['aci_rn']
-        obj_filter = obj['target_filter']
-        mo = obj['module_object']
+        obj_class = obj.get('aci_class')
+        obj_rn = obj.get('aci_rn')
+        obj_filter = obj.get('target_filter')
+        mo = obj.get('module_object')
 
-        if self.module.params['state'] in ('absent', 'present'):
+        if self.module.params.get('state') in ('absent', 'present'):
             # State is absent or present
             self.path = 'api/mo/uni/{0}.json'.format(obj_rn)
             self.update_qs({'rsp-prop-include': 'config-only'})
@@ -662,16 +662,16 @@ class ACIModule(object):
         """
         This method is used by construct_url when the object is the second-level class.
         """
-        parent_class = parent['aci_class']
-        parent_rn = parent['aci_rn']
-        parent_filter = parent['target_filter']
-        parent_obj = parent['module_object']
-        obj_class = obj['aci_class']
-        obj_rn = obj['aci_rn']
-        obj_filter = obj['target_filter']
-        mo = obj['module_object']
+        parent_class = parent.get('aci_class')
+        parent_rn = parent.get('aci_rn')
+        parent_filter = parent.get('target_filter')
+        parent_obj = parent.get('module_object')
+        obj_class = obj.get('aci_class')
+        obj_rn = obj.get('aci_rn')
+        obj_filter = obj.get('target_filter')
+        mo = obj.get('module_object')
 
-        if self.module.params['state'] in ('absent', 'present'):
+        if self.module.params.get('state') in ('absent', 'present'):
             # State is absent or present
             self.path = 'api/mo/uni/{0}/{1}.json'.format(parent_rn, obj_rn)
             self.update_qs({'rsp-prop-include': 'config-only'})
@@ -695,20 +695,20 @@ class ACIModule(object):
         """
         This method is used by construct_url when the object is the third-level class.
         """
-        root_class = root['aci_class']
-        root_rn = root['aci_rn']
-        root_filter = root['target_filter']
-        root_obj = root['module_object']
-        parent_class = parent['aci_class']
-        parent_rn = parent['aci_rn']
-        parent_filter = parent['target_filter']
-        parent_obj = parent['module_object']
-        obj_class = obj['aci_class']
-        obj_rn = obj['aci_rn']
-        obj_filter = obj['target_filter']
-        mo = obj['module_object']
+        root_class = root.get('aci_class')
+        root_rn = root.get('aci_rn')
+        root_filter = root.get('target_filter')
+        root_obj = root.get('module_object')
+        parent_class = parent.get('aci_class')
+        parent_rn = parent.get('aci_rn')
+        parent_filter = parent.get('target_filter')
+        parent_obj = parent.get('module_object')
+        obj_class = obj.get('aci_class')
+        obj_rn = obj.get('aci_rn')
+        obj_filter = obj.get('target_filter')
+        mo = obj.get('module_object')
 
-        if self.module.params['state'] in ('absent', 'present'):
+        if self.module.params.get('state') in ('absent', 'present'):
             # State is absent or present
             self.path = 'api/mo/uni/{0}/{1}/{2}.json'.format(root_rn, parent_rn, obj_rn)
             self.update_qs({'rsp-prop-include': 'config-only'})
@@ -761,27 +761,27 @@ class ACIModule(object):
         """
         This method is used by construct_url when the object is the fourth-level class.
         """
-        root_class = root['aci_class']
-        root_rn = root['aci_rn']
-        root_filter = root['target_filter']
-        root_obj = root['module_object']
-        sec_class = sec['aci_class']
-        sec_rn = sec['aci_rn']
-        sec_filter = sec['target_filter']
-        sec_obj = sec['module_object']
-        parent_class = parent['aci_class']
-        parent_rn = parent['aci_rn']
-        parent_filter = parent['target_filter']
-        parent_obj = parent['module_object']
-        obj_class = obj['aci_class']
-        obj_rn = obj['aci_rn']
-        obj_filter = obj['target_filter']
-        mo = obj['module_object']
+        root_class = root.get('aci_class')
+        root_rn = root.get('aci_rn')
+        root_filter = root.get('target_filter')
+        root_obj = root.get('module_object')
+        sec_class = sec.get('aci_class')
+        sec_rn = sec.get('aci_rn')
+        sec_filter = sec.get('target_filter')
+        sec_obj = sec.get('module_object')
+        parent_class = parent.get('aci_class')
+        parent_rn = parent.get('aci_rn')
+        parent_filter = parent.get('target_filter')
+        parent_obj = parent.get('module_object')
+        obj_class = obj.get('aci_class')
+        obj_rn = obj.get('aci_rn')
+        obj_filter = obj.get('target_filter')
+        mo = obj.get('module_object')
 
         if self.child_classes is None:
             self.child_classes = [obj_class]
 
-        if self.module.params['state'] in ('absent', 'present'):
+        if self.module.params.get('state') in ('absent', 'present'):
             # State is absent or present
             self.path = 'api/mo/uni/{0}/{1}/{2}/{3}.json'.format(root_rn, sec_rn, parent_rn, obj_rn)
             self.update_qs({'rsp-prop-include': 'config-only'})
@@ -831,15 +831,15 @@ class ACIModule(object):
             resp, info = fetch_url(self.module, self.url,
                                    headers=self.headers,
                                    method='DELETE',
-                                   timeout=self.params['timeout'],
-                                   use_proxy=self.params['use_proxy'])
+                                   timeout=self.params.get('timeout'),
+                                   use_proxy=self.params.get('use_proxy'))
 
-            self.response = info['msg']
-            self.status = info['status']
+            self.response = info.get('msg')
+            self.status = info.get('status')
             self.method = 'DELETE'
 
             # Handle APIC response
-            if info['status'] == 200:
+            if info.get('status') == 200:
                 self.result['changed'] = True
                 self.response_json(resp.read())
             else:
@@ -877,7 +877,7 @@ class ACIModule(object):
             # add name back to config only if the configs do not match
             if config:
                 # TODO: If URLs are built with the object's name, then we should be able to leave off adding the name back
-                # config["name"] = proposed_config["name"]
+                # config['name'] = proposed_config.get('name')
                 config = {aci_class: {'attributes': config}}
 
             # check for updates to child configs and update new config dictionary
@@ -961,20 +961,20 @@ class ACIModule(object):
         uri = self.url + self.filter_string
 
         # Sign and encode request as to APIC's wishes
-        if self.params['private_key']:
+        if self.params.get('private_key'):
             self.cert_auth(path=self.path + self.filter_string, method='GET')
 
         resp, info = fetch_url(self.module, uri,
                                headers=self.headers,
                                method='GET',
-                               timeout=self.params['timeout'],
-                               use_proxy=self.params['use_proxy'])
-        self.response = info['msg']
-        self.status = info['status']
+                               timeout=self.params.get('timeout'),
+                               use_proxy=self.params.get('use_proxy'))
+        self.response = info.get('msg')
+        self.status = info.get('status')
         self.method = 'GET'
 
         # Handle APIC response
-        if info['status'] == 200:
+        if info.get('status') == 200:
             self.existing = json.loads(resp.read())['imdata']
         else:
             try:
@@ -1062,22 +1062,22 @@ class ACIModule(object):
             return
         elif not self.module.check_mode:
             # Sign and encode request as to APIC's wishes
-            if self.params['private_key']:
+            if self.params.get('private_key'):
                 self.cert_auth(method='POST', payload=json.dumps(self.config))
 
             resp, info = fetch_url(self.module, self.url,
                                    data=json.dumps(self.config),
                                    headers=self.headers,
                                    method='POST',
-                                   timeout=self.params['timeout'],
-                                   use_proxy=self.params['use_proxy'])
+                                   timeout=self.params.get('timeout'),
+                                   use_proxy=self.params.get('use_proxy'))
 
-            self.response = info['msg']
-            self.status = info['status']
+            self.response = info.get('msg')
+            self.status = info.get('status')
             self.method = 'POST'
 
             # Handle APIC response
-            if info['status'] == 200:
+            if info.get('status') == 200:
                 self.result['changed'] = True
                 self.response_json(resp.read())
             else:
@@ -1095,12 +1095,12 @@ class ACIModule(object):
     def exit_json(self, **kwargs):
 
         if 'state' in self.params:
-            if self.params['state'] in ('absent', 'present'):
-                if self.params['output_level'] in ('debug', 'info'):
+            if self.params.get('state') in ('absent', 'present'):
+                if self.params.get('output_level') in ('debug', 'info'):
                     self.result['previous'] = self.existing
 
         # Return the gory details when we need it
-        if self.params['output_level'] == 'debug':
+        if self.params.get('output_level') == 'debug':
             if 'state' in self.params:
                 self.result['filter_string'] = self.filter_string
             self.result['method'] = self.method
@@ -1111,7 +1111,7 @@ class ACIModule(object):
 
         if 'state' in self.params:
             self.original = self.existing
-            if self.params['state'] in ('absent', 'present'):
+            if self.params.get('state') in ('absent', 'present'):
                 self.get_existing()
 
             # if self.module._diff and self.original != self.existing:
@@ -1121,7 +1121,7 @@ class ACIModule(object):
             #     )
             self.result['current'] = self.existing
 
-            if self.params['output_level'] in ('debug', 'info'):
+            if self.params.get('output_level') in ('debug', 'info'):
                 self.result['sent'] = self.config
                 self.result['proposed'] = self.proposed
 
@@ -1131,21 +1131,21 @@ class ACIModule(object):
     def fail_json(self, msg, **kwargs):
 
         # Return error information, if we have it
-        if self.error['code'] is not None and self.error['text'] is not None:
+        if self.error.get('code') is not None and self.error.get('text') is not None:
             self.result['error'] = self.error
 
         if 'state' in self.params:
-            if self.params['state'] in ('absent', 'present'):
-                if self.params['output_level'] in ('debug', 'info'):
+            if self.params.get('state') in ('absent', 'present'):
+                if self.params.get('output_level') in ('debug', 'info'):
                     self.result['previous'] = self.existing
 
             # Return the gory details when we need it
-            if self.params['output_level'] == 'debug':
+            if self.params.get('output_level') == 'debug':
                 if self.imdata is not None:
                     self.result['imdata'] = self.imdata
                     self.result['totalCount'] = self.totalCount
 
-        if self.params['output_level'] == 'debug':
+        if self.params.get('output_level') == 'debug':
             if self.url is not None:
                 if 'state' in self.params:
                     self.result['filter_string'] = self.filter_string
@@ -1156,7 +1156,7 @@ class ACIModule(object):
                 self.result['url'] = self.url
 
         if 'state' in self.params:
-            if self.params['output_level'] in ('debug', 'info'):
+            if self.params.get('output_level') in ('debug', 'info'):
                 self.result['sent'] = self.config
                 self.result['proposed'] = self.proposed
 

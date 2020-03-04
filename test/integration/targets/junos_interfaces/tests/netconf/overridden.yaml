@@ -8,9 +8,9 @@
     expected_overridden_output:
       - name: ge-0/0/1
         description: "Overridden by Ansible - Interface 1"
-        enable: true
+        enabled: true
       - name: fxp0
-        enable: true
+        enabled: true
 
 - block:
     - name: Configure initial state for interface
@@ -20,7 +20,7 @@
             description: "Configured by Ansible - Interface 1"
             mtu: 1024
             speed: 100m
-            enable: False
+            enabled: False
             duplex: full-duplex
             hold_time:
               up: 2000

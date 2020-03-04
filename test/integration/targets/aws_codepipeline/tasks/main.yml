@@ -25,10 +25,6 @@
         <<: *aws_connection_info
       register: codepipeline_iam_role
 
-    - name: Pause a few seconds to ensure IAM role is available to next task
-      pause:
-        seconds: 10
-
     # ================== integration test ==========================================
 
     - name: create CodePipeline
@@ -69,6 +65,9 @@
         state: present
         <<: *aws_connection_info
       register: output
+      retries: 10
+      delay: 5
+      until: output is success
 
     - assert:
         that:

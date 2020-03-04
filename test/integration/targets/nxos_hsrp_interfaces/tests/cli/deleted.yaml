@@ -1,0 +1,57 @@
+---
+- debug:
+    msg: "Start nxos_hsrp_interfaces deleted integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: test_int2="{{ nxos_int2 }}"
+- set_fact:
+    bfd_enable: enable
+    bfd_disable: disable
+  when: platform is not search('N35')
+
+- block:
+  - name: setup1
+    cli_config: &setup_teardown
+      config: |
+        no feature bfd
+        no feature hsrp
+        default interface {{ test_int1 }}
+        default interface {{ test_int2 }}
+
+  - name: setup2
+    cli_config:
+      config: |
+        feature bfd
+        feature hsrp
+        interface {{ test_int1 }}
+          no switchport
+          hsrp bfd
+        interface {{ test_int2 }}
+          no switchport
+
+  - name: deleted
+    nxos_hsrp_interfaces: &deleted
+      config:
+        - name: "{{ test_int1 }}"
+          bfd: "{{ bfd_disable|default(omit)}}"
+      state: deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'no hsrp bfd' in result.commands"
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+
+  - name: Idempotence - deleted
+    nxos_hsrp_interfaces: *deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *setup_teardown

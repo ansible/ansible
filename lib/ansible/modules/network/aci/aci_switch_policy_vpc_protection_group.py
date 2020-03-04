@@ -53,6 +53,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 seealso:
 - module: aci_switch_policy_leaf_profile
@@ -223,6 +228,7 @@ def main():
         switch_1_id=dict(type='int'),
         switch_2_id=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -234,12 +240,13 @@ def main():
         ],
     )
 
-    protection_group = module.params['protection_group']
-    protection_group_id = module.params['protection_group_id']
-    vpc_domain_policy = module.params['vpc_domain_policy']
-    switch_1_id = module.params['switch_1_id']
-    switch_2_id = module.params['switch_2_id']
-    state = module.params['state']
+    protection_group = module.params.get('protection_group')
+    protection_group_id = module.params.get('protection_group_id')
+    vpc_domain_policy = module.params.get('vpc_domain_policy')
+    switch_1_id = module.params.get('switch_1_id')
+    switch_2_id = module.params.get('switch_2_id')
+    state = module.params.get('state')
+    name_alias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -260,6 +267,7 @@ def main():
             class_config=dict(
                 name=protection_group,
                 id=protection_group_id,
+                nameAlias=name_alias,
             ),
             child_configs=[
                 dict(

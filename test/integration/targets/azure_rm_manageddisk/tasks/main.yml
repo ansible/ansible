@@ -132,21 +132,22 @@
        - output.state.os_type == 'linux'
 
  - name: Gather facts to one specific disk
-   azure_rm_manageddisk_facts:
+   azure_rm_manageddisk_info:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
+   register: output  
 
  - assert:
        that:
-           - "azure_managed_disk | length == 1"
-           - azure_managed_disk[0].storage_account_type == "StandardSSD_LRS"
-           - azure_managed_disk[0].disk_size_gb == 2
-           - "azure_managed_disk[0].os_type == 'linux'"
+           - "output.ansible_info.azure_managed_disk | length == 1"
+           - output.ansible_info.azure_managed_disk[0].storage_account_type == "StandardSSD_LRS"
+           - output.ansible_info.azure_managed_disk[0].disk_size_gb == 2
+           - "output.ansible_info.azure_managed_disk[0].os_type == 'linux'"
 
  - set_fact:
      parameter: "{{parameter |combine({item.key: item.value})}}"
    when: "{{item.key not in ['id', 'changed'] and item.value != None}}"
-   with_dict: "{{ azure_managed_disk[0] }}"
+   with_dict: "{{ output.ansible_info.azure_managed_disk[0] }}"
 
  - name: Create disk with facts return value
    azure_rm_manageddisk:

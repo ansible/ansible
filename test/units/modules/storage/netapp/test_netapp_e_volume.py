@@ -238,16 +238,14 @@ class NetAppESeriesVolumeTest(ModuleTestCase):
             self._set_args(arg_set)
             volume_object = NetAppESeriesVolume()
 
-            size_unit_multiplier = NetAppESeriesModule.SIZE_UNIT_MAP[arg_set["size_unit"]]
-            self.assertEqual(volume_object.size_b, arg_set["size"] * size_unit_multiplier)
-            self.assertEqual(volume_object.thin_volume_repo_size_b,
-                             arg_set["thin_volume_repo_size"] * size_unit_multiplier)
+            self.assertEqual(volume_object.size_b, volume_object.convert_to_aligned_bytes(arg_set["size"]))
+            self.assertEqual(volume_object.thin_volume_repo_size_b, volume_object.convert_to_aligned_bytes(arg_set["thin_volume_repo_size"]))
             self.assertEqual(volume_object.thin_volume_expansion_policy, "automatic")
             if "thin_volume_max_repo_size" not in arg_set.keys():
-                self.assertEqual(volume_object.thin_volume_max_repo_size_b, arg_set["size"] * size_unit_multiplier)
+                self.assertEqual(volume_object.thin_volume_max_repo_size_b, volume_object.convert_to_aligned_bytes(arg_set["size"]))
             else:
                 self.assertEqual(volume_object.thin_volume_max_repo_size_b,
-                                 arg_set["thin_volume_max_repo_size"] * size_unit_multiplier)
+                                 volume_object.convert_to_aligned_bytes(arg_set["thin_volume_max_repo_size"]))
 
         # validate metadata form
         self._set_args(
@@ -502,7 +500,7 @@ class NetAppESeriesVolumeTest(ModuleTestCase):
              "read_ahead_enable": True, "thin_provision": False})
         volume_object = NetAppESeriesVolume()
         volume_object.volume_detail = {"metadata": [],
-                                       "cacheSettings": {"readCacheEnable": True, "writeCacheEnable": True,
+                                       "cacheSettings": {"cwob": False, "readCacheEnable": True, "writeCacheEnable": True,
                                                          "readAheadMultiplier": 1}, "flashCached": True,
                                        "segmentSize": str(128 * 1024)}
         self.assertEqual(volume_object.get_volume_property_changes(), dict())
@@ -514,7 +512,7 @@ class NetAppESeriesVolumeTest(ModuleTestCase):
              "thin_volume_max_repo_size": 1000, "thin_volume_growth_alert_threshold": 90})
         volume_object = NetAppESeriesVolume()
         volume_object.volume_detail = {"metadata": [],
-                                       "cacheSettings": {"readCacheEnable": True, "writeCacheEnable": True,
+                                       "cacheSettings": {"cwob": False, "readCacheEnable": True, "writeCacheEnable": True,
                                                          "readAheadMultiplier": 1},
                                        "flashCached": True, "growthAlertThreshold": "90",
                                        "expansionPolicy": "automatic", "segmentSize": str(128 * 1024)}
@@ -527,7 +525,7 @@ class NetAppESeriesVolumeTest(ModuleTestCase):
              "read_ahead_enable": True, "thin_provision": False})
         volume_object = NetAppESeriesVolume()
         volume_object.volume_detail = {"metadata": [],
-                                       "cacheSettings": {"readCacheEnable": False, "writeCacheEnable": True,
+                                       "cacheSettings": {"cwob": False, "readCacheEnable": False, "writeCacheEnable": True,
                                                          "readAheadMultiplier": 1}, "flashCached": True,
                                        "segmentSize": str(128 * 1024)}
         self.assertEqual(volume_object.get_volume_property_changes(),
@@ -535,11 +533,11 @@ class NetAppESeriesVolumeTest(ModuleTestCase):
                           'flashCache': True})
         self._set_args(
             {"state": "present", "name": "Matthew", "storage_pool_name": "pool", "size": 100, "ssd_cache_enabled": True,
-             "read_cache_enable": True, "write_cache_enable": True,
+             "read_cache_enable": True, "write_cache_enable": True, "cache_without_batteries": False,
              "read_ahead_enable": True, "thin_provision": False})
         volume_object = NetAppESeriesVolume()
         volume_object.volume_detail = {"metadata": [],
-                                       "cacheSettings": {"readCacheEnable": True, "writeCacheEnable": False,
+                                       "cacheSettings": {"cwob": False, "readCacheEnable": True, "writeCacheEnable": False,
                                                          "readAheadMultiplier": 1}, "flashCached": True,
                                        "segmentSize": str(128 * 1024)}
         self.assertEqual(volume_object.get_volume_property_changes(),
@@ -547,29 +545,30 @@ class NetAppESeriesVolumeTest(ModuleTestCase):
                           'flashCache': True})
         self._set_args(
             {"state": "present", "name": "Matthew", "storage_pool_name": "pool", "size": 100, "ssd_cache_enabled": True,
-             "read_cache_enable": True, "write_cache_enable": True,
+             "read_cache_enable": True, "write_cache_enable": True, "cache_without_batteries": True,
              "read_ahead_enable": True, "thin_provision": False})
         volume_object = NetAppESeriesVolume()
         volume_object.volume_detail = {"metadata": [],
-                                       "cacheSettings": {"readCacheEnable": True, "writeCacheEnable": True,
+                                       "cacheSettings": {"cwob": False, "readCacheEnable": True, "writeCacheEnable": True,
                                                          "readAheadMultiplier": 1}, "flashCached": False,
                                        "segmentSize": str(128 * 1024)}
         self.assertEqual(volume_object.get_volume_property_changes(),
-                         {"metaTags": [], 'cacheSettings': {'readCacheEnable': True, 'writeCacheEnable': True},
+                         {"metaTags": [], 'cacheSettings': {'readCacheEnable': True, 'writeCacheEnable': True, "cacheWithoutBatteries": True},
                           'flashCache': True})
         self._set_args(
             {"state": "present", "name": "Matthew", "storage_pool_name": "pool", "size": 100, "ssd_cache_enabled": True,
-             "read_cache_enable": True, "write_cache_enable": True,
+             "read_cache_enable": True, "write_cache_enable": True, "cache_without_batteries": True,
              "read_ahead_enable": False, "thin_provision": False})
         volume_object = NetAppESeriesVolume()
         volume_object.volume_detail = {"metadata": [],
-                                       "cacheSettings": {"readCacheEnable": True, "writeCacheEnable": True,
+                                       "cacheSettings": {"cwob": False, "readCacheEnable": True, "writeCacheEnable": True,
                                                          "readAheadMultiplier": 1}, "flashCached": False,
                                        "segmentSize": str(128 * 1024)}
         self.assertEqual(volume_object.get_volume_property_changes(), {"metaTags": [],
                                                                        'cacheSettings': {'readCacheEnable': True,
                                                                                          'writeCacheEnable': True,
-                                                                                         'readAheadEnable': False},
+                                                                                         'readAheadEnable': False,
+                                                                                         "cacheWithoutBatteries": True},
                                                                        'flashCache': True})
 
         self._set_args(
@@ -579,7 +578,7 @@ class NetAppESeriesVolumeTest(ModuleTestCase):
              "thin_volume_max_repo_size": 1000, "thin_volume_growth_alert_threshold": 90})
         volume_object = NetAppESeriesVolume()
         volume_object.volume_detail = {"metadata": [],
-                                       "cacheSettings": {"readCacheEnable": True, "writeCacheEnable": True,
+                                       "cacheSettings": {"cwob": True, "readCacheEnable": True, "writeCacheEnable": True,
                                                          "readAheadMultiplier": 1},
                                        "flashCached": True, "growthAlertThreshold": "95",
                                        "expansionPolicy": "automatic", "segmentSize": str(128 * 1024)}
@@ -594,7 +593,7 @@ class NetAppESeriesVolumeTest(ModuleTestCase):
              "read_cache_enable": True, "write_cache_enable": True, "read_ahead_enable": True, "thin_provision": False})
         volume_object = NetAppESeriesVolume()
         volume_object.volume_detail = {
-            "cacheSettings": {"readCacheEnable": True, "writeCacheEnable": True, "readAheadMultiplier": 1},
+            "cacheSettings": {"cwob": False, "readCacheEnable": True, "writeCacheEnable": True, "readAheadMultiplier": 1},
             "flashCached": True, "segmentSize": str(512 * 1024)}
         with self.assertRaisesRegexp(AnsibleFailJson, "Existing volume segment size is"):
             volume_object.get_volume_property_changes()

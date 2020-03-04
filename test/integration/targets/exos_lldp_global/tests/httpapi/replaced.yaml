@@ -1,0 +1,53 @@
+---
+- debug:
+      msg: "START exos_lldp_global replaced integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _reset_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+  - name: Replace device configurations of LLDP service with provided configurations
+    exos_lldp_global: &replaced
+      config:
+        interval: 20
+        tlv_select:
+          system_name: false
+          system_description: true
+          system_capabilities: false
+      state: replaced
+    register: result
+
+  - name: Assert that correct set of results were generated
+    assert:
+      that:
+        - "{{ replaced['requests'][0]['method'] == result['requests'][0]['method'] }}"
+        - "{{ replaced['requests'][0]['path'] == result['requests'][0]['path'] }}"
+        - "{{ replaced['requests'][0]['data'] == result['requests'][0]['data'] }}"
+
+  - name: Assert that before dicts are correctly generated
+    assert:
+      that:
+          - "{{ populate == result['before'] }}"
+
+  - name: Assert that after dict is correctly generated
+    assert:
+      that:
+          - "{{ replaced['after'] == result['after'] }}"
+
+  - name: Replace device configurations of LLDP service with provided configurations (IDEMPOTENT)
+    exos_lldp_global: *replaced
+    register: result
+
+  - name: Assert that task was idempotent
+    assert:
+      that:
+          - "result['changed'] == false"
+
+  - name: Assert that before dict is correctly generated
+    assert:
+      that:
+          - "{{ replaced['after'] == result['before'] }}"
+
+  always:
+  - include_tasks: _reset_config.yaml

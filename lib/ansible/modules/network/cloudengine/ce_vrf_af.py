@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -27,8 +30,10 @@ description:
     - Manages VPN instance address family of HUAWEI CloudEngine switches.
 author: Yang yang (@QijunPan)
 notes:
-    - If I(state=absent), the vrf will be removed, regardless of the
-      non-required parameters.
+    - If I(state=absent), the vrf will be removed, regardless of the non-required parameters.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     vrf:
         description:
@@ -494,6 +499,11 @@ class VrfAf(object):
         """ set update command"""
         if not self.changed:
             return
+        if self.vpn_target_type:
+            if self.vpn_target_type == "export_extcommunity":
+                vpn_target_type = "export-extcommunity"
+            else:
+                vpn_target_type = "import-extcommunity"
         if self.state == "present":
             self.updates_cmd.append('ip vpn-instance %s' % (self.vrf))
             if self.vrf_aftype == 'ipv4uni':
@@ -512,18 +522,18 @@ class VrfAf(object):
                 if not self.is_vrf_rt_exist():
                     if self.evpn is False:
                         self.updates_cmd.append(
-                            'vpn-target %s %s' % (self.vpn_target_value, self.vpn_target_type))
+                            'vpn-target %s %s' % (self.vpn_target_value, vpn_target_type))
                     else:
                         self.updates_cmd.append(
-                            'vpn-target %s %s evpn' % (self.vpn_target_value, self.vpn_target_type))
+                            'vpn-target %s %s evpn' % (self.vpn_target_value, vpn_target_type))
             elif self.vpn_target_state == "absent":
                 if self.is_vrf_rt_exist():
                     if self.evpn is False:
                         self.updates_cmd.append(
-                            'undo vpn-target %s %s' % (self.vpn_target_value, self.vpn_target_type))
+                            'undo vpn-target %s %s' % (self.vpn_target_value, vpn_target_type))
                     else:
                         self.updates_cmd.append(
-                            'undo vpn-target %s %s evpn' % (self.vpn_target_value, self.vpn_target_type))
+                            'undo vpn-target %s %s evpn' % (self.vpn_target_value, vpn_target_type))
         else:
             self.updates_cmd.append('ip vpn-instance %s' % (self.vrf))
             if self.vrf_aftype == 'ipv4uni':

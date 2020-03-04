@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -30,13 +33,13 @@ description:
 author: QijunPan (@QijunPan)
 notes:
     - When C(state=absent), VLANs can be added/removed from trunk links and
-      the existing access VLAN can be 'unconfigured' to just having VLAN 1
-      on that interface.
+      the existing access VLAN can be 'unconfigured' to just having VLAN 1 on that interface.
     - When working with trunks VLANs the keywords add/remove are always sent
-      in the C(port trunk allow-pass vlan) command. Use verbose mode to see
-      commands sent.
-    - When C(state=unconfigured), the interface will result with having a default
-      Layer 2 interface, i.e. vlan 1 in access mode.
+      in the C(port trunk allow-pass vlan) command. Use verbose mode to see commands sent.
+    - When C(state=unconfigured), the interface will result with having a default Layer 2 interface, i.e. vlan 1 in access mode.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     interface:
         description:
@@ -858,7 +861,7 @@ class SwitchPort(object):
 
         if not self.is_l2switchport():
             self.module.fail_json(
-                msg='Error: Interface is not layer2 swtich port.')
+                msg='Error: Interface is not layer2 switch port.')
         if self.state == "unconfigured":
             if any([self.mode, self.default_vlan, self.pvid_vlan, self.trunk_vlans, self.untagged_vlans, self.tagged_vlans]):
                 self.module.fail_json(

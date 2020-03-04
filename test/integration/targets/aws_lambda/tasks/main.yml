@@ -1,9 +1,15 @@
 ---
-#
-#  Author: Michael De La Rue
-#  based on ec2_key.yml + lambda.py
+# tasks file for aws_lambda test
 
-- block:
+- name: set connection information for AWS modules and run tests
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+
+  block:
 
     # ============================================================
     - name: test with no parameters
@@ -20,7 +26,7 @@
     # ============================================================
     - name: test with no parameters except state absent
       lambda:
-        state=absent
+        state: absent
       register: result
       ignore_errors: true
 
@@ -33,8 +39,8 @@
     # ============================================================
     - name: test with no role or handler
       lambda:
-        name=ansible-testing-fake-should-not-be-created
-        runtime="python2.7"
+        name: ansible-testing-fake-should-not-be-created
+        runtime: "python2.7"
       register: result
       ignore_errors: true
 
@@ -47,10 +53,11 @@
     # ============================================================
     - name: test with all module required variables but no region
       lambda:
-        name=ansible-testing-fake-should-not-be-created
-        runtime="python2.7"
-        handler="no-handler"
-        role=arn:fake-role-doesnt-exist
+        name: ansible-testing-fake-should-not-be-created
+        runtime: "python2.7"
+        handler: "no-handler"
+        role: "arn:fake-role-doesnt-exist"
+        region:
       register: result
       ignore_errors: true
 
@@ -76,6 +83,7 @@
         vpc_security_group_ids:
         environment_variables:
         dead_letter_arn:
+        region:
       register: result
       ignore_errors: true
 
@@ -101,31 +109,24 @@
 
     - name: test state=present - upload the lambda
       lambda:
-        name="{{lambda_function_name}}"
-        runtime="python2.7"
-        handler="mini_lambda.handler"
-        role="ansible_lambda_role"
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='{{ec2_access_key}}'
-        ec2_secret_key='{{ec2_secret_key}}'
-        security_token='{{security_token}}'
-        zip_file="{{zip_res.dest}}"
+        name: "{{lambda_function_name}}"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        zip_file: "{{zip_res.dest}}"
       register: result
 
     - name: assert lambda upload succeeded
       assert:
         that:
-           - 'result is not failed'
+          - result is not failed
+          - result.configuration.tracing_config.mode == "PassThrough"
 
     - name: test lambda works
       execute_lambda:
         name: "{{lambda_function_name}}"
         payload:
           name: "Mr Ansible Tests"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
       register: result
 
     - name: assert lambda manages to respond as expected
@@ -134,16 +135,147 @@
            - 'result is not failed'
            - 'result.result.output.message == "hello Mr Ansible Tests"'
 
+    - name: test lambda config updates
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "nodejs10.x"
+        tracing_mode: 'Active'
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+      register: update_result
+
+    - name: assert that update succeeded
+      assert:
+        that:
+          - update_result is not failed
+          - update_result.changed == True
+          - update_result.configuration.runtime == 'nodejs10.x'
+          - update_result.configuration.tracing_config.mode == 'Active'
+
+    - name: test no changes are made with the same parameters
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "nodejs10.x"
+        tracing_mode: 'Active'
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+      register: update_result
+
+    - name: assert that update succeeded
+      assert:
+        that:
+          - update_result is not failed
+          - update_result.changed == False
+          - update_result.configuration.runtime == 'nodejs10.x'
+          - update_result.configuration.tracing_config.mode == 'Active'
+
+    - name: reset config updates for the following tests
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "python2.7"
+        tracing_mode: 'PassThrough'
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+      register: result
+
+    - name: assert that reset succeeded
+      assert:
+        that:
+          - result is not failed
+          - result.changed == True
+          - result.configuration.runtime == 'python2.7'
+          - result.configuration.tracing_config.mode == 'PassThrough'
+
+    - name: lambda_info | Gather all infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: all
+      register: lambda_infos_all
+
+    - name: lambda_info | Assert successfull retrieval of all information
+      assert:
+        that:
+          - lambda_infos_all is not failed
+          - lambda_infos_all.function[lambda_function_name].function_name == lambda_function_name
+          - lambda_infos_all.function[lambda_function_name].runtime == "python2.7"
+          - lambda_infos_all.function[lambda_function_name].versions is defined
+          - lambda_infos_all.function[lambda_function_name].aliases is defined
+          - lambda_infos_all.function[lambda_function_name].policy is defined
+          - lambda_infos_all.function[lambda_function_name].mappings is defined
+          - lambda_infos_all.function[lambda_function_name].description == ""
+          - lambda_infos_all.function[lambda_function_name].function_arn is defined
+          - lambda_infos_all.function[lambda_function_name].handler == "mini_lambda.handler"
+
+    - name: lambda_info | Gather version infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: versions
+      register: lambda_infos_versions
+
+    - name: lambda_info | Assert successfull retrieval of versions information
+      assert:
+        that:
+          - lambda_infos_versions is not failed
+          - lambda_infos_versions.function[lambda_function_name].versions|length > 0
+          - lambda_infos_versions.function[lambda_function_name].function_name is undefined
+
+    - name: lambda_info | Gather config infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: config
+      register: lambda_infos_config
+
+    - name: lambda_info | Assert successfull retrieval of config information
+      assert:
+        that:
+          - lambda_infos_config is not failed
+          - lambda_infos_config.function[lambda_function_name].function_name == lambda_function_name
+          - lambda_infos_config.function[lambda_function_name].description is defined
+          - lambda_infos_config.function[lambda_function_name].versions is undefined
+
+    - name: lambda_info | Gather policy infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: policy
+      register: lambda_infos_policy
+
+    - name: lambda_info | Assert successfull retrieval of policy information
+      assert:
+        that:
+          - lambda_infos_policy is not failed
+          - lambda_infos_policy.function[lambda_function_name].policy is defined
+          - lambda_infos_policy.function[lambda_function_name].versions is undefined
+
+    - name: lambda_info | Gather aliases infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: aliases
+      register: lambda_infos_aliases
+
+    - name: lambda_info | Assert successfull retrieval of aliases information
+      assert:
+        that:
+          - lambda_infos_aliases is not failed
+          - lambda_infos_aliases.function[lambda_function_name].aliases is defined
+
+    - name: lambda_info | Gather mappings infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: mappings
+      register: lambda_infos_mappings
+
+    - name: lambda_info | Assert successfull retrieval of mappings information
+      assert:
+        that:
+          - lambda_infos_mappings is not failed
+          - lambda_infos_mappings.function[lambda_function_name].mappings is defined
+
     # ============================================================
     - name: test state=present with security group but no vpc
       lambda:
         name: "{{lambda_function_name}}"
         runtime: "python2.7"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
         handler:
         description:
@@ -168,10 +300,6 @@
         name: "{{lambda_function_name}}"
         runtime: "python2.7"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
         handler: "mini_lambda.handler"
 # These are not allowed because of mutually exclusive.
@@ -191,8 +319,6 @@
            - 'result is not failed'
            - 'result.changed == False'
 
-
-
     # ============================================================
     - name: test putting an environment variable changes lambda
       lambda:
@@ -200,10 +326,6 @@
         runtime: "python2.7"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
         environment_variables:
             EXTRA_MESSAGE: "I think you are great!!"
@@ -220,9 +342,6 @@
         name: "{{lambda_function_name}}"
         payload:
           name: "Mr Ansible Tests"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
       register: result
 
@@ -256,12 +375,8 @@
     # ============================================================
     - name: test state=absent (expect changed=False)
       lambda:
-        name="{{lambda_function_name}}"
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='{{ec2_access_key}}'
-        ec2_secret_key='{{ec2_secret_key}}'
-        security_token='{{security_token}}'
-        state=absent
+        name: "{{lambda_function_name}}"
+        state: absent
       register: result
 
     - name: assert state=absent
@@ -279,10 +394,6 @@
         runtime: "python2.7"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
       async: 1000
       register: async_1
@@ -293,10 +404,6 @@
         runtime: "python2.7"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
       async: 1000
       register: async_2
@@ -307,10 +414,6 @@
         runtime: "python2.7"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
       async: 1000
       register: async_3
@@ -321,10 +424,6 @@
         runtime: "python2.7"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
       register: result
 
@@ -356,10 +455,6 @@
       lambda:
         name: "{{lambda_function_name}}_1"
         state: absent
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
       async: 1000
       register: async_1
@@ -368,10 +463,6 @@
       lambda:
         name: "{{lambda_function_name}}_2"
         state: absent
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
       async: 1000
       register: async_2
@@ -380,10 +471,6 @@
       lambda:
         name: "{{lambda_function_name}}_3"
         state: absent
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
       async: 1000
       register: async_3
@@ -392,10 +479,6 @@
       lambda:
         name: "{{lambda_function_name}}_4"
         state: absent
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         zip_file: "{{zip_res.dest}}"
       register: result
 
@@ -422,29 +505,11 @@
       until: job_result is finished
       retries: 30
 
-
-    # ============================================================
-    # upload via s3 bucket - multi function
-
-    # ============================================================
-    # update already existing function
-
-
+  # ============================================================
   always:
 
-    # ============================================================
-    - name: test state=absent (expect changed=False)
+    - name: ensure function is absent at end of test
       lambda:
-        name="{{lambda_function_name}}"
-        ec2_region='{{ec2_region}}'
-        ec2_access_key='{{ec2_access_key}}'
-        ec2_secret_key='{{ec2_secret_key}}'
-        security_token='{{security_token}}'
-        state=absent
-      register: result
-
-    - name: assert state=absent
-      assert:
-        that:
-           - 'result is not failed'
-           - 'result.changed == False'
+        name: "{{lambda_function_name}}"
+        state: absent
+      ignore_errors: true

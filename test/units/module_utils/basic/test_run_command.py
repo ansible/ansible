@@ -13,6 +13,7 @@ from io import BytesIO
 import pytest
 
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import PY2
 
 
 class OpenBytesIO(BytesIO):
@@ -197,3 +198,22 @@ class TestRunCommandOutput:
         # bytes because it's returning native strings
         assert stdout == to_native(u'Žarn§')
         assert stderr == to_native(u'لرئيسية')
+
+
+@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+def test_run_command_fds(mocker, rc_am):
+    subprocess_mock = mocker.patch('ansible.module_utils.basic.subprocess')
+    subprocess_mock.Popen.side_effect = AssertionError
+
+    try:
+        rc_am.run_command('synchronize', pass_fds=(101, 42))
+    except SystemExit:
+        pass
+
+    if PY2:
+        assert subprocess_mock.Popen.call_args[1]['close_fds'] is False
+        assert 'pass_fds' not in subprocess_mock.Popen.call_args[1]
+
+    else:
+        assert subprocess_mock.Popen.call_args[1]['pass_fds'] == (101, 42)
+        assert subprocess_mock.Popen.call_args[1]['close_fds'] is True

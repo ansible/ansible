@@ -128,12 +128,12 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    template = module.params['template']
-    vrf = module.params['vrf']
-    display_name = module.params['display_name']
-    layer3_multicast = module.params['layer3_multicast']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    template = module.params.get('template')
+    vrf = module.params.get('vrf')
+    display_name = module.params.get('display_name')
+    layer3_multicast = module.params.get('layer3_multicast')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
@@ -145,21 +145,21 @@ def main():
     schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
-    templates = [t['name'] for t in schema_obj['templates']]
+    templates = [t.get('name') for t in schema_obj.get('templates')]
     if template not in templates:
         mso.fail_json(msg="Provided template '{0}' does not exist. Existing templates: {1}".format(template, ', '.join(templates)))
     template_idx = templates.index(template)
 
     # Get ANP
-    vrfs = [v['name'] for v in schema_obj['templates'][template_idx]['vrfs']]
+    vrfs = [v.get('name') for v in schema_obj.get('templates')[template_idx]['vrfs']]
 
     if vrf is not None and vrf in vrfs:
         vrf_idx = vrfs.index(vrf)
-        mso.existing = schema_obj['templates'][template_idx]['vrfs'][vrf_idx]
+        mso.existing = schema_obj.get('templates')[template_idx]['vrfs'][vrf_idx]
 
     if state == 'query':
         if vrf is None:
-            mso.existing = schema_obj['templates'][template_idx]['vrfs']
+            mso.existing = schema_obj.get('templates')[template_idx]['vrfs']
         elif not mso.existing:
             mso.fail_json(msg="VRF '{vrf}' not found".format(vrf=vrf))
         mso.exit_json()

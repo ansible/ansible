@@ -1,0 +1,2 @@
+minor_changes:
+- win_dns_client - Added support for setting IPv6 DNS servers - https://github.com/ansible/ansible/issues/55962

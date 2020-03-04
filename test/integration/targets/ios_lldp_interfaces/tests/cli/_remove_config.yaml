@@ -1,0 +1,15 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      interface GigabitEthernet 0/0
+      no lldp receive
+      no lldp transmit
+      interface GigabitEthernet 0/1
+      no lldp receive
+      no lldp transmit
+      interface GigabitEthernet 0/2
+      no lldp receive
+      no lldp transmit

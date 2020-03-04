@@ -48,7 +48,7 @@ options:
     choices: [ unknown, vlan, vxlan ]
   multicast_address:
     description:
-    - The muticast IP address to use for the virtual switch.
+    - The multicast IP address to use for the virtual switch.
     type: str
   state:
     description:
@@ -57,6 +57,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
   vm_provider:
     description:
     - The VM platform for VMM Domains.
@@ -286,6 +291,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
         vswitch=dict(type='str', choices=['avs', 'default', 'dvs', 'unknown']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -298,16 +304,17 @@ def main():
         ],
     )
 
-    dscp = module.params['dscp']
-    domain = module.params['domain']
-    domain_type = module.params['domain_type']
-    encap_mode = module.params['encap_mode']
-    multicast_address = module.params['multicast_address']
-    vm_provider = module.params['vm_provider']
-    vswitch = module.params['vswitch']
+    dscp = module.params.get('dscp')
+    domain = module.params.get('domain')
+    domain_type = module.params.get('domain_type')
+    encap_mode = module.params.get('encap_mode')
+    multicast_address = module.params.get('multicast_address')
+    vm_provider = module.params.get('vm_provider')
+    vswitch = module.params.get('vswitch')
     if vswitch is not None:
-        vswitch = VSWITCH_MAPPING[vswitch]
-    state = module.params['state']
+        vswitch = VSWITCH_MAPPING.get(vswitch)
+    state = module.params.get('state')
+    name_alias = module.params.get('name_alias')
 
     if domain_type != 'vmm':
         if vm_provider is not None:
@@ -341,8 +348,8 @@ def main():
         domain_rn = 'phys-{0}'.format(domain)
     elif domain_type == 'vmm':
         domain_class = 'vmmDomP'
-        domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
-        domain_rn = 'vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
+        domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING.get(vm_provider), domain)
+        domain_rn = 'vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING.get(vm_provider), domain)
 
     # Ensure that querying all objects works when only domain_type is provided
     if domain is None:
@@ -369,6 +376,7 @@ def main():
                 mode=vswitch,
                 name=domain,
                 targetDscp=dscp,
+                nameAlias=name_alias,
             ),
         )
 

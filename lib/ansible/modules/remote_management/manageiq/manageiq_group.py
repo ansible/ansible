@@ -201,12 +201,12 @@ group:
       description: Group creation date
       returned: success
       type: str
-      example: 2018-08-12T08:37:55+00:00
+      sample: "2018-08-12T08:37:55+00:00"
     updated_on:
       description: Group update date
       returned: success
       type: int
-      example: 2018-08-12T08:37:55+00:00
+      sample: "2018-08-12T08:37:55+00:00"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -330,7 +330,7 @@ class ManageIQgroup(object):
 
         return dict(
             changed=True,
-            msg="deleted group %s with id %i" % (group['description'], group['id']))
+            msg="deleted group %s with id %s" % (group['description'], group['id']))
 
     def edit_group(self, group, description, role, tenant, norm_managed_filters, managed_filters_merge_mode,
                    belongsto_filters, belongsto_filters_merge_mode):
@@ -411,11 +411,7 @@ class ManageIQgroup(object):
         filters_updated = False
         new_filters_resource = {}
 
-        # Process belongsto filters
-        if 'belongsto' in current_filters:
-            current_belongsto_set = set(current_filters['belongsto'])
-        else:
-            current_belongsto_set = set()
+        current_belongsto_set = current_filters.get('belongsto', set())
 
         if belongsto_filters:
             new_belongsto_set = set(belongsto_filters)
@@ -501,11 +497,12 @@ class ManageIQgroup(object):
 
     @staticmethod
     def manageiq_filters_to_sorted_dict(current_filters):
-        if 'managed' not in current_filters:
+        current_managed_filters = current_filters.get('managed')
+        if not current_managed_filters:
             return None
 
         res = {}
-        for tag_list in current_filters['managed']:
+        for tag_list in current_managed_filters:
             tag_list.sort()
             key = tag_list[0].split('/')[2]
             res[key] = tag_list
@@ -547,11 +544,11 @@ class ManageIQgroup(object):
         belongsto_filters = None
         if 'filters' in group['entitlement']:
             filters = group['entitlement']['filters']
-            if 'belongsto' in filters:
-                belongsto_filters = filters['belongsto']
-            if 'managed' in filters:
+            belongsto_filters = filters.get('belongsto')
+            group_managed_filters = filters.get('managed')
+            if group_managed_filters:
                 managed_filters = {}
-                for tag_list in filters['managed']:
+                for tag_list in group_managed_filters:
                     key = tag_list[0].split('/')[2]
                     tags = []
                     for t in tag_list:

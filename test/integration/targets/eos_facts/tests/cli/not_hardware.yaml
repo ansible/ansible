@@ -1,11 +1,11 @@
 ---
 - debug: msg="START cli/not_hardware.yaml on connection={{ ansible_connection }}"
 
-
 - name: test not hardware
   eos_facts:
     gather_subset:
       - "!hardware"
+    provider: "{{ cli }}"
   become: yes
   register: result
 

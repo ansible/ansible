@@ -233,7 +233,7 @@ commands:
 import re
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 
@@ -337,11 +337,6 @@ def get_custom_value(arg, config, module):
     command = PARAM_TO_COMMAND_KEYMAP.get(arg)
     splitted_config = config.splitlines()
     value = ''
-
-    command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
-    has_command = command_re.search(config)
-    command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(command), re.M)
-    has_command_val = command_val_re.search(config)
 
     if arg.startswith('additional_paths'):
         value = 'inherit'
@@ -630,7 +625,6 @@ def main():
     )
 
     warnings = list()
-    check_args(module, warnings)
     result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
@@ -683,7 +677,8 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        load_config(module, candidate)
+        if not module.check_mode:
+            load_config(module, candidate)
         result['changed'] = True
         result['commands'] = candidate
     else:

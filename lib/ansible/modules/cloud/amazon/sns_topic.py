@@ -16,8 +16,8 @@ DOCUMENTATION = """
 module: sns_topic
 short_description: Manages AWS SNS topics and subscriptions
 description:
-    - The C(sns_topic) module allows you to create, delete, and manage subscriptions for AWS SNS topics. As of 2.6,
-      this module can be use to subscribe and unsubscribe to topics outside of your AWS account.
+    - The M(sns_topic) module allows you to create, delete, and manage subscriptions for AWS SNS topics.
+    - As of 2.6, this module can be use to subscribe and unsubscribe to topics outside of your AWS account.
 version_added: 2.0
 author:
   - "Joel Thompson (@joelthompson)"
@@ -26,22 +26,27 @@ author:
 options:
   name:
     description:
-      - The name or ARN of the SNS topic to manage
-    required: True
+      - The name or ARN of the SNS topic to manage.
+    required: true
+    type: str
   state:
     description:
-      - Whether to create or destroy an SNS topic
+      - Whether to create or destroy an SNS topic.
     default: present
     choices: ["absent", "present"]
+    type: str
   display_name:
     description:
-      - Display name of the topic
+      - Display name of the topic.
+    type: str
   policy:
     description:
-      - Policy to apply to the SNS topic
+      - Policy to apply to the SNS topic.
+    type: dict
   delivery_policy:
     description:
-      - Delivery policy to apply to the SNS topic
+      - Delivery policy to apply to the SNS topic.
+    type: dict
   subscriptions:
     description:
       - List of subscriptions to apply to the topic. Note that AWS requires
@@ -49,11 +54,13 @@ options:
         subscriptions.
     suboptions:
       endpoint:
-        description: Endpoint of subscription
-        required: yes
+        description: Endpoint of subscription.
+        required: true
       protocol:
-        description: Protocol of subscription
-        required: yes
+        description: Protocol of subscription.
+        required: true
+    type: list
+    elements: dict
     default: []
   purge_subscriptions:
     description:
@@ -62,7 +69,7 @@ options:
         exist and would be purged, they are silently skipped. This means that
         somebody could come back later and confirm the subscription. Sorry.
         Blame Amazon."
-    default: 'yes'
+    default: true
     type: bool
 extends_documentation_fragment:
   - aws
@@ -210,6 +217,7 @@ sns_topic:
 
 import json
 import re
+import copy
 
 try:
     import botocore
@@ -257,12 +265,12 @@ class SnsTopicManager(object):
         paginator = self.connection.get_paginator('list_topics')
         return paginator.paginate().build_full_result()['Topics']
 
-    @AWSRetry.jittered_backoff()
+    @AWSRetry.jittered_backoff(catch_extra_error_codes=['NotFound'])
     def _list_topic_subscriptions_with_backoff(self):
         paginator = self.connection.get_paginator('list_subscriptions_by_topic')
         return paginator.paginate(TopicArn=self.topic_arn).build_full_result()['Subscriptions']
 
-    @AWSRetry.jittered_backoff()
+    @AWSRetry.jittered_backoff(catch_extra_error_codes=['NotFound'])
     def _list_subscriptions_with_backoff(self):
         paginator = self.connection.get_paginator('list_subscriptions')
         return paginator.paginate().build_full_result()['Subscriptions']
@@ -290,6 +298,20 @@ class SnsTopicManager(object):
                 self.module.fail_json_aws(e, msg="Couldn't create topic %s" % self.name)
             self.topic_arn = response['TopicArn']
         return True
+
+    def _compare_delivery_policies(self, policy_a, policy_b):
+        _policy_a = copy.deepcopy(policy_a)
+        _policy_b = copy.deepcopy(policy_b)
+        # AWS automatically injects disableSubscriptionOverrides if you set an
+        # http policy
+        if 'http' in policy_a:
+            if 'disableSubscriptionOverrides' not in policy_a['http']:
+                _policy_a['http']['disableSubscriptionOverrides'] = False
+        if 'http' in policy_b:
+            if 'disableSubscriptionOverrides' not in policy_b['http']:
+                _policy_b['http']['disableSubscriptionOverrides'] = False
+        comparison = (_policy_a != _policy_b)
+        return comparison
 
     def _set_topic_attrs(self):
         changed = False
@@ -319,7 +341,7 @@ class SnsTopicManager(object):
                     self.module.fail_json_aws(e, msg="Couldn't set topic policy")
 
         if self.delivery_policy and ('DeliveryPolicy' not in topic_attributes or
-                                     compare_policies(self.delivery_policy, json.loads(topic_attributes['DeliveryPolicy']))):
+                                     self._compare_delivery_policies(self.delivery_policy, json.loads(topic_attributes['DeliveryPolicy']))):
             changed = True
             self.attributes_set.append('delivery_policy')
             if not self.check_mode:

@@ -33,6 +33,13 @@ except ImportError:
     from xml.etree.ElementTree import Element, SubElement, tostring as xml_to_string
     HAS_LXML = False
 
+try:
+    from jnpr.junos import Device
+    from jnpr.junos.exception import ConnectError
+    HAS_PYEZ = True
+except ImportError:
+    HAS_PYEZ = False
+
 ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
 JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
 FORMATS = frozenset(['xml', 'text', 'json'])
@@ -48,18 +55,8 @@ junos_provider_spec = {
     'transport': dict(default='netconf', choices=['cli', 'netconf'])
 }
 junos_argument_spec = {
-    'provider': dict(type='dict', options=junos_provider_spec),
+    'provider': dict(type='dict', options=junos_provider_spec, removed_in_version=2.14),
 }
-junos_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-    'timeout': dict(removed_in_version=2.9, type='int'),
-    'transport': dict(removed_in_version=2.9)
-}
-junos_argument_spec.update(junos_top_spec)
 
 
 def tostring(element, encoding='UTF-8'):
@@ -99,6 +96,39 @@ def get_capabilities(module):
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     module._junos_capabilities = json.loads(capabilities)
     return module._junos_capabilities
+
+
+def get_device(module):
+    provider = module.params.get("provider") or {}
+    host = provider.get('host')
+
+    kwargs = {
+        'port': provider.get('port') or 830,
+        'user': provider.get('username')
+    }
+
+    if 'password' in provider:
+        kwargs['passwd'] = provider.get('password')
+
+    if 'ssh_keyfile' in provider:
+        kwargs['ssh_private_key_file'] = provider.get('ssh_keyfile')
+
+    if module.params.get('ssh_config'):
+        kwargs['ssh_config'] = module.params['ssh_config']
+
+    if module.params.get('ssh_private_key_file'):
+        kwargs['ssh_private_key_file'] = module.params['ssh_private_key_file']
+
+    kwargs['gather_facts'] = False
+
+    try:
+        device = Device(host, **kwargs)
+        device.open()
+        device.timeout = provider.get('timeout') or 10
+    except ConnectError as exc:
+        module.fail_json('unable to connect to %s: %s' % (host, to_text(exc)))
+
+    return device
 
 
 def is_netconf(module):
@@ -250,16 +280,6 @@ def load_config(module, candidate, warnings, action='merge', format='xml'):
 
     module._junos_connection.validate()
     return get_diff(module)
-
-
-def get_param(module, key):
-    if module.params.get(key):
-        value = module.params[key]
-    elif module.params.get('provider'):
-        value = module.params['provider'].get(key)
-    else:
-        value = None
-    return value
 
 
 def map_params_to_obj(module, param_to_xpath_map, param=None):

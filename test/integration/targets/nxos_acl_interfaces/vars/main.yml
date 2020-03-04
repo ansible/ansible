@@ -1,0 +1,21 @@
+---
+parsed:
+    - access_groups:
+      - acls:
+        - direction: in
+          name: ACL1v6
+        afi: ipv6
+      name: Ethernet1/2
+    - access_groups:
+      - acls:
+        - direction: out
+          name: ACL1v4
+        - direction: in
+          name: PortACL
+          port: true
+        afi: ipv4
+      - acls:
+        - direction: in
+          name: ACL1v6
+        afi: ipv6
+      name: Ethernet1/5 

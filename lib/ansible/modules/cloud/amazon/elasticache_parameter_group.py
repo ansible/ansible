@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -22,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: elasticache_parameter_group
-short_description: Manage cache security groups in Amazon Elasticache.
+short_description: Manage cache parameter groups in Amazon ElastiCache.
 description:
-  - Manage cache security groups in Amazon Elasticache.
+  - Manage cache security groups in Amazon ElastiCache.
   - Returns information about the specified cache cluster.
 version_added: "2.3"
 author: "Sloane Hertel (@s-hertel)"
@@ -38,21 +30,26 @@ options:
       - The name of the cache parameter group family that the cache parameter group can be used with.
         Required when creating a cache parameter group.
     choices: ['memcached1.4', 'memcached1.5', 'redis2.6', 'redis2.8', 'redis3.2', 'redis4.0', 'redis5.0']
+    type: str
   name:
     description:
      - A user-specified name for the cache parameter group.
     required: yes
+    type: str
   description:
     description:
       - A user-specified description for the cache parameter group.
+    type: str
   state:
     description:
       - Idempotent actions that will create/modify, destroy, or reset a cache parameter group as needed.
     choices: ['present', 'absent', 'reset']
     required: true
+    type: str
   values:
     description:
       - A user-specified dictionary of parameters to reset or modify for the cache parameter group.
+    type: dict
 """
 
 EXAMPLES = """
@@ -288,7 +285,7 @@ def main():
             group_family=dict(type='str', choices=['memcached1.4', 'memcached1.5', 'redis2.6', 'redis2.8', 'redis3.2', 'redis4.0', 'redis5.0']),
             name=dict(required=True, type='str'),
             description=dict(default='', type='str'),
-            state=dict(required=True),
+            state=dict(required=True, choices=['present', 'absent', 'reset']),
             values=dict(type='dict'),
         )
     )

@@ -22,8 +22,16 @@
     that:
       - generate_csr_check is changed
       - generate_csr is changed
-      - generate_csr_check_idempotent is not changed
-      - generate_csr_check_idempotent_check is not changed
+      - generate_csr_idempotent is not changed
+      - generate_csr_idempotent_check is not changed
+
+- name: Validate CSR (data retrieval)
+  assert:
+    that:
+      - generate_csr_check.csr is none
+      - generate_csr.csr == lookup('file', output_dir ~ '/csr.csr', rstrip=False)
+      - generate_csr.csr == generate_csr_idempotent.csr
+      - generate_csr.csr == generate_csr_idempotent_check.csr
 
 - name: Validate CSR without SAN (check mode, idempotency)
   assert:
@@ -125,6 +133,36 @@
     that:
       - output_broken is changed
 
+- name: Verify that subject key identifier handling works
+  assert:
+    that:
+      - subject_key_identifier_1 is changed
+      - subject_key_identifier_2 is not changed
+      - subject_key_identifier_3 is changed
+      - subject_key_identifier_4 is changed
+      - subject_key_identifier_5 is not changed
+      - subject_key_identifier_6 is changed
+  when: select_crypto_backend != 'pyopenssl'
+
+- name: Verify that authority key identifier handling works
+  assert:
+    that:
+      - authority_key_identifier_1 is changed
+      - authority_key_identifier_2 is not changed
+      - authority_key_identifier_3 is changed
+      - authority_key_identifier_4 is changed
+  when: select_crypto_backend != 'pyopenssl'
+
+- name: Verify that authority cert issuer / serial number handling works
+  assert:
+    that:
+      - authority_cert_issuer_sn_1 is changed
+      - authority_cert_issuer_sn_2 is not changed
+      - authority_cert_issuer_sn_3 is changed
+      - authority_cert_issuer_sn_4 is changed
+      - authority_cert_issuer_sn_5 is changed
+  when: select_crypto_backend != 'pyopenssl'
+
 - name: Check backup
   assert:
     that:
@@ -138,6 +176,7 @@
       - csr_backup_4.backup_file is string
       - csr_backup_5 is not changed
       - csr_backup_5.backup_file is undefined
+      - csr_backup_4.csr is none
 
 - name: Check CSR with everything
   assert:
@@ -145,3 +184,25 @@
       - everything_1 is changed
       - everything_2 is not changed
       - everything_3 is not changed
+
+- name: Verify Ed25519 and Ed448 tests (for cryptography >= 2.6, < 2.8)
+  assert:
+    that:
+      - generate_csr_ed25519_ed448.results[0] is failed
+      - generate_csr_ed25519_ed448.results[1] is failed
+      - generate_csr_ed25519_ed448.results[0].msg == 'Signing with Ed25519 and Ed448 keys requires cryptography 2.8 or newer.'
+      - generate_csr_ed25519_ed448.results[1].msg == 'Signing with Ed25519 and Ed448 keys requires cryptography 2.8 or newer.'
+      - generate_csr_ed25519_ed448_idempotent.results[0] is failed
+      - generate_csr_ed25519_ed448_idempotent.results[1] is failed
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.6', '>=') and cryptography_version.stdout is version('2.8', '<') and generate_csr_ed25519_ed448_privatekey is not failed
+
+- name: Verify Ed25519 and Ed448 tests (for cryptography >= 2.8)
+  assert:
+    that:
+      - generate_csr_ed25519_ed448 is succeeded
+      - generate_csr_ed25519_ed448.results[0] is changed
+      - generate_csr_ed25519_ed448.results[1] is changed
+      - generate_csr_ed25519_ed448_idempotent is succeeded
+      - generate_csr_ed25519_ed448_idempotent.results[0] is not changed
+      - generate_csr_ed25519_ed448_idempotent.results[1] is not changed
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.8', '>=') and generate_csr_ed25519_ed448_privatekey is not failed

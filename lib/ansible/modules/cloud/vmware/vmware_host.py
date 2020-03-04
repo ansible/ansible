@@ -59,9 +59,7 @@ options:
     - "Here 'host' is an invisible folder under VMware Web Client."
     - "Another example, if there is a nested folder structure like '/myhosts/india/pune' under
        datacenter 'dc2', then C(folder) value will be '/dc2/host/myhosts/india/pune'."
-    - "Other Examples: "
-    - "  - '/Site2/dc2/Asia-Cluster/host'"
-    - "  - '/dc3/Asia-Cluster/host'"
+    - "Other Examples: '/Site2/dc2/Asia-Cluster/host' or '/dc3/Asia-Cluster/host'"
     version_added: "2.6"
     aliases: ['folder_name']
     type: str
@@ -564,7 +562,7 @@ class VMwareHost(PyVmomi):
 
         if self.esxi_username and self.esxi_password:
             # Build the connection spec as well and fetch thumbprint if enabled
-            # Usefull if you reinstalled a host and it uses a new self-signed certificate
+            # Useful if you reinstalled a host and it uses a new self-signed certificate
             reconnecthost_args['cnxSpec'] = self.get_host_connect_spec()
         try:
             task = host_object.ReconnectHost_Task(**reconnecthost_args)

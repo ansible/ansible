@@ -13,6 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
@@ -21,9 +24,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: s3_bucket
-short_description: Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
+short_description: Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus, FakeS3 and StorageGRID
 description:
-    - Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
+    - Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus, FakeS3 and StorageGRID
 version_added: "2.0"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
@@ -38,15 +41,18 @@ options:
     description:
       - Name of the s3 bucket
     required: true
+    type: str
   policy:
     description:
       - The JSON policy as a string.
+    type: json
   s3_url:
     description:
       - S3 URL endpoint for usage with DigitalOcean, Ceph, Eucalyptus and fakes3 etc.
       - Assumes AWS if not specified.
       - For Walrus, use FQDN of the endpoint without scheme nor path.
     aliases: [ S3_URL ]
+    type: str
   ceph:
     description:
       - Enable API compatibility with Ceph. It takes into account the S3 API subset working
@@ -65,9 +71,11 @@ options:
     required: false
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   tags:
     description:
       - tags dict to apply to bucket
+    type: dict
   purge_tags:
     description:
       - whether to remove tags that aren't present in the C(tags) parameter
@@ -84,18 +92,20 @@ options:
         In order to remove the server-side encryption, the encryption needs to be set to 'none' explicitly.
     choices: [ 'none', 'AES256', 'aws:kms' ]
     version_added: "2.9"
+    type: str
   encryption_key_id:
     description: KMS master key ID to use for the default encryption. This parameter is allowed if encryption is aws:kms. If
                  not specified then it will default to the AWS provided KMS key.
     version_added: "2.9"
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
 notes:
     - If C(requestPayment), C(policy), C(tagging) or C(versioning)
       operations/API aren't implemented by the endpoint, module doesn't fail
-      if related parameters I(requester_pays), I(policy), I(tags) or
-      I(versioning) are C(None).
+      if each parameter satisfies the following condition.
+      I(requester_pays) is C(False), I(policy), I(tags), and I(versioning) are C(None).
 '''
 
 EXAMPLES = '''
@@ -133,6 +143,24 @@ EXAMPLES = '''
     name: mydobucket
     s3_url: 'https://nyc3.digitaloceanspaces.com'
 
+# Create a bucket with AES256 encryption
+- s3_bucket:
+    name: mys3bucket
+    state: present
+    encryption: "AES256"
+
+# Create a bucket with aws:kms encryption, KMS key
+- s3_bucket:
+    name: mys3bucket
+    state: present
+    encryption: "aws:kms"
+    encryption_key_id: "arn:aws:kms:us-east-1:1234/5678example"
+
+# Create a bucket with aws:kms encryption, default key
+- s3_bucket:
+    name: mys3bucket
+    state: present
+    encryption: "aws:kms"
 '''
 
 import json
@@ -143,13 +171,13 @@ from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import to_text
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
-from ansible.module_utils.ec2 import compare_policies, ec2_argument_spec, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
+from ansible.module_utils.ec2 import compare_policies, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, AWSRetry
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError, EndpointConnectionError, WaiterError
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def create_or_update_bucket(s3_client, module, location):
@@ -219,7 +247,7 @@ def create_or_update_bucket(s3_client, module, location):
     except BotoCoreError as exp:
         module.fail_json_aws(exp, msg="Failed to get bucket request payment")
     except ClientError as exp:
-        if exp.response['Error']['Code'] != 'NotImplemented' or requester_pays is not None:
+        if exp.response['Error']['Code'] not in ('NotImplemented', 'XNotImplemented') or requester_pays:
             module.fail_json_aws(exp, msg="Failed to get bucket request payment")
     else:
         if requester_pays:
@@ -277,7 +305,7 @@ def create_or_update_bucket(s3_client, module, location):
     except BotoCoreError as exp:
         module.fail_json_aws(exp, msg="Failed to get bucket tags")
     except ClientError as exp:
-        if exp.response['Error']['Code'] != 'NotImplemented' or tags is not None:
+        if exp.response['Error']['Code'] not in ('NotImplemented', 'XNotImplemented') or tags is not None:
             module.fail_json_aws(exp, msg="Failed to get bucket tags")
     else:
         if tags is not None:
@@ -306,13 +334,10 @@ def create_or_update_bucket(s3_client, module, location):
         result['tags'] = current_tags_dict
 
     # Encryption
-    if hasattr(s3_client, "get_bucket_encryption"):
-        try:
-            current_encryption = get_bucket_encryption(s3_client, name)
-        except (ClientError, BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Failed to get bucket encryption")
-    elif encryption is not None:
-        module.fail_json(msg="Using bucket encryption requires botocore version >= 1.7.41")
+    try:
+        current_encryption = get_bucket_encryption(s3_client, name)
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to get bucket encryption")
 
     if encryption is not None:
         current_encryption_algorithm = current_encryption.get('SSEAlgorithm') if current_encryption else None
@@ -326,13 +351,9 @@ def create_or_update_bucket(s3_client, module, location):
             changed = True
         elif encryption != 'none' and (encryption != current_encryption_algorithm) or (encryption == 'aws:kms' and current_encryption_key != encryption_key_id):
             expected_encryption = {'SSEAlgorithm': encryption}
-            if encryption == 'aws:kms':
+            if encryption == 'aws:kms' and encryption_key_id is not None:
                 expected_encryption.update({'KMSMasterKeyID': encryption_key_id})
-            try:
-                put_bucket_encryption(s3_client, name, expected_encryption)
-            except (BotoCoreError, ClientError) as e:
-                module.fail_json_aws(e, msg="Failed to set bucket encryption")
-            current_encryption = wait_encryption_is_applied(module, s3_client, name, expected_encryption)
+            current_encryption = put_bucket_encryption_with_retry(module, s3_client, name, expected_encryption)
             changed = True
 
         result['encryption'] = current_encryption
@@ -368,22 +389,22 @@ def create_bucket(s3_client, bucket_name, location):
             raise e
 
 
-@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket', 'OperationAborted'])
 def put_bucket_tagging(s3_client, bucket_name, tags):
     s3_client.put_bucket_tagging(Bucket=bucket_name, Tagging={'TagSet': ansible_dict_to_boto3_tag_list(tags)})
 
 
-@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket', 'OperationAborted'])
 def put_bucket_policy(s3_client, bucket_name, policy):
     s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(policy))
 
 
-@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket', 'OperationAborted'])
 def delete_bucket_policy(s3_client, bucket_name):
     s3_client.delete_bucket_policy(Bucket=bucket_name)
 
 
-@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket', 'OperationAborted'])
 def get_bucket_policy(s3_client, bucket_name):
     try:
         current_policy = json.loads(s3_client.get_bucket_policy(Bucket=bucket_name).get('Policy'))
@@ -395,28 +416,31 @@ def get_bucket_policy(s3_client, bucket_name):
     return current_policy
 
 
-@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket', 'OperationAborted'])
 def put_bucket_request_payment(s3_client, bucket_name, payer):
     s3_client.put_bucket_request_payment(Bucket=bucket_name, RequestPaymentConfiguration={'Payer': payer})
 
 
-@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket', 'OperationAborted'])
 def get_bucket_request_payment(s3_client, bucket_name):
     return s3_client.get_bucket_request_payment(Bucket=bucket_name).get('Payer')
 
 
-@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket', 'OperationAborted'])
 def get_bucket_versioning(s3_client, bucket_name):
     return s3_client.get_bucket_versioning(Bucket=bucket_name)
 
 
-@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket', 'OperationAborted'])
 def put_bucket_versioning(s3_client, bucket_name, required_versioning):
     s3_client.put_bucket_versioning(Bucket=bucket_name, VersioningConfiguration={'Status': required_versioning})
 
 
-@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket', 'OperationAborted'])
 def get_bucket_encryption(s3_client, bucket_name):
+    if not hasattr(s3_client, "get_bucket_encryption"):
+        return None
+
     try:
         result = s3_client.get_bucket_encryption(Bucket=bucket_name)
         return result.get('ServerSideEncryptionConfiguration', {}).get('Rules', [])[0].get('ApplyServerSideEncryptionByDefault')
@@ -429,23 +453,42 @@ def get_bucket_encryption(s3_client, bucket_name):
         return None
 
 
-@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+def put_bucket_encryption_with_retry(module, s3_client, name, expected_encryption):
+    max_retries = 3
+    for retries in range(1, max_retries + 1):
+        try:
+            put_bucket_encryption(s3_client, name, expected_encryption)
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg="Failed to set bucket encryption")
+        current_encryption = wait_encryption_is_applied(module, s3_client, name, expected_encryption,
+                                                        should_fail=(retries == max_retries), retries=5)
+        if current_encryption == expected_encryption:
+            return current_encryption
+
+    # We shouldn't get here, the only time this should happen is if
+    # current_encryption != expected_encryption and retries == max_retries
+    # Which should use module.fail_json and fail out first.
+    module.fail_json(msg='Failed to apply bucket encryption',
+                     current=current_encryption, expected=expected_encryption, retries=retries)
+
+
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket', 'OperationAborted'])
 def put_bucket_encryption(s3_client, bucket_name, encryption):
     server_side_encryption_configuration = {'Rules': [{'ApplyServerSideEncryptionByDefault': encryption}]}
     s3_client.put_bucket_encryption(Bucket=bucket_name, ServerSideEncryptionConfiguration=server_side_encryption_configuration)
 
 
-@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket', 'OperationAborted'])
 def delete_bucket_tagging(s3_client, bucket_name):
     s3_client.delete_bucket_tagging(Bucket=bucket_name)
 
 
-@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket', 'OperationAborted'])
 def delete_bucket_encryption(s3_client, bucket_name):
     s3_client.delete_bucket_encryption(Bucket=bucket_name)
 
 
-@AWSRetry.exponential_backoff(max_delay=120)
+@AWSRetry.exponential_backoff(max_delay=240, catch_extra_error_codes=['OperationAborted'])
 def delete_bucket(s3_client, bucket_name):
     try:
         s3_client.delete_bucket(Bucket=bucket_name)
@@ -470,7 +513,8 @@ def wait_policy_is_applied(module, s3_client, bucket_name, expected_policy, shou
         else:
             return current_policy
     if should_fail:
-        module.fail_json(msg="Bucket policy failed to apply in the expected time")
+        module.fail_json(msg="Bucket policy failed to apply in the expected time",
+                         requested_policy=expected_policy, live_policy=current_policy)
     else:
         return None
 
@@ -486,13 +530,14 @@ def wait_payer_is_applied(module, s3_client, bucket_name, expected_payer, should
         else:
             return requester_pays_status
     if should_fail:
-        module.fail_json(msg="Bucket request payment failed to apply in the expected time")
+        module.fail_json(msg="Bucket request payment failed to apply in the expected time",
+                         requested_status=expected_payer, live_status=requester_pays_status)
     else:
         return None
 
 
-def wait_encryption_is_applied(module, s3_client, bucket_name, expected_encryption):
-    for dummy in range(0, 12):
+def wait_encryption_is_applied(module, s3_client, bucket_name, expected_encryption, should_fail=True, retries=12):
+    for dummy in range(0, retries):
         try:
             encryption = get_bucket_encryption(s3_client, bucket_name)
         except (BotoCoreError, ClientError) as e:
@@ -501,7 +546,12 @@ def wait_encryption_is_applied(module, s3_client, bucket_name, expected_encrypti
             time.sleep(5)
         else:
             return encryption
-    module.fail_json(msg="Bucket encryption failed to apply in the expected time")
+
+    if should_fail:
+        module.fail_json(msg="Bucket encryption failed to apply in the expected time",
+                         requested_encryption=expected_encryption, live_encryption=encryption)
+
+    return encryption
 
 
 def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioning):
@@ -514,7 +564,8 @@ def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioni
             time.sleep(8)
         else:
             return versioning_status
-    module.fail_json(msg="Bucket versioning failed to apply in the expected time")
+    module.fail_json(msg="Bucket versioning failed to apply in the expected time",
+                     requested_versioning=required_versioning, live_versioning=versioning_status)
 
 
 def wait_tags_are_applied(module, s3_client, bucket_name, expected_tags_dict):
@@ -527,7 +578,8 @@ def wait_tags_are_applied(module, s3_client, bucket_name, expected_tags_dict):
             time.sleep(5)
         else:
             return current_tags_dict
-    module.fail_json(msg="Bucket tags failed to apply in the expected time")
+    module.fail_json(msg="Bucket tags failed to apply in the expected time",
+                     requested_tags=expected_tags_dict, live_tags=current_tags_dict)
 
 
 def get_current_bucket_tags_dict(s3_client, bucket_name):
@@ -640,27 +692,27 @@ def get_s3_client(module, aws_connect_kwargs, location, ceph, s3_url):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            force=dict(default=False, type='bool'),
-            policy=dict(type='json'),
-            name=dict(required=True),
-            requester_pays=dict(default=False, type='bool'),
-            s3_url=dict(aliases=['S3_URL']),
-            state=dict(default='present', choices=['present', 'absent']),
-            tags=dict(type='dict'),
-            purge_tags=dict(type='bool', default=True),
-            versioning=dict(type='bool'),
-            ceph=dict(default=False, type='bool'),
-            encryption=dict(choices=['none', 'AES256', 'aws:kms']),
-            encryption_key_id=dict()
-        )
+    argument_spec = dict(
+        force=dict(default=False, type='bool'),
+        policy=dict(type='json'),
+        name=dict(required=True),
+        requester_pays=dict(default=False, type='bool'),
+        s3_url=dict(aliases=['S3_URL']),
+        state=dict(default='present', choices=['present', 'absent']),
+        tags=dict(type='dict'),
+        purge_tags=dict(type='bool', default=True),
+        versioning=dict(type='bool'),
+        ceph=dict(default=False, type='bool'),
+        encryption=dict(choices=['none', 'AES256', 'aws:kms']),
+        encryption_key_id=dict()
+    )
+
+    required_by = dict(
+        encryption_key_id=('encryption',),
     )
 
     module = AnsibleAWSModule(
-        argument_spec=argument_spec,
-        required_if=[['encryption', 'aws:kms', ['encryption_key_id']]]
+        argument_spec=argument_spec, required_by=required_by
     )
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
@@ -697,10 +749,12 @@ def main():
     encryption = module.params.get("encryption")
     encryption_key_id = module.params.get("encryption_key_id")
 
+    if not hasattr(s3_client, "get_bucket_encryption"):
+        if encryption is not None:
+            module.fail_json(msg="Using bucket encryption requires botocore version >= 1.7.41")
+
     # Parameter validation
-    if encryption_key_id is not None and encryption is None:
-        module.fail_json(msg="You must specify encryption parameter along with encryption_key_id.")
-    elif encryption_key_id is not None and encryption != 'aws:kms':
+    if encryption_key_id is not None and encryption != 'aws:kms':
         module.fail_json(msg="Only 'aws:kms' is a valid option for encryption parameter when you specify encryption_key_id.")
 
     if state == 'present':

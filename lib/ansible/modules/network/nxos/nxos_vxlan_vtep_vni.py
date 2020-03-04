@@ -97,7 +97,7 @@ commands:
 
 import re
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 
@@ -259,10 +259,10 @@ def state_present(module, existing, proposed, candidate):
                ingress_replicationnb_command, ingress_replicationns_command)):
             static_level_cmds = [cmd for cmd in commands if 'peer' in cmd]
             parents = [interface_command, vni_command]
+            commands = [cmd for cmd in commands if 'peer' not in cmd]
             for cmd in commands:
                 parents.append(cmd)
             candidate.add(static_level_cmds, parents=parents)
-            commands = [cmd for cmd in commands if 'peer' not in cmd]
 
         elif 'peer-ip' in commands[0]:
             static_level_cmds = [cmd for cmd in commands]
@@ -314,7 +314,6 @@ def main():
     )
 
     warnings = list()
-    check_args(module, warnings)
     result = {'changed': False, 'commands': [], 'warnings': warnings}
 
     if module.params['peer_list']:
@@ -326,7 +325,7 @@ def main():
             if peer_list[0] == 'default':
                 module.params['peer_list'] = 'default'
             else:
-                stripped_peer_list = map(str.strip, peer_list)
+                stripped_peer_list = list(map(str.strip, peer_list))
                 module.params['peer_list'] = stripped_peer_list
 
     state = module.params['state']

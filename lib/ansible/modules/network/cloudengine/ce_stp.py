@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -29,6 +32,9 @@ description:
     - Manages STP configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@QijunPan)
+notes:
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     state:
         description:
@@ -167,14 +173,23 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import load_config, ce_argument_spec
-from ansible.module_utils.network.cloudengine.ce import get_config as get_cli_config
+from ansible.module_utils.network.cloudengine.ce import exec_command, load_config, ce_argument_spec
 
 
 def get_config(module, flags):
 
-    cfg = get_cli_config(module, flags)
-    config = cfg.strip() if cfg else ""
+    """Retrieves the current config from the device or cache"""
+
+    flags = [] if flags is None else flags
+
+    cmd = 'display current-configuration '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
+
+    rc, out, err = exec_command(module, cmd)
+    if rc != 0:
+        module.fail_json(msg=err)
+    config = str(out).strip()
     if config.startswith("display"):
         configs = config.split("\n")
         if len(configs) > 1:
@@ -579,7 +594,7 @@ class Stp(object):
 
         cmds = list()
 
-        # cofig stp global
+        # config stp global
         if self.stp_mode:
             if self.stp_mode != self.cur_cfg["stp_mode"]:
                 cmd = "stp mode %s" % self.stp_mode

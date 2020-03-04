@@ -54,7 +54,7 @@ from ..jinja2.filters import do_max, documented_type, html_ify, rst_fmt, rst_ify
 
 # if a module is added in a version of Ansible older than this, don't print the version added information
 # in the module documentation because everyone is assumed to be running something newer than this already.
-TOO_OLD_TO_BE_NOTABLE = 2.3
+TOO_OLD_TO_BE_NOTABLE = 2.4
 
 # Get parent directory of the directory this script lives in
 MODULEDIR = os.path.abspath(os.path.join(
@@ -346,6 +346,72 @@ def too_old(added):
     return added_float < TOO_OLD_TO_BE_NOTABLE
 
 
+def process_options(module, options, full_key=None):
+    option_names = []
+    if full_key is None:
+        full_key = []
+
+    if options:
+        for (k, v) in iteritems(options):
+            # Make sure that "full key" is contained
+            full_key_k = full_key + [k]
+            v['full_key'] = full_key_k
+
+            # Error out if there's no description
+            if 'description' not in v:
+                raise AnsibleError("Missing required description for parameter '%s' in '%s' " % (k, module))
+
+            # Make sure description is a list of lines for later formatting
+            if isinstance(v['description'], string_types):
+                v['description'] = [v['description']]
+            elif not isinstance(v['description'], (list, tuple)):
+                raise AnsibleError("Invalid type for options['%s']['description']."
+                                   " Must be string or list of strings.  Got %s" %
+                                   (k, type(v['description'])))
+
+            # Error out if required isn't a boolean (people have been putting
+            # information on when something is required in here.  Those need
+            # to go in the description instead).
+            required_value = v.get('required', False)
+            if not isinstance(required_value, bool):
+                raise AnsibleError("Invalid required value '%s' for parameter '%s' in '%s' (must be truthy)" % (required_value, k, module))
+
+            # Strip old version_added information for options
+            if 'version_added' in v and too_old(v['version_added']):
+                del v['version_added']
+
+            if 'suboptions' in v and v['suboptions']:
+                if isinstance(v['suboptions'], dict):
+                    process_options(module, v['suboptions'], full_key=full_key_k)
+                elif isinstance(v['suboptions'][0], dict):
+                    process_options(module, v['suboptions'][0], full_key=full_key_k)
+
+            option_names.append(k)
+
+    option_names.sort()
+
+    return option_names
+
+
+def process_returndocs(returndocs, full_key=None):
+    if full_key is None:
+        full_key = []
+
+    if returndocs:
+        for (k, v) in iteritems(returndocs):
+            # Make sure that "full key" is contained
+            full_key_k = full_key + [k]
+            v['full_key'] = full_key_k
+
+            # Process suboptions
+            suboptions = v.get('contains')
+            if suboptions:
+                if isinstance(suboptions, dict):
+                    process_returndocs(suboptions, full_key=full_key_k)
+                elif is_sequence(suboptions):
+                    process_returndocs(suboptions[0], full_key=full_key_k)
+
+
 def process_plugins(module_map, templates, outputname, output_dir, ansible_version, plugin_type):
     for module_index, module in enumerate(module_map):
 
@@ -417,38 +483,7 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
         if too_old(added):
             del doc['version_added']
 
-        option_names = []
-
-        if 'options' in doc and doc['options']:
-            for (k, v) in iteritems(doc['options']):
-                # Error out if there's no description
-                if 'description' not in doc['options'][k]:
-                    raise AnsibleError("Missing required description for parameter '%s' in '%s' " % (k, module))
-
-                # Make sure description is a list of lines for later formatting
-                if isinstance(doc['options'][k]['description'], string_types):
-                    doc['options'][k]['description'] = [doc['options'][k]['description']]
-                elif not isinstance(doc['options'][k]['description'], (list, tuple)):
-                    raise AnsibleError("Invalid type for options['%s']['description']."
-                                       " Must be string or list of strings.  Got %s" %
-                                       (k, type(doc['options'][k]['description'])))
-
-                # Error out if required isn't a boolean (people have been putting
-                # information on when something is required in here.  Those need
-                # to go in the description instead).
-                required_value = doc['options'][k].get('required', False)
-                if not isinstance(required_value, bool):
-                    raise AnsibleError("Invalid required value '%s' for parameter '%s' in '%s' (must be truthy)" % (required_value, k, module))
-
-                # Strip old version_added information for options
-                if 'version_added' in doc['options'][k] and too_old(doc['options'][k]['version_added']):
-                    del doc['options'][k]['version_added']
-
-                option_names.append(k)
-
-        option_names.sort()
-
-        doc['option_keys'] = option_names
+        doc['option_keys'] = process_options(module, doc.get('options'))
         doc['filename'] = fname
         doc['source'] = module_map[module]['source']
         doc['docuri'] = doc['module'].replace('_', '-')
@@ -473,6 +508,7 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
         if module_map[module]['returndocs']:
             try:
                 doc['returndocs'] = yaml.safe_load(module_map[module]['returndocs'])
+                process_returndocs(doc['returndocs'])
             except Exception as e:
                 print("%s:%s:yaml error:%s:returndocs=%s" % (fname, module, e, module_map[module]['returndocs']))
                 doc['returndocs'] = None

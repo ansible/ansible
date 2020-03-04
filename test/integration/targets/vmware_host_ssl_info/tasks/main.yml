@@ -1,0 +1,70 @@
+# Test code for the vmware_host_ssl_info module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+
+
+- name: Gather SSL info about ESXi machine
+  vmware_host_ssl_info:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: '{{ esxi1 }}'
+    validate_certs: no
+  register: ssl_info
+
+- debug: var=ssl_info
+
+- assert:
+    that:
+      - ssl_info.host_ssl_info is defined
+
+- name: Gather info about all hostsystem in given cluster
+  vmware_host_ssl_info:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster_name: "{{ ccr1 }}"
+    validate_certs: no
+  register: ssl_info
+
+- debug: var=ssl_info
+
+- assert:
+    that:
+      - ssl_info.host_ssl_info is defined
+
+- name: Gather SSL info about ESXi machine in check mode
+  vmware_host_ssl_info:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: '{{ esxi1 }}'
+    validate_certs: no
+  check_mode: yes
+  register: ssl_info
+
+- debug: var=ssl_info
+
+- assert:
+    that:
+      - ssl_info.host_ssl_info is defined
+
+- name: Gather info about all hostsystem in given cluster in check mode ee
+  vmware_host_ssl_info:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster_name: "{{ ccr1 }}"
+    validate_certs: no
+  check_mode: yes
+  register: ssl_info
+
+- debug: var=ssl_info
+
+- assert:
+    that:
+      - ssl_info.host_ssl_info is defined

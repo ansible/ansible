@@ -306,7 +306,7 @@ options:
         version_added: "2.4"
     performance_limits:
         description:
-            - Optional settings that determine performance limits like max connections or bandwdith etc.
+            - Optional settings that determine performance limits like max connections or bandwidth etc.
     pool_group_ref:
         description:
             - The pool group is an object that contains pools.

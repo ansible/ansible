@@ -3,7 +3,7 @@
   connection: local
   gather_facts: no
   vars:
-    template_name: "../templates/{{ template | default('inventory.yml') }}"
+    template_name: "../templates/{{ template | default('inventory.j2') }}"
   tasks:
     - name: write inventory config file
       copy:

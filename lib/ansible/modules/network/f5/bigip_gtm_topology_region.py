@@ -35,7 +35,7 @@ options:
     suboptions:
       negate:
         description:
-          - When set to c(yes) the system selects this topology region, when the request source does not match.
+          - When set to C(yes) the system selects this topology region, when the request source does not match.
           - Only a single list entry can be specified together with negate.
         type: bool
         default: no

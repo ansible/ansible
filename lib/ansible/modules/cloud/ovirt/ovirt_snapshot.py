@@ -85,6 +85,20 @@ options:
             - "Number of days after which should snapshot be deleted."
             - "It will check all snapshots of virtual machine and delete them, if they are older."
         version_added: "2.8"
+    disks:
+        description:
+            - "List of disks which should be created with snapshot."
+        suboptions:
+            id:
+                description:
+                    - "Id of the disk which should will be created."
+                type: str
+            name:
+                description:
+                    - "Name of the disk which should will be created."
+                type: str
+        type: list
+        version_added: "2.10"
 notes:
     - "Note that without a guest agent the data on the created snapshot may be
        inconsistent."
@@ -144,6 +158,13 @@ EXAMPLES = '''
 - ovirt_snapshot:
     vm_name: test
     keep_days_old: 2
+
+- name: Select which disks should be add to snapshot
+  ovirt_snapshot:
+    vm_name: test
+    disks:
+      - id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
+      - name: my_disk_name
 '''
 
 
@@ -190,7 +211,8 @@ from ansible.module_utils.ovirt import (
     ovirt_full_argument_spec,
     search_by_name,
     wait,
-    get_id_by_name
+    get_id_by_name,
+    get_link_name
 )
 
 
@@ -322,17 +344,30 @@ def download_disk_image(connection, module):
     )
 
 
-def create_snapshot(module, vm_service, snapshots_service):
+def get_disk_attachment(disk, disk_attachments, connection):
+    for disk_attachment in disk_attachments:
+        if get_link_name(connection, disk_attachment.disk) == disk.get('name') or\
+                disk_attachment.disk.id == disk.get('id'):
+            return disk_attachment
+
+
+def create_snapshot(module, vm_service, snapshots_service, connection):
     changed = False
     snapshot = get_entity(
         snapshots_service.snapshot_service(module.params['snapshot_id'])
     )
     if snapshot is None:
         if not module.check_mode:
+            disk_attachments_id = set(
+                get_disk_attachment(disk, vm_service.disk_attachments_service().list(), connection).id
+                for disk in module.params.get('disks')
+            ) if module.params.get('disks') else None
+
             snapshot = snapshots_service.add(
                 otypes.Snapshot(
                     description=module.params.get('description'),
                     persist_memorystate=module.params.get('use_memory'),
+                    disk_attachments=[otypes.DiskAttachment(disk=otypes.Disk(id=da_id)) for da_id in disk_attachments_id] if disk_attachments_id else None
                 )
             )
         changed = True
@@ -421,7 +456,6 @@ def get_snapshot_disk_id(module, snapshots_service):
         disk_id = module.params.get('disk_id')
     elif module.params.get('disk_name'):
         disk_id = get_id_by_name(snapshot_disks_service, module.params.get('disk_name'))
-
     return disk_id
 
 
@@ -447,6 +481,13 @@ def main():
         ),
         vm_name=dict(required=True),
         snapshot_id=dict(default=None),
+        disks=dict(
+            type='list',
+            options=dict(
+                name=dict(default=None, type='str'),
+                id=dict(default=None, type='str'),
+            )
+        ),
         disk_id=dict(default=None),
         disk_name=dict(default=None),
         description=dict(default=None),
@@ -494,7 +535,7 @@ def main():
             if module.params.get('keep_days_old') is not None:
                 ret = remove_old_snapshosts(module, vm_service, snapshots_service)
             else:
-                ret = create_snapshot(module, vm_service, snapshots_service)
+                ret = create_snapshot(module, vm_service, snapshots_service, connection)
         elif state == 'restore':
             ret = restore_snapshot(module, vm_service, snapshots_service)
         elif state == 'absent':

@@ -14,7 +14,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list, get_xml_conf_arg
+from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.junos.facts.facts import Facts
 from ansible.module_utils.network.junos.junos import locked_config, load_config, commit_configuration, discard_changes, tostring
 from ansible.module_utils.network.common.netconf import build_root_xml_node, build_child_xml_node, build_subtree
@@ -74,7 +74,7 @@ class Lldp_interfaces(ConfigBase):
                 if self._module._diff:
                     result['diff'] = {'prepared': diff}
 
-        result['xml'] = config_xmls
+        result['commands'] = config_xmls
 
         changed_lldp_interfaces_facts = self.get_lldp_interfaces_facts()
 
@@ -172,8 +172,8 @@ class Lldp_interfaces(ConfigBase):
             if config.get('name'):
                 build_child_xml_node(lldp_intf_root, 'name', config['name'])
 
-            if config.get('enable') is not None:
-                if config['enable'] is False:
+            if config.get('enabled') is not None:
+                if config['enabled'] is False:
                     build_child_xml_node(lldp_intf_root, 'disable')
                 else:
                     build_child_xml_node(lldp_intf_root, 'disable', None, {'delete': 'delete'})

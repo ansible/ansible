@@ -1,0 +1,173 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Tests for master_use_gtid parameter.
+# https://github.com/ansible/ansible/pull/62648
+
+#############################
+# master_use_gtid: "disabled"
+#############################
+
+# Auxiliary step:
+- name: Get master status
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ primary_db.port }}"
+    mode: getmaster
+  register: primary_status
+
+# Set master_use_gtid disabled:
+- name: Run replication
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ replica_db.port }}"
+    mode: changemaster
+    master_host: 127.0.0.1
+    master_port: "{{ primary_db.port }}"
+    master_user: "{{ replication_user }}"
+    master_password: "{{ replication_pass }}"
+    master_log_file: mysql-bin.000001
+    master_log_pos: '{{ primary_status.Position }}'
+    master_use_gtid: disabled
+  register: result
+
+- assert:
+    that:
+    - result is changed
+
+# Start standby for further tests:
+- name: Start standby
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ primary_db.port }}"
+    mode: startslave
+
+- name: Get standby status
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ replica_db.port }}"
+    mode: getslave
+  register: slave_status
+
+- assert:
+    that:
+    - slave_status.Using_Gtid == 'No'
+
+# Stop standby for further tests:
+- name: Stop standby
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ replica_db.port }}"
+    mode: stopslave
+
+################################
+# master_use_gtid: "current_pos"
+################################
+
+# Auxiliary step:
+- name: Get master status
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ primary_db.port }}"
+    mode: getmaster
+  register: primary_status
+
+# Set master_use_gtid current_pos:
+- name: Run replication
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ replica_db.port }}"
+    mode: changemaster
+    master_host: 127.0.0.1
+    master_port: "{{ primary_db.port }}"
+    master_user: "{{ replication_user }}"
+    master_password: "{{ replication_pass }}"
+    master_log_file: mysql-bin.000001
+    master_log_pos: '{{ primary_status.Position }}'
+    master_use_gtid: current_pos
+  register: result
+
+- assert:
+    that:
+    - result is changed
+
+# Start standby for further tests:
+- name: Start standby
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ primary_db.port }}"
+    mode: startslave
+
+- name: Get standby status
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ replica_db.port }}"
+    mode: getslave
+  register: slave_status
+
+- assert:
+    that:
+    - slave_status.Using_Gtid == 'Current_Pos'
+
+# Stop standby for further tests:
+- name: Stop standby
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ replica_db.port }}"
+    mode: stopslave
+
+##############################
+# master_use_gtid: "slave_pos"
+##############################
+
+# Auxiliary step:
+- name: Get master status
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ primary_db.port }}"
+    mode: getmaster
+  register: primary_status
+
+# Set master_use_gtid slave_pos:
+- name: Run replication
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ replica_db.port }}"
+    mode: changemaster
+    master_host: 127.0.0.1
+    master_port: "{{ primary_db.port }}"
+    master_user: "{{ replication_user }}"
+    master_password: "{{ replication_pass }}"
+    master_log_file: mysql-bin.000001
+    master_log_pos: '{{ primary_status.Position }}'
+    master_use_gtid: slave_pos
+  register: result
+
+- assert:
+    that:
+    - result is changed
+
+# Start standby for further tests:
+- name: Start standby
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ primary_db.port }}"
+    mode: startslave
+
+- name: Get standby status
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ replica_db.port }}"
+    mode: getslave
+  register: slave_status
+
+- assert:
+    that:
+    - slave_status.Using_Gtid == 'Slave_Pos'
+
+# Stop standby for further tests:
+- name: Stop standby
+  mysql_replication:
+    login_host: 127.0.0.1
+    login_port: "{{ replica_db.port }}"
+    mode: stopslave

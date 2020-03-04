@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -29,6 +32,9 @@ description:
     - Manages a system startup information on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@QijunPan)
+notes:
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     cfg_file:
         description:

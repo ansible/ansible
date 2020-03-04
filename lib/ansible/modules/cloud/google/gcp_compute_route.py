@@ -46,9 +46,9 @@ description:
   gateway. Packets that do not match any route in the sending virtual machine's routing
   table will be dropped.
 - A Route resource must have exactly one specification of either nextHopGateway, nextHopInstance,
-  nextHopIp, or nextHopVpnTunnel.
+  nextHopIp, nextHopVpnTunnel, or nextHopIlb.
 short_description: Creates a GCP Route
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -75,7 +75,7 @@ options:
       the resource.
     required: false
     type: str
-    version_added: 2.7
+    version_added: '2.7'
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -147,10 +147,72 @@ options:
       to "{{ name-of-resource }}"'
     required: false
     type: dict
-extends_documentation_fragment: gcp
+  next_hop_ilb:
+    description:
+    - The URL to a forwarding rule of type loadBalancingScheme=INTERNAL that should
+      handle matching packets.
+    - 'You can only specify the forwarding rule as a partial or full URL. For example,
+      the following are all valid URLs: U(https://www.googleapis.com/compute/v1/projects/project/regions/region/forwardingRules/forwardingRule)
+      regions/region/forwardingRules/forwardingRule Note that this can only be used
+      when the destinationRange is a public (non-RFC 1918) IP CIDR range.'
+    - 'This field represents a link to a ForwardingRule resource in GCP. It can be
+      specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_forwarding_rule task and then set this next_hop_ilb
+      field to "{{ name-of-resource }}"'
+    required: false
+    type: dict
+    version_added: '2.10'
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/routes)'
 - 'Using Routes: U(https://cloud.google.com/vpc/docs/using-routes)'
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -252,6 +314,16 @@ nextHopNetwork:
   - URL to a Network that should handle matching packets.
   returned: success
   type: str
+nextHopIlb:
+  description:
+  - The URL to a forwarding rule of type loadBalancingScheme=INTERNAL that should
+    handle matching packets.
+  - 'You can only specify the forwarding rule as a partial or full URL. For example,
+    the following are all valid URLs: U(https://www.googleapis.com/compute/v1/projects/project/regions/region/forwardingRules/forwardingRule)
+    regions/region/forwardingRules/forwardingRule Note that this can only be used
+    when the destinationRange is a public (non-RFC 1918) IP CIDR range.'
+  returned: success
+  type: dict
 '''
 
 ################################################################################
@@ -283,6 +355,7 @@ def main():
             next_hop_instance=dict(type='dict'),
             next_hop_ip=dict(type='str'),
             next_hop_vpn_tunnel=dict(type='dict'),
+            next_hop_ilb=dict(type='dict'),
         )
     )
 
@@ -345,6 +418,7 @@ def resource_to_request(module):
         u'nextHopInstance': replace_resource_dict(module.params.get(u'next_hop_instance', {}), 'selfLink'),
         u'nextHopIp': module.params.get('next_hop_ip'),
         u'nextHopVpnTunnel': replace_resource_dict(module.params.get(u'next_hop_vpn_tunnel', {}), 'selfLink'),
+        u'nextHopIlb': replace_resource_dict(module.params.get(u'next_hop_ilb', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -421,6 +495,7 @@ def response_to_hash(module, response):
         u'nextHopIp': module.params.get('next_hop_ip'),
         u'nextHopVpnTunnel': replace_resource_dict(module.params.get(u'next_hop_vpn_tunnel', {}), 'selfLink'),
         u'nextHopNetwork': response.get(u'nextHopNetwork'),
+        u'nextHopIlb': replace_resource_dict(module.params.get(u'next_hop_ilb', {}), 'selfLink'),
     }
 
 

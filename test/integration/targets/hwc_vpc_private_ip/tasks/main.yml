@@ -1,0 +1,133 @@
+---
+# Pre-test setup
+- name: create a vpc
+  hwc_network_vpc:
+    cidr: "192.168.100.0/24"
+    name: "ansible_network_vpc_test"
+    state: present
+  register: vpc
+- name: create a subnet
+  hwc_vpc_subnet:
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: True
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    state: present
+  register: subnet
+- name: delete a private ip
+  hwc_vpc_private_ip:
+    subnet_id: "{{ subnet.id }}"
+    ip_address: "192.168.100.33"
+    state: absent
+#----------------------------------------------------------
+- name: create a private ip (check mode)
+  hwc_vpc_private_ip:
+    subnet_id: "{{ subnet.id }}"
+    ip_address: "192.168.100.33"
+    state: present
+  check_mode: yes
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+#----------------------------------------------------------
+- name: create a private ip
+  hwc_vpc_private_ip:
+    subnet_id: "{{ subnet.id }}"
+    ip_address: "192.168.100.33"
+    state: present
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+#----------------------------------------------------------
+- name: create a private ip (idemponent)
+  hwc_vpc_private_ip:
+    subnet_id: "{{ subnet.id }}"
+    ip_address: "192.168.100.33"
+    state: present
+  check_mode: yes
+  register: result
+- name: idemponent
+  assert:
+    that:
+      - not result.changed
+# ----------------------------------------------------------------------------
+- name: create a private ip that already exists
+  hwc_vpc_private_ip:
+    subnet_id: "{{ subnet.id }}"
+    ip_address: "192.168.100.33"
+    state: present
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
+#----------------------------------------------------------
+- name: delete a private ip (check mode)
+  hwc_vpc_private_ip:
+    subnet_id: "{{ subnet.id }}"
+    ip_address: "192.168.100.33"
+    state: absent
+  check_mode: yes
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+#----------------------------------------------------------
+- name: delete a private ip
+  hwc_vpc_private_ip:
+    subnet_id: "{{ subnet.id }}"
+    ip_address: "192.168.100.33"
+    state: absent
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+#----------------------------------------------------------
+- name: delete a private ip (idemponent)
+  hwc_vpc_private_ip:
+    subnet_id: "{{ subnet.id }}"
+    ip_address: "192.168.100.33"
+    state: absent
+  check_mode: yes
+  register: result
+- name: idemponent
+  assert:
+    that:
+      - not result.changed
+# ----------------------------------------------------------------------------
+- name: delete a private ip that does not exist
+  hwc_vpc_private_ip:
+    subnet_id: "{{ subnet.id }}"
+    ip_address: "192.168.100.33"
+    state: absent
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
+#---------------------------------------------------------
+# Post-test teardown
+- name: delete a subnet
+  hwc_vpc_subnet:
+    gateway_ip: "192.168.100.32"
+    name: "ansible_network_subnet_test"
+    dhcp_enable: True
+    vpc_id: "{{ vpc.id }}"
+    cidr: "192.168.100.0/26"
+    state: absent
+  register: subnet
+- name: delete a vpc
+  hwc_network_vpc:
+    cidr: "192.168.100.0/24"
+    name: "ansible_network_vpc_test"
+    state: absent
+  register: vpc

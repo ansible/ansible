@@ -64,6 +64,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
 extends_documentation_fragment: aci
 notes:
 - The C(pool) must exist in order to add or delete a encap block.
@@ -253,6 +258,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         pool_allocation_mode=dict(type='str', aliases=['pool_mode'], choices=['dynamic', 'static']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -264,14 +270,15 @@ def main():
         ],
     )
 
-    allocation_mode = module.params['allocation_mode']
-    description = module.params['description']
-    pool = module.params['pool']
-    pool_allocation_mode = module.params['pool_allocation_mode']
-    block_end = module.params['block_end']
-    block_name = module.params['block_name']
-    block_start = module.params['block_start']
-    state = module.params['state']
+    allocation_mode = module.params.get('allocation_mode')
+    description = module.params.get('description')
+    pool = module.params.get('pool')
+    pool_allocation_mode = module.params.get('pool_allocation_mode')
+    block_end = module.params.get('block_end')
+    block_name = module.params.get('block_name')
+    block_start = module.params.get('block_start')
+    state = module.params.get('state')
+    name_alias = module.params.get('name_alias')
 
     if block_end is not None:
         encap_end = 'vlan-{0}'.format(block_end)
@@ -337,6 +344,7 @@ def main():
                 "from": encap_start,
                 "name": block_name,
                 "to": encap_end,
+                "nameAlias": name_alias,
             },
         )
 

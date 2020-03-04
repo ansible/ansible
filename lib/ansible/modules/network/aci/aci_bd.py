@@ -123,6 +123,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
   tenant:
     description:
     - The name of the Tenant.
@@ -354,9 +359,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         vrf=dict(type='str', aliases=['vrf_name']),
-        gateway_ip=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
-        scope=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
-        subnet_mask=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -370,38 +373,34 @@ def main():
 
     aci = ACIModule(module)
 
-    arp_flooding = aci.boolean(module.params['arp_flooding'])
-    bd = module.params['bd']
-    bd_type = module.params['bd_type']
+    arp_flooding = aci.boolean(module.params.get('arp_flooding'))
+    bd = module.params.get('bd')
+    bd_type = module.params.get('bd_type')
     if bd_type == 'ethernet':
         # ethernet type is represented as regular, but that is not clear to the users
         bd_type = 'regular'
-    description = module.params['description']
-    enable_multicast = aci.boolean(module.params['enable_multicast'])
-    enable_routing = aci.boolean(module.params['enable_routing'])
-    endpoint_clear = aci.boolean(module.params['endpoint_clear'])
-    endpoint_move_detect = module.params['endpoint_move_detect']
+    description = module.params.get('description')
+    enable_multicast = aci.boolean(module.params.get('enable_multicast'))
+    enable_routing = aci.boolean(module.params.get('enable_routing'))
+    endpoint_clear = aci.boolean(module.params.get('endpoint_clear'))
+    endpoint_move_detect = module.params.get('endpoint_move_detect')
     if endpoint_move_detect == 'default':
         # the ACI default setting is an empty string, but that is not a good input value
         endpoint_move_detect = ''
-    endpoint_retention_action = module.params['endpoint_retention_action']
-    endpoint_retention_policy = module.params['endpoint_retention_policy']
-    igmp_snoop_policy = module.params['igmp_snoop_policy']
-    ip_learning = aci.boolean(module.params['ip_learning'])
-    ipv6_nd_policy = module.params['ipv6_nd_policy']
-    l2_unknown_unicast = module.params['l2_unknown_unicast']
-    l3_unknown_multicast = module.params['l3_unknown_multicast']
-    limit_ip_learn = aci.boolean(module.params['limit_ip_learn'])
-    mac_address = module.params['mac_address']
-    multi_dest = module.params['multi_dest']
-    state = module.params['state']
-    tenant = module.params['tenant']
-    vrf = module.params['vrf']
-
-    # Give warning when fvSubnet parameters are passed as those have been moved to the aci_subnet module
-    if module.params['gateway_ip'] or module.params['subnet_mask'] or module.params['scope']:
-        module._warnings = ["The support for managing Subnets has been moved to its own module, aci_subnet. \
-                            The new modules still supports 'gateway_ip' and 'subnet_mask' along with more features"]
+    endpoint_retention_action = module.params.get('endpoint_retention_action')
+    endpoint_retention_policy = module.params.get('endpoint_retention_policy')
+    igmp_snoop_policy = module.params.get('igmp_snoop_policy')
+    ip_learning = aci.boolean(module.params.get('ip_learning'))
+    ipv6_nd_policy = module.params.get('ipv6_nd_policy')
+    l2_unknown_unicast = module.params.get('l2_unknown_unicast')
+    l3_unknown_multicast = module.params.get('l3_unknown_multicast')
+    limit_ip_learn = aci.boolean(module.params.get('limit_ip_learn'))
+    mac_address = module.params.get('mac_address')
+    multi_dest = module.params.get('multi_dest')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
+    vrf = module.params.get('vrf')
+    name_alias = module.params.get('name_alias')
 
     aci.construct_url(
         root_class=dict(
@@ -439,6 +438,7 @@ def main():
                 unicastRoute=enable_routing,
                 unkMacUcastAct=l2_unknown_unicast,
                 unkMcastAct=l3_unknown_multicast,
+                nameAlias=name_alias,
             ),
             child_configs=[
                 {'fvRsCtx': {'attributes': {'tnFvCtxName': vrf}}},

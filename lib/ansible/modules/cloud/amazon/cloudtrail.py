@@ -29,15 +29,18 @@ options:
   state:
     description:
       - Add or remove CloudTrail configuration.
-      - The following states have been preserved for backwards compatibility. C(state=enabled) and C(state=disabled).
-      - enabled=present and disabled=absent.
-    required: true
+      - 'The following states have been preserved for backwards compatibility: I(state=enabled) and I(state=disabled).'
+      - I(state=enabled) is equivalet to I(state=present).
+      - I(state=disabled) is equivalet to I(state=absent).
+    type: str
     choices: ['present', 'absent', 'enabled', 'disabled']
+    default: present
   name:
     description:
       - Name for the CloudTrail.
       - Names are unique per-region unless the CloudTrail is a multi-region trail, in which case it is unique per-account.
-    required: true
+    type: str
+    default: default
   enable_logging:
     description:
       - Start or stop the CloudTrail logging. If stopped the trail will be paused and will not record events or deliver log files.
@@ -49,11 +52,13 @@ options:
       - An existing S3 bucket where CloudTrail will deliver log files.
       - This bucket should exist and have the proper policy.
       - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/aggregating_logs_regions_bucket_policy.html).
-      - Required when C(state=present).
+      - Required when I(state=present).
+    type: str
     version_added: "2.4"
   s3_key_prefix:
     description:
       - S3 Key prefix for delivered log files. A trailing slash is not necessary and will be removed.
+    type: str
   is_multi_region_trail:
     description:
       - Specify whether the trail belongs only to one region or exists in all regions.
@@ -77,23 +82,27 @@ options:
     description:
       - SNS Topic name to send notifications to when a log file is delivered.
     version_added: "2.4"
+    type: str
   cloudwatch_logs_role_arn:
     description:
       - Specifies a full ARN for an IAM role that assigns the proper permissions for CloudTrail to create and write to the log group.
       - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html).
       - Required when C(cloudwatch_logs_log_group_arn).
     version_added: "2.4"
+    type: str
   cloudwatch_logs_log_group_arn:
     description:
       - A full ARN specifying a valid CloudWatch log group to which CloudTrail logs will be delivered. The log group should already exist.
       - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html).
       - Required when C(cloudwatch_logs_role_arn).
+    type: str
     version_added: "2.4"
   kms_key_id:
     description:
       - Specifies the KMS key ID to use to encrypt the logs delivered by CloudTrail. This also has the effect of enabling log file encryption.
       - The value can be an alias name prefixed by "alias/", a fully specified ARN to an alias, a fully specified ARN to a key, or a globally unique identifier.
       - See U(https://docs.aws.amazon.com/awscloudtrail/latest/userguide/encrypting-cloudtrail-log-files-with-aws-kms.html).
+    type: str
     version_added: "2.4"
   tags:
     description:
@@ -101,6 +110,7 @@ options:
       - Remove completely or specify an empty dictionary to remove all tags.
     default: {}
     version_added: "2.4"
+    type: dict
 
 extends_documentation_fragment:
 - aws
@@ -252,33 +262,29 @@ trail:
             sample: {'environment': 'dev', 'Name': 'default'}
 '''
 
-import traceback
-
 try:
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    # Handled in main() by imported HAS_BOTO3
-    pass
+    pass  # Handled by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info,
-                                      HAS_BOTO3, ansible_dict_to_boto3_tag_list,
-                                      boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict)
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (camel_dict_to_snake_dict,
+                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
 
 
 def create_trail(module, client, ct_params):
     """
     Creates a CloudTrail
 
-    module : AnsibleModule object
+    module : AnsibleAWSModule object
     client : boto3 client connection object
     ct_params : The parameters for the Trail to create
     """
     resp = {}
     try:
         resp = client.create_trail(**ct_params)
-    except ClientError as err:
-        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    except (BotoCoreError, ClientError) as err:
+        module.fail_json_aws(err, msg="Failed to create Trail")
 
     return resp
 
@@ -287,7 +293,7 @@ def tag_trail(module, client, tags, trail_arn, curr_tags=None, dry_run=False):
     """
     Creates, updates, removes tags on a CloudTrail resource
 
-    module : AnsibleModule object
+    module : AnsibleAWSModule object
     client : boto3 client connection object
     tags : Dict of tags converted from ansible_dict to boto3 list of dicts
     trail_arn : The ARN of the CloudTrail to operate on
@@ -321,16 +327,16 @@ def tag_trail(module, client, tags, trail_arn, curr_tags=None, dry_run=False):
         if not dry_run:
             try:
                 client.remove_tags(ResourceId=trail_arn, TagsList=removes + updates)
-            except ClientError as err:
-                module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+            except (BotoCoreError, ClientError) as err:
+                module.fail_json_aws(err, msg="Failed to remove tags from Trail")
 
     if updates or adds:
         changed = True
         if not dry_run:
             try:
                 client.add_tags(ResourceId=trail_arn, TagsList=updates + adds)
-            except ClientError as err:
-                module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+            except (BotoCoreError, ClientError) as err:
+                module.fail_json_aws(err, msg="Failed to add tags to Trail")
 
     return changed
 
@@ -352,7 +358,7 @@ def set_logging(module, client, name, action):
     """
     Starts or stops logging based on given state
 
-    module : AnsibleModule object
+    module : AnsibleAWSModule object
     client : boto3 client connection object
     name : The name or ARN of the CloudTrail to operate on
     action : start or stop
@@ -361,14 +367,14 @@ def set_logging(module, client, name, action):
         try:
             client.start_logging(Name=name)
             return client.get_trail_status(Name=name)
-        except ClientError as err:
-            module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+        except (BotoCoreError, ClientError) as err:
+            module.fail_json_aws(err, msg="Failed to start logging")
     elif action == 'stop':
         try:
             client.stop_logging(Name=name)
             return client.get_trail_status(Name=name)
-        except ClientError as err:
-            module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+        except (BotoCoreError, ClientError) as err:
+            module.fail_json_aws(err, msg="Failed to stop logging")
     else:
         module.fail_json(msg="Unsupported logging action")
 
@@ -377,15 +383,15 @@ def get_trail_facts(module, client, name):
     """
     Describes existing trail in an account
 
-    module : AnsibleModule object
+    module : AnsibleAWSModule object
     client : boto3 client connection object
     name : Name of the trail
     """
     # get Trail info
     try:
         trail_resp = client.describe_trails(trailNameList=[name])
-    except ClientError as err:
-        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    except (BotoCoreError, ClientError) as err:
+        module.fail_json_aws(err, msg="Failed to describe Trail")
 
     # Now check to see if our trail exists and get status and tags
     if len(trail_resp['trailList']):
@@ -393,8 +399,8 @@ def get_trail_facts(module, client, name):
         try:
             status_resp = client.get_trail_status(Name=trail['Name'])
             tags_list = client.list_tags(ResourceIdList=[trail['TrailARN']])
-        except ClientError as err:
-            module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+        except (BotoCoreError, ClientError) as err:
+            module.fail_json_aws(err, msg="Failed to describe Trail")
 
         trail['IsLogging'] = status_resp['IsLogging']
         trail['tags'] = boto3_tag_list_to_ansible_dict(tags_list['ResourceTagList'][0]['TagsList'])
@@ -413,33 +419,32 @@ def delete_trail(module, client, trail_arn):
     """
     Delete a CloudTrail
 
-    module : AnsibleModule object
+    module : AnsibleAWSModule object
     client : boto3 client connection object
     trail_arn : Full CloudTrail ARN
     """
     try:
         client.delete_trail(Name=trail_arn)
-    except ClientError as err:
-        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    except (BotoCoreError, ClientError) as err:
+        module.fail_json_aws(err, msg="Failed to delete Trail")
 
 
 def update_trail(module, client, ct_params):
     """
     Delete a CloudTrail
 
-    module : AnsibleModule object
+    module : AnsibleAWSModule object
     client : boto3 client connection object
     ct_params : The parameters for the Trail to update
     """
     try:
         client.update_trail(**ct_params)
-    except ClientError as err:
-        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    except (BotoCoreError, ClientError) as err:
+        module.fail_json_aws(err, msg="Failed to update Trail")
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
         name=dict(default='default'),
         enable_logging=dict(default=True, type='bool'),
@@ -453,15 +458,12 @@ def main():
         cloudwatch_logs_log_group_arn=dict(),
         kms_key_id=dict(),
         tags=dict(default={}, type='dict'),
-    ))
+    )
 
     required_if = [('state', 'present', ['s3_bucket_name']), ('state', 'enabled', ['s3_bucket_name'])]
     required_together = [('cloudwatch_logs_role_arn', 'cloudwatch_logs_log_group_arn')]
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together, required_if=required_if)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required for this module')
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together, required_if=required_if)
 
     # collect parameters
     if module.params['state'] in ('present', 'enabled'):
@@ -495,11 +497,8 @@ def main():
     if module.params['kms_key_id']:
         ct_params['KmsKeyId'] = module.params['kms_key_id']
 
-    try:
-        region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-        client = boto3_conn(module, conn_type='client', resource='cloudtrail', region=region, endpoint=ec2_url, **aws_connect_params)
-    except ClientError as err:
-        module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+    client = module.client('cloudtrail')
+    region = module.region
 
     results = dict(
         changed=False,
@@ -579,8 +578,8 @@ def main():
             # Get the trail status
             try:
                 status_resp = client.get_trail_status(Name=created_trail['Name'])
-            except ClientError as err:
-                module.fail_json(msg=err.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
+            except (BotoCoreError, ClientError) as err:
+                module.fail_json_aws(err, msg="Failed to fetch Trail statuc")
             # Set the logging state for the trail to desired value
             if enable_logging and not status_resp['IsLogging']:
                 set_logging(module, client, name=ct_params['Name'], action='start')
@@ -593,9 +592,9 @@ def main():
         if module.check_mode:
             acct_id = '123456789012'
             try:
-                sts_client = boto3_conn(module, conn_type='client', resource='sts', region=region, endpoint=ec2_url, **aws_connect_params)
+                sts_client = module.client('sts')
                 acct_id = sts_client.get_caller_identity()['Account']
-            except ClientError:
+            except (BotoCoreError, ClientError):
                 pass
             trail = dict()
             trail.update(ct_params)

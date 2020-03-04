@@ -1,0 +1,2 @@
+minor_changes:
+- mysql_replication - add ``queries`` return value (https://github.com/ansible/ansible/pull/63036).

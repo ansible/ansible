@@ -80,7 +80,6 @@ class TestIosxrSystemModule(TestIosxrModule):
     def test_iosxr_system_name_servers(self):
         name_servers = ['8.8.8.8', '8.8.4.4', '1.1.1.1']
         set_module_args(dict(name_servers=name_servers))
-        commands = ['domain name-server 1.1.1.1', 'no domain name-server 8.8.4.4', 'no domain lookup disable']
         self.execute_module(changed=True)
 
     def test_iosxr_system_state_absent(self):

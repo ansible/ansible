@@ -76,7 +76,8 @@ class MockONTAPConnection(object):
                                                         'source-location': 'ansible:ansible',
                                                         'relationship-status': status, 'policy': 'ansible',
                                                         'relationship-type': 'data_protection',
-                                                        'max-transfer-rate': 1000},
+                                                        'max-transfer-rate': 1000,
+                                                        'identity-preserve': 'true'},
                                     'snapmirror-destination-info': {'destination-location': 'ansible'}}}
         xml.translate_struct(data)
         return xml
@@ -163,6 +164,7 @@ class TestMyModule(unittest.TestCase):
         ''' creating snapmirror and testing idempotency '''
         data = self.set_default_args()
         data['schedule'] = 'abc'
+        data['identity_preserve'] = True
         set_module_args(data)
         my_obj = my_module()
         my_obj.asup_log_for_cserver = Mock(return_value=None)

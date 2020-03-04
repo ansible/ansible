@@ -63,6 +63,12 @@ options:
     - If not set then the default path is C(%SYSTEMROOT%\NTDS).
     type: path
     version_added: '2.5'
+  domain_log_path:
+    description:
+    - Specified the fully qualified, non-UNC path to a directory on a fixed disk of the local computer that will
+      contain the domain log files.
+    type: path
+    version_added: '2.10'
   sysvol_path:
     description:
     - The path to a directory on a fixed disk of the Windows host where the
@@ -70,6 +76,19 @@ options:
     - If not set then the default path is C(%SYSTEMROOT%\SYSVOL).
     type: path
     version_added: '2.5'
+  install_dns:
+    description:
+    - Whether to install the DNS service when creating the domain controller.
+    - If not specified then the C(-InstallDns) option is not supplied to C(Install-ADDSDomainController) command,
+      see U(https://docs.microsoft.com/en-us/powershell/module/addsdeployment/install-addsdomaincontroller).
+    type: bool
+    version_added: '2.10'
+  log_path:
+    description:
+    - The path to log any debug information when running the module.
+    - This option is deprecated and should not be used, it will be removed in Ansible 2.14.
+    - This does not relate to the C(-LogPath) paramter of the install controller cmdlet.
+    type: str
 seealso:
 - module: win_domain
 - module: win_domain_computer
@@ -96,7 +115,6 @@ EXAMPLES = r'''
     domain_admin_password: password123!
     safe_mode_password: password123!
     state: domain_controller
-    log_path: C:\ansible_win_domain_controller.txt
 
 # ensure a server is not a domain controller
 # note that without an action wrapper, in the case where a DC is demoted,
@@ -109,7 +127,6 @@ EXAMPLES = r'''
     domain_admin_password: password123!
     local_admin_password: password123!
     state: member_server
-    log_path: C:\ansible_win_domain_controller.txt
 
 - name: Promote server as a read only domain controller
   win_domain_controller:
@@ -120,4 +137,20 @@ EXAMPLES = r'''
     state: domain_controller
     read_only: yes
     site_name: London
+
+- name: Promote server with custom paths
+  win_domain_controller:
+    dns_domain_name: ansible.vagrant
+    domain_admin_user: testguy@ansible.vagrant
+    domain_admin_password: password123!
+    safe_mode_password: password123!
+    state: domain_controller
+    sysvol_path: D:\SYSVOL
+    database_path: D:\NTDS
+    domain_log_path: D:\NTDS
+  register: dc_promotion
+
+- name: Reboot after promotion
+  win_reboot:
+  when: dc_promotion.reboot_required
 '''

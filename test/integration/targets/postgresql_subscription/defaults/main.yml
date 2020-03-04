@@ -1,0 +1,15 @@
+pg_user: postgres
+db_default: postgres
+master_port: 5433
+replica_port: 5434
+
+test_table1: acme1
+test_pub: first_publication
+test_pub2: second_publication
+replication_role: logical_replication
+replication_pass: alsdjfKJKDf1#
+test_db: acme_db
+test_subscription: test
+test_role1: alice
+test_role2: bob
+conn_timeout: 100

@@ -110,19 +110,18 @@ def main():
             module.exit_json(changed=_system_state_change(state, dev))
 
         if state == 'present':
-            if dev:
-                # Volume is already attached to this server
-                module.exit_json(changed=False)
-
-            cloud.attach_volume(server, volume, module.params['device'],
-                                wait=wait, timeout=timeout)
+            changed = False
+            if not dev:
+                changed = True
+                cloud.attach_volume(server, volume, module.params['device'],
+                                    wait=wait, timeout=timeout)
 
             server = cloud.get_server(module.params['server'])  # refresh
             volume = cloud.get_volume(module.params['volume'])  # refresh
             hostvars = cloud.get_openstack_vars(server)
 
             module.exit_json(
-                changed=True,
+                changed=changed,
                 id=volume['id'],
                 attachments=volume['attachments'],
                 openstack=hostvars

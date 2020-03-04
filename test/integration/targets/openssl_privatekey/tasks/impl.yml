@@ -3,6 +3,15 @@
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey1.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
+  register: privatekey1
+
+- name: Generate privatekey1 - standard (idempotence)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey1.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
+  register: privatekey1_idempotence
 
 - name: Generate privatekey2 - size 2048
   openssl_privatekey:
@@ -27,6 +36,15 @@
     state: absent
     path: '{{ output_dir }}/privatekey4.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
+    return_content: yes
+  register: privatekey4_delete
+
+- name: Delete privatekey4 - standard (idempotence)
+  openssl_privatekey:
+    state: absent
+    path: '{{ output_dir }}/privatekey4.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey4_delete_idempotence
 
 - name: Generate privatekey5 - standard - with passphrase
   openssl_privatekey:
@@ -152,6 +170,7 @@
     loop: "{{ types }}"
     loop_control:
       label: "{{ item.type }}"
+    ignore_errors: yes
     register: privatekey_t1_generate
 
   - name: Test other type generation (idempotency)
@@ -163,6 +182,7 @@
     loop: "{{ types }}"
     loop_control:
       label: "{{ item.type }}"
+    ignore_errors: yes
     register: privatekey_t1_idempotency
 
   when: select_crypto_backend == 'cryptography'
@@ -277,3 +297,524 @@
   stat:
     path: '{{ output_dir }}/privatekey_mode.pem'
   register: privatekey_mode_3_stat
+
+- block:
+  - name: Generate privatekey_fmt_1 - auto format
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: auto
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_1
+
+  - name: Generate privatekey_fmt_1 - auto format (idempotent)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: auto
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_2
+
+  - name: Generate privatekey_fmt_1 - PKCS1 format
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: pkcs1
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_3
+
+  - name: Generate privatekey_fmt_1 - PKCS8 format
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: pkcs8
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_4
+
+  - name: Generate privatekey_fmt_1 - PKCS8 format (idempotent)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: pkcs8
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_5
+
+  - name: Generate privatekey_fmt_1 - auto format (ignore)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: auto_ignore
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_6
+
+  - name: Generate privatekey_fmt_1 - auto format (no ignore)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: auto
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_7
+
+  - name: Generate privatekey_fmt_1 - raw format (fail)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: raw
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    ignore_errors: yes
+    register: privatekey_fmt_1_step_8
+
+  - name: Generate privatekey_fmt_1 - PKCS8 format (convert)
+    openssl_privatekey_info:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_9_before
+
+  - name: Generate privatekey_fmt_1 - PKCS8 format (convert)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: pkcs8
+      format_mismatch: convert
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_9
+
+  - name: Generate privatekey_fmt_1 - PKCS8 format (convert)
+    openssl_privatekey_info:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_9_after
+
+  when: 'select_crypto_backend == "cryptography"'
+
+- block:
+  - name: Generate privatekey_fmt_2 - PKCS8 format
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      type: X448
+      format: pkcs8
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    ignore_errors: yes
+    register: privatekey_fmt_2_step_1
+
+  - name: Generate privatekey_fmt_2 - PKCS8 format (idempotent)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      type: X448
+      format: pkcs8
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    ignore_errors: yes
+    register: privatekey_fmt_2_step_2
+
+  - name: Generate privatekey_fmt_2 - raw format
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      type: X448
+      format: raw
+      select_crypto_backend: '{{ select_crypto_backend }}'
+      return_content: yes
+    ignore_errors: yes
+    register: privatekey_fmt_2_step_3
+
+  - name: Read privatekey_fmt_2.pem
+    slurp:
+      src: "{{ output_dir }}/privatekey_fmt_2.pem"
+    ignore_errors: yes
+    register: content
+
+  - name: Generate privatekey_fmt_2 - verify that returned content is base64 encoded
+    assert:
+      that:
+        - privatekey_fmt_2_step_3.privatekey == content.content
+    when: privatekey_fmt_2_step_1 is not failed
+
+  - name: Generate privatekey_fmt_2 - raw format (idempotent)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      type: X448
+      format: raw
+      select_crypto_backend: '{{ select_crypto_backend }}'
+      return_content: yes
+    ignore_errors: yes
+    register: privatekey_fmt_2_step_4
+
+  - name: Read privatekey_fmt_2.pem
+    slurp:
+      src: "{{ output_dir }}/privatekey_fmt_2.pem"
+    ignore_errors: yes
+    register: content
+
+  - name: Generate privatekey_fmt_2 - verify that returned content is base64 encoded
+    assert:
+      that:
+        - privatekey_fmt_2_step_4.privatekey == content.content
+    when: privatekey_fmt_2_step_1 is not failed
+
+  - name: Generate privatekey_fmt_2 - auto format (ignore)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      type: X448
+      format: auto_ignore
+      select_crypto_backend: '{{ select_crypto_backend }}'
+      return_content: yes
+    ignore_errors: yes
+    register: privatekey_fmt_2_step_5
+
+  - name: Read privatekey_fmt_2.pem
+    slurp:
+      src: "{{ output_dir }}/privatekey_fmt_2.pem"
+    ignore_errors: yes
+    register: content
+
+  - name: Generate privatekey_fmt_2 - verify that returned content is base64 encoded
+    assert:
+      that:
+        - privatekey_fmt_2_step_5.privatekey == content.content
+    when: privatekey_fmt_2_step_1 is not failed
+
+  - name: Generate privatekey_fmt_2 - auto format (no ignore)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      type: X448
+      format: auto
+      select_crypto_backend: '{{ select_crypto_backend }}'
+      return_content: yes
+    ignore_errors: yes
+    register: privatekey_fmt_2_step_6
+
+  - name: Generate privatekey_fmt_2 - verify that returned content is not base64 encoded
+    assert:
+      that:
+        - privatekey_fmt_2_step_6.privatekey == lookup('file', output_dir ~ '/privatekey_fmt_2.pem', rstrip=False)
+    when: privatekey_fmt_2_step_1 is not failed
+
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")'
+
+
+
+# Test regenerate option
+
+- name: Regenerate - setup simple keys
+  openssl_privatekey:
+    path: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+    type: RSA
+    size: 1024
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  loop: "{{ regenerate_values }}"
+- name: Regenerate - setup password protected keys
+  openssl_privatekey:
+    path: '{{ output_dir }}/regenerate-b-{{ item }}.pem'
+    type: RSA
+    size: 1024
+    passphrase: hunter2
+    cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  loop: "{{ regenerate_values }}"
+- name: Regenerate - setup broken keys
+  copy:
+    dest: '{{ output_dir }}/regenerate-c-{{ item }}.pem'
+    content: 'broken key'
+    mode: '0700'
+  loop: "{{ regenerate_values }}"
+
+- name: Regenerate - modify broken keys (check mode)
+  openssl_privatekey:
+    path: '{{ output_dir }}/regenerate-c-{{ item }}.pem'
+    type: RSA
+    size: 1024
+    regenerate: '{{ item }}'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+  loop: "{{ regenerate_values }}"
+  ignore_errors: yes
+  register: result
+- assert:
+    that:
+      - result.results[0] is failed
+      - "'Unable to read the key. The key is protected with a another passphrase / no passphrase or broken. Will not proceed.' in result.results[0].msg or 'Cannot load raw key' in result.results[0].msg"
+      - result.results[1] is failed
+      - "'Unable to read the key. The key is protected with a another passphrase / no passphrase or broken. Will not proceed.' in result.results[1].msg or 'Cannot load raw key' in result.results[1].msg"
+      - result.results[2] is failed
+      - "'Unable to read the key. The key is protected with a another passphrase / no passphrase or broken. Will not proceed.' in result.results[2].msg or 'Cannot load raw key' in result.results[2].msg"
+      - result.results[3] is changed
+      - result.results[4] is changed
+
+- name: Regenerate - modify broken keys
+  openssl_privatekey:
+    path: '{{ output_dir }}/regenerate-c-{{ item }}.pem'
+    type: RSA
+    size: 1024
+    regenerate: '{{ item }}'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  loop: "{{ regenerate_values }}"
+  ignore_errors: yes
+  register: result
+- assert:
+    that:
+      - result.results[0] is failed
+      - "'Unable to read the key. The key is protected with a another passphrase / no passphrase or broken. Will not proceed.' in result.results[0].msg or 'Cannot load raw key' in result.results[0].msg"
+      - result.results[1] is failed
+      - "'Unable to read the key. The key is protected with a another passphrase / no passphrase or broken. Will not proceed.' in result.results[1].msg or 'Cannot load raw key' in result.results[1].msg"
+      - result.results[2] is failed
+      - "'Unable to read the key. The key is protected with a another passphrase / no passphrase or broken. Will not proceed.' in result.results[2].msg or 'Cannot load raw key' in result.results[2].msg"
+      - result.results[3] is changed
+      - result.results[4] is changed
+
+- name: Regenerate - modify password protected keys (check mode)
+  openssl_privatekey:
+    path: '{{ output_dir }}/regenerate-b-{{ item }}.pem'
+    type: RSA
+    size: 1024
+    regenerate: '{{ item }}'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+  loop: "{{ regenerate_values }}"
+  ignore_errors: yes
+  register: result
+- assert:
+    that:
+      - result.results[0] is failed
+      - "'Unable to read the key. The key is protected with a another passphrase / no passphrase or broken. Will not proceed.' in result.results[0].msg"
+      - result.results[1] is failed
+      - "'Unable to read the key. The key is protected with a another passphrase / no passphrase or broken. Will not proceed.' in result.results[1].msg"
+      - result.results[2] is failed
+      - "'Unable to read the key. The key is protected with a another passphrase / no passphrase or broken. Will not proceed.' in result.results[2].msg"
+      - result.results[3] is changed
+      - result.results[4] is changed
+
+- name: Regenerate - modify password protected keys
+  openssl_privatekey:
+    path: '{{ output_dir }}/regenerate-b-{{ item }}.pem'
+    type: RSA
+    size: 1024
+    regenerate: '{{ item }}'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  loop: "{{ regenerate_values }}"
+  ignore_errors: yes
+  register: result
+- assert:
+    that:
+      - result.results[0] is failed
+      - "'Unable to read the key. The key is protected with a another passphrase / no passphrase or broken. Will not proceed.' in result.results[0].msg"
+      - result.results[1] is failed
+      - "'Unable to read the key. The key is protected with a another passphrase / no passphrase or broken. Will not proceed.' in result.results[1].msg"
+      - result.results[2] is failed
+      - "'Unable to read the key. The key is protected with a another passphrase / no passphrase or broken. Will not proceed.' in result.results[2].msg"
+      - result.results[3] is changed
+      - result.results[4] is changed
+
+- name: Regenerate - not modify regular keys (check mode)
+  openssl_privatekey:
+    path: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+    type: RSA
+    size: 1024
+    regenerate: '{{ item }}'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+  loop: "{{ regenerate_values }}"
+  register: result
+- assert:
+    that:
+      - result.results[0] is not changed
+      - result.results[1] is not changed
+      - result.results[2] is not changed
+      - result.results[3] is not changed
+      - result.results[4] is changed
+
+- name: Regenerate - not modify regular keys
+  openssl_privatekey:
+    path: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+    type: RSA
+    size: 1024
+    regenerate: '{{ item }}'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  loop: "{{ regenerate_values }}"
+  register: result
+- assert:
+    that:
+      - result.results[0] is not changed
+      - result.results[1] is not changed
+      - result.results[2] is not changed
+      - result.results[3] is not changed
+      - result.results[4] is changed
+
+- name: Regenerate - adjust key size (check mode)
+  openssl_privatekey:
+    path: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+    type: RSA
+    size: 1048
+    regenerate: '{{ item }}'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+  loop: "{{ regenerate_values }}"
+  ignore_errors: yes
+  register: result
+- assert:
+    that:
+      - result.results[0] is success and result.results[0] is not changed
+      - result.results[1] is failed
+      - "'Key has wrong type and/or size. Will not proceed.' in result.results[1].msg"
+      - result.results[2] is changed
+      - result.results[3] is changed
+      - result.results[4] is changed
+
+- name: Regenerate - adjust key size
+  openssl_privatekey:
+    path: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+    type: RSA
+    size: 1048
+    regenerate: '{{ item }}'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  loop: "{{ regenerate_values }}"
+  ignore_errors: yes
+  register: result
+- assert:
+    that:
+      - result.results[0] is success and result.results[0] is not changed
+      - result.results[1] is failed
+      - "'Key has wrong type and/or size. Will not proceed.' in result.results[1].msg"
+      - result.results[2] is changed
+      - result.results[3] is changed
+      - result.results[4] is changed
+
+- name: Regenerate - redistribute keys
+  copy:
+    src: '{{ output_dir }}/regenerate-a-always.pem'
+    dest: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+    remote_src: true
+  loop: "{{ regenerate_values }}"
+  when: "item != 'always'"
+
+- name: Regenerate - adjust key type (check mode)
+  openssl_privatekey:
+    path: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+    type: DSA
+    size: 1024
+    regenerate: '{{ item }}'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+  loop: "{{ regenerate_values }}"
+  ignore_errors: yes
+  register: result
+- assert:
+    that:
+      - result.results[0] is success and result.results[0] is not changed
+      - result.results[1] is failed
+      - "'Key has wrong type and/or size. Will not proceed.' in result.results[1].msg"
+      - result.results[2] is changed
+      - result.results[3] is changed
+      - result.results[4] is changed
+
+- name: Regenerate - adjust key type
+  openssl_privatekey:
+    path: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+    type: DSA
+    size: 1024
+    regenerate: '{{ item }}'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  loop: "{{ regenerate_values }}"
+  ignore_errors: yes
+  register: result
+- assert:
+    that:
+      - result.results[0] is success and result.results[0] is not changed
+      - result.results[1] is failed
+      - "'Key has wrong type and/or size. Will not proceed.' in result.results[1].msg"
+      - result.results[2] is changed
+      - result.results[3] is changed
+      - result.results[4] is changed
+
+- block:
+  - name: Regenerate - redistribute keys
+    copy:
+      src: '{{ output_dir }}/regenerate-a-always.pem'
+      dest: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+      remote_src: true
+    loop: "{{ regenerate_values }}"
+    when: "item != 'always'"
+
+  - name: Regenerate - format mismatch (check mode)
+    openssl_privatekey:
+      path: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+      type: DSA
+      size: 1024
+      format: pkcs8
+      regenerate: '{{ item }}'
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    check_mode: yes
+    loop: "{{ regenerate_values }}"
+    ignore_errors: yes
+    register: result
+  - assert:
+      that:
+        - result.results[0] is success and result.results[0] is not changed
+        - result.results[1] is failed
+        - "'Key has wrong format. Will not proceed.' in result.results[1].msg"
+        - result.results[2] is changed
+        - result.results[3] is changed
+        - result.results[4] is changed
+
+  - name: Regenerate - format mismatch
+    openssl_privatekey:
+      path: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+      type: DSA
+      size: 1024
+      format: pkcs8
+      regenerate: '{{ item }}'
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    loop: "{{ regenerate_values }}"
+    ignore_errors: yes
+    register: result
+  - assert:
+      that:
+        - result.results[0] is success and result.results[0] is not changed
+        - result.results[1] is failed
+        - "'Key has wrong format. Will not proceed.' in result.results[1].msg"
+        - result.results[2] is changed
+        - result.results[3] is changed
+        - result.results[4] is changed
+
+  - name: Regenerate - redistribute keys
+    copy:
+      src: '{{ output_dir }}/regenerate-a-always.pem'
+      dest: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+      remote_src: true
+    loop: "{{ regenerate_values }}"
+    when: "item != 'always'"
+
+  - name: Regenerate - convert format (check mode)
+    openssl_privatekey:
+      path: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+      type: DSA
+      size: 1024
+      format: pkcs1
+      format_mismatch: convert
+      regenerate: '{{ item }}'
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    check_mode: yes
+    loop: "{{ regenerate_values }}"
+    register: result
+  - assert:
+      that:
+        - result.results[0] is changed
+        - result.results[1] is changed
+        - result.results[2] is changed
+        - result.results[3] is changed
+        - result.results[4] is changed
+
+  - name: Regenerate - convert format
+    openssl_privatekey:
+      path: '{{ output_dir }}/regenerate-a-{{ item }}.pem'
+      type: DSA
+      size: 1024
+      format: pkcs1
+      format_mismatch: convert
+      regenerate: '{{ item }}'
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    loop: "{{ regenerate_values }}"
+    register: result
+  - assert:
+      that:
+        - result.results[0] is changed
+        - result.results[1] is changed
+        - result.results[2] is changed
+        - result.results[3] is changed
+        - result.results[4] is changed
+        # for all values but 'always', the key should have not been regenerated.
+        # verify this by comparing fingerprints:
+        - result.results[0].fingerprint == result.results[1].fingerprint
+        - result.results[0].fingerprint == result.results[2].fingerprint
+        - result.results[0].fingerprint == result.results[3].fingerprint
+        - result.results[0].fingerprint != result.results[4].fingerprint
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")'

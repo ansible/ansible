@@ -15,7 +15,7 @@ DOCUMENTATION = r'''
 module: aci_tenant_span_src_group_to_dst_group
 short_description: Bind SPAN source groups to destination groups (span:SpanLbl)
 description:
-- Bind SPAN source groups to associated destinaton groups on Cisco ACI fabrics.
+- Bind SPAN source groups to associated destination groups on Cisco ACI fabrics.
 version_added: '2.4'
 options:
   description:
@@ -38,6 +38,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+  name_alias:
+    version_added: '2.10'
+    description:
+    - The alias for the current object. This relates to the nameAlias field in ACI.
+    type: str
   tenant:
     description:
     - The name of the Tenant.
@@ -187,6 +192,7 @@ def main():
         src_group=dict(type='str'),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        name_alias=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -198,11 +204,12 @@ def main():
         ],
     )
 
-    description = module.params['description']
-    dst_group = module.params['dst_group']
-    src_group = module.params['src_group']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    description = module.params.get('description')
+    dst_group = module.params.get('dst_group')
+    src_group = module.params.get('src_group')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
+    name_alias = module.params.get('name_alias')
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -234,6 +241,7 @@ def main():
             class_config=dict(
                 descr=description,
                 name=dst_group,
+                nameAlias=name_alias,
             ),
         )
 

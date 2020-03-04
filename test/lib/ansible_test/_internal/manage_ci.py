@@ -12,6 +12,7 @@ from .util import (
     cmd_quote,
     display,
     ANSIBLE_TEST_DATA_ROOT,
+    get_network_settings,
 )
 
 from .util_common import (
@@ -149,11 +150,14 @@ class ManageNetworkCI:
 
     def wait(self):
         """Wait for instance to respond to ansible ping."""
+        settings = get_network_settings(self.core_ci.args, self.core_ci.platform, self.core_ci.version)
+
         extra_vars = [
             'ansible_host=%s' % self.core_ci.connection.hostname,
             'ansible_port=%s' % self.core_ci.connection.port,
-            'ansible_connection=local',
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
+        ] + [
+            '%s=%s' % (key, value) for key, value in settings.inventory_vars.items()
         ]
 
         name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '-'))
@@ -161,7 +165,7 @@ class ManageNetworkCI:
         env = ansible_environment(self.core_ci.args)
         cmd = [
             'ansible',
-            '-m', '%s_command' % self.core_ci.platform,
+            '-m', '%s%s_command' % (settings.collection + '.' if settings.collection else '', self.core_ci.platform),
             '-a', 'commands=?',
             '-u', self.core_ci.connection.username,
             '-i', '%s,' % name,
@@ -211,6 +215,8 @@ class ManagePosixCI:
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
         elif self.core_ci.platform == 'rhel':
             self.become = ['sudo', '-in', 'bash', '-c']
+        elif self.core_ci.platform in ['aix', 'ibmi']:
+            self.become = []
 
     def setup(self, python_version):
         """Start instance and wait for it to become ready and respond to an ansible ping.
@@ -267,7 +273,13 @@ class ManagePosixCI:
             create_payload(self.core_ci.args, local_source_fd.name)
 
             self.upload(local_source_fd.name, remote_source_dir)
-            self.ssh('rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && tar oxzf %s' % remote_source_path)
+            # AIX does not provide the GNU tar version, leading to parameters
+            # being different and -z not being recognized. This pattern works
+            # with both versions of tar.
+            self.ssh(
+                'rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && gunzip --stdout %s | tar oxf - && rm %s' %
+                (remote_source_path, remote_source_path)
+            )
 
     def download(self, remote, local):
         """
@@ -296,12 +308,13 @@ class ManagePosixCI:
         if isinstance(command, list):
             command = ' '.join(cmd_quote(c) for c in command)
 
+        command = cmd_quote(command) if self.become else command
         return run_command(self.core_ci.args,
                            ['ssh', '-tt', '-q'] + self.ssh_args +
                            options +
                            ['-p', str(self.core_ci.connection.port),
                             '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
-                           self.become + [cmd_quote(command)], capture=capture)
+                           self.become + [command], capture=capture)
 
     def scp(self, src, dst):
         """

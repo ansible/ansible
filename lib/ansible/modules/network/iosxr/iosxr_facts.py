@@ -28,6 +28,9 @@ description:
     respective resource name.  The facts module will always collect a
     base set of facts from the device and can enable or disable
     collection of additional facts.
+notes:
+  - Tested against IOS-XR 6.1.3.
+  - This module works with connection C(network_cli). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
 author:
   - Ricardo Carrillo Cruz (@rcarrillocruz)
   - Nilashish Chakraborty (@Nilashishc)
@@ -50,8 +53,10 @@ options:
         Can specify a list of values to include a larger subset. Values
         can also be used with an initial C(M(!)) to specify that a
         specific subset should not be collected.
+        Valid subsets are 'all', 'lacp', 'lacp_interfaces', 'lldp_global',
+        'lldp_interfaces', 'interfaces', 'l2_interfaces', 'l3_interfaces',
+        'lag_interfaces', 'acls', 'acl_interfaces', 'static_routes.
     required: false
-    choices: ['all', 'lacp', '!lacp', 'lacp_interfaces', '!lacp_interfaces']
     version_added: "2.9"
 """
 
@@ -88,6 +93,15 @@ EXAMPLES = """
 - iosxr_facts:
     gather_subset: min
     gather_network_resources: lacp
+
+# Collect only the interfaces facts
+- iosxr_facts:
+    gather_subset:
+      - "!all"
+      - "!min"
+    gather_network_resources:
+      - interfaces
+      - l2_interfaces
 """
 
 RETURN = """
@@ -179,13 +193,15 @@ def main():
 
     :returns: ansible_facts
     """
-    spec = FactsArgs.argument_spec
-    spec.update(iosxr_argument_spec)
+    argument_spec = FactsArgs.argument_spec
+    argument_spec.update(iosxr_argument_spec)
 
-    module = AnsibleModule(argument_spec=spec,
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
-    warnings = ['default value for `gather_subset` '
-                'will be changed to `min` from `!config` v2.11 onwards']
+
+    warnings = []
+    if module.params["gather_subset"] == "!config":
+        warnings.append('default value for `gather_subset` will be changed to `min` from `!config` v2.11 onwards')
 
     result = Facts(module).get_facts()
 

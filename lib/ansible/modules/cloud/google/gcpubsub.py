@@ -279,7 +279,7 @@ def main():
                            push_endpoint=mod_params['subscription'].get('push_endpoint', None))
 
     if mod_params['state'] == 'absent':
-        # Remove the most granular resource.  If subcription is specified
+        # Remove the most granular resource.  If subscription is specified
         # we remove it.  If only topic is specified, that is what is removed.
         # Note that a topic can be removed without first removing the subscription.
         # TODO(supertom): Enhancement: Provide an option to only delete a topic

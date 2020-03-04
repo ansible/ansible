@@ -29,6 +29,8 @@ notes:
       To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
     - If you specify both the key id and the URL with C(state=present), the task can verify or add the key as needed.
     - Adding a new key requires an apt cache update (e.g. using the apt module's update_cache option)
+requirements:
+    - gpg
 options:
     id:
         description:

@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -28,6 +32,9 @@ description:
     - This module offers the ability to configure a BGP EVPN peer relationship on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@QijunPan)
+notes:
+  - Recommended connection is C(network_cli).
+  - This module also works with C(local) connections for legacy playbooks.
 options:
     bgp_instance:
         description:
@@ -136,7 +143,7 @@ end_state:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import exec_command, load_config
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
@@ -238,18 +245,20 @@ class EvpnBgp(object):
     def get_evpn_overlay_config(self):
         """get evpn-overlay enable configuration"""
 
-        flags = list()
-        exp = "| ignore-case include evpn-overlay enable"
-        flags.append(exp)
-        return get_config(self.module, flags)
+        cmd = "display current-configuration | include ^evpn-overlay enable"
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        return out
 
     def get_current_config(self):
         """get current configuration"""
 
-        flags = list()
-        exp = "| ignore-case section include bgp %s" % self.bgp_instance
-        flags.append(exp)
-        return get_config(self.module, flags)
+        cmd = "display current-configuration | section include bgp %s" % self.bgp_instance
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        return out
 
     def cli_add_command(self, command, undo=False):
         """add command to self.update_cmd and self.commands"""
@@ -500,6 +509,10 @@ class EvpnBgp(object):
         self.config = self.get_current_config()
         if not self.config:
             return
+
+        self.config_list = self.config.split('l2vpn-family evpn')
+        if len(self.config_list) == 2:
+            self.l2vpn_evpn_exist = True
 
         if self.bgp_instance:
             self.end_state["bgp_instance"] = self.bgp_instance

@@ -39,6 +39,8 @@ if ($null -ne $domain_server) {
     $extra_args.Server = $domain_server
 }
 
+$ADGroup = Get-ADGroup -Identity $name @extra_args
+
 $result = @{
     changed = $false
     added = [System.Collections.Generic.List`1[String]]@()
@@ -48,11 +50,16 @@ if ($diff_mode) {
     $result.diff = @{}
 }
 
-$members_before = Get-AdGroupMember -Identity $name @extra_args
+$members_before = Get-AdGroupMember -Identity $ADGroup @extra_args
 $pure_members = [System.Collections.Generic.List`1[String]]@()
 
 foreach ($member in $members) {
-    $group_member = Get-ADObject -Filter "SamAccountName -eq '$member' -and $ad_object_class_filter" -Properties objectSid, sAMAccountName @extra_args
+    $extra_member_args = $extra_args.Clone()
+    if ($member -match "\\"){
+        $extra_member_args.Server = $member.Split("\")[0]
+        $member = $member.Split("\")[1]
+    }
+    $group_member = Get-ADObject -Filter "SamAccountName -eq '$member' -and $ad_object_class_filter" -Properties objectSid, sAMAccountName @extra_member_args
     if (!$group_member) {
         Fail-Json -obj $result "Could not find domain user, group, service account or computer named $member"
     }
@@ -70,11 +77,11 @@ foreach ($member in $members) {
     }
 
     if ($state -in @("present", "pure") -and !$user_in_group) {
-        Add-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args
+        Add-ADPrincipalGroupMembership -Identity $group_member -MemberOf $ADGroup -WhatIf:$check_mode @extra_member_args
         $result.added.Add($group_member.SamAccountName)
         $result.changed = $true
     } elseif ($state -eq "absent" -and $user_in_group) {
-        Remove-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args -Confirm:$False
+        Remove-ADPrincipalGroupMembership -Identity $group_member -MemberOf $ADGroup -WhatIf:$check_mode -Confirm:$False @extra_member_args
         $result.removed.Add($group_member.SamAccountName)
         $result.changed = $true
     }
@@ -82,7 +89,7 @@ foreach ($member in $members) {
 
 if ($state -eq "pure") {
     # Perform removals for existing group members not defined in $members
-    $current_members = Get-AdGroupMember -Identity $name @extra_args
+    $current_members = Get-AdGroupMember -Identity $ADGroup @extra_args
 
     foreach ($current_member in $current_members) {
         $user_to_remove = $true
@@ -94,14 +101,14 @@ if ($state -eq "pure") {
         }
 
         if ($user_to_remove) {
-            Remove-ADGroupMember -Identity $name -Members $current_member -WhatIf:$check_mode @extra_args -Confirm:$False
+            Remove-ADPrincipalGroupMembership -Identity $current_member -MemberOf $ADGroup -WhatIf:$check_mode -Confirm:$False
             $result.removed.Add($current_member.SamAccountName)
             $result.changed = $true
         }
     }
 }
 
-$final_members = Get-AdGroupMember -Identity $name @extra_args
+$final_members = Get-AdGroupMember -Identity $ADGroup @extra_args
 
 if ($final_members) {
     $result.members = [Array]$final_members.SamAccountName

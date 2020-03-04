@@ -1,0 +1,65 @@
+---
+- debug:
+    msg: "Start ios_acl_interfaces deleted integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+- include_tasks: _populate_config.yaml
+
+- block:
+
+  - name: Delete module attributes of given Interface based on AFI
+    ios_acl_interfaces:
+      config:
+        - name: GigabitEthernet0/1
+          access_groups:
+            - afi: ipv6
+      state: deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.commands|length == 3"
+        - "result.changed == true"
+        - "'no ipv6 traffic-filter temp_v6 in' in result.commands"
+        - "'no ipv6 traffic-filter test_v6 out' in result.commands"
+
+  - name: Delete module attributes of given Interface based on AFI (IDEMPOTENT)
+    ios_acl_interfaces:
+      config:
+        - name: GigabitEthernet0/1
+          access_groups:
+            - afi: ipv6
+      state: deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: Delete module attributes of given Interface.
+    ios_acl_interfaces:
+      config:
+        - name: GigabitEthernet0/1
+      state: deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.commands|length == 3"
+        - "result.changed == true"
+        - "'no ip access-group 110 in' in result.commands"
+        - "'no ip access-group 123 out' in result.commands"
+
+  - name: Delete module attributes of given Interface (IDEMPOTENT)
+    ios_acl_interfaces:
+      config:
+        - name: GigabitEthernet0/1
+      state: deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  always:
+    - include_tasks: _remove_config.yaml

@@ -41,11 +41,20 @@ options:
     power_state:
         description:
             - Use this option to change power state of the instance.
-        required: True
         choices:
             - 'running'
             - 'stopped'
             - 'deallocated'
+    protect_from_scale_in:
+        type: bool
+        description:
+            - turn on/off instance protection from scale in
+        version_added: "2.10"
+    protect_from_scale_set_actions:
+        type: bool
+        description:
+            - tun on/off instance protection from scale set actions
+        version_added: "2.10"
     state:
         description:
             - State of the VMSS instance. Use C(present) to update an instance and C(absent) to delete an instance.
@@ -64,11 +73,18 @@ author:
 
 EXAMPLES = '''
   - name: Upgrade instance to the latest image
-    azure_rm_computevirtualmachinescalesetinstance:
+    azure_rm_virtualmachinescalesetinstance:
       resource_group: myResourceGroup
       vmss_name: myVMSS
       instance_id: "2"
       latest_model: yes
+
+  - name: Turn on protect from scale in
+    azure_rm_virtualmachinescalesetinstance:
+        resource_group: myResourceGroup
+        vmss_name: myVMSS
+        instance_id: "2"
+        protect_from_scale_in: true
 '''
 
 RETURN = '''
@@ -119,6 +135,12 @@ class AzureRMVirtualMachineScaleSetInstance(AzureRMModuleBase):
                 type='str',
                 choices=['running', 'stopped', 'deallocated']
             ),
+            protect_from_scale_in=dict(
+                type='bool'
+            ),
+            protect_from_scale_set_actions=dict(
+                type='bool'
+            ),
             state=dict(
                 type='str',
                 default='present',
@@ -136,13 +158,16 @@ class AzureRMVirtualMachineScaleSetInstance(AzureRMModuleBase):
         self.latest_model = None
         self.power_state = None
         self.state = None
+        self.protect_from_scale_in = None
+        self.protect_from_scale_set_actions = None
         super(AzureRMVirtualMachineScaleSetInstance, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(ComputeManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
+                                                    base_url=self._cloud_environment.endpoints.resource_manager,
+                                                    api_version='2019-07-01')
 
         instances = self.get()
 
@@ -175,6 +200,14 @@ class AzureRMVirtualMachineScaleSetInstance(AzureRMModuleBase):
                         if not self.check_mode:
                             self.start(item['instance_id'])
                         self.results['changed'] = True
+            if self.protect_from_scale_in is not None or self.protect_from_scale_set_actions is not None:
+                for item in instances:
+                    protection_policy = item['protection_policy']
+                    if protection_policy is None or self.protect_from_scale_in != protection_policy['protect_from_scale_in'] or \
+                            self.protect_from_scale_set_actions != protection_policy['protect_from_scale_set_actions']:
+                        if not self.check_mode:
+                            self.update_protection_policy(self.instance_id, self.protect_from_scale_in, self.protect_from_scale_set_actions)
+                        self.results['changed'] = True
 
         self.results['instances'] = [{'id': item['id']} for item in instances]
         return self.results
@@ -202,8 +235,8 @@ class AzureRMVirtualMachineScaleSetInstance(AzureRMModuleBase):
                                                                                      instance_ids=[instance_id])
             self.get_poller_result(poller)
         except CloudError as exc:
-            self.log("Error applying latest model {0} - {1}".format(self.name, str(exc)))
-            self.fail("Error applying latest model {0} - {1}".format(self.name, str(exc)))
+            self.log("Error applying latest model {0} - {1}".format(self.vmss_name, str(exc)))
+            self.fail("Error applying latest model {0} - {1}".format(self.vmss_name, str(exc)))
 
     def delete(self, instance_id):
         try:
@@ -241,6 +274,27 @@ class AzureRMVirtualMachineScaleSetInstance(AzureRMModuleBase):
             self.log('Could not deallocate instance of Virtual Machine Scale Set VM.')
             self.fail('Could not deallocate instance of Virtual Machine Scale Set VM.')
 
+    def update_protection_policy(self, instance_id, protect_from_scale_in, protect_from_scale_set_actions):
+        try:
+            d = {}
+            if protect_from_scale_in is not None:
+                d['protect_from_scale_in'] = protect_from_scale_in
+            if protect_from_scale_set_actions is not None:
+                d['protect_from_scale_set_actions'] = protect_from_scale_set_actions
+            protection_policy = self.compute_models.VirtualMachineScaleSetVMProtectionPolicy(**d)
+            instance = self.mgmt_client.virtual_machine_scale_set_vms.get(resource_group_name=self.resource_group,
+                                                                          vm_scale_set_name=self.vmss_name,
+                                                                          instance_id=instance_id)
+            instance.protection_policy = protection_policy
+            poller = self.mgmt_client.virtual_machine_scale_set_vms.update(resource_group_name=self.resource_group,
+                                                                           vm_scale_set_name=self.vmss_name,
+                                                                           instance_id=instance_id,
+                                                                           parameters=instance)
+            self.get_poller_result(poller)
+        except CloudError as e:
+            self.log('Could not update instance protection policy.')
+            self.fail('Could not update instance protection policy.')
+
     def format_response(self, item):
         d = item.as_dict()
         iv = self.mgmt_client.virtual_machine_scale_set_vms.get_instance_view(resource_group_name=self.resource_group,
@@ -257,7 +311,8 @@ class AzureRMVirtualMachineScaleSetInstance(AzureRMModuleBase):
             'tags': d.get('tags'),
             'instance_id': d.get('instance_id'),
             'latest_model': d.get('latest_model_applied'),
-            'power_state': power_state
+            'power_state': power_state,
+            'protection_policy': d.get('protection_policy')
         }
         return d
 
