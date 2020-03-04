@@ -124,6 +124,16 @@
       - "file_attributes_result_4 is not changed"
   when: file_attributes_result_4 is changed
 
+- name: create user
+  user:
+    name: test1
+    uid: 1234
+
+- name: create group
+  group:
+    name: test1
+    gid: 1234
+
 - name: change ownership and group
   file: path={{output_dir}}/baz.txt owner=1234 group=1234
 
@@ -310,6 +320,11 @@
   assert:
     that:
       - "file9_result.uid != 1234"
+
+- name: create user
+  user:
+    name: test2
+    uid: 1235
 
 - name: change the ownership of a directory with recurse=yes
   file: path={{output_dir}}/foobar owner=1235 recurse=yes
@@ -527,7 +542,7 @@
     path: /nonexistent
     owner: nonexistent
   check_mode: yes
-  ignore_errors:
+  ignore_errors: yes
   register: owner_no_exist
 
 - name: owner does not exist in check_mode, using uid
@@ -535,7 +550,7 @@
     path: /nonexistent
     owner: 1111111
   check_mode: yes
-  ignore_errors:
+  ignore_errors: yes
   register: owner_uid_no_exist
 
 - name: group does not exist in check_mode
@@ -544,16 +559,16 @@
     state: directory
     group: nonexistent
   check_mode: yes
-  ignore_errors:
+  ignore_errors: yes
   register: group_no_exist
 
 - name: group does not exist in check_mode, using gid
   file:
     path: /nonexistent
     state: directory
-    group: nonexistent
+    group: 1111111
   check_mode: yes
-  ignore_errors:
+  ignore_errors: yes
   register: group_gid_no_exist
 
 - assert:

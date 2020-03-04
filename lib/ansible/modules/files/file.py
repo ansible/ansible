@@ -875,31 +875,29 @@ def ensure_hardlink(path, src, follow, force, timestamps):
 def check_owner_exists(module, owner):
     try:
         uid = int(owner)
+        try:
+            getpwuid(uid).pw_name
+        except KeyError:
+            module.fail_json(msg='failed to look up user with uid %s' % uid)
     except ValueError:
         try:
             getpwnam(owner).pw_uid
         except KeyError:
             module.fail_json(msg='failed to look up user %s' % owner)
-    else:
-        try:
-            getpwuid(uid).pw_name
-        except KeyError:
-            module.fail_json(msg='failed to look up user with uid %s' % uid)
 
 
 def check_group_exists(module, group):
     try:
         gid = int(group)
+        try:
+            getgrgid(gid).gr_name
+        except KeyError:
+            module.fail_json(msg='failed to look up group with gid %s' % gid)
     except ValueError:
         try:
             getgrnam(group).gr_gid
         except KeyError:
             module.fail_json(msg='failed to look up group %s' % group)
-    else:
-        try:
-            getgrgid(gid).gr_name
-        except KeyError:
-            module.fail_json(msg='failed to look up group with gid %s' % gid)
 
 
 def main():
