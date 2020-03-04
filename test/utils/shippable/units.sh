@@ -9,9 +9,9 @@ version="${args[1]}"
 group="${args[2]}"
 
 if [[ "${COVERAGE:-}" == "--coverage" ]]; then
-    timeout=60
+    timeout=90
 else
-    timeout=11
+    timeout=20
 fi
 
 group1=()
