@@ -159,13 +159,6 @@ options:
         optional route-map. For example [['10.0.0.0/16', 'routemap_LA'],
         ['192.168.1.1', 'Chicago'], ['192.168.2.0/24'],
         ['192.168.3.0/24', 'routemap_NYC']].
-  networks_purge:
-    description:
-      - When used with 'networks' you can choose to wipe out previous
-        advertised networks and force only the requested advertised networks
-        or you can choose to leave other networks untouched.
-    type: bool
-    version_added: "2.9"
   next_hop_route_map:
     description:
       - Configure a route-map for valid nexthops. Valid values are a
@@ -194,10 +187,10 @@ options:
     type: bool
   state:
     description:
-      - Determines whether the config should be present or not
-        on the device.
+      - Determines whether the config should be present, not
+        on the device, or strictly match and remove existing items.
     default: present
-    choices: ['present','absent']
+    choices: ['present','absent','strict']
 '''
 EXAMPLES = '''
 # configure a simple address-family
@@ -486,7 +479,8 @@ def default_existing(existing_value, key, value):
     return commands
 
 
-def get_network_command(existing, key, value, networks_purge):
+def get_network_command(module, existing, key, value):
+    state = module.params['state']
     commands = []
     existing_networks = existing.get('networks', [])
     for inet in value:
@@ -499,9 +493,9 @@ def get_network_command(existing, key, value, networks_purge):
                 command = '{0} {1} route-map {2}'.format(key, inet[0], inet[1])
             if command:
                 commands.append(command)
-    if (networks_purge):
+    if 'strict' == state:
         for enet in existing_networks:
-            if (enet[0] not in value):
+            if enet not in value:
                 if len(enet) == 1:
                     command = 'no {0} {1}'.format(key, enet[0])
                 elif len(enet) == 2:
@@ -511,7 +505,8 @@ def get_network_command(existing, key, value, networks_purge):
     return commands
 
 
-def get_inject_map_command(existing, key, value):
+def get_inject_map_command(module, existing, key, value):
+    state = module.params['state']
     commands = []
     existing_maps = existing.get('inject_map', [])
     for maps in value:
@@ -527,21 +522,23 @@ def get_inject_map_command(existing, key, value):
                                                     maps[1]))
             if command:
                 commands.append(command)
-    for emaps in existing_maps:
-        if emaps not in value:
-            if len(emaps) == 2:
-                command = ('no inject-map {0} exist-map {1}'.format(
-                    emaps[0], emaps[1]))
-            elif len(emaps) == 3:
-                command = ('no inject-map {0} exist-map {1} '
-                           'copy-attributes'.format(emaps[0],
-                                                    emaps[1]))
-            if command:
-                commands.append(command)
+    if 'strict' == state:
+        for emaps in existing_maps:
+            if emaps not in value:
+                if len(emaps) == 2:
+                    command = ('no inject-map {0} exist-map {1}'.format(
+                        emaps[0], emaps[1]))
+                elif len(emaps) == 3:
+                    command = ('no inject-map {0} exist-map {1} '
+                               'copy-attributes'.format(emaps[0],
+                                                        emaps[1]))
+                if command:
+                    commands.append(command)
     return commands
 
 
-def get_redistribute_command(existing, key, value):
+def get_redistribute_command(module, existing, key, value):
+    state = module.params['state']
     commands = []
     existing_rules = existing.get('redistribute', [])
     for rule in value:
@@ -551,11 +548,12 @@ def get_redistribute_command(existing, key, value):
             command = ('redistribute {0} route-map {1}'.format(
                 rule[0], rule[1]))
             commands.append(command)
-    for erule in existing_rules:
-        if erule not in value:
-            command = ('no redistribute {0} route-map {1}'.format(
-                erule[0], erule[1]))
-            commands.append(command)
+    if 'strict' == state:
+        for erule in existing_rules:
+            if erule not in value:
+                command = ('no redistribute {0} route-map {1}'.format(
+                    erule[0], erule[1]))
+                commands.append(command)
     return commands
 
 
@@ -625,17 +623,17 @@ def state_present(module, existing, proposed, candidate):
                         commands.extend(default_command)
         else:
             if key == 'network':
-                network_commands = get_network_command(existing, key, value, module.params['networks_purge'])
+                network_commands = get_network_command(module, existing, key, value)
                 if network_commands:
                     commands.extend(network_commands)
 
             elif key == 'inject-map':
-                inject_map_commands = get_inject_map_command(existing, key, value)
+                inject_map_commands = get_inject_map_command(module, existing, key, value)
                 if inject_map_commands:
                     commands.extend(inject_map_commands)
 
             elif key == 'redistribute':
-                redistribute_commands = get_redistribute_command(existing, key, value)
+                redistribute_commands = get_redistribute_command(module, existing, key, value)
                 if redistribute_commands:
                     commands.extend(redistribute_commands)
 
@@ -695,13 +693,12 @@ def main():
         maximum_paths=dict(required=False, type='str'),
         maximum_paths_ibgp=dict(required=False, type='str'),
         networks=dict(required=False, type='list'),
-        networks_purge=dict(required=False, type='bool'),
         next_hop_route_map=dict(required=False, type='str'),
         redistribute=dict(required=False, type='list'),
         suppress_inactive=dict(required=False, type='bool'),
         table_map=dict(required=False, type='str'),
         table_map_filter=dict(required=False, type='bool'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
+        state=dict(choices=['present', 'absent', 'strict'], default='present', required=False),
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -741,7 +738,7 @@ def main():
     args = PARAM_TO_COMMAND_KEYMAP.keys()
     existing = get_existing(module, args, warnings)
 
-    if existing.get('asn') and state == 'present':
+    if existing.get('asn') and (state == 'present' or state == 'strict'):
         if existing.get('asn') != module.params['asn']:
             module.fail_json(msg='Another BGP ASN already exists.',
                              proposed_asn=module.params['asn'],
@@ -764,7 +761,7 @@ def main():
                 proposed[key] = value
 
     candidate = CustomNetworkConfig(indent=3)
-    if state == 'present':
+    if (state == 'present') or (state == 'strict'):
         state_present(module, existing, proposed, candidate)
     elif state == 'absent' and existing:
         state_absent(module, candidate)
