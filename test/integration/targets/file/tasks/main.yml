@@ -520,6 +520,53 @@
     that:
     - result.mode == '0444'
 
+# https://github.com/ansible/ansible/issues/67307
+# Test the module fails in check_mode when directory and owner/group do not exist
+- name: owner does not exist in check_mode
+  file:
+    path: /nonexistent
+    owner: nonexistent
+  check_mode: yes
+  ignore_errors:
+  register: owner_no_exist
+
+- name: owner does not exist in check_mode, using uid
+  file:
+    path: /nonexistent
+    owner: 1111111
+  check_mode: yes
+  ignore_errors:
+  register: owner_uid_no_exist
+
+- name: group does not exist in check_mode
+  file:
+    path: /nonexistent
+    state: directory
+    group: nonexistent
+  check_mode: yes
+  ignore_errors:
+  register: group_no_exist
+
+- name: group does not exist in check_mode, using gid
+  file:
+    path: /nonexistent
+    state: directory
+    group: nonexistent
+  check_mode: yes
+  ignore_errors:
+  register: group_gid_no_exist
+
+- assert:
+    that:
+    - owner_no_exist is failed
+    - owner_no_exist.msg is search('failed to look up user')
+    - owner_uid_no_exist is failed
+    - owner_uid_no_exist is search('failed to look up user with uid')
+    - group_no_exist is failed
+    - group_no_exist.msg is search('failed to look up group')
+    - group_gid_no_exist is failed
+    - group_gid_no_exist.msg is search('failed to look up group with gid')
+
 # https://github.com/ansible/ansible/issues/50943
 # Need to use /tmp as nobody can't access output_dir at all
 - name: create file as root with all write permissions
