@@ -271,9 +271,12 @@ class Connection(ConnectionBase):
 
             Can revisit using $HOME instead if it's a problem
         '''
-        if not remote_path.startswith(os.path.sep):
-            remote_path = os.path.join(os.path.sep, remote_path)
-        return os.path.normpath(remote_path)
+        if getattr(self._shell, "_IS_WINDOWS", False):
+            return os.path.normpath(remote_path)
+        else:
+            if not remote_path.startswith(os.path.sep):
+                remote_path = os.path.join(os.path.sep, remote_path)
+            return os.path.normpath(remote_path)
 
     def put_file(self, in_path, out_path):
         """ Transfer a file from local to docker container """
