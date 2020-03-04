@@ -304,3 +304,24 @@
   assert:
     that:
       - cluster is not changed
+
+- name: cleanup pod
+  cs_pod:
+    name: "{{ cs_resource_prefix }}-pod"
+    zone: "{{ cs_resource_prefix }}-zone"
+    state: absent
+  register: pod
+- name: verify cleanup pod
+  assert:
+    that:
+      - pod is successful
+
+- name: cleanup zone
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    state: absent
+  register: zone
+- name: verify cleanup zone
+  assert:
+    that:
+      - zone is successful
