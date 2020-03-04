@@ -64,7 +64,7 @@ options:
           - Replace existing packages with explicit other versions.
         type: bool
         default: 'no'
-        version_added: "X.X"
+        version_added: "2.10"
     quick:
         description:
           - Replace or delete packages quickly; do not bother with checksums
