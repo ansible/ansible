@@ -331,7 +331,7 @@ options:
       driver_config:
         description:
           - Volume driver configuration.
-          - Can only be used when I(mode) is C(volume).
+          - Can only be used when I(type) is C(volume).
         suboptions:
           name:
             description:
