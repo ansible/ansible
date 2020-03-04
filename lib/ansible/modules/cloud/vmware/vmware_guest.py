@@ -364,7 +364,7 @@ options:
     - ' - C(hwclockUTC) (bool): Specifies whether the hardware clock is in UTC or local time.
           True when the hardware clock is in UTC, False when the hardware clock is in local time. version_added: 2.9'
     - 'Parameters related to Windows customization:'
-    - ' - C(autologon) (bool): Auto logon after virtual machine customization (default: False).'
+    - ' - C(autologon) (bool): Auto logon after virtual machine customization (default: False). Requires (password).'
     - ' - C(autologoncount) (int): Number of autologon after reboot (default: 1).'
     - ' - C(domainadmin) (string): User used to join in AD domain (mandatory with C(joindomain)).'
     - ' - C(domainadminpassword) (string): Password used to join in AD domain (mandatory with C(joindomain)).'
