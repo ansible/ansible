@@ -17,6 +17,12 @@ provider="${P:-default}"
 if [ -f lib/ansible/config/routing.yml ]; then
     # this option is only useful for ansible/ansible (not collections) and should not be used prior to migration (except for incidental tests)
     enable_test_support=--enable-test-support
+
+    if ! ansible-test windows-integration "${target}" --list-targets > /dev/null 2>&1; then
+        # allow tests to pass when windows groups do not exist after migration, making preparation for migration easier
+        echo "Nothing to do since there are no tests after migration for: ${target}"
+        exit
+    fi
 fi
 
 # python versions to test in order
