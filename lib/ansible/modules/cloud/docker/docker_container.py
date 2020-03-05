@@ -369,7 +369,7 @@ options:
     type: str
   keep_volumes:
     description:
-      - Retain volumes associated with a removed container.
+      - Retain anonymous volumes associated with a removed container.
     type: bool
     default: yes
   kill_signal:
@@ -738,7 +738,7 @@ options:
   state:
     description:
       - 'C(absent) - A container matching the specified name will be stopped and removed. Use I(force_kill) to kill the container
-         rather than stopping it. Use I(keep_volumes) to retain volumes associated with the removed container.'
+         rather than stopping it. Use I(keep_volumes) to retain anonymous volumes associated with the removed container.'
       - 'C(present) - Asserts the existence of a container matching the name and any provided configuration parameters. If no
         container matches the name, a container will be created. If a container matches the name but the provided configuration
         does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed and re-created
@@ -751,8 +751,8 @@ options:
         image version will be taken into account, you can also use the I(ignore_image) option.
       - Use the I(recreate) option to always force re-creation of a matching container, even if it is running.
       - If the container should be killed instead of stopped in case it needs to be stopped for recreation, or because I(state) is
-        C(stopped), please use the I(force_kill) option. Use I(keep_volumes) to retain volumes associated with a removed container.
-      - Use I(keep_volumes) to retain volumes associated with a removed container.
+        C(stopped), please use the I(force_kill) option. Use I(keep_volumes) to retain anonymous volumes associated with a removed container.
+      - Use I(keep_volumes) to retain anonymous volumes associated with a removed container.
     type: str
     default: started
     choices:
