@@ -62,12 +62,12 @@ options:
     type: bool
   src:
     description:
-    - Source location of file (may be local machine or cloud depending on action).
+    - Source location of file (may be local machine or cloud depending on action). Google Cloud locations need to be urlencoded including the slashes.
     required: false
     type: path
   dest:
     description:
-    - Destination location of file (may be local machine or cloud depending on action).
+    - Destination location of file (may be local machine or cloud depending on action). Google Cloud locations need to be urlencoded including the slashes.
     required: false
     type: path
   bucket:
@@ -125,6 +125,18 @@ EXAMPLES = '''
     auth_kind: serviceaccount
     service_account_file: "/tmp/auth.pem"
     state: present
+    
+- name: download an object not in the root of the bucket
+  gcp_storage_object:
+    action: download
+    bucket: ansible-bucket
+    src: "{{ 'some-folder/modules.zip'| urlencode|replace('/','%2f') }}"
+    dest: "~/modules.zip"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
+
 '''
 
 RETURN = '''
