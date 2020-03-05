@@ -2030,3 +2030,15 @@ releases:
     - v2.8.8_summary.yaml
     - yum-enable-missing-repo.yaml
     release_date: '2020-01-15'
+  2.8.9:
+    codename: How Many More Times
+    fragments:
+    - 62062-os_network-openstacksdk-min.yml
+    - 66914-purefa_user_string.yaml
+    - 66974-mysql_user_doesnt_support_privs_with_underscore.yml
+    - 67515-openssl-fingerprint-fips.yml
+    - ansible-test-constraints-virtualenv.yml
+    - ansible-test-jinja2-python-2.6.yml
+    - v2.8.9_summary.yaml
+    - win_unzip-paths.yaml
+    release_date: '2020-03-04'

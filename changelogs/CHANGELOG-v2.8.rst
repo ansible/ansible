@@ -5,6 +5,27 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.9
+======
+
+Release Summary
+---------------
+
+| Release Date: 2020-03-04
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Bump the minimum openstacksdk version to 0.18.0 when os_network uses the port_security_enabled argument.
+- ansible-test - Use ``virtualenv`` versions before 20 on provisioned macOS instances to remain compatible with an older pip install.
+- ansible-test now limits Jinja2 installs to version 2.10 and earlier on Python 2.6
+- mysql_user - fix support privileges with underscore (https://github.com/ansible/ansible/issues/66974).
+- openssl_* modules - prevent crash on fingerprint determination in FIPS mode (https://github.com/ansible/ansible/issues/67213).
+- pure - fix incorrect user_string setting in module_utils file (https://github.com/ansible/ansible/pull/66914)
+- win_unzip - Fix support for paths with square brackets not being detected properly
+
 v2.8.8
 ======
 
