@@ -10,7 +10,7 @@ __metaclass__ = type
 import re
 import pytest
 
-from .test_play_context import parser, reset_cli_args
+from ...playbook.test_play_context import parser, reset_cli_args
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
@@ -21,15 +21,15 @@ from ansible.plugins.loader import become_loader
 from ansible.utils import context_objects as co
 
 
-def test_play_context_make_become_cmd_sudo(mocker, parser, reset_cli_args):
+def test_pfexec(mocker, parser, reset_cli_args):
     options = parser.parse_args([])
     context._init_global_context(options)
     play_context = PlayContext()
 
     default_cmd = "/bin/foo"
     default_exe = "/bin/bash"
-    sudo_exe = 'sudo'
-    sudo_flags = '-H -s -n'
+    pfexec_exe = 'pfexec'
+    pfexec_flags = ''
 
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
     assert cmd == default_cmd
@@ -38,15 +38,8 @@ def test_play_context_make_become_cmd_sudo(mocker, parser, reset_cli_args):
 
     play_context.become = True
     play_context.become_user = 'foo'
-    play_context.set_become_plugin(become_loader.get('sudo'))
-    play_context.become_flags = sudo_flags
+    play_context.set_become_plugin(become_loader.get('pfexec'))
+    play_context.become_method = 'pfexec'
+    play_context.become_flags = pfexec_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
-
-    assert (re.match("""%s %s  -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags, play_context.become_user,
-                                                               default_exe, success, default_cmd), cmd) is not None)
-
-    play_context.become_pass = 'testpass'
-    cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
-    assert (re.match("""%s %s -p "%s" -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags.replace('-n', ''),
-                                                                      r"\[sudo via ansible, key=.+?\] password:", play_context.become_user,
-                                                                      default_exe, success, default_cmd), cmd) is not None)
+    assert re.match('''%s %s "'echo %s; %s'"''' % (pfexec_exe, pfexec_flags, success, default_cmd), cmd) is not None
