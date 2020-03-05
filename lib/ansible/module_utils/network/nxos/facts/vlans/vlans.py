@@ -134,7 +134,7 @@ class VlansFacts(object):
           and adds a 'run_cfg' key containing raw cli from the device.
         """
         # device output may be string, convert to list
-        structured = ast.literal_eval(str(structured))
+        structured = json.loads(structured)
 
         vlanbrief = []
         mtuinfo = []
