@@ -329,7 +329,11 @@ class Connection(ConnectionBase):
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.communicate()
 
-        actual_out_path = os.path.join(out_dir, os.path.basename(in_path))
+        if getattr(self._shell, "_IS_WINDOWS", False):
+            import ntpath
+            actual_out_path = os.path.join(out_dir, ntpath.basename(in_path))
+        else:
+            actual_out_path = os.path.join(out_dir, os.path.basename(in_path))
 
         if p.returncode != 0:
             # Older docker doesn't have native support for fetching files command `cp`
