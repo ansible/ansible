@@ -20,6 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from io import StringIO
 import sys
 import pytest
 
@@ -53,6 +54,15 @@ else:
 
 
 class TestNetconfConnectionClass(unittest.TestCase):
+
+    def test_netconf_connection_module(self):
+        play_context = PlayContext()
+        play_context.prompt = (
+            '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
+        )
+        in_stream = StringIO()
+
+        self.assertIsInstance(netconf.Connection(play_context, in_stream), netconf.Connection)
 
     def test_netconf_init(self):
         pc = PlayContext()
