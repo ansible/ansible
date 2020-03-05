@@ -96,6 +96,7 @@ options:
               - C(CONFIGURE_TOTP), user must configure a one-time password generator on their mobile
                 device using either the Free OTP or Google Authenticator application.
         choices: [ UPDATE_PROFILE, VERIFY_EMAIL, UPDATE_PASSWORD, CONFIGURE_TOTP ]
+        elements: str
         aliases: [ requiredActions ]
         type: list
 
