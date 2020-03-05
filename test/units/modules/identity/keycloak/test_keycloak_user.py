@@ -284,7 +284,7 @@ def test_state_absent_should_not_create_absent_user(monkeypatch, url_mock_keyclo
             'auth_username': 'test_admin',
             'auth_password': 'admin_password',
             'auth_realm': 'master',
-            'keycloak_username': 'to_not_add_user',
+            'user_username': 'to_not_add_user',
             'state': 'absent',
         }
     )
@@ -304,7 +304,7 @@ def test_state_present_should_create_absent_user(monkeypatch, url_mock_keycloak)
             'auth_username': 'test_admin',
             'auth_password': 'admin_password',
             'auth_realm': 'master',
-            'keycloak_username': 'to_add_user',
+            'user_username': 'to_add_user',
             'state': 'present',
         }
     )
@@ -316,7 +316,7 @@ def test_state_present_should_create_absent_user(monkeypatch, url_mock_keycloak)
 
 @pytest.mark.parametrize(
     'user_to_delete',
-    [{'keycloak_username': 'to_delete'}, {'user_id': '994eeb5e-62e1-4bb9-8cb7-667f53e62f01'}],
+    [{'user_username': 'to_delete'}, {'user_id': '994eeb5e-62e1-4bb9-8cb7-667f53e62f01'}],
     ids=['with name', 'with id'],
 )
 def test_state_absent_should_delete_existing_user(monkeypatch, url_mock_keycloak, user_to_delete):
@@ -339,15 +339,15 @@ def test_state_absent_should_delete_existing_user(monkeypatch, url_mock_keycloak
 
 @pytest.fixture(
     params=[
-        {'keycloak_username': 'user1'},
+        {'user_username': 'user1'},
         {'user_id': '883eeb5e-51d0-4aa9-8cb7-667f53e62e90'},
-        {'keycloak_username': 'UsEr1'},
+        {'user_username': 'UsEr1'},
     ],
     ids=['with name', 'with_id', 'name with upper case'],
 )
 def build_user_update_request(request):
     new_response_dictionary = RESPONSE_ADMIN_ONLY.copy()
-    if 'keycloak_username' in request.param.keys():
+    if 'user_username' in request.param.keys():
         new_response_dictionary.update(
             {
                 'http://keycloak.url/auth/admin/realms/master/users/883eeb5e-51d0-4aa9-8cb7-667f53e62e90': {
@@ -424,7 +424,7 @@ def test_wrong_attributes_type_should_raise_an_error(
         'auth_username': 'test_admin',
         'auth_password': 'admin_password',
         'auth_realm': 'master',
-        'keycloak_username': 'user1',
+        'user_username': 'user1',
         'attributes': wrong_attributes,
     }
     set_module_args(arguments)
@@ -465,7 +465,7 @@ def test_correct_attributes_type_should_pass(monkeypatch, url_for_fake_update):
         'auth_username': 'test_admin',
         'auth_password': 'admin_password',
         'auth_realm': 'master',
-        'keycloak_username': 'user1',
+        'user_username': 'user1',
         'attributes': {'int': 1, 'str': ['some text'], 'float': 0.1, 'bool': True},
         'required_actions': [
             'CONFIGURE_TOTP',
@@ -516,7 +516,7 @@ def test_reset_password_should_call_some_url(monkeypatch, url_for_password_updat
         'auth_username': 'test_admin',
         'auth_password': 'admin_password',
         'auth_realm': 'master',
-        'keycloak_username': user_name,
+        'user_username': user_name,
         'user_password': 'password',
     }
     set_module_args(arguments)

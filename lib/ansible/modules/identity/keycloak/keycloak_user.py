@@ -59,7 +59,7 @@ options:
         aliases: [ userId ]
         type: str
 
-    keycloak_username:
+    user_username:
         description:
             - username of user to be worked on. This and I(user_id) are mutually exclusive.
             - keycloak lower the username
@@ -135,7 +135,7 @@ EXAMPLES = '''
     auth_realm: master
     auth_username: admin_test
     auth_password: admin_password
-    keycloak_username: userTest1
+    user_username: userTest1
 - name: Delete previous user
   keycloak_user:
     auth_client_id: admin-cli
@@ -143,7 +143,7 @@ EXAMPLES = '''
     auth_realm: master
     auth_username: admin_test
     auth_password: admin_password
-    keycloak_username: userTest1
+    user_username: userTest1
     state: absent
 - name: Update keycloak user with all options
   keycloak_user:
@@ -152,7 +152,7 @@ EXAMPLES = '''
     auth_realm: master
     auth_username: admin_test
     auth_password: admin_password
-    keycloak_username: userTest1
+    user_username: userTest1
     email_verified: yes
     enabled: yes
     email: userTest@domain.org
@@ -276,7 +276,7 @@ class KeycloakUser(object):
             url=self.module.params.get('auth_keycloak_url'),
             realm=quote(self.module.params.get('realm')),
         ) + '?username={username}'.format(
-            username=self.module.params.get('keycloak_username').lower()
+            username=self.module.params.get('user_username').lower()
         )
 
     def get_user(self):
@@ -289,7 +289,7 @@ class KeycloakUser(object):
         if json_user:
             if self.uuid:
                 return json_user
-            user_name = self.module.params.get('keycloak_username').lower()
+            user_name = self.module.params.get('user_username').lower()
             if user_name:
                 for one_user in json_user:
                     if user_name == one_user['username']:
@@ -303,8 +303,8 @@ class KeycloakUser(object):
         :return the asked id given by the user as a name or an uuid.
         :rtype: str
         """
-        if self.module.params.get('keycloak_username'):
-            return self.module.params.get('keycloak_username')
+        if self.module.params.get('user_username'):
+            return self.module.params.get('user_username')
         return self.module.params.get('user_id')
 
     @property
@@ -402,7 +402,7 @@ class KeycloakUser(object):
                 new_param_value = new_attributes
             if user_param == 'user_id':
                 payload['id'] = new_param_value
-            elif user_param == 'keycloak_username':
+            elif user_param == 'user_username':
                 payload['username'] = new_param_value
             else:
                 payload[camel(user_param)] = new_param_value
@@ -420,7 +420,7 @@ def run_module():
     meta_args = dict(
         state=dict(default='present', choices=['present', 'absent']),
         realm=dict(default='master'),
-        keycloak_username=dict(type='str', aliases=['keycloakUsername']),
+        user_username=dict(type='str', aliases=['keycloakUsername']),
         user_id=dict(type='str', aliases=['userId']),
         email_verified=dict(type='bool', aliases=['emailVerified']),
         enabled=dict(type='bool'),
@@ -439,8 +439,8 @@ def run_module():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_one_of=([['keycloak_username', 'user_id']]),
-        mutually_exclusive=[['keycloak_username', 'user_id']],
+        required_one_of=([['user_username', 'user_id']]),
+        mutually_exclusive=[['user_username', 'user_id']],
     )
 
     try:
