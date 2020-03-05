@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix ``TypeError`` in OpenStack modules introduced in Ansible 2.8.9 (https://github.com/ansible/ansible/pull/68043).
