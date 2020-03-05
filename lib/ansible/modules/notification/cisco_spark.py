@@ -19,7 +19,7 @@ module: cisco_spark
 short_description: Send a message to a Cisco Webex Teams Room or Individual.
 description:
     - Send a message to a Cisco Webex Teams Room or Individual with options to control the formatting.
-version_added: "2.10"
+version_added: "2.3"
 author: Drew Rusell (@drew-russell)
 notes:
   - The C(recipient_id) type must be valid for the supplied C(recipient_id).
