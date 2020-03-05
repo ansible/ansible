@@ -431,7 +431,10 @@ def run_module():
         first_name=dict(type='str', aliases=['firstName']),
         last_name=dict(type='str', aliases=['lastName']),
         required_actions=dict(
-            type='list', aliases=['requiredActions'], choices=AUTHORIZED_REQUIRED_ACTIONS
+            type='list',
+            elements='str',
+            aliases=['requiredActions'],
+            choices=AUTHORIZED_REQUIRED_ACTIONS
         ),
         user_password=dict(type='str', aliases=['userPassword']),
     )
