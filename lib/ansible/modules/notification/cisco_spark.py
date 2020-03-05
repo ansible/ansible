@@ -176,7 +176,7 @@ def main():
             message_type=dict(required=False, default=['text'], aliases=[
                               'type'], choices=['text', 'markdown']),
             personal_token=dict(required=True, no_log=True, aliases=['token']),
-            send_message=dict(required=True)
+            send_message=dict(type='str', required=True, aliases=['message'], deprecated_aliases=[dict(name='message', version='2.14')]),
 
         ),
 
