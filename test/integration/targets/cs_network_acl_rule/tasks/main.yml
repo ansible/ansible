@@ -546,3 +546,8 @@
     - acl_rule.icmp_type == 0
     - acl_rule.icmp_code == 8
     - acl_rule.rule_position == 2
+- name: cleanup vpc
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent

@@ -181,3 +181,15 @@
     - router is changed
     - router.state == "Running"
     - router.service_offering == "System Offering For Software Router"
+
+- name: cleanup instance
+  cs_instance:
+    name: "instance-vm"
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
+
+- name: cleanup network
+  cs_network:
+    name: "net_router"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent

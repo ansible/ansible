@@ -47,6 +47,11 @@
     that:
     - reset2 is failed
     - reset2.msg.endswith("the template is not password enabled'")
+- name: cleanup test VM
+  cs_instance:
+    name: test-nopassword
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
 
 - name: enable password_enabled on default template
   cs_template:
@@ -83,3 +88,8 @@
     that:
     - reset3 is success
     - reset3.password != ''
+- name: cleanup test VM
+  cs_instance:
+    name: test-password
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged

@@ -106,3 +106,9 @@
     that:
     - vpn_gateway is successful
     - vpn_gateway is not changed
+
+- name: cleanup vpc
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent

@@ -71,3 +71,8 @@
       - '"securitygroups_enabled" in zone.zones[0]'
       - '"dhcp_provider" in zone.zones[0]'
       - '"local_storage_enabled" in zone.zones[0]'
+
+- name: cleanup the zone
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    state: absent

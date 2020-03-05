@@ -299,3 +299,8 @@
   assert:
     that:
       - pod is not changed
+
+- name: cleanup zone
+  cs_zone:
+    name: "{{ zone.name }}"
+    state: absent

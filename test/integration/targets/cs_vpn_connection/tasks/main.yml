@@ -203,3 +203,9 @@
   assert:
     that:
     - vpn_conn is successful
+
+- name: cleanup vpc
+  cs_vpc:
+    name: my_vpc
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
