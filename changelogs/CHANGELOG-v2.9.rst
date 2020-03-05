@@ -5,6 +5,66 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.6
+======
+
+Release Summary
+---------------
+
+| Release Date: 2020-03-04
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Fix URL in postgresql_table documentation.
+- Refator net_base action plugin to support collection with network platform agnostic modules.
+- docker connection plugin - run Powershell modules on Windows containers.
+- ovirt_disk: correct description of storage_domain, there is no default value of the attribute
+- ovirt_vm: remove deprecated warning of Linux boot parameters
+
+Bugfixes
+--------
+
+- Bump the minimum openstacksdk version to 0.18.0 when os_network uses the port_security_enabled or mtu arguments.
+- Fix Python3 compatibility for vmware_export_ovf module.
+- Fix a bug when a host was not removed from a play after ``meta: end_host`` and as a result the host was still present in ``ansible_play_hosts`` and ``ansible_play_batch`` variables.
+- Fix collection install error that happened if a dependency specified dependencies to be null (https://github.com/ansible/ansible/issues/67574).
+- Fix examples in eos_vlans (https://github.com/ansible/ansible/pull/66131).
+- Templating - Ansible was caching results of Jinja2 expressions in some cases where these expressions could have dynamic results, like password generation (https://github.com/ansible/ansible/issues/34144).
+- Update the warning message for ``CONDITIONAL_BARE_VARS`` to list the original conditional not the value of the original conditional (https://github.com/ansible/ansible/issues/67735)
+- Use hostnamectl command to get current hostname for host while using systemd strategy (https://github.com/ansible/ansible/issues/59438).
+- also strip spaces around config values in pathlist as we do in list types
+- ansible-galaxy - Display proper error when invalid token is used for Galaxy servers
+- ansible-galaxy - Fix issue when compared installed dependencies with a collection having no ``MANIFEST.json`` or an empty version string in the json
+- ansible-galaxy - Fix up pagination searcher for collection versions on Automation Hub
+- ansible-galaxy - Remove uneeded verbose messages when accessing local token file
+- ansible-galaxy - Send SHA256 hashes when publishing a collection
+- ansible-galaxy - properly list roles when the role name also happens to be in the role path (https://github.com/ansible/ansible/issues/67365)
+- ansible-test validate-modules - Fix arg spec collector for PowerShell to find utils in both a collection and base.
+- azure_rm_resourcegroup_facts - adds the ansible_facts as a sub map to fix the KeyError (https://github.com/ansible/ansible/issues/66727).
+- docker_login - make sure that ``~/.docker/config.json`` is created with permissions ``0600``.
+- ec2_asg - regression bug, when an existing autoscaling group was updated and but the launch config of existing instances was deleted.
+- fix the bug where IOS vlans module throws traceback. (ref: https://github.com/ansible/ansible/pull/64633)
+- fixes the eos_vlans repalced state behavior to configure the 'name' parameter(https://github.com/ansible/ansible/pull/67318)
+- get_certificate - Fix cryptography backend when pyopenssl is unavailable (https://github.com/ansible/ansible/issues/67900)
+- make ``no_log=False`` on a module option silence the ``no_log`` warning (https://github.com/ansible/ansible/issues/49465 https://github.com/ansible/ansible/issues/64656)
+- mysql_db - fix bug in the ``db_import`` function introduced by https://github.com/ansible/ansible/pull/56721 (https://github.com/ansible/ansible/issues/65351).
+- nxos_vlans -  Allow nxos_l2_interfaces to append the allowed vlans list
+- openssl_* modules - prevent crash on fingerprint determination in FIPS mode (https://github.com/ansible/ansible/issues/67213).
+- ovirt_vm: correct keyError for iSCSI parameters
+- ovirt_vm: correct numa nodes and update documentation
+- plugins - Allow ensure_type to decrypt the value for string types (and implicit string types) when value is an inline vault.
+- proxysql - fixed mysql dictcursor
+- route53 - improve handling of octal encoded characters
+- synchronize - allow data to be passed between two managed nodes when using the docker connection plugin (https://github.com/ansible/ansible/pull/65698)
+- unixy - fixed duplicate log entries on loops
+- vmware_host_firewall_manager - Fixed creating IP specific firewall rules with Python 2 (https://github.com/ansible/ansible/issues/67303)
+- vultr - Fixed the issue retry max delay param was ignored.
+- win_credential - Fix issue that errors when trying to add a ``name`` with wildcards.
+- win_unzip - Fix support for paths with square brackets not being detected properly
+
 v2.9.5
 ======
 
@@ -33,6 +93,7 @@ Bugfixes
 
 - AnsibleModule.run_command() - set ``close_fds`` to ``False`` on Python 2 if ``pass_fds`` are passed to ``run_command()``. Since ``subprocess.Popen()`` on Python 2 does not have the ``pass_fds`` option, there is no way to exclude a specific list of file descriptors from being closed.
 
+- Bump the minimum openstacksdk version to 0.29.0 when os_network uses the dns_domain argument
 - Fix multiple issues with nxos_interfaces states (https://github.com/ansible/ansible/pull/63960/).
 - Module arguments in suboptions which were marked as deprecated with ``removed_in_version`` did not result in a warning.
 - Redact GitLab Project variables which might include sensetive information such as password, api_keys and other project related details.
@@ -40,7 +101,6 @@ Bugfixes
 - ansible-test - Use ``virtualenv`` versions before 20 on provisioned macOS instances to remain compatible with an older pip install.
 - ansible-test now limits Jinja2 installs to version 2.10 and earlier on Python 2.6
 - ansible-test windows coverage - Ensure coverage reports are UTF-8 encoded without a BOM
-- bump the minimum openstacksdk version when os_network uses the dns_domain argument
 - display - remove extra new line after warnings (https://github.com/ansible/ansible/pull/65199)
 - dnf - Fix idempotence of `state: installed` (https://github.com/ansible/ansible/issues/64963)
 - docker_container - passing ``test: [NONE]`` now actually disables the image's healthcheck, as documented.
