@@ -428,7 +428,7 @@ def test_wrong_attributes_type_should_raise_an_error(
     ansible_failed_json = exec_error.value.args[0]
     assert ansible_failed_json['msg'] == (
         'Attributes are not in the correct format. Should be a dictionary with'
-        ' one value per key as string, integer and boolean'
+        ' one value or a list of value per key as string, integer and boolean'
     )
 
 

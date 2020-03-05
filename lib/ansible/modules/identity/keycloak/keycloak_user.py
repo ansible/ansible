@@ -224,7 +224,7 @@ class KeycloakUser(object):
             self.module.fail_json(
                 msg=(
                     'Attributes are not in the correct format. Should be a dictionary with '
-                    'one value per key as string, integer and boolean'
+                    'one value or a list of value per key as string, integer and boolean'
                 )
             )
         self.new_password = self.module.params.get('user_password')
