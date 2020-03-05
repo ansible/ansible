@@ -8,17 +8,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-import pytest
 
-from ...playbook.test_play_context import parser, reset_cli_args
-from ansible import constants as C
 from ansible import context
-from ansible.cli.arguments import option_helpers as opt_help
-from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
-from ansible.playbook.play import Play
 from ansible.plugins.loader import become_loader
-from ansible.utils import context_objects as co
 
 
 def test_pbrun(mocker, parser, reset_cli_args):
