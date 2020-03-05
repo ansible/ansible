@@ -406,13 +406,8 @@ def test_state_present_should_update_existing_user(monkeypatch, dynamic_url_for_
 
 @pytest.mark.parametrize(
     'wrong_attributes',
-    [
-        {'list1': ['a', 'b', 'c']},
-        {'list2': [['a', 2, 3]]},
-        {'dict1': {'a': 2}},
-        {'list3': [[['a']]]},
-    ],
-    ids=['too long list', 'list into a list', 'dictionary as value', 'list russian doll'],
+    [{'list2': [['a', 2, 3]]}, {'dict1': {'a': 2}}, {'list3': [[['a']]]},],
+    ids=['list into a list', 'dictionary as value', 'list russian doll'],
 )
 def test_wrong_attributes_type_should_raise_an_error(
     monkeypatch, wrong_attributes, url_mock_keycloak
@@ -455,7 +450,7 @@ def url_for_fake_update(mocker):
     )
 
 
-def test_correct_attributes_type_should_pass(monkeypatch, url_for_fake_update):
+def test_correct_attributes_type_should_pass(monkeypatch):  # , url_for_fake_update):
     """This test only check that accepted types don't raised errors.
     There is no check on the returned values."""
     monkeypatch.setattr(keycloak_user.AnsibleModule, 'exit_json', exit_json)
@@ -466,7 +461,13 @@ def test_correct_attributes_type_should_pass(monkeypatch, url_for_fake_update):
         'auth_password': 'admin_password',
         'auth_realm': 'master',
         'user_username': 'user1',
-        'attributes': {'int': 1, 'str': ['some text'], 'float': 0.1, 'bool': True},
+        'attributes': {
+            'int': 1,
+            'str': ['some text'],
+            'float': 0.1,
+            'bool': True,
+            'list': ['a', 1, 2],
+        },
         'required_actions': [
             'CONFIGURE_TOTP',
             'UPDATE_PASSWORD',

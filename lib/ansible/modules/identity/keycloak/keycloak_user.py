@@ -253,8 +253,9 @@ class KeycloakUser(object):
 
     def attribute_as_list_format_is_correct(self, one_value, first_call=True):
         if isinstance(one_value, list) and first_call:
-            if len(one_value) > 1:
-                return False
+            for one_element in one_value:
+                if not self.attribute_as_list_format_is_correct(one_element, False):
+                    return False
             return self.attribute_as_list_format_is_correct(one_value[0], False)
         else:
             if not isinstance(one_value, AUTHORIZED_ATTRIBUTE_VALUE_TYPE):
