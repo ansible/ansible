@@ -719,6 +719,7 @@ class DocumentPlugins(Command):
         if not args.template_dir:
             args.template_dir = ["hacking/templates"]
         validate_options(args)
+        args.module_dir = os.path.normpath(args.module_dir)
         display.verbosity = args.verbosity
         plugin_type = args.plugin_type
 
