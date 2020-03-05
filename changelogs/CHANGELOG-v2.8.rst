@@ -5,6 +5,21 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.10
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2020-03-05
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Fix ``TypeError`` in OpenStack modules introduced in Ansible 2.8.9 (https://github.com/ansible/ansible/pull/68043).
+
 v2.8.9
 ======
 

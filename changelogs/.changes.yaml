@@ -1627,6 +1627,12 @@ releases:
     - win_acl-network.yaml
     - winrm-input-failures.yaml
     release_date: '2019-06-06'
+  2.8.10:
+    codename: How Many More Times
+    fragments:
+    - openstack-regression.yml
+    - v2.8.10_summary.yaml
+    release_date: '2020-03-05'
   2.8.2:
     codename: How Many More Times
     fragments:
