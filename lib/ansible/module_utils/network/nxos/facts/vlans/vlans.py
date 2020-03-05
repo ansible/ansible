@@ -135,6 +135,8 @@ class VlansFacts(object):
         """
         # device output may be string, convert to list
         structured = json.loads(structured)
+        structured = ast.literal_eval(str(structured))
+
 
         vlanbrief = []
         mtuinfo = []
