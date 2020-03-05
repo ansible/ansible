@@ -60,6 +60,7 @@ Many of our community `Working Groups <https://github.com/ansible/community/wiki
 - `Documentation Working Group <https://github.com/ansible/community/wiki/Docs>`_- ``#ansible-docs``
 - `Galaxy Working Group <https://github.com/ansible/community/wiki/Galaxy>`_ - ``#ansible-galaxy``
 - `JBoss Working Group <https://github.com/ansible/community/wiki/JBoss>`_ - ``#ansible-jboss``
+- `Kubernetes Working Group <https://github.com/ansible/community/wiki/Kubernetes>`_ - ``#ansible-kubernetes``
 - `Lightbulb Training <https://github.com/ansible/lightbulb>`_ - ``#ansible-lightbulb`` - Ansible training
 - `Linode Working Group <https://github.com/ansible/community/wiki/Linode>`_ - ``#ansible-linode``
 - `Molecule Working Group <https://github.com/ansible/community/wiki/Molecule>`_ | `molecule.io <https://molecule.readthedocs.io>`_ - ``#ansible-molecule`` - testing platform for Ansible playbooks and roles
