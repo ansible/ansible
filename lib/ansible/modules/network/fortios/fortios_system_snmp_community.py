@@ -425,17 +425,17 @@ def fortios_system_snmp(data, fos):
 def validate_events(data):
 
     events_set = set(["cpu-high", "mem-low", "log-full", "intf-ip",
-                  "vpn-tun-up", "vpn-tun-down", "ha-switch",
-                  "ha-hb-failure", "ips-signature", "ips-anomaly",
-                  "av-virus", "av-oversize", "av-pattern",
-                  "av-fragmented", "fm-if-change", "fm-conf-change",
-                  "bgp-established", "bgp-backward-transition",
-                  "ha-member-up", "ha-member-down", "ent-conf-change",
-                  "av-conserve", "av-bypass", "av-oversize-passed",
-                  "av-oversize-blocked", "ips-pkg-update", "ips-fail-open",
-                  "faz-disconnect", "wc-ap-up", "wc-ap-down",
-                  "fswctl-session-up", "fswctl-session-down", "load-balance-real-server-down",
-                  "device-new", "per-cpu-high"])
+                      "vpn-tun-up", "vpn-tun-down", "ha-switch",
+                      "ha-hb-failure", "ips-signature", "ips-anomaly",
+                      "av-virus", "av-oversize", "av-pattern",
+                      "av-fragmented", "fm-if-change", "fm-conf-change",
+                      "bgp-established", "bgp-backward-transition",
+                      "ha-member-up", "ha-member-down", "ent-conf-change",
+                      "av-conserve", "av-bypass", "av-oversize-passed",
+                      "av-oversize-blocked", "ips-pkg-update", "ips-fail-open",
+                      "faz-disconnect", "wc-ap-up", "wc-ap-down",
+                      "fswctl-session-up", "fswctl-session-down", "load-balance-real-server-down",
+                      "device-new", "per-cpu-high"])
     # check if the current events is a subset of the events_set
     curr_events_str = data['system_snmp_community']['events']
     if curr_events_str is None:
