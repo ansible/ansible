@@ -256,7 +256,7 @@ class FortiManagerHandler(object):
                     failed = False
                 if stop_on_fail:
                     module.exit_json(msg=msg, failed=failed, changed=changed, unreachable=unreachable, skipped=skipped,
-                                     results=results[1], ansible_facts=ansible_facts, rc=results[0],
+                                     ansible_module_results=results[1], ansible_facts=ansible_facts, rc=results[0],
                                      invocation={"module_args": ansible_facts["ansible_params"]})
             elif success:
                 if changed_if_success:
@@ -264,7 +264,7 @@ class FortiManagerHandler(object):
                     success = False
                 if stop_on_success:
                     module.exit_json(msg=msg, success=success, changed=changed, unreachable=unreachable,
-                                     skipped=skipped, results=results[1], ansible_facts=ansible_facts, rc=results[0],
+                                     skipped=skipped, ansible_module_results=results[1], ansible_facts=ansible_facts, rc=results[0],
                                      invocation={"module_args": ansible_facts["ansible_params"]})
         return msg
 
