@@ -7,6 +7,7 @@ always: List of tasks, in a block, that execute no matter if there is an error i
 any_errors_fatal: Force any un-handled task errors on any host to propagate to all hosts and end the play.
 async: Run a task asynchronously if the C(action) supports this; value is maximum runtime in seconds.
 become: Boolean that controls if privilege escalation is used or not on :term:`Task` execution.
+become_exe: Path to the executable used to elevate privileges.
 become_flags: A string of flag(s) to pass to the privilege escalation program when :term:`become` is True.
 become_method: Which method of privilege escalation to use (such as sudo or su).
 become_user: "User that you 'become' after using privilege escalation. The remote/login user must have permissions to become this user."
@@ -16,6 +17,11 @@ check_mode: |
     A boolean that controls if a task is executed in 'check' mode
 
     .. seealso:: :ref:`check_mode_dry`
+
+collections: |
+    List of collection namespaces to search for modules.
+
+    .. sealso:: :ref:`using_collections_in_playbook:`
 
 connection: |
     Allows you to change the connection plugin used for tasks to execute on the target.
