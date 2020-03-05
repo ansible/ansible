@@ -450,7 +450,7 @@ def url_for_fake_update(mocker):
     )
 
 
-def test_correct_attributes_type_should_pass(monkeypatch):  # , url_for_fake_update):
+def test_correct_attributes_type_should_pass(monkeypatch , url_for_fake_update):
     """This test only check that accepted types don't raised errors.
     There is no check on the returned values."""
     monkeypatch.setattr(keycloak_user.AnsibleModule, 'exit_json', exit_json)
