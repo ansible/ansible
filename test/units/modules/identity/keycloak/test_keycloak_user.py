@@ -406,7 +406,7 @@ def test_state_present_should_update_existing_user(monkeypatch, dynamic_url_for_
 
 @pytest.mark.parametrize(
     'wrong_attributes',
-    [{'list2': [['a', 2, 3]]}, {'dict1': {'a': 2}}, {'list3': [[['a']]]},],
+    [{'list2': [['a', 2, 3]]}, {'dict1': {'a': 2}}, {'list3': [[['a']]]}],
     ids=['list into a list', 'dictionary as value', 'list russian doll'],
 )
 def test_wrong_attributes_type_should_raise_an_error(
@@ -450,7 +450,7 @@ def url_for_fake_update(mocker):
     )
 
 
-def test_correct_attributes_type_should_pass(monkeypatch , url_for_fake_update):
+def test_correct_attributes_type_should_pass(monkeypatch, url_for_fake_update):
     """This test only check that accepted types don't raised errors.
     There is no check on the returned values."""
     monkeypatch.setattr(keycloak_user.AnsibleModule, 'exit_json', exit_json)
