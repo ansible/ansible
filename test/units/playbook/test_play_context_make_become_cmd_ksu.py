@@ -41,6 +41,6 @@ def test_play_context_make_become_cmd_ksu(mocker, parser, reset_cli_args):
     play_context.set_become_plugin(become_loader.get('ksu'))
     play_context.become_method = 'ksu'
     play_context.become_flags = ksu_flags
-    cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+    cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
     assert (re.match("""%s %s %s -e %s -c 'echo %s; %s'""" % (ksu_exe, play_context.become_user, ksu_flags,
                                                               default_exe, success, default_cmd), cmd) is not None)

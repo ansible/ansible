@@ -42,6 +42,6 @@ def test_play_context_make_become_cmd_su(mocker, parser, reset_cli_args):
     play_context.become_method = 'su'
     play_context.set_become_plugin(become_loader.get('su'))
     play_context.become_flags = su_flags
-    cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+    cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
     assert (re.match("""%s  %s -c '%s -c '"'"'echo %s; %s'"'"''""" % (su_exe, play_context.become_user, default_exe,
                                                                       success, default_cmd), cmd) is not None)

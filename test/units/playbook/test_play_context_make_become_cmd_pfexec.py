@@ -41,5 +41,5 @@ def test_play_context_make_become_cmd_pfexec(mocker, parser, reset_cli_args):
     play_context.set_become_plugin(become_loader.get('pfexec'))
     play_context.become_method = 'pfexec'
     play_context.become_flags = pfexec_flags
-    cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+    cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
     assert re.match('''%s %s "'echo %s; %s'"''' % (pfexec_exe, pfexec_flags, success, default_cmd), cmd) is not None
