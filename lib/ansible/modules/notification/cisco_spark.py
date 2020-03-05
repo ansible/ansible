@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cisco_spark
-short_description: Send a message to a Cisco Webex Teams Room or Individual.
+short_description: Send a message to a Cisco Webex Teams (formerly known as Cisco Spark) Room or Individual.
 description:
     - Send a message to a Cisco Webex Teams Room or Individual with options to control the formatting.
 version_added: "2.3"
