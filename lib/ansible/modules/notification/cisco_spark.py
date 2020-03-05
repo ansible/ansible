@@ -109,6 +109,8 @@ send_message:
     description:
       - The Response Message returned by the Webex teams API.
       - Full Response Code explanations can be found at U(https://developer.webex.com/docs/api/v1/messages/create-a-message).
+      - C(message) alias is deprecated in Ansible 2.10 and will be removed in Ansible 2.14, since it is used internally by Ansible Core Engine. 
+    aliases: [ 'message' ]
     returned: always
     type: str
     sample: OK (585 bytes)
