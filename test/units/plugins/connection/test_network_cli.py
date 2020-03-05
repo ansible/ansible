@@ -20,6 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from io import StringIO
 import re
 import json
 
@@ -29,10 +30,21 @@ from units.compat.mock import patch, MagicMock
 from ansible.module_utils._text import to_text
 from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext
+from ansible.plugins.connection import network_cli
 from ansible.plugins.loader import connection_loader
 
 
 class TestConnectionClass(unittest.TestCase):
+
+    def test_network_cli_connection_module(self):
+        play_context = PlayContext()
+        play_context.prompt = (
+            '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
+        )
+        play_context.network_os = 'eos'
+        in_stream = StringIO()
+
+        self.assertIsInstance(network_cli.Connection(play_context, in_stream), network_cli.Connection)
 
     def test_network_cli__invalid_os(self):
         pc = PlayContext()
