@@ -155,6 +155,56 @@ options:
           - The password for retrieving the update image
         type: str
     version_added: "2.10"
+  virtual_media:
+    required: false
+    description:
+      - The options for VirtualMedia commands
+    type: dict
+    suboptions:
+      media_types:
+        required: false
+        description:
+          - The list of media types appropriate for the image
+        type: list
+        elements: str
+      image_url:
+        required: false
+        description:
+          - The URL od the image the insert or eject
+        type: str
+      inserted:
+        required: false
+        description:
+          - Indicates if the image is treated as inserted on command completion
+        type: bool
+        default: True
+      write_protected:
+        required: false
+        description:
+          - Indicates if the media is treated as write-protected
+        type: bool
+        default: True
+      username:
+        required: false
+        description:
+          - The username for accessing the image URL
+        type: str
+      password:
+        required: false
+        description:
+          - The password for accessing the image URL
+        type: str
+      transfer_protocol_type:
+        required: false
+        description:
+          - The network protocol to use with the image
+        type: str
+      transfer_method:
+        required: false
+        description:
+          - The transfer method to use with the image
+        type: str
+    version_added: "2.10"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -362,6 +412,31 @@ EXAMPLES = '''
       update_creds:
         username: operator
         password: supersecretpwd
+
+  - name: Insert Virtual Media
+    redfish_command:
+      category: Manager
+      command: VirtualMediaInsert
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      virtual_media:
+        image_url: 'http://example.com/images/SomeLinux-current.iso'
+        media_types:
+          - CD
+          - DVD
+      resource_id: BMC
+
+  - name: Eject Virtual Media
+    redfish_command:
+      category: Manager
+      command: VirtualMediaEject
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      virtual_media:
+        image_url: 'http://example.com/images/SomeLinux-current.iso'
+      resource_id: BMC
 '''
 
 RETURN = '''
@@ -386,7 +461,8 @@ CATEGORY_COMMANDS_ALL = {
                  "UpdateUserRole", "UpdateUserPassword", "UpdateUserName",
                  "UpdateAccountServiceProperties"],
     "Sessions": ["ClearSessions"],
-    "Manager": ["GracefulRestart", "ClearLogs"],
+    "Manager": ["GracefulRestart", "ClearLogs", "VirtualMediaInsert",
+                "VirtualMediaEject"],
     "Update": ["SimpleUpdate"]
 }
 
@@ -419,6 +495,19 @@ def main():
                 options=dict(
                     username=dict(),
                     password=dict()
+                )
+            ),
+            virtual_media=dict(
+                type='dict',
+                options=dict(
+                    media_types=dict(type='list', elements='str', default=[]),
+                    image_url=dict(),
+                    inserted=dict(type='bool', default=True),
+                    write_protected=dict(type='bool', default=True),
+                    username=dict(),
+                    password=dict(no_log=True),
+                    transfer_protocol_type=dict(),
+                    transfer_method=dict(),
                 )
             )
         ),
@@ -453,6 +542,9 @@ def main():
         'update_targets': module.params['update_targets'],
         'update_creds': module.params['update_creds']
     }
+
+    # VirtualMedia options
+    virtual_media = module.params['virtual_media']
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
@@ -532,18 +624,20 @@ def main():
                 result = rf_utils.clear_sessions()
 
     elif category == "Manager":
-        MANAGER_COMMANDS = {
-            "GracefulRestart": rf_utils.restart_manager_gracefully,
-            "ClearLogs": rf_utils.clear_logs
-        }
-
         # execute only if we find a Manager service resource
         result = rf_utils._find_managers_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
         for command in command_list:
-            result = MANAGER_COMMANDS[command]()
+            if command == 'GracefulRestart':
+                result = rf_utils.restart_manager_gracefully()
+            elif command == 'ClearLogs':
+                result = rf_utils.clear_logs()
+            elif command == 'VirtualMediaInsert':
+                result = rf_utils.virtual_media_insert(virtual_media)
+            elif command == 'VirtualMediaEject':
+                result = rf_utils.virtual_media_eject(virtual_media)
 
     elif category == "Update":
         # execute only if we find UpdateService resources

@@ -9,6 +9,7 @@ from ansible.module_utils.urls import open_url
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves import http_client
 from ansible.module_utils.six.moves.urllib.error import URLError, HTTPError
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 GET_HEADERS = {'accept': 'application/json', 'OData-Version': '4.0'}
 POST_HEADERS = {'content-type': 'application/json', 'accept': 'application/json',
@@ -327,6 +328,37 @@ class RedfishUtils(object):
                 self.module.deprecate(DEPRECATE_MSG % {'resource': 'Manager'},
                                       version='2.14')
         return {'ret': True}
+
+    def _get_all_action_info_values(self, action):
+        """Retrieve all parameter values for an Action from ActionInfo.
+        Fall back to AllowableValue annotations if no ActionInfo found.
+        Return the result in an ActionInfo-like dictionary, keyed
+        by the name of the parameter. """
+        ai = {}
+        if '@Redfish.ActionInfo' in action:
+            ai_uri = action['@Redfish.ActionInfo']
+            response = self.get_request(self.root_uri + ai_uri)
+            if response['ret'] is True:
+                data = response['data']
+                if 'Parameters' in data:
+                    params = data['Parameters']
+                    ai = dict((p['Name'], p)
+                              for p in params if 'Name' in p)
+        if not ai:
+            ai = dict((k[:-24],
+                       {'AllowableValues': v}) for k, v in action.items()
+                      if k.endswith('@Redfish.AllowableValues'))
+        return ai
+
+    def _get_allowable_values(self, action, name, default_values=None):
+        if default_values is None:
+            default_values = []
+        ai = self._get_all_action_info_values(action)
+        allowable_values = ai.get(name, {}).get('AllowableValues')
+        # fallback to default values
+        if allowable_values is None:
+            allowable_values = default_values
+        return allowable_values
 
     def get_logs(self):
         log_svcs_uri_list = []
@@ -779,23 +811,9 @@ class RedfishUtils(object):
                     'msg': 'target URI missing from Action #ComputerSystem.Reset'}
         action_uri = reset_action['target']
 
-        # get AllowableValues from ActionInfo
-        allowable_values = None
-        if '@Redfish.ActionInfo' in reset_action:
-            action_info_uri = reset_action.get('@Redfish.ActionInfo')
-            response = self.get_request(self.root_uri + action_info_uri)
-            if response['ret'] is True:
-                data = response['data']
-                if 'Parameters' in data:
-                    params = data['Parameters']
-                    for param in params:
-                        if param.get('Name') == 'ResetType':
-                            allowable_values = param.get('AllowableValues')
-                            break
-
-        # fallback to @Redfish.AllowableValues annotation
-        if allowable_values is None:
-            allowable_values = reset_action.get('ResetType@Redfish.AllowableValues', [])
+        # get AllowableValues
+        ai = self._get_all_action_info_values(reset_action)
+        allowable_values = ai.get('ResetType', {}).get('AllowableValues', [])
 
         # map ResetType to an allowable value if needed
         if reset_type not in allowable_values:
@@ -1254,32 +1272,6 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': 'No SoftwareInventory resource found'}
         else:
             return self._software_inventory(self.software_uri)
-
-    def _get_allowable_values(self, action, name, default_values=None):
-        if default_values is None:
-            default_values = []
-        allowable_values = None
-        # get Allowable values from ActionInfo
-        if '@Redfish.ActionInfo' in action:
-            action_info_uri = action.get('@Redfish.ActionInfo')
-            response = self.get_request(self.root_uri + action_info_uri)
-            if response['ret'] is True:
-                data = response['data']
-                if 'Parameters' in data:
-                    params = data['Parameters']
-                    for param in params:
-                        if param.get('Name') == name:
-                            allowable_values = param.get('AllowableValues')
-                            break
-        # fallback to @Redfish.AllowableValues annotation
-        if allowable_values is None:
-            prop = '%s@Redfish.AllowableValues' % name
-            if prop in action:
-                allowable_values = action[prop]
-        # fallback to default values
-        if allowable_values is None:
-            allowable_values = default_values
-        return allowable_values
 
     def simple_update(self, update_opts):
         image_uri = update_opts.get('update_image_uri')
@@ -2068,6 +2060,248 @@ class RedfishUtils(object):
                 entries.append(({'resource_uri': resource_uri},
                                virtualmedia['entries']))
         return dict(ret=ret, entries=entries)
+
+    @staticmethod
+    def _find_empty_virt_media_slot(resources, media_types,
+                                    media_match_strict=True):
+        for uri, data in resources.items():
+            # check MediaTypes
+            if 'MediaTypes' in data and media_types:
+                if not set(media_types).intersection(set(data['MediaTypes'])):
+                    continue
+            else:
+                if media_match_strict:
+                    continue
+            # if ejected, 'Inserted' should be False and 'ImageName' cleared
+            if (not data.get('Inserted', False) and
+                    not data.get('ImageName')):
+                return uri, data
+        return None, None
+
+    @staticmethod
+    def _virt_media_image_inserted(resources, image_url):
+        for uri, data in resources.items():
+            if data.get('Image'):
+                if urlparse(image_url) == urlparse(data.get('Image')):
+                    if data.get('Inserted', False) and data.get('ImageName'):
+                        return True
+        return False
+
+    @staticmethod
+    def _find_virt_media_to_eject(resources, image_url):
+        matched_uri, matched_data = None, None
+        for uri, data in resources.items():
+            if data.get('Image'):
+                if urlparse(image_url) == urlparse(data.get('Image')):
+                    matched_uri, matched_data = uri, data
+                    if data.get('Inserted', True) and data.get('ImageName', 'x'):
+                        return uri, data, True
+        return matched_uri, matched_data, False
+
+    def _read_virt_media_resources(self, uri_list):
+        resources = {}
+        headers = {}
+        for uri in uri_list:
+            response = self.get_request(self.root_uri + uri)
+            if response['ret'] is False:
+                continue
+            resources[uri] = response['data']
+            headers[uri] = response['headers']
+        return resources, headers
+
+    @staticmethod
+    def _insert_virt_media_payload(options, param_map, data, ai):
+        payload = {
+            'Image': options.get('image_url')
+        }
+        for param, option in param_map.items():
+            if options.get(option) is not None and param in data:
+                allowable = ai.get(param, {}).get('AllowableValues', [])
+                if allowable and options.get(option) not in allowable:
+                    return {'ret': False,
+                            'msg': "Value '%s' specified for option '%s' not "
+                                   "in list of AllowableValues %s" % (
+                                       options.get(option), option,
+                                       allowable)}
+                payload[param] = options.get(option)
+        return payload
+
+    def virtual_media_insert_via_patch(self, options, param_map, uri, data):
+        # get AllowableValues
+        ai = dict((k[:-24],
+                   {'AllowableValues': v}) for k, v in data.items()
+                  if k.endswith('@Redfish.AllowableValues'))
+        # construct payload
+        payload = self._insert_virt_media_payload(options, param_map, data, ai)
+        if 'Inserted' not in payload:
+            payload['Inserted'] = True
+        # PATCH the resource
+        response = self.patch_request(self.root_uri + uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True, 'msg': "VirtualMedia inserted"}
+
+    def virtual_media_insert(self, options):
+        param_map = {
+            'Inserted': 'inserted',
+            'WriteProtected': 'write_protected',
+            'UserName': 'username',
+            'Password': 'password',
+            'TransferProtocolType': 'transfer_protocol_type',
+            'TransferMethod': 'transfer_method'
+        }
+        image_url = options.get('image_url')
+        if not image_url:
+            return {'ret': False,
+                    'msg': "image_url option required for VirtualMediaInsert"}
+        media_types = options.get('media_types')
+
+        # locate and read the VirtualMedia resources
+        response = self.get_request(self.root_uri + self.manager_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'VirtualMedia' not in data:
+            return {'ret': False, 'msg': "VirtualMedia resource not found"}
+        virt_media_uri = data["VirtualMedia"]["@odata.id"]
+        response = self.get_request(self.root_uri + virt_media_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        virt_media_list = []
+        for member in data[u'Members']:
+            virt_media_list.append(member[u'@odata.id'])
+        resources, headers = self._read_virt_media_resources(virt_media_list)
+
+        # see if image already inserted; if so, nothing to do
+        if self._virt_media_image_inserted(resources, image_url):
+            return {'ret': True, 'changed': False,
+                    'msg': "VirtualMedia '%s' already inserted" % image_url}
+
+        # find an empty slot to insert the media
+        # try first with strict media_type matching
+        uri, data = self._find_empty_virt_media_slot(
+            resources, media_types, media_match_strict=True)
+        if not uri:
+            # if not found, try without strict media_type matching
+            uri, data = self._find_empty_virt_media_slot(
+                resources, media_types, media_match_strict=False)
+        if not uri:
+            return {'ret': False,
+                    'msg': "Unable to find an available VirtualMedia resource "
+                           "%s" % ('supporting ' + str(media_types)
+                                   if media_types else '')}
+
+        # confirm InsertMedia action found
+        if ('Actions' not in data or
+                '#VirtualMedia.InsertMedia' not in data['Actions']):
+            # try to insert via PATCH if no InsertMedia action found
+            h = headers[uri]
+            if 'allow' in h:
+                methods = [m.strip() for m in h.get('allow').split(',')]
+                if 'PATCH' not in methods:
+                    # if Allow header present and PATCH missing, return error
+                    return {'ret': False,
+                            'msg': "%s action not found and PATCH not allowed"
+                            % '#VirtualMedia.InsertMedia'}
+            return self.virtual_media_insert_via_patch(options, param_map,
+                                                       uri, data)
+
+        # get the action property
+        action = data['Actions']['#VirtualMedia.InsertMedia']
+        if 'target' not in action:
+            return {'ret': False,
+                    'msg': "target URI missing from Action "
+                           "#VirtualMedia.InsertMedia"}
+        action_uri = action['target']
+        # get ActionInfo or AllowableValues
+        ai = self._get_all_action_info_values(action)
+        # construct payload
+        payload = self._insert_virt_media_payload(options, param_map, data, ai)
+        # POST to action
+        response = self.post_request(self.root_uri + action_uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True, 'msg': "VirtualMedia inserted"}
+
+    def virtual_media_eject_via_patch(self, uri):
+        # construct payload
+        payload = {
+            'Inserted': False,
+            'Image': None
+        }
+        # PATCH resource
+        response = self.patch_request(self.root_uri + uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True,
+                'msg': "VirtualMedia ejected"}
+
+    def virtual_media_eject(self, options):
+        image_url = options.get('image_url')
+        if not image_url:
+            return {'ret': False,
+                    'msg': "image_url option required for VirtualMediaEject"}
+
+        # locate and read the VirtualMedia resources
+        response = self.get_request(self.root_uri + self.manager_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'VirtualMedia' not in data:
+            return {'ret': False, 'msg': "VirtualMedia resource not found"}
+        virt_media_uri = data["VirtualMedia"]["@odata.id"]
+        response = self.get_request(self.root_uri + virt_media_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        virt_media_list = []
+        for member in data[u'Members']:
+            virt_media_list.append(member[u'@odata.id'])
+        resources, headers = self._read_virt_media_resources(virt_media_list)
+
+        # find the VirtualMedia resource to eject
+        uri, data, eject = self._find_virt_media_to_eject(resources, image_url)
+        if uri and eject:
+            if ('Actions' not in data or
+                    '#VirtualMedia.EjectMedia' not in data['Actions']):
+                # try to eject via PATCH if no EjectMedia action found
+                h = headers[uri]
+                if 'allow' in h:
+                    methods = [m.strip() for m in h.get('allow').split(',')]
+                    if 'PATCH' not in methods:
+                        # if Allow header present and PATCH missing, return error
+                        return {'ret': False,
+                                'msg': "%s action not found and PATCH not allowed"
+                                       % '#VirtualMedia.EjectMedia'}
+                return self.virtual_media_eject_via_patch(uri)
+            else:
+                # POST to the EjectMedia Action
+                action = data['Actions']['#VirtualMedia.EjectMedia']
+                if 'target' not in action:
+                    return {'ret': False,
+                            'msg': "target URI property missing from Action "
+                                   "#VirtualMedia.EjectMedia"}
+                action_uri = action['target']
+                # empty payload for Eject action
+                payload = {}
+                # POST to action
+                response = self.post_request(self.root_uri + action_uri,
+                                             payload)
+                if response['ret'] is False:
+                    return response
+                return {'ret': True, 'changed': True,
+                        'msg': "VirtualMedia ejected"}
+        elif uri and not eject:
+            # already ejected: return success but changed=False
+            return {'ret': True, 'changed': False,
+                    'msg': "VirtualMedia image '%s' already ejected" %
+                           image_url}
+        else:
+            # return failure (no resources matching image_url found)
+            return {'ret': False, 'changed': False,
+                    'msg': "No VirtualMedia resource found with image '%s' "
+                           "inserted" % image_url}
 
     def get_psu_inventory(self):
         result = {}
