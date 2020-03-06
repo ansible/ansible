@@ -24,7 +24,7 @@ from io import StringIO
 import pytest
 
 from units.compat import unittest
-from ansible.plugins.connection import local
+from ansible.plugins.loader import connection_loader
 from ansible.playbook.play_context import PlayContext
 
 
@@ -37,4 +37,5 @@ class TestLocalConnectionClass(unittest.TestCase):
         )
         in_stream = StringIO()
 
-        self.assertIsInstance(local.Connection(play_context, in_stream), local.Connection)
+        conn = connection_loader.get('local', play_context, in_stream)
+        self.assertEqual(conn.transport, 'local')
