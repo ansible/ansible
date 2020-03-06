@@ -117,15 +117,15 @@ Modules removed
 The following modules no longer exist:
 
 * Apstra's ``aos_*`` modules.  See the new modules at  `https://github.com/apstra <https://github.com/apstra>`_.
-* ec2_ami_find use :ref:`ec2_ami_facts <ec2_ami_facts_module>` instead.
-* kubernetes use :ref:`k8s <k8s_module>` instead.
-* nxos_ip_interface use :ref:`nxos_l3_interface <nxos_l3_interface_module>` instead.
-* nxos_portchannel use :ref:`nxos_linkagg <nxos_linkagg_module>` instead.
-* nxos_switchport use :ref:`nxos_l2_interface <nxos_l2_interface_module>` instead.
-* oc use :ref:`k8s <k8s_module>` instead.
-* panos_nat_policy use :ref:`panos_nat_rule <panos_nat_rule_module>` instead.
-* panos_security_policy use :ref:`panos_security_rule <panos_security_rule_module>` instead.
-* vsphere_guest use :ref:`vmware_guest <vmware_guest_module>` instead.
+* ec2_ami_find use :ref:`ec2_ami_facts <ansible_2_9:ec2_ami_facts_module>` instead.
+* kubernetes use :ref:`k8s <ansible_2_9:k8s_module>` instead.
+* nxos_ip_interface use :ref:`nxos_l3_interface <ansible_2_9:nxos_l3_interface_module>` instead.
+* nxos_portchannel use :ref:`nxos_linkagg <ansible_2_9:nxos_linkagg_module>` instead.
+* nxos_switchport use :ref:`nxos_l2_interface <ansible_2_9:nxos_l2_interface_module>` instead.
+* oc use :ref:`k8s <ansible_2_9:k8s_module>` instead.
+* panos_nat_policy use :ref:`panos_nat_rule <ansible_2_9:panos_nat_rule_module>` instead.
+* panos_security_policy use :ref:`panos_security_rule <ansible_2_9:panos_security_rule_module>` instead.
+* vsphere_guest use :ref:`vmware_guest <ansible_2_9:vmware_guest_module>` instead.
 
 
 Deprecation notices
