@@ -28,15 +28,12 @@ from ansible.playbook.task import Task
 from ansible.plugins.loader import connection_loader
 
 
-play_context = Mock()
-play_context.shell = 'sh'
-connection = connection_loader.get('local', play_context, os.devnull)
-
-
 class TestCopyResultExclude(unittest.TestCase):
 
     def setUp(self):
-        pass
+        self.play_context = Mock()
+        self.play_context.shell = 'sh'
+        self.connection = connection_loader.get('local', self.play_context, os.devnull)
 
     def tearDown(self):
         pass
@@ -53,9 +50,9 @@ class TestCopyResultExclude(unittest.TestCase):
         task.async_val = False
 
         task.args = {'_raw_params': 'Args1'}
-        play_context.check_mode = False
+        self.play_context.check_mode = False
 
-        self.mock_am = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
+        self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
         self.mock_am._low_level_execute_command = Mock(return_value={})
         self.mock_am.display = Mock()
         self.mock_am._admin_users = ['root', 'toor']
@@ -69,10 +66,10 @@ class TestCopyResultExclude(unittest.TestCase):
         task.async_val = False
 
         task.args = {'_raw_params': 'Args1'}
-        play_context.check_mode = True
+        self.play_context.check_mode = True
 
         try:
-            self.mock_am = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
+            self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
         except AnsibleActionFail:
             pass
 
@@ -83,9 +80,9 @@ class TestCopyResultExclude(unittest.TestCase):
 
         task.args = {'_raw_params': 'Args1'}
         task.environment = None
-        play_context.check_mode = False
+        self.play_context.check_mode = False
 
-        self.mock_am = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
+        self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
         self.mock_am._low_level_execute_command = Mock(return_value={})
         self.mock_am.display = Mock()
 
@@ -98,9 +95,9 @@ class TestCopyResultExclude(unittest.TestCase):
 
         task.args = {'_raw_params': 'Args1'}
         task.environment = None
-        play_context.check_mode = False
+        self.play_context.check_mode = False
 
-        self.mock_am = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
+        self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
         self.mock_am._low_level_execute_command = Mock(return_value={})
         self.mock_am.display = Mock()
 
