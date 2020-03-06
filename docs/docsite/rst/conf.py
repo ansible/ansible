@@ -289,4 +289,4 @@ linkcheck_ignore = [
     r'http://irc\.freenode\.net',
     ]
 
-linkcheck_anchors = False
+# linkcheck_anchors = False
