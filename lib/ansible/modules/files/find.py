@@ -146,6 +146,7 @@ EXAMPLES = r'''
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
   find:
     paths: /var/log
+    use_regex: yes
     patterns: '*.old,*.log.gz'
     size: 10m
 
