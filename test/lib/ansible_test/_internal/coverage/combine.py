@@ -99,16 +99,23 @@ def _command_coverage_combine_python(args):
 
         updated = coverage.CoverageData()
 
+        # coverage.py pre v5 fails with an rc of 1 and a message of 'No data to report.'. While it would be nice to
+        # show this there is no sane way to ignore this error without potentially ignoring other errors. Until we
+        # upgrade we just need to skip creating empty coverage files.
+        arcs_present = False
+
         for filename in arc_data:
             if not path_checker.check_path(filename):
                 continue
 
+            arcs_present = True
             updated.add_arcs({filename: list(arc_data[filename])})
 
-        if args.all:
+        if args.all and sources:
+            arcs_present = True
             updated.add_arcs(dict((source[0], []) for source in sources))
 
-        if not args.explain:
+        if arcs_present and not args.explain:
             output_file = coverage_file + group
             updated.write_file(output_file)
             output_files.append(output_file)

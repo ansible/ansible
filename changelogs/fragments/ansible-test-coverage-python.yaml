@@ -1,0 +1,3 @@
+bugfixes:
+- ansible-test coverage - Do not fail if no Python coverage data was collected
+- ansible-test coverage - Fix path sanitizer to properly sanitize test plugins
