@@ -2577,7 +2577,9 @@ files:
   $modules/packaging/os/zypper.py:
     maintainers: $team_suse
     ignored: dirtyharrycallahan robinro
-  $modules/remote_management/foreman/: $team_foreman
+  $modules/remote_management/foreman/: 
+    maintainers: $team_foreman
+    migrated_to: theforeman.foreman
   $modules/remote_management/hpilo/:
     ignored: dagwieers
     maintainers: haad
@@ -2956,6 +2958,7 @@ files:
   contrib/inventory/docker: *docker
   contrib/inventory/foreman.py:
     maintainers: $team_foreman
+    migrated_to: theforeman.foreman
   contrib/inventory/linode:
     keywords:
       - linode dynamic inventory script
@@ -3496,6 +3499,7 @@ files:
     migrated_to: community.grafana
   $plugins/callback/foreman.py:
     maintainers: $team_foreman
+    migrated_to: theforeman.foreman
   $plugins/callback/junit:
     support: core
   $plugins/callback/minimal:
@@ -3718,6 +3722,7 @@ files:
     maintainers: $team_docker morph027
   $plugins/inventory/foreman.py:
     maintainers: $team_foreman
+    migrated_to: theforeman.foreman
   $plugins/inventory/gcp_compute.py:
     maintainers: $team_google
     supershipit: $team_google
