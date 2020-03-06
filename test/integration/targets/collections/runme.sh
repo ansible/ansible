@@ -36,8 +36,10 @@ else
   ansible-playbook -i "${INVENTORY_PATH}" collection_root_user/ansible_collections/testns/testcoll/playbooks/default_collection_playbook.yml
 fi
 
-# run test playbook
+# run test playbooks
 ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v "${TEST_PLAYBOOK}" "$@"
+
+ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v test_invocation.yml "$@"
 
 # test adjacent with --playbook-dir
 export ANSIBLE_COLLECTIONS_PATHS=''
