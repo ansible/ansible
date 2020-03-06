@@ -21,23 +21,34 @@ version_added: "2.10"
 requirements: [ boto3, deepdiff ]
 author: "Tom Wright (@tomwwright)"
 options:
-  arn:
-    description: The ARN of the resource
-    returned: always
-    type: str
   block_device_mappings:
     type: list
+    description: ''
   components:
     type: list
+    description: ''
   description:
     type: str
+    description: ''
   name:
     type: str
     required: true
+    description: ''
+  parent_image:
+    type: str
+    description: ''
   semantic_version:
     type: str
+    required: True
+    description: ''
+  state:
+    type: str
+    required: True
+    choices: ['present', 'absent']
+    description: ''
   tags:
     type: dict
+    description: ''
 extends_documentation_fragment:
     - aws
     - ec2
@@ -77,7 +88,7 @@ EXAMPLES = '''
     state: present
     tags:
       this: isatag
-      this: isanothertag
+      thisis: anothertag
 
 - name: delete a version of a recipe
   ec2_imagebuilder_recipe:
@@ -87,9 +98,9 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-name
 recipe:
-  description: Recipe configuration details. Refer to U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/imagebuilder.html#imagebuilder.Client.get_image_recipe)
+  description: Recipe configuration details. \
+    Refer to U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/imagebuilder.html#imagebuilder.Client.get_image_recipe)
   returned: always
   type: complex
   contains:
@@ -100,9 +111,13 @@ recipe:
     block_device_mappings:
       returned: when state is present
       type: list
+      elements: dict
+      description: ''
     components:
       returned: when state is present
       type: list
+      elements: dict
+      description: ''
     date_created:
       description: The time and date that this recipe version was created.
       returned: when state is present
@@ -111,22 +126,27 @@ recipe:
     description:
       returned: when state is present
       type: str
+      description: ''
     name:
       returned: when state is present
       type: str
-      required: true
+      description: ''
     owner:
       returned: when state is present
       type: str
+      description: ''
     platform:
       returned: when state is present
       type: str
+      description: ''
     tags:
       returned: when state is present
       type: dict
+      description: ''
     version:
       returned: when state is present
       type: str
+      description: ''
 '''
 
 import copy
@@ -282,8 +302,8 @@ def main():
 
     argument_spec = (
         dict(
-            block_device_mappings=dict(type='dict'),
-            components=dict(type='list'),
+            block_device_mappings=dict(type='list', elements='dict'),
+            components=dict(type='list', elements='dict'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             parent_image=dict(type='str'),
