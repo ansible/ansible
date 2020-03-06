@@ -16,35 +16,54 @@ DOCUMENTATION = '''
 module: ec2_imagebuilder_infrastructure_configuration
 short_description: Manage an EC2 Image Builder infrastructure configuration
 description:
-    - Manage an EC2 Image Builder infrastructure configuration. See U(https://docs.aws.amazon.com/imagebuilder/latest/userguide/) for information about EC2 Image Builder.
+    - Manage an EC2 Image Builder infrastructure configuration. \
+      See U(https://docs.aws.amazon.com/imagebuilder/latest/userguide/) for information about EC2 Image Builder.
 version_added: "2.10"
 requirements: [ boto3, deepdiff ]
 author: "Tom Wright (@tomwwright)"
 options:
   description:
     type: str
+    description: ''
   instance_profile_name:
-    required: True
     type: str
+    description: ''
   instance_types:
     type: list
+    elements: str
+    description: ''
   key_pair:
     type: str
+    description: ''
   logging:
-    type: complex
+    type: dict
+    description: ''
   name:
     required: True
     type: str
+    description: ''
   security_group_ids:
     type: list
+    elements: str
+    description: ''
   sns_topic_arn:
     type: str
+    description: ''
   subnet_id:
     type: str
+    description: ''
+  state:
+    type: str
+    required: True
+    choices: ['present', 'absent']
+    description: ''
   tags:
     type: dict
+    description: ''
   terminate_instance_on_failure:
     type: bool
+    description: ''
+    default: true
 extends_documentation_fragment:
     - aws
     - ec2
@@ -80,9 +99,9 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-name
 infrastructure:
-  description: Infrastructure configuration details in snake case. Refer to https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/imagebuilder.html#imagebuilder.Client.get_distribution_configuration
+  description: Infrastructure configuration details in snake case. \
+    Refer to https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/imagebuilder.html#imagebuilder.Client.get_distribution_configuration
   returned: always
   type: complex
   contains:
@@ -94,48 +113,67 @@ infrastructure:
     date_created:
       returned: when state is present
       type: str
+      description: ''
     date_updated:
       returned: when state is present
       type: str
+      description: ''
     description:
       returned: when state is present
       type: str
+      description: ''
     instance_profile_name:
       returned: when state is present
       type: str
+      description: ''
     instance_types:
       returned: when state is present
       type: list
+      elements: str
+      description: ''
     key_pair:
       returned: when state is present
       type: str
+      description: ''
     logging:
       returned: when state is present
-      type: complex
+      type: dict
+      description: ''
     name:
       returned: when state is present
       type: str
+      description: ''
     security_group_ids:
       returned: when state is present
       type: list
+      elements: str
+      description: ''
     sns_topic_arn:
       returned: when state is present
       type: str
+      description: ''
     subnet_id:
       returned: when state is present
       type: str
+      description: ''
     tags:
       returned: when state is present
       type: dict
+      description: ''
     terminate_instance_on_failure:
       returned: when state is present
       type: bool
+      description: ''
 '''
 
-from deepdiff import DeepDiff
 import copy
 from ansible.module_utils.ec2 import get_aws_connection_info, camel_dict_to_snake_dict, snake_dict_to_camel_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
+
+try:
+    from deepdiff import DeepDiff
+except ImportError:
+    pass
 
 try:
     import botocore
@@ -343,10 +381,10 @@ def main():
             description=dict(type='str'),
             key_pair=dict(type='str'),
             instance_profile_name=dict(type='str'),
-            instance_types=dict(type='list'),
+            instance_types=dict(type='list', elements='str'),
             logging=dict(type='dict'),
             name=dict(required=True, type='str'),
-            security_group_ids=dict(type='list'),
+            security_group_ids=dict(type='list', elements='str'),
             sns_topic_arn=dict(type='str'),
             subnet_id=dict(type='str'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
