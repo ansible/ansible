@@ -150,9 +150,13 @@ recipe:
 '''
 
 import copy
-from deepdiff import DeepDiff
 from ansible.module_utils.ec2 import get_aws_connection_info, camel_dict_to_snake_dict, snake_dict_to_camel_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
+
+try:
+    from deepdiff import DeepDiff
+except ImportError:
+    pass
 
 try:
     import botocore
