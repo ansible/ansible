@@ -24,9 +24,11 @@ options:
   block_device_mappings:
     type: list
     description: ''
+    elements: dict
   components:
     type: list
     description: ''
+    elements: dict
   description:
     type: str
     description: ''
