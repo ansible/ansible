@@ -263,32 +263,32 @@ Example: ``aci.post_config()``
 
 Example code
 """"""""""""
-.. code-block:: guess
+.. code-block:: python
 
-    if state == 'present':
-        aci.payload(
-            aci_class='<object APIC class>',
-            class_config=dict(
-                name=object_id,
-                prop1=object_prop1,
-                prop2=object_prop2,
-                prop3=object_prop3,
-            ),
-            child_configs=[
-                dict(
-                    '<child APIC class>'=dict(
-                        attributes=dict(
-                            child_key=child_object_id,
-                            child_prop=child_object_prop
-                        ),
-                    ),
-                ),
-            ],
-        )
+   if state == 'present':
+       aci.payload(
+           aci_class='<object APIC class>',
+           class_config=dict(
+               name=object_id,
+               prop1=object_prop1,
+               prop2=object_prop2,
+               prop3=object_prop3,
+           ),
+           child_configs=[
+               {
+                   '<child APIC class>': dict(
+                       attributes=dict(
+                           child_key=child_object_id,
+                           child_prop=child_object_prop
+                       ),
+                   ),
+               },
+           ],
+       )
 
-        aci.get_diff(aci_class='<object APIC class>')
+       aci.get_diff(aci_class='<object APIC class>')
 
-        aci.post_config()
+       aci.post_config()
 
 
 When state is absent
