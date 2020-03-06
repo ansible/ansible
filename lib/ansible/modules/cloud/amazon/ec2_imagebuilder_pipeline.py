@@ -23,22 +23,37 @@ author: "Tom Wright (@tomwwright)"
 options:
   description:
     type: str
+    description: ''
   distribution_configuration_arn:
     type: str
+    description: ''
   image_recipe_arn:
     type: str
+    description: ''
   image_tests_configuration:
     type: dict
+    description: ''
   infrastructure_configuration_arn:
     type: str
+    description: ''
   name:
     type: str
+    required: true
+    description: ''
   schedule:
     type: dict
+    description: ''
+  state:
+    type: str
+    required: True
+    choices: ['present', 'absent']
+    description: ''
   status:
     type: str
+    description: ''
   tags:
     type: dict
+    description: ''
 extends_documentation_fragment:
     - aws
     - ec2
@@ -71,7 +86,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-name
 infrastructure:
   description: pipeline details with keys in snake case. Refer to https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/imagebuilder.html#imagebuilder.Client.get_image_pipeline
   returned: always
@@ -85,42 +99,55 @@ infrastructure:
     date_created:
       returned: when state is present
       type: str
+      description: ''
     date_last_run:
       returned: when state is present
       type: str
+      description: ''
     date_next_run:
       returned: when state is present
       type: str
+      description: ''
     date_updated:
       returned: when state is present
       type: str
+      description: ''
     description:
       returned: when state is present
       type: str
+      description: ''
     distribution_configuration_arn:
       returned: when state is present
       type: str
+      description: ''
     image_recipe_arn:
       returned: when state is present
       type: str
+      description: ''
     image_tests_configuration:
       returned: when state is present
-      type: complex
+      type: dict
+      description: ''
     infrastructure_configuration_arn:
       returned: when state is present
       type: str
+      description: ''
     name:
       returned: when state is present
       type: str
+      description: ''
     schedule:
       returned: when state is present
-      type: complex
+      type: dict
+      description: ''
     status:
       returned: when state is present
       type: str
+      description: ''
     tags:
       returned: when state is present
       type: dict
+      description: ''
 '''
 
 import copy
