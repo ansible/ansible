@@ -16,30 +16,27 @@ DOCUMENTATION = '''
 module: ec2_imagebuilder_distribution_configuration
 short_description: Manage an EC2 Image Builder distribution configuration
 description:
-    - Manage an EC2 Image Builder distribution configuration. See U(https://docs.aws.amazon.com/imagebuilder/latest/userguide/) for information about EC2 Image Builder.
+    - Manage an EC2 Image Builder distribution configuration. \
+      See U(https://docs.aws.amazon.com/imagebuilder/latest/userguide/) for information about EC2 Image Builder.
 version_added: "2.10"
 requirements: [ boto3, deepdiff ]
 author: "Tom Wright (@tomwwright)"
 options:
   description:
     description: Description of the resource
-    returned: when state is present
     type: str
-    sample: This is a test distribution configuration
   distributions:
-    description: List of distributions of the resource. See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/imagebuilder.html#imagebuilder.Client.get_distribution_configuration
-    returned: when state is present
+    description: List of distributions of the resource. \
+      See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/imagebuilder.html#imagebuilder.Client.get_distribution_configuration
     type: list
+    elements: dict
   name:
     description: The name of the resource
-    returned: when state is present
+    required: true
     type: str
-    sample: test_distribution_configuration
   tags:
     description: The tags on the resource
-    returned: when state is present
     type: dict
-    sample: "{ 'key': 'value' }"
   state:
     description:
       - Create or delete the EC2 Image Builder distribution configuration.
@@ -74,7 +71,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-name
 distribution_configuration:
   description: Distribution configuration details
   returned: always
@@ -96,9 +92,11 @@ distribution_configuration:
       type: str
       sample: This is a test distribution configuration
     distributions:
-      description: List of distributions of the resource with snake case keys. See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/imagebuilder.html#imagebuilder.Client.get_distribution_configuration
+      description: List of distributions of the resource with snake case keys. \
+        See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/imagebuilder.html#imagebuilder.Client.get_distribution_configuration
       returned: when state is present
       type: list
+      elements: dict
     name:
       description: The name of the resource
       returned: when state is present
@@ -111,10 +109,14 @@ distribution_configuration:
       sample: "{ 'key': 'value' }"
 '''
 
-from deepdiff import DeepDiff
 import copy
 from ansible.module_utils.ec2 import get_aws_connection_info, camel_dict_to_snake_dict, snake_dict_to_camel_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
+
+try:
+    from deepdiff import DeepDiff
+except ImportError:
+    pass
 
 try:
     import botocore
@@ -305,7 +307,7 @@ def main():
     argument_spec = (
         dict(
             description=dict(type='str'),
-            distributions=dict(type='list'),
+            distributions=dict(type='list', elements='dict'),
             name=dict(required=True, type='str'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             tags=dict(type='dict')
