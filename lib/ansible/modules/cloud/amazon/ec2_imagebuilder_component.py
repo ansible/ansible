@@ -1,4 +1,4 @@
-#!/usr/bin/python\
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2020, Tom Wright (@tomwwright)
@@ -23,24 +23,38 @@ author: "Tom Wright (@tomwwright)"
 options:
   change_description:
     type: str
+    description: ''
   data:
     type: str
+    description: ''
   uri:
     type: str
+    description: ''
   description:
     type: str
+    description: ''
   kms_key_id:
     type: str
+    description: ''
   name:
     type: str
     required: true
+    description: ''
   platform:
     type: str
-    choices: ['Windows', 'Linux']
+    description: ''
   semantic_version:
     type: str
+    required: True
+    description: ''
+  state:
+    type: str
+    required: True
+    choices: ['present', 'absent']
+    description: ''
   tags:
     type: dict
+    description: ''
 extends_documentation_fragment:
     - aws
     - ec2
@@ -119,9 +133,9 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-name
 component:
-  description: Component configuration details. Refer to U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/imagebuilder.html#imagebuilder.Client.get_component)
+  description: Component configuration details. \
+    Refer to U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/imagebuilder.html#imagebuilder.Client.get_component)
   returned: always
   type: complex
   contains:
@@ -132,9 +146,11 @@ component:
     change_description:
       returned: when state is present
       type: str
+      description: ''
     data:
       returned: when state is present
       type: str
+      description: ''
     date_created:
       description: The time and date that this component version was created.
       returned: when state is present
@@ -143,35 +159,43 @@ component:
     description:
       returned: when state is present
       type: str
+      description: ''
     encrypted:
       returned: when state is present
       type: bool
+      description: ''
     uri:
       returned: when state is present
       type: str
+      description: ''
     kms_key_id:
       returned: when state is present
       type: str
+      description: ''
     name:
       returned: when state is present
       type: str
-      required: true
+      description: ''
     owner:
       returned: when state is present
       type: str
+      description: ''
     platform:
       returned: when state is present
       type: str
-      choices: ['Windows', 'Linux']
+      description: ''
     semantic_version:
       returned: when state is present
       type: str
+      description: ''
     tags:
       returned: when state is present
       type: dict
+      description: ''
     type:
       returned: when state is present
       type: str
+      description: ''
 '''
 
 import copy
