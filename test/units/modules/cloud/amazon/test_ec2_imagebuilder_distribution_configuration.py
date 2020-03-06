@@ -255,7 +255,7 @@ class TestEC2ImageBuilderDistributionConfigurationModule(ModuleTestCase):
         assert client_mock.return_value.get_distribution_configuration.call_count == 2
         assert client_mock.return_value.update_distribution_configuration.call_count == 0
         assert client_mock.return_value.tag_resource.call_count == 1
-        _, kwargs = client_mock.return_value.tag_resource.call_args
+        args, kwargs = client_mock.return_value.tag_resource.call_args
         assert kwargs['tags'] == updated_test_distribution_configuration['tags']
 
     @patch.object(ec2_imagebuilder_distribution_configuration.AnsibleAWSModule, 'client')
@@ -300,5 +300,5 @@ class TestEC2ImageBuilderDistributionConfigurationModule(ModuleTestCase):
             arn=test_distribution_configuration['arn'])
         assert client_mock.return_value.get_distribution_configuration.call_count == 1
         assert client_mock.return_value.delete_distribution_configuration.call_count == 1
-        _, kwargs = client_mock.return_value.delete_distribution_configuration.call_args
+        args, kwargs = client_mock.return_value.delete_distribution_configuration.call_args
         assert kwargs['distributionConfigurationArn'] == test_distribution_configuration['arn']

@@ -261,7 +261,7 @@ class TestEC2ImageBuilderPipelineModule(ModuleTestCase):
         assert client_mock.return_value.get_image_pipeline.call_count == 2
         assert client_mock.return_value.update_image_pipeline.call_count == 0
         assert client_mock.return_value.untag_resource.call_count == 1
-        _, kwargs = client_mock.return_value.untag_resource.call_args
+        args, kwargs = client_mock.return_value.untag_resource.call_args
         assert kwargs['tagKeys'] == list(test_pipeline['tags'])
 
     @patch.object(ec2_imagebuilder_pipeline.AnsibleAWSModule, 'client')
@@ -311,5 +311,5 @@ class TestEC2ImageBuilderPipelineModule(ModuleTestCase):
             arn=test_pipeline['arn'])
         assert client_mock.return_value.get_image_pipeline.call_count == 1
         assert client_mock.return_value.delete_image_pipeline.call_count == 1
-        _, kwargs = client_mock.return_value.delete_image_pipeline.call_args
+        args, kwargs = client_mock.return_value.delete_image_pipeline.call_args
         assert kwargs['imagePipelineArn'] == test_pipeline['arn']

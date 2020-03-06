@@ -257,7 +257,7 @@ class TestEC2ImageBuilderInfrastructureConfigurationModule(ModuleTestCase):
         assert client_mock.return_value.get_infrastructure_configuration.call_count == 2
         assert client_mock.return_value.update_infrastructure_configuration.call_count == 0
         assert client_mock.return_value.tag_resource.call_count == 1
-        _, kwargs = client_mock.return_value.tag_resource.call_args
+        args, kwargs = client_mock.return_value.tag_resource.call_args
         assert kwargs['tags'] == updated_test_infrastructure_configuration['tags']
 
     @patch.object(ec2_imagebuilder_infrastructure_configuration.AnsibleAWSModule, 'client')
@@ -305,5 +305,5 @@ class TestEC2ImageBuilderInfrastructureConfigurationModule(ModuleTestCase):
             arn=test_infrastructure_configuration['arn'])
         assert client_mock.return_value.get_infrastructure_configuration.call_count == 1
         assert client_mock.return_value.delete_infrastructure_configuration.call_count == 1
-        _, kwargs = client_mock.return_value.delete_infrastructure_configuration.call_args
+        args, kwargs = client_mock.return_value.delete_infrastructure_configuration.call_args
         assert kwargs['infrastructureConfigurationArn'] == test_infrastructure_configuration['arn']
