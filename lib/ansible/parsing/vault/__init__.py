@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
 import os
 import random
 import shlex
@@ -1087,20 +1088,25 @@ class VaultEditor:
             # Create a file with default permissions
             try:
                 fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_RDWR, mode)
-            except FileExistsError:
-                os.unlink(filename)
-                fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_RDWR, mode)
+            except OSError as ose:
+                # Want to catch FileExistsError, which doesn't exist in Python 2, so catch OSError
+                # and compare the error number to get equivalent behavior in Python 2/3
+                if ose.errno == errno.EEXIST:
+                    os.unlink(filename)
+                    fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_RDWR, mode)
+                else:
+                    raise AnsibleError('Problem creating temporary vault file')
 
             try:
                 os.write(fd, b_file_data)
-            except Exception:
-                # Make sure the file descriptor is closed in case something goes wrong
+            except OSError:
+                raise AnsibleError('Unable to write to temporary vault file')
+            finally:
+                # Make sure the file descriptor is always closed
                 os.close(fd)
 
-            os.close(fd)
-
-            # Reset umask
-            os.umask(current_umask)
+                # Reset umask
+                os.umask(current_umask)
 
     def shuffle_files(self, src, dest):
         prev = None
