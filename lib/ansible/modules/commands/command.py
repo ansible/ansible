@@ -53,7 +53,7 @@ options:
   removes:
     type: path
     description:
-      - A filename or (since 2.0) glob pattern. If it already exists, this step B(will) be run.
+      - A filename or (since 2.0) glob pattern. If it still exists, this step B(will) be run.
     version_added: "0.8"
   chdir:
     type: path
