@@ -19,7 +19,7 @@ DOCUMENTATION = """
       remote_addr:
         description:
             - Container identifier
-        default: The set user as per docker's configuration
+        default: The set user as per libvirt lxc container
         vars:
             - name: ansible_host
             - name: ansible_libvirt_lxc_host
