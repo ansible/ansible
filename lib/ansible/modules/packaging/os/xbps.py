@@ -222,6 +222,22 @@ def check_packages(module, xbps_path, packages, state):
                          packages=[])
 
 
+def update_cache(module, xbps_path, upgrade_planned):
+    """Update package cache"""
+    if module.check_mode:
+        if upgrade_planned:
+            return
+        module.exit_json(
+            changed=True, msg='Would have updated the package cache'
+        )
+    changed = update_package_db(module, xbps_path)
+    if not upgrade_planned:
+        module.exit_json(changed=changed, msg=(
+            'Updated the package master lists' if changed
+            else 'Package list already up to date'
+        ))
+
+
 def main():
     """Returns, calling appropriate command"""
 
@@ -257,20 +273,8 @@ def main():
     elif p['state'] in ['absent', 'removed']:
         p['state'] = 'absent'
 
-    if p["update_cache"] and not module.check_mode:
-        changed = update_package_db(module, xbps_path)
-        if p['name'] is None and not p['upgrade']:
-            if changed:
-                module.exit_json(changed=True,
-                                 msg='Updated the package master lists')
-            else:
-                module.exit_json(changed=False,
-                                 msg='Package list already up to date')
-
-    if (p['update_cache'] and module.check_mode and not
-            (p['name'] or p['upgrade'])):
-        module.exit_json(changed=True,
-                         msg='Would have updated the package cache')
+    if p['update_cache']:
+        update_cache(module, xbps_path, (p['name'] or p['upgrade']))
 
     if p['upgrade']:
         upgrade(module, xbps_path)
