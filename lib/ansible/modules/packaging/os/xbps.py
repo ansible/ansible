@@ -51,21 +51,42 @@ options:
             - Whether or not to upgrade whole system
         type: bool
         default: 'no'
+    upgrade_xbps:
+        description:
+            - Whether or not to upgrade the xbps package when necessary.
+              Before installing new packages,
+              xbps requires the user to update the xbps package itself.
+              Thus when this option is set to C(no),
+              upgrades and installations will fail when xbps is not up to date.
+        type: bool
+        default: 'yes'
+        version_added: '2.10'
 '''
 
 EXAMPLES = '''
-# Install package foo
-- xbps: name=foo state=present
-# Upgrade package foo
-- xbps: name=foo state=latest update_cache=yes
-# Remove packages foo and bar
-- xbps: name=foo,bar state=absent
-# Recursively remove package foo
-- xbps: name=foo state=absent recurse=yes
-# Update package cache
-- xbps: update_cache=yes
-# Upgrade packages
-- xbps: upgrade=yes
+- name: Install package foo (automatically updating the xbps package if needed)
+  xbps: name=foo state=present
+
+- name: Upgrade package foo
+  xbps: name=foo state=latest update_cache=yes
+
+- name: Remove packages foo and bar
+  xbps: name=foo,bar state=absent
+
+- name: Recursively remove package foo
+  xbps: name=foo state=absent recurse=yes
+
+- name: Update package cache
+  xbps: update_cache=yes
+
+- name: Upgrade packages
+  xbps: upgrade=yes
+
+- name: Install a package, failing if the xbps package is out of date
+  xbps:
+    name: foo
+    state: present
+    upgrade_xbps: no
 '''
 
 RETURN = '''
@@ -125,6 +146,13 @@ def update_package_db(module, xbps_path):
         return False
 
 
+def upgrade_xbps(module, xbps_path, exit_on_success=False):
+    cmdupgradexbps = "%s -uy" % (xbps_path['install'])
+    rc, stdout, stderr = module.run_command(cmdupgradexbps, check_rc=False)
+    if rc != 0:
+        module.fail_json(msg='Could not upgrade xbps itself')
+
+
 def upgrade(module, xbps_path):
     """Returns true is full upgrade succeeds"""
     cmdupgrade = "%s -uy" % (xbps_path['install'])
@@ -140,6 +168,11 @@ def upgrade(module, xbps_path):
             rc, stdout, stderr = module.run_command(cmdupgrade, check_rc=False)
             if rc == 0:
                 module.exit_json(changed=True, msg='System upgraded')
+            elif rc == 16 and module.params['upgrade_xbps']:
+                upgrade_xbps(module, xbps_path)
+                # avoid loops by not trying self-upgrade again
+                module.params['upgrade_xbps'] = False
+                upgrade(module, xbps_path)
             else:
                 module.fail_json(msg="Could not upgrade")
     else:
@@ -191,7 +224,12 @@ def install_packages(module, xbps_path, state, packages):
     cmd = "%s -y %s" % (xbps_path['install'], " ".join(toInstall))
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
-    if rc != 0 and not (state == 'latest' and rc == 17):
+    if rc == 16 and module.params['upgrade_xbps']:
+        upgrade_xbps(module, xbps_path)
+        # avoid loops by not trying self-update again
+        module.params['upgrade_xbps'] = False
+        install_packages(module, xbps_path, state, packages)
+    elif rc != 0 and not (state == 'latest' and rc == 17):
         module.fail_json(msg="failed to install %s" % (package))
 
     module.exit_json(changed=True, msg="installed %s package(s)"
@@ -251,7 +289,8 @@ def main():
             force=dict(default=False, type='bool'),
             upgrade=dict(default=False, type='bool'),
             update_cache=dict(default=True, aliases=['update-cache'],
-                              type='bool')
+                              type='bool'),
+            upgrade_xbps=dict(default=True, type='bool')
         ),
         required_one_of=[['name', 'update_cache', 'upgrade']],
         supports_check_mode=True)
