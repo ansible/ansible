@@ -128,13 +128,6 @@ EXAMPLES = '''
   hosts: cloudengine
   connection: local
   gather_facts: no
-  vars:
-    cli:
-      host: "{{ inventory_hostname }}"
-      port: "{{ ansible_ssh_port }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      transport: cli
 
   tasks:
 
@@ -142,13 +135,11 @@ EXAMPLES = '''
     ce_acl:
       state: present
       acl_name: 2200
-      provider: "{{ cli }}"
 
   - name: "Undo ACL"
     ce_acl:
       state: delete_acl
       acl_name: 2200
-      provider: "{{ cli }}"
 
   - name: "Config ACL base rule"
     ce_acl:
@@ -161,7 +152,6 @@ EXAMPLES = '''
       src_mask: 24
       frag_type: fragment
       time_range: wdz_acl_time
-      provider: "{{ cli }}"
 
   - name: "undo ACL base rule"
     ce_acl:
@@ -174,7 +164,6 @@ EXAMPLES = '''
       src_mask: 24
       frag_type: fragment
       time_range: wdz_acl_time
-      provider: "{{ cli }}"
 '''
 
 RETURN = '''

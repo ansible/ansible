@@ -104,13 +104,6 @@ EXAMPLES = r'''
   hosts: cloudengine
   connection: local
   gather_facts: no
-  vars:
-    cli:
-      host: "{{ inventory_hostname }}"
-      port: "{{ ansible_ssh_port }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      transport: cli
 
   tasks:
 
@@ -120,7 +113,6 @@ EXAMPLES = r'''
       authen_scheme_name: test1
       first_authen_mode: radius
       radius_server_group: test2
-      provider: "{{ cli }}"
 
   - name: "Undo radius authentication Server Basic settings"
     ce_aaa_server:
@@ -128,7 +120,6 @@ EXAMPLES = r'''
       authen_scheme_name: test1
       first_authen_mode: radius
       radius_server_group: test2
-      provider: "{{ cli }}"
 
   - name: "Hwtacacs accounting Server Basic settings"
     ce_aaa_server:
@@ -136,7 +127,6 @@ EXAMPLES = r'''
       acct_scheme_name: test1
       accounting_mode: hwtacacs
       hwtacas_template: test2
-      provider: "{{ cli }}"
 
   - name: "Undo hwtacacs accounting Server Basic settings"
     ce_aaa_server:
@@ -144,7 +134,6 @@ EXAMPLES = r'''
       acct_scheme_name: test1
       accounting_mode: hwtacacs
       hwtacas_template: test2
-      provider: "{{ cli }}"
 '''
 
 RETURN = '''

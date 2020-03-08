@@ -251,13 +251,7 @@ EXAMPLES = '''
   hosts: cloudengine
   connection: local
   gather_facts: no
-  vars:
-    cli:
-      host: "{{ inventory_hostname }}"
-      port: "{{ ansible_ssh_port }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      transport: cli
+
 
   tasks:
 
@@ -265,13 +259,11 @@ EXAMPLES = '''
     ce_acl_advance:
       state: present
       acl_name: 3200
-      provider: "{{ cli }}"
 
   - name: "Undo ACL"
     ce_acl_advance:
       state: delete_acl
       acl_name: 3200
-      provider: "{{ cli }}"
 
   - name: "Config ACL advance rule"
     ce_acl_advance:
@@ -284,7 +276,6 @@ EXAMPLES = '''
       source_ip: 10.10.10.10
       src_mask: 24
       frag_type: fragment
-      provider: "{{ cli }}"
 
   - name: "Undo ACL advance rule"
     ce_acl_advance:
@@ -297,7 +288,6 @@ EXAMPLES = '''
       source_ip: 10.10.10.10
       src_mask: 24
       frag_type: fragment
-      provider: "{{ cli }}"
 '''
 
 RETURN = '''
