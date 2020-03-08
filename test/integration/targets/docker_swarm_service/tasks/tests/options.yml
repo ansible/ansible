@@ -1829,3 +1829,50 @@
     - working_dir_1 is changed
     - working_dir_2 is not changed
     - working_dir_3 is changed
+
+####################################################################
+## init ############################################################
+####################################################################
+
+- name: init
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    init: true
+  register: init_1
+
+- name: init (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    init: true
+  register: init_2
+
+- name: init (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    init: false
+  register: init_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - init_1 is changed
+      - init_2 is not changed
+      - init_3 is changed
+  when: docker_api_version is version('1.37', '>=')
+
+- assert:
+    that:
+    - init_1 is failed
+    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.37') in hosts_1.msg"
+  when: docker_api_version is version('1.37', '<')

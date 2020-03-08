@@ -18,6 +18,7 @@ service_expected_output:
   hostname: null
   hosts: null
   image: busybox
+  init: null
   labels: null
   limit_cpu: null
   limit_memory: null

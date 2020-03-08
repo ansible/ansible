@@ -193,6 +193,13 @@ options:
       - Service image path and tag.
       - Corresponds to the C(IMAGE) parameter of C(docker service create).
     type: str
+  init:
+    description:
+      - Use an init inside each service container to forward signals and reap processes.
+      - Corresponds to the C(--init) option of C(docker service create).
+      - Requires API version >= 1.37.
+    type: bool
+    version_added: "2.9"
   labels:
     description:
       - Dictionary of key value pairs.
@@ -1385,6 +1392,7 @@ class DockerService(DockerBaseClass):
         self.update_max_failure_ratio = None
         self.update_order = None
         self.working_dir = None
+        self.init = None
 
         self.docker_api_version = docker_api_version
         self.docker_py_version = docker_py_version
@@ -1439,6 +1447,7 @@ class DockerService(DockerBaseClass):
             'update_order': self.update_order,
             'user': self.user,
             'working_dir': self.working_dir,
+            'init': self.init,
         }
 
     @property
@@ -1678,6 +1687,7 @@ class DockerService(DockerBaseClass):
         s.user = ap['user']
         s.working_dir = ap['working_dir']
         s.read_only = ap['read_only']
+        s.init = ap['init']
 
         s.networks = get_docker_networks(ap['networks'], network_ids)
 
@@ -1922,6 +1932,8 @@ class DockerService(DockerBaseClass):
             differences.add('working_dir', parameter=self.working_dir, active=os.working_dir)
         if self.force_update:
             force_update = True
+        if self.init is not None and self.init != os.init:
+            differences.add('init', parameter=self.init, active=os.init)
         return not differences.empty or force_update, differences, needs_rebuild, force_update
 
     def has_healthcheck_changed(self, old_publish):
@@ -2082,6 +2094,8 @@ class DockerService(DockerBaseClass):
             container_spec_args['dns_config'] = dns_config
         if configs is not None:
             container_spec_args['configs'] = configs
+        if self.init is not None:
+            container_spec_args['init'] = self.init
 
         return types.ContainerSpec(self.image, **container_spec_args)
 
@@ -2457,6 +2471,8 @@ class DockerServiceManager(object):
                 ds.networks.append(network)
         ds.service_version = raw_data['Version']['Index']
         ds.service_id = raw_data['ID']
+
+        ds.init = task_template_data['ContainerSpec'].get('Init')
         return ds
 
     def update_service(self, name, old_service, new_service):
@@ -2861,6 +2877,7 @@ def main():
         ),
         user=dict(type='str'),
         working_dir=dict(type='str'),
+        init=dict(type='bool'),
     )
 
     option_minimal_versions = dict(
@@ -2885,6 +2902,7 @@ def main():
         read_only=dict(docker_py_version='2.6.0', docker_api_version='1.28'),
         resolve_image=dict(docker_api_version='1.30', docker_py_version='3.2.0'),
         rollback_config=dict(docker_py_version='3.5.0', docker_api_version='1.28'),
+        init=dict(docker_py_version='4.0.0', docker_api_version='1.37'),
         # specials
         publish_mode=dict(
             docker_py_version='3.0.0',
