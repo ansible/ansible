@@ -4625,29 +4625,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: dellemc_networking.os6
+    migrated_to: openvswitch.openvswitch
   test/units/compat/mock.py:
-    migrated_to: dellemc_networking.os6
+    migrated_to: openvswitch.openvswitch
   test/units/compat/unittest.py:
-    migrated_to: dellemc_networking.os6
+    migrated_to: openvswitch.openvswitch
   test/units/compat/__init__.py:
-    migrated_to: dellemc_networking.os6
+    migrated_to: openvswitch.openvswitch
   test/units/compat/builtins.py:
-    migrated_to: dellemc_networking.os6
+    migrated_to: openvswitch.openvswitch
   test/units/mock/__init__.py:
-    migrated_to: dellemc_networking.os6
+    migrated_to: openvswitch.openvswitch
   test/units/mock/yaml_helper.py:
-    migrated_to: dellemc_networking.os6
+    migrated_to: openvswitch.openvswitch
   test/units/mock/procenv.py:
-    migrated_to: dellemc_networking.os6
+    migrated_to: openvswitch.openvswitch
   test/units/mock/vault_helper.py:
-    migrated_to: dellemc_networking.os6
+    migrated_to: openvswitch.openvswitch
   test/units/mock/path.py:
-    migrated_to: dellemc_networking.os6
+    migrated_to: openvswitch.openvswitch
   test/units/mock/loader.py:
-    migrated_to: dellemc_networking.os6
+    migrated_to: openvswitch.openvswitch
   test/units/modules/conftest.py:
-    migrated_to: dellemc_networking.os6
+    migrated_to: openvswitch.openvswitch
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -29398,6 +29398,64 @@ files:
     migrated_to: azure.azcollection
   test/integration/targets/azure_rm_hdinsightcluster/meta/main.yml:
     migrated_to: azure.azcollection
+  lib/ansible/modules/network/ovs/openvswitch_port.py:
+    migrated_to: openvswitch.openvswitch
+  lib/ansible/modules/network/ovs/openvswitch_db.py:
+    migrated_to: openvswitch.openvswitch
+  lib/ansible/modules/network/ovs/openvswitch_bridge.py:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/test_openvswitch_port.py:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/fixtures/get_port_eth2_external_ids.cfg:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/fixtures/openvswitch_db_disable_in_band_true.cfg:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/fixtures/get_port_eth2_tag.cfg:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/fixtures/br_get_external_id_foo_bar.cfg:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/fixtures/openvswitch_db_disable_in_band_missing.cfg:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/fixtures/br_to_vlan_zero.cfg:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/fixtures/br_to_parent_test_br.cfg:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/fixtures/get_fail_mode_secure.cfg:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/fixtures/list_br_test_br.cfg:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/fixtures/list_ports_test_br.cfg:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/ovs_module.py:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/__init__.py:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/test_openvswitch_db.py:
+    migrated_to: openvswitch.openvswitch
+  test/units/modules/network/ovs/test_openvswitch_bridge.py:
+    migrated_to: openvswitch.openvswitch
+  test/integration/targets/openvswitch_db/aliases:
+    migrated_to: openvswitch.openvswitch
+  test/integration/targets/openvswitch_db/defaults/main.yaml:
+    migrated_to: openvswitch.openvswitch
+  test/integration/targets/openvswitch_db/tasks/main.yml:
+    migrated_to: openvswitch.openvswitch
+  test/integration/targets/openvswitch_db/meta/main.yaml:
+    migrated_to: openvswitch.openvswitch
+  test/integration/targets/openvswitch_db/tests/basic.yaml:
+    migrated_to: openvswitch.openvswitch
+  test/integration/targets/prepare_ovs_tests/tasks/main.yml:
+    migrated_to: openvswitch.openvswitch
+  test/integration/targets/openvswitch_bridge/aliases:
+    migrated_to: openvswitch.openvswitch
+  test/integration/targets/openvswitch_bridge/defaults/main.yaml:
+    migrated_to: openvswitch.openvswitch
+  test/integration/targets/openvswitch_bridge/tasks/main.yml:
+    migrated_to: openvswitch.openvswitch
+  test/integration/targets/openvswitch_bridge/meta/main.yaml:
+    migrated_to: openvswitch.openvswitch
+  test/integration/targets/openvswitch_bridge/tests/basic.yaml:
+    migrated_to: openvswitch.openvswitch
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
