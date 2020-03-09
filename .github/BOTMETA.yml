@@ -2987,51 +2987,51 @@ files:
     maintainers: $team_purestorage
     labels: pure_storage
   $modules/storage/purestorage/purefa_alert.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_arrayname.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_banner.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_connect.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_dns.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_ds.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_dsrole.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_hg.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_host.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_info.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_ntp.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_offload.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_pg.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_pgsnap.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_phonehome.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_ra.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_smtp.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_snap.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_snmp.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_syslog.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_user.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_vg.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefa_volume.py:
-    migrated_to: puresorage.flasharray
+    migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefb_bucket.py:
     migrated_to: puresorage.flashblade
   $modules/storage/purestorage/purefb_ds.py:
