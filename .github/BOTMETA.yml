@@ -842,6 +842,7 @@ files:
   $modules/files/acl.py:
     ignored: astorije
     maintainers: $team_ansible
+    migrated_to: ansible.posix
   $modules/files/assemble.py: $team_ansible
   $modules/files/copy.py: $team_ansible ptux
   $modules/files/fetch.py: $team_ansible
@@ -850,7 +851,9 @@ files:
   $modules/files/lineinfile.py: $team_ansible samdoran
   $modules/files/stat.py:
     ignored: bpennypacker
-  $modules/files/synchronize.py: $team_ansible
+  $modules/files/synchronize.py:
+    maintainers: $team_ansible
+    migrated_to: ansible.posix
   $modules/files/template.py: $team_ansible
   $modules/files/unarchive.py:
     ignored: dagwieers
@@ -3056,8 +3059,12 @@ files:
   $modules/system/alternatives.py:
     ignored: DavidWittman
     migrated_to: community.general
-  $modules/system/at.py: $team_ansible
-  $modules/system/authorized_key.py: $team_ansible
+  $modules/system/at.py:
+    maintainers: $team_ansible
+    migrated_to: ansible.posix
+  $modules/system/authorized_key.py:
+    maintainers: $team_ansible
+    migrated_to: ansible.posix
   $modules/system/beadm.py: *id005
   $modules/system/facter.py:
     maintainers: $team_ansible
@@ -3079,6 +3086,7 @@ files:
   $modules/system/mount.py:
     maintainers: $team_ansible jtyr
     ignored: skvidal
+    migrated_to: ansible.posix
   $modules/system/ohai.py:
     maintainers: $team_ansible
     migrated_to: community.general
@@ -3091,13 +3099,19 @@ files:
   $modules/system/puppet.py:
     maintainers: nibalizer
     migrated_to: community.general
-  $modules/system/seboolean.py: $team_ansible
-  $modules/system/selinux.py: samdoran
+  $modules/system/seboolean.py:
+    maintainers: $team_ansible
+    migrated_to: ansible.posix
+  $modules/system/selinux.py:
+    maintainers: samdoran
+    migrated_to: ansible.posix
   $modules/system/service.py: $team_ansible
   $modules/system/setup.py:
     maintainers: $team_ansible
   $modules/system/solaris: *id005
-  $modules/system/sysctl.py: Akasurde
+  $modules/system/sysctl.py:
+    maintainers: Akasurde
+    migrated_to: ansible.posix
   $modules/system/systemd.py: $team_ansible
   $modules/system/ufw.py:
     notified: felixfontein
@@ -3319,6 +3333,7 @@ files:
     support: core
   $module_utils/ismount.py:
     support: core
+    migrated_to: ansible.posix
   $module_utils/json_utils.py:
     support: core
   $module_utils/pycompat24.py:
@@ -3650,6 +3665,7 @@ files:
     support: core
   $plugins/action/patch.py:
     support: core
+    migrated_to: ansible.posix
   $plugins/action/pause.py:
     support: core
   $plugins/action/raw.py:
@@ -3666,6 +3682,7 @@ files:
     support: core
   $plugins/action/synchronize.py:
     support: core
+    migrated_to: ansible.posix
   $plugins/action/telnet.py:
     support: core
     migrated_to: ansible.netcommon
@@ -3757,6 +3774,7 @@ files:
     support: core
   $plugins/callback/debug:
     support: core
+    migrated_to: ansible.posix
   $plugins/callback/default:
     support: core
   $plugins/callback/grafana_annotations.py:
@@ -4583,29 +4601,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: ansible.netcommon
+    migrated_to: ansible.posix
   test/units/compat/mock.py:
-    migrated_to: ansible.netcommon
+    migrated_to: ansible.posix
   test/units/compat/unittest.py:
-    migrated_to: ansible.netcommon
+    migrated_to: ansible.posix
   test/units/compat/__init__.py:
-    migrated_to: ansible.netcommon
+    migrated_to: ansible.posix
   test/units/compat/builtins.py:
-    migrated_to: ansible.netcommon
+    migrated_to: ansible.posix
   test/units/mock/__init__.py:
-    migrated_to: ansible.netcommon
+    migrated_to: ansible.posix
   test/units/mock/yaml_helper.py:
-    migrated_to: ansible.netcommon
+    migrated_to: ansible.posix
   test/units/mock/procenv.py:
-    migrated_to: ansible.netcommon
+    migrated_to: ansible.posix
   test/units/mock/vault_helper.py:
-    migrated_to: ansible.netcommon
+    migrated_to: ansible.posix
   test/units/mock/path.py:
-    migrated_to: ansible.netcommon
+    migrated_to: ansible.posix
   test/units/mock/loader.py:
-    migrated_to: ansible.netcommon
+    migrated_to: ansible.posix
   test/units/modules/conftest.py:
-    migrated_to: ansible.netcommon
+    migrated_to: ansible.posix
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -6209,7 +6227,7 @@ files:
   test/integration/targets/aws_api_gateway/templates/minimal-swagger-api.yml.j2:
     migrated_to: community.amazon
   test/integration/targets/prepare_tests/tasks/main.yml:
-    migrated_to: ansible.amazon
+    migrated_to: ansible.posix
   test/integration/targets/setup_ec2/vars/main.yml:
     migrated_to: ansible.amazon
   test/integration/targets/setup_ec2/defaults/main.yml:
@@ -12221,247 +12239,247 @@ files:
   test/units/modules/storage/netapp/test_netapp_e_volume.py:
     migrated_to: community.general
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com.test_no_changes.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv4_pre_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_add_and_delete_aggi_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_add_aggi_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_set_aggi_slaves.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv6_post_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_revert.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv6_post_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com.test_no_changes:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_add_aggi_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_add_and_delete_aggi_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv6_pre_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv6_post_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv6_pre_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv6.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv4_post_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_set_aggi_slaves.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_add_and_delete_aggi_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_add_and_delete_aggi_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_revert.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv4_post_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_add_aggi_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv6_pre_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv4_pre_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv6_post_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv6.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_set_aggi_and_eth0_mtu.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_method.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_revert:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_set_aggi_and_eth0_mtu.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_set_aggi_and_eth0_mtu.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp.test_no_changes:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv6_post_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_set_aggi_and_eth0_mtu:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv6_pre_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_revert:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv6_post_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_method:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_set_aggi_slaves:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv4.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv4_pre_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_set_aggi_slaves.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_method:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv4:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_add_aggi_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv6_pre_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_add_and_delete_aggi_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv6:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv4:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_revert:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_set_aggi_and_eth0_mtu.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv4.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_add_aggi_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv4_post_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv6.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family.test_no_changes.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_add_and_delete_aggi_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_add_aggi_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_set_aggi_and_eth0_mtu:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_method.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_method.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv6_post_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv4.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_set_aggi_slaves.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv4.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv6_post_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_add_and_delete_aggi_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv4_post_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv6:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_set_aggi_slaves.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv4.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_add_and_delete_aggi_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_revert.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv6_pre_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv4_pre_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_revert.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv4_pre_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_set_aggi_slaves:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv4_pre_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv6:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv6_pre_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_set_aggi_slaves:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv4_pre_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_method.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv6_post_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_add_aggi_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv4_post_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_set_aggi_and_eth0_mtu.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_set_aggi_and_eth0_mtu.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv4_post_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv4:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_add_and_delete_aggi_up.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_add_aggi_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_revert.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv4_post_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_add_aggi_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family.test_no_changes:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv4_post_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_ipv6.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_method.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv6_pre_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv4_pre_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_change_method:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv4_post_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv4.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_method.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_set_aggi_and_eth0_mtu:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv6.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv6.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/address_family_change_ipv4_pre_up.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp.test_no_changes.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/servers.com_revert.json:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_set_aggi_slaves.exceptions.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/golden_output/default_dhcp_change_ipv6_pre_up:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/input/default_dhcp:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/input/address_family:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/fixtures/input/servers.com:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/__init__.py:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/interfaces_file/test_interfaces_file.py:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/test_java_keystore.py:
     migrated_to: community.general
   test/units/modules/system/__init__.py:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/units/modules/system/test_pamd.py:
     migrated_to: community.general
   test/units/modules/system/test_parted.py:
@@ -14355,17 +14373,17 @@ files:
   test/integration/targets/iso_extract/meta/main.yml:
     migrated_to: community.general
   test/integration/targets/patch/aliases:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/integration/targets/patch/files/result.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/integration/targets/patch/files/origin.txt:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/integration/targets/patch/files/result.patch:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/integration/targets/patch/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/integration/targets/patch/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   test/integration/targets/read_csv/aliases:
     migrated_to: community.general
   test/integration/targets/read_csv/tasks/main.yml:
@@ -19412,6 +19430,150 @@ files:
     migrated_to: ansible.netcommon
   test/integration/targets/prepare_sros_tests/tasks/main.yml:
     migrated_to: ansible.netcommon
+  lib/ansible/plugins/callback/cgroup_perf_recap.py:
+    migrated_to: ansible.posix
+  lib/ansible/plugins/callback/json.py:
+    migrated_to: ansible.posix
+  lib/ansible/plugins/callback/profile_roles.py:
+    migrated_to: ansible.posix
+  lib/ansible/plugins/callback/profile_tasks.py:
+    migrated_to: ansible.posix
+  lib/ansible/plugins/callback/skippy.py:
+    migrated_to: ansible.posix
+  lib/ansible/plugins/callback/timer.py:
+    migrated_to: ansible.posix
+  lib/ansible/plugins/shell/csh.py:
+    migrated_to: ansible.posix
+  lib/ansible/plugins/shell/fish.py:
+    migrated_to: ansible.posix
+  test/units/plugins/action/test_synchronize.py:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_become/task_vars_in.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/delegate_remote_su/meta.yaml:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_vagrant_become_cli/task_vars_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_vagrant_become_cli/task_args_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic/taskvars_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_vagrant/task_vars_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic/taskvars_in.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/delegate_remote_su/task_vars_in.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_vagrant_sudo/meta.yaml:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/delegate_remote/task_vars_in.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/delegate_remote/meta.yaml:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_vagrant_sudo/task_vars_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_vagrant/task_vars_in.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_become/task_vars_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_become/meta.yaml:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_vagrant_sudo/task_vars_in.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_vagrant_become_cli/task_vars_in.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_vagrant/task_args_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_become_cli/task_args_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_become_cli/meta.yaml:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/delegate_remote/task_vars_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_vagrant_sudo/task_args_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_vagrant/meta.yaml:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic/meta.yaml:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/delegate_remote_su/task_args_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic/task_args_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_vagrant_become_cli/meta.yaml:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/delegate_remote/task_args_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/delegate_remote_su/task_vars_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_become_cli/task_vars_in.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_become_cli/task_vars_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/fixtures/synchronize/basic_become/task_args_out.json:
+    migrated_to: ansible.posix
+  test/units/plugins/action/__init__.py:
+    migrated_to: ansible.posix
+  test/units/modules/system/test_mount.py:
+    migrated_to: ansible.posix
+  test/integration/targets/synchronize/aliases:
+    migrated_to: ansible.posix
+  test/integration/targets/synchronize/files/bar.txt:
+    migrated_to: ansible.posix
+  test/integration/targets/synchronize/files/foo.txt:
+    migrated_to: ansible.posix
+  test/integration/targets/synchronize/tasks/main.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/synchronize/meta/main.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/acl/aliases:
+    migrated_to: ansible.posix
+  test/integration/targets/acl/tasks/acl.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/acl/tasks/main.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/at/aliases:
+    migrated_to: ansible.posix
+  test/integration/targets/at/tasks/main.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/at/meta/main.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/authorized_key/aliases:
+    migrated_to: ansible.posix
+  test/integration/targets/authorized_key/defaults/main.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/authorized_key/files/existing_authorized_keys:
+    migrated_to: ansible.posix
+  test/integration/targets/authorized_key/tasks/main.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/authorized_key/meta/main.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/mount/aliases:
+    migrated_to: ansible.posix
+  test/integration/targets/mount/tasks/main.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/seboolean/aliases:
+    migrated_to: ansible.posix
+  test/integration/targets/seboolean/tasks/main.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/seboolean/tasks/seboolean.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/selinux/aliases:
+    migrated_to: ansible.posix
+  test/integration/targets/selinux/tasks/selinux.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/selinux/tasks/main.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/selinux/tasks/selogin.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/sysctl/aliases:
+    migrated_to: ansible.posix
+  test/integration/targets/sysctl/files/sysctl.conf:
+    migrated_to: ansible.posix
+  test/integration/targets/sysctl/tasks/main.yml:
+    migrated_to: ansible.posix
+  test/integration/targets/sysctl/meta/main.yml:
+    migrated_to: ansible.posix
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
