@@ -3179,6 +3179,7 @@ files:
     labels: windows
     maintainers: $team_windows
     notified: if-meaton
+    migrated_to: community.windows
   contrib/:
     support: community
   contrib/inventory:
@@ -4553,27 +4554,27 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: community.vmware
+    migrated_to: community.windows
   test/units/compat/mock.py:
-    migrated_to: community.vmware
+    migrated_to: community.windows
   test/units/compat/unittest.py:
-    migrated_to: community.vmware
+    migrated_to: community.windows
   test/units/compat/__init__.py:
-    migrated_to: community.vmware
+    migrated_to: community.windows
   test/units/compat/builtins.py:
-    migrated_to: community.vmware
+    migrated_to: community.windows
   test/units/mock/__init__.py:
-    migrated_to: community.vmware
+    migrated_to: community.windows
   test/units/mock/yaml_helper.py:
-    migrated_to: community.vmware
+    migrated_to: community.windows
   test/units/mock/procenv.py:
-    migrated_to: community.vmware
+    migrated_to: community.windows
   test/units/mock/vault_helper.py:
-    migrated_to: community.vmware
+    migrated_to: community.windows
   test/units/mock/path.py:
-    migrated_to: community.vmware
+    migrated_to: community.windows
   test/units/mock/loader.py:
-    migrated_to: community.vmware
+    migrated_to: community.windows
   test/units/modules/conftest.py:
     migrated_to: community.vmware
   test/units/modules/network/frr/test_frr_facts.py:
@@ -6159,17 +6160,17 @@ files:
   test/integration/targets/aws_acm/meta/main.yml:
     migrated_to: community.amazon
   test/integration/targets/setup_remote_tmp_dir/tasks/windows-cleanup.yml:
-    migrated_to: community.mongo
+    migrated_to: community.windows
   test/integration/targets/setup_remote_tmp_dir/tasks/default-cleanup.yml:
-    migrated_to: community.mongo
+    migrated_to: community.windows
   test/integration/targets/setup_remote_tmp_dir/tasks/default.yml:
-    migrated_to: community.mongo
+    migrated_to: community.windows
   test/integration/targets/setup_remote_tmp_dir/tasks/main.yml:
-    migrated_to: community.mongo
+    migrated_to: community.windows
   test/integration/targets/setup_remote_tmp_dir/tasks/windows.yml:
-    migrated_to: community.mongo
+    migrated_to: community.windows
   test/integration/targets/setup_remote_tmp_dir/handlers/main.yml:
-    migrated_to: community.mongo
+    migrated_to: community.windows
   test/integration/targets/aws_api_gateway/aliases:
     migrated_to: community.amazon
   test/integration/targets/aws_api_gateway/tasks/main.yml:
@@ -10353,9 +10354,9 @@ files:
   test/units/plugins/lookup/test_avi.py:
     migrated_to: community.general
   test/units/plugins/lookup/fixtures/avi.json:
-    migrated_to: community.general
+    migrated_to: community.windows
   test/units/plugins/lookup/__init__.py:
-    migrated_to: community.general
+    migrated_to: community.windows
   test/units/plugins/lookup/test_conjur_variable.py:
     migrated_to: community.general
   test/units/plugins/lookup/test_lastpass.py:
@@ -17630,6 +17631,940 @@ files:
     migrated_to: community.vmware
   test/integration/targets/vsphere_file/tasks/main.yml:
     migrated_to: community.vmware
+  lib/ansible/plugins/lookup/laps_password.py:
+    migrated_to: community.windows
+  lib/ansible/modules/commands/psexec.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_audit_policy_system.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_audit_policy_system.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_audit_rule.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_audit_rule.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_auto_logon.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_auto_logon.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_certificate_info.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_certificate_info.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_chocolatey.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_chocolatey.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_chocolatey_config.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_chocolatey_config.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_chocolatey_facts.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_chocolatey_facts.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_chocolatey_feature.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_chocolatey_feature.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_chocolatey_source.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_chocolatey_source.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_computer_description.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_computer_description.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_credential.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_credential.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_data_deduplication.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_data_deduplication.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_defrag.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_defrag.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_disk_facts.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_disk_facts.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_disk_image.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_disk_image.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_dns_record.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_dns_record.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_domain_computer.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_domain_computer.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_domain_group.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_domain_group.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_domain_group_membership.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_domain_group_membership.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_domain_object_info.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_domain_object_info.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_domain_user.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_domain_user.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_dotnet_ngen.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_dotnet_ngen.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_eventlog.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_eventlog.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_eventlog_entry.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_eventlog_entry.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_file_compression.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_file_compression.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_file_version.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_file_version.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_firewall.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_firewall.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_firewall_rule.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_firewall_rule.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_format.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_format.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_hosts.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_hosts.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_hotfix.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_hotfix.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_http_proxy.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_http_proxy.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_iis_virtualdirectory.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_iis_virtualdirectory.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_iis_webapplication.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_iis_webapplication.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_iis_webapppool.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_iis_webapppool.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_iis_webbinding.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_iis_webbinding.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_iis_website.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_iis_website.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_inet_proxy.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_inet_proxy.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_initialize_disk.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_initialize_disk.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_lineinfile.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_lineinfile.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_mapped_drive.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_mapped_drive.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_msg.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_msg.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_netbios.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_netbios.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_nssm.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_nssm.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_pagefile.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_pagefile.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_partition.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_partition.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_pester.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_pester.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_power_plan.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_power_plan.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_product_facts.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_product_facts.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_psexec.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_psexec.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_psmodule.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_psmodule.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_psrepository.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_psrepository.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_psrepository_info.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_psrepository_info.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_rabbitmq_plugin.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_rabbitmq_plugin.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_rds_cap.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_rds_cap.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_rds_rap.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_rds_rap.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_rds_settings.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_rds_settings.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_region.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_region.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_regmerge.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_regmerge.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_robocopy.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_robocopy.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_route.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_route.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_say.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_say.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_scheduled_task.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_scheduled_task.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_scheduled_task_stat.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_scheduled_task_stat.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_security_policy.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_shortcut.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_shortcut.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_snmp.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_snmp.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_timezone.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_timezone.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_toast.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_toast.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_unzip.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_unzip.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_user_profile.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_user_profile.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_wait_for_process.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_wait_for_process.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_wakeonlan.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_wakeonlan.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_webpicmd.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_webpicmd.py:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_xml.ps1:
+    migrated_to: community.windows
+  lib/ansible/modules/windows/win_xml.py:
+    migrated_to: community.windows
+  test/units/plugins/lookup/test_laps_password.py:
+    migrated_to: community.windows
+  test/integration/targets/psexec/aliases:
+    migrated_to: community.windows
+  test/integration/targets/psexec/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/psexec/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_audit_policy_system/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_audit_policy_system/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_audit_policy_system/tasks/add.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_audit_policy_system/tasks/remove.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_audit_policy_system/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_audit_rule/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_audit_rule/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_audit_rule/tasks/add.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_audit_rule/tasks/remove.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_audit_rule/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_audit_rule/tasks/modify.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_audit_rule/library/test_get_audit_rule.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_auto_logon/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_auto_logon/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_auto_logon/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_auto_logon/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_auto_logon/library/test_autologon_info.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_certificate_info/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_certificate_info/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_certificate_info/files/root-cert.pem:
+    migrated_to: community.windows
+  test/integration/targets/win_certificate_info/files/subj-cert.pem:
+    migrated_to: community.windows
+  test/integration/targets/win_certificate_info/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_certificate_info/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_certificate_info/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/prepare_win_tests/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/prepare_win_tests/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey/files/package.nuspec:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey/files/tools/chocolateyUninstall.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey/files/tools/chocolateyinstall.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_config/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_config/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_config/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_facts/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_facts/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_feature/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_feature/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_feature/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_feature/filter_plugins/choco_checksum_state.py:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_source/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_source/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_source/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_source/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_chocolatey_source/library/choco_source.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_computer_description/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_computer_description/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_computer_description/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_credential/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_credential/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_credential/files/cert.pfx:
+    migrated_to: community.windows
+  test/integration/targets/win_credential/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_credential/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_credential/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_credential/library/test_cred_facts.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_data_deduplication/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_data_deduplication/tasks/pre_test.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_data_deduplication/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_data_deduplication/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_data_deduplication/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_data_deduplication/templates/partition_creation_script.j2:
+    migrated_to: community.windows
+  test/integration/targets/win_data_deduplication/templates/partition_deletion_script.j2:
+    migrated_to: community.windows
+  test/integration/targets/win_disk_facts/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_disk_facts/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_disk_facts/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_dns_record/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_dns_record/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_dns_record/tasks/tests-A.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_dns_record/tasks/tests-CNAME.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_dns_record/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_dns_record/tasks/tests-PTR.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_dns_record/tasks/clean.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_dns_record/tasks/tests-AAAA.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_dns_record/tasks/tests-diff.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_dns_record/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_domain_computer/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_domain_computer/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_domain_group/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_domain_group/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_domain_group/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_domain_object_info/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_domain_object_info/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_domain_object_info/handlers/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_dotnet_ngen/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_dotnet_ngen/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_eventlog/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_eventlog/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_eventlog/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_eventlog_entry/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_eventlog_entry/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_eventlog_entry/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_eventlog_entry/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_eventlog_entry/library/test_win_eventlog_entry.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_file_compression/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_file_compression/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_file_compression/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_file_compression/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_firewall/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_firewall/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_firewall/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_firewall_rule/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_firewall_rule/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_format/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_format/tasks/pre_test.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_format/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_format/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_format/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_format/templates/partition_creation_script.j2:
+    migrated_to: community.windows
+  test/integration/targets/win_format/templates/partition_deletion_script.j2:
+    migrated_to: community.windows
+  test/integration/targets/win_hosts/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_hosts/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_hosts/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_hosts/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_hosts/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_hotfix/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_hotfix/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_hotfix/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_hotfix/tasks/tests_2012R2.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_hotfix/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_http_proxy/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_http_proxy/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_http_proxy/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webapplication/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webapplication/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webapplication/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webapplication/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webapplication/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webapppool/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webapppool/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webapppool/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webapppool/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webbinding/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webbinding/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webbinding/tasks/http.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webbinding/tasks/https-lt6.2.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webbinding/tasks/setup.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webbinding/tasks/failures.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webbinding/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webbinding/tasks/https-ge6.2.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_iis_webbinding/library/test_get_webbindings.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_inet_proxy/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_inet_proxy/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_inet_proxy/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_inet_proxy/library/win_phonebook_entry.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_inet_proxy/library/win_inet_proxy_info.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_initialize_disk/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_initialize_disk/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_initialize_disk/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_initialize_disk/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_initialize_disk/templates/vhdx_deletion_script.j2:
+    migrated_to: community.windows
+  test/integration/targets/win_initialize_disk/templates/vhdx_creation_script.j2:
+    migrated_to: community.windows
+  test/integration/targets/win_lineinfile/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_lineinfile/files/test_linebreak.txt:
+    migrated_to: community.windows
+  test/integration/targets/win_lineinfile/files/test.txt:
+    migrated_to: community.windows
+  test/integration/targets/win_lineinfile/files/test_quoting.txt:
+    migrated_to: community.windows
+  test/integration/targets/win_lineinfile/files/testempty.txt:
+    migrated_to: community.windows
+  test/integration/targets/win_lineinfile/files/testnoeof.txt:
+    migrated_to: community.windows
+  test/integration/targets/win_lineinfile/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_lineinfile/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_mapped_drive/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_mapped_drive/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_mapped_drive/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_mapped_drive/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_msg/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_msg/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_netbios/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_netbios/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_netbios/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_netbios/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/setup_win_device/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/setup_win_device/library/win_device.ps1:
+    migrated_to: community.windows
+  test/integration/targets/setup_win_device/handlers/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_nssm/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_nssm/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_nssm/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_nssm/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_pagefile/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_pagefile/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_partition/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_partition/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_partition/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_partition/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_partition/templates/vhdx_deletion_script.j2:
+    migrated_to: community.windows
+  test/integration/targets/win_partition/templates/vhdx_creation_script.j2:
+    migrated_to: community.windows
+  test/integration/targets/win_pester/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_pester/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_pester/files/test02.tests.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_pester/files/test01.tests.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_pester/files/fail.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_pester/files/test04.tests.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_pester/files/test03.tests.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_pester/tasks/test.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_pester/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_power_plan/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_power_plan/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_product_facts/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_product_facts/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psexec/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_psexec/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psexec/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psmodule/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_psmodule/files/setup_modules.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_psmodule/files/openssl.conf:
+    migrated_to: community.windows
+  test/integration/targets/win_psmodule/files/setup_certs.sh:
+    migrated_to: community.windows
+  test/integration/targets/win_psmodule/files/module/template.nuspec:
+    migrated_to: community.windows
+  test/integration/targets/win_psmodule/files/module/template.psm1:
+    migrated_to: community.windows
+  test/integration/targets/win_psmodule/files/module/template.psd1:
+    migrated_to: community.windows
+  test/integration/targets/win_psmodule/tasks/setup.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psmodule/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psmodule/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psmodule/handlers/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/setup_win_psget/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/setup_win_psget/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository_info/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository_info/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository_info/tasks/contains_all_fields.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository_info/tasks/single.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository_info/tasks/multiple.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository_info/tasks/empty.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository_info/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_psrepository_info/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_rabbitmq_plugin/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_rabbitmq_plugin/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_rabbitmq_plugin/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_rds/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_rds/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_rds/tasks/win_rds_cap.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_rds/tasks/win_rds_cap_tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_rds/tasks/win_rds_settings.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_rds/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_rds/tasks/win_rds_rap.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_rds/tasks/win_rds_rap_tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_rds/tasks/win_rds_settings_tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_rds/templates/rds_base_cfg.xml.j2:
+    migrated_to: community.windows
+  test/integration/targets/win_region/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_region/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_region/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_regmerge/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_regmerge/vars/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_regmerge/files/settings2.reg:
+    migrated_to: community.windows
+  test/integration/targets/win_regmerge/files/settings1.reg:
+    migrated_to: community.windows
+  test/integration/targets/win_regmerge/files/settings3.reg:
+    migrated_to: community.windows
+  test/integration/targets/win_regmerge/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_regmerge/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_regmerge/templates/win_line_ending.j2:
+    migrated_to: community.windows
+  test/integration/targets/win_route/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_route/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_route/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_route/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_say/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_say/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_scheduled_task/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_scheduled_task/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_scheduled_task/tasks/principals.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_scheduled_task/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_scheduled_task/tasks/failures.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_scheduled_task/tasks/clean.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_scheduled_task/tasks/triggers.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_scheduled_task/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_scheduled_task_stat/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_scheduled_task_stat/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_scheduled_task_stat/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_security_policy/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_security_policy/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_security_policy/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_security_policy/library/test_win_security_policy.ps1:
+    migrated_to: community.windows
+  test/integration/targets/win_shortcut/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_shortcut/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_shortcut/tasks/clean.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_shortcut/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_snmp/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_snmp/vars/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_snmp/tasks/cleanup.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_snmp/tasks/cleanup_using_module.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_snmp/tasks/output_only.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_snmp/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_snmp/tasks/snmp_managers.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_snmp/tasks/snmp_community.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_timezone/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_timezone/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_timezone/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_toast/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_toast/tasks/setup.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_toast/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_toast/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_unzip/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_unzip/defaults/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_unzip/files/create_crafty_zip_files.py:
+    migrated_to: community.windows
+  test/integration/targets/win_unzip/files/create_zip.py:
+    migrated_to: community.windows
+  test/integration/targets/win_unzip/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_unzip/meta/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_user_profile/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_user_profile/tasks/tests.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_user_profile/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_wait_for_process/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_wait_for_process/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_wakeonlan/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_wakeonlan/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_xml/aliases:
+    migrated_to: community.windows
+  test/integration/targets/win_xml/files/plane.zip:
+    migrated_to: community.windows
+  test/integration/targets/win_xml/files/log4j.xml:
+    migrated_to: community.windows
+  test/integration/targets/win_xml/files/books.xml:
+    migrated_to: community.windows
+  test/integration/targets/win_xml/files/config.xml:
+    migrated_to: community.windows
+  test/integration/targets/win_xml/tasks/main.yml:
+    migrated_to: community.windows
+  test/integration/targets/win_xml/meta/main.yml:
+    migrated_to: community.windows
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
