@@ -86,8 +86,6 @@ lib/ansible/module_utils/json_utils.py future-import-boilerplate
 lib/ansible/module_utils/json_utils.py metaclass-boilerplate
 lib/ansible/module_utils/network/dellos6/dellos6.py future-import-boilerplate
 lib/ansible/module_utils/network/dellos6/dellos6.py metaclass-boilerplate
-lib/ansible/module_utils/network/dellos9/dellos9.py future-import-boilerplate
-lib/ansible/module_utils/network/dellos9/dellos9.py metaclass-boilerplate
 lib/ansible/module_utils/network/skydive/api.py future-import-boilerplate
 lib/ansible/module_utils/network/skydive/api.py metaclass-boilerplate
 lib/ansible/module_utils/network/vyos/vyos.py future-import-boilerplate
@@ -1064,24 +1062,6 @@ lib/ansible/modules/network/dellos6/dellos6_facts.py validate-modules:doc-requir
 lib/ansible/modules/network/dellos6/dellos6_facts.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/network/dellos6/dellos6_facts.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/dellos6/dellos6_facts.py validate-modules:undocumented-parameter
-lib/ansible/modules/network/dellos9/dellos9_command.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/network/dellos9/dellos9_command.py validate-modules:doc-missing-type
-lib/ansible/modules/network/dellos9/dellos9_command.py validate-modules:doc-required-mismatch
-lib/ansible/modules/network/dellos9/dellos9_command.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/network/dellos9/dellos9_command.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/dellos9/dellos9_command.py validate-modules:undocumented-parameter
-lib/ansible/modules/network/dellos9/dellos9_config.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/network/dellos9/dellos9_config.py validate-modules:doc-missing-type
-lib/ansible/modules/network/dellos9/dellos9_config.py validate-modules:doc-required-mismatch
-lib/ansible/modules/network/dellos9/dellos9_config.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/network/dellos9/dellos9_config.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/dellos9/dellos9_config.py validate-modules:undocumented-parameter
-lib/ansible/modules/network/dellos9/dellos9_facts.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/network/dellos9/dellos9_facts.py validate-modules:doc-missing-type
-lib/ansible/modules/network/dellos9/dellos9_facts.py validate-modules:doc-required-mismatch
-lib/ansible/modules/network/dellos9/dellos9_facts.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/network/dellos9/dellos9_facts.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/dellos9/dellos9_facts.py validate-modules:undocumented-parameter
 lib/ansible/modules/network/ovs/openvswitch_bridge.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/network/ovs/openvswitch_bridge.py validate-modules:doc-missing-type
 lib/ansible/modules/network/ovs/openvswitch_bridge.py validate-modules:parameter-type-not-in-doc
@@ -1366,7 +1346,6 @@ lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # http
 lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/action/dellos6.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
-lib/ansible/plugins/action/dellos9.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/action/vyos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
@@ -1384,8 +1363,6 @@ lib/ansible/plugins/doc_fragments/default_callback.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/default_callback.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/dellos6.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/dellos6.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/dellos9.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/dellos9.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/files.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/files.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/hcloud.py future-import-boilerplate
