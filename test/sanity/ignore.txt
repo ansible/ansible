@@ -3530,7 +3530,6 @@ lib/ansible/modules/network/vyos/vyos_vlan.py validate-modules:missing-suboption
 lib/ansible/modules/network/vyos/vyos_vlan.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/network/vyos/vyos_vlan.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/vyos/vyos_vlan.py validate-modules:undocumented-parameter
-lib/ansible/modules/notification/snow_record_find.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/packaging/language/pip.py pylint:blacklisted-name
 lib/ansible/modules/packaging/language/pip.py validate-modules:doc-elements-mismatch
 lib/ansible/modules/packaging/language/pip.py validate-modules:invalid-ansiblemodule-schema
