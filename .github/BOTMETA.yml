@@ -3769,6 +3769,7 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
+    migrated_to: vyos.vyos
   $plugins/become:
     support: community
   $plugins/become/__init__.py:
@@ -3880,6 +3881,7 @@ files:
   $plugins/cliconf/vyos.py:
     support: network
     maintainers: $team_networking
+    migrated_to: vyos.vyos
   $plugins/connection/:
     support: core
   $plugins/connection/buildah.py:
@@ -4294,6 +4296,7 @@ files:
   $plugins/terminal/vyos.py:
     support: network
     maintainers: $team_networking
+    migrated_to: vyos.vyos
   $plugins/terminal/bigip.py:
     maintainers: caphrim007 wojtek0806
     migrated_to: f5networks.f5_modules
@@ -4625,29 +4628,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: openvswitch.openvswitch
+    migrated_to: vyos.vyos
   test/units/compat/mock.py:
-    migrated_to: openvswitch.openvswitch
+    migrated_to: vyos.vyos
   test/units/compat/unittest.py:
-    migrated_to: openvswitch.openvswitch
+    migrated_to: vyos.vyos
   test/units/compat/__init__.py:
-    migrated_to: openvswitch.openvswitch
+    migrated_to: vyos.vyos
   test/units/compat/builtins.py:
-    migrated_to: openvswitch.openvswitch
+    migrated_to: vyos.vyos
   test/units/mock/__init__.py:
-    migrated_to: openvswitch.openvswitch
+    migrated_to: vyos.vyos
   test/units/mock/yaml_helper.py:
-    migrated_to: openvswitch.openvswitch
+    migrated_to: vyos.vyos
   test/units/mock/procenv.py:
-    migrated_to: openvswitch.openvswitch
+    migrated_to: vyos.vyos
   test/units/mock/vault_helper.py:
-    migrated_to: openvswitch.openvswitch
+    migrated_to: vyos.vyos
   test/units/mock/path.py:
-    migrated_to: openvswitch.openvswitch
+    migrated_to: vyos.vyos
   test/units/mock/loader.py:
-    migrated_to: openvswitch.openvswitch
+    migrated_to: vyos.vyos
   test/units/modules/conftest.py:
-    migrated_to: openvswitch.openvswitch
+    migrated_to: vyos.vyos
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -29456,6 +29459,670 @@ files:
     migrated_to: openvswitch.openvswitch
   test/integration/targets/openvswitch_bridge/tests/basic.yaml:
     migrated_to: openvswitch.openvswitch
+  lib/ansible/plugins/doc_fragments/vyos.py:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_route/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_logging/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interface/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_global/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_banner/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_command/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/1:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_facts/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_system/aliases:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/vars/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/meta/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_route/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_route/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_route/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_logging/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_logging/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_logging/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interface/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interface/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interface/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interface/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interface/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interface/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interface/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interface/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interface/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/vars/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/meta/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_global/vars/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_global/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_global/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_global/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_linkagg/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_linkagg/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_linkagg/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_banner/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_banner/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_banner/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_command/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_command/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_command/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/vars/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/meta/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/vars/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/meta/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/vars/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/meta/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/vars/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/meta/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_facts/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_facts/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_facts/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/vars/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/meta/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/tasks/cli_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_smoke/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_smoke/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_smoke/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_vlan/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_vlan/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_vlan/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interfaces/vars/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interfaces/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interfaces/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interfaces/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interfaces/meta/main.yml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_user/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_user/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_user/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_system/defaults/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_system/tasks/cli.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_system/tasks/main.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/tests/cli/overridden.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/tests/cli/deleted.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/tests/cli/replaced.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/tests/cli/_add_bond.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/tests/cli/merged.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/tests/cli/_populate.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/tests/cli/rtt.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lag_interfaces/tests/cli/_remove_bond.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_route/tests/cli/net_static_route.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_route/tests/cli/basic.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_logging/tests/cli/net_logging.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_logging/tests/cli/basic.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp/tests/cli/net_lldp.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp/tests/cli/basic.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interface/tests/cli/basic.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interface/tests/cli/net_lldp_interface.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interface/tests/cli/basic.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interface/tests/cli/basic.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interface/tests/cli/net_interface.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interface/tests/cli/intent.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/deleted_all.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/parsed.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/overridden.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/deleted.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/replaced.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/empty_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/merged.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/rendered.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/_populate.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/deleted_rule.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/deleted_afi.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/_remove_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/gathered.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/rtt.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_rules/tests/cli/_parsed_config.cfg:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_global/tests/cli/deleted.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_global/tests/cli/replaced.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_global/tests/cli/empty_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_global/tests/cli/merged.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_global/tests/cli/_populate.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_global/tests/cli/_remove_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_global/tests/cli/rtt.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_linkagg/tests/cli/net_linkagg.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_linkagg/tests/cli/basic.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_banner/tests/cli/basic-no-login.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_banner/tests/cli/basic-post-login.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_banner/tests/cli/basic-pre-login.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_command/tests/cli/invalid.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_command/tests/cli/output.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_command/tests/cli/bad_operator.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_command/tests/cli/contains.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_command/tests/cli/cli_command.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_command/tests/cli/timeout.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/deleted_all.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/parsed.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/overridden.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/deleted.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/replaced.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/deleted_single.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/_remove_firewall_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/merged.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/rendered.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/_populate.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/_populate_rule_sets.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/merged_edit.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/deleted_afi.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/gathered.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/rtt.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_interfaces/tests/cli/_parsed_config.cfg:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/tests/cli/overridden.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/tests/cli/deleted.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/tests/cli/replaced.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/tests/cli/merged.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/tests/cli/_populate.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_interfaces/tests/cli/rtt.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/tests/cli/_populate_intf.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/tests/cli/overridden.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/tests/cli/deleted.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/tests/cli/replaced.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/tests/cli/merged.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/tests/cli/_populate.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_lldp_interfaces/tests/cli/rtt.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/deleted_all.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/deleted_nh.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/parsed.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/overridden.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/deleted.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/replaced.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/empty_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/merged.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/rendered.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/_populate.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/deleted_afi.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/_remove_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/gathered.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/rtt.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_static_routes/tests/cli/_parsed_config.cfg:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_facts/tests/cli/basic_facts.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tests/cli/parsed.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tests/cli/deleted.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tests/cli/replaced.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tests/cli/empty_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tests/cli/merged.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tests/cli/rendered.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tests/cli/_populate.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tests/cli/_remove_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tests/cli/gathered.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tests/cli/rtt.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_firewall_global/tests/cli/_parsed_config.cfg:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/tests/cli/check_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/tests/cli/config.cfg:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/tests/cli/comment.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/tests/cli/simple.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/tests/cli/save.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/tests/cli/backup.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/tests/cli_config/cli_basic.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/tests/cli_config/cli_comment.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_config/tests/cli_config/cli_backup.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_smoke/tests/cli/common_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_smoke/tests/cli/common_utils.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_smoke/tests/cli/misc_tests.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_vlan/tests/cli/basic.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_vlan/tests/cli/multiple.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_vlan/tests/cli/intent.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interfaces/tests/cli/overridden.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interfaces/tests/cli/deleted.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interfaces/tests/cli/replaced.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interfaces/tests/cli/merged.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interfaces/tests/cli/_populate.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_l3_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_user/tests/cli/basic.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_user/tests/cli/auth.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_system/tests/cli/basic.yaml:
+    migrated_to: vyos.vyos
+  test/integration/targets/vyos_system/tests/cli/net_system.yaml:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/vyos.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/facts/facts.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/utils/utils.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/facts/lldp_global/lldp_global.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/facts/firewall_global/firewall_global.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/facts/static_routes/static_routes.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/facts/firewall_rules/firewall_rules.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/facts/l3_interfaces/l3_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/facts/lag_interfaces/lag_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/facts/legacy/base.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/facts/interfaces/interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/facts/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/facts/firewall_interfaces/firewall_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/argspec/lldp_global/lldp_global.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/argspec/facts/facts.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/argspec/firewall_global/firewall_global.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/argspec/static_routes/static_routes.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/argspec/firewall_rules/firewall_rules.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/argspec/l3_interfaces/l3_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/argspec/lag_interfaces/lag_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/argspec/interfaces/interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/argspec/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/argspec/firewall_interfaces/firewall_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/config/lldp_global/lldp_global.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/config/firewall_global/firewall_global.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/config/static_routes/static_routes.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/config/firewall_rules/firewall_rules.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/config/l3_interfaces/l3_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/config/lag_interfaces/lag_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/config/interfaces/interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/config/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/module_utils/network/vyos/config/firewall_interfaces/firewall_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/_vyos_l3_interface.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_banner.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_firewall_rules.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/_vyos_static_route.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/_vyos_lldp_interface.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_vlan.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_user.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_firewall_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/_vyos_interface.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_firewall_global.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_config.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_facts.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/_vyos_linkagg.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_ping.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_lag_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/_vyos_lldp.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_lldp_global.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_l3_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_lldp_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_interfaces.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_logging.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_static_routes.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_command.py:
+    migrated_to: vyos.vyos
+  lib/ansible/modules/network/vyos/vyos_system.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/test_vyos_banner.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/vyos_config_src.cfg:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/show_host_name:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/vyos_firewall_global_config.cfg:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/vyos_ping_ping_10.10.10.10_count_2:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/vyos_ping_ping_10.10.10.11_count_10_ttl_128_size_512:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/vyos_config_src_brackets.cfg:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/vyos_firewall_rules_config.cfg:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/vyos_static_routes_config.cfg:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/vyos_firewall_interfaces_config.cfg:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/vyos_user_config.cfg:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/show_version:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/vyos_ping_ping_10.10.10.20_count_4:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/fixtures/vyos_config_config.cfg:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/vyos_module.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/__init__.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/test_vyos_firewall_rules.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/test_vyos_static_route.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/test_vyos_user.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/test_vyos_firewall_interfaces.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/test_vyos_firewall_global.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/test_vyos_config.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/test_vyos_facts.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/test_vyos_ping.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/test_vyos_static_routes.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/test_vyos_command.py:
+    migrated_to: vyos.vyos
+  test/units/modules/network/vyos/test_vyos_system.py:
+    migrated_to: vyos.vyos
+  test/integration/targets/prepare_vyos_tests/tasks/main.yaml:
+    migrated_to: vyos.vyos
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
