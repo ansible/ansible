@@ -3989,6 +3989,7 @@ files:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: k8s
+    migrated_to: community.kubernetes
   $plugins/inventory/linode.py:
     keywords:
     - linode dynamic inventory script
@@ -4004,6 +4005,7 @@ files:
   $plugins/inventory/openshift.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87
+    migrated_to: community.kubernetes
   $plugins/inventory/openstack.py:
     maintainers: $team_openstack
     keywords:
@@ -4104,6 +4106,7 @@ files:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: k8s
+    migrated_to: community.kubernetes
   $plugins/lookup/nios:
     support: core
     maintainers: $team_networking sganesh-infoblox
@@ -6146,17 +6149,17 @@ files:
   test/integration/targets/aws_acm/meta/main.yml:
     migrated_to: community.amazon
   test/integration/targets/setup_remote_tmp_dir/tasks/windows-cleanup.yml:
-    migrated_to: community.general
+    migrated_to: community.kubernetes
   test/integration/targets/setup_remote_tmp_dir/tasks/default-cleanup.yml:
-    migrated_to: community.general
+    migrated_to: community.kubernetes
   test/integration/targets/setup_remote_tmp_dir/tasks/default.yml:
-    migrated_to: community.general
+    migrated_to: community.kubernetes
   test/integration/targets/setup_remote_tmp_dir/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.kubernetes
   test/integration/targets/setup_remote_tmp_dir/tasks/windows.yml:
-    migrated_to: community.general
+    migrated_to: community.kubernetes
   test/integration/targets/setup_remote_tmp_dir/handlers/main.yml:
-    migrated_to: community.general
+    migrated_to: community.kubernetes
   test/integration/targets/aws_api_gateway/aliases:
     migrated_to: community.amazon
   test/integration/targets/aws_api_gateway/tasks/main.yml:
@@ -15963,6 +15966,86 @@ files:
     migrated_to: community.grafana
   test/integration/targets/setup_grafana/tasks/main.yml:
     migrated_to: community.grafana
+  lib/ansible/plugins/doc_fragments/k8s_auth_options.py:
+    migrated_to: community.kubernetes
+  lib/ansible/plugins/doc_fragments/k8s_name_options.py:
+    migrated_to: community.kubernetes
+  lib/ansible/plugins/doc_fragments/k8s_resource_options.py:
+    migrated_to: community.kubernetes
+  lib/ansible/plugins/doc_fragments/k8s_scale_options.py:
+    migrated_to: community.kubernetes
+  lib/ansible/plugins/doc_fragments/k8s_state_options.py:
+    migrated_to: community.kubernetes
+  lib/ansible/plugins/filter/k8s.py:
+    migrated_to: community.kubernetes
+  lib/ansible/plugins/lookup/_openshift.py:
+    migrated_to: community.kubernetes
+  lib/ansible/module_utils/k8s/__init__.py:
+    migrated_to: community.kubernetes
+  lib/ansible/module_utils/k8s/common.py:
+    migrated_to: community.kubernetes
+  lib/ansible/module_utils/k8s/raw.py:
+    migrated_to: community.kubernetes
+  lib/ansible/module_utils/k8s/scale.py:
+    migrated_to: community.kubernetes
+  lib/ansible/modules/clustering/k8s/_k8s_facts.py:
+    migrated_to: community.kubernetes
+  lib/ansible/modules/clustering/k8s/_k8s_raw.py:
+    migrated_to: community.kubernetes
+  lib/ansible/modules/clustering/k8s/k8s.py:
+    migrated_to: community.kubernetes
+  lib/ansible/modules/clustering/k8s/k8s_auth.py:
+    migrated_to: community.kubernetes
+  lib/ansible/modules/clustering/k8s/k8s_info.py:
+    migrated_to: community.kubernetes
+  lib/ansible/modules/clustering/k8s/k8s_scale.py:
+    migrated_to: community.kubernetes
+  lib/ansible/modules/clustering/k8s/k8s_service.py:
+    migrated_to: community.kubernetes
+  lib/ansible/modules/clustering/openshift/_openshift_raw.py:
+    migrated_to: community.kubernetes
+  lib/ansible/modules/clustering/openshift/_openshift_scale.py:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/aliases:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/README.md:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/defaults/main.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/files/kuard-invalid-type.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/files/setup-crd.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/files/kuard-extra-property.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/files/crd-resource.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/tasks/validate_not_installed.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/tasks/validate_installed.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/tasks/openshift.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/tasks/lists.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/tasks/delete.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/tasks/older_openshift_fail.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/tasks/crd.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/tasks/append_hash.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/tasks/waiter.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/tasks/main.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/tasks/full_test.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/tasks/apply.yml:
+    migrated_to: community.kubernetes
+  test/integration/targets/k8s/meta/main.yml:
+    migrated_to: community.kubernetes
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
