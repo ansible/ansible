@@ -4606,27 +4606,27 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: arista.eos
+    migrated_to: cisco.aci
   test/units/compat/mock.py:
-    migrated_to: arista.eos
+    migrated_to: cisco.aci
   test/units/compat/unittest.py:
-    migrated_to: arista.eos
+    migrated_to: cisco.aci
   test/units/compat/__init__.py:
-    migrated_to: arista.eos
+    migrated_to: cisco.aci
   test/units/compat/builtins.py:
-    migrated_to: arista.eos
+    migrated_to: cisco.aci
   test/units/mock/__init__.py:
-    migrated_to: arista.eos
+    migrated_to: cisco.aci
   test/units/mock/yaml_helper.py:
-    migrated_to: arista.eos
+    migrated_to: cisco.aci
   test/units/mock/procenv.py:
-    migrated_to: arista.eos
+    migrated_to: cisco.aci
   test/units/mock/vault_helper.py:
-    migrated_to: arista.eos
+    migrated_to: cisco.aci
   test/units/mock/path.py:
-    migrated_to: arista.eos
+    migrated_to: cisco.aci
   test/units/mock/loader.py:
-    migrated_to: arista.eos
+    migrated_to: cisco.aci
   test/units/modules/conftest.py:
     migrated_to: arista.eos
   test/units/modules/network/frr/test_frr_facts.py:
@@ -10418,7 +10418,7 @@ files:
   test/units/plugins/lookup/test_onepassword.py:
     migrated_to: community.general
   test/units/module_utils/conftest.py:
-    migrated_to: netapp.ontap
+    migrated_to: cisco.aci
   test/units/module_utils/cloud/__init__.py:
     migrated_to: community.general
   test/units/module_utils/cloud/test_backoff.py:
@@ -10496,9 +10496,9 @@ files:
   test/units/module_utils/network/meraki/test_meraki.py:
     migrated_to: community.general
   test/units/module_utils/network/aci/test_aci.py:
-    migrated_to: community.general
+    migrated_to: cisco.aci
   test/units/module_utils/network/aci/__init__.py:
-    migrated_to: community.general
+    migrated_to: cisco.aci
   test/units/module_utils/remote_management/__init__.py:
     migrated_to: community.general
   test/units/module_utils/remote_management/dellemc/test_ome.py:
@@ -22279,6 +22279,218 @@ files:
     migrated_to: arista.eos
   test/integration/targets/prepare_eos_tests/tasks/main.yml:
     migrated_to: arista.eos
+  test/integration/targets/aci_aaa_user/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_aaa_user/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_aaa_user_certificate/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_aaa_user_certificate/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_aaa_user_certificate/pki/admin.key:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_aaa_user_certificate/pki/admin.crt:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_access_port_block_to_access_port/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_access_port_block_to_access_port/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_access_port_to_interface_policy_leaf_profile/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_access_port_to_interface_policy_leaf_profile/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_access_sub_port_block_to_access_port/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_access_sub_port_block_to_access_port/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_aep/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_aep/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_aep_to_domain/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_aep_to_domain/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_ap/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_ap/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_bd/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_bd/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_bd_subnet/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_bd_subnet/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_config_rollback/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_config_rollback/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_config_snapshot/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_config_snapshot/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_contract/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_contract/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_contract_subject/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_contract_subject/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_contract_subject_to_filter/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_contract_subject_to_filter/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_domain/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_domain/tasks/l3dom.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_domain/tasks/fc.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_domain/tasks/l2dom.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_domain/tasks/phys.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_domain/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_domain/tasks/vmm-vmware.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_domain_to_vlan_pool/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_domain_to_vlan_pool/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_encap_pool/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_encap_pool/tasks/vsan.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_encap_pool/tasks/vxlan.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_encap_pool/tasks/vlan.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_encap_pool/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_encap_pool_range/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_encap_pool_range/tasks/vsan.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_encap_pool_range/tasks/vxlan.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_encap_pool_range/tasks/vlan.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_encap_pool_range/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_epg/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_epg/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_epg_to_contract/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_epg_to_contract/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_epg_to_domain/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_epg_to_domain/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_fabric_node/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_fabric_node/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_filter/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_filter/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_filter_entry/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_filter_entry/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_firmware_source/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_firmware_source/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_interface_policy_cdp/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_interface_policy_cdp/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_interface_policy_leaf_policy_group/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_interface_policy_leaf_policy_group/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_interface_policy_leaf_profile/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_interface_policy_leaf_profile/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_interface_policy_ospf/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_interface_policy_ospf/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_interface_selector_to_switch_policy_leaf_profile/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_interface_selector_to_switch_policy_leaf_profile/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_rest/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_rest/tasks/yaml_inline.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_rest/tasks/json_inline.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_rest/tasks/yaml_string.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_rest/tasks/json_string.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_rest/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_rest/tasks/error_handling.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_rest/tasks/xml_string.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_static_binding_to_epg/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_static_binding_to_epg/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_switch_leaf_selector/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_switch_leaf_selector/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_switch_policy_leaf_profile/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_switch_policy_leaf_profile/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_switch_policy_vpc_protection_group/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_switch_policy_vpc_protection_group/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_taboo_contract/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_taboo_contract/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_tenant/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_tenant/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_vlan_pool/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_vlan_pool/tasks/dynamic.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_vlan_pool/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_vlan_pool/tasks/static.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_vlan_pool_encap_block/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_vlan_pool_encap_block/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_vmm_credential/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_vmm_credential/tasks/vmware.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_vmm_credential/tasks/main.yml:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_vrf/aliases:
+    migrated_to: cisco.aci
+  test/integration/targets/aci_vrf/tasks/main.yml:
+    migrated_to: cisco.aci
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
