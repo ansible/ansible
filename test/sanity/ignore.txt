@@ -1666,14 +1666,6 @@ lib/ansible/modules/cloud/vmware/vmware_vspan_session.py validate-modules:parame
 lib/ansible/modules/cloud/vmware/vmware_vspan_session.py validate-modules:undocumented-parameter
 lib/ansible/modules/cloud/vmware/vmware_vswitch.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/cloud/vmware/vsphere_copy.py validate-modules:undocumented-parameter
-lib/ansible/modules/cloud/vmware_httpapi/vmware_appliance_access_info.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/vmware_httpapi/vmware_appliance_access_info.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/cloud/vmware_httpapi/vmware_appliance_health_info.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/vmware_httpapi/vmware_appliance_health_info.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/cloud/vmware_httpapi/vmware_cis_category_info.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/vmware_httpapi/vmware_cis_category_info.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/cloud/vmware_httpapi/vmware_core_info.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/vmware_httpapi/vmware_core_info.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/commands/command.py validate-modules:doc-missing-type
 lib/ansible/modules/commands/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/commands/command.py validate-modules:parameter-list-no-elements
