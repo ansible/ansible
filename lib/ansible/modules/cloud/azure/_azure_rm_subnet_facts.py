@@ -1,1 +1,0 @@
-azure_rm_subnet_info.py

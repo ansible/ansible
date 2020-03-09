@@ -1,1 +1,0 @@
-azure_rm_postgresqlserver_info.py
