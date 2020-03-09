@@ -3670,6 +3670,7 @@ files:
   $plugins/connection/buildah.py:
     support: community
     maintainers: TomasTomecek
+    migrated_to: containers.podman
   $plugins/connection/docker.py:
     ignored: ThomasSteinbach cove
     labels: *id001
@@ -3703,6 +3704,7 @@ files:
   $plugins/connection/podman.py:
     support: community
     maintainers: TomasTomecek
+    migrated_to: containers.podman
   $plugins/connection/psrp.py: *id029
   $plugins/connection/saltstack.py:
     support: community
@@ -4258,6 +4260,80 @@ files:
     notified: mattclay
   shippable.yml:
     notified: mattclay
+  lib/ansible/modules/cloud/podman/__init__.py:
+    migrated_to: containers.podman
+  lib/ansible/modules/cloud/podman/podman_container_info.py:
+    migrated_to: containers.podman
+  lib/ansible/modules/cloud/podman/podman_image_info.py:
+    migrated_to: containers.podman
+  lib/ansible/modules/cloud/podman/podman_image.py:
+    migrated_to: containers.podman
+  lib/ansible/modules/cloud/podman/podman_volume_info.py:
+    migrated_to: containers.podman
+  lib/ansible/module_utils/podman/common.py:
+    migrated_to: containers.podman
+  lib/ansible/module_utils/podman/__init__.py:
+    migrated_to: containers.podman
+  test/integration/targets/connection_podman/aliases:
+    migrated_to: containers.podman
+  test/integration/targets/connection_podman/runme.sh:
+    migrated_to: containers.podman
+  test/integration/targets/connection_podman/test_connection.inventory:
+    migrated_to: containers.podman
+  test/integration/targets/podman_container_info/aliases:
+    migrated_to: containers.podman
+  test/integration/targets/podman_image_info/aliases:
+    migrated_to: containers.podman
+  test/integration/targets/podman_volume_info/aliases:
+    migrated_to: containers.podman
+  test/integration/targets/podman_image/aliases:
+    migrated_to: containers.podman
+  test/integration/targets/podman_container_info/tasks/main.yml:
+    migrated_to: containers.podman
+  test/integration/targets/podman_container_info/meta/main.yml:
+    migrated_to: containers.podman
+  test/integration/targets/podman_image_info/tasks/main.yml:
+    migrated_to: containers.podman
+  test/integration/targets/podman_image_info/meta/main.yml:
+    migrated_to: containers.podman
+  test/integration/targets/podman_volume_info/tasks/main.yml:
+    migrated_to: containers.podman
+  test/integration/targets/podman_volume_info/meta/main.yml:
+    migrated_to: containers.podman
+  test/integration/targets/podman_image/files/Containerfile:
+    migrated_to: containers.podman
+  test/integration/targets/podman_image/tasks/main.yml:
+    migrated_to: containers.podman
+  test/integration/targets/podman_image/meta/main.yml:
+    migrated_to: containers.podman
+  test/integration/targets/setup_podman/vars/main.yml:
+    migrated_to: containers.podman
+  test/integration/targets/setup_podman/defaults/main.yml:
+    migrated_to: containers.podman
+  test/integration/targets/setup_podman/tasks/main.yml:
+    migrated_to: containers.podman
+  test/integration/targets/setup_podman/handlers/main.yml:
+    migrated_to: containers.podman
+  test/integration/targets/connection_buildah/aliases:
+    migrated_to: containers.podman
+  test/integration/targets/connection_buildah/runme.sh:
+    migrated_to: containers.podman
+  test/integration/targets/connection_buildah/posix.sh:
+    migrated_to: containers.podman
+  test/integration/targets/connection_buildah/test_connection.inventory:
+    migrated_to: containers.podman
+  test/integration/targets/connection_posix/aliases:
+    migrated_to: containers.podman
+  test/integration/targets/connection_posix/test.sh:
+    migrated_to: containers.podman
+  test/integration/targets/connection/aliases:
+    migrated_to: containers.podman
+  test/integration/targets/connection/test_connection.yml:
+    migrated_to: containers.podman
+  test/integration/targets/connection/test.sh:
+    migrated_to: containers.podman
+  test/integration/targets/connection_podman/posix.sh:
+    migrated_to: containers.podman
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
