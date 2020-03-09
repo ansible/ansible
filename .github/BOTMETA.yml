@@ -4334,6 +4334,70 @@ files:
     migrated_to: containers.podman
   test/integration/targets/connection_podman/posix.sh:
     migrated_to: containers.podman
+  lib/ansible/module_utils/network/frr/frr.py:
+    migrated_to: frr.frr
+  lib/ansible/module_utils/network/frr/providers/module.py:
+    migrated_to: frr.frr
+  lib/ansible/module_utils/network/frr/providers/providers.py:
+    migrated_to: frr.frr
+  lib/ansible/module_utils/network/frr/providers/cli/config/base.py:
+    migrated_to: frr.frr
+  lib/ansible/module_utils/network/frr/providers/cli/config/bgp/neighbors.py:
+    migrated_to: frr.frr
+  lib/ansible/module_utils/network/frr/providers/cli/config/bgp/process.py:
+    migrated_to: frr.frr
+  lib/ansible/module_utils/network/frr/providers/cli/config/bgp/address_family.py:
+    migrated_to: frr.frr
+  lib/ansible/modules/network/frr/frr_facts.py:
+    migrated_to: frr.frr
+  lib/ansible/modules/network/frr/frr_bgp.py:
+    migrated_to: frr.frr
+  lib/ansible/plugins/cliconf/frr.py:
+    migrated_to: frr.frr
+  lib/ansible/plugins/terminal/frr.py:
+    migrated_to: frr.frr
+  test/units/modules/utils.py:
+    migrated_to: frr.frr
+  test/units/compat/mock.py:
+    migrated_to: frr.frr
+  test/units/compat/unittest.py:
+    migrated_to: frr.frr
+  test/units/compat/__init__.py:
+    migrated_to: frr.frr
+  test/units/compat/builtins.py:
+    migrated_to: frr.frr
+  test/units/mock/__init__.py:
+    migrated_to: frr.frr
+  test/units/mock/yaml_helper.py:
+    migrated_to: frr.frr
+  test/units/mock/procenv.py:
+    migrated_to: frr.frr
+  test/units/mock/vault_helper.py:
+    migrated_to: frr.frr
+  test/units/mock/path.py:
+    migrated_to: frr.frr
+  test/units/mock/loader.py:
+    migrated_to: frr.frr
+  test/units/modules/conftest.py:
+    migrated_to: frr.frr
+  test/units/modules/network/frr/test_frr_facts.py:
+    migrated_to: frr.frr
+  test/units/modules/network/frr/fixtures/frr_facts_show_memory:
+    migrated_to: frr.frr
+  test/units/modules/network/frr/fixtures/frr_facts_show_interface:
+    migrated_to: frr.frr
+  test/units/modules/network/frr/fixtures/frr_bgp_config:
+    migrated_to: frr.frr
+  test/units/modules/network/frr/fixtures/__init__.py:
+    migrated_to: frr.frr
+  test/units/modules/network/frr/fixtures/frr_facts_show_version:
+    migrated_to: frr.frr
+  test/units/modules/network/frr/frr_module.py:
+    migrated_to: frr.frr
+  test/units/modules/network/frr/__init__.py:
+    migrated_to: frr.frr
+  test/units/modules/network/frr/test_frr_bgp.py:
+    migrated_to: frr.frr
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
