@@ -1679,10 +1679,6 @@ lib/ansible/modules/commands/command.py validate-modules:nonexistent-parameter-d
 lib/ansible/modules/commands/command.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/commands/command.py validate-modules:undocumented-parameter
 lib/ansible/modules/commands/expect.py validate-modules:doc-missing-type
-lib/ansible/modules/database/mongodb/mongodb_parameter.py use-argspec-type-path
-lib/ansible/modules/database/mongodb/mongodb_replicaset.py use-argspec-type-path
-lib/ansible/modules/database/mongodb/mongodb_shard.py use-argspec-type-path
-lib/ansible/modules/database/mongodb/mongodb_user.py use-argspec-type-path
 lib/ansible/modules/files/acl.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/files/assemble.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/files/blockinfile.py validate-modules:doc-choices-do-not-match-spec
