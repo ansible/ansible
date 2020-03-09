@@ -1,1 +1,0 @@
-../k8s/k8s_scale.py
