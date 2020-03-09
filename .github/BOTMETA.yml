@@ -28068,6 +28068,12 @@ files:
     migrated_to: skydive.skydive
   lib/ansible/modules/network/skydive/skydive_node.py:
     migrated_to: skydive.skydive
+  lib/ansible/modules/identity/cyberark/__init__.py:
+    migrated_to: cyberark.bizdev
+  lib/ansible/modules/identity/cyberark/cyberark_authentication.py:
+    migrated_to: cyberark.bizdev
+  lib/ansible/modules/identity/cyberark/cyberark_user.py:
+    migrated_to: cyberark.bizdev
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
