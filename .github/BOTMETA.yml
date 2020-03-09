@@ -27508,6 +27508,106 @@ files:
     migrated_to: junipernetworks.junos
   test/units/modules/network/junos/test_junos_command.py:
     migrated_to: junipernetworks.junos
+  lib/ansible/modules/web_infrastructure/ansible_tower/__init__.py:
+    migrated_to: awx.awx
+  test/integration/targets/tower_credential/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_credential/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_credential_type/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_credential_type/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_group/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_group/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_host/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_host/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_inventory/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_inventory/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_inventory_source/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_inventory_source/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_job_cancel/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_job_cancel/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_job_launch/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_job_launch/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_job_list/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_job_list/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_job_template/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_job_template/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_job_wait/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_job_wait/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_label/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_label/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_notification/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_notification/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_organization/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_organization/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_project/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_project/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_project/tasks/create_project_dir.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_receive/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_receive/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_role/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_role/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_send/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_send/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_settings/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_settings/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_team/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_team/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_user/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_user/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_workflow_launch/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_workflow_launch/files/tower_assets.json:
+    migrated_to: awx.awx
+  test/integration/targets/tower_workflow_launch/tasks/main.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_workflow_launch/tests/validate.yml:
+    migrated_to: awx.awx
+  test/integration/targets/tower_workflow_template/aliases:
+    migrated_to: awx.awx
+  test/integration/targets/tower_workflow_template/tasks/main.yml:
+    migrated_to: awx.awx
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
