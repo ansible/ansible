@@ -183,11 +183,6 @@
       register: stop_execution_output
       check_mode: yes
 
-    - assert:
-        that:
-          - stop_execution_output.changed
-          - "stop_execution_output.output == 'State machine execution would be stopped.'"
-
     - name: Stop execution of state machine
       aws_step_functions_state_machine_execution:
         action: stop
@@ -196,11 +191,6 @@
         error: "error code of the failure"
       register: stop_execution_output
 
-    - assert:
-        that:
-          - stop_execution_output.changed
-          - "'stop_date' in stop_execution_output"
-
     - name: Stop execution of state machine (check for idempotency)
       aws_step_functions_state_machine_execution:
         action: stop
@@ -208,10 +198,6 @@
         cause: "cause of the failure"
         error: "error code of the failure"
       register: stop_execution_output
-
-    - assert:
-        that:
-          - not stop_execution_output.changed
 
     - name: Try stopping a non-running execution -- check_mode
       aws_step_functions_state_machine_execution:
