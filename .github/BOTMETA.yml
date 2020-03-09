@@ -15943,6 +15943,26 @@ files:
     migrated_to: community.general
   test/integration/targets/supervisorctl/templates/supervisord.conf:
     migrated_to: community.general
+  test/integration/targets/grafana_datasource/aliases:
+    migrated_to: community.grafana
+  test/integration/targets/grafana_datasource/tasks/cloudwatch.yml:
+    migrated_to: community.grafana
+  test/integration/targets/grafana_datasource/tasks/elastic.yml:
+    migrated_to: community.grafana
+  test/integration/targets/grafana_datasource/tasks/postgres.yml:
+    migrated_to: community.grafana
+  test/integration/targets/grafana_datasource/tasks/main.yml:
+    migrated_to: community.grafana
+  test/integration/targets/grafana_datasource/tasks/influx.yml:
+    migrated_to: community.grafana
+  test/integration/targets/grafana_datasource/meta/main.yml:
+    migrated_to: community.grafana
+  test/integration/targets/setup_grafana/files/grafana.repo:
+    migrated_to: community.grafana
+  test/integration/targets/setup_grafana/tasks/setup.yml:
+    migrated_to: community.grafana
+  test/integration/targets/setup_grafana/tasks/main.yml:
+    migrated_to: community.grafana
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
