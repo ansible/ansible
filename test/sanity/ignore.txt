@@ -84,8 +84,6 @@ lib/ansible/module_utils/gcp_utils.py future-import-boilerplate
 lib/ansible/module_utils/gcp_utils.py metaclass-boilerplate
 lib/ansible/module_utils/json_utils.py future-import-boilerplate
 lib/ansible/module_utils/json_utils.py metaclass-boilerplate
-lib/ansible/module_utils/network/dellos10/dellos10.py future-import-boilerplate
-lib/ansible/module_utils/network/dellos10/dellos10.py metaclass-boilerplate
 lib/ansible/module_utils/network/dellos6/dellos6.py future-import-boilerplate
 lib/ansible/module_utils/network/dellos6/dellos6.py metaclass-boilerplate
 lib/ansible/module_utils/network/dellos9/dellos9.py future-import-boilerplate
@@ -1048,24 +1046,6 @@ lib/ansible/modules/net_tools/basics/uri.py pylint:blacklisted-name
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/dellos10/dellos10_command.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/network/dellos10/dellos10_command.py validate-modules:doc-missing-type
-lib/ansible/modules/network/dellos10/dellos10_command.py validate-modules:doc-required-mismatch
-lib/ansible/modules/network/dellos10/dellos10_command.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/network/dellos10/dellos10_command.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/dellos10/dellos10_command.py validate-modules:undocumented-parameter
-lib/ansible/modules/network/dellos10/dellos10_config.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/network/dellos10/dellos10_config.py validate-modules:doc-missing-type
-lib/ansible/modules/network/dellos10/dellos10_config.py validate-modules:doc-required-mismatch
-lib/ansible/modules/network/dellos10/dellos10_config.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/network/dellos10/dellos10_config.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/dellos10/dellos10_config.py validate-modules:undocumented-parameter
-lib/ansible/modules/network/dellos10/dellos10_facts.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/network/dellos10/dellos10_facts.py validate-modules:doc-missing-type
-lib/ansible/modules/network/dellos10/dellos10_facts.py validate-modules:doc-required-mismatch
-lib/ansible/modules/network/dellos10/dellos10_facts.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/network/dellos10/dellos10_facts.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/dellos10/dellos10_facts.py validate-modules:undocumented-parameter
 lib/ansible/modules/network/dellos6/dellos6_command.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/network/dellos6/dellos6_command.py validate-modules:doc-missing-type
 lib/ansible/modules/network/dellos6/dellos6_command.py validate-modules:doc-required-mismatch
@@ -1385,7 +1365,6 @@ lib/ansible/playbook/base.py pylint:blacklisted-name
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
 lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
-lib/ansible/plugins/action/dellos10.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/dellos6.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/dellos9.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
@@ -1403,8 +1382,6 @@ lib/ansible/plugins/doc_fragments/decrypt.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/decrypt.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/default_callback.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/default_callback.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/dellos10.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/dellos10.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/dellos6.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/dellos6.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/dellos9.py future-import-boilerplate
