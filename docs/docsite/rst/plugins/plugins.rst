@@ -17,12 +17,9 @@ This section covers the various types of plugins that are included with Ansible:
    become
    cache
    callback
-   cliconf
    connection
-   httpapi
    inventory
    lookup
-   netconf
    shell
    strategy
    vars

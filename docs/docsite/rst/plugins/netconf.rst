@@ -7,8 +7,11 @@ Netconf Plugins
    :local:
    :depth: 2
 
-Netconf plugins are abstractions over the Netconf interface to network devices. They provide a standard interface
-for Ansible to execute tasks on those network devices.
+.. warning::
+
+	Links on this page may not point to the most recent versions of plugins. In preparation for the release of 2.10, many plugins and modules have migrated to Collections on  `Ansible Galaxy <https://galaxy.ansible.com>`_. For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/general/blob/master/README.rst>`_.
+
+Netconf plugins are abstractions over the Netconf interface to network devices. They provide a standard interface for Ansible to execute tasks on those network devices.
 
 These plugins generally correspond one-to-one to network device platforms. The appropriate netconf plugin will
 thus be automatically loaded based on the ``ansible_network_os`` variable. If the platform supports standard
@@ -42,14 +45,7 @@ Plugins are self-documenting. Each plugin should document its configuration opti
 Plugin list
 -----------
 
-You can use ``ansible-doc -t netconf -l`` to see the list of available plugins.
-Use ``ansible-doc -t netconf <plugin name>`` to see detailed documentation and examples.
-
-
-.. toctree:: :maxdepth: 1
-    :glob:
-
-    netconf/*
+These plugins have migrated to a collection. Updates on where to find and how to use them will be coming soon.
 
 
 .. seealso::
