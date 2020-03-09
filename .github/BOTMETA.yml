@@ -792,8 +792,10 @@ files:
     labels: crypto
     maintainers: $team_crypto
     supershipit: felixfontein
+    migrated_to: community.crypto
   $modules/crypto/openssl_certificate.py:
     maintainers: ctrufan
+    migrated_to: community.crypto
   $modules/crypto/entrust/: ctrufan tylert
   $modules/database/influxdb/: kamsz
   $modules/database/mssql/mssql_db.py:
@@ -4543,29 +4545,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/compat/mock.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/compat/unittest.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/compat/__init__.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/compat/builtins.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/mock/__init__.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/mock/yaml_helper.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/mock/procenv.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/mock/vault_helper.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/mock/path.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/mock/loader.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/modules/conftest.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -6149,17 +6151,17 @@ files:
   test/integration/targets/aws_acm/meta/main.yml:
     migrated_to: community.amazon
   test/integration/targets/setup_remote_tmp_dir/tasks/windows-cleanup.yml:
-    migrated_to: community.kubernetes
+    migrated_to: community.crypto
   test/integration/targets/setup_remote_tmp_dir/tasks/default-cleanup.yml:
-    migrated_to: community.kubernetes
+    migrated_to: community.crypto
   test/integration/targets/setup_remote_tmp_dir/tasks/default.yml:
-    migrated_to: community.kubernetes
+    migrated_to: community.crypto
   test/integration/targets/setup_remote_tmp_dir/tasks/main.yml:
-    migrated_to: community.kubernetes
+    migrated_to: community.crypto
   test/integration/targets/setup_remote_tmp_dir/tasks/windows.yml:
-    migrated_to: community.kubernetes
+    migrated_to: community.crypto
   test/integration/targets/setup_remote_tmp_dir/handlers/main.yml:
-    migrated_to: community.kubernetes
+    migrated_to: community.crypto
   test/integration/targets/aws_api_gateway/aliases:
     migrated_to: community.amazon
   test/integration/targets/aws_api_gateway/tasks/main.yml:
@@ -6169,7 +6171,7 @@ files:
   test/integration/targets/aws_api_gateway/templates/minimal-swagger-api.yml.j2:
     migrated_to: community.amazon
   test/integration/targets/prepare_tests/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/integration/targets/setup_ec2/vars/main.yml:
     migrated_to: community.amazon
   test/integration/targets/setup_ec2/defaults/main.yml:
@@ -10355,7 +10357,7 @@ files:
   test/units/plugins/lookup/test_onepassword.py:
     migrated_to: community.general
   test/units/module_utils/conftest.py:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/units/module_utils/cloud/__init__.py:
     migrated_to: community.general
   test/units/module_utils/cloud/test_backoff.py:
@@ -12663,15 +12665,15 @@ files:
   test/integration/targets/lookup_hashi_vault/lookup_hashi_vault/templates/vault_config.hcl.j2:
     migrated_to: community.general
   test/integration/targets/setup_openssl/vars/FreeBSD.yml:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/integration/targets/setup_openssl/vars/RedHat.yml:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/integration/targets/setup_openssl/vars/Debian.yml:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/integration/targets/setup_openssl/vars/Suse.yml:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/integration/targets/setup_openssl/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.crypto
   test/integration/targets/lookup_lmdb_kv/test.yml:
     migrated_to: community.general
   test/integration/targets/lookup_lmdb_kv/aliases:
@@ -16046,6 +16048,406 @@ files:
     migrated_to: community.kubernetes
   test/integration/targets/k8s/meta/main.yml:
     migrated_to: community.kubernetes
+  lib/ansible/modules/crypto/openssh_cert.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/openssl_pkcs12.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/openssl_csr.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/openssl_certificate_info.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/x509_crl.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/openssl_privatekey_info.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/x509_crl_info.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/get_certificate.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/openssh_keypair.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/openssl_publickey.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/openssl_csr_info.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/luks_device.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/openssl_dhparam.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/openssl_privatekey.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/certificate_complete_chain.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/acme/acme_inspect.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/acme/acme_certificate_revoke.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/acme/acme_certificate.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/acme/acme_account.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/acme/_acme_account_facts.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/acme/acme_challenge_cert_helper.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/acme/acme_account_info.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/entrust/ecs_domain.py:
+    migrated_to: community.crypto
+  lib/ansible/modules/crypto/entrust/ecs_certificate.py:
+    migrated_to: community.crypto
+  lib/ansible/plugins/doc_fragments/ecs_credential.py:
+    migrated_to: community.crypto
+  lib/ansible/module_utils/ecs/api.py:
+    migrated_to: community.crypto
+  test/units/modules/crypto/test_luks_device.py:
+    migrated_to: community.crypto
+  test/units/modules/crypto/__init__.py:
+    migrated_to: community.crypto
+  test/units/module_utils/acme/test_acme.py:
+    migrated_to: community.crypto
+  test/units/module_utils/acme/fixtures/privatekey_1.txt:
+    migrated_to: community.crypto
+  test/units/module_utils/acme/fixtures/csr_1.txt:
+    migrated_to: community.crypto
+  test/units/module_utils/acme/fixtures/privatekey_1.pem:
+    migrated_to: community.crypto
+  test/units/module_utils/acme/fixtures/csr_1.pem:
+    migrated_to: community.crypto
+  test/units/module_utils/acme/fixtures/csr_2.txt:
+    migrated_to: community.crypto
+  test/units/module_utils/acme/fixtures/csr_2.pem:
+    migrated_to: community.crypto
+  test/units/module_utils/acme/fixtures/cert_1.pem:
+    migrated_to: community.crypto
+  test/integration/targets/openssh_cert/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/openssh_cert/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssh_cert/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/setup_ssh_keygen/vars/RedHat.yml:
+    migrated_to: community.crypto
+  test/integration/targets/setup_ssh_keygen/vars/Debian.yml:
+    migrated_to: community.crypto
+  test/integration/targets/setup_ssh_keygen/vars/Suse.yml:
+    migrated_to: community.crypto
+  test/integration/targets/setup_ssh_keygen/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_pkcs12/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_pkcs12/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_pkcs12/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_pkcs12/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_pkcs12/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_csr/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_csr/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_csr/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_csr/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_csr/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate/tasks/ownca.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate/tasks/expired.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate/tasks/assertonly.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate/tasks/selfsigned.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate/tasks/removal.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate/tests/validate_ownca.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate/tests/validate_selfsigned.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate_info/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate_info/test_plugins/jinja_compatibility.py:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate_info/files/cert1.pem:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate_info/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate_info/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_certificate_info/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/x509_crl/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/x509_crl/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/x509_crl/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/x509_crl/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/x509_crl/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_privatekey_info/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_privatekey_info/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_privatekey_info/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_privatekey_info/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/incidental_x509_crl/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/incidental_x509_crl/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/incidental_x509_crl/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/incidental_x509_crl/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/incidental_x509_crl/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/incidental_setup_openssl/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/incidental_setup_openssl/vars/FreeBSD.yml:
+    migrated_to: community.crypto
+  test/integration/targets/incidental_setup_openssl/vars/RedHat.yml:
+    migrated_to: community.crypto
+  test/integration/targets/incidental_setup_openssl/vars/Debian.yml:
+    migrated_to: community.crypto
+  test/integration/targets/incidental_setup_openssl/vars/Suse.yml:
+    migrated_to: community.crypto
+  test/integration/targets/incidental_setup_openssl/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/get_certificate/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/get_certificate/files/bogus_ca.pem:
+    migrated_to: community.crypto
+  test/integration/targets/get_certificate/files/process_certs.py:
+    migrated_to: community.crypto
+  test/integration/targets/get_certificate/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/get_certificate/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/get_certificate/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/prepare_http_tests/vars/httptester.yml:
+    migrated_to: community.crypto
+  test/integration/targets/prepare_http_tests/defaults/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/prepare_http_tests/tasks/default.yml:
+    migrated_to: community.crypto
+  test/integration/targets/prepare_http_tests/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/prepare_http_tests/tasks/windows.yml:
+    migrated_to: community.crypto
+  test/integration/targets/prepare_http_tests/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssh_keypair/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/openssh_keypair/vars/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssh_keypair/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssh_keypair/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssh_keypair/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_publickey/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_publickey/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_publickey/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_publickey/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_publickey/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_csr_info/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_csr_info/test_plugins/jinja_compatibility.py:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_csr_info/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_csr_info/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_csr_info/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/luks_device/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/luks_device/files/keyfile2:
+    migrated_to: community.crypto
+  test/integration/targets/luks_device/files/keyfile1:
+    migrated_to: community.crypto
+  test/integration/targets/luks_device/tasks/run-test.yml:
+    migrated_to: community.crypto
+  test/integration/targets/luks_device/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/luks_device/tasks/tests/device-check.yml:
+    migrated_to: community.crypto
+  test/integration/targets/luks_device/tasks/tests/create-destroy.yml:
+    migrated_to: community.crypto
+  test/integration/targets/luks_device/tasks/tests/key-management.yml:
+    migrated_to: community.crypto
+  test/integration/targets/luks_device/tasks/tests/options.yml:
+    migrated_to: community.crypto
+  test/integration/targets/luks_device/tasks/tests/passphrase.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_dhparam/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_dhparam/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_dhparam/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_dhparam/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_dhparam/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_privatekey/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_privatekey/vars/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_privatekey/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_privatekey/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_privatekey/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/openssl_privatekey/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/cert1-root.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/cert2.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/roots.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/cert1-fullchain.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/cert2-fullchain.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/cert2-altchain.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/cert2-altroot.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/cert1.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/cert1-chain.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/cert2-chain.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/cert2-root.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/roots/COMODO_RSA_Certification_Authority.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/roots/COMODO_Certification_Authority.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/roots/ISRG_Root_X1.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/roots/COMODO_ECC_Certification_Authority.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/files/roots/DST_Root_CA_X3.pem:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/certificate_complete_chain/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_inspect/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/acme_inspect/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_inspect/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_inspect/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_inspect/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/setup_acme/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/setup_acme/tasks/obtain-cert.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_certificate_revoke/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/acme_certificate_revoke/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_certificate_revoke/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_certificate_revoke/tasks/obtain-cert.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_certificate_revoke/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_certificate_revoke/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_certificate/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/acme_certificate/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_certificate/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_certificate/tasks/obtain-cert.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_certificate/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_certificate/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_account/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/acme_account/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_account/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_account/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_account/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_challenge_cert_helper/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/acme_challenge_cert_helper/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_challenge_cert_helper/tasks/obtain-cert.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_challenge_cert_helper/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_account_info/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/acme_account_info/tasks/impl.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_account_info/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_account_info/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/acme_account_info/tests/validate.yml:
+    migrated_to: community.crypto
+  test/integration/targets/ecs_domain/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/ecs_domain/vars/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/ecs_domain/defaults/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/ecs_domain/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/ecs_domain/meta/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/ecs_certificate/aliases:
+    migrated_to: community.crypto
+  test/integration/targets/ecs_certificate/vars/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/ecs_certificate/defaults/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/ecs_certificate/tasks/main.yml:
+    migrated_to: community.crypto
+  test/integration/targets/ecs_certificate/meta/main.yml:
+    migrated_to: community.crypto
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
