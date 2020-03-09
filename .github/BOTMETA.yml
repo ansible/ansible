@@ -4603,29 +4603,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: netapp.aws
+    migrated_to: netapp.elementsw
   test/units/compat/mock.py:
-    migrated_to: netapp.aws
+    migrated_to: netapp.elementsw
   test/units/compat/unittest.py:
-    migrated_to: netapp.aws
+    migrated_to: netapp.elementsw
   test/units/compat/__init__.py:
-    migrated_to: netapp.aws
+    migrated_to: netapp.elementsw
   test/units/compat/builtins.py:
-    migrated_to: netapp.aws
+    migrated_to: netapp.elementsw
   test/units/mock/__init__.py:
-    migrated_to: netapp.aws
+    migrated_to: netapp.elementsw
   test/units/mock/yaml_helper.py:
-    migrated_to: netapp.aws
+    migrated_to: netapp.elementsw
   test/units/mock/procenv.py:
-    migrated_to: netapp.aws
+    migrated_to: netapp.elementsw
   test/units/mock/vault_helper.py:
-    migrated_to: netapp.aws
+    migrated_to: netapp.elementsw
   test/units/mock/path.py:
-    migrated_to: netapp.aws
+    migrated_to: netapp.elementsw
   test/units/mock/loader.py:
-    migrated_to: netapp.aws
+    migrated_to: netapp.elementsw
   test/units/modules/conftest.py:
-    migrated_to: netapp.aws
+    migrated_to: netapp.elementsw
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -12209,7 +12209,7 @@ files:
   test/units/modules/storage/netapp/test_netapp_e_alerts.py:
     migrated_to: community.general
   test/units/modules/storage/netapp/__init__.py:
-    migrated_to: community.general
+    migrated_to: netapp.elementsw
   test/units/modules/storage/netapp/test_netapp_e_asup.py:
     migrated_to: community.general
   test/units/modules/storage/netapp/test_netapp_e_auditlog.py:
