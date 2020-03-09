@@ -28056,6 +28056,18 @@ files:
     migrated_to: hetzner.hcloud
   test/integration/targets/hcloud_subnetwork/tasks/main.yml:
     migrated_to: hetzner.hcloud
+  lib/ansible/plugins/doc_fragments/skydive.py:
+    migrated_to: skydive.skydive
+  lib/ansible/plugins/lookup/skydive.py:
+    migrated_to: skydive.skydive
+  lib/ansible/module_utils/network/skydive/api.py:
+    migrated_to: skydive.skydive
+  lib/ansible/modules/network/skydive/skydive_capture.py:
+    migrated_to: skydive.skydive
+  lib/ansible/modules/network/skydive/skydive_edge.py:
+    migrated_to: skydive.skydive
+  lib/ansible/modules/network/skydive/skydive_node.py:
+    migrated_to: skydive.skydive
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
