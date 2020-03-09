@@ -3783,6 +3783,7 @@ files:
     migrated_to: community.grafana
   $plugins/callback/foreman.py:
     maintainers: $team_foreman
+    migrated_to: theforeman.foreman
   $plugins/callback/junit:
     support: core
   $plugins/callback/minimal:
@@ -4035,6 +4036,7 @@ files:
     migrated_to: community.general
   $plugins/inventory/foreman.py:
     maintainers: $team_foreman
+    migrated_to: theforeman.foreman
   $plugins/inventory/gcp_compute.py:
     maintainers: $team_google
     supershipit: $team_google
@@ -21038,6 +21040,16 @@ files:
     migrated_to: fortinet.fortios
   test/integration/targets/fortios_ipv4_policy/tasks/test_params.yml:
     migrated_to: fortinet.fortios
+  test/integration/targets/inventory_foreman/test_foreman_inventory.yml:
+    migrated_to: theforeman.foreman
+  test/integration/targets/inventory_foreman/aliases:
+    migrated_to: theforeman.foreman
+  test/integration/targets/inventory_foreman/inspect_cache.yml:
+    migrated_to: theforeman.foreman
+  test/integration/targets/inventory_foreman/runme.sh:
+    migrated_to: theforeman.foreman
+  test/integration/targets/inventory_foreman/ansible.cfg:
+    migrated_to: theforeman.foreman
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
