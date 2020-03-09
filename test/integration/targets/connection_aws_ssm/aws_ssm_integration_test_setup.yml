@@ -1,3 +1,0 @@
-- hosts: localhost
-  roles:
-    - role: aws_ssm_integration_test_setup

@@ -1,8 +1,0 @@
-vpc_cidr: '10.{{ 256 | random(seed=resource_prefix) }}.0.0/16'
-subnet_a: '10.{{ 256 | random(seed=resource_prefix) }}.10.0/24'
-subnet_b: '10.{{ 256 | random(seed=resource_prefix) }}.11.0/24'
-subnet_c: '10.{{ 256 | random(seed=resource_prefix) }}.12.0/24'
-subnet_d: '10.{{ 256 | random(seed=resource_prefix) }}.13.0/24'
-
-group_description: 'Created by integration test : {{ resource_prefix }}'
-group_description_changed: 'Created by integration test : {{ resource_prefix }} - changed'

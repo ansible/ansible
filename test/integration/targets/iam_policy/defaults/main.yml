@@ -1,6 +1,0 @@
----
-iam_name: '{{resource_prefix}}'
-iam_policy_name_a: '{{resource_prefix}}-document-a'
-iam_policy_name_b: '{{resource_prefix}}-document-b'
-iam_policy_name_c: '{{resource_prefix}}-json-a'
-iam_policy_name_d: '{{resource_prefix}}-json-b'
