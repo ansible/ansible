@@ -4603,29 +4603,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: netapp.ontap
+    migrated_to: check_point.mgmt
   test/units/compat/mock.py:
-    migrated_to: netapp.ontap
+    migrated_to: check_point.mgmt
   test/units/compat/unittest.py:
-    migrated_to: netapp.ontap
+    migrated_to: check_point.mgmt
   test/units/compat/__init__.py:
-    migrated_to: netapp.ontap
+    migrated_to: check_point.mgmt
   test/units/compat/builtins.py:
-    migrated_to: netapp.ontap
+    migrated_to: check_point.mgmt
   test/units/mock/__init__.py:
-    migrated_to: netapp.ontap
+    migrated_to: check_point.mgmt
   test/units/mock/yaml_helper.py:
-    migrated_to: netapp.ontap
+    migrated_to: check_point.mgmt
   test/units/mock/procenv.py:
-    migrated_to: netapp.ontap
+    migrated_to: check_point.mgmt
   test/units/mock/vault_helper.py:
-    migrated_to: netapp.ontap
+    migrated_to: check_point.mgmt
   test/units/mock/path.py:
-    migrated_to: netapp.ontap
+    migrated_to: check_point.mgmt
   test/units/mock/loader.py:
-    migrated_to: netapp.ontap
+    migrated_to: check_point.mgmt
   test/units/modules/conftest.py:
-    migrated_to: netapp.ontap
+    migrated_to: check_point.mgmt
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -10395,7 +10395,7 @@ files:
   test/units/plugins/httpapi/test_ftd.py:
     migrated_to: community.general
   test/units/plugins/httpapi/__init__.py:
-    migrated_to: community.general
+    migrated_to: check_point.mgmt
   test/units/plugins/inventory/test_linode.py:
     migrated_to: community.general
   test/units/plugins/inventory/__init__.py:
@@ -10703,7 +10703,7 @@ files:
   test/units/modules/network/check_point/test_checkpoint_access_rule.py:
     migrated_to: community.general
   test/units/modules/network/check_point/__init__.py:
-    migrated_to: community.general
+    migrated_to: check_point.mgmt
   test/units/modules/network/check_point/test_checkpoint_host.py:
     migrated_to: community.general
   test/units/modules/network/check_point/test_checkpoint_session.py:
@@ -21182,6 +21182,186 @@ files:
     migrated_to: netapp.ontap
   test/units/modules/storage/netapp/test_na_ontap_vscan_scanner_pool.py:
     migrated_to: netapp.ontap
+  test/units/plugins/httpapi/test_checkpoint.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_access_layer.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_access_layer_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_access_role.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_access_role_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_access_rule.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_access_rule_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_address_range.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_address_range_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_administrator.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_administrator_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_application_site.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_application_site_category.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_application_site_category_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_application_site_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_application_site_group.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_application_site_group_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_assign_global_assignment.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_discard.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_dns_domain.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_dns_domain_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_dynamic_object.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_dynamic_object_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_exception_group.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_exception_group_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_global_assignment.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_global_assignment_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_group.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_group_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_group_with_exclusion.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_group_with_exclusion_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_host.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_host_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_install_policy.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_mds_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_multicast_address_range.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_multicast_address_range_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_network.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_network_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_package.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_package_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_publish.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_put_file.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_run_ips_update.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_run_script.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_security_zone.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_security_zone_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_dce_rpc.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_dce_rpc_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_group.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_group_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_icmp.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_icmp6.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_icmp6_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_icmp_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_other.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_other_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_rpc.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_rpc_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_sctp.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_sctp_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_tcp.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_tcp_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_udp.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_service_udp_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_session_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_simple_gateway.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_simple_gateway_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_tag.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_tag_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_threat_exception.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_threat_exception_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_threat_indicator.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_threat_indicator_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_threat_layer.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_threat_layer_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_threat_profile.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_threat_profile_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_threat_protection_override.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_threat_rule.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_threat_rule_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_time.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_time_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_verify_policy.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_vpn_community_meshed.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_vpn_community_meshed_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_vpn_community_star.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_vpn_community_star_facts.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_wildcard.py:
+    migrated_to: check_point.mgmt
+  test/units/modules/network/check_point/test_cp_mgmt_wildcard_facts.py:
+    migrated_to: check_point.mgmt
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
