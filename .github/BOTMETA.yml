@@ -1167,6 +1167,7 @@ files:
     - asa
     - cisco
     - networking
+    migrated_to: cisco.asa
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
   $modules/network/check_point/checkpoint_access_layer_facts.py:
@@ -4606,29 +4607,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: cisco.aci
+    migrated_to: cisco.asa
   test/units/compat/mock.py:
-    migrated_to: cisco.aci
+    migrated_to: cisco.asa
   test/units/compat/unittest.py:
-    migrated_to: cisco.aci
+    migrated_to: cisco.asa
   test/units/compat/__init__.py:
-    migrated_to: cisco.aci
+    migrated_to: cisco.asa
   test/units/compat/builtins.py:
-    migrated_to: cisco.aci
+    migrated_to: cisco.asa
   test/units/mock/__init__.py:
-    migrated_to: cisco.aci
+    migrated_to: cisco.asa
   test/units/mock/yaml_helper.py:
-    migrated_to: cisco.aci
+    migrated_to: cisco.asa
   test/units/mock/procenv.py:
-    migrated_to: cisco.aci
+    migrated_to: cisco.asa
   test/units/mock/vault_helper.py:
-    migrated_to: cisco.aci
+    migrated_to: cisco.asa
   test/units/mock/path.py:
-    migrated_to: cisco.aci
+    migrated_to: cisco.asa
   test/units/mock/loader.py:
-    migrated_to: cisco.aci
+    migrated_to: cisco.asa
   test/units/modules/conftest.py:
-    migrated_to: arista.eos
+    migrated_to: cisco.asa
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -22491,6 +22492,104 @@ files:
     migrated_to: cisco.aci
   test/integration/targets/aci_vrf/tasks/main.yml:
     migrated_to: cisco.aci
+  lib/ansible/module_utils/network/asa/asa.py:
+    migrated_to: cisco.asa
+  lib/ansible/modules/network/asa/asa_acl.py:
+    migrated_to: cisco.asa
+  lib/ansible/modules/network/asa/asa_config.py:
+    migrated_to: cisco.asa
+  lib/ansible/modules/network/asa/asa_og.py:
+    migrated_to: cisco.asa
+  lib/ansible/modules/network/asa/asa_command.py:
+    migrated_to: cisco.asa
+  lib/ansible/plugins/cliconf/asa.py:
+    migrated_to: cisco.asa
+  lib/ansible/plugins/doc_fragments/asa.py:
+    migrated_to: cisco.asa
+  test/units/modules/network/asa/test_asa_og.py:
+    migrated_to: cisco.asa
+  test/units/modules/network/asa/fixtures/asa_og_config.cfg:
+    migrated_to: cisco.asa
+  test/units/modules/network/asa/asa_module.py:
+    migrated_to: cisco.asa
+  test/units/modules/network/asa/__init__.py:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_acl/defaults/main.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_acl/tasks/cli.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_acl/tasks/main.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_acl/tests/cli/insert.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_acl/tests/cli/basic.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_acl/tests/cli/full_name_match.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/defaults/main.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tasks/cli.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tasks/main.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/templates/defaults/config.j2:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/templates/basic/config.j2:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/removal_error.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/sublevel_strict_mul_parents.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/toplevel_before.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/sublevel_strict.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/force.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/sublevel.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/toplevel_nonidempotent.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/basic.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/sublevel_exact.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/toplevel_after.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/more_system.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/defaults.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/sublevel_block.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/backup.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_config/tests/cli/toplevel.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_og/defaults/main.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_og/tasks/cli.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_og/tasks/main.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_og/tests/cli/asa_og.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_command/defaults/main.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_command/tasks/cli.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_command/tasks/main.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_command/tests/cli/invalid.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_command/tests/cli/output.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_command/tests/cli/bad_operator.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_command/tests/cli/contains.yaml:
+    migrated_to: cisco.asa
+  test/integration/targets/asa_command/tests/cli/timeout.yaml:
+    migrated_to: cisco.asa
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
