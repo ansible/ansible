@@ -1,5 +1,0 @@
----
-# defaults file for ec2_vpc_net
-vpc_cidr: '10.{{ 256 | random(seed=resource_prefix) }}.0.0/24'
-vpc_cidr_a: '10.{{ 256 | random(seed=resource_prefix) }}.1.0/24'
-vpc_cidr_b: '10.{{ 256 | random(seed=resource_prefix) }}.2.0/24'

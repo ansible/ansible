@@ -1,2 +1,0 @@
----
-bucket_name: '{{ resource_prefix }}-{{ inventory_hostname | regex_replace("_","-") }}'
