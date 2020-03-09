@@ -752,8 +752,10 @@ files:
     - vmware
     maintainers: $team_vmware
     notified: lparkes
+    migrated_to: community.vmware
   $modules/cloud/vmware/vmware_deploy_ovf.py:
     ignored: sivel
+    migrated_to: community.vmware
   $modules/cloud/vmware_httpapi/: &id034
     keywords:
     - esx
@@ -765,7 +767,9 @@ files:
     - cloud
     - vmware_httpapi
     maintainers: $team_vmware_httpapi
-  $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
+  $modules/cloud/vmware/vmware_vm_shell.py:
+    maintainers: chrrrles
+    migrated_to: community.vmware
   $modules/cloud/vultr/: &id035
     labels:
     - cloud
@@ -3243,6 +3247,7 @@ files:
     labels:
     - cloud
     maintainers: $team_vmware
+    migrated_to: community.vmware
   contrib/inventory/vmware_inventory.py:
     keywords:
     - vmware inventory
@@ -3251,6 +3256,7 @@ files:
     - cloud
     - vmware
     maintainers: $team_vmware
+    migrated_to: community.vmware
   lib/ansible/inventory:
     keywords:
     - core inventory
@@ -3870,6 +3876,7 @@ files:
     labels:
     - vmware
     - cloud
+    migrated_to: community.vmware
   $plugins/doc_fragments/:
     support: community
   $plugins/doc_fragments/__init__.py:
@@ -4028,6 +4035,7 @@ files:
     - vmware inventory
     - vmware dynamic inventory plugin
     ignored: cigamit jcpowermac mtnbikenc tchernomax ckotte
+    migrated_to: community.vmware
   $plugins/inventory/vultr.py: *id035
   $plugins/inventory/yaml.py:
     support: core
@@ -4545,29 +4553,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/compat/mock.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/compat/unittest.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/compat/__init__.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/compat/builtins.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/mock/__init__.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/mock/yaml_helper.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/mock/procenv.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/mock/vault_helper.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/mock/path.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/mock/loader.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/modules/conftest.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -10357,7 +10365,7 @@ files:
   test/units/plugins/lookup/test_onepassword.py:
     migrated_to: community.general
   test/units/module_utils/conftest.py:
-    migrated_to: community.crypto
+    migrated_to: community.vmware
   test/units/module_utils/cloud/__init__.py:
     migrated_to: community.general
   test/units/module_utils/cloud/test_backoff.py:
@@ -16564,6 +16572,1064 @@ files:
     migrated_to: community.vmware_rest
   lib/ansible/modules/cloud/vmware_httpapi/vmware_core_info.py:
     migrated_to: community.vmware_rest
+  lib/ansible/plugins/doc_fragments/vca.py:
+    migrated_to: community.vmware
+  lib/ansible/plugins/doc_fragments/vmware.py:
+    migrated_to: community.vmware
+  lib/ansible/plugins/doc_fragments/vmware_rest_client.py:
+    migrated_to: community.vmware
+  lib/ansible/plugins/httpapi/vmware.py:
+    migrated_to: community.vmware
+  test/integration/targets/script_inventory_vmware_inventory/vmware_inventory.sh:
+    migrated_to: community.vmware
+  test/integration/targets/script_inventory_vmware_inventory/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/script_inventory_vmware_inventory/test_vmware_inventory.yml:
+    migrated_to: community.vmware
+  test/integration/targets/script_inventory_vmware_inventory/runme.sh:
+    migrated_to: community.vmware
+  contrib/inventory/vmware.ini:
+    migrated_to: community.vmware
+  contrib/inventory/vmware_inventory.ini:
+    migrated_to: community.vmware
+  lib/ansible/module_utils/vca.py:
+    migrated_to: community.vmware
+  lib/ansible/module_utils/vmware_rest_client.py:
+    migrated_to: community.vmware
+  lib/ansible/module_utils/vmware_spbm.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vcenter_extension_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_about_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_category_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_cluster_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_datastore_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_dns_config.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_drs_group_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_drs_rule_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_dvs_portgroup_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_guest_boot_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_guest_customization_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_guest_disk_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_guest_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_guest_snapshot_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_host_capability_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_host_config_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_host_dns_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_host_feature_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_host_firewall_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_host_ntp_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_host_package_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_host_service_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_host_ssl_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_host_vmhba_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_host_vmnic_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_local_role_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_local_user_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_portgroup_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_resource_pool_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_tag_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_target_canonical_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_vm_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_vmkernel_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/_vmware_vswitch_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vca_fw.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vca_nat.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vca_vapp.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vcenter_extension.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vcenter_extension_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vcenter_folder.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vcenter_license.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_about_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_category.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_category_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_cfg_backup.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_cluster.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_cluster_drs.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_cluster_ha.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_cluster_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_cluster_vsan.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_content_deploy_template.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_content_library_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_content_library_manager.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_datacenter.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_datastore_cluster.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_datastore_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_datastore_maintenancemode.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_drs_group.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_drs_group_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_drs_rule_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_dvs_host.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_dvs_portgroup.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_dvs_portgroup_find.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_dvs_portgroup_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_dvswitch.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_dvswitch_lacp.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_dvswitch_nioc.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_dvswitch_pvlans.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_dvswitch_uplink_pg.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_evc_mode.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_export_ovf.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_folder_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_boot_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_boot_manager.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_controller.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_cross_vc_clone.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_custom_attribute_defs.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_custom_attributes.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_customization_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_disk.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_disk_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_file_operation.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_find.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_move.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_network.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_powerstate.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_register_operation.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_screenshot.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_sendkey.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_serial_port.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_snapshot.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_snapshot_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_tools_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_tools_upgrade.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_tools_wait.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_video.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_guest_vnc.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_acceptance.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_active_directory.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_auto_start.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_capability_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_config_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_config_manager.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_datastore.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_dns.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_dns_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_facts.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_feature_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_firewall_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_firewall_manager.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_hyperthreading.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_ipv6.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_kernel_manager.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_lockdown.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_ntp.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_ntp_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_package_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_powermgmt_policy.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_powerstate.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_scanhba.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_service_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_service_manager.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_snmp.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_ssl_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_vmhba_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_host_vmnic_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_local_role_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_local_role_manager.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_local_user_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_local_user_manager.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_maintenancemode.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_migrate_vmk.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_object_role_permission.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_portgroup.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_portgroup_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_resource_pool.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_resource_pool_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_tag.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_tag_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_tag_manager.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_target_canonical_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vcenter_settings.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vcenter_statistics.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vm_host_drs_rule.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vm_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vm_storage_policy_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vm_vm_drs_rule.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vm_vss_dvs_migrate.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vmkernel.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vmkernel_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vmkernel_ip_config.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vmotion.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vsan_cluster.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vsan_health_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vspan_session.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vswitch.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vmware_vswitch_info.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vsphere_copy.py:
+    migrated_to: community.vmware
+  lib/ansible/modules/cloud/vmware/vsphere_file.py:
+    migrated_to: community.vmware
+  test/units/contrib/inventory/test_vmware_inventory.py:
+    migrated_to: community.vmware
+  test/units/module_utils/test_vmware.py:
+    migrated_to: community.vmware
+  test/units/modules/cloud/vmware/test_vmware_guest.py:
+    migrated_to: community.vmware
+  test/units/modules/cloud/vmware/__init__.py:
+    migrated_to: community.vmware
+  test/units/modules/cloud/vmware/test_data/test_vmware_guest_with_parameters.json:
+    migrated_to: community.vmware
+  test/integration/targets/inventory_vmware_vm_inventory/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/inventory_vmware_vm_inventory/test_vmware_vm_inventory.yml:
+    migrated_to: community.vmware
+  test/integration/targets/inventory_vmware_vm_inventory/runme.sh:
+    migrated_to: community.vmware
+  test/integration/targets/inventory_vmware_vm_inventory/ansible.cfg:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_about_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_about_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/vars/common.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/vars/vcsim.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/vars/vcenter_1esxi.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/vars/vcenter_2esxi.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/vars/vcenter_only.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/setup_virtualmachines.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/setup_datacenter.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/setup_content_library.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/setup_switch.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/init_real_lab.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/setup_datastore.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/setup_resource_pool.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/setup_tag.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/setup_dvs_portgroup.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/init_vcsim.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/setup_attach_hosts.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/teardown.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/setup_dvswitch.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/setup_category.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/teardown_with_esxi.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/tasks/setup_cluster.yml:
+    migrated_to: community.vmware
+  test/integration/targets/prepare_vmware_tests/meta/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_cluster_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_cluster_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_datastore_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_datastore_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_drs_group_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_drs_group_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_drs_rule_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_drs_rule_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvs_portgroup_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvs_portgroup_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_boot_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_boot_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_customization_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_customization_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_disk_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_disk_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_snapshot_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_snapshot_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_capability_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_capability_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_config_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_config_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_dns_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_dns_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_feature_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_feature_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_firewall_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_firewall_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_ntp_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_ntp_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_package_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_package_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_service_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_service_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_ssl_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_ssl_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_vmhba_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_vmhba_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_vmnic_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_vmnic_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_local_role_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_local_role_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_local_user_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_local_user_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_portgroup_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_portgroup_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_resource_pool_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_resource_pool_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_target_canonical_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_target_canonical_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vm_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vm_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vmkernel_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vmkernel_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vswitch_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vswitch_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vcenter_folder/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vcenter_folder/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vcenter_folder/meta/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vcenter_license/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vcenter_license/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vcenter_license/meta/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_about_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_about_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_category/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_category/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_category/tasks/associable_obj_types.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_cluster/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_cluster/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_cluster_drs/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_cluster_drs/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_cluster_ha/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_cluster_ha/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_cluster_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_cluster_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_cluster_vsan/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_cluster_vsan/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_content_deploy_template/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_content_deploy_template/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_content_library_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_content_library_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_content_library_manager/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_content_library_manager/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_datacenter/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_datacenter/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_datastore_cluster/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_datastore_cluster/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_datastore_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_datastore_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_datastore_maintenancemode/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_datastore_maintenancemode/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_drs_group/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_drs_group/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_drs_group_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_drs_group_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_drs_rule_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_drs_rule_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvs_portgroup/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvs_portgroup/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvs_portgroup_find/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvs_portgroup_find/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvs_portgroup_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvs_portgroup_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvswitch/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvswitch/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvswitch_nioc/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvswitch_nioc/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvswitch_pvlans/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvswitch_pvlans/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvswitch_uplink_pg/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_dvswitch_uplink_pg/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_evc_mode/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_evc_mode/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_evc_mode/meta/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_export_ovf/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_export_ovf/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_folder_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_folder_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/defaults/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/remove_vm_from_inventory.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/disk_size_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/windows_vbs_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/reconfig_vm_to_latest_version.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/clone_with_convert.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/network_with_device.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/cdrom_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/max_connections.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/network_with_dvpg.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/delete_vm.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/mem_reservation.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/network_with_portgroup.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/create_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/check_mode.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/create_nw_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/non_existent_vm_ops.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/linked_clone_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/mac_address_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/network_negative_test.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/boot_firmware_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/run_test_playbook.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/disk_mode_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/poweroff_d1_c1_f1.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/create_rp_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/template_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/vapp_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/create_guest_invalid_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/poweroff_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/clone_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/disk_type_d1_c1_f0.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/clone_customize_guest_test.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest/tasks/clone_resize_disks.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_boot_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_boot_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_controller/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_controller/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_cross_vc_clone/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_cross_vc_clone/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_custom_attribute_defs/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_custom_attribute_defs/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_custom_attributes/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_custom_attributes/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_customization_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_customization_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_disk/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_disk/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_disk_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_disk_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_find/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_find/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_move/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_move/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_network/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_network/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_powerstate/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_powerstate/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_register_operation/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_register_operation/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_screenshot/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_screenshot/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_sendkey/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_sendkey/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_serial_port/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_serial_port/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_snapshot/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_snapshot/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_snapshot_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_snapshot_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_tools_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_tools_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_tools_wait/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_guest_tools_wait/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_acceptance/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_acceptance/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_active_directory/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_active_directory/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_auto_start/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_auto_start/tasks/vcenter_auto_start_ops.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_auto_start/tasks/esxi_auto_start_ops.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_auto_start/tasks/reset_auto_start_config.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_auto_start/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_capability_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_capability_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_config_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_config_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_config_manager/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_config_manager/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_datastore/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_datastore/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_dns/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_dns/tasks/dhcp.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_dns/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_dns/tasks/static.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_dns_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_dns_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_facts/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_facts/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_feature_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_feature_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_firewall_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_firewall_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_firewall_manager/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_firewall_manager/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_hyperthreading/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_hyperthreading/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_ipv6/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_ipv6/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_kernel_manager/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_kernel_manager/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_ntp/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_ntp/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_ntp_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_ntp_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_package_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_package_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_powermgmt_policy/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_powermgmt_policy/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_powerstate/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_powerstate/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_scanhba/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_scanhba/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_service_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_service_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_service_manager/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_service_manager/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_snmp/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_snmp/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_ssl_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_ssl_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_vmhba_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_vmhba_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_vmnic_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_host_vmnic_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_local_role_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_local_role_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_local_role_manager/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_local_role_manager/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_local_user_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_local_user_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_local_user_manager/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_local_user_manager/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_maintenancemode/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_maintenancemode/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_portgroup/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_portgroup/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_portgroup_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_portgroup_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_resource_pool/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_resource_pool/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_resource_pool_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_resource_pool_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_tag/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_tag/tasks/tag_manager_ops.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_tag/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_tag/tasks/tag_crud_ops.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_tag/tasks/tag_manager_duplicate_tag_cat.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_tag_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_tag_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_tag_info/tasks/tag_info.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_tag_manager/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_tag_manager/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_tag_manager/tasks/tag_manager_dict.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_target_canonical_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_target_canonical_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vcenter_settings/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vcenter_settings/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vcenter_statistics/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vcenter_statistics/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vm_host_drs_rule/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vm_host_drs_rule/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vm_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vm_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vm_storage_policy_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vm_storage_policy_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vm_vm_drs_rule/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vm_vm_drs_rule/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vmkernel/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vmkernel/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vmkernel_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vmkernel_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vmotion/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vmotion/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vsan_health_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vsan_health_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vspan_session/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vspan_session/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vswitch/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vswitch/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vswitch/tasks/teardown.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vswitch_info/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vmware_vswitch_info/tasks/main.yml:
+    migrated_to: community.vmware
+  test/integration/targets/vsphere_file/aliases:
+    migrated_to: community.vmware
+  test/integration/targets/vsphere_file/tasks/main.yml:
+    migrated_to: community.vmware
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
