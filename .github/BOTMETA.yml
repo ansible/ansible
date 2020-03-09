@@ -3033,29 +3033,29 @@ files:
   $modules/storage/purestorage/purefa_volume.py:
     migrated_to: purestorage.flasharray
   $modules/storage/purestorage/purefb_bucket.py:
-    migrated_to: puresorage.flashblade
+    migrated_to: purestorage.flashblade
   $modules/storage/purestorage/purefb_ds.py:
-    migrated_to: puresorage.flashblade
+    migrated_to: purestorage.flashblade
   $modules/storage/purestorage/purefb_dsrole.py:
-    migrated_to: puresorage.flashblade
+    migrated_to: purestorage.flashblade
   $modules/storage/purestorage/purefb_fs.py:
-    migrated_to: puresorage.flashblade
+    migrated_to: purestorage.flashblade
   $modules/storage/purestorage/purefb_info.py:
-    migrated_to: puresorage.flashblade
+    migrated_to: purestorage.flashblade
   $modules/storage/purestorage/purefb_network.py:
-    migrated_to: puresorage.flashblade
+    migrated_to: purestorage.flashblade
   $modules/storage/purestorage/purefb_ra.py:
-    migrated_to: puresorage.flashblade
+    migrated_to: purestorage.flashblade
   $modules/storage/purestorage/purefb_s3acc.py:
-    migrated_to: puresorage.flashblade
+    migrated_to: purestorage.flashblade
   $modules/storage/purestorage/purefb_s3user.py:
-    migrated_to: puresorage.flashblade
+    migrated_to: purestorage.flashblade
   $modules/storage/purestorage/purefb_smtp.py:
-    migrated_to: puresorage.flashblade
+    migrated_to: purestorage.flashblade
   $modules/storage/purestorage/purefb_snap.py:
-    migrated_to: puresorage.flashblade
+    migrated_to: purestorage.flashblade
   $modules/storage/purestorage/purefb_subnet.py:
-    migrated_to: puresorage.flashblade
+    migrated_to: purestorage.flashblade
   $modules/storage/glusterfs/: devyanikota
   $modules/storage/ibm/: tzurE
   $modules/storage/zfs/: *id005
