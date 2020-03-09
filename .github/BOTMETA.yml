@@ -3721,6 +3721,7 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
+    migrated_to: arista.eos
   $plugins/action/ios:
     labels: *id022
     maintainers: $team_networking $team_ios
@@ -3819,6 +3820,7 @@ files:
   $plugins/cliconf/eos.py:
     support: network
     maintainers: $team_networking
+    migrated_to: arista.eos
   $plugins/cliconf/eric_eccli.py:
     support: network
     maintainers: $team_networking itercheng
@@ -4225,6 +4227,7 @@ files:
   $plugins/terminal/eos.py:
     support: network
     maintainers: $team_networking
+    migrated_to: arista.eos
   $plugins/terminal/eric_eccli.py:
     support: community
     maintainers: itercheng
@@ -4603,29 +4606,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: check_point.mgmt
+    migrated_to: arista.eos
   test/units/compat/mock.py:
-    migrated_to: check_point.mgmt
+    migrated_to: arista.eos
   test/units/compat/unittest.py:
-    migrated_to: check_point.mgmt
+    migrated_to: arista.eos
   test/units/compat/__init__.py:
-    migrated_to: check_point.mgmt
+    migrated_to: arista.eos
   test/units/compat/builtins.py:
-    migrated_to: check_point.mgmt
+    migrated_to: arista.eos
   test/units/mock/__init__.py:
-    migrated_to: check_point.mgmt
+    migrated_to: arista.eos
   test/units/mock/yaml_helper.py:
-    migrated_to: check_point.mgmt
+    migrated_to: arista.eos
   test/units/mock/procenv.py:
-    migrated_to: check_point.mgmt
+    migrated_to: arista.eos
   test/units/mock/vault_helper.py:
-    migrated_to: check_point.mgmt
+    migrated_to: arista.eos
   test/units/mock/path.py:
-    migrated_to: check_point.mgmt
+    migrated_to: arista.eos
   test/units/mock/loader.py:
-    migrated_to: check_point.mgmt
+    migrated_to: arista.eos
   test/units/modules/conftest.py:
-    migrated_to: check_point.mgmt
+    migrated_to: arista.eos
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -21362,6 +21365,920 @@ files:
     migrated_to: check_point.mgmt
   test/units/modules/network/check_point/test_cp_mgmt_wildcard_facts.py:
     migrated_to: check_point.mgmt
+  lib/ansible/plugins/doc_fragments/eos.py:
+    migrated_to: arista.eos
+  lib/ansible/plugins/httpapi/eos.py:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/config.txt:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vrf/aliases:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interface/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interface/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interface/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interface/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interface/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interfaces/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interfaces/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interfaces/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_banner/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_banner/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_banner/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_banner/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_banner/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_interfaces/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_interfaces/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_interfaces/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/vars/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_global/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_global/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_global/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lag_interfaces/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lag_interfaces/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lag_interfaces/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlan/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlan/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlan/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlan/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_route/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_route/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_route/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_route/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tasks/cli_config.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/vars/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_logging/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_logging/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_logging/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_logging/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_logging/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vrf/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vrf/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vrf/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vrf/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp_interfaces/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp_interfaces/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp_interfaces/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interface/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interface/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interface/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interface/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interface/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_smoke/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_smoke/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_smoke/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_smoke/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_smoke/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlans/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlans/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlans/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_user/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_user/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_user/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_user/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_user/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interface/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interface/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interface/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interface/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interface/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_linkagg/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_linkagg/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_linkagg/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_linkagg/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_bgp/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_bgp/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_bgp/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_bgp/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interfaces/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interfaces/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interfaces/meta/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tasks/cli.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tasks/eapi.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interfaces/defaults/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interfaces/tasks/main.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interfaces/meta/main.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interface/tests/eapi/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interface/tests/eapi/net_interface.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interface/tests/eapi/intent.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interface/tests/cli/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interface/tests/cli/net_interface.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interface/tests/cli/intent.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interfaces/tests/cli/reset_config.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interfaces/tests/cli/overridden.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interfaces/tests/cli/deleted.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interfaces/tests/cli/replaced.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_interfaces/tests/cli/merged.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_banner/tests/eapi/basic-login.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_banner/tests/eapi/net_banner.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_banner/tests/eapi/basic-motd.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_banner/tests/cli/basic-login.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_banner/tests/cli/net_banner.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_banner/tests/cli/basic-motd.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tests/cli/parsed.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tests/cli/overridden.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tests/cli/deleted.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tests/cli/replaced.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tests/cli/merged.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tests/cli/rendered.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tests/cli/_populate.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tests/cli/_remove_config.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tests/cli/_parsed.cfg:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tests/cli/gathered.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_routes/tests/cli/rtt.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp/tests/cli/reset_config.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp/tests/cli/deleted.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp/tests/cli/replaced.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp/tests/cli/merged.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_interfaces/tests/cli/reset_config.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_interfaces/tests/cli/overridden.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_interfaces/tests/cli/deleted.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_interfaces/tests/cli/replaced.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_interfaces/tests/cli/merged.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tests/cli/parsed.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tests/cli/overridden.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tests/cli/deleted.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tests/cli/replaced.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tests/cli/merged.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tests/cli/rendered.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tests/cli/_populate.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tests/cli/_parsed.cfg:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acl_interfaces/tests/cli/gathered.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/eapi/invalid.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/eapi/greaterthan.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/eapi/output.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/eapi/greaterthanorequal.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/eapi/bad_operator.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/eapi/contains.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/eapi/lessthanorequal.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/eapi/notequal.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/eapi/timeout.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/eapi/equal.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/eapi/lessthan.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/cli/invalid.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/cli/greaterthan.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/cli/output.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/cli/greaterthanorequal.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/cli/bad_operator.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/cli/contains.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/cli/lessthanorequal.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/cli/notequal.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/cli/cli_command.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/cli/timeout.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/cli/equal.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_command/tests/cli/lessthan.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_global/tests/cli/reset_config.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_global/tests/cli/deleted.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_global/tests/cli/replaced.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp_global/tests/cli/merged.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lag_interfaces/tests/cli/reset_config.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lag_interfaces/tests/cli/overridden.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lag_interfaces/tests/cli/deleted.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lag_interfaces/tests/cli/replaced.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lag_interfaces/tests/cli/merged.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp/tests/eapi/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lldp/tests/cli/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlan/tests/cli/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlan/tests/cli/net_vlan.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_route/tests/cli/net_static_route.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_static_route/tests/cli/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/templates/defaults/test.j2:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/templates/defaults/config.j2:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/templates/basic/cmds.j2:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/templates/basic/config.j2:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/src_invalid.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/toplevel_before.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/sublevel_strict.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/sublevel.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/src_basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/sublevel_exact.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/toplevel_after.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/save.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/src_match_none.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/defaults.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/sublevel_block.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/backup.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/eapi/toplevel.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/src_invalid.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/sublevel_strict_mul_parents.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/toplevel_before.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/sublevel_strict.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/sublevel.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/src_basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/config.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/sublevel_exact.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/toplevel_after.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/save.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/src_match_none.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/defaults.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/sublevel_block.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/backup.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/toplevel.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli/check_mode.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli_config/cli_basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_config/tests/cli_config/cli_backup.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tests/common/parsed.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tests/common/overridden.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tests/common/deleted.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tests/common/replaced.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tests/common/merged.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tests/common/rendered.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tests/common/_populate.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tests/common/_parsed_cfg.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tests/common/_remove_config.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tests/common/_parsed.cfg:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tests/common/gathered.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_acls/tests/common/rtt.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_logging/tests/eapi/net_logging.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_logging/tests/eapi/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_logging/tests/cli/net_logging.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_logging/tests/cli/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vrf/tests/cli/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vrf/tests/cli/net_vrf.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/tests/cli/start.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/tests/cli/on.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/tests/cli/vrf.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/tests/cli/config.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/tests/cli/zzz_reset.1:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/tests/cli/configure.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/tests/cli/off.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/tests/cli/stop.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_eapi/tests/cli/badtransport.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp_interfaces/tests/cli/reset_config.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp_interfaces/tests/cli/overridden.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp_interfaces/tests/cli/deleted.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp_interfaces/tests/cli/replaced.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_lacp_interfaces/tests/cli/merged.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interface/tests/eapi/net_l3_interface.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interface/tests/eapi/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interface/tests/cli/net_l3_interface.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interface/tests/cli/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_smoke/tests/eapi/common_config.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_smoke/tests/eapi/common_utils.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_smoke/tests/cli/common_config.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_smoke/tests/cli/common_utils.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_smoke/tests/cli/reboot.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_smoke/tests/cli/misc_tests.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlans/tests/cli/idempotent.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlans/tests/cli/reset_config.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlans/tests/cli/overridden.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlans/tests/cli/deleted.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlans/tests/cli/replaced.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_vlans/tests/cli/merged.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_user/tests/cli/net_user.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_user/tests/cli/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_user/tests/cli/auth.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interface/tests/eapi/no_interface.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interface/tests/eapi/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interface/tests/cli/no_interface.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interface/tests/cli/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_linkagg/tests/cli/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_bgp/tests/cli/basic.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/tests/eapi/default_facts.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/tests/eapi/not_hardware.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/tests/eapi/invalid_subset.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/tests/eapi/all_facts.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/tests/cli/default_facts.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/tests/cli/not_hardware.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/tests/cli/invalid_subset.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_facts/tests/cli/all_facts.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interfaces/tests/cli/reset_config.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interfaces/tests/cli/overridden.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interfaces/tests/cli/deleted.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interfaces/tests/cli/replaced.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l3_interfaces/tests/cli/merged.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tests/eapi/set_lookup_source.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tests/eapi/set_domain_name.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tests/eapi/set_domain_list.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tests/eapi/set_hostname.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tests/eapi/net_system.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tests/eapi/set_name_servers.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tests/cli/set_lookup_source.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tests/cli/set_domain_name.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tests/cli/set_domain_list.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tests/cli/set_hostname.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tests/cli/net_system.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_system/tests/cli/set_name_servers.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interfaces/tests/cli/cleanup.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interfaces/tests/cli/reset_config.yml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interfaces/tests/cli/overridden.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interfaces/tests/cli/deleted.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interfaces/tests/cli/replaced.yaml:
+    migrated_to: arista.eos
+  test/integration/targets/eos_l2_interfaces/tests/cli/merged.yaml:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/eos.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/providers/module.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/providers/providers.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/facts.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/utils/utils.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/lldp_global/lldp_global.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/vlans/vlans.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/acl_interfaces/acl_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/static_routes/static_routes.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/l3_interfaces/l3_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/l2_interfaces/l2_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/lag_interfaces/lag_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/legacy/base.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/interfaces/interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/lacp/lacp.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/facts/acls/acls.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/lldp_global/lldp_global.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/vlans/vlans.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/facts/facts.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/acl_interfaces/acl_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/static_routes/static_routes.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/l3_interfaces/l3_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/l2_interfaces/l2_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/lag_interfaces/lag_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/interfaces/interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/lacp/lacp.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/argspec/acls/acls.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/config/lldp_global/lldp_global.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/config/vlans/vlans.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/config/acl_interfaces/acl_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/config/static_routes/static_routes.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/config/l3_interfaces/l3_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/config/l2_interfaces/l2_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/config/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/config/lag_interfaces/lag_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/config/interfaces/interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/config/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/config/lacp/lacp.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/config/acls/acls.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/providers/cli/config/bgp/neighbors.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/providers/cli/config/bgp/process.py:
+    migrated_to: arista.eos
+  lib/ansible/module_utils/network/eos/providers/cli/config/bgp/address_family.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/_eos_static_route.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_acls.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_facts.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_logging.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_lag_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_l2_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/_eos_l3_interface.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_lacp.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_lldp_global.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_static_routes.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_lacp_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_system.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/_eos_vlan.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_eapi.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_acl_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/_eos_l2_interface.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_lldp_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_command.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/_eos_linkagg.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_l3_interfaces.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_vlans.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_user.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_banner.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_lldp.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/_eos_interface.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_config.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_bgp.py:
+    migrated_to: arista.eos
+  lib/ansible/modules/network/eos/eos_vrf.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_acls.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_eapi_show_mgmt.json:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_static_routes_config1.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_logging_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_banner_show_banner.txt:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_lacp_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_l2_interfaces_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_static_routes_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_command_show_version.txt:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_acl_interfaces_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_config_config_updated.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_bgp_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_vlan_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_eapi_show_mgmt_unconfigured.json:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_interfaces_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_lacp_interfaces_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_user_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_acls_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_system_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_eapi_show_vrf.text:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_config_candidate.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/fixtures/eos_config_config.cfg:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/eos_module.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/__init__.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_interfaces.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_logging.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_l2_interfaces.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_lacp.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_static_routes.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_lacp_interfaces.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_system.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_eapi.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_acl_interfaces.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_command.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_vlans.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_user.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_banner.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_config.py:
+    migrated_to: arista.eos
+  test/units/modules/network/eos/test_eos_bgp.py:
+    migrated_to: arista.eos
+  test/integration/targets/prepare_eos_tests/tasks/main.yml:
+    migrated_to: arista.eos
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
