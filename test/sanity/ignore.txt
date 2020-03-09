@@ -84,8 +84,6 @@ lib/ansible/module_utils/facts/utils.py future-import-boilerplate
 lib/ansible/module_utils/facts/utils.py metaclass-boilerplate
 lib/ansible/module_utils/gcp_utils.py future-import-boilerplate
 lib/ansible/module_utils/gcp_utils.py metaclass-boilerplate
-lib/ansible/module_utils/ismount.py future-import-boilerplate
-lib/ansible/module_utils/ismount.py metaclass-boilerplate
 lib/ansible/module_utils/json_utils.py future-import-boilerplate
 lib/ansible/module_utils/json_utils.py metaclass-boilerplate
 lib/ansible/module_utils/net_tools/netbox/netbox_utils.py future-import-boilerplate
@@ -1488,7 +1486,6 @@ lib/ansible/modules/commands/command.py validate-modules:nonexistent-parameter-d
 lib/ansible/modules/commands/command.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/commands/command.py validate-modules:undocumented-parameter
 lib/ansible/modules/commands/expect.py validate-modules:doc-missing-type
-lib/ansible/modules/files/acl.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/files/assemble.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/files/blockinfile.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/files/blockinfile.py validate-modules:doc-default-does-not-match-spec
@@ -1510,13 +1507,6 @@ lib/ansible/modules/files/replace.py validate-modules:nonexistent-parameter-docu
 lib/ansible/modules/files/stat.py validate-modules:parameter-invalid
 lib/ansible/modules/files/stat.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/files/stat.py validate-modules:undocumented-parameter
-lib/ansible/modules/files/synchronize.py pylint:blacklisted-name
-lib/ansible/modules/files/synchronize.py use-argspec-type-path
-lib/ansible/modules/files/synchronize.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/files/synchronize.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/files/synchronize.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/files/synchronize.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/files/synchronize.py validate-modules:undocumented-parameter
 lib/ansible/modules/files/unarchive.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/files/unarchive.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/identity/cyberark/cyberark_authentication.py validate-modules:parameter-type-not-in-doc
@@ -3810,8 +3800,6 @@ lib/ansible/modules/storage/purestorage/purefb_info.py validate-modules:paramete
 lib/ansible/modules/storage/purestorage/purefb_info.py validate-modules:return-syntax-error
 lib/ansible/modules/storage/purestorage/purefb_s3acc.py validate-modules:doc-required-mismatch
 lib/ansible/modules/storage/purestorage/purefb_s3user.py validate-modules:doc-required-mismatch
-lib/ansible/modules/system/at.py validate-modules:doc-required-mismatch
-lib/ansible/modules/system/authorized_key.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/system/getent.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/system/hostname.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/system/hostname.py validate-modules:parameter-type-not-in-doc
@@ -3820,16 +3808,11 @@ lib/ansible/modules/system/iptables.py validate-modules:parameter-list-no-elemen
 lib/ansible/modules/system/known_hosts.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/system/known_hosts.py validate-modules:doc-missing-type
 lib/ansible/modules/system/known_hosts.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/system/seboolean.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/system/selinux.py validate-modules:invalid-ansiblemodule-schema
-lib/ansible/modules/system/selinux.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/system/service.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/system/service.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/system/setup.py validate-modules:doc-missing-type
 lib/ansible/modules/system/setup.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/system/setup.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/system/sysctl.py validate-modules:doc-missing-type
-lib/ansible/modules/system/sysctl.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/system/systemd.py validate-modules:parameter-invalid
 lib/ansible/modules/system/systemd.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/system/systemd.py validate-modules:return-syntax-error
@@ -4392,8 +4375,6 @@ test/units/modules/system/test_iptables.py metaclass-boilerplate
 test/units/modules/system/test_known_hosts.py future-import-boilerplate
 test/units/modules/system/test_known_hosts.py metaclass-boilerplate
 test/units/modules/system/test_known_hosts.py pylint:ansible-bad-function
-test/units/modules/system/test_mount.py future-import-boilerplate
-test/units/modules/system/test_mount.py metaclass-boilerplate
 test/units/modules/system/test_systemd.py future-import-boilerplate
 test/units/modules/system/test_systemd.py metaclass-boilerplate
 test/units/modules/utils.py future-import-boilerplate
@@ -4406,8 +4387,6 @@ test/units/playbook/test_attribute.py future-import-boilerplate
 test/units/playbook/test_attribute.py metaclass-boilerplate
 test/units/playbook/test_conditional.py future-import-boilerplate
 test/units/playbook/test_conditional.py metaclass-boilerplate
-test/units/plugins/action/test_synchronize.py future-import-boilerplate
-test/units/plugins/action/test_synchronize.py metaclass-boilerplate
 test/units/plugins/inventory/test_constructed.py future-import-boilerplate
 test/units/plugins/inventory/test_constructed.py metaclass-boilerplate
 test/units/plugins/loader_fixtures/import_fixture.py future-import-boilerplate
