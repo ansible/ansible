@@ -614,115 +614,115 @@ files:
     support: community
   $modules/cloud/ovirt/: *id003
   $modules/cloud/ovirt/ovirt_tag.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_job.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_host.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_network.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/__init__.py:
     migrated_to: ovirt.ovirt_collection
   $modules/cloud/ovirt/ovirt_event.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_storage_domain_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_affinity_label_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_external_provider.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_cluster.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_datacenter.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_host_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_user.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_vm_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_disk_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_quota.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_host_pm.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_cluster_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_host_storage_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_snapshot.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_storage_template_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_vmpool.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_datacenter_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_event_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_permission.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_tag_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_vnic_profile_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_vm.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_quota_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_snapshot_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_storage_domain.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_api_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_scheduling_policy_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_storage_vm_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_disk.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_vmpool_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_host_network.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_group.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_role.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_auth.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_vnic_profile.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_user_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_template_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_storage_connection.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_nic_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_nic.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_template.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_external_provider_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_group_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_mac_pool.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_permission_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_affinity_group.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_network_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_instance_type.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/ovirt/ovirt_affinity_label.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $modules/cloud/profitbricks/: baldwinSPC
   $modules/cloud/rackspace/:
     ignored: sivel angstwad
@@ -3577,7 +3577,7 @@ files:
     migrated_to: openstack.cloud
   $module_utils/oracle/: *id027
   $module_utils/ovirt.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $module_utils/postgres.py: *id028
   $module_utils/powershell: *id029
   $module_utils/pure.py:
@@ -3987,9 +3987,9 @@ files:
   $plugins/doc_fragments/ucs.py: *id031
   $plugins/doc_fragments/vultr.py: *id035
   $plugins/doc_fragments/ovirt.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $plugins/doc_fragments/ovirt_info.py:
-    migrated_to: ovirt.ovirt_collection
+    migrated_to: ovirt.ovirt
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
     migrated_to: community.general
