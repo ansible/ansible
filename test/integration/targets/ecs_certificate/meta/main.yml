@@ -1,3 +1,0 @@
-dependencies:
-  - prepare_tests
-  - setup_openssl

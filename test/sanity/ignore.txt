@@ -1679,8 +1679,6 @@ lib/ansible/modules/commands/command.py validate-modules:nonexistent-parameter-d
 lib/ansible/modules/commands/command.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/commands/command.py validate-modules:undocumented-parameter
 lib/ansible/modules/commands/expect.py validate-modules:doc-missing-type
-lib/ansible/modules/crypto/acme/acme_account_info.py validate-modules:return-syntax-error
-lib/ansible/modules/crypto/acme/acme_certificate.py validate-modules:doc-elements-mismatch
 lib/ansible/modules/database/mongodb/mongodb_parameter.py use-argspec-type-path
 lib/ansible/modules/database/mongodb/mongodb_replicaset.py use-argspec-type-path
 lib/ansible/modules/database/mongodb/mongodb_shard.py use-argspec-type-path
