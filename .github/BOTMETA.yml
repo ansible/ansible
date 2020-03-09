@@ -2805,6 +2805,7 @@ files:
     - remote_management
     - intersight
     maintainers: $team_intersight
+    migrated_to: cisco.intersight
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/lxca/: navalkp prabhosa
   $modules/remote_management/manageiq/: $team_manageiq
@@ -22590,6 +22591,14 @@ files:
     migrated_to: cisco.asa
   test/integration/targets/asa_command/tests/cli/timeout.yaml:
     migrated_to: cisco.asa
+  lib/ansible/modules/remote_management/intersight/_intersight_facts.py:
+    migrated_to: cisco.intersight
+  lib/ansible/modules/remote_management/intersight/intersight_rest_api.py:
+    migrated_to: cisco.intersight
+  test/integration/targets/intersight_rest_api/aliases:
+    migrated_to: cisco.intersight
+  test/integration/targets/intersight_rest_api/tasks/main.yml:
+    migrated_to: cisco.intersight
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
