@@ -3904,7 +3904,7 @@ files:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87
     labels: k8s
-    migrated_to: community.general
+    migrated_to: community.kubernetes
   $plugins/connection/lxd.py:
     maintainers: mattclay
     migrated_to: community.general
