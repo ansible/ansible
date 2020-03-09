@@ -6151,17 +6151,17 @@ files:
   test/integration/targets/aws_acm/meta/main.yml:
     migrated_to: community.amazon
   test/integration/targets/setup_remote_tmp_dir/tasks/windows-cleanup.yml:
-    migrated_to: community.crypto
+    migrated_to: community.mongo
   test/integration/targets/setup_remote_tmp_dir/tasks/default-cleanup.yml:
-    migrated_to: community.crypto
+    migrated_to: community.mongo
   test/integration/targets/setup_remote_tmp_dir/tasks/default.yml:
-    migrated_to: community.crypto
+    migrated_to: community.mongo
   test/integration/targets/setup_remote_tmp_dir/tasks/main.yml:
-    migrated_to: community.crypto
+    migrated_to: community.mongo
   test/integration/targets/setup_remote_tmp_dir/tasks/windows.yml:
-    migrated_to: community.crypto
+    migrated_to: community.mongo
   test/integration/targets/setup_remote_tmp_dir/handlers/main.yml:
-    migrated_to: community.crypto
+    migrated_to: community.mongo
   test/integration/targets/aws_api_gateway/aliases:
     migrated_to: community.amazon
   test/integration/targets/aws_api_gateway/tasks/main.yml:
@@ -16448,6 +16448,102 @@ files:
     migrated_to: community.crypto
   test/integration/targets/ecs_certificate/meta/main.yml:
     migrated_to: community.crypto
+  lib/ansible/modules/database/mongodb/mongodb_parameter.py:
+    migrated_to: community.mongo
+  lib/ansible/modules/database/mongodb/mongodb_info.py:
+    migrated_to: community.mongo
+  lib/ansible/modules/database/mongodb/mongodb_replicaset.py:
+    migrated_to: community.mongo
+  lib/ansible/modules/database/mongodb/mongodb_user.py:
+    migrated_to: community.mongo
+  lib/ansible/modules/database/mongodb/mongodb_shard.py:
+    migrated_to: community.mongo
+  lib/ansible/plugins/cache/mongodb.py:
+    migrated_to: community.mongo
+  lib/ansible/plugins/lookup/mongodb.py:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_parameter/aliases:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_parameter/defaults/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_parameter/tasks/mongod_singlenode.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_parameter/tasks/mongod_teardown.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_parameter/tasks/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_parameter/meta/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/setup_mongodb/defaults/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/setup_mongodb/tasks/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/setup_mongodb/handlers/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_info/aliases:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_info/defaults/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_info/tasks/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_info/tasks/mongodb_info.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_info/meta/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/setup_mongodb_v4/defaults/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/setup_mongodb_v4/tasks/setup_mongodb.yml:
+    migrated_to: community.mongo
+  test/integration/targets/setup_mongodb_v4/tasks/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/setup_mongodb_v4/handlers/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_replicaset/aliases:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_replicaset/defaults/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_replicaset/files/js/is_primary.js:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_replicaset/tasks/mongod_replicaset.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_replicaset/tasks/mongod_teardown.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_replicaset/tasks/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_replicaset/meta/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_user/aliases:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_user/defaults/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_user/files/js/is_primary.js:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_user/tasks/mongod_replicaset.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_user/tasks/mongod_teardown.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_user/tasks/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_user/meta/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_shard/aliases:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_shard/defaults/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_shard/files/bash/ensure_primary.sh.j2:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_shard/files/js/is_primary.js:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_shard/tasks/mongod_replicaset.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_shard/tasks/mongod_teardown.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_shard/tasks/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_shard/meta/main.yml:
+    migrated_to: community.mongo
+  test/integration/targets/mongodb_shard/templates/create_user_root_3.2.js.j2:
+    migrated_to: community.mongo
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
