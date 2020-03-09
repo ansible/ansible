@@ -41,7 +41,7 @@ def _find_symlinks(topdir, extension=''):
 
         We want the symlinks in :file:`bin/` that link into :file:`lib/ansible/*` (currently,
         :command:`ansible`, :command:`ansible-test`, and :command:`ansible-connection`) to become
-        real files on install.  Updates to the heuristic here *must not* add them to the symlink
+        real files on install.  Updates to the heuristic here *must* add them to the symlink
         cache.
     """
     symlinks = defaultdict(list)
