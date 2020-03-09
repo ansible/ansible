@@ -30123,6 +30123,20 @@ files:
     migrated_to: vyos.vyos
   test/integration/targets/prepare_vyos_tests/tasks/main.yaml:
     migrated_to: vyos.vyos
+  lib/ansible/plugins/lookup/cpm_metering.py:
+    migrated_to: wti.remote
+  lib/ansible/plugins/lookup/cpm_status.py:
+    migrated_to: wti.remote
+  lib/ansible/modules/remote_management/cpm/cpm_plugconfig.py:
+    migrated_to: wti.remote
+  lib/ansible/modules/remote_management/cpm/cpm_plugcontrol.py:
+    migrated_to: wti.remote
+  lib/ansible/modules/remote_management/cpm/cpm_serial_port_config.py:
+    migrated_to: wti.remote
+  lib/ansible/modules/remote_management/cpm/cpm_serial_port_info.py:
+    migrated_to: wti.remote
+  lib/ansible/modules/remote_management/cpm/cpm_user.py:
+    migrated_to: wti.remote
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
