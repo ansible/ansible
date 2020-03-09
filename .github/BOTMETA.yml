@@ -4603,27 +4603,27 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: fortinet.fortios
+    migrated_to: netbox.netbox
   test/units/compat/mock.py:
-    migrated_to: fortinet.fortios
+    migrated_to: netbox.netbox
   test/units/compat/unittest.py:
-    migrated_to: fortinet.fortios
+    migrated_to: netbox.netbox
   test/units/compat/__init__.py:
-    migrated_to: fortinet.fortios
+    migrated_to: netbox.netbox
   test/units/compat/builtins.py:
-    migrated_to: fortinet.fortios
+    migrated_to: netbox.netbox
   test/units/mock/__init__.py:
-    migrated_to: fortinet.fortios
+    migrated_to: netbox.netbox
   test/units/mock/yaml_helper.py:
-    migrated_to: fortinet.fortios
+    migrated_to: netbox.netbox
   test/units/mock/procenv.py:
-    migrated_to: fortinet.fortios
+    migrated_to: netbox.netbox
   test/units/mock/vault_helper.py:
-    migrated_to: fortinet.fortios
+    migrated_to: netbox.netbox
   test/units/mock/path.py:
-    migrated_to: fortinet.fortios
+    migrated_to: netbox.netbox
   test/units/mock/loader.py:
-    migrated_to: fortinet.fortios
+    migrated_to: netbox.netbox
   test/units/modules/conftest.py:
     migrated_to: fortinet.fortios
   test/units/modules/network/frr/test_frr_facts.py:
@@ -10415,7 +10415,7 @@ files:
   test/units/plugins/lookup/test_onepassword.py:
     migrated_to: community.general
   test/units/module_utils/conftest.py:
-    migrated_to: ansible.netcommon
+    migrated_to: netbox.netbox
   test/units/module_utils/cloud/__init__.py:
     migrated_to: community.general
   test/units/module_utils/cloud/test_backoff.py:
@@ -10439,9 +10439,9 @@ files:
   test/units/module_utils/net_tools/__init__.py:
     migrated_to: community.general
   test/units/module_utils/net_tools/netbox/__init__.py:
-    migrated_to: community.general
+    migrated_to: netbox.netbox
   test/units/module_utils/net_tools/netbox/test_netbox_utils.py:
-    migrated_to: community.general
+    migrated_to: netbox.netbox
   test/units/module_utils/net_tools/nios/test_api.py:
     migrated_to: community.general
   test/units/module_utils/net_tools/nios/__init__.py:
@@ -21050,6 +21050,8 @@ files:
     migrated_to: theforeman.foreman
   test/integration/targets/inventory_foreman/ansible.cfg:
     migrated_to: theforeman.foreman
+  lib/ansible/module_utils/net_tools/netbox/netbox_utils.py:
+    migrated_to: netbox.netbox
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
