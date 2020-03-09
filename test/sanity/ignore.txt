@@ -2305,13 +2305,6 @@ lib/ansible/modules/cloud/packet/packet_sshkey.py validate-modules:parameter-typ
 lib/ansible/modules/cloud/packet/packet_sshkey.py validate-modules:undocumented-parameter
 lib/ansible/modules/cloud/packet/packet_volume_attachment.py pylint:ansible-bad-function
 lib/ansible/modules/cloud/packet/packet_volume_attachment.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/podman/podman_image.py validate-modules:doc-type-does-not-match-spec
-lib/ansible/modules/cloud/podman/podman_image.py validate-modules:mutually_exclusive-unknown
-lib/ansible/modules/cloud/podman/podman_image.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/cloud/podman/podman_image.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/podman/podman_image.py validate-modules:undocumented-parameter
-lib/ansible/modules/cloud/podman/podman_image_info.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/cloud/podman/podman_image_info.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/profitbricks/profitbricks.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/cloud/profitbricks/profitbricks.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/cloud/profitbricks/profitbricks.py validate-modules:doc-missing-type
