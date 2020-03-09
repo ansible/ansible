@@ -3876,32 +3876,6 @@ lib/ansible/modules/web_infrastructure/ansible_tower/tower_user.py validate-modu
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_workflow_launch.py validate-modules:doc-missing-type
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_workflow_launch.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_workflow_template.py validate-modules:doc-missing-type
-lib/ansible/modules/windows/async_status.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/setup.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_acl_inheritance.ps1 pslint:PSAvoidTrailingWhitespace
-lib/ansible/modules/windows/win_certificate_store.ps1 validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/windows/win_copy.ps1 pslint:PSUseApprovedVerbs
-lib/ansible/modules/windows/win_dns_client.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_domain.ps1 pslint:PSAvoidUsingEmptyCatchBlock # Keep
-lib/ansible/modules/windows/win_domain.ps1 pslint:PSUseApprovedVerbs
-lib/ansible/modules/windows/win_domain_controller.ps1 pslint:PSAvoidGlobalVars # New PR
-lib/ansible/modules/windows/win_domain_controller.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_domain_controller.ps1 pslint:PSUseApprovedVerbs
-lib/ansible/modules/windows/win_domain_membership.ps1 pslint:PSAvoidGlobalVars # New PR
-lib/ansible/modules/windows/win_domain_membership.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_domain_membership.ps1 pslint:PSUseApprovedVerbs
-lib/ansible/modules/windows/win_dsc.ps1 pslint:PSAvoidUsingEmptyCatchBlock # Keep
-lib/ansible/modules/windows/win_dsc.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_feature.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_find.ps1 pslint:PSAvoidUsingEmptyCatchBlock # Keep
-lib/ansible/modules/windows/win_find.ps1 validate-modules:doc-elements-mismatch
-lib/ansible/modules/windows/win_optional_feature.ps1 validate-modules:parameter-list-no-elements
-lib/ansible/modules/windows/win_regedit.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_share.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_shell.ps1 pslint:PSUseApprovedVerbs
-lib/ansible/modules/windows/win_updates.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_uri.ps1 pslint:PSAvoidUsingEmptyCatchBlock # Keep
-lib/ansible/modules/windows/win_wait_for.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/parsing/vault/__init__.py pylint:blacklisted-name
 lib/ansible/playbook/base.py pylint:blacklisted-name
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
@@ -4088,24 +4062,14 @@ test/integration/targets/wait_for/files/testserver.py future-import-boilerplate
 test/integration/targets/wait_for/files/testserver.py metaclass-boilerplate
 test/integration/targets/want_json_modules_posix/library/helloworld.py future-import-boilerplate
 test/integration/targets/want_json_modules_posix/library/helloworld.py metaclass-boilerplate
-test/integration/targets/win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xSetReboot/ANSIBLE_xSetReboot.psm1 pslint!skip
-test/integration/targets/win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1 pslint!skip
-test/integration/targets/win_dsc/files/xTestDsc/1.0.0/xTestDsc.psd1 pslint!skip
-test/integration/targets/win_dsc/files/xTestDsc/1.0.1/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1 pslint!skip
-test/integration/targets/win_dsc/files/xTestDsc/1.0.1/xTestDsc.psd1 pslint!skip
 test/integration/targets/win_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
-test/integration/targets/win_ping/library/win_ping_syntax_error.ps1 pslint!skip
-test/integration/targets/win_reboot/templates/post_reboot.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_script/files/test_script.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/win_script/files/test_script_creates_file.ps1 pslint:PSAvoidUsingCmdletAliases
 test/integration/targets/win_script/files/test_script_removes_file.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_script/files/test_script_with_args.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:PSAvoidUsingWriteHost # Keep
-test/integration/targets/win_stat/library/test_symlink_file.ps1 pslint:PSCustomUseLiteralPath
-test/integration/targets/win_template/files/foo.dos.txt line-endings
-test/integration/targets/win_user_right/library/test_get_right.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/windows-minimal/library/win_ping_syntax_error.ps1 pslint!skip
 test/lib/ansible_test/_data/requirements/constraints.txt test-constraints
 test/lib/ansible_test/_data/requirements/integration.cloud.azure.txt test-constraints
