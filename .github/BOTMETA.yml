@@ -16544,6 +16544,26 @@ files:
     migrated_to: community.mongo
   test/integration/targets/mongodb_shard/templates/create_user_root_3.2.js.j2:
     migrated_to: community.mongo
+  lib/ansible/plugins/doc_fragments/VmwareRestModule.py:
+    migrated_to: community.vmware_rest
+  lib/ansible/plugins/doc_fragments/VmwareRestModule_filters.py:
+    migrated_to: community.vmware_rest
+  lib/ansible/plugins/doc_fragments/VmwareRestModule_full.py:
+    migrated_to: community.vmware_rest
+  lib/ansible/plugins/doc_fragments/VmwareRestModule_state.py:
+    migrated_to: community.vmware_rest
+  lib/ansible/module_utils/vmware_httpapi/VmwareRestModule.py:
+    migrated_to: community.vmware_rest
+  lib/ansible/module_utils/vmware_httpapi/__init__.py:
+    migrated_to: community.vmware_rest
+  lib/ansible/modules/cloud/vmware_httpapi/vmware_appliance_access_info.py:
+    migrated_to: community.vmware_rest
+  lib/ansible/modules/cloud/vmware_httpapi/vmware_appliance_health_info.py:
+    migrated_to: community.vmware_rest
+  lib/ansible/modules/cloud/vmware_httpapi/vmware_cis_category_info.py:
+    migrated_to: community.vmware_rest
+  lib/ansible/modules/cloud/vmware_httpapi/vmware_core_info.py:
+    migrated_to: community.vmware_rest
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
