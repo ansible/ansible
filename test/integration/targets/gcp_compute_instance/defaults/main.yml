@@ -1,2 +1,0 @@
----
-resource_name: "{{ resource_prefix }}"
