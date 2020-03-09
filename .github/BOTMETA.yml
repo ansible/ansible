@@ -2819,6 +2819,7 @@ files:
     - remote_management
     - ucs
     maintainers: $team_ucs
+    migrated_to: cisco.ucs
   $modules/remote_management/dellemc/: rajeevarakkal
   $modules/source_control/git.py: $team_ansible
   $modules/source_control/github/github_key.py:
@@ -26348,6 +26349,122 @@ files:
     migrated_to: cisco.nxos
   test/integration/targets/nxos_overlay_global/tasks/platform/n7k/setup.yaml:
     migrated_to: cisco.nxos
+  lib/ansible/modules/remote_management/ucs/ucs_managed_objects.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_vnic_template.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_query.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_dns_server.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_lan_connectivity.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_vhba_template.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_san_connectivity.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_disk_group_policy.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_uuid_pool.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_vlan_find.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_vlans.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_service_profile_template.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_ip_pool.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_timezone.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_ntp_server.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_mac_pool.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_storage_profile.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_org.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_vsans.py:
+    migrated_to: cisco.ucs
+  lib/ansible/modules/remote_management/ucs/ucs_wwn_pool.py:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_managed_objects/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_managed_objects/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_vnic_template/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_vnic_template/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_query/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_query/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_dns_server/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_dns_server/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_lan_connectivity/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_lan_connectivity/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_vhba_template/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_vhba_template/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_san_connectivity/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_san_connectivity/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_disk_group_policy/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_disk_group_policy/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_uuid_pool/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_uuid_pool/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_vlans/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_vlans/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_service_profile_template/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_service_profile_template/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_ip_pool/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_ip_pool/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_timezone/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_timezone/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_ntp_server/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_ntp_server/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_mac_pool/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_mac_pool/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_storage_profile/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_storage_profile/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_org/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_org/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_vsans/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_vsans/tasks/main.yml:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_wwn_pool/aliases:
+    migrated_to: cisco.ucs
+  test/integration/targets/ucs_wwn_pool/tasks/main.yml:
+    migrated_to: cisco.ucs
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
