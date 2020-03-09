@@ -3751,6 +3751,7 @@ files:
     labels: *id026
     maintainers: $team_networking
     support: network
+    migrated_to: cisco.nxos
   $plugins/action/onyx_config.py:
     maintainers: $team_onyx
     labels: networking
@@ -3856,6 +3857,7 @@ files:
     labels: *id026
     maintainers: $team_nxos
     support: network
+    migrated_to: cisco.nxos
   $plugins/cliconf/onyx.py:
     maintainers: $team_onyx
     migrated_to: community.general
@@ -4265,6 +4267,7 @@ files:
     labels: *id026
     maintainers: $team_networking
     support: network
+    migrated_to: cisco.nxos
   $plugins/terminal/onyx.py:
     maintainers: $team_onyx
     migrated_to: community.general
@@ -4614,29 +4617,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: cisco.meraki
+    migrated_to: cisco.nxos
   test/units/compat/mock.py:
-    migrated_to: cisco.meraki
+    migrated_to: cisco.nxos
   test/units/compat/unittest.py:
-    migrated_to: cisco.meraki
+    migrated_to: cisco.nxos
   test/units/compat/__init__.py:
-    migrated_to: cisco.meraki
+    migrated_to: cisco.nxos
   test/units/compat/builtins.py:
-    migrated_to: cisco.meraki
+    migrated_to: cisco.nxos
   test/units/mock/__init__.py:
-    migrated_to: cisco.meraki
+    migrated_to: cisco.nxos
   test/units/mock/yaml_helper.py:
-    migrated_to: cisco.meraki
+    migrated_to: cisco.nxos
   test/units/mock/procenv.py:
-    migrated_to: cisco.meraki
+    migrated_to: cisco.nxos
   test/units/mock/vault_helper.py:
-    migrated_to: cisco.meraki
+    migrated_to: cisco.nxos
   test/units/mock/path.py:
-    migrated_to: cisco.meraki
+    migrated_to: cisco.nxos
   test/units/mock/loader.py:
-    migrated_to: cisco.meraki
+    migrated_to: cisco.nxos
   test/units/modules/conftest.py:
-    migrated_to: cisco.iosxr
+    migrated_to: cisco.nxos
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -24341,6 +24344,2010 @@ files:
     migrated_to: cisco.mso
   test/integration/targets/mso_user/tasks/main.yml:
     migrated_to: cisco.mso
+  lib/ansible/plugins/action/nxos_file_copy.py:
+    migrated_to: cisco.nxos
+  lib/ansible/plugins/doc_fragments/nxos.py:
+    migrated_to: cisco.nxos
+  lib/ansible/plugins/httpapi/nxos.py:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_facts/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_facts/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_facts/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_facts/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_facts/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_linkagg/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_linkagg/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_linkagg/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_linkagg/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_linkagg/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_feature/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_feature/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_feature/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_feature/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_feature/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim_rp_address/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim_rp_address/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim_rp_address/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim_rp_address/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim_rp_address/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_evpn_vni/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_evpn_vni/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_evpn_vni/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_evpn_vni/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_evpn_vni/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_host/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_host/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_host/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_host/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_host/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp_options/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp_options/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp_options/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp_options/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp_options/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_logging/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_logging/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_logging/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_logging/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_logging/meta/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interfaces/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interfaces/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interfaces/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interfaces/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_smoke/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_smoke/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_smoke/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_smoke/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_smoke/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vpc/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vpc/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vpc/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vpc/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vpc/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vsan/vars/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vsan/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vsan/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vsan/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vsan/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_telemetry/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_telemetry/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_telemetry/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_telemetry/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_telemetry/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lag_interfaces/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lag_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lag_interfaces/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lag_interfaces/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ospf/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ospf/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ospf/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ospf/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ospf/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tasks/httpapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tasks/network_cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_version/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_version/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_version/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_version/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_version/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vpc_interface/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vpc_interface/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vpc_interface/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vpc_interface/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vpc_interface/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snapshot/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snapshot/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snapshot/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snapshot/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snapshot/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_udld/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_udld/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_udld/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_udld/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_udld/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_gir_profile_management/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_gir_profile_management/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_gir_profile_management/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_gir_profile_management/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_gir_profile_management/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ospf_vrf/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ospf_vrf/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ospf_vrf/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ospf_vrf/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ospf_vrf/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_neighbor/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_neighbor/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_neighbor/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_neighbor/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_neighbor/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interfaces/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interfaces/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interfaces/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interfaces/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim_interface/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim_interface/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim_interface/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim_interface/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim_interface/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_location/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_location/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_location/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_location/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_location/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp_snooping/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp_snooping/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp_snooping/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp_snooping/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp_snooping/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_devicealias/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_devicealias/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_devicealias/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_devicealias/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interface/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interface/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interface/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interface/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interface/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_zone_zoneset/vars/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_zone_zoneset/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_zone_zoneset/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_zone_zoneset/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_zone_zoneset/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_af/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_af/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_af/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_af/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_af/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_interfaces/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_interfaces/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_interfaces/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_interfaces/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_reboot/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_reboot/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_reboot/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_reboot/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_reboot/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_udld_interface/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_udld_interface/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_udld_interface/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_udld_interface/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_udld_interface/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi_transports/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi_transports/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi_transports/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi_transports/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlans/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlans/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlans/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlans/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlans/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp_interface/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp_interface/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp_interface/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp_interface/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp_interface/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_file_copy/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_file_copy/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_file_copy/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_file_copy/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_file_copy/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_rollback/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_rollback/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_rollback/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_rollback/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_rollback/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp_auth/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp_auth/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp_auth/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp_auth/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp_auth/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_become/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_become/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_become/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_become/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_become/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tasks/cli_config.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/templates/config.js:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interface/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interface/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interface/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interface/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interface/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface_ospf/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface_ospf/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface_ospf/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface_ospf/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface_ospf/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/vars/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf_af/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf_af/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf_af/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf_af/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf_af/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlan/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlan/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlan/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlan/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlan/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_contact/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_contact/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_contact/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_contact/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_contact/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrrp/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrrp/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrrp/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrrp/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrrp/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/vars/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp_interfaces/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp_interfaces/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp_interfaces/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp_interfaces/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_rpm/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_rpm/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_rpm/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_rpm/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_rpm/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_gir/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_gir/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_gir/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_gir/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_gir/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_global/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_global/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_global/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_global/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_global/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_user/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_user/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_user/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_user/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_user/meta/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_banner/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_banner/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_banner/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_banner/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_banner/meta/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_evpn_global/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_evpn_global/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_evpn_global/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_evpn_global/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_evpn_global/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_global/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_global/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_global/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_global/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_neighbor_af/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_neighbor_af/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_neighbor_af/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_neighbor_af/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_neighbor_af/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_traps/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_traps/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_traps/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_traps/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_traps/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_password/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_password/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_password/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_password/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_password/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_netconf/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_netconf/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_netconf/tasks/netconf.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_netconf/meta/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interface/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interface/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interface/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interface/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interface/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf_interface/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf_interface/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf_interface/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf_interface/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf_interface/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_community/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_community/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_community/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_community/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_community/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_static_route/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_static_route/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_static_route/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_static_route/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_static_route/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_overlay_global/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_overlay_global/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_overlay_global/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_overlay_global/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_overlay_global/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_user/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_user/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_user/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_user/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_user/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interfaces/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interfaces/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interfaces/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interfaces/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_domain/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_domain/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_domain/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_domain/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_domain/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp_interfaces/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp_interfaces/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp_interfaces/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp_interfaces/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server_host/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server_host/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server_host/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server_host/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server_host/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep_vni/defaults/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep_vni/tasks/cli.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep_vni/tasks/main.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep_vni/tasks/nxapi.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep_vni/meta/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_facts/tests/common/default_facts.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_facts/tests/common/not_hardware.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_facts/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_facts/tests/common/invalid_subset.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_facts/tests/common/all_facts.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_linkagg/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_feature/tests/common/invalid.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_feature/tests/common/configure.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim_rp_address/tests/common/configure.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_evpn_vni/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_host/tests/common/sanity_snmp_v2_inform.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_host/tests/common/sanity_snmp_v3_trap.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_host/tests/common/sanity_snmp_v3_inform.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_host/tests/common/sanity_snmp_v1_trap.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp_options/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp/tests/cli/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp/tests/nxapi/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_logging/tests/common/purge.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_logging/tests/common/net_logging.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_logging/tests/common/basic.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_smoke/tests/cli/misc_tests.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_smoke/tests/common/common_config.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_smoke/tests/common/common_utils.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_smoke/tests/common/misc_tests.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vpc/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vsan/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_telemetry/tests/common/deleted.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_telemetry/tests/common/replaced.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_telemetry/tests/common/merged.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lag_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lag_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lag_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lag_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ospf/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tasks/upgrade/install_os.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tasks/upgrade/clear_persistent_sockets.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tasks/upgrade/copy_kick_system_images.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tasks/upgrade/enable_scp_server.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tasks/upgrade/main_os_install.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tasks/upgrade/install_with_kick.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tasks/upgrade/install_system.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tasks/upgrade/delete_files.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n3172_u61a.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n3172_u63a.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n9k_greensboro.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n5k_733_N11.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n7k_atherton.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n9k_greensboro_force.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n9k_hamilton.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n3172_u62a.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n7k_helsinki.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n35_62a88.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n35_greensboro.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n3172_greensboro.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_install_os/tests/common/upgrade_n5k_730_N11.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_version/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vpc_interface/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snapshot/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_udld/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_gir_profile_management/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ospf_vrf/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_neighbor/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim_interface/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_location/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp_snooping/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_devicealias/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interface/tests/cli/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l3_interface/tests/nxapi/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_zone_zoneset/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_af/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_reboot/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_udld_interface/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi_transports/tests/nxapi/assert_test.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi_transports/tests/nxapi/assert_transports.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tests/cli/enable.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tests/cli/disable.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tests/cli/configure.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tests/cli/nxapi_ssl.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tests/nxapi/badtransport.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlans/tests/cli/overridden.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlans/tests/cli/deleted.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlans/tests/cli/replaced.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlans/tests/cli/merged.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf/tests/common/intent.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_igmp_interface/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_file_copy/tests/cli/negative.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_file_copy/tests/cli/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_file_copy/tests/cli/input_validation.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_file_copy/tests/nxapi/badtransport.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp/tests/cli/deleted.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp/tests/cli/replaced.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp/tests/cli/merged.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_rollback/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp_auth/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_become/tests/cli/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/templates/defaults/test.j2:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/templates/defaults/config.j2:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/templates/basic/configexact1.j2:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/templates/basic/setupexact.j2:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/templates/basic/setupstrict.j2:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/templates/basic/base_running_config:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/templates/basic/configstrict1.j2:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/templates/basic/config.j2:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/templates/basic/configblock.j2:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/templates/basic/configexact2.j2:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/templates/basic/intended_running_config:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/cli/toplevel_before.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/cli/sublevel_strict.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/cli/diff.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/cli/sublevel.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/cli/sublevel_exact.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/cli/toplevel_after.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/cli/multilevel.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/cli_config/cli_basic.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/cli_config/cli_exact_match.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/cli_config/cli_block_replace.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/cli_config/cli_strict_match.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/cli_config/cli_backup.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/nxapi/toplevel_before.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/nxapi/sublevel_strict.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/nxapi/sublevel.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/nxapi/sublevel_exact.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/nxapi/toplevel_after.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/nxapi/multilevel.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/common/src_invalid.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/common/src_basic.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/common/toplevel_nonidempotent.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/common/save.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/common/src_match_none.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/common/defaults.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/common/sublevel_block.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/common/backup.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_config/tests/common/toplevel.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interface/tests/common/agg.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_l2_interface/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/tests/cli/populate_config.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/tests/cli/parsed.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/tests/cli/remove_config.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/tests/cli/gathered.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/tests/cli/merged.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/tests/cli/overridden.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/tests/cli/replaced.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/tests/cli/rendered.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/tests/cli/rtt.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acls/tests/cli/deleted.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface_ospf/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_ntp/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/tests/cli/parsed.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/tests/cli/remove_config.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/tests/cli/gathered.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/tests/cli/merged.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/tests/cli/overridden.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/tests/cli/replaced.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/tests/cli/rendered.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/tests/cli/rtt.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_interfaces/tests/cli/deleted.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf_af/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlan/tests/common/agg.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlan/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vlan/tests/common/interface.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_pim/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_contact/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrrp/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tests/cli/populate_config.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tests/cli/parsed.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tests/cli/populate_acl.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tests/cli/remove_config.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tests/cli/gathered.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tests/cli/merged.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tests/cli/overridden.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tests/cli/replaced.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tests/cli/rendered.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tests/cli/rtt.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interfaces/tests/cli/deleted.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_rpm/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_gir/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bfd_global/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_user/tests/common/net_user.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_user/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_user/tests/common/basic.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_user/tests/common/auth.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_banner/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_evpn_global/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_global/tests/cli/merged.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_global/tests/cli/replaced.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lldp_global/tests/cli/deleted.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp_neighbor_af/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_traps/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server/tests/common/tacacs.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server/tests/common/radius.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp/tests/common/param.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp/tests/common/dis_policy.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp/tests/common/hels.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp/tests/common/isolate.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_bgp/tests/common/supp_fib.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_password/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface/tests/common/set_state_absent.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface/tests/common/sub_int.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface/tests/common/intent.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interface/tests/common/set_state_present.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_netconf/tests/fixtures/config.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_netconf/tests/netconf/basic.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tests/cli/set_domain_name.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tests/cli/set_domain_list.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tests/cli/net_system.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tests/cli/set_name_servers.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tests/nxapi/set_domain_name.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tests/nxapi/set_domain_list.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tests/nxapi/net_system.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tests/nxapi/set_name_servers.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_system/tests/common/set_hostname.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_acl_interface/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vrf_interface/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/cli/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/cli/contains.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/cli/cli_command.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/nxapi/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/nxapi/contains.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/common/invalid.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/common/greaterthan.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/common/output.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/common/greaterthanorequal.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/common/not_comparison_operator.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/common/bad_operator.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/common/lessthanorequal.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/common/notequal.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/common/timeout.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/common/equal.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_command/tests/common/lessthan.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_hsrp/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_community/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_static_route/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_overlay_global/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_snmp_user/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vtp_domain/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_lacp_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server_host/tests/common/tacacs.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_aaa_server_host/tests/common/radius.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep_vni/tests/common/sanity.yaml:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/nxos.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/facts.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/utils/utils.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/lldp_global/lldp_global.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/bfd_interfaces/bfd_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/vlans/vlans.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/telemetry/telemetry.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/acl_interfaces/acl_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/l3_interfaces/l3_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/l2_interfaces/l2_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/lag_interfaces/lag_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/legacy/base.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/interfaces/interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/hsrp_interfaces/hsrp_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/lacp/lacp.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/facts/acls/acls.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/lldp_global/lldp_global.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/bfd_interfaces/bfd_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/vlans/vlans.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/telemetry/telemetry.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/facts/facts.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/acl_interfaces/acl_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/l3_interfaces/l3_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/l2_interfaces/l2_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/lag_interfaces/lag_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/interfaces/interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/hsrp_interfaces/hsrp_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/lacp/lacp.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/argspec/acls/acls.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/lldp_global/lldp_global.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/bfd_interfaces/bfd_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/vlans/vlans.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/telemetry/telemetry.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/acl_interfaces/acl_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/l3_interfaces/l3_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/l2_interfaces/l2_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/lag_interfaces/lag_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/interfaces/interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/hsrp_interfaces/hsrp_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/lacp/lacp.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/config/acls/acls.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/utils/telemetry/telemetry.py:
+    migrated_to: cisco.nxos
+  lib/ansible/module_utils/network/nxos/cmdref/telemetry/telemetry.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_telemetry.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_user.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_bfd_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_ospf.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_system.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/_nxos_l3_interface.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_smu.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_reboot.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_static_route.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_acl_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_vpc.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/_nxos_linkagg.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_vxlan_vtep_vni.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_vrrp.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_lldp.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/_nxos_interface.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_lacp_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_gir_profile_management.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_snmp_community.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_lag_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_acl.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_hsrp_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_lldp_global.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_snmp_contact.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_vrf_interface.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_rpm.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_ntp_options.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_ospf_vrf.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_vtp_version.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_igmp_interface.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_bgp_neighbor.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_bgp.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_rollback.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_aaa_server.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_udld_interface.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_bgp_af.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_feature.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_snmp_traps.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_evpn_global.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_igmp.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_aaa_server_host.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_vrf_af.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_snapshot.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_gir.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_command.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_vxlan_vtep.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_snmp_location.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_evpn_vni.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_vpc_interface.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_logging.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_pim.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_ping.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_pim_rp_address.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_pim_interface.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_install_os.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_nxapi.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/_nxos_l2_interface.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_lacp.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_lldp_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_acl_interface.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_vrf.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_interface_ospf.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_acls.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_vtp_password.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_l3_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_igmp_snooping.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_banner.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_bfd_global.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_udld.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_vtp_domain.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_snmp_host.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_l2_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_hsrp.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_interfaces.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_overlay_global.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_snmp_user.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_vlans.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_ntp.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_file_copy.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_ntp_auth.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_config.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/_nxos_vlan.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/nxos_facts.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/storage/nxos_zone_zoneset.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/storage/nxos_vsan.py:
+    migrated_to: cisco.nxos
+  lib/ansible/modules/network/nxos/storage/nxos_devicealias.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_telemetry.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vrf/show_vrf_ntc:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_acl_interfaces/nxos_acl_interfaces.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vrf/show_vrf_management:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vpc/vrf_test_show_vrf_all:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vpc/vrf_test_show_inventory:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_bgp/config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_acl_interface/show_running-config_aclmgr.txt:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/_nxos_interface/show_interface:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vxlan_vtep_vni/config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vpc_interface/show_port-channel_summary:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vrf/show_vrf_management_interface:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_zone_zoneset/shzoneset_2.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/_nxos_switchport/show_interface_ethernet_switchport:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_pim_interface/config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vpc/vrf_test_show_vpc:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_pim_interface/show_interface_eth2_1:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_bfd_global/N7K.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_interface_ospf/config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vlan/show_vlan_brief.txt:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_telemetry/N9K_SGs.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vlans/show_running-config_vlan_1:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_static_route.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/_nxos_interface/show_run_interface_loopback0:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_zone_zoneset/shzoneset_0.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_zone_zoneset/shzonestatus_4.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_config/candidate.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_acl/show_ip_access-list.txt:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_feature/show_feature.txt:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vlans/show_vlan_no_facts:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_overlay_global_config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_zone_zoneset/shzone_2.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vlan/agg_show_vlan_brief.txt:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_l3_interface/ethernet_noshut_multiple_ipv6:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vrf/show_vrf_default:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_pim_rp_address/config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/_nxos_interface/show_interface_loopback0:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_pim/config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vlan/config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_l3_interface/ethernet_noshut_ipv4_ipv6:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vrf/show_run_all:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/_nxos_ip_interface.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vrf/show_vrf_default_interface:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_pim_interface/sh_run_interface_eth2_1_all:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/_nxos_interface/show_run_interface_Ethernet2_1:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vsan/shvsanmem.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_nxapi/n3k/show_run_all:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vxlan_vtep/config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_evpn_global/configured.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vlans/show_vlan_vlan_1:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vrf/show_vrf_ntc_interface:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_command/show_version.txt:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_devicealias/shdastatuslock.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vpc/show_vpc:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_zone_zoneset/shzonestatus_3.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_zone_zoneset/shzonestatus_2.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_zone_zoneset/shzoneset_1.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vrf_af/config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_bfd_global/N9K.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_zone_zoneset/shzone_1.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_devicealias/shdadatabse.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_zone_zoneset/shzone_0.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_system_config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vlans/show_running-config_no_facts:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/_nxos_switchport/show_vlan:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/_nxos_interface/show_interface_Ethernet2_1:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_evpn_global/unconfigured.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vpc/vrf_test_show_hardware:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_nxapi/n7k/show_run_all:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_pim_interface/show_ip_pim_interface_eth2_1:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_zone_zoneset/shzonesetactive_0.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_bgp/config_32_bits_as.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_l3_interface/ethernet_noshut:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_config/config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_evpn_vni_config.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vsan/shvsan.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_devicealias/shdastatus_mansi.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vpc/show_vrf_all:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_zone_zoneset/shzonestatus_0.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vpc_interface/show_vpc_brief:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vpc/vrf_test_vpc_config:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_zone_zoneset/shzonestatus_1.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_telemetry/N9K.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/_nxos_switchport/show_interface_ethernet:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_devicealias/shdastatus.cfg:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vlans/show_vlan:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/fixtures/nxos_vlans/show_running-config:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/storage/test_nxos_devicealias.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/storage/test_nxos_vsan.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/storage/test_nxos_zone_zoneset.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/storage/__init__.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/nxos_module.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/__init__.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_bfd_interfaces.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_ospf.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_system.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_l3_interface.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_static_route.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_acl_interfaces.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_vpc.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_vxlan_vtep_vni.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_interface.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_acl.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_hsrp_interfaces.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_ospf_vrf.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_bgp_neighbor.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_bgp.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_bgp_af.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_feature.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_evpn_global.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_vrf_af.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_command.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_vxlan_vtep.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_evpn_vni.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_vpc_interface.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_pim.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_pim_rp_address.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_pim_interface.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_nxapi.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_bgp_neighbor_af.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_lldp_interfaces.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_acl_interface.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_vrf.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_interface_ospf.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_acls.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_l3_interfaces.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_banner.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_bfd_global.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_hsrp.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_interfaces.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_overlay_global.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_vlans.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_config.py:
+    migrated_to: cisco.nxos
+  test/units/modules/network/nxos/test_nxos_vlan.py:
+    migrated_to: cisco.nxos
+  test/integration/targets/prepare_nxos_tests/tasks/main.yml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep/tasks/platform/n7k/cleanup.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_vxlan_vtep/tasks/platform/n7k/setup.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/platform/n7k/assert_changes_https.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/platform/n7k/assert_changes_http.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/platform/n7k/assert_changes_https_http.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/platform/n7k/assert_changes_https_http_ports.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/platform/default/assert_changes_https.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/platform/default/assert_changes_http.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/platform/default/assert_changes_https_http.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/platform/default/assert_changes_https_http_ports.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/platform/n5k/assert_changes_https.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/platform/n5k/assert_changes_http.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/platform/n5k/assert_changes_https_http.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_nxapi/tasks/platform/n5k/assert_changes_https_http_ports.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_overlay_global/tasks/platform/n7k/cleanup.yaml:
+    migrated_to: cisco.nxos
+  test/integration/targets/nxos_overlay_global/tasks/platform/n7k/setup.yaml:
+    migrated_to: cisco.nxos
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
