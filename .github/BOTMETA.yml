@@ -3733,6 +3733,7 @@ files:
     labels: *id023
     maintainers: $team_networking $team_iosxr
     support: network
+    migrated_to: cisco.iosxr
   $plugins/action/ironware:
     maintainers: paulquack
     labels: networking
@@ -3840,6 +3841,7 @@ files:
     labels: *id023
     maintainers: $team_networking $team_iosxr
     support: network
+    migrated_to: cisco.iosxr
   $plugins/cliconf/ironware.py:
     maintainers: paulquack
     migrated_to: community.general
@@ -4248,6 +4250,7 @@ files:
     labels: *id023
     maintainers: $team_networking $team_iosxr
     support: network
+    migrated_to: cisco.iosxr
   $plugins/terminal/ironware.py:
     maintainers: paulquack
     migrated_to: community.general
@@ -4611,29 +4614,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: cisco.ios
+    migrated_to: cisco.iosxr
   test/units/compat/mock.py:
-    migrated_to: cisco.ios
+    migrated_to: cisco.iosxr
   test/units/compat/unittest.py:
-    migrated_to: cisco.ios
+    migrated_to: cisco.iosxr
   test/units/compat/__init__.py:
-    migrated_to: cisco.ios
+    migrated_to: cisco.iosxr
   test/units/compat/builtins.py:
-    migrated_to: cisco.ios
+    migrated_to: cisco.iosxr
   test/units/mock/__init__.py:
-    migrated_to: cisco.ios
+    migrated_to: cisco.iosxr
   test/units/mock/yaml_helper.py:
-    migrated_to: cisco.ios
+    migrated_to: cisco.iosxr
   test/units/mock/procenv.py:
-    migrated_to: cisco.ios
+    migrated_to: cisco.iosxr
   test/units/mock/vault_helper.py:
-    migrated_to: cisco.ios
+    migrated_to: cisco.iosxr
   test/units/mock/path.py:
-    migrated_to: cisco.ios
+    migrated_to: cisco.iosxr
   test/units/mock/loader.py:
-    migrated_to: cisco.ios
+    migrated_to: cisco.iosxr
   test/units/modules/conftest.py:
-    migrated_to: cisco.ios
+    migrated_to: cisco.iosxr
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -19399,9 +19402,9 @@ files:
   test/integration/targets/prepare_junos_tests/tasks/main.yml:
     migrated_to: ansible.netcommon
   test/integration/targets/prepare_iosxr_tests/tasks/main.yml:
-    migrated_to: ansible.netcommon
+    migrated_to: cisco.iosxr
   test/integration/targets/prepare_iosxr_tests/templates/config.j2:
-    migrated_to: ansible.netcommon
+    migrated_to: cisco.iosxr
   test/integration/targets/netconf_rpc/defaults/main.yaml:
     migrated_to: ansible.netcommon
   test/integration/targets/netconf_rpc/tasks/main.yaml:
@@ -23494,6 +23497,738 @@ files:
     migrated_to: cisco.ios
   test/integration/targets/prepare_ios_tests/templates/config.j2:
     migrated_to: cisco.ios
+  lib/ansible/plugins/doc_fragments/iosxr.py:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/fixtures/parsed.cfg:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/vars/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_bgp/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_bgp/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_bgp/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_bgp/meta/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_user/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_user/files/public2.pub:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_user/files/public.pub:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_user/files/private:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_user/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_user/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_user/tasks/netconf.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_user/meta/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_interfaces/vars/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_interfaces/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_interfaces/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/vars/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tasks/netconf.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/meta/main.yml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/vars/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lag_interfaces/vars/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lag_interfaces/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lag_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lag_interfaces/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_command/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_command/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_command/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_command/meta/main.yml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp_interfaces/vars/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp_interfaces/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp_interfaces/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_facts/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_facts/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_facts/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_facts/meta/main.yml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_banner/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_banner/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_banner/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_banner/tasks/netconf.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_banner/meta/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_netconf/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_netconf/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_netconf/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_netconf/meta/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l2_interfaces/vars/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l2_interfaces/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l2_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l2_interfaces/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l2_interfaces/meta/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interface/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interface/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interface/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interface/tasks/netconf.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interface/meta/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interfaces/vars/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interfaces/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interfaces/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interfaces/meta/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp/vars/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_logging/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_logging/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_logging/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_logging/tasks/netconf.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_logging/meta/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_smoke/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_smoke/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_smoke/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_smoke/tasks/netconf.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_smoke/meta/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/fixtures/config_del_interface.txt:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/fixtures/config_add_interface.txt:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tasks/cli_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/meta/main.yml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/vars/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/meta/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_global/vars/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_global/defaults/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_global/tasks/cli.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_global/tasks/main.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tests/cli/parsed.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tests/cli/overridden.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tests/cli/deleted.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tests/cli/replaced.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tests/cli/empty_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tests/cli/merged.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tests/cli/rendered.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tests/cli/gathered.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_static_routes/tests/cli/rtt.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_bgp/tests/cli/basic.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_user/tests/cli/basic.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_user/tests/common/auth.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_user/tests/netconf/basic.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_interfaces/tests/cli/_populate.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_interfaces/tests/cli/rtt.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tests/cli/parsed.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tests/cli/overridden.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tests/cli/deleted.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tests/cli/replaced.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tests/cli/empty_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tests/cli/merged.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tests/cli/rendered.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tests/cli/gathered.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tests/cli/rtt.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tests/cli/set_lookup_source.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tests/cli/set_domain_name.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tests/cli/set_domain_list.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tests/cli/set_hostname.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tests/cli/net_system.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tests/cli/set_name_servers.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tests/netconf/set_lookup_source.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tests/netconf/set_domain_name.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tests/netconf/set_domain_list.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tests/netconf/set_hostname.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_system/tests/netconf/set_name_servers.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/deleted_all.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/parsed.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/rendered.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/_populate.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/gathered.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/rtt.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lag_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lag_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lag_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lag_interfaces/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lag_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lag_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lag_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lag_interfaces/tests/cli/rtt.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_command/tests/cli/invalid.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_command/tests/cli/prompt.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_command/tests/cli/output.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_command/tests/cli/bad_operator.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_command/tests/cli/contains.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_command/tests/cli/cli_command.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_command/tests/cli/timeout.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp_interfaces/tests/cli/_populate.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp_interfaces/tests/cli/rtt.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_facts/tests/cli/default_facts.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_facts/tests/cli/not_hardware.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_facts/tests/cli/invalid_subset.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_facts/tests/cli/all_facts.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_banner/tests/cli/basic-no-login.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_banner/tests/cli/basic-login.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_banner/tests/cli/basic-motd.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_banner/tests/netconf/basic-no-login.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_banner/tests/netconf/basic-login.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_banner/tests/netconf/basic-motd.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_netconf/tests/cli/basic.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l2_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l2_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l2_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l2_interfaces/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l2_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l2_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l2_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interface/tests/cli/basic.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interface/tests/cli/net_interface.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interface/tests/cli/intent.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interface/tests/netconf/basic.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interface/tests/netconf/net_interface.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interface/tests/netconf/intent.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interfaces/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp/tests/cli/deleted.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp/tests/cli/replaced.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp/tests/cli/empty_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp/tests/cli/merged.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp/tests/cli/_populate.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lacp/tests/cli/rtt.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_logging/tests/cli/net_logging.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_logging/tests/cli/basic.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_logging/tests/netconf/basic.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_smoke/tests/cli/common_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_smoke/tests/cli/common_utils.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_smoke/tests/netconf/common_netconf.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_smoke/tests/netconf/misc_tests.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/templates/defaults/config.j2:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/templates/basic/route_policy.j2:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/templates/basic/route_policy_clean.j2:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/templates/basic/change_prefix_set.j2:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/templates/basic/route_policy_change.j2:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/templates/basic/init_prefix_set.j2:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/templates/basic/config.j2:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/comment-too-long.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/src_invalid.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/replace_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/sublevel_strict_mul_parents.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/toplevel_before.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/sublevel_strict.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/sublevel.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/src_basic.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/comment.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/toplevel_nonidempotent.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/route_policy.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/sublevel_exact.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/toplevel_after.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/src_match_none.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/commit_label.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/misplaced_sublevel.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/sublevel_block.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/backup.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli/toplevel.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli_config/cli_basic.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_config/tests/cli_config/cli_backup.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_l3_interfaces/tests/cli/rtt.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_global/tests/cli/deleted.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_global/tests/cli/replaced.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_global/tests/cli/empty_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_global/tests/cli/merged.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_global/tests/cli/_populate.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_global/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_lldp_global/tests/cli/rtt.yaml:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/iosxr.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/providers/module.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/providers/providers.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/facts.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/utils/utils.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/lldp_global/lldp_global.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/acl_interfaces/acl_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/static_routes/static_routes.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/l3_interfaces/l3_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/l2_interfaces/l2_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/lag_interfaces/lag_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/legacy/base.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/interfaces/interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/lacp/lacp.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/facts/acls/acls.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/argspec/lldp_global/lldp_global.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/argspec/facts/facts.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/argspec/acl_interfaces/acl_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/argspec/static_routes/static_routes.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/argspec/l3_interfaces/l3_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/argspec/l2_interfaces/l2_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/argspec/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/argspec/lag_interfaces/lag_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/argspec/interfaces/interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/argspec/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/argspec/lacp/lacp.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/argspec/acls/acls.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/config/lldp_global/lldp_global.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/config/acl_interfaces/acl_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/config/static_routes/static_routes.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/config/l3_interfaces/l3_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/config/l2_interfaces/l2_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/config/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/config/lag_interfaces/lag_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/config/interfaces/interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/config/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/config/lacp/lacp.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/config/acls/acls.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/providers/cli/config/bgp/neighbors.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/providers/cli/config/bgp/process.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/module_utils/network/iosxr/providers/cli/config/bgp/address_family.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_bgp.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_lldp_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_l3_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_netconf.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_static_routes.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_lldp_global.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_config.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_lag_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/_iosxr_interface.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_user.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_facts.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_acl_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_l2_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_logging.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_lacp.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_acls.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_system.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_command.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_lacp_interfaces.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/modules/network/iosxr/iosxr_banner.py:
+    migrated_to: cisco.iosxr
+  lib/ansible/plugins/netconf/iosxr.py:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/test_iosxr_netconf.py:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/show_lldp_neighbors_detail:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/iosxr_config_src.cfg:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/iosxr_user_config.cfg:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/show_ipv6_interface:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/show_running-config:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/show_memory_summary:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/iosxr_acls_config.cfg:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/dir_7all:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/iosxr_config_config.cfg:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/show_lldp:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/iosxr_static_routes_config.cfg:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/show_interfaces:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/iosxr_system_config.cfg:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/show_version_brief:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/show_version:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/fixtures/show_version___utility_head_-n_20:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/iosxr_module.py:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/__init__.py:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/test_iosxr_static_routes.py:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/test_iosxr_config.py:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/test_iosxr_user.py:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/test_iosxr_facts.py:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/test_iosxr_acls.py:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/test_iosxr_system.py:
+    migrated_to: cisco.iosxr
+  test/units/modules/network/iosxr/test_iosxr_command.py:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acl_interfaces/tests/cli/fixtures/parsed.cfg:
+    migrated_to: cisco.iosxr
+  test/integration/targets/iosxr_acls/tests/cli/fixtures/parsed.cfg:
+    migrated_to: cisco.iosxr
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
