@@ -1,8 +1,0 @@
-unsupported
-destructive
-skip/aix
-skip/freebsd
-skip/osx
-skip/rhel
-needs/root
-needs/privileged
