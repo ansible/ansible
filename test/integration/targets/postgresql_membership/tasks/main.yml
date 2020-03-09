@@ -1,2 +1,0 @@
-# Initial CI tests of postgresql_membership module
-- import_tasks: postgresql_membership_initial.yml
