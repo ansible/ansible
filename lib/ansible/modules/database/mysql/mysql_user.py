@@ -702,7 +702,7 @@ def main():
             priv=dict(type='raw'),
             append_privs=dict(type='bool', default=False),
             check_implicit_admin=dict(type='bool', default=False),
-            update_password=dict(type='str', default='always', choices=['always', 'on_create']),
+            update_password=dict(type='str', default='always', choices=['always', 'on_create'], no_log=False),
             connect_timeout=dict(type='int', default=30),
             config_file=dict(type='path', default='~/.my.cnf'),
             sql_log_bin=dict(type='bool', default=True),
