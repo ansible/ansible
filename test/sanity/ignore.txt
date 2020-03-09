@@ -142,13 +142,6 @@ lib/ansible/modules/net_tools/basics/uri.py pylint:blacklisted-name
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/ovs/openvswitch_bridge.py validate-modules:doc-choices-do-not-match-spec
-lib/ansible/modules/network/ovs/openvswitch_bridge.py validate-modules:doc-missing-type
-lib/ansible/modules/network/ovs/openvswitch_bridge.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/ovs/openvswitch_db.py validate-modules:doc-missing-type
-lib/ansible/modules/network/ovs/openvswitch_db.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/ovs/openvswitch_port.py validate-modules:doc-missing-type
-lib/ansible/modules/network/ovs/openvswitch_port.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/vyos/_vyos_interface.py future-import-boilerplate
 lib/ansible/modules/network/vyos/_vyos_interface.py metaclass-boilerplate
 lib/ansible/modules/network/vyos/_vyos_interface.py validate-modules:doc-choices-do-not-match-spec
