@@ -24321,6 +24321,26 @@ files:
     migrated_to: cisco.meraki
   test/integration/targets/meraki_webhook/tasks/main.yml:
     migrated_to: cisco.meraki
+  test/integration/targets/mso_label/aliases:
+    migrated_to: cisco.mso
+  test/integration/targets/mso_label/tasks/main.yml:
+    migrated_to: cisco.mso
+  test/integration/targets/mso_role/aliases:
+    migrated_to: cisco.mso
+  test/integration/targets/mso_role/tasks/main.yml:
+    migrated_to: cisco.mso
+  test/integration/targets/mso_site/aliases:
+    migrated_to: cisco.mso
+  test/integration/targets/mso_site/tasks/main.yml:
+    migrated_to: cisco.mso
+  test/integration/targets/mso_tenant/aliases:
+    migrated_to: cisco.mso
+  test/integration/targets/mso_tenant/tasks/main.yml:
+    migrated_to: cisco.mso
+  test/integration/targets/mso_user/aliases:
+    migrated_to: cisco.mso
+  test/integration/targets/mso_user/tasks/main.yml:
+    migrated_to: cisco.mso
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
