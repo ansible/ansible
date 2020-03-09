@@ -1,4 +1,0 @@
-mysql_support_packages:
-  - python3-PyMySQL
-
-mysql_disablerepo: AppStream
