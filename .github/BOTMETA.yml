@@ -16,30 +16,44 @@ files:
   $modules/cloud/amazon/cloudformation.py:
     maintainers: ryansb
     ignored: tedder
+    migrated_to: ansible.amazon
   $modules/cloud/amazon/cloudtrail.py:
     maintainers: $team_ansible
     migrated_to: community.amazon
   $modules/cloud/amazon/ec2.py:
     maintainers: $team_ansible
     ignored: skvidal
+    migrated_to: ansible.amazon
   $modules/cloud/amazon/ec2_asg.py:
     maintainers: $team_ansible s-hertel ryansb
     migrated_to: community.amazon
-  $modules/cloud/amazon/ec2_group.py: $team_ansible
+  $modules/cloud/amazon/ec2_group.py:
+    maintainers: $team_ansible
+    migrated_to: ansible.amazon
   $modules/cloud/amazon/ec2_instance.py:
     maintainers: Shaps
     migrated_to: community.amazon
-  $modules/cloud/amazon/ec2_key.py: $team_ansible
+  $modules/cloud/amazon/ec2_key.py:
+    maintainers: $team_ansible
+    migrated_to: ansible.amazon
   $modules/cloud/amazon/ec2_lc.py:
     maintainers: $team_ansible
     migrated_to: community.amazon
   $modules/cloud/amazon/ec2_metric_alarm.py:
     maintainers: $team_ansible
     migrated_to: community.amazon
-  $modules/cloud/amazon/ec2_tag.py: $team_ansible
-  $modules/cloud/amazon/ec2_vol.py: $team_ansible
-  $modules/cloud/amazon/ec2_vpc_net.py: $team_ansible
-  $modules/cloud/amazon/ec2_vpc_net_info.py: whiter
+  $modules/cloud/amazon/ec2_tag.py:
+    maintainers: $team_ansible
+    migrated_to: ansible.amazon
+  $modules/cloud/amazon/ec2_vol.py:
+    maintainers: $team_ansible
+    migrated_to: ansible.amazon
+  $modules/cloud/amazon/ec2_vpc_net.py:
+    maintainers: $team_ansible
+    migrated_to: ansible.amazon
+  $modules/cloud/amazon/ec2_vpc_net_info.py:
+    maintainers: whiter
+    migrated_to: ansible.amazon
   $modules/cloud/amazon/elasticache.py:
     maintainers: alachaum
     migrated_to: community.amazon
@@ -3323,6 +3337,7 @@ files:
     labels:
     - aws
     - cloud
+    migrated_to: ansible.amazon
   $module_utils/ecs/:
     maintainers: ctrufan tylert $team_crypto
   $module_utils/facts:
@@ -3602,6 +3617,7 @@ files:
     support: core
   $plugins/action/aws_s3.py:
     support: core
+    migrated_to: ansible.amazon
   $plugins/action/command.py:
     support: core
   $plugins/action/cli:
@@ -3977,6 +3993,7 @@ files:
     support: core
   $plugins/inventory/aws_ec2.py:
     maintainers: $team_aws
+    migrated_to: ansible.amazon
   $plugins/inventory/azure_rm.py:
     migrated_to: azure.azcollection
   $plugins/inventory/docker: *id011
@@ -4554,29 +4571,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/compat/mock.py:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/compat/unittest.py:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/compat/__init__.py:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/compat/builtins.py:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/mock/__init__.py:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/mock/yaml_helper.py:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/mock/procenv.py:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/mock/vault_helper.py:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/mock/path.py:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/mock/loader.py:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/modules/conftest.py:
-    migrated_to: community.vmware
+    migrated_to: ansible.amazon
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -5034,1055 +5051,1055 @@ files:
   test/units/modules/cloud/amazon/test_aws_acm.py:
     migrated_to: community.amazon
   test/units/modules/cloud/amazon/fixtures/certs/chain-1.3.cert:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/fixtures/certs/a.pem:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/fixtures/certs/simple-chain-a.cert:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/fixtures/certs/chain-1.4.cert:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/fixtures/certs/chain-1.0.cert:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/fixtures/certs/chain-1.1.cert:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/fixtures/certs/simple-chain-b.cert:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/fixtures/certs/chain-4.cert:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/fixtures/certs/b.pem:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/fixtures/certs/chain-1.2.cert:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/fixtures/thezip.zip:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.CreateTags_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_13.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/pipeline_description/datapipeline.DescribePipelines_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_lag_with_connections/directconnect.DescribeLags_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_15.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DeleteVpnConnection_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_10.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_17.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_35.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_11.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_9.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline/datapipeline.DescribePipelines_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_delete/cloudformation.DescribeStackEvents_5.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_lag_with_connections_without_force_delete/directconnect.DescribeLags_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_delete/cloudformation.DescribeStacks_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_9.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_connection/connection_exists_by_id/directconnect.DescribeConnections_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStackEvents_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_rollback/cloudformation.DescribeStacks_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStackEvents_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStacks_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_27.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_26.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_nonexistent_connection/ec2.DescribeVpnConnections_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_6.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_10.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_31.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_17.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_33.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_34.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/check_dp_exists_true/datapipeline.DescribePipelines_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_12.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_nonexistent_lag/directconnect.DescribeLags_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_27.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_with_tags/datapipeline.DescribePipelines_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_8.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_29.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_16.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/delete_pipeline/datapipeline.ListPipelines_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_31.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_connection/changed_properties/directconnect.DescribeConnections_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/check_dp_exists_false/datapipeline.DescribePipelines_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_7.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_delete/cloudformation.DescribeStacks_5.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_5.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_4.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.CreateVpnConnection_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline/datapipeline.DescribePipelines_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.CreateTags_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_9.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_6.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_17.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_already_exists/datapipeline.DescribePipelines_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_8.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_25.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_22.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_18.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_30.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_5.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_connection/create_and_delete/directconnect.CreateConnection_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_18.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.ListPipelines_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_12.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_8.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_34.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_12.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_do_nothing/cloudformation.CreateStack_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_8.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_16.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_16.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_31.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_29.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStacks_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline/datapipeline.DescribePipelines_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_15.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_13.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_26.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline/datapipeline.DescribePipelines_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.CreateVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStacks_7.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.CreateTags_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/delete_pipeline/datapipeline.ListPipelines_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/delete_pipeline/datapipeline.DescribePipelines_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_18.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_lag_with_connections_without_force_delete/directconnect.DescribeLags_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/.gitkeep:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStackEvents_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/nonexistent_lag_does_not_exist/directconnect.DescribeLags_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStackEvents_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_12.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_19.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_6.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/lag_status/directconnect.DescribeLags_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.CreateVpnConnectionRoute_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_nonexistent/ec2.DescribeVpnConnections_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_16.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_15.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_36.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DeleteTags_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/delete_nonexistent_stack/cloudformation.DescribeStackEvents_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_11.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_15.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_25.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_already_exists/datapipeline.DescribePipelines_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_9.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_do_nothing/cloudformation.DescribeStacks_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_8.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_connection/connection_exists_by_name/directconnect.DescribeConnections_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_15.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/pipeline_field/datapipeline.DescribePipelines_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_33.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_do_nothing/cloudformation.DescribeStacks_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_9.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_15.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_17.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.CreateVpnConnectionRoute_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStackEvents_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_7.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_29.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/delete_pipeline/datapipeline.DescribePipelines_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/deactivate_pipeline/datapipeline.DescribePipelines_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_rollback/cloudformation.CreateStack_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_8.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_14.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_10.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/delete_pipeline/datapipeline.DescribePipelines_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_with_tags/datapipeline.DescribePipelines_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/deactivate_pipeline/datapipeline.DescribePipelines_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DeleteVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_11.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/delete_pipeline/datapipeline.DescribePipelines_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_14.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_7.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_delete/cloudformation.DescribeStackEvents_4.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStackEvents_5.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_18.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_delete/cloudformation.DescribeStacks_4.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_8.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_do_nothing/cloudformation.DeleteStack_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.CreateVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.ActivatePipeline_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_rollback/cloudformation.DescribeStackEvents_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_14.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_with_tags/datapipeline.ListPipelines_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/deactivate_pipeline/datapipeline.DescribePipelines_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DeleteVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_7.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.CreateVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStackEvents_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/define_pipeline/datapipeline.PutPipelineDefinition_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_26.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_15.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_24.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_17.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.CreateVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_35.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_11.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_4.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_22.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_23.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_24.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_9.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_9.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_14.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_10.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_14.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_23.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_20.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_11.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_already_exists/datapipeline.DescribePipelines_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_16.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_12.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_13.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_20.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_10.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_rollback/cloudformation.DescribeStacks_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_21.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.CreateVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_14.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_28.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_11.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_delete/cloudformation.CreateStack_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_10.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DeleteVpnConnection_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/delete_nonexistent_stack/cloudformation.DescribeStacks_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/check_dp_status/datapipeline.DescribePipelines_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_connection/associations_are_not_updated/directconnect.DescribeConnections_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/delete_pipeline/datapipeline.DescribePipelines_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.CreateTags_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_delete/cloudformation.DescribeStackEvents_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_14.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/update_lag/directconnect.DescribeLags_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_7.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_17.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_31.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_9.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_15.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_12.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_21.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_11.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/deactivate_pipeline/datapipeline.ListPipelines_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_30.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DeleteVpnConnection_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_lag_with_connections/directconnect.DisassociateConnectionFromLag_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_30.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_13.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.CreateStack_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.CreateVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_29.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DeleteVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_25.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline/datapipeline.DescribePipelines_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStackEvents_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DeleteStack_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/nonexistent_lag_status/directconnect.DescribeLags_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_9.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_with_tags/datapipeline.ListPipelines_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DeleteVpnConnection_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_10.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_13.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline/datapipeline.ListPipelines_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_7.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.CreateVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_4.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_lag_with_connections/directconnect.DeleteConnection_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/delete_nonexistent_stack/cloudformation.DescribeStackEvents_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_10.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStacks_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_14.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/invalid_template_json/cloudformation.CreateStack_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_17.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_35.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStacks_5.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_31.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_13.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_7.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_do_nothing/cloudformation.DescribeStackEvents_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_20.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_15.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline/datapipeline.ListPipelines_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStacks_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_with_tags/datapipeline.DescribePipelines_6.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_connection/create_and_delete/directconnect.DeleteConnection_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_33.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_27.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline/datapipeline.CreatePipeline_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_8.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_13.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_32.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DeleteVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_lag_with_connections/directconnect.DescribeLags_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_22.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_32.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_30.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_10.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DeleteVpnConnection_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_30.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/lag_changed_true/directconnect.DescribeLags_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_6.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_with_tags/datapipeline.DescribePipelines_5.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/delete_nonexistent_pipeline/datapipeline.ListPipelines_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_7.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_with_tags/datapipeline.DescribePipelines_4.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStacks_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_27.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStackEvents_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DeleteVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_25.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.CreateVpnConnection_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_10.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_17.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_14.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_12.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStacks_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_8.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_33.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/lag_exists_using_name/directconnect.DescribeLags_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_12.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_12.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_14.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStackEvents_6.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_already_exists/datapipeline.GetPipelineDefinition_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_9.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_28.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.CreateStack_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStacks_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_10.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/pipeline_description_nonexistent/datapipeline.DescribePipelines_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_21.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_28.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_16.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_9.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/get_nonexistent_stack/cloudformation.DescribeStacks_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_16.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_7.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStackEvents_4.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_lag_with_connections/directconnect.DescribeLags_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_9.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_15.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/delete_pipeline/datapipeline.DescribePipelines_7.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_22.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_13.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_10.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_7.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_8.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_with_tags/datapipeline.DeletePipeline_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStacks_6.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.ListPipelines_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_already_exists/datapipeline.ListPipelines_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_11.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_24.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_lag_with_connections_without_force_delete/directconnect.DescribeLags_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_delete/cloudformation.DescribeStacks_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_7.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DeleteVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_6.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_do_nothing/cloudformation.DescribeStackEvents_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DeleteVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_5.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline/datapipeline.DescribePipelines_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_14.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_26.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_lag_with_connections_without_force_delete/directconnect.DescribeVirtualInterfaces_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_already_exists/datapipeline.DescribePipelines_4.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_11.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DeleteVpnConnection_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_19.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_16.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_rollback/cloudformation.DescribeStackEvents_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_19.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/deactivate_pipeline/datapipeline.DescribePipelines_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_28.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_19.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/delete_pipeline/datapipeline.DescribePipelines_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.CreateTags_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_8.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_21.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_9.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStacks_7.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_24.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_20.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStackEvents_7.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_with_tags/datapipeline.DescribePipelines_7.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_23.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_8.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_7.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_28.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_connection/connection_status/directconnect.DescribeConnections_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.CreateTags_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_25.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_4.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/define_pipeline/datapipeline.DescribePipelines_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.CreateVpnConnection_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_lag_with_connections/directconnect.DescribeVirtualInterfaces_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_13.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_15.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline/datapipeline.DeletePipeline_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_13.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_9.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_16.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_18.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.DescribeVpnConnections_13.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_18.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStacks_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_22.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_20.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_7.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_20.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_34.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_delete/cloudformation.DescribeStackEvents_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_12.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_12.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_15.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_21.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/lag_changed_true_no/directconnect.DescribeLags_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_3.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/update_lag/directconnect.DescribeLags_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_with_tags/datapipeline.CreatePipeline_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.CreateVpnConnection_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_10.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_5.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/delete_pipeline/datapipeline.CreatePipeline_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_8.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_15.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DeleteStack_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_36.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_8.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_connection/connection_does_not_exist/directconnect.DescribeConnections_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_13.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_4.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/modify_deleted_connection/ec2.CreateVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_19.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_7.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_18.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_11.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_23.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DeleteVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_3.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_20.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_27.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DeleteVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_10.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.DescribeVpnConnections_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStackEvents_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_rollback/cloudformation.DescribeStackEvents_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_24.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_delete/cloudformation.DescribeStackEvents_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_16.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_29.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_rollback/cloudformation.DeleteStack_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_16.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/create_pipeline_with_tags/datapipeline.DescribePipelines_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_23.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/delete_pipeline/datapipeline.DeletePipeline_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/update_lag/directconnect.UpdateLag_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.ActivatePipeline_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_14.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_6.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_tags/ec2.DescribeVpnConnections_11.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_5.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_11.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_2.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.CreateVpnConnection_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_tags/ec2.DescribeVpnConnections_14.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_15.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_13.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_11.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_32.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/remove_tags/ec2.DescribeVpnConnections_12.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/lag_exists/directconnect.DescribeLags_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_pipeline/datapipeline.DescribePipelines_14.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_17.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_4.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_vpc_conn_id/ec2.DescribeVpnConnections_11.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStacks_4.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_26.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/cloudformation/basic_s3_stack/cloudformation.DescribeStacks_1.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_delete/cloudformation.DescribeStacks_2.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/check_for_update_nonmodifiable_attr/ec2.CreateVpnConnection_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/on_create_failure_rollback/cloudformation.DescribeStacks_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/delete_connection/ec2.DescribeVpnConnections_12.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.DescribeVpnConnections_12.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_lag_with_connections/directconnect.DeleteLag_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection/ec2.DescribeVpnConnections_5.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/aws_direct_connect_link_aggregation_group/delete_lag_with_connections/directconnect.UpdateLag_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/cloudformation/client_request_token_s3_stack/cloudformation.DescribeStackEvents_7.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/data_pipeline/activate_without_population/datapipeline.DescribePipelines_32.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/create_connection_that_exists/ec2.CreateVpnConnection_1.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_filters/ec2.DescribeVpnConnections_19.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/add_routes/ec2.DescribeVpnConnections_13.json:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   ? test/units/modules/cloud/amazon/placebo_recordings/ec2_vpc_vpn/find_connection_insufficient_filters/ec2.DescribeVpnConnections_19.json
-  : migrated_to: community.amazon
+  : migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/__init__.py:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/units/modules/cloud/amazon/test_aws_api_gateway.py:
     migrated_to: community.amazon
   test/units/modules/cloud/amazon/test_aws_direct_connect_connection.py:
@@ -6160,17 +6177,17 @@ files:
   test/integration/targets/aws_acm/meta/main.yml:
     migrated_to: community.amazon
   test/integration/targets/setup_remote_tmp_dir/tasks/windows-cleanup.yml:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/integration/targets/setup_remote_tmp_dir/tasks/default-cleanup.yml:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/integration/targets/setup_remote_tmp_dir/tasks/default.yml:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/integration/targets/setup_remote_tmp_dir/tasks/main.yml:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/integration/targets/setup_remote_tmp_dir/tasks/windows.yml:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/integration/targets/setup_remote_tmp_dir/handlers/main.yml:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/integration/targets/aws_api_gateway/aliases:
     migrated_to: community.amazon
   test/integration/targets/aws_api_gateway/tasks/main.yml:
@@ -6180,13 +6197,13 @@ files:
   test/integration/targets/aws_api_gateway/templates/minimal-swagger-api.yml.j2:
     migrated_to: community.amazon
   test/integration/targets/prepare_tests/tasks/main.yml:
-    migrated_to: community.crypto
+    migrated_to: ansible.amazon
   test/integration/targets/setup_ec2/vars/main.yml:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/integration/targets/setup_ec2/defaults/main.yml:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/integration/targets/setup_ec2/tasks/common.yml:
-    migrated_to: community.amazon
+    migrated_to: ansible.amazon
   test/integration/targets/aws_codebuild/aliases:
     migrated_to: community.amazon
   test/integration/targets/aws_codebuild/vars/main.yml:
@@ -10350,13 +10367,13 @@ files:
   test/units/plugins/inventory/test_linode.py:
     migrated_to: community.general
   test/units/plugins/inventory/__init__.py:
-    migrated_to: community.general
+    migrated_to: ansible.amazon
   test/units/plugins/lookup/test_avi.py:
     migrated_to: community.general
   test/units/plugins/lookup/fixtures/avi.json:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/plugins/lookup/__init__.py:
-    migrated_to: community.windows
+    migrated_to: ansible.amazon
   test/units/plugins/lookup/test_conjur_variable.py:
     migrated_to: community.general
   test/units/plugins/lookup/test_lastpass.py:
@@ -10366,7 +10383,7 @@ files:
   test/units/plugins/lookup/test_onepassword.py:
     migrated_to: community.general
   test/units/module_utils/conftest.py:
-    migrated_to: community.vmware
+    migrated_to: ansible.amazon
   test/units/module_utils/cloud/__init__.py:
     migrated_to: community.general
   test/units/module_utils/cloud/test_backoff.py:
@@ -18811,6 +18828,364 @@ files:
     migrated_to: community.azure
   test/integration/targets/azure_rm_automationaccount/meta/main.yml:
     migrated_to: community.azure
+  lib/ansible/plugins/callback/aws_resource_actions.py:
+    migrated_to: ansible.amazon
+  lib/ansible/plugins/doc_fragments/aws.py:
+    migrated_to: ansible.amazon
+  lib/ansible/plugins/doc_fragments/aws_credentials.py:
+    migrated_to: ansible.amazon
+  lib/ansible/plugins/doc_fragments/aws_region.py:
+    migrated_to: ansible.amazon
+  lib/ansible/plugins/doc_fragments/ec2.py:
+    migrated_to: ansible.amazon
+  lib/ansible/plugins/inventory/aws_rds.py:
+    migrated_to: ansible.amazon
+  lib/ansible/plugins/lookup/aws_account_attribute.py:
+    migrated_to: ansible.amazon
+  lib/ansible/plugins/lookup/aws_secret.py:
+    migrated_to: ansible.amazon
+  lib/ansible/plugins/lookup/aws_service_ip_ranges.py:
+    migrated_to: ansible.amazon
+  lib/ansible/plugins/lookup/aws_ssm.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/__init__.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/acm.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/batch.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/cloudfront_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/core.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/direct_connect.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/elb_utils.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/elbv2.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/iam.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/rds.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/s3.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/urls.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/waf.py:
+    migrated_to: ansible.amazon
+  lib/ansible/module_utils/aws/waiters.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/_aws_az_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/_aws_caller_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/_cloudformation_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/_ec2_ami_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/_ec2_eni_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/_ec2_group_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/_ec2_snapshot_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/_ec2_vol_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/_ec2_vpc_dhcp_option_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/_ec2_vpc_net_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/_ec2_vpc_subnet_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/aws_az_info.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/aws_caller_info.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/aws_s3.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/cloudformation_info.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_ami.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_ami_info.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_elb_lb.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_eni.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_eni_info.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_group_info.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_metadata_facts.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_snapshot.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_snapshot_info.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_tag_info.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_vol_info.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_vpc_dhcp_option.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_vpc_dhcp_option_info.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_vpc_subnet.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/ec2_vpc_subnet_info.py:
+    migrated_to: ansible.amazon
+  lib/ansible/modules/cloud/amazon/s3_bucket.py:
+    migrated_to: ansible.amazon
+  test/units/module_utils/aws/test_aws_module.py:
+    migrated_to: ansible.amazon
+  test/units/plugins/inventory/test_aws_ec2.py:
+    migrated_to: ansible.amazon
+  test/units/plugins/lookup/test_aws_secret.py:
+    migrated_to: ansible.amazon
+  test/units/plugins/lookup/test_aws_ssm.py:
+    migrated_to: ansible.amazon
+  test/units/module_utils/test_ec2.py:
+    migrated_to: ansible.amazon
+  test/units/module_utils/ec2/test_aws.py:
+    migrated_to: ansible.amazon
+  test/units/module_utils/ec2/__init__.py:
+    migrated_to: ansible.amazon
+  test/units/modules/cloud/amazon/test_aws_s3.py:
+    migrated_to: ansible.amazon
+  test/units/modules/cloud/amazon/test_cloudformation.py:
+    migrated_to: ansible.amazon
+  test/units/modules/cloud/amazon/test_ec2_group.py:
+    migrated_to: ansible.amazon
+  test/integration/targets/aws_s3/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/aws_s3/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/aws_s3/files/hello.txt:
+    migrated_to: ansible.amazon
+  test/integration/targets/aws_s3/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/aws_s3/meta/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/test.aws_ec2.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/runme.sh:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/playbooks/tear_down.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/playbooks/empty_inventory_config.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/playbooks/setup.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/playbooks/test_invalid_aws_ec2_inventory_config.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/playbooks/create_inventory_config.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/playbooks/populate_cache.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/playbooks/test_populating_inventory.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/playbooks/test_inventory_cache.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/playbooks/test_populating_inventory_with_constructed.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/playbooks/test_refresh_inventory.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/templates/inventory_with_cache.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/templates/inventory.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_ec2/templates/inventory_with_constructed.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/test.aws_rds.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/runme.sh:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/playbooks/empty_inventory_config.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/playbooks/create_inventory_config.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/playbooks/populate_cache.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/playbooks/test_populating_inventory.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/playbooks/test_invalid_aws_rds_inventory_config.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/playbooks/test_inventory_cache.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/playbooks/test_populating_inventory_with_constructed.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/playbooks/test_refresh_inventory.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/templates/inventory_with_constructed.j2:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/templates/inventory_with_cache.j2:
+    migrated_to: ansible.amazon
+  test/integration/targets/inventory_aws_rds/templates/inventory.j2:
+    migrated_to: ansible.amazon
+  test/integration/targets/aws_caller_info/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/aws_caller_info/tasks/main.yaml:
+    migrated_to: ansible.amazon
+  test/integration/targets/cloudformation/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/cloudformation/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/cloudformation/files/cf_template.json:
+    migrated_to: ansible.amazon
+  test/integration/targets/cloudformation/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_ami/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_ami/vars/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_ami/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_ami/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_ami/meta/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_elb_lb/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_elb_lb/vars/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_elb_lb/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_elb_lb/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_elb_lb/meta/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/tasks/ec2_classic.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/tasks/numeric_protos.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/tasks/multi_nested_target.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/tasks/diff_mode.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/tasks/ipv6_default_tests.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/tasks/egress_tests.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/tasks/multi_account.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/tasks/data_validation.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/tasks/credential_tests.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/tasks/rule_group_create.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_group/meta/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_key/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_key/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_key/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_key/meta/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/setup_sshkey/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_metadata_facts/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_metadata_facts/vars/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_metadata_facts/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_metadata_facts/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_metadata_facts/meta/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_snapshot/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_snapshot/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_snapshot/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_tag/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_tag/vars/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_tag/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_tag/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_tag/meta/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vol/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vol/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vol/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vol_info/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vol_info/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vol_info/meta/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vpc_net/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vpc_net/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vpc_net/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vpc_net/meta/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vpc_subnet/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vpc_subnet/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vpc_subnet/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/ec2_vpc_subnet/meta/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/aliases:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/inventory:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/runme.sh:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/meta/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/roles/s3_bucket/defaults/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/roles/s3_bucket/tasks/dotted.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/roles/s3_bucket/tasks/encryption_kms.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/roles/s3_bucket/tasks/complex.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/roles/s3_bucket/tasks/missing.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/roles/s3_bucket/tasks/tags.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/roles/s3_bucket/tasks/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/roles/s3_bucket/tasks/encryption_sse.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/roles/s3_bucket/tasks/simple.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/roles/s3_bucket/meta/main.yml:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/roles/s3_bucket/templates/policy.json:
+    migrated_to: ansible.amazon
+  test/integration/targets/s3_bucket/roles/s3_bucket/templates/policy-updated.json:
+    migrated_to: ansible.amazon
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
