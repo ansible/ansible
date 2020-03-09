@@ -1,8 +1,0 @@
----
-- name: Setup
-  eos_acls:
-    config:
-      - afi: "ipv4"
-      - afi: "ipv6"
-    state: deleted
-  become: yes
