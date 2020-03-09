@@ -4229,6 +4229,7 @@ files:
     migrated_to: community.general
   $plugins/terminal/dellos10:
     maintainers: skg-net
+    migrated_to: dellemc_networking.os10
   $plugins/terminal/edgeos.py:
     maintainers: samdoran
     migrated_to: community.general
@@ -4621,29 +4622,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: junipernetworks.junos
+    migrated_to: dellemc_networking.os10
   test/units/compat/mock.py:
-    migrated_to: junipernetworks.junos
+    migrated_to: dellemc_networking.os10
   test/units/compat/unittest.py:
-    migrated_to: junipernetworks.junos
+    migrated_to: dellemc_networking.os10
   test/units/compat/__init__.py:
-    migrated_to: junipernetworks.junos
+    migrated_to: dellemc_networking.os10
   test/units/compat/builtins.py:
-    migrated_to: junipernetworks.junos
+    migrated_to: dellemc_networking.os10
   test/units/mock/__init__.py:
-    migrated_to: junipernetworks.junos
+    migrated_to: dellemc_networking.os10
   test/units/mock/yaml_helper.py:
-    migrated_to: junipernetworks.junos
+    migrated_to: dellemc_networking.os10
   test/units/mock/procenv.py:
-    migrated_to: junipernetworks.junos
+    migrated_to: dellemc_networking.os10
   test/units/mock/vault_helper.py:
-    migrated_to: junipernetworks.junos
+    migrated_to: dellemc_networking.os10
   test/units/mock/path.py:
-    migrated_to: junipernetworks.junos
+    migrated_to: dellemc_networking.os10
   test/units/mock/loader.py:
-    migrated_to: junipernetworks.junos
+    migrated_to: dellemc_networking.os10
   test/units/modules/conftest.py:
-    migrated_to: junipernetworks.junos
+    migrated_to: dellemc_networking.os10
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -27608,6 +27609,94 @@ files:
     migrated_to: awx.awx
   test/integration/targets/tower_workflow_template/tasks/main.yml:
     migrated_to: awx.awx
+  lib/ansible/plugins/action/dellos10.py:
+    migrated_to: dellemc_networking.os10
+  lib/ansible/plugins/cliconf/dellos10.py:
+    migrated_to: dellemc_networking.os10
+  lib/ansible/plugins/doc_fragments/dellos10.py:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_config/defaults/main.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_config/tasks/cli.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_config/tasks/main.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_facts/defaults/main.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_facts/tasks/cli.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_facts/tasks/main.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_command/defaults/main.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_command/tasks/cli.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_command/tasks/main.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_config/tests/cli/toplevel_before.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_config/tests/cli/sublevel_strict.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_config/tests/cli/sublevel.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_config/tests/cli/toplevel_nonidempotent.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_config/tests/cli/sublevel_exact.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_config/tests/cli/toplevel_after.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_config/tests/cli/sublevel_block.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_config/tests/cli/toplevel.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_facts/tests/cli/facts.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_command/tests/cli/invalid.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_command/tests/cli/output.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_command/tests/cli/bad_operator.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_command/tests/cli/contains.yaml:
+    migrated_to: dellemc_networking.os10
+  test/integration/targets/dellos10_command/tests/cli/timeout.yaml:
+    migrated_to: dellemc_networking.os10
+  lib/ansible/module_utils/network/dellos10/dellos10.py:
+    migrated_to: dellemc_networking.os10
+  lib/ansible/modules/network/dellos10/dellos10_command.py:
+    migrated_to: dellemc_networking.os10
+  lib/ansible/modules/network/dellos10/dellos10_facts.py:
+    migrated_to: dellemc_networking.os10
+  lib/ansible/modules/network/dellos10/dellos10_config.py:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/test_dellos10_command.py:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/fixtures/show_version:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/fixtures/show_lldp_neighbors__display-xml:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/fixtures/dellos10_config_config.cfg:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/fixtures/show_system__display-xml:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/fixtures/show_processes_node-id_1__grep_Mem_colon_:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/fixtures/show_running-config:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/fixtures/show_version__display-xml:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/fixtures/show_interface__display-xml:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/fixtures/dellos10_config_src.cfg:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/__init__.py:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/dellos10_module.py:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/test_dellos10_facts.py:
+    migrated_to: dellemc_networking.os10
+  test/units/modules/network/dellos10/test_dellos10_config.py:
+    migrated_to: dellemc_networking.os10
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
