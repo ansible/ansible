@@ -37,12 +37,12 @@ options:
     name:
         description:
             - The Name of the Hetzner Cloud server to manage.
-            - Only required if no server I(id) is given or a server does not exists.
+            - Only required if no server I(id) is given or a server does not exist.
         type: str
     server_type:
         description:
             - The Server Type of the Hetzner Cloud server to manage.
-            - Required if server does not exists.
+            - Required if the server does not exist.
         type: str
     ssh_keys:
         description:
@@ -52,31 +52,31 @@ options:
         type: list
     volumes:
         description:
-            - List of Volumes IDs that should be attached to the server on server creation.
+            - List of Volume IDs that should be attached to the server on server creation.
         type: list
     image:
         description:
             - Image the server should be created from.
-            - Required if server does not exists.
+            - Required if the server does not exist.
         type: str
     location:
         description:
-            - Location of Server.
-            - Required if no I(datacenter) is given and server does not exists.
+            - Location of the server.
+            - Required if no I(datacenter) is given and the server does not exist.
         type: str
     datacenter:
         description:
-            - Datacenter of Server.
-            - Required of no I(location) is given and server does not exists.
+            - Datacenter of the server.
+            - Required if no I(location) is given and the server does not exist.
         type: str
     backups:
         description:
-            - Enable or disable Backups for the given Server.
+            - Enable or disable backups for the given the server.
         type: bool
         default: no
     upgrade_disk:
         description:
-            - Resize the disk size, when resizing a server.
+            - Resize the disk when resizing a server.
             - If you want to downgrade the server later, this value should be False.
         type: bool
         default: no
@@ -89,7 +89,7 @@ options:
     user_data:
         description:
             - User Data to be passed to the server on creation.
-            - Only used if server does not exists.
+            - Only used if the server does not exist.
         type: str
     rescue_mode:
         description:
@@ -102,13 +102,13 @@ options:
         type: dict
     delete_protection:
         description:
-            - Protect the Server for deletion.
+            - Protect the server from deletion.
             - Needs to be the same as I(rebuild_protection).
         type: bool
         version_added: "2.10"
     rebuild_protection:
         description:
-            - Protect the Server for rebuild.
+            - Protect the server from rebuild.
             - Needs to be the same as I(delete_protection).
         type: bool
         version_added: "2.10"
@@ -172,7 +172,7 @@ EXAMPLES = """
     rescue_mode: linux64
     state: restarted
 
-- name: Ensure the server is rebuild
+- name: Ensure the server is rebuilt
   hcloud_server:
     name: my-server
     image: ubuntu-18.04
@@ -226,12 +226,12 @@ hcloud_server:
             type: str
             sample: fsn1-dc14
         rescue_enabled:
-            description: True if rescue mode is enabled, Server will then boot into rescue system on next reboot
+            description: True if rescue mode is enabled, the server will then boot into the rescue system on next reboot
             returned: always
             type: bool
             sample: false
         backup_window:
-            description: Time window (UTC) in which the backup will run, or null if the backups are not enabled
+            description: Time window (UTC) in which the backup will run, or null if backups are not enabled
             returned: always
             type: bool
             sample: 22-02
@@ -240,13 +240,13 @@ hcloud_server:
             returned: always
             type: dict
         delete_protection:
-            description: True if server is protected for deletion
+            description: True if the server is protected from deletion
             type: bool
             returned: always
             sample: false
             version_added: "2.10"
         rebuild_protection:
-            description: True if server is protected for rebuild
+            description: True if the server is protected from rebuild
             type: bool
             returned: always
             sample: false
@@ -397,7 +397,7 @@ class AnsibleHcloudServer(Hcloud):
                             self.stop_server()  # Only stopped server can be upgraded
                         else:
                             self.module.warn(
-                                "You can not upgrade a running instance %s. You need to stop the instance or use force_upgrade=yes."
+                                "You cannot upgrade a running instance %s. You need to stop the instance or use force_upgrade=yes."
                                 % self.hcloud_server.name
                             )
                 timeout = 100
