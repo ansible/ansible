@@ -4622,29 +4622,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: dellemc_networking.os9
+    migrated_to: dellemc_networking.os6
   test/units/compat/mock.py:
-    migrated_to: dellemc_networking.os9
+    migrated_to: dellemc_networking.os6
   test/units/compat/unittest.py:
-    migrated_to: dellemc_networking.os9
+    migrated_to: dellemc_networking.os6
   test/units/compat/__init__.py:
-    migrated_to: dellemc_networking.os9
+    migrated_to: dellemc_networking.os6
   test/units/compat/builtins.py:
-    migrated_to: dellemc_networking.os9
+    migrated_to: dellemc_networking.os6
   test/units/mock/__init__.py:
-    migrated_to: dellemc_networking.os9
+    migrated_to: dellemc_networking.os6
   test/units/mock/yaml_helper.py:
-    migrated_to: dellemc_networking.os9
+    migrated_to: dellemc_networking.os6
   test/units/mock/procenv.py:
-    migrated_to: dellemc_networking.os9
+    migrated_to: dellemc_networking.os6
   test/units/mock/vault_helper.py:
-    migrated_to: dellemc_networking.os9
+    migrated_to: dellemc_networking.os6
   test/units/mock/path.py:
-    migrated_to: dellemc_networking.os9
+    migrated_to: dellemc_networking.os6
   test/units/mock/loader.py:
-    migrated_to: dellemc_networking.os9
+    migrated_to: dellemc_networking.os6
   test/units/modules/conftest.py:
-    migrated_to: dellemc_networking.os9
+    migrated_to: dellemc_networking.os6
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -27791,6 +27791,102 @@ files:
     migrated_to: dellemc_networking.os9
   test/units/modules/network/dellos9/test_dellos9_config.py:
     migrated_to: dellemc_networking.os9
+  lib/ansible/plugins/action/dellos6.py:
+    migrated_to: dellemc_networking.os6
+  lib/ansible/plugins/cliconf/dellos6.py:
+    migrated_to: dellemc_networking.os6
+  lib/ansible/plugins/doc_fragments/dellos6.py:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_command/defaults/main.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_command/tasks/cli.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_command/tasks/main.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_facts/defaults/main.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_facts/tasks/cli.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_facts/tasks/main.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_config/defaults/main.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_config/tasks/cli.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_config/tasks/main.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_command/tests/cli/invalid.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_command/tests/cli/output.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_command/tests/cli/bad_operator.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_command/tests/cli/contains.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_command/tests/cli/timeout.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_facts/tests/cli/facts.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_config/tests/cli/toplevel_before.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_config/tests/cli/sublevel_strict.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_config/tests/cli/sublevel.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_config/tests/cli/toplevel_nonidempotent.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_config/tests/cli/sublevel_exact.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_config/tests/cli/toplevel_after.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_config/tests/cli/sublevel_block.yaml:
+    migrated_to: dellemc_networking.os6
+  test/integration/targets/dellos6_config/tests/cli/toplevel.yaml:
+    migrated_to: dellemc_networking.os6
+  lib/ansible/module_utils/network/dellos6/dellos6.py:
+    migrated_to: dellemc_networking.os6
+  lib/ansible/modules/network/dellos6/dellos6_facts.py:
+    migrated_to: dellemc_networking.os6
+  lib/ansible/modules/network/dellos6/dellos6_config.py:
+    migrated_to: dellemc_networking.os6
+  lib/ansible/modules/network/dellos6/dellos6_command.py:
+    migrated_to: dellemc_networking.os6
+  lib/ansible/plugins/terminal/dellos6.py:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/test_dellos6_facts.py:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/fixtures/show_running-config__include_hostname:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/fixtures/dellos6_config_config.cfg:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/fixtures/show_memory_cpu:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/fixtures/show_running-config:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/fixtures/show_interfaces_transceiver_properties:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/fixtures/show_interfaces:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/fixtures/show_interfaces_status:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/fixtures/dellos6_config_src.cfg:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/fixtures/show_lldp_remote-device_all:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/fixtures/show_ip_int:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/fixtures/show_lldp:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/fixtures/show_version:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/dellos6_module.py:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/__init__.py:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/test_dellos6_config.py:
+    migrated_to: dellemc_networking.os6
+  test/units/modules/network/dellos6/test_dellos6_command.py:
+    migrated_to: dellemc_networking.os6
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
