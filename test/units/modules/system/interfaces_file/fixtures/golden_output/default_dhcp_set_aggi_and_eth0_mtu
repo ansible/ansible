@@ -1,7 +1,0 @@
-# The loopback network interface
-auto lo eth0
-iface lo inet loopback
-
-# The primary network interface
-iface eth0 inet dhcp
-    mtu 1350
