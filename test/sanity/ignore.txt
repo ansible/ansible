@@ -202,7 +202,6 @@ lib/ansible/module_utils/urls.py pylint:blacklisted-name
 lib/ansible/module_utils/urls.py replace-urlopen
 lib/ansible/module_utils/yumdnf.py future-import-boilerplate
 lib/ansible/module_utils/yumdnf.py metaclass-boilerplate
-lib/ansible/modules/cloud/amazon/aws_netapp_cvs_FileSystems.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/cloud/azure/azure_rm_acs.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/cloud/azure/azure_rm_acs.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/azure/azure_rm_acs.py validate-modules:required_if-requirements-unknown
