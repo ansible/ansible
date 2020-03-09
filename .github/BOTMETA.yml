@@ -4618,29 +4618,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: cisco.nxos
+    migrated_to: f5networks.f5_modules
   test/units/compat/mock.py:
-    migrated_to: cisco.nxos
+    migrated_to: f5networks.f5_modules
   test/units/compat/unittest.py:
-    migrated_to: cisco.nxos
+    migrated_to: f5networks.f5_modules
   test/units/compat/__init__.py:
-    migrated_to: cisco.nxos
+    migrated_to: f5networks.f5_modules
   test/units/compat/builtins.py:
-    migrated_to: cisco.nxos
+    migrated_to: f5networks.f5_modules
   test/units/mock/__init__.py:
-    migrated_to: cisco.nxos
+    migrated_to: f5networks.f5_modules
   test/units/mock/yaml_helper.py:
-    migrated_to: cisco.nxos
+    migrated_to: f5networks.f5_modules
   test/units/mock/procenv.py:
-    migrated_to: cisco.nxos
+    migrated_to: f5networks.f5_modules
   test/units/mock/vault_helper.py:
-    migrated_to: cisco.nxos
+    migrated_to: f5networks.f5_modules
   test/units/mock/path.py:
-    migrated_to: cisco.nxos
+    migrated_to: f5networks.f5_modules
   test/units/mock/loader.py:
-    migrated_to: cisco.nxos
+    migrated_to: f5networks.f5_modules
   test/units/modules/conftest.py:
-    migrated_to: cisco.nxos
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -11028,307 +11028,307 @@ files:
   test/units/modules/network/f5/test_bigip_gtm_facts.py:
     migrated_to: community.general
   test/units/modules/network/f5/fixtures/load_sys_global_settings.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/create_insecure_key1.key:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_security_port_list_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_pool_untyped_default.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ntp.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/cert2.crt:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_virtual_1_address.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_dns_cache_resolver_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_log_config_destination_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_cm_device.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_net_timer_policy_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_virtual_3.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_auth_password_policy_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_snatpool.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_generic_parser.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_generic_peer.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_node_2.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_node_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_irules.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_virtual_2.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/data-group-string.txt:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_cli_alias_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_monitor_firepass_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/fake_policy.xml:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_monitor_udp.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_application_template_w_new_checksum.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_pool_a_collection.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_generic_route.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_snmp_communities_4.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_fastl4_profile_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_afm_schedule.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_pool_a_example_stats.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_security_firewall_policy_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_net_node_with_fqdn.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_afm_log_global_network_profile.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_asm_policy_inactive.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_application_template_w_old_checksum.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_vlan_untag_ifcs.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_net_route_description.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_cm_traffic_group_2.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_pool_a_with_members_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/update_vlan_description.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_profile_analytics_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_profile_tcp_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_monitor_tcp_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_profile_clientssl.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_net_tunnel_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/update_iapp_service_parameters_f5_http.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/create_iapp_template.iapp:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_auth_tacacs_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_sys_syslog_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tg_ha_order.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_auth_user_with_pass.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_httpd.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/cert1.crt:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_apm_network_access.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_syslog_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_net_service_policy_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_wide_ip_with_pools.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_profile_udp_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/create_gtm_irule.tcl:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_auth_partition.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/cert2.key:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_shared_system_setup_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_irules.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_security_address_list_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_dns_nameserver_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_snmp_communities_2.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_net_dns_resolver_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/pool_members_subcollection.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/create_insecure_cert1.crt:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_snmp_communities_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/MyApp-0.1.0-0001.noarch.rpm:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_profile_http_compression_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_datacenter_default.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_asm_dos.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/fake_policy.tar.gz:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_afm_global_network_log_network.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_smtp_server.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_cli_script_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_monitor_https.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_regkey_license_key.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_monitor_tcp_echo.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_policy_draft_rule_http-uri_forward.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_net_route_domain_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_snmp_users_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_virtual_address_default.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/chain1.crt:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_file_ssl_cert_with_issuer_cert.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_imish_output_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/create_iapp_service_parameters_f5_http.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_snat_translation_default.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_global_settings_general_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_crypto_cert_validator_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_monitor_http_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_regkey_license_pool.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_profile_dns_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_log_config_publisher_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_http_profile_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/create_ltm_irule.tcl:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_dns_zone_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/basic-iapp.tmpl:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/cert1.key:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_virtual_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_server_virtual_2.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_cm_device_default.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_machine_resolver.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_asm_policy_active.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/data-group-address.txt:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_vlan_interfaces.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_vlan.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_management_route_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_pool_a_member_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_virtual_address_collection_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_net_interfaces.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_sys_syslog_2.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/data-group-integer.txt:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_cm_device_group.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_server_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_profile_oneconnect_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_software_update.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_security_firewall_global_rules_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_auth_remote_role_role_info_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_http2_profile.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_monitor_http.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_profile_serverssl_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_vlan_tagged_ifcs.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_snmp_communities_3.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tmm_log.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_node_3.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_monitor_tcp.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_net_trunk_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_httpd_non_default.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_software_image_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_cm_traffic_group_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_remote_user_settings.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_monitor_tcp_half_open.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_generic_router.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_auth_user_no_pass.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_generic_transport_config.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_pool.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_profile_persistence_cookie_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_provision_default.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_tm_net_self.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_net_node_with_ipv4_address.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_apm_acl.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_ltm_profile_persistence_src_addr_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_sys_file_external-monitor_1.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_datacenter_disabled.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/fixtures/load_gtm_pool_a_default.json:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/__init__.py:
-    migrated_to: community.general
+    migrated_to: f5networks.f5_modules
   test/units/modules/network/f5/test_bigip_security_address_list.py:
     migrated_to: community.general
   test/units/modules/network/f5/test_bigip_security_port_list.py:
@@ -26465,6 +26465,340 @@ files:
     migrated_to: cisco.ucs
   test/integration/targets/ucs_wwn_pool/tasks/main.yml:
     migrated_to: cisco.ucs
+  lib/ansible/module_utils/network/f5/bigip.py:
+    migrated_to: f5networks.f5_modules
+  lib/ansible/module_utils/network/f5/bigiq.py:
+    migrated_to: f5networks.f5_modules
+  lib/ansible/module_utils/network/f5/common.py:
+    migrated_to: f5networks.f5_modules
+  lib/ansible/module_utils/network/f5/compare.py:
+    migrated_to: f5networks.f5_modules
+  lib/ansible/module_utils/network/f5/icontrol.py:
+    migrated_to: f5networks.f5_modules
+  lib/ansible/module_utils/network/f5/ipaddress.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_apm_acl.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_apm_network_access.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_apm_policy_fetch.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_apm_policy_import.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_appsvcs_extension.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_asm_dos_application.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_asm_policy_fetch.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_asm_policy_import.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_asm_policy_manage.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_asm_policy_server_technology.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_asm_policy_signature_set.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_cli_alias.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_cli_script.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_command.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_config.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_configsync_action.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_data_group.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_auth.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_auth_ldap.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_certificate.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_connectivity.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_dns.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_group.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_group_member.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_ha_group.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_httpd.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_info.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_license.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_ntp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_sshd.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_syslog.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_traffic_group.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_device_trust.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_dns_cache_resolver.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_dns_nameserver.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_dns_resolver.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_dns_zone.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_file_copy.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_firewall_address_list.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_firewall_dos_profile.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_firewall_dos_vector.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_firewall_global_rules.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_firewall_log_profile.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_firewall_log_profile_network.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_firewall_policy.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_firewall_port_list.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_firewall_rule.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_firewall_rule_list.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_firewall_schedule.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_datacenter.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_global.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_monitor_bigip.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_monitor_external.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_monitor_firepass.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_monitor_http.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_monitor_https.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_monitor_tcp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_monitor_tcp_half_open.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_pool.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_pool_member.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_server.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_topology_record.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_topology_region.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_virtual_server.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_gtm_wide_ip.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_hostname.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_iapp_service.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_iapp_template.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_ike_peer.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_imish_config.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_ipsec_policy.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_irule.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_log_destination.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_log_publisher.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_lx_package.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_management_route.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_message_routing_peer.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_message_routing_protocol.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_message_routing_route.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_message_routing_router.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_message_routing_transport_config.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_monitor_dns.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_monitor_external.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_monitor_gateway_icmp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_monitor_http.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_monitor_https.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_monitor_ldap.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_monitor_snmp_dca.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_monitor_tcp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_monitor_tcp_echo.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_monitor_tcp_half_open.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_monitor_udp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_node.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_partition.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_password_policy.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_policy.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_policy_rule.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_pool.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_pool_member.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_analytics.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_client_ssl.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_dns.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_fastl4.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_http.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_http2.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_http_compression.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_oneconnect.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_persistence_cookie.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_persistence_src_addr.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_server_ssl.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_tcp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_profile_udp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_provision.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_qkview.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_remote_role.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_remote_syslog.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_remote_user.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_routedomain.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_selfip.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_service_policy.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_smtp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_snat_pool.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_snat_translation.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_snmp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_snmp_community.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_snmp_trap.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_software_image.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_software_install.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_software_update.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_ssl_certificate.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_ssl_key.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_ssl_ocsp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_static_route.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_sys_daemon_log_tmm.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_sys_db.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_sys_global.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_timer_policy.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_traffic_selector.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_trunk.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_tunnel.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_ucs.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_ucs_fetch.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_user.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_vcmp_guest.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_virtual_address.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_virtual_server.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_vlan.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigip_wait.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_application_fasthttp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_application_fastl4_tcp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_application_fastl4_udp.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_application_http.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_application_https_offload.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_application_https_waf.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_device_discovery.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_device_info.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_regkey_license.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_regkey_license_assignment.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_regkey_pool.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_utility_license.py:
+    migrated_to: f5networks.f5_modules
+  test/units/modules/network/f5/test_bigiq_utility_license_assignment.py:
+    migrated_to: f5networks.f5_modules
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
