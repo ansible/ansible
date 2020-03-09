@@ -84,6 +84,7 @@ files:
     maintainers: $team_azure
   $modules/cloud/azure/azure_rm_dnsrecordset.py:
     ignored: ozboms
+    migrated_to: azure.azcollection
   $modules/cloud/centurylink/: clc-runner
   $modules/cloud/cloudscale/:
     maintainers: $team_cloudscale
@@ -3311,6 +3312,7 @@ files:
     labels:
     - azure
     - cloud
+    migrated_to: azure.azcollection
   $module_utils/basic.py:
     support: core
   $module_utils/urls.py:
@@ -18785,101 +18787,101 @@ files:
   lib/ansible/modules/cloud/azure/_azure_rm_virtualmachine_scaleset_facts.py:
     migrated_to: community.azure
   test/integration/targets/azure_rm_publicipaddress/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_publicipaddress/tasks/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_publicipaddress/meta/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/setup_azure/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_securitygroup/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_securitygroup/tasks/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_securitygroup/meta/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachine/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachine/inventory.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachine/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachine/runme.sh:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachine/tasks/azure_test_public_ip.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachine/tasks/azure_test_no_public_ip.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachine/tasks/azure_test_deallocate.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachine/tasks/azure_test_invalid.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachine/tasks/setup.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachine/tasks/azure_test_dual_nic.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachine/tasks/azure_test_minimal.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_mysqlserver/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_mysqlserver/tasks/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_mysqlserver/meta/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachinescaleset/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachinescaleset/tasks/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachinescaleset/meta/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_rediscache/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_rediscache/tasks/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_rediscache/meta/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_sqlserver/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_sqlserver/tasks/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_sqlserver/meta/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_devtestlab/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_devtestlab/tasks/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_devtestlab/meta/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachineextension/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachineextension/tasks/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_virtualmachineextension/meta/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_mariadbserver/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_mariadbserver/tasks/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_mariadbserver/meta/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_postgresqlserver/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_postgresqlserver/tasks/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_postgresqlserver/meta/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_webapp/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_webapp/tasks/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_webapp/meta/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_automationaccount/aliases:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_automationaccount/tasks/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   test/integration/targets/azure_rm_automationaccount/meta/main.yml:
-    migrated_to: community.azure
+    migrated_to: azure.azcollection
   lib/ansible/plugins/callback/aws_resource_actions.py:
     migrated_to: ansible.amazon
   lib/ansible/plugins/doc_fragments/aws.py:
@@ -28810,6 +28812,592 @@ files:
     migrated_to: google.cloud
   test/integration/targets/gcp_tpu_node/meta/main.yml:
     migrated_to: google.cloud
+  lib/ansible/module_utils/azure_rm_common_ext.py:
+    migrated_to: azure.azcollection
+  lib/ansible/module_utils/azure_rm_common_rest.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_acs.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualmachine_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_dnszone_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_networkinterface_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_publicipaddress_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_securitygroup_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_storageaccount_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_deployment.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_dnszone.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_networkinterface.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_publicipaddress.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_securitygroup.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_subnet.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualmachine.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_aks.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_aks_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_aksversion_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_appgateway.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_applicationsecuritygroup.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_applicationsecuritygroup_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_appserviceplan.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_appserviceplan_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_availabilityset.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_availabilityset_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_containerinstance.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_containerinstance_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_containerregistry.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_containerregistry_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_deployment_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_functionapp.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_functionapp_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_gallery.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_gallery_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_galleryimage.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_galleryimage_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_galleryimageversion.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_galleryimageversion_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_image.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_image_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_keyvault.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_keyvault_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_keyvaultkey.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_keyvaultkey_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_keyvaultsecret.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_manageddisk.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_manageddisk_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_resource.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_resource_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_resourcegroup.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_resourcegroup_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_snapshot.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_storageblob.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_subnet_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualmachineextension.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualmachineextension_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualmachineimage_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualmachinescaleset.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualmachinescaleset_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualmachinescalesetextension.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualmachinescalesetextension_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualmachinescalesetinstance.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualmachinescalesetinstance_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_webapp.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_webapp_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_webappslot.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_automationaccount.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_automationaccount_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_autoscale.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_autoscale_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_azurefirewall.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_azurefirewall_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_batchaccount.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_cdnendpoint.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_cdnendpoint_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_cdnprofile.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_cdnprofile_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_iotdevice.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_iotdevice_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_iotdevicemodule.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_iothub.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_iothub_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_iothubconsumergroup.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_loadbalancer.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_loadbalancer_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_lock.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_lock_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_loganalyticsworkspace.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_loganalyticsworkspace_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_monitorlogprofile.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_rediscache.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_rediscache_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_rediscachefirewallrule.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_roleassignment.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_roleassignment_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_roledefinition.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_roledefinition_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_route.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_routetable.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_routetable_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_servicebus.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_servicebus_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_servicebusqueue.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_servicebussaspolicy.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_servicebustopic.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_servicebustopicsubscription.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_trafficmanagerendpoint.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_trafficmanagerendpoint_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_trafficmanagerprofile.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_trafficmanagerprofile_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualnetworkgateway.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualnetworkpeering.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_virtualnetworkpeering_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_cosmosdbaccount.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_cosmosdbaccount_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlab.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlab_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabarmtemplate_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabartifact_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabartifactsource.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabartifactsource_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabcustomimage.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabcustomimage_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabenvironment.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabenvironment_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabpolicy.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabpolicy_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabschedule.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabschedule_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabvirtualmachine.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabvirtualmachine_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabvirtualnetwork.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_devtestlabvirtualnetwork_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_hdinsightcluster.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_hdinsightcluster_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mariadbconfiguration.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mariadbconfiguration_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mariadbdatabase.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mariadbdatabase_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mariadbfirewallrule.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mariadbfirewallrule_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mariadbserver.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mariadbserver_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mysqlconfiguration.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mysqlconfiguration_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mysqldatabase.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mysqldatabase_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mysqlfirewallrule.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mysqlfirewallrule_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mysqlserver.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_mysqlserver_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_postgresqlconfiguration.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_postgresqlconfiguration_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_postgresqldatabase.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_postgresqldatabase_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_postgresqlfirewallrule.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_postgresqlfirewallrule_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_postgresqlserver.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_postgresqlserver_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_sqldatabase.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_sqldatabase_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_sqlfirewallrule.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_sqlfirewallrule_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_sqlserver.py:
+    migrated_to: azure.azcollection
+  lib/ansible/modules/cloud/azure/azure_rm_sqlserver_info.py:
+    migrated_to: azure.azcollection
+  lib/ansible/plugins/doc_fragments/azure.py:
+    migrated_to: azure.azcollection
+  lib/ansible/plugins/doc_fragments/azure_tags.py:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_acs/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_acs/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_acs/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_dnszone/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_dnszone/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_dnszone/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_deployment/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_deployment/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_deployment/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_networkinterface/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_networkinterface/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_networkinterface/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_storageaccount/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_storageaccount/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_storageaccount/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_subnet/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_subnet/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_subnet/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_virtualnetwork/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_virtualnetwork/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_virtualnetwork/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_aks/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_aks/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_aks/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_appgateway/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_appgateway/files/cert2.txt:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_appgateway/files/cert1.txt:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_appgateway/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_appgateway/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_appserviceplan/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_appserviceplan/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_appserviceplan/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_availabilityset/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_availabilityset/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_availabilityset/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_containerinstance/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_containerinstance/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_containerinstance/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_containerregistry/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_containerregistry/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_containerregistry/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_functionapp/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_functionapp/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_functionapp/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_gallery/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_gallery/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_gallery/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_image/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_image/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_image/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_keyvault/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_keyvault/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_keyvault/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_keyvault/lookup_plugins/azure_service_principal_attribute.py:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_manageddisk/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_manageddisk/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_manageddisk/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_resource/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_resource/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_resource/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_resourcegroup/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_resourcegroup/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_resourcegroup/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_storageblob/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_storageblob/files/Ratings.png:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_storageblob/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_storageblob/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_virtualmachineimage_info/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_virtualmachineimage_info/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_virtualmachineimage_info/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_autoscale/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_autoscale/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_autoscale/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_azurefirewall/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_azurefirewall/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_azurefirewall/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_batchaccount/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_batchaccount/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_batchaccount/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_cdnprofile/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_cdnprofile/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_cdnprofile/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_iothub/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_iothub/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_iothub/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_loadbalancer/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_loadbalancer/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_loadbalancer/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_lock/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_lock/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_lock/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_loganalyticsworkspace/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_loganalyticsworkspace/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_loganalyticsworkspace/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_monitorlogprofile/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_monitorlogprofile/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_monitorlogprofile/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_roledefinition/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_roledefinition/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_roledefinition/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_routetable/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_routetable/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_routetable/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_servicebus/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_servicebus/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_servicebus/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_trafficmanagerprofile/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_trafficmanagerprofile/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_trafficmanagerprofile/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_virtualnetworkgateway/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_virtualnetworkgateway/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_virtualnetworkgateway/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_virtualnetworkpeering/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_virtualnetworkpeering/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_virtualnetworkpeering/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_cosmosdbaccount/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_cosmosdbaccount/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_cosmosdbaccount/meta/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_hdinsightcluster/aliases:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_hdinsightcluster/tasks/main.yml:
+    migrated_to: azure.azcollection
+  test/integration/targets/azure_rm_hdinsightcluster/meta/main.yml:
+    migrated_to: azure.azcollection
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
