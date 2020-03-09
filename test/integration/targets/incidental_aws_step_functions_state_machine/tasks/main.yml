@@ -180,7 +180,7 @@
     # Sleeping too long (10s) will also cause test failures.
     - name: Pausing to improve test stability
       pause:
-        seconds: 3
+        seconds: 5
 
     - name: Stop execution of state machine -- check_mode
       aws_step_functions_state_machine_execution:
