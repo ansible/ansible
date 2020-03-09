@@ -142,15 +142,110 @@ keyed_groups:
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
-from ansible.module_utils.docker.common import update_tls_hostname, get_connect_params
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.parsing.utils.addresses import parse_address
 
 try:
     import docker
+    from docker.errors import TLSParameterError
+    from docker.tls import TLSConfig
     HAS_DOCKER = True
 except ImportError:
     HAS_DOCKER = False
+
+
+def update_tls_hostname(result):
+    if result['tls_hostname'] is None:
+        # get default machine name from the url
+        parsed_url = urlparse(result['docker_host'])
+        if ':' in parsed_url.netloc:
+            result['tls_hostname'] = parsed_url.netloc[:parsed_url.netloc.rindex(':')]
+        else:
+            result['tls_hostname'] = parsed_url
+
+
+def _get_tls_config(fail_function, **kwargs):
+    try:
+        tls_config = TLSConfig(**kwargs)
+        return tls_config
+    except TLSParameterError as exc:
+        fail_function("TLS config error: %s" % exc)
+
+
+def get_connect_params(auth, fail_function):
+    if auth['tls'] or auth['tls_verify']:
+        auth['docker_host'] = auth['docker_host'].replace('tcp://', 'https://')
+
+    if auth['tls_verify'] and auth['cert_path'] and auth['key_path']:
+        # TLS with certs and host verification
+        if auth['cacert_path']:
+            tls_config = _get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
+                                         ca_cert=auth['cacert_path'],
+                                         verify=True,
+                                         assert_hostname=auth['tls_hostname'],
+                                         ssl_version=auth['ssl_version'],
+                                         fail_function=fail_function)
+        else:
+            tls_config = _get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
+                                         verify=True,
+                                         assert_hostname=auth['tls_hostname'],
+                                         ssl_version=auth['ssl_version'],
+                                         fail_function=fail_function)
+
+        return dict(base_url=auth['docker_host'],
+                    tls=tls_config,
+                    version=auth['api_version'],
+                    timeout=auth['timeout'])
+
+    if auth['tls_verify'] and auth['cacert_path']:
+        # TLS with cacert only
+        tls_config = _get_tls_config(ca_cert=auth['cacert_path'],
+                                     assert_hostname=auth['tls_hostname'],
+                                     verify=True,
+                                     ssl_version=auth['ssl_version'],
+                                     fail_function=fail_function)
+        return dict(base_url=auth['docker_host'],
+                    tls=tls_config,
+                    version=auth['api_version'],
+                    timeout=auth['timeout'])
+
+    if auth['tls_verify']:
+        # TLS with verify and no certs
+        tls_config = _get_tls_config(verify=True,
+                                     assert_hostname=auth['tls_hostname'],
+                                     ssl_version=auth['ssl_version'],
+                                     fail_function=fail_function)
+        return dict(base_url=auth['docker_host'],
+                    tls=tls_config,
+                    version=auth['api_version'],
+                    timeout=auth['timeout'])
+
+    if auth['tls'] and auth['cert_path'] and auth['key_path']:
+        # TLS with certs and no host verification
+        tls_config = _get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
+                                     verify=False,
+                                     ssl_version=auth['ssl_version'],
+                                     fail_function=fail_function)
+        return dict(base_url=auth['docker_host'],
+                    tls=tls_config,
+                    version=auth['api_version'],
+                    timeout=auth['timeout'])
+
+    if auth['tls']:
+        # TLS with no certs and not host verification
+        tls_config = _get_tls_config(verify=False,
+                                     ssl_version=auth['ssl_version'],
+                                     fail_function=fail_function)
+        return dict(base_url=auth['docker_host'],
+                    tls=tls_config,
+                    version=auth['api_version'],
+                    timeout=auth['timeout'])
+
+    # No TLS
+    return dict(base_url=auth['docker_host'],
+                version=auth['api_version'],
+                timeout=auth['timeout'])
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):
