@@ -159,8 +159,6 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 pslint:PSU
 lib/ansible/module_utils/pycompat24.py future-import-boilerplate
 lib/ansible/module_utils/pycompat24.py metaclass-boilerplate
 lib/ansible/module_utils/pycompat24.py no-get-exception
-lib/ansible/module_utils/remote_management/intersight.py future-import-boilerplate
-lib/ansible/module_utils/remote_management/intersight.py metaclass-boilerplate
 lib/ansible/module_utils/remote_management/ucs.py future-import-boilerplate
 lib/ansible/module_utils/remote_management/ucs.py metaclass-boilerplate
 lib/ansible/module_utils/service.py future-import-boilerplate
@@ -2949,7 +2947,6 @@ lib/ansible/modules/remote_management/cpm/cpm_serial_port_info.py validate-modul
 lib/ansible/modules/remote_management/cpm/cpm_serial_port_info.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/remote_management/cpm/cpm_user.py validate-modules:doc-missing-type
 lib/ansible/modules/remote_management/cpm/cpm_user.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/remote_management/intersight/intersight_rest_api.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/remote_management/ucs/ucs_disk_group_policy.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/remote_management/ucs/ucs_disk_group_policy.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/remote_management/ucs/ucs_disk_group_policy.py validate-modules:doc-elements-mismatch
@@ -3164,8 +3161,6 @@ lib/ansible/plugins/doc_fragments/files.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/files.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/hcloud.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/hcloud.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/intersight.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/intersight.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/inventory_cache.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/inventory_cache.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/ios.py future-import-boilerplate
