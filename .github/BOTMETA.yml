@@ -3728,6 +3728,7 @@ files:
     labels: *id022
     maintainers: $team_networking $team_ios
     support: network
+    migrated_to: cisco.ios
   $plugins/action/iosxr:
     labels: *id023
     maintainers: $team_networking $team_iosxr
@@ -3834,6 +3835,7 @@ files:
     labels: *id022
     maintainers: $team_networking $team_ios
     support: network
+    migrated_to: cisco.ios
   $plugins/cliconf/iosxr.py:
     labels: *id023
     maintainers: $team_networking $team_iosxr
@@ -4241,6 +4243,7 @@ files:
     labels: *id022
     maintainers: $team_networking $team_ios
     support: network
+    migrated_to: cisco.ios
   $plugins/terminal/iosxr.py:
     labels: *id023
     maintainers: $team_networking $team_iosxr
@@ -4608,29 +4611,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: cisco.asa
+    migrated_to: cisco.ios
   test/units/compat/mock.py:
-    migrated_to: cisco.asa
+    migrated_to: cisco.ios
   test/units/compat/unittest.py:
-    migrated_to: cisco.asa
+    migrated_to: cisco.ios
   test/units/compat/__init__.py:
-    migrated_to: cisco.asa
+    migrated_to: cisco.ios
   test/units/compat/builtins.py:
-    migrated_to: cisco.asa
+    migrated_to: cisco.ios
   test/units/mock/__init__.py:
-    migrated_to: cisco.asa
+    migrated_to: cisco.ios
   test/units/mock/yaml_helper.py:
-    migrated_to: cisco.asa
+    migrated_to: cisco.ios
   test/units/mock/procenv.py:
-    migrated_to: cisco.asa
+    migrated_to: cisco.ios
   test/units/mock/vault_helper.py:
-    migrated_to: cisco.asa
+    migrated_to: cisco.ios
   test/units/mock/path.py:
-    migrated_to: cisco.asa
+    migrated_to: cisco.ios
   test/units/mock/loader.py:
-    migrated_to: cisco.asa
+    migrated_to: cisco.ios
   test/units/modules/conftest.py:
-    migrated_to: cisco.asa
+    migrated_to: cisco.ios
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -10374,23 +10377,23 @@ files:
   test/units/plugins/cliconf/test_nos.py:
     migrated_to: community.general
   test/units/plugins/cliconf/fixtures/slxos/show_version:
-    migrated_to: community.general
+    migrated_to: cisco.ios
   test/units/plugins/cliconf/fixtures/nos/show_running-config:
-    migrated_to: community.general
+    migrated_to: cisco.ios
   test/units/plugins/cliconf/fixtures/slxos/show_chassis:
-    migrated_to: community.general
+    migrated_to: cisco.ios
   test/units/plugins/cliconf/fixtures/nos/show_chassis:
-    migrated_to: community.general
+    migrated_to: cisco.ios
   test/units/plugins/cliconf/fixtures/slxos/show_running-config:
-    migrated_to: community.general
+    migrated_to: cisco.ios
   test/units/plugins/cliconf/fixtures/slxos/show_startup-config:
-    migrated_to: community.general
+    migrated_to: cisco.ios
   test/units/plugins/cliconf/fixtures/nos/show_version:
-    migrated_to: community.general
+    migrated_to: cisco.ios
   test/units/plugins/cliconf/fixtures/ios/show_version:
-    migrated_to: community.general
+    migrated_to: cisco.ios
   test/units/plugins/cliconf/__init__.py:
-    migrated_to: community.general
+    migrated_to: cisco.ios
   test/units/plugins/cliconf/test_slxos.py:
     migrated_to: community.general
   test/units/plugins/connection/test_docker.py:
@@ -22599,6 +22602,898 @@ files:
     migrated_to: cisco.intersight
   test/integration/targets/intersight_rest_api/tasks/main.yml:
     migrated_to: cisco.intersight
+  lib/ansible/plugins/doc_fragments/ios.py:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_global/aliases:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp/aliases:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_file/ios1.cfg:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_file/aliases:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_file/nonascii.bin:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_bgp/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_bgp/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_bgp/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_bgp/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_system/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_system/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_system/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_system/meta/main.yml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlans/vars/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlans/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlans/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlans/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlans/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlan/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlan/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlan/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlan/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/vars/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_command/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_command/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_command/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_command/meta/main.yml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interfaces/vars/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interfaces/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interfaces/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interfaces/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_interfaces/vars/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_interfaces/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_interfaces/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/vars/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/vars/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_logging/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_logging/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_logging/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_logging/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_route/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_route/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_route/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_route/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interfaces/vars/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interfaces/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interfaces/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interfaces/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_smoke/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_smoke/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_smoke/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_smoke/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_global/vars/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_global/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_global/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_global/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_global/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tasks/cli_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/meta/main.yml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lag_interfaces/vars/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lag_interfaces/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lag_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lag_interfaces/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lag_interfaces/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_ntp/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_ntp/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_ntp/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_ntp/meta/main.yml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_user/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_user/files/test_rsa:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_user/files/test_rsa.pub:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_user/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_user/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_user/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp/vars/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_facts/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_facts/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_facts/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_facts/meta/main.yml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interface/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interface/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interface/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interface/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interface/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interface/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interface/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interface/meta/main.yml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp_interfaces/vars/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp_interfaces/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp_interfaces/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_ping/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_ping/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_ping/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_ping/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_file/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_file/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_file/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interfaces/vars/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interfaces/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interfaces/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interfaces/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interfaces/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_linkagg/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_linkagg/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_linkagg/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_linkagg/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_banner/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_banner/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_banner/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_banner/meta/main.yml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interface/defaults/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interface/tasks/cli.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interface/tasks/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interface/meta/main.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_bgp/tests/cli/basic.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_system/tests/cli/set_lookup_source.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_system/tests/cli/set_domain_name.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_system/tests/cli/set_domain_list.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_system/tests/cli/set_hostname.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_system/tests/cli/net_system.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_system/tests/cli/set_name_servers.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlans/tests/cli/overridden.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlans/tests/cli/deleted.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlans/tests/cli/replaced.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlans/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlans/tests/cli/empty_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlans/tests/cli/merged.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlans/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_vlan/tests/cli/basic.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tests/cli/parsed.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tests/cli/rendered.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tests/cli/_parsed.cfg:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tests/cli/gathered.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acl_interfaces/tests/cli/rtt.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_command/tests/cli/invalid.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_command/tests/cli/error_regex.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_command/tests/cli/output.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_command/tests/cli/bad_operator.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_command/tests/cli/contains.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_command/tests/cli/cli_command.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_command/tests/cli/timeout.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interfaces/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_interfaces/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_interfaces/tests/cli/_enable_lldp.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tests/cli/parsed.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tests/cli/overridden.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tests/cli/deleted.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tests/cli/replaced.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tests/cli/empty_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tests/cli/merged.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tests/cli/rendered.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tests/cli/_parsed.cfg:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tests/cli/gathered.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_acls/tests/cli/rtt.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tests/cli/overridden.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tests/cli/deleted.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tests/cli/replaced.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tests/cli/empty_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tests/cli/merged.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tests/cli/rendered.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tests/cli/_intial_setup_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tests/cli/gathered.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_routes/tests/cli/rtt.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_logging/tests/cli/net_logging.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_logging/tests/cli/basic.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_route/tests/cli/net_static_route.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_static_route/tests/cli/basic.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interfaces/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_smoke/templates/defaults/config.j2:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_smoke/tests/cli/common_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_smoke/tests/cli/common_utils.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_smoke/tests/cli/reboot.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_smoke/tests/cli/misc_tests.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_global/tests/cli/deleted.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_global/tests/cli/replaced.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_global/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_global/tests/cli/empty_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_global/tests/cli/merged.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp_global/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/templates/defaults/config.j2:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/templates/basic/configexact1.j2:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/templates/basic/setupexact.j2:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/templates/basic/setupstrict.j2:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/templates/basic/base_running_config:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/templates/basic/setupblock.j2:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/templates/basic/configstrict1.j2:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/templates/basic/config.j2:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/templates/basic/configblock.j2:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/templates/basic/configexact2.j2:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/templates/basic/macro.j2:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/templates/basic/intended_running_config:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/macro.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/src_invalid.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/sublevel_strict_mul_parents.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/toplevel_before.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/sublevel_strict.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/diff.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/sublevel.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/src_basic.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/toplevel_nonidempotent.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/sublevel_exact.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/toplevel_after.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/save.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/src_match_none.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/defaults.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/sublevel_block.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/backup.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli/toplevel.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli_config/cli_basic.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli_config/cli_exact_match.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli_config/cli_block_replace.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli_config/cli_strict_match.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_config/tests/cli_config/cli_backup.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lag_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lag_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lag_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lag_interfaces/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lag_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lag_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lag_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_ntp/tests/cli/ntp_configuration.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_user/tests/cli/basic.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_user/tests/cli/auth.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp/tests/cli/deleted.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp/tests/cli/replaced.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp/tests/cli/empty_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp/tests/cli/merged.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_facts/tests/cli/default_facts.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_facts/tests/cli/not_hardware.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_facts/tests/cli/invalid_subset.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_facts/tests/cli/all_facts.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interface/tests/cli/basic.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interface/tests/cli/net_interface.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_interface/tests/cli/intent.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interface/tests/cli/agg.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l2_interface/tests/cli/sanity.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp_interfaces/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lacp_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_ping/tests/cli/ping.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_file/tests/cli/net_put.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_file/tests/cli/net_get.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interfaces/tests/cli/overridden.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interfaces/tests/cli/deleted.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interfaces/tests/cli/replaced.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interfaces/tests/cli/_populate_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interfaces/tests/cli/empty_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interfaces/tests/cli/merged.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interfaces/tests/cli/_remove_config.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_linkagg/tests/cli/basic.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_lldp/tests/cli/basic.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_banner/tests/cli/basic-no-login.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_banner/tests/cli/basic-login.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_banner/tests/cli/multiple-login-exec.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_banner/tests/cli/basic-motd.yaml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_banner/tests/cli/net_banner.yml:
+    migrated_to: cisco.ios
+  test/integration/targets/ios_l3_interface/tests/cli/basic.yaml:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/ios.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/providers/module.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/providers/providers.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/facts.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/utils/utils.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/lldp_global/lldp_global.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/vlans/vlans.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/acl_interfaces/acl_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/static_routes/static_routes.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/l3_interfaces/l3_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/l2_interfaces/l2_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/lag_interfaces/lag_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/legacy/base.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/interfaces/interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/lacp/lacp.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/facts/acls/acls.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/lldp_global/lldp_global.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/vlans/vlans.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/facts/facts.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/acl_interfaces/acl_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/static_routes/static_routes.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/l3_interfaces/l3_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/l2_interfaces/l2_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/lag_interfaces/lag_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/interfaces/interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/lacp/lacp.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/argspec/acls/acls.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/config/lldp_global/lldp_global.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/config/vlans/vlans.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/config/acl_interfaces/acl_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/config/static_routes/static_routes.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/config/l3_interfaces/l3_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/config/l2_interfaces/l2_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/config/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/config/lag_interfaces/lag_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/config/interfaces/interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/config/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/config/lacp/lacp.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/config/acls/acls.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/providers/cli/config/base.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/providers/cli/config/bgp/neighbors.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/providers/cli/config/bgp/process.py:
+    migrated_to: cisco.ios
+  lib/ansible/module_utils/network/ios/providers/cli/config/bgp/address_family.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_l3_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_lldp.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/_ios_interface.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_lldp_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/_ios_l3_interface.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_acl_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_static_routes.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_l2_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_logging.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/_ios_vlan.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_command.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_static_route.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_lldp_global.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_banner.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_lag_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_linkagg.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_user.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_system.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_facts.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_ping.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_vlans.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_vrf.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_bgp.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_ntp.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_lacp_interfaces.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_lacp.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_config.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/_ios_l2_interface.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_acls.py:
+    migrated_to: cisco.ios
+  lib/ansible/modules/network/ios/ios_interfaces.py:
+    migrated_to: cisco.ios
+  test/units/plugins/cliconf/test_ios.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_acl_interfaces.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_facts_show_interfaces:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_static_routes_config.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_logging_config_ios12.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_facts_dir:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_ntp_config.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_bgp_config.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_logging_config.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_facts_show_ipv6_interface:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_vrf_config.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_config_src.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_ping_ping_8.8.8.8_repeat_2:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_facts_show_memory_statistics:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/show_version:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_facts_show_cdp_neighbors_detail:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_config_config.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/configure_terminal:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_facts_show_lldp_neighbors_detail:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_acl_interfaces.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_user_config.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_acls_config.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_banner_show_banner.txt:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_config_defaults.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_facts_show_cdp:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_vlan_config.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_facts_show_lldp:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_facts_show_ip_interface:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_banner_show_running_config_ios12.txt:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_system_config.cfg:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_ping_ping_10.255.255.250_repeat_2:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/fixtures/ios_facts_show_version:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/ios_module.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/__init__.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_static_routes.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_logging.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_vlan.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_command.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_banner.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_user.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_system.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_facts.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_ping.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_vrf.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_bgp.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_ntp.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_config.py:
+    migrated_to: cisco.ios
+  test/units/modules/network/ios/test_ios_acls.py:
+    migrated_to: cisco.ios
+  test/integration/targets/prepare_ios_tests/tasks/main.yml:
+    migrated_to: cisco.ios
+  test/integration/targets/prepare_ios_tests/templates/config.j2:
+    migrated_to: cisco.ios
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
