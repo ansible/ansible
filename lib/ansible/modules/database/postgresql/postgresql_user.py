@@ -814,7 +814,7 @@ def main():
         fail_on_user=dict(type='bool', default='yes', aliases=['fail_on_role']),
         role_attr_flags=dict(type='str', default=''),
         encrypted=dict(type='bool', default='yes'),
-        no_password_changes=dict(type='bool', default='no'),
+        no_password_changes=dict(type='bool', default='no', no_log=False),
         expires=dict(type='str', default=None),
         conn_limit=dict(type='int', default=None),
         session_role=dict(type='str'),
