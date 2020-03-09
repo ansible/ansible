@@ -86,7 +86,6 @@ lib/ansible/module_utils/gcp_utils.py future-import-boilerplate
 lib/ansible/module_utils/gcp_utils.py metaclass-boilerplate
 lib/ansible/module_utils/json_utils.py future-import-boilerplate
 lib/ansible/module_utils/json_utils.py metaclass-boilerplate
-lib/ansible/module_utils/net_tools/netbox/netbox_utils.py future-import-boilerplate
 lib/ansible/module_utils/netapp.py future-import-boilerplate
 lib/ansible/module_utils/netapp.py metaclass-boilerplate
 lib/ansible/module_utils/netapp_elementsw_module.py future-import-boilerplate
@@ -1509,14 +1508,6 @@ lib/ansible/modules/net_tools/basics/uri.py pylint:blacklisted-name
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/net_tools/netbox/netbox_device.py validate-modules:doc-missing-type
-lib/ansible/modules/net_tools/netbox/netbox_device.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/net_tools/netbox/netbox_interface.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/net_tools/netbox/netbox_ip_address.py validate-modules:doc-missing-type
-lib/ansible/modules/net_tools/netbox/netbox_ip_address.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/net_tools/netbox/netbox_prefix.py validate-modules:doc-missing-type
-lib/ansible/modules/net_tools/netbox/netbox_prefix.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/net_tools/netbox/netbox_site.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/aci/aci_aaa_user.py validate-modules:doc-required-mismatch
 lib/ansible/modules/network/aci/aci_aaa_user_certificate.py validate-modules:doc-required-mismatch
 lib/ansible/modules/network/aci/aci_access_port_block_to_access_port.py validate-modules:doc-required-mismatch
