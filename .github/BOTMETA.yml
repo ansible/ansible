@@ -3743,6 +3743,7 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
+    migrated_to: junipernetworks.junos
   $plugins/action/net:
     support: network
     maintainers: $team_networking
@@ -3850,6 +3851,7 @@ files:
   $plugins/cliconf/junos.py:
     support: network
     maintainers: $team_networking
+    migrated_to: junipernetworks.junos
   $plugins/cliconf/nos.py:
     maintainers: $team_extreme
     migrated_to: community.general
@@ -4260,6 +4262,7 @@ files:
   $plugins/terminal/junos.py:
     support: network
     maintainers: $team_networking
+    migrated_to: junipernetworks.junos
   $plugins/terminal/nos.py:
     maintainers: $team_extreme
     migrated_to: community.general
@@ -4618,29 +4621,29 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: openstack.cloud
+    migrated_to: junipernetworks.junos
   test/units/compat/mock.py:
-    migrated_to: openstack.cloud
+    migrated_to: junipernetworks.junos
   test/units/compat/unittest.py:
-    migrated_to: openstack.cloud
+    migrated_to: junipernetworks.junos
   test/units/compat/__init__.py:
-    migrated_to: openstack.cloud
+    migrated_to: junipernetworks.junos
   test/units/compat/builtins.py:
-    migrated_to: openstack.cloud
+    migrated_to: junipernetworks.junos
   test/units/mock/__init__.py:
-    migrated_to: openstack.cloud
+    migrated_to: junipernetworks.junos
   test/units/mock/yaml_helper.py:
-    migrated_to: openstack.cloud
+    migrated_to: junipernetworks.junos
   test/units/mock/procenv.py:
-    migrated_to: openstack.cloud
+    migrated_to: junipernetworks.junos
   test/units/mock/vault_helper.py:
-    migrated_to: openstack.cloud
+    migrated_to: junipernetworks.junos
   test/units/mock/path.py:
-    migrated_to: openstack.cloud
+    migrated_to: junipernetworks.junos
   test/units/mock/loader.py:
-    migrated_to: openstack.cloud
+    migrated_to: junipernetworks.junos
   test/units/modules/conftest.py:
-    migrated_to: openstack.cloud
+    migrated_to: junipernetworks.junos
   test/units/modules/network/frr/test_frr_facts.py:
     migrated_to: frr.frr
   test/units/modules/network/frr/fixtures/frr_facts_show_memory:
@@ -12508,9 +12511,9 @@ files:
   test/units/modules/web_infrastructure/test_jenkins_plugin.py:
     migrated_to: community.general
   test/units/plugins/terminal/test_junos.py:
-    migrated_to: community.general
+    migrated_to: junipernetworks.junos
   test/units/plugins/terminal/__init__.py:
-    migrated_to: community.general
+    migrated_to: junipernetworks.junos
   test/units/plugins/terminal/test_slxos.py:
     migrated_to: community.general
   test/integration/targets/callback_log_plays/aliases:
@@ -19404,7 +19407,7 @@ files:
   test/integration/targets/netconf_config/tests/iosxr/basic.yaml:
     migrated_to: ansible.netcommon
   test/integration/targets/prepare_junos_tests/tasks/main.yml:
-    migrated_to: ansible.netcommon
+    migrated_to: junipernetworks.junos
   test/integration/targets/prepare_iosxr_tests/tasks/main.yml:
     migrated_to: cisco.iosxr
   test/integration/targets/prepare_iosxr_tests/templates/config.j2:
@@ -26805,6 +26808,706 @@ files:
     migrated_to: openstack.cloud
   test/units/modules/cloud/openstack/__init__.py:
     migrated_to: openstack.cloud
+  lib/ansible/plugins/doc_fragments/junos.py:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_system/aliases:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_logging/aliases:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interface/aliases:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_facts/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_facts/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_facts/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_facts/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_rpc/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_rpc/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_rpc/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_rpc/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vrf/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vrf/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vrf/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vrf/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l3_interfaces/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l3_interfaces/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l3_interfaces/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l3_interfaces/meta/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlan/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlan/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlan/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlan/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_system/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_system/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_system/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_system/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tasks/cli_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lag_interfaces/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lag_interfaces/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lag_interfaces/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lag_interfaces/meta/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interfaces/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interfaces/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interfaces/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interfaces/meta/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp_interfaces/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp_interfaces/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp_interfaces/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp_interfaces/meta/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_logging/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_logging/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_logging/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_logging/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tasks/netconf_text.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tasks/netconf_xml.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tasks/cli.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tasks/netconf_json.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interface/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interface/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interface/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interface/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_routes/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_routes/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_routes/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_routes/meta/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_banner/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_banner/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_banner/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_banner/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interface/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interface/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interface/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interface/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interfaces/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interfaces/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interfaces/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interfaces/meta/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_global/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_global/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_global/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_global/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interface/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interface/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interface/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interface/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interfaces/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interfaces/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interfaces/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interfaces/meta/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_smoke/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_smoke/tasks/cli.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_smoke/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_smoke/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_smoke/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_netconf/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_netconf/tasks/cli.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_netconf/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlans/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlans/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlans/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlans/meta/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_route/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_route/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_route/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_route/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_user/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_user/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_user/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_user/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l3_interface/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l3_interface/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l3_interface/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l3_interface/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_linkagg/defaults/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_linkagg/tasks/main.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_linkagg/tasks/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_linkagg/meta/main.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_facts/tests/netconf/facts.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_rpc/tests/netconf/rpc.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vrf/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vrf/tests/netconf/net_vrf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l3_interfaces/tests/netconf/junos_l3_interfaces.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlan/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlan/tests/netconf/net_vlan.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_system/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_system/tests/netconf/net_system.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/templates/basic/config.j2:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/templates/basic/config.xml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/templates/basic/config.set:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tests/cli_config/cli_basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tests/cli_config/cli_replace.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tests/cli_config/cli_backup.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tests/netconf/invalid.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tests/netconf/src_invalid.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tests/netconf/single.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tests/netconf/src_basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tests/netconf/multiple.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tests/netconf/bad_action.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_config/tests/netconf/backup.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lag_interfaces/tests/netconf/overridden.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lag_interfaces/tests/netconf/deleted.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lag_interfaces/tests/netconf/replaced.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lag_interfaces/tests/netconf/_base_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lag_interfaces/tests/netconf/merged.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lag_interfaces/tests/netconf/_remove_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interfaces/tests/netconf/overridden.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interfaces/tests/netconf/deleted.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interfaces/tests/netconf/replaced.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interfaces/tests/netconf/_base_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interfaces/tests/netconf/merged.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interfaces/tests/netconf/_remove_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interfaces/tests/netconf/rtt.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp_interfaces/tests/netconf/deleted.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp_interfaces/tests/netconf/replaced.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp_interfaces/tests/netconf/_base_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp_interfaces/tests/netconf/merged.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp_interfaces/tests/netconf/overridden.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp_interfaces/tests/netconf/_remove_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp_interfaces/tests/netconf/rtt.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_logging/tests/netconf/net_logging.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_logging/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp/tests/netconf/net_lldp.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_xml/invalid.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_xml/greaterthan.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_xml/output.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_xml/greaterthanorequal.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_xml/bad_operator.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_xml/contains.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_xml/lessthanorequal.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_xml/notequal.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_xml/timeout.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_xml/equal.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_xml/lessthan.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/cli/cli_commmand.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_text/invalid.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_text/output.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_text/bad_operator.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_text/contains.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_text/timeout.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_json/greaterthan.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_json/output.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_json/greaterthanorequal.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_json/bad_operator.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_json/contains.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_json/lessthanorequal.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_json/notequal.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_json/equal.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_command/tests/netconf_json/lessthan.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interface/tests/netconf/net_l2_interface.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l2_interface/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_routes/tests/netconf/overridden.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_routes/tests/netconf/deleted.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_routes/tests/netconf/replaced.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_routes/tests/netconf/_base_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_routes/tests/netconf/merged.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_routes/tests/netconf/_remove_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_banner/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_banner/tests/netconf/net_banner.yml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interface/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interface/tests/netconf/net_interface.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interface/tests/netconf/intent.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interfaces/tests/netconf/overridden.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interfaces/tests/netconf/deleted.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interfaces/tests/netconf/replaced.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interfaces/tests/netconf/merged.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interfaces/tests/netconf/_remove_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interfaces/tests/netconf/rtt.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_global/tests/netconf/deleted.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_global/tests/netconf/replaced.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_global/tests/netconf/merged.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_global/tests/netconf/_remove_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_global/tests/netconf/rtt.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interface/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lldp_interface/tests/netconf/net_lldp_interface.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interfaces/tests/netconf/overridden.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interfaces/tests/netconf/deleted.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interfaces/tests/netconf/replaced.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interfaces/tests/netconf/merged.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interfaces/tests/netconf/groups.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interfaces/tests/netconf/_remove_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_interfaces/tests/netconf/rtt.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_smoke/tests/cli/reboot.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_smoke/tests/netconf/common_utils.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_smoke/tests/netconf/module_utils_junos.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_netconf/tests/cli/changeport.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_netconf/tests/cli/netconf.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_netconf/tests/utils/junos_command.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp/tests/netconf/deleted.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp/tests/netconf/replaced.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp/tests/netconf/merged.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp/tests/netconf/_remove_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_lacp/tests/netconf/rtt.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlans/tests/netconf/overridden.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlans/tests/netconf/deleted.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlans/tests/netconf/replaced.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlans/tests/netconf/_base_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlans/tests/netconf/merged.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_vlans/tests/netconf/_remove_config.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_route/tests/netconf/net_static_route.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_static_route/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_user/tests/netconf/net_user.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_user/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l3_interface/tests/netconf/net_l3_interface.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_l3_interface/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_linkagg/tests/netconf/net_linkagg.yaml:
+    migrated_to: junipernetworks.junos
+  test/integration/targets/junos_linkagg/tests/netconf/basic.yaml:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/junos.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/facts/facts.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/utils/utils.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/facts/lldp_global/lldp_global.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/facts/vlans/vlans.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/facts/static_routes/static_routes.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/facts/l3_interfaces/l3_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/facts/l2_interfaces/l2_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/facts/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/facts/lag_interfaces/lag_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/facts/legacy/base.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/facts/interfaces/interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/facts/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/facts/lacp/lacp.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/argspec/lldp_global/lldp_global.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/argspec/vlans/vlans.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/argspec/facts/facts.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/argspec/static_routes/static_routes.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/argspec/l3_interfaces/l3_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/argspec/l2_interfaces/l2_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/argspec/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/argspec/lag_interfaces/lag_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/argspec/interfaces/interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/argspec/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/argspec/lacp/lacp.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/config/lldp_global/lldp_global.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/config/vlans/vlans.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/config/static_routes/static_routes.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/config/l3_interfaces/l3_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/config/l2_interfaces/l2_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/config/lacp_interfaces/lacp_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/config/lag_interfaces/lag_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/config/interfaces/interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/config/lldp_interfaces/lldp_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/module_utils/network/junos/config/lacp/lacp.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_user.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/_junos_l2_interface.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/_junos_lldp.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_rpc.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_l2_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/_junos_lldp_interface.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/_junos_static_route.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_lacp.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_lacp_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_vlans.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/_junos_linkagg.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_scp.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_banner.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/_junos_l3_interface.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_logging.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_package.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_netconf.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_facts.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_ping.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/_junos_interface.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_lldp_global.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_config.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_static_routes.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_command.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_lag_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_l3_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_lldp_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/_junos_vlan.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_system.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_interfaces.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/modules/network/junos/junos_vrf.py:
+    migrated_to: junipernetworks.junos
+  lib/ansible/plugins/netconf/junos.py:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/test_junos_rpc.py:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/get_configuration_rpc_reply_diff.txt:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/show_interfaces_details_xml.txt:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/load_configuration_xml.txt:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/junos_config.json:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/show_system_storage_xml.txt:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/get_configuration_rpc_reply.txt:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/junos_config.xml:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/show_system_memory_xml.txt:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/junos_config.set:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/junos_ping_ping_10.10.10.10_count_2:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/get_configuration_rpc_reply_json.txt:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/show_version_xml.txt:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/show_chassis_routing-engine_xml.txt:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/junos_config.text:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/show_version_json.txt:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/junos_ping_ping_10.10.10.11_count_5_size_512_interval_2:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/junos_ping_ping_10.10.10.20_count_4:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/show_chassis_hardware_xml.txt:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/fixtures/show_version_text.txt:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/junos_module.py:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/__init__.py:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/test_junos_scp.py:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/test_junos_package.py:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/test_junos_netconf.py:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/test_junos_facts.py:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/test_junos_ping.py:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/test_junos_config.py:
+    migrated_to: junipernetworks.junos
+  test/units/modules/network/junos/test_junos_command.py:
+    migrated_to: junipernetworks.junos
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
