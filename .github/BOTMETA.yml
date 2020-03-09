@@ -4601,27 +4601,27 @@ files:
   lib/ansible/plugins/terminal/frr.py:
     migrated_to: frr.frr
   test/units/modules/utils.py:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/compat/mock.py:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/compat/unittest.py:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/compat/__init__.py:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/compat/builtins.py:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/mock/__init__.py:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/mock/yaml_helper.py:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/mock/procenv.py:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/mock/vault_helper.py:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/mock/path.py:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/mock/loader.py:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/modules/conftest.py:
     migrated_to: ansible.posix
   test/units/modules/network/frr/test_frr_facts.py:
@@ -6207,17 +6207,17 @@ files:
   test/integration/targets/aws_acm/meta/main.yml:
     migrated_to: community.amazon
   test/integration/targets/setup_remote_tmp_dir/tasks/windows-cleanup.yml:
-    migrated_to: ansible.amazon
+    migrated_to: ansible.windows
   test/integration/targets/setup_remote_tmp_dir/tasks/default-cleanup.yml:
-    migrated_to: ansible.amazon
+    migrated_to: ansible.windows
   test/integration/targets/setup_remote_tmp_dir/tasks/default.yml:
-    migrated_to: ansible.amazon
+    migrated_to: ansible.windows
   test/integration/targets/setup_remote_tmp_dir/tasks/main.yml:
-    migrated_to: ansible.amazon
+    migrated_to: ansible.windows
   test/integration/targets/setup_remote_tmp_dir/tasks/windows.yml:
-    migrated_to: ansible.amazon
+    migrated_to: ansible.windows
   test/integration/targets/setup_remote_tmp_dir/handlers/main.yml:
-    migrated_to: ansible.amazon
+    migrated_to: ansible.windows
   test/integration/targets/aws_api_gateway/aliases:
     migrated_to: community.amazon
   test/integration/targets/aws_api_gateway/tasks/main.yml:
@@ -16297,17 +16297,17 @@ files:
   test/integration/targets/get_certificate/tests/validate.yml:
     migrated_to: community.crypto
   test/integration/targets/prepare_http_tests/vars/httptester.yml:
-    migrated_to: community.crypto
+    migrated_to: ansible.windows
   test/integration/targets/prepare_http_tests/defaults/main.yml:
-    migrated_to: community.crypto
+    migrated_to: ansible.windows
   test/integration/targets/prepare_http_tests/tasks/default.yml:
-    migrated_to: community.crypto
+    migrated_to: ansible.windows
   test/integration/targets/prepare_http_tests/tasks/main.yml:
-    migrated_to: community.crypto
+    migrated_to: ansible.windows
   test/integration/targets/prepare_http_tests/tasks/windows.yml:
-    migrated_to: community.crypto
+    migrated_to: ansible.windows
   test/integration/targets/prepare_http_tests/meta/main.yml:
-    migrated_to: community.crypto
+    migrated_to: ansible.windows
   test/integration/targets/openssh_keypair/aliases:
     migrated_to: community.crypto
   test/integration/targets/openssh_keypair/vars/main.yml:
@@ -18037,9 +18037,9 @@ files:
   test/integration/targets/win_certificate_info/meta/main.yml:
     migrated_to: community.windows
   test/integration/targets/prepare_win_tests/tasks/main.yml:
-    migrated_to: community.windows
+    migrated_to: ansible.windows
   test/integration/targets/prepare_win_tests/meta/main.yml:
-    migrated_to: community.windows
+    migrated_to: ansible.windows
   test/integration/targets/win_chocolatey/aliases:
     migrated_to: community.windows
   test/integration/targets/win_chocolatey/defaults/main.yml:
@@ -18331,11 +18331,11 @@ files:
   test/integration/targets/win_netbios/meta/main.yml:
     migrated_to: community.windows
   test/integration/targets/setup_win_device/tasks/main.yml:
-    migrated_to: community.windows
+    migrated_to: ansible.windows
   test/integration/targets/setup_win_device/library/win_device.ps1:
-    migrated_to: community.windows
+    migrated_to: ansible.windows
   test/integration/targets/setup_win_device/handlers/main.yml:
-    migrated_to: community.windows
+    migrated_to: ansible.windows
   test/integration/targets/win_nssm/aliases:
     migrated_to: community.windows
   test/integration/targets/win_nssm/defaults/main.yml:
@@ -19449,71 +19449,71 @@ files:
   test/units/plugins/action/test_synchronize.py:
     migrated_to: ansible.posix
   test/units/plugins/action/fixtures/synchronize/basic_become/task_vars_in.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/delegate_remote_su/meta.yaml:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_vagrant_become_cli/task_vars_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_vagrant_become_cli/task_args_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic/taskvars_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_vagrant/task_vars_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic/taskvars_in.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/delegate_remote_su/task_vars_in.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_vagrant_sudo/meta.yaml:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/delegate_remote/task_vars_in.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/delegate_remote/meta.yaml:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_vagrant_sudo/task_vars_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_vagrant/task_vars_in.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_become/task_vars_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_become/meta.yaml:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_vagrant_sudo/task_vars_in.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_vagrant_become_cli/task_vars_in.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_vagrant/task_args_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_become_cli/task_args_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_become_cli/meta.yaml:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/delegate_remote/task_vars_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_vagrant_sudo/task_args_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_vagrant/meta.yaml:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic/meta.yaml:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/delegate_remote_su/task_args_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic/task_args_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_vagrant_become_cli/meta.yaml:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/delegate_remote/task_args_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/delegate_remote_su/task_vars_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_become_cli/task_vars_in.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_become_cli/task_vars_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/fixtures/synchronize/basic_become/task_args_out.json:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/plugins/action/__init__.py:
-    migrated_to: ansible.posix
+    migrated_to: ansible.windows
   test/units/modules/system/test_mount.py:
     migrated_to: ansible.posix
   test/integration/targets/synchronize/aliases:
@@ -19574,6 +19574,588 @@ files:
     migrated_to: ansible.posix
   test/integration/targets/sysctl/meta/main.yml:
     migrated_to: ansible.posix
+  lib/ansible/plugins/action/win_copy.py:
+    migrated_to: ansible.windows
+  lib/ansible/plugins/action/win_reboot.py:
+    migrated_to: ansible.windows
+  lib/ansible/plugins/action/win_template.py:
+    migrated_to: ansible.windows
+  lib/ansible/plugins/action/win_updates.py:
+    migrated_to: ansible.windows
+  lib/ansible/plugins/doc_fragments/url_windows.py:
+    migrated_to: ansible.windows
+  test/integration/targets/win_setup/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_setup/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_slurp/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_slurp/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_slurp/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_slurp/handlers/main.yml:
+    migrated_to: ansible.windows
+  lib/ansible/module_utils/csharp/Ansible.Service.cs:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/async_status.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/setup.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/slurp.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_acl.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_acl.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_acl_inheritance.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_acl_inheritance.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_certificate_store.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_certificate_store.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_command.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_command.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_copy.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_copy.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_dns_client.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_dns_client.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_domain.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_domain.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_domain_controller.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_domain_controller.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_domain_membership.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_domain_membership.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_dsc.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_dsc.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_environment.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_environment.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_feature.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_feature.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_file.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_file.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_find.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_find.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_get_url.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_get_url.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_group.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_group.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_group_membership.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_group_membership.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_hostname.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_hostname.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_optional_feature.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_optional_feature.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_owner.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_owner.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_package.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_package.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_path.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_path.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_ping.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_ping.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_reboot.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_reg_stat.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_reg_stat.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_regedit.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_regedit.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_service.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_service.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_service_info.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_service_info.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_share.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_share.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_shell.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_shell.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_stat.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_stat.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_tempfile.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_tempfile.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_template.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_updates.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_updates.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_uri.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_uri.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_user.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_user.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_user_right.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_user_right.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_wait_for.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_wait_for.py:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_whoami.ps1:
+    migrated_to: ansible.windows
+  lib/ansible/modules/windows/win_whoami.py:
+    migrated_to: ansible.windows
+  test/units/plugins/action/test_win_updates.py:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/files/empty.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/files/foo.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/files/subdir/bar.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/files/subdir/subdir2/baz.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/files/subdir/subdir2/subdir3/subdir4/qux.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/tasks/remote_tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/files-different/vault/readme.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/files-different/vault/vault-file:
+    migrated_to: ansible.windows
+  test/integration/targets/win_copy/files-different/vault/folder/nested-vault-file:
+    migrated_to: ansible.windows
+  test/integration/targets/win_reboot/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_reboot/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_reboot/templates/post_reboot.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_template/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_template/vars/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_template/files/foo.unix.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_template/files/foo.dos.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_template/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_template/meta/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_template/templates/foo.j2:
+    migrated_to: ansible.windows
+  test/integration/targets/win_template/templates/foo2.j2:
+    migrated_to: ansible.windows
+  test/integration/targets/win_template/templates/another_foo.j2:
+    migrated_to: ansible.windows
+  test/integration/targets/win_template/templates/foo.utf-8.j2:
+    migrated_to: ansible.windows
+  test/integration/targets/win_updates/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_updates/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_updates/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_updates/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_acl/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_acl/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_acl/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_acl/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_acl_inheritance/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_acl_inheritance/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_acl_inheritance/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_acl_inheritance/library/test_get_acl.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_certificate_store/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_certificate_store/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_certificate_store/files/subj-key.pem:
+    migrated_to: ansible.windows
+  test/integration/targets/win_certificate_store/files/root-cert.pem:
+    migrated_to: ansible.windows
+  test/integration/targets/win_certificate_store/files/subj-cert.pem:
+    migrated_to: ansible.windows
+  test/integration/targets/win_certificate_store/files/root-key.pem:
+    migrated_to: ansible.windows
+  test/integration/targets/win_certificate_store/tasks/test.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_certificate_store/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_certificate_store/meta/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_command/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_command/files/crt_setmode.c:
+    migrated_to: ansible.windows
+  test/integration/targets/win_command/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dns_client/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dns_client/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dns_client/meta/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_domain_membership/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_domain_membership/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_domain_membership/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dsc/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dsc/files/xTestDsc/1.0.0/xTestDsc.psd1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xSetReboot/ANSIBLE_xSetReboot.psm1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xSetReboot/ANSIBLE_xSetReboot.schema.mof:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.schema.mof:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dsc/files/xTestDsc/1.0.1/xTestDsc.psd1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dsc/files/xTestDsc/1.0.1/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dsc/files/xTestDsc/1.0.1/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.schema.mof:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dsc/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dsc/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_dsc/meta/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_environment/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_environment/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_environment/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_feature/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_feature/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_feature/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_feature/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_file/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_file/files/foo.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_file/files/foobar/fileA:
+    migrated_to: ansible.windows
+  test/integration/targets/win_file/files/foobar/fileB:
+    migrated_to: ansible.windows
+  test/integration/targets/win_file/files/foobar/directory/fileC:
+    migrated_to: ansible.windows
+  test/integration/targets/win_file/files/foobar/directory/fileD:
+    migrated_to: ansible.windows
+  test/integration/targets/win_file/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_file/meta/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_find/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_find/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_find/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_find/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_find/meta/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/files/ftp/anon/sha256sum_with_dot.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/files/ftp/anon/sha1sum.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/files/ftp/anon/file2.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/files/ftp/anon/file.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/files/ftp/anon/sha256sum.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/files/ftp/user/file.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/files/ftp/user-pass/file.txt:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/tasks/tests_ftp.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/tasks/tests_url.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/tasks/tests_checksum.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/meta/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/library/win_defender_exclusion.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_get_url/templates/slimftpd.conf.tmpl:
+    migrated_to: ansible.windows
+  test/integration/targets/win_group/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_group/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_group/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_group_membership/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_group_membership/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_group_membership/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_hostname/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_hostname/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_hostname/tasks/test.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_hostname/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_optional_feature/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_optional_feature/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_optional_feature/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_owner/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_owner/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_owner/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/files/good.wsx:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/files/bad.wsx:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/files/reboot.wsx:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/tasks/msix_tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/tasks/msi_tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/tasks/msp_tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/tasks/registry_tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/tasks/failure_tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/meta/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/library/win_make_appx.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/templates/registry_package.ps1.j2:
+    migrated_to: ansible.windows
+  test/integration/targets/win_package/handlers/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_path/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_path/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_ping/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_ping/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_ping/library/win_ping_set_attr.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_ping/library/win_ping_syntax_error.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_ping/library/win_ping_throw.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_ping/library/win_ping_strict_mode_error.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_ping/library/win_ping_throw_string.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_reg_stat/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_reg_stat/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_reg_stat/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_reg_stat/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_reg_stat/meta/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_reg_stat/templates/test_reg.reg.j2:
+    migrated_to: ansible.windows
+  test/integration/targets/win_regedit/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_regedit/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_regedit/tasks/create_tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_regedit/tasks/cleanup.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_regedit/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_regedit/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_service/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_service/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_service/files/Program.cs:
+    migrated_to: ansible.windows
+  test/integration/targets/win_service/files/SleepService.cs:
+    migrated_to: ansible.windows
+  test/integration/targets/win_service/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_service/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_service_info/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_service_info/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_service_info/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_service_info/meta/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_service_info/handlers/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_share/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_share/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_share/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_share/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_shell/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_shell/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_stat/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_stat/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_stat/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_stat/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_stat/library/test_symlink_file.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_tempfile/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_tempfile/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_tempfile/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_uri/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_uri/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_uri/meta/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_user/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_user/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_user/files/lockout_user.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_user/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_user/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_user_right/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_user_right/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_user_right/tasks/tests.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_user_right/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_user_right/library/test_get_right.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_wait_for/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_wait_for/defaults/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_wait_for/tasks/main.yml:
+    migrated_to: ansible.windows
+  test/integration/targets/win_wait_for/templates/http-server.ps1:
+    migrated_to: ansible.windows
+  test/integration/targets/win_whoami/aliases:
+    migrated_to: ansible.windows
+  test/integration/targets/win_whoami/tasks/main.yml:
+    migrated_to: ansible.windows
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
