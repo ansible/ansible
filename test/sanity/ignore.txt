@@ -1031,7 +1031,6 @@ lib/ansible/modules/files/stat.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/files/stat.py validate-modules:undocumented-parameter
 lib/ansible/modules/files/unarchive.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/files/unarchive.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/identity/cyberark/cyberark_authentication.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/net_tools/basics/get_url.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/net_tools/basics/uri.py pylint:blacklisted-name
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:doc-required-mismatch
