@@ -1005,9 +1005,6 @@ lib/ansible/modules/cloud/google/gcp_storage_bucket_access_control.py validate-m
 lib/ansible/modules/cloud/google/gcp_storage_object.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/cloud/google/gcp_tpu_node.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/cloud/google/gcp_tpu_node_info.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/cloud/hcloud/hcloud_network_info.py validate-modules:return-syntax-error
-lib/ansible/modules/cloud/hcloud/hcloud_server.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/cloud/hcloud/hcloud_server_network.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/commands/command.py validate-modules:doc-missing-type
 lib/ansible/modules/commands/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/commands/command.py validate-modules:parameter-list-no-elements
@@ -1342,8 +1339,6 @@ lib/ansible/plugins/doc_fragments/default_callback.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/default_callback.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/files.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/files.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/hcloud.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/hcloud.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/inventory_cache.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/inventory_cache.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/return_common.py future-import-boilerplate
