@@ -14,13 +14,13 @@ matrix:
     - env: T=sanity/4
     - env: T=sanity/5
 
-    - env: T=units/2.6/1
-    - env: T=units/2.7/1
-    - env: T=units/3.5/1
-    - env: T=units/3.6/1
-    - env: T=units/3.7/1
-    - env: T=units/3.8/1
-    - env: T=units/3.9/1
+    - env: T=units/2.6
+    - env: T=units/2.7
+    - env: T=units/3.5
+    - env: T=units/3.6
+    - env: T=units/3.7
+    - env: T=units/3.8
+    - env: T=units/3.9
 
     - env: T=windows/2012/1
     - env: T=windows/2012-R2/1
