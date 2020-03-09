@@ -18565,6 +18565,252 @@ files:
     migrated_to: community.windows
   test/integration/targets/win_xml/meta/main.yml:
     migrated_to: community.windows
+  lib/ansible/modules/cloud/azure/_azure_rm_aks_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_dnsrecordset_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_dnszone_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_networkinterface_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_publicipaddress_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_securitygroup_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_storageaccount_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_virtualmachine_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_virtualnetwork_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_roledefinition_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_autoscale_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_mysqldatabase_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_devtestlabschedule_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_virtualmachinescaleset_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_devtestlabcustomimage_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_cosmosdbaccount_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_subnet_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_aksversion_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_hdinsightcluster_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_virtualmachinescalesetextension_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_loadbalancer_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_roleassignment_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_manageddisk_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_mysqlserver_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_servicebus_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_rediscache_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_resource_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_routetable_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_virtualmachine_extension.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_loganalyticsworkspace_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_sqldatabase_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_devtestlabartifactsource_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_deployment_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_virtualmachineextension_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_applicationsecuritygroup_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_availabilityset_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_mariadbdatabase_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_devtestlabenvironment_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_appserviceplan_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_containerinstance_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_devtestlabarmtemplate_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_devtestlabartifact_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_virtualmachinescalesetinstance_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_cdnendpoint_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_trafficmanagerprofile_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_functionapp_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_virtualmachineimage_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_mariadbconfiguration_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_virtualnetworkpeering_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_sqlserver_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_mariadbfirewallrule_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_mysqlconfiguration_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_mysqlfirewallrule_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_postgresqlfirewallrule_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_mariadbserver_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_postgresqldatabase_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_devtestlabvirtualnetwork_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_devtestlabpolicy_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_trafficmanagerendpoint_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_sqlfirewallrule_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_containerregistry_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_postgresqlconfiguration_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_postgresqlserver_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_devtestlab_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_cdnprofile_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_virtualmachine_scaleset.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_webapp_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_devtestlabvirtualmachine_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_image_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_managed_disk.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_automationaccount_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_lock_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_managed_disk_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_resourcegroup_facts.py:
+    migrated_to: community.azure
+  lib/ansible/modules/cloud/azure/_azure_rm_virtualmachine_scaleset_facts.py:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_publicipaddress/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_publicipaddress/tasks/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_publicipaddress/meta/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/setup_azure/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_securitygroup/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_securitygroup/tasks/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_securitygroup/meta/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachine/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachine/inventory.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachine/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachine/runme.sh:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachine/tasks/azure_test_public_ip.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachine/tasks/azure_test_no_public_ip.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachine/tasks/azure_test_deallocate.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachine/tasks/azure_test_invalid.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachine/tasks/setup.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachine/tasks/azure_test_dual_nic.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachine/tasks/azure_test_minimal.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_mysqlserver/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_mysqlserver/tasks/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_mysqlserver/meta/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachinescaleset/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachinescaleset/tasks/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachinescaleset/meta/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_rediscache/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_rediscache/tasks/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_rediscache/meta/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_sqlserver/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_sqlserver/tasks/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_sqlserver/meta/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_devtestlab/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_devtestlab/tasks/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_devtestlab/meta/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachineextension/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachineextension/tasks/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_virtualmachineextension/meta/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_mariadbserver/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_mariadbserver/tasks/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_mariadbserver/meta/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_postgresqlserver/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_postgresqlserver/tasks/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_postgresqlserver/meta/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_webapp/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_webapp/tasks/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_webapp/meta/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_automationaccount/aliases:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_automationaccount/tasks/main.yml:
+    migrated_to: community.azure
+  test/integration/targets/azure_rm_automationaccount/meta/main.yml:
+    migrated_to: community.azure
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
