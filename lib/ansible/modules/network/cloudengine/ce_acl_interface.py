@@ -43,26 +43,26 @@ options:
               For a named rule group, the value is a string of 1 to 32 case-sensitive characters starting
               with a letter, spaces not supported.
         required: true
-	    type: str
+        type: str
     interface:
         description:
             - Interface name.
               Only support interface full name, such as "40GE2/0/1".
         required: true
-	    type: str
+        type: str
     direction:
         description:
             - Direction ACL to be applied in on the interface.
         required: true
         choices: ['inbound', 'outbound']
-	    type: str
+        type: str
     state:
         description:
             - Determines whether the config should be present or not on the device.
         required: false
         default: present
         choices: ['present', 'absent']
-	    type: str
+        type: str
 '''
 
 EXAMPLES = '''
