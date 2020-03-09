@@ -1,1 +1,0 @@
-azure_rm_servicebus_info.py

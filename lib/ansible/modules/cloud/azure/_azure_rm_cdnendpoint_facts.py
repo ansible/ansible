@@ -1,1 +1,0 @@
-azure_rm_cdnendpoint_info.py

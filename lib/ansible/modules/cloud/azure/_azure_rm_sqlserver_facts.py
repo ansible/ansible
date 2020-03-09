@@ -1,1 +1,0 @@
-azure_rm_sqlserver_info.py
