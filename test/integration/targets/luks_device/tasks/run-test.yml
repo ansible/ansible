@@ -1,8 +1,0 @@
----
-- name: Make sure LUKS device is gone
-  luks_device:
-    device: "{{ cryptfile_device }}"
-    state: absent
-  become: yes
-- name: "Loading tasks from {{ item }}"
-  include_tasks: "{{ item }}"
