@@ -1,5 +1,0 @@
-# Rabbitmq lookup
-- include: ubuntu.yml
-  when: 
-    - ansible_distribution == 'Ubuntu'
-    - ansible_distribution_release != 'trusty'

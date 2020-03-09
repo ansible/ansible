@@ -1,7 +1,0 @@
----
-- name: Reset config
-  exos_config:
-    lines:
-      - configure vlan Default add ports all untagged
-      - configure vlan 2-4094 delete ports all
-      - delete vlan 2-4094

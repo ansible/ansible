@@ -1,5 +1,0 @@
----
-vultr_resource_prefix: "vultr-test-prefix"
-vultr_network_name: "{{ vultr_resource_prefix }}_network"
-vultr_network_cidr: 192.168.42.0/24
-vultr_network_region: New Jersey

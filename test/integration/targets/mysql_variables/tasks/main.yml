@@ -1,2 +1,0 @@
-- import_tasks: mysql_variables.yml
-  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'

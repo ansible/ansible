@@ -1,7 +1,0 @@
-destructive
-unsupported  # these tests conflict with mysql_replication tests and do not run on changes to the mysql_replication module
-skip/aix
-skip/osx
-skip/freebsd
-skip/rhel
-needs/root

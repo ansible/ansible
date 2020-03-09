@@ -1,1 +1,0 @@
-oneview_datacenter_info.py

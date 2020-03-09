@@ -1,6 +1,0 @@
-shippable/posix/group2
-skip/aix
-skip/docker
-skip/freebsd
-skip/osx
-destructive

@@ -1,7 +1,0 @@
-- block:
-    - include_tasks: package.yml
-    - include_tasks: tests.yml
-  when:
-    # The pass package is no longer available in EPEL, so only test on Fedora, OpenSUSE, FreeBSD, macOS, and Ubuntu
-    # https://lists.zx2c4.com/pipermail/password-store/2019-July/003689.html
-    - ansible_facts.distribution in ['FreeBSD', 'MacOSX', 'openSUSE Leap', 'Ubuntu']

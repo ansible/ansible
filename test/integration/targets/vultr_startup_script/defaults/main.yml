@@ -1,7 +1,0 @@
-# Copyright (c) 2018, René Moser <mail@renemoser.net>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
----
-vultr_resource_prefix: "vultr-test-prefix"
-vultr_startup_script_name: "{{ vultr_resource_prefix }}_script"
-vultr_startup_script: "#!/bin/bash\necho Hello World > /root/hello"
-vultr_startup_script2: "#!/bin/bash\necho Hello to my World > /root/hello"

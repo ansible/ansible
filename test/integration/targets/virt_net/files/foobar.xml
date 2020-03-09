@@ -1,9 +1,0 @@
-<network>
-    <name>foobar</name>
-    <forward mode='nat'/>
-    <ip address='192.168.125.1' netmask='255.255.255.0'>
-        <dhcp>
-            <range start='192.168.125.2' end='192.168.125.254'/>
-        </dhcp>
-    </ip>
-</network>

@@ -1,6 +1,0 @@
- Interface name          : Ethernet 0/2
- Switchport mode         : access
- Ingress filter          : enable
- Acceptable frame types  : vlan-untagged only
- Default Vlan            : 1
- Active Vlans            : 1

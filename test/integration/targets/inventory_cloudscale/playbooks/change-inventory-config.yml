@@ -1,8 +1,0 @@
-- name: Change inventory configuration to {{ inventory_config }}
-  file:
-    src: '{{ inventory_config }}'
-    dest: ../inventory_cloudscale.yml
-    state: link
-
-- name: Refresh inventory
-  meta: refresh_inventory

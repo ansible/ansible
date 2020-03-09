@@ -1,1 +1,0 @@
-buildah-container    ansible_host=buildah-container ansible_connection=buildah

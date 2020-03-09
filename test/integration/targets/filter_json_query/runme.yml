@@ -1,3 +1,0 @@
-- hosts: localhost
-  roles:
-    - { role: filter_json_query }

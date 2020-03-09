@@ -1,1 +1,0 @@
-gcp_compute_instance_group_info.py

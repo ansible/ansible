@@ -1,1 +1,0 @@
-onepassword_info.py

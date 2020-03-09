@@ -1,5 +1,0 @@
----
-- name: Restore initial config
-  exos_config:
-    lines:
-      - enable lldp ports all

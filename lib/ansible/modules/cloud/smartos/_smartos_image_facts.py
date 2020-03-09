@@ -1,1 +1,0 @@
-smartos_image_info.py

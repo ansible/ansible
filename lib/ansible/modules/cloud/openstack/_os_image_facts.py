@@ -1,1 +1,0 @@
-os_image_info.py
