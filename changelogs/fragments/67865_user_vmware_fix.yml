@@ -1,0 +1,2 @@
+minor_changes:
+- Add support for user manipulation for VMware ESXi host systems (https://github.com/ansible/ansible/issues/67865).

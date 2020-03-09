@@ -2861,6 +2861,130 @@ class Alpine(BusyBox):
     distribution = 'Alpine'
 
 
+class VMware(User):
+    """
+    This is the VMware User manipulation class.
+    It overrides the following methods:
+    - create_user()
+    - remove_user()
+    - modify_user()
+    """
+    platform = 'VMkernel'
+    distribution = None
+    vmware_busybox_bin = '/usr/lib/vmware/busybox/bin/busybox'
+
+    def create_user(self):
+        cmd = [self.module.get_bin_path(self.vmware_busybox_bin, True)]
+
+        cmd.extend(['adduser', '-D'])
+
+        if self.uid is not None:
+            cmd.extend(['-u', self.uid])
+
+        if self.group is not None:
+            if not self.group_exists(self.group):
+                self.module.fail_json(msg='Group {0} does not exist'.format(self.group))
+            cmd.append('-G')
+            cmd.append(self.group)
+
+        if self.comment is not None:
+            cmd.append('-g')
+            cmd.append(self.comment)
+
+        if self.home is not None:
+            cmd.append('-h')
+            cmd.append(self.home)
+
+        if self.shell is not None:
+            cmd.append('-s')
+            cmd.append(self.shell)
+
+        if not self.create_home:
+            cmd.append('-H')
+
+        if self.skeleton is not None:
+            self.module.fail_json(msg="VMware adduser does not support skeletion option.")
+
+        if self.system:
+            cmd.append('-S')
+
+        cmd.append(self.name)
+
+        rc, out, err = self.execute_command(cmd)
+
+        if rc is not None and rc != 0:
+            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        if self.password is not None:
+            cmd = [self.module.get_bin_path('passwd', True)]
+            cmd.extend([self.name, '--stdin'])
+            data = '{password}'.format(password=self.password)
+            rc, out, err = self.execute_command(cmd, data=data)
+
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # Add to additional groups
+        if self.groups is not None and len(self.groups):
+            groups = self.get_groups_set()
+            add_cmd_bin = self.module.get_bin_path(self.vmware_busybox_bin, True)
+            for group in groups:
+                cmd = [add_cmd_bin, 'adduser', self.name, group]
+                rc, out, err = self.execute_command(cmd)
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        return rc, out, err
+
+    def remove_user(self):
+        cmd = [self.module.get_bin_path(self.vmware_busybox_bin, True)]
+        cmd.extend(['deluser', self.name])
+        return self.execute_command(cmd)
+
+    def modify_user(self):
+        current_groups = self.user_group_membership()
+        groups = []
+        rc, out, err = None, '', ''
+        info = self.user_info()
+
+        cmd = [self.module.get_bin_path(self.vmware_busybox_bin, True)]
+
+        add_cmd_bin = cmd + ['adduser']
+        remove_cmd_bin = cmd + ['delgroup']
+
+        # Manage group membership
+        if self.groups is not None and len(self.groups):
+            groups = self.get_groups_set()
+            group_diff = set(current_groups).symmetric_difference(groups)
+
+            if group_diff:
+                for g in groups:
+                    if g in group_diff:
+                        add_cmd = [add_cmd_bin, self.name, g]
+                        rc, out, err = self.execute_command(add_cmd)
+                        if rc is not None and rc != 0:
+                            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+                for g in group_diff:
+                    if g not in groups and not self.append:
+                        remove_cmd = [remove_cmd_bin, self.name, g]
+                        rc, out, err = self.execute_command(remove_cmd)
+                        if rc is not None and rc != 0:
+                            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # Manage password
+        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            cmd = [self.module.get_bin_path('passwd', True)]
+            cmd.extend([self.name, '--stdin'])
+            data = '{password}'.format(password=self.password)
+            rc, out, err = self.execute_command(cmd, data=data)
+
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        return rc, out, err
+
+
 def main():
     ssh_defaults = dict(
         bits=0,
