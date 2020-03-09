@@ -48,7 +48,7 @@
           - vaulted_valued is iterable
           - vaulted_valued is lower
           - vaulted_valued is not none
-          # This is not exactly a string, and UserString doesn't fulfil this
+          # This is not exactly a string, and UserString doesn't fulfill this
           # - vaulted_valued is string
           - vaulted_valued is not upper
 
