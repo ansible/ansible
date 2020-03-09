@@ -444,6 +444,7 @@ files:
     - cloud
     - hcloud
     maintainers: $team_hcloud
+    migrated_to: hetzner.hcloud
   $modules/cloud/huawei/:
     keywords: &id015
     - cloud
@@ -19148,7 +19149,7 @@ files:
   test/integration/targets/ec2_key/meta/main.yml:
     migrated_to: ansible.amazon
   test/integration/targets/setup_sshkey/tasks/main.yml:
-    migrated_to: ansible.amazon
+    migrated_to: hetzner.hcloud
   test/integration/targets/ec2_metadata_facts/aliases:
     migrated_to: ansible.amazon
   test/integration/targets/ec2_metadata_facts/vars/main.yml:
@@ -27887,6 +27888,174 @@ files:
     migrated_to: dellemc_networking.os6
   test/units/modules/network/dellos6/test_dellos6_command.py:
     migrated_to: dellemc_networking.os6
+  lib/ansible/plugins/doc_fragments/hcloud.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/module_utils/hcloud.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/_hcloud_location_facts.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_server_info.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_server_network.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_server_type_info.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_route.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_server.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_volume_info.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/_hcloud_server_type_facts.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_ssh_key_info.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_network_info.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_datacenter_info.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/_hcloud_image_facts.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/_hcloud_volume_facts.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_floating_ip_info.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/_hcloud_floating_ip_facts.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_image_info.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/_hcloud_ssh_key_facts.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_location_info.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_network.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_volume.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_ssh_key.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/_hcloud_datacenter_facts.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_rdns.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_floating_ip.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/_hcloud_server_facts.py:
+    migrated_to: hetzner.hcloud
+  lib/ansible/modules/cloud/hcloud/hcloud_subnetwork.py:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_server_info/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_server_info/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_server_info/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_server_network/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_server_network/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_server_network/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_server_type_info/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_server_type_info/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_server_type_info/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_route/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_route/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_route/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_server/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_server/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_server/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_volume_info/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_volume_info/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_volume_info/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_ssh_key_info/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_ssh_key_info/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_ssh_key_info/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_ssh_key_info/meta/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_network_info/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_network_info/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_network_info/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_datacenter_info/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_datacenter_info/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_datacenter_info/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_floating_ip_info/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_floating_ip_info/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_floating_ip_info/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_image_info/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_image_info/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_image_info/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_location_info/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_location_info/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_location_info/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_network/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_network/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_network/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_volume/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_volume/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_volume/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_ssh_key/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_ssh_key/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_ssh_key/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_ssh_key/meta/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_rdns/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_rdns/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_rdns/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_floating_ip/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_floating_ip/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_floating_ip/tasks/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_subnetwork/aliases:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_subnetwork/defaults/main.yml:
+    migrated_to: hetzner.hcloud
+  test/integration/targets/hcloud_subnetwork/tasks/main.yml:
+    migrated_to: hetzner.hcloud
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
