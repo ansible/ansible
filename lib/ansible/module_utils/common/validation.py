@@ -372,6 +372,14 @@ def check_type_list(value):
         return value
 
     if isinstance(value, string_types):
+        if value.startswith("[") and value.endswith("]"):
+            try:
+                return json.loads(value)
+            except Exception:
+                (result, exc) = safe_eval(value, dict(), include_exceptions=True)
+                if exc is not None:
+                    raise TypeError('unable to evaluate string as list')
+                return result
         return value.split(",")
     elif isinstance(value, int) or isinstance(value, float):
         return [str(value)]
