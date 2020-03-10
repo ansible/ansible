@@ -15,6 +15,9 @@ export INVENTORY_PATH="$ipath"
 # test callback
 ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m ping | grep "usercallback says ok"
 
+# Test module_utils.  This tests that from module_utils.NAME import NAME works.
+ansible localhost -m testns.testcoll.test_quirk "$@" | grep -- '"msg": "Quirk Avoidance"'
+
 # test documentation
 ansible-doc testns.testcoll.testmodule -vvv | grep -- "- normal_doc_frag"
 
