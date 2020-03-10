@@ -1,5 +1,5 @@
 posix
 shippable/posix/group4
-shippable/windows/group2
+shippable/windows/group1
 skip/python2.6
 windows
