@@ -8712,7 +8712,7 @@ files:
   lib/ansible/modules/files/iso_extract.py:
     migrated_to: community.general
   lib/ansible/modules/files/patch.py:
-    migrated_to: community.general
+    migrated_to: ansible.posix
   lib/ansible/modules/files/read_csv.py:
     migrated_to: community.general
   lib/ansible/modules/identity/_onepassword_facts.py:
