@@ -57,7 +57,8 @@ class TerminalModule(TerminalBase):
         try:
             self._exec_cli_command(b'terminal length 0')
         except AnsibleConnectionFailure:
-            raise AnsibleConnectionFailure('unable to set terminal parameters')
+            display.display('WARNING: Unable to set terminal length, command responses may be truncated')
+            # raise AnsibleConnectionFailure('unable to set terminal parameters')
 
         try:
             self._exec_cli_command(b'terminal width 512')
