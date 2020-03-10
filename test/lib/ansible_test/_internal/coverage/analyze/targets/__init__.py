@@ -21,8 +21,9 @@ from .. import (
 )
 
 if t.TYPE_CHECKING:
-    NamedPoints = t.Dict[str, t.Dict[t.Union[int, t.Tuple[int, int]], t.Set[str]]]
-    IndexedPoints = t.Dict[str, t.Dict[t.Union[int, t.Tuple[int, int]], t.Set[int]]]
+    TargetKey = t.TypeVar('TargetKey', int, t.Tuple[int, int])
+    NamedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[str]]]
+    IndexedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
     Arcs = t.Dict[str, t.Dict[t.Tuple[int, int], t.Set[int]]]
     Lines = t.Dict[str, t.Dict[int, t.Set[int]]]
     TargetIndexes = t.Dict[str, int]
@@ -110,10 +111,10 @@ def get_target_index(name, target_indexes):  # type: (str, TargetIndexes) -> int
 
 
 def expand_indexes(
-        source_data,  # type: t.Dict[str, t.Dict[t.Any, t.Set[int]]]
+        source_data,  # type: IndexedPoints
         source_index,  # type: t.List[str]
         format_func,  # type: t.Callable[t.Tuple[t.Any], str]
-):  # type: (...) -> t.Dict[str, t.Dict[t.Any, t.Set[str]]]
+):  # type: (...) -> NamedPoints
     """Expand indexes from the source into target names for easier processing of the data (arcs or lines)."""
     combined_data = {}  # type: t.Dict[str, t.Dict[t.Any, t.Set[str]]]
 
