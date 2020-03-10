@@ -211,7 +211,7 @@ class DistributionFiles:
         if 'Slackware' not in data:
             return False, slackware_facts  # TODO: remove
         slackware_facts['distribution'] = name
-        version = re.findall(r'\w+[.]\w+', data)
+        version = re.findall(r'\w+[.]\w+\+?', data)
         if version:
             slackware_facts['distribution_version'] = version[0]
         return True, slackware_facts
