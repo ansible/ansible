@@ -37,6 +37,11 @@ _SYNTHETIC_PACKAGES = {
 # FIXME: exception handling/error logging
 class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
     def __init__(self, config=None):
+        # Keep track of modules which we found. Like sys.modules but
+        # doesn't require loading the module
+        self._modules_found = set()
+        self._modules_not_found = set()
+
         if config:
             self._n_configured_paths = config.get_config_value('COLLECTIONS_PATHS')
         else:
@@ -116,16 +121,44 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
 
         return mod
 
+    def is_module_found(self, fullname):
+        """
+        Return True if this Finder found the module.
+        """
+        # Cached values
+
+        # Note: I don't know if we should be scanning sys.modules here.
+        if fullname in sys.modules or fullname in self._modules_found:
+            return True
+
+        if fullname in self._modules_not_found:
+            return False
+
+        # We haven't checked for it yet.  Go ahead and try now
+        loader = self.find_module(fullname)
+        if loader:
+            return True
+
+        return False
+
     def _find_module(self, fullname, path, load):
         # this loader is only concerned with items under the Ansible Collections namespace hierarchy, ignore others
         if not fullname.startswith('ansible_collections.') and fullname != 'ansible_collections':
             return False, None
 
-        if sys.modules.get(fullname):
-            if not load:
-                return True, None
+        # If we've previously looked for this module, use those results
+        if load:
+            if fullname in sys.modules:
+                return True, sys.modules[fullname]
+            if fullname in self._modules_not_found:
+                return False, None
+            # Module not looked for or looked for but not loaded
 
-            return True, sys.modules[fullname]
+        else:
+            if fullname in self._modules_found:
+                return True, None
+            elif fullname in self._modules_not_found:
+                return False, None
 
         newmod = None
 
@@ -169,17 +202,21 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                     raise KeyError('invalid synthetic map package definition (no target "map" defined)')
 
                 if not load:
+                    self._modules_found.add(fullname)
                     return True, None
 
                 mod = import_module(map_package + synpkg_remainder)
 
+                self._modules_found.add(fullname)
                 sys.modules[fullname] = mod
 
+                self._modules_found.add(fullname)
                 return True, mod
             elif pkg_type == 'flatmap':
                 raise NotImplementedError()
             elif pkg_type == 'pkg_only':
                 if not load:
+                    self._modules_found.add(fullname)
                     return True, None
 
                 newmod = ModuleType(fullname)
@@ -191,6 +228,7 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                 if not synpkg_def.get('allow_external_subpackages'):
                     # if external subpackages are NOT allowed, we're done
                     sys.modules[fullname] = newmod
+                    self._modules_found.add(fullname)
                     return True, newmod
 
                 # if external subpackages ARE allowed, check for on-disk implementations and return a normal
@@ -218,6 +256,7 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                         continue
 
                     if not load:
+                        self._modules_found.add(fullname)
                         return True, None
 
                     with open(to_bytes(source_path), 'rb') as fd:
@@ -251,15 +290,18 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                 # FIXME: decide cases where we don't actually want to exec the code?
                 exec(code_object, newmod.__dict__)
 
+            self._modules_found.add(fullname)
             return True, newmod
 
         # even if we didn't find one on disk, fall back to a synthetic package if we have one...
         if newmod:
             sys.modules[fullname] = newmod
+            self._modules_found.add(fullname)
             return True, newmod
 
         # FIXME: need to handle the "no dirs present" case for at least the root and synthetic internal collections like ansible.builtin
 
+        self._modules_not_found.add(fullname)
         return False, None
 
     @staticmethod

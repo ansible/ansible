@@ -25,10 +25,11 @@ import base64
 import datetime
 import json
 import os
-import shlex
-import zipfile
-import re
 import pkgutil
+import re
+import shlex
+import sys
+import zipfile
 from io import BytesIO
 
 from ansible.release import __version__, __author__
@@ -42,7 +43,7 @@ from ansible.plugins.loader import module_utils_loader
 # If we import write_locks directly then we end up binding a
 # variable to the object and then it never gets updated.
 from ansible.executor import action_write_locks
-
+from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.display import Display
 
 
@@ -643,27 +644,84 @@ class CollectionModuleInfo(ModuleInfo):
         self.py_src = True
         # FIXME: Implement pkg_dir so that we can place __init__.py files
         self.pkg_dir = False
+        self._package_name = None
 
         for path in paths:
-            self._package_name = '.'.join(path.split('/'))
+            package_name = '.'.join(path.split('/'))
+            module_name = '.'.join((package_name, self._mod_name))
+
+            #
+            # Validate the package name
+            #
             try:
-                self.get_source()
+                self._get_source(package_name)
             except FileNotFoundError:
-                pass
-            else:
-                self.path = os.path.join(path, self._mod_name) + '.py'
+                continue
+
+            # Retrieving the source means that a module exists but we don't know if it is a simple
+            # module (single file) or a python package(__init__.py).  is_module_found() will decide
+            # that for us.
+            # (Toshio): This is what I've observed but I'm not sure it is entirely
+            # correct.  I didn't find a specification which made this clear.  It could also be the
+            # way our CollectionLoader works but not how python module loaders work in general.
+
+            try:
+                module_found = AnsibleCollectionLoader().is_module_found(module_name)
+            except Exception as e:
+                # Just move on to trying the next version
+                continue
+
+            if module_found:
+                # We found a module.  Therefore, it is a file-based python module
+                self._package_name = package_name
+                self.path = '{0}.py'.format(os.path.join(path, self._mod_name))
                 break
+            else:
+                # Module not found so it is a python package.  Use the dir name and set pkg_dir
+                self._package_name = package_name
+                self.path = os.path.join(path, self._mod_name)
+                self.pkg_dir = True
+                break
+
         else:
             # FIXME (nitz): implement package fallback code
             raise ImportError('unable to load collection-hosted module_util'
                               ' {0}.{1}'.format(to_native(self._package_name),
                                                 to_native(name)))
 
-    def get_source(self):
+    def _get_source(self, package_name):
+        """
+        External callers rely on the package_name that was passed into the
+        constructor so they should use CollectionModInfo.get_source()
+
+        This helper exists because the constructor uses this function to validate that
+        package_name actually references a module
+
+        :arg package_name: name of the Python package to retrieve source of
+        """
         # FIXME (nitz): need this in py2 for some reason TBD, but we shouldn't (get_data delegates
         # to wrong loader without it)
-        pkg = import_module(self._package_name)
-        data = pkgutil.get_data(to_native(self._package_name), to_native(self._mod_name + '.py'))
+        pkg = import_module(package_name)
+        data = pkgutil.get_data(to_native(package_name), to_native(self._mod_name) + '.py')
+        return data
+
+    def get_source(self):
+        """Return the source code of the module"""
+        data = self._get_source(self._package_name)
+        # pkgutil.get_data() has a quirk where it will return the contents of a
+        # file even if the file does not exist but the filename matches the
+        # python file that the loader is looking in:
+        #
+        #    pkgutil.get_data('six', 'six.py')  => Returns
+        #    site-packages/six.py's contents rather than either
+        #    site-packages/six/six.py or throwing an error
+        #
+        # We don't want that behaviour so get rid of it here
+        full_mod_name = '.'.join((self._package_name, self._mod_name))
+        # Check whether the module was loaded
+        if not AnsibleCollectionLoader().is_module_found(full_mod_name):
+            raise FileNotFoundError("No module named '%s'" % full_mod_name)
+
         return data
 
 
@@ -725,13 +783,16 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
             for idx in (1, 2):
                 if len(py_module_name) < idx:
                     break
+
                 try:
                     # this is a collection-hosted MU; look it up with pkgutil.get_data()
                     module_info = CollectionModuleInfo(py_module_name[-idx],
                                                        [os.path.join(*py_module_name[:-idx])])
                     break
+
                 except ImportError:
                     continue
+
         elif py_module_name[0:2] == ('ansible', 'module_utils'):
             # Need to remove ansible.module_utils because PluginLoader may find different paths
             # for us to look in

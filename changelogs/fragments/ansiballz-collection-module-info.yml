@@ -1,0 +1,3 @@
+bugfixes:
+  - AnsiballZ - Fix detection of module_utils when an identifier being imported
+    has the same name as the Python module it belongs in
