@@ -21,6 +21,8 @@ from .. import (
 )
 
 if t.TYPE_CHECKING:
+    NamedPoints = t.Dict[str, t.Dict[t.Union[int, t.Tuple[int, int]], t.Set[str]]]
+    IndexedPoints = t.Dict[str, t.Dict[t.Union[int, t.Tuple[int, int]], t.Set[int]]]
     Arcs = t.Dict[str, t.Dict[t.Tuple[int, int], t.Set[int]]]
     Lines = t.Dict[str, t.Dict[int, t.Set[int]]]
     TargetIndexes = t.Dict[str, int]
@@ -125,6 +127,22 @@ def expand_indexes(
                 combined_point.add(source_index[covered_target_index])
 
     return combined_data
+
+
+def generate_indexes(target_indexes, data):  # type: (TargetIndexes, NamedPoints) -> IndexedPoints
+    """Return an indexed version of the given data (arcs or points)."""
+    results = {}  # type: IndexedPoints
+
+    for path, points in data.items():
+        result_points = results[path] = {}
+
+        for point, target_names in points.items():
+            result_point = result_points[point] = set()
+
+            for target_name in target_names:
+                result_point.add(get_target_index(target_name, target_indexes))
+
+    return results
 
 
 class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):
