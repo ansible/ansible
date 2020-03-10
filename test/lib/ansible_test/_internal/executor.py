@@ -1838,11 +1838,16 @@ def get_integration_remote_filter(args, targets):
 
     platform = parts[0]
 
+    remote_provider = args.remote_provider
+    if remote_provider:
+        skip = 'skip/%s/%s/' % (remote_provider, platform)
+    else:
+        skip = 'skip/%s/' % platform
+
     exclude = []
 
     common_integration_filter(args, targets, exclude)
 
-    skip = 'skip/%s/' % platform
     skipped = [target.name for target in targets if skip in target.aliases]
     if skipped:
         exclude.append(skip)

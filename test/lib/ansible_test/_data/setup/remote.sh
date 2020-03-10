@@ -41,7 +41,7 @@ if [ "${platform}" = "freebsd" ]; then
         sed -i '' 's/^# *PermitRootLogin.*$/PermitRootLogin yes/;' /etc/ssh/sshd_config
         service sshd restart
     fi
-elif [ "${platform}" = "rhel" ]; then
+elif [ "${platform}" = "rhel" ] || [ "${platform}" = "centos" ]; then
     if grep '8\.' /etc/redhat-release; then
         while true; do
             yum module install -q -y python36 && \
@@ -63,6 +63,8 @@ elif [ "${platform}" = "rhel" ]; then
                 python-devel \
                 python-virtualenv \
                 python2-cryptography \
+                libffi-devel \
+                openssl-devel \
             && break
             echo "Failed to install packages. Sleeping before trying again..."
             sleep 10

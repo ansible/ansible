@@ -1,5 +1,6 @@
 shippable/posix/incidental
 skip/aix
+skip/power/centos
 skip/osx
 skip/freebsd
 skip/rhel8.0

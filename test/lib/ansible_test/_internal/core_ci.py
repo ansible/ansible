@@ -98,6 +98,9 @@ class AnsibleCoreCI:
                 'aix',
                 'ibmi',
             ),
+            ibmvpc=(
+                'power',
+            ),
             parallels=(
                 'osx',
             ),
@@ -123,9 +126,11 @@ class AnsibleCoreCI:
 
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
-        if self.provider in ('aws', 'azure', 'ibmps'):
+        if self.provider in ('aws', 'azure', 'ibmps', 'power'):
             if self.provider != 'aws':
                 self.resource = self.provider
+            if self.provider == 'power':
+                self.resource = [resource for resource, platforms in providers.items() if self.provider in platforms][0]
 
             if args.remote_aws_region:
                 # permit command-line override of region selection

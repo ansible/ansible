@@ -409,7 +409,8 @@ def delegate_remote(args, exclude, require, integration_targets):
 
         core_ci.wait()
 
-        python_version = get_python_version(args, get_remote_completion(), args.remote)
+        remote = '%s/%s' % (args.remote_provider, args.remote) if args.remote_provider else args.remote
+        python_version = get_python_version(args, get_remote_completion(), remote)
 
         if platform == 'windows':
             # Windows doesn't need the ansible-test fluff, just run the SSH command
