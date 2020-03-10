@@ -72,6 +72,5 @@ for version in "${python_versions[@]}"; do
     ansible-test windows-integration --color -v --retry-on-error "${ci}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
         "${platforms[@]}" \
         --docker default --python "${version}" \
-        --enable-test-support \
         --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done
