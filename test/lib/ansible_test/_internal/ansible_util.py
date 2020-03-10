@@ -113,9 +113,7 @@ def ansible_environment(args, color=True, ansible_config=None):
 
 def configure_plugin_paths(args):  # type: (CommonConfig) -> t.Dict[str, str]
     """Return environment variables with paths to plugins relevant for the current command."""
-    # temporarily require opt-in to this feature
-    # once collection migration has occurred this feature should always be enabled
-    if not isinstance(args, IntegrationConfig) or not args.enable_test_support:
+    if not isinstance(args, IntegrationConfig):
         return {}
 
     support_path = os.path.join(ANSIBLE_SOURCE_ROOT, 'test', 'support', args.command)
