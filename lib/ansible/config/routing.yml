@@ -1468,7 +1468,7 @@ plugin_routing:
     iso_extract:
       redirect: community.general.iso_extract
     patch:
-      redirect: community.general.patch
+      redirect: ansible.posix.patch
     read_csv:
       redirect: community.general.read_csv
     xattr:
