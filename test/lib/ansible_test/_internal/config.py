@@ -256,7 +256,6 @@ class IntegrationConfig(TestConfig):
         self.diff = args.diff
         self.no_temp_workdir = args.no_temp_workdir
         self.no_temp_unicode = args.no_temp_unicode
-        self.enable_test_support = args.enable_test_support
 
         if self.get_delegated_completion().get('temp-unicode', 'enabled') == 'disabled':
             self.no_temp_unicode = True
