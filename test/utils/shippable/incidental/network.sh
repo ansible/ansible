@@ -40,7 +40,6 @@ for python_version in "${python_versions[@]}"; do
         --platform-connection "${platform}=ansible.netcommon.network_cli" \
         --platform-collection "vyos=vyos.vyos" \
         --platform-collection "ios=cisco.ios" \
-        --enable-test-support \
         --docker default --python "${python_version}" \
         --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done

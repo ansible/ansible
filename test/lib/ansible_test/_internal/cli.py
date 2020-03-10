@@ -389,10 +389,6 @@ def parse_args():
                              action='store_true',
                              help='avoid unicode characters in temporary directory (use only for verifying broken tests)')
 
-    integration.add_argument('--enable-test-support',
-                             action='store_true',
-                             help=argparse.SUPPRESS)  # temporary option for side-by-side testing -- remove after collection migration
-
     subparsers = parser.add_subparsers(metavar='COMMAND')
     subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
 
