@@ -49,6 +49,7 @@ options:
     default: "set"
     choices: ["add", "remove", "set"]
     version_added: "2.10"
+    type: str
   state:
     description:
     - State to ensure.

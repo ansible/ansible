@@ -54,6 +54,7 @@ options:
     default: "set"
     choices: ["add", "remove", "set"]
     version_added: "2.10"
+    type: str
   privilege:
     description:
     - Accepts a list of member privileges.  The action taken will depend on the value of "member_action."
