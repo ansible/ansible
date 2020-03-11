@@ -21,6 +21,9 @@ from .. import (
 )
 
 if t.TYPE_CHECKING:
+    TargetKey = t.TypeVar('TargetKey', int, t.Tuple[int, int])
+    NamedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[str]]]
+    IndexedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
     Arcs = t.Dict[str, t.Dict[t.Tuple[int, int], t.Set[int]]]
     Lines = t.Dict[str, t.Dict[int, t.Set[int]]]
     TargetIndexes = t.Dict[str, int]
@@ -105,6 +108,42 @@ def get_target_set_index(data, target_set_indexes):  # type: (t.Set[int], Target
 def get_target_index(name, target_indexes):  # type: (str, TargetIndexes) -> int
     """Find or add the target in the result set and return the target index."""
     return target_indexes.setdefault(name, len(target_indexes))
+
+
+def expand_indexes(
+        source_data,  # type: IndexedPoints
+        source_index,  # type: t.List[str]
+        format_func,  # type: t.Callable[t.Tuple[t.Any], str]
+):  # type: (...) -> NamedPoints
+    """Expand indexes from the source into target names for easier processing of the data (arcs or lines)."""
+    combined_data = {}  # type: t.Dict[str, t.Dict[t.Any, t.Set[str]]]
+
+    for covered_path, covered_points in source_data.items():
+        combined_points = combined_data.setdefault(covered_path, {})
+
+        for covered_point, covered_target_indexes in covered_points.items():
+            combined_point = combined_points.setdefault(format_func(covered_point), set())
+
+            for covered_target_index in covered_target_indexes:
+                combined_point.add(source_index[covered_target_index])
+
+    return combined_data
+
+
+def generate_indexes(target_indexes, data):  # type: (TargetIndexes, NamedPoints) -> IndexedPoints
+    """Return an indexed version of the given data (arcs or points)."""
+    results = {}  # type: IndexedPoints
+
+    for path, points in data.items():
+        result_points = results[path] = {}
+
+        for point, target_names in points.items():
+            result_point = result_points[point] = set()
+
+            for target_name in target_names:
+                result_point.add(get_target_index(target_name, target_indexes))
+
+    return results
 
 
 class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):

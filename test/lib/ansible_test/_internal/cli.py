@@ -125,6 +125,11 @@ from .coverage.analyze.targets.expand import (
     CoverageAnalyzeTargetsExpandConfig,
 )
 
+from .coverage.analyze.targets.filter import (
+    command_coverage_analyze_targets_filter,
+    CoverageAnalyzeTargetsFilterConfig,
+)
+
 from .coverage.analyze.targets.combine import (
     command_coverage_analyze_targets_combine,
     CoverageAnalyzeTargetsCombineConfig,
@@ -722,6 +727,51 @@ def add_coverage_analyze(coverage_subparsers, coverage_common):  # type: (argpar
     targets_expand.add_argument(
         'output_file',
         help='output file to write expanded coverage to',
+    )
+
+    targets_filter = targets_subparsers.add_parser(
+        'filter',
+        parents=[coverage_common],
+        help='filter aggregated coverage data',
+    )
+
+    targets_filter.set_defaults(
+        func=command_coverage_analyze_targets_filter,
+        config=CoverageAnalyzeTargetsFilterConfig,
+    )
+
+    targets_filter.add_argument(
+        'input_file',
+        help='input file to read aggregated coverage from',
+    )
+
+    targets_filter.add_argument(
+        'output_file',
+        help='output file to write expanded coverage to',
+    )
+
+    targets_filter.add_argument(
+        '--include-target',
+        dest='include_targets',
+        action='append',
+        help='include the specified targets',
+    )
+
+    targets_filter.add_argument(
+        '--exclude-target',
+        dest='exclude_targets',
+        action='append',
+        help='exclude the specified targets',
+    )
+
+    targets_filter.add_argument(
+        '--include-path',
+        help='include paths matching the given regex',
+    )
+
+    targets_filter.add_argument(
+        '--exclude-path',
+        help='exclude paths matching the given regex',
     )
 
     targets_combine = targets_subparsers.add_parser(

@@ -11,6 +11,7 @@ from ....io import (
 
 from . import (
     CoverageAnalyzeTargetsConfig,
+    expand_indexes,
     format_arc,
     read_report,
 )
@@ -27,26 +28,6 @@ def command_coverage_analyze_targets_expand(args):  # type: (CoverageAnalyzeTarg
 
     if not args.explain:
         write_json_file(args.output_file, report, encoder=SortedSetEncoder)
-
-
-def expand_indexes(
-        source_data,  # type: t.Dict[str, t.Dict[t.Any, t.Set[int]]]
-        source_index,  # type: t.List[str]
-        format_func,  # type: t.Callable[t.Tuple[t.Any], str]
-):  # type: (...) -> t.Dict[str, t.Dict[t.Any, t.Set[str]]]
-    """Merge indexes from the source into the combined data set (arcs or lines)."""
-    combined_data = {}  # type: t.Dict[str, t.Dict[t.Any, t.Set[str]]]
-
-    for covered_path, covered_points in source_data.items():
-        combined_points = combined_data.setdefault(covered_path, {})
-
-        for covered_point, covered_target_indexes in covered_points.items():
-            combined_point = combined_points.setdefault(format_func(covered_point), set())
-
-            for covered_target_index in covered_target_indexes:
-                combined_point.add(source_index[covered_target_index])
-
-    return combined_data
 
 
 class CoverageAnalyzeTargetsExpandConfig(CoverageAnalyzeTargetsConfig):

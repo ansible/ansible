@@ -15,6 +15,7 @@ from . import (
 if t.TYPE_CHECKING:
     from . import (
         Arcs,
+        IndexedPoints,
         Lines,
         TargetIndexes,
     )
@@ -38,9 +39,9 @@ def command_coverage_analyze_targets_combine(args):  # type: (CoverageAnalyzeTar
 
 
 def merge_indexes(
-        source_data,  # type: t.Dict[str, t.Dict[t.Any, t.Set[int]]]
+        source_data,  # type: IndexedPoints
         source_index,  # type: t.List[str]
-        combined_data,  # type: t.Dict[str, t.Dict[t.Any, t.Set[int]]]
+        combined_data,  # type: IndexedPoints
         combined_index,  # type: TargetIndexes
 ):  # type: (...) -> None
     """Merge indexes from the source into the combined data set (arcs or lines)."""
