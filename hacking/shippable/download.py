@@ -244,7 +244,7 @@ def download_run_recursive(args, headers, output_dir, run, is_given=False):
 
     rerun_batch_id = run.get('reRunBatchId')
     if rerun_batch_id:
-        print('Recursing traverse_previous_runs for parent run %s' % rerun_batch_id)
+        print('Downloading previous run: %s' % rerun_batch_id)
         response = requests.get('https://api.shippable.com/runs/%s' % rerun_batch_id, headers=headers)
 
         if response.status_code != 200:
