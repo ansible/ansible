@@ -190,13 +190,6 @@ def download_run(args):
 
     output_dir = '%s/%s/%s' % (account, project, run_number)
 
-    response = requests.get('https://api.shippable.com/jobs?runIds=%s' % args.run_id, headers=headers)
-
-    if response.status_code != 200:
-        raise Exception(response.content)
-
-    jobs = sorted(response.json(), key=lambda job: int(job['jobNumber']))
-
     if not args.test:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
@@ -212,7 +205,53 @@ def download_run(args):
             with open(path, 'w') as metadata_fd:
                 metadata_fd.write(contents)
 
-    download_jobs(args, jobs, headers, output_dir)
+    download_run_recursive(args, headers, output_dir, run, True)
+
+
+def download_run_recursive(args, headers, output_dir, run, is_given=False):
+    # Notes:
+    # - The /runs response tells us if we need to eventually go up another layer
+    #   or not (if we are a re-run attempt or not).
+    # - Given a run id, /jobs will tell us all the jobs in that run, and whether
+    #   or not we can pull results from them.
+    #
+    # When we initially run (i.e., in download_run), we'll have a /runs output
+    # which we can use to get a /jobs output. Using the /jobs output, we filter
+    # on the jobs we need to fetch (usually only successful ones unless we are
+    # processing the initial/given run and not one of its parent runs) and
+    # download them accordingly.
+    #
+    # Lastly, we check if the run we are currently processing has another
+    # parent (reRunBatchId). If it does, we pull that /runs result and
+    # recurse using it to start the process over again.
+    response = requests.get('https://api.shippable.com/jobs?runIds=%s' % run['id'], headers=headers)
+
+    if response.status_code != 200:
+        raise Exception(response.content)
+
+    jobs = sorted(response.json(), key=lambda job: int(job['jobNumber']))
+
+    if is_given:
+        needed_jobs = [j for j in jobs if j['isConsoleArchived']]
+    else:
+        needed_jobs = [j for j in jobs if j['isConsoleArchived'] and j['statusCode'] == 30]
+
+    if not args.test:
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+    download_jobs(args, needed_jobs, headers, output_dir)
+
+    rerun_batch_id = run.get('reRunBatchId')
+    if rerun_batch_id:
+        print('Downloading previous run: %s' % rerun_batch_id)
+        response = requests.get('https://api.shippable.com/runs/%s' % rerun_batch_id, headers=headers)
+
+        if response.status_code != 200:
+            raise Exception(response.content)
+
+        run = response.json()
+        download_run_recursive(args, headers, output_dir, run)
 
 
 def download_jobs(args, jobs, headers, output_dir):
