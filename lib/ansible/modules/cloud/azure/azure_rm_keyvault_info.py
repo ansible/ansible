@@ -198,7 +198,8 @@ def keyvault_to_dict(vault):
             permissions=dict(
                 keys=[kp.lower() for kp in policy.permissions.keys] if policy.permissions.keys else None,
                 secrets=[sp.lower() for sp in policy.permissions.secrets] if policy.permissions.secrets else None,
-                certificates=[cp.lower() for cp in policy.permissions.certificates] if policy.permissions.certificates else None
+                certificates=[cp.lower() for cp in policy.permissions.certificates] if policy.permissions.certificates else None,
+                storage=[stp.lower() for stp in policy.permissions.storage] if policy.permissions.storage else None
             ) if policy.permissions else None,
         ) for policy in vault.properties.access_policies] if vault.properties.access_policies else None,
         sku=dict(
