@@ -719,8 +719,12 @@ def main():
 
             changed = True
     elif state == 'mounted':
-        if not os.path.exists(args['src']):
-            module.fail_json(msg="Unable to mount %s as it does not exist" % args['src'])
+        if args['src'].startswith('/dev/') and not os.path.exists(args['src']):
+            if module.check_mode:
+                # Maybe something earlier in the playbook would have created it "for real"
+                module.warn("%s does not exist, continuing anyway due to check mode" % args['src'])
+            else:
+                module.fail_json(msg="Unable to mount %s as it does not exist" % args['src'])
 
         if not os.path.exists(name) and not module.check_mode:
             try:
