@@ -245,13 +245,15 @@ namespace Ansible.Basic
 
         public void Deprecate(string message, string version = null, string date = null)
         {
-            if (version != null) {
-                deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "version", version } });
-                LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
-            }
-            if (date != null) {
+            if (date != null)
+            {
                 deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "date", date } });
                 LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, date));
+            }
+            else
+            {
+                deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "version", version } });
+                LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
             }
         }
 
@@ -709,11 +711,13 @@ namespace Ansible.Basic
                     if (parameters.Contains(aliasName))
                     {
                         string msg = String.Format("Alias '{0}' is deprecated. See the module docs for more information", aliasName);
-                        if (depInfo.ContainsKey("version")) {
+                        if (depInfo.ContainsKey("version"))
+                        {
                             string depVersion = (string)depInfo["version"];
                             Deprecate(FormatOptionsContext(msg, " - "), version: depVersion);
                         }
-                        if (depInfo.ContainsKey("version")) {
+                        if (depInfo.ContainsKey("version"))
+                        {
                             string depDate = (string)depInfo["date"];
                             Deprecate(FormatOptionsContext(msg, " - "), date: depDate);
                         }

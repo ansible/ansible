@@ -20,10 +20,10 @@ def warn(warning):
 
 def deprecate(msg, version=None, date=None):
     if isinstance(msg, string_types):
-        if version is not None:
-            _global_deprecations.append({'msg': msg, 'version': version})
         if date is not None:
             _global_deprecations.append({'msg': msg, 'date': date})
+        else:
+            _global_deprecations.append({'msg': msg, 'version': version})
     else:
         raise TypeError("deprecate requires a string not a %s" % type(msg))
 

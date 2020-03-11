@@ -727,10 +727,10 @@ class AnsibleModule(object):
 
     def deprecate(self, msg, version=None, date=None):
         deprecate(msg, version=version, date=date)
-        if version is not None:
-            self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
         if date is not None:
             self.log('[DEPRECATION WARNING] %s %s' % (msg, date))
+        else:
+            self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
 
     def load_file_common_arguments(self, params, path=None):
         '''
