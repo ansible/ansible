@@ -1,6 +1,6 @@
 - hosts: localhost
   vars:
-    vaulted_valued: !vault |
+    vaulted_value: !vault |
           $ANSIBLE_VAULT;1.1;AES256
           35323961353038346165643738646465376139363061353835303739663538343266303232326635
           3365353662646236356665323135633630656238316530640a663362363763633436373439663031
@@ -9,101 +9,101 @@
           3833
   tasks:
     - debug:
-        msg: "{{ vaulted_valued }}"
+        msg: "{{ vaulted_value }}"
 
     - debug:
-        msg: "{{ vaulted_valued|type_debug }}"
+        msg: "{{ vaulted_value|type_debug }}"
 
     - assert:
         that:
-          - vaulted_valued is vault_encrypted
-          - vaulted_valued == 'foo bar'
-          - vaulted_valued|string == 'foo bar'
-          - vaulted_valued|quote == "'foo bar'"
-          - vaulted_valued|capitalize == 'Foo bar'
-          - vaulted_valued|center(width=9) == ' foo bar '
-          - vaulted_valued|default('monkey') == 'foo bar'
-          - vaulted_valued|escape == 'foo bar'
-          - vaulted_valued|forceescape == 'foo bar'
-          - vaulted_valued|first == 'f'
-          - "'%s'|format(vaulted_valued) == 'foo bar'"
-          - vaulted_valued|indent(indentfirst=True) == '    foo bar'
-          - vaulted_valued.split() == ['foo', 'bar']
-          - vaulted_valued|join('-') == 'f-o-o- -b-a-r'
-          - vaulted_valued|last == 'r'
-          - vaulted_valued|length == 7
-          - vaulted_valued|list == ['f', 'o', 'o', ' ', 'b', 'a', 'r']
-          - vaulted_valued|lower == 'foo bar'
-          - vaulted_valued|replace('foo', 'baz') == 'baz bar'
-          - vaulted_valued|reverse|string == 'rab oof'
-          - vaulted_valued|safe == 'foo bar'
-          - vaulted_valued|slice(2)|list == [['f', 'o', 'o', ' '], ['b', 'a', 'r']]
-          - vaulted_valued|sort|list == [" ", "a", "b", "f", "o", "o", "r"]
-          - vaulted_valued|trim == 'foo bar'
-          - vaulted_valued|upper == 'FOO BAR'
+          - vaulted_value is vault_encrypted
+          - vaulted_value == 'foo bar'
+          - vaulted_value|string == 'foo bar'
+          - vaulted_value|quote == "'foo bar'"
+          - vaulted_value|capitalize == 'Foo bar'
+          - vaulted_value|center(width=9) == ' foo bar '
+          - vaulted_value|default('monkey') == 'foo bar'
+          - vaulted_value|escape == 'foo bar'
+          - vaulted_value|forceescape == 'foo bar'
+          - vaulted_value|first == 'f'
+          - "'%s'|format(vaulted_value) == 'foo bar'"
+          - vaulted_value|indent(indentfirst=True) == '    foo bar'
+          - vaulted_value.split() == ['foo', 'bar']
+          - vaulted_value|join('-') == 'f-o-o- -b-a-r'
+          - vaulted_value|last == 'r'
+          - vaulted_value|length == 7
+          - vaulted_value|list == ['f', 'o', 'o', ' ', 'b', 'a', 'r']
+          - vaulted_value|lower == 'foo bar'
+          - vaulted_value|replace('foo', 'baz') == 'baz bar'
+          - vaulted_value|reverse|string == 'rab oof'
+          - vaulted_value|safe == 'foo bar'
+          - vaulted_value|slice(2)|list == [['f', 'o', 'o', ' '], ['b', 'a', 'r']]
+          - vaulted_value|sort|list == [" ", "a", "b", "f", "o", "o", "r"]
+          - vaulted_value|trim == 'foo bar'
+          - vaulted_value|upper == 'FOO BAR'
           # jinja2.filters.do_urlencode uses an isinstance against string_types
-          # - vaulted_valued|urlencode == 'foo%20bar'
-          - vaulted_valued|urlize == 'foo bar'
-          - vaulted_valued is not callable
-          - vaulted_valued is iterable
-          - vaulted_valued is lower
-          - vaulted_valued is not none
+          # - vaulted_value|urlencode == 'foo%20bar'
+          - vaulted_value|urlize == 'foo bar'
+          - vaulted_value is not callable
+          - vaulted_value is iterable
+          - vaulted_value is lower
+          - vaulted_value is not none
           # This is not exactly a string, and UserString doesn't fulfill this
-          # - vaulted_valued is string
-          - vaulted_valued is not upper
+          # - vaulted_value is string
+          - vaulted_value is not upper
 
-          - vaulted_valued|b64encode == 'Zm9vIGJhcg=='
-          - vaulted_valued|to_uuid == '0271fe51-bb26-560f-b118-5d6513850860'
-          - vaulted_valued|string|to_json == '"foo bar"'
-          - vaulted_valued|md5 == '327b6f07435811239bc47e1544353273'
-          - vaulted_valued|sha1 == '3773dea65156909838fa6c22825cafe090ff8030'
-          - vaulted_valued|hash == '3773dea65156909838fa6c22825cafe090ff8030'
-          - vaulted_valued|regex_replace('foo', 'baz') == 'baz bar'
-          - vaulted_valued|regex_escape == 'foo\ bar'
-          - vaulted_valued|regex_search('foo') == 'foo'
-          - vaulted_valued|regex_findall('foo') == ['foo']
-          - vaulted_valued|comment == '#\n# foo bar\n#'
+          - vaulted_value|b64encode == 'Zm9vIGJhcg=='
+          - vaulted_value|to_uuid == '0271fe51-bb26-560f-b118-5d6513850860'
+          - vaulted_value|string|to_json == '"foo bar"'
+          - vaulted_value|md5 == '327b6f07435811239bc47e1544353273'
+          - vaulted_value|sha1 == '3773dea65156909838fa6c22825cafe090ff8030'
+          - vaulted_value|hash == '3773dea65156909838fa6c22825cafe090ff8030'
+          - vaulted_value|regex_replace('foo', 'baz') == 'baz bar'
+          - vaulted_value|regex_escape == 'foo\ bar'
+          - vaulted_value|regex_search('foo') == 'foo'
+          - vaulted_value|regex_findall('foo') == ['foo']
+          - vaulted_value|comment == '#\n# foo bar\n#'
 
     - assert:
         that:
-          - vaulted_valued|random(seed='foo') == ' '
-          - vaulted_valued|shuffle(seed='foo') == ["o", "f", "r", "b", "o", "a", " "]
-          - vaulted_valued|pprint == "'foo bar'"
+          - vaulted_value|random(seed='foo') == ' '
+          - vaulted_value|shuffle(seed='foo') == ["o", "f", "r", "b", "o", "a", " "]
+          - vaulted_value|pprint == "'foo bar'"
       when: ansible_python.version.major == 3
 
     - assert:
         that:
-          - vaulted_valued|random(seed='foo') == 'r'
-          - vaulted_valued|shuffle(seed='foo') == ["b", "o", "a", " ", "o", "f", "r"]
-          - vaulted_valued|pprint == "u'foo bar'"
+          - vaulted_value|random(seed='foo') == 'r'
+          - vaulted_value|shuffle(seed='foo') == ["b", "o", "a", " ", "o", "f", "r"]
+          - vaulted_value|pprint == "u'foo bar'"
       when: ansible_python.version.major == 2
 
     - assert:
         that:
-          - vaulted_valued|map('upper')|list == ['F', 'O', 'O', ' ', 'B', 'A', 'R']
+          - vaulted_value|map('upper')|list == ['F', 'O', 'O', ' ', 'B', 'A', 'R']
       when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.7', '>=')
 
 
     - assert:
         that:
-          - vaulted_valued.split()|first|int(base=36) == 20328
-          - vaulted_valued|select('equalto', 'o')|list == ['o', 'o']
-          - vaulted_valued|title == 'Foo Bar'
-          - vaulted_valued is equalto('foo bar')
+          - vaulted_value.split()|first|int(base=36) == 20328
+          - vaulted_value|select('equalto', 'o')|list == ['o', 'o']
+          - vaulted_value|title == 'Foo Bar'
+          - vaulted_value is equalto('foo bar')
       when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.8', '>=')
 
     - assert:
         that:
-          - vaulted_valued|string|tojson == '"foo bar"'
-          - vaulted_valued|truncate(4) == 'foo bar'
+          - vaulted_value|string|tojson == '"foo bar"'
+          - vaulted_value|truncate(4) == 'foo bar'
       when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.9', '>=')
 
     - assert:
         that:
-          - vaulted_valued|wordwrap(4) == 'foo\nbar'
+          - vaulted_value|wordwrap(4) == 'foo\nbar'
       when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.11', '>=')
 
     - assert:
         that:
-          - vaulted_valued|wordcount == 2
+          - vaulted_value|wordcount == 2
       when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.11.2', '>=')
