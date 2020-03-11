@@ -115,13 +115,18 @@ def argument_spec_schema():
             'aliases': Any(list_string_types, tuple(list_string_types)),
             'apply_defaults': bool,
             'removed_in_version': Any(float, *string_types),
+            'removed_at_date': Any(*string_types),
             'options': Self,
-            'deprecated_aliases': Any([
-                {
+            'deprecated_aliases': Any([Any(
+                Schema({
                     Required('name'): Any(*string_types),
                     Required('version'): Any(float, *string_types),
-                },
-            ]),
+                }),
+                Schema({
+                    Required('name'): Any(*string_types),
+                    Required('date'): Any(*string_types),
+                }),
+            )]),
         }
     }
     schema[any_string_types].update(argument_spec_modifiers)

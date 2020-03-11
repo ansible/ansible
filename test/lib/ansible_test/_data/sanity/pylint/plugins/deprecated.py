@@ -4,6 +4,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import datetime
+
 from distutils.version import LooseVersion
 
 import astroid
@@ -22,10 +24,10 @@ MSGS = {
               "Used when a call to Display.deprecated specifies a version "
               "less than or equal to the current version of Ansible",
               {'minversion': (2, 6)}),
-    'E9502': ("Display.deprecated call without a version",
+    'E9502': ("Display.deprecated call without a version or date",
               "ansible-deprecated-no-version",
               "Used when a call to Display.deprecated does not specify a "
-              "version",
+              "version or date",
               {'minversion': (2, 6)}),
     'E9503': ("Invalid deprecated version (%r) found in call to "
               "Display.deprecated or AnsibleModule.deprecate",
@@ -45,6 +47,18 @@ MSGS = {
               "collection-invalid-deprecated-version",
               "Used when a call to Display.deprecated specifies an invalid "
               "collection version number",
+              {'minversion': (2, 6)}),
+    'E9504': ("Expired date (%r) found in call to Display.deprecated "
+              "or AnsibleModule.deprecate",
+              "ansible-deprecated-date",
+              "Used when a call to Display.deprecated specifies a date "
+              "before today",
+              {'minversion': (2, 6)}),
+    'E9505': ("Invalid deprecated date (%r) found in call to "
+              "Display.deprecated or AnsibleModule.deprecate",
+              "ansible-invalid-deprecated-date",
+              "Used when a call to Display.deprecated specifies an invalid "
+              "date. It must be a string in format YYYY-MM-DD",
               {'minversion': (2, 6)}),
 }
 
@@ -105,6 +119,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
     @check_messages(*(MSGS.keys()))
     def visit_call(self, node):
         version = None
+        date = None
         try:
             if (node.func.attrname == 'deprecated' and 'display' in _get_expr_name(node) or
                     node.func.attrname == 'deprecate' and _get_expr_name(node)):
@@ -118,25 +133,38 @@ class AnsibleDeprecatedChecker(BaseChecker):
                                 # This is likely a variable
                                 return
                             version = keyword.value.value
-                if not version:
+                        if keyword.arg == 'date':
+                            if isinstance(keyword.value.value, astroid.Name):
+                                # This is likely a variable
+                                return
+                            date = keyword.value.value
+                if not version and not date:
                     try:
                         version = node.args[1].value
                     except IndexError:
                         self.add_message('ansible-deprecated-no-version', node=node)
                         return
 
-                try:
-                    loose_version = self.version_constructor(str(version))
-                    if self.is_collection and self.collection_version is not None:
-                        if self.collection_version >= loose_version:
-                            self.add_message('collection-deprecated-version', node=node, args=(version,))
-                    if not self.is_collection and ANSIBLE_VERSION >= loose_version:
-                        self.add_message('ansible-deprecated-version', node=node, args=(version,))
-                except ValueError:
-                    if self.is_collection:
-                        self.add_message('collection-invalid-deprecated-version', node=node, args=(version,))
-                    else:
-                        self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
+                if version:
+                    try:
+                        loose_version = self.version_constructor(str(version))
+                        if self.is_collection and self.collection_version is not None:
+                            if self.collection_version >= loose_version:
+                                self.add_message('collection-deprecated-version', node=node, args=(version,))
+                        if not self.is_collection and ANSIBLE_VERSION >= loose_version:
+                            self.add_message('ansible-deprecated-version', node=node, args=(version,))
+                    except ValueError:
+                        if self.is_collection:
+                            self.add_message('collection-invalid-deprecated-version', node=node, args=(version,))
+                        else:
+                            self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
+
+                if date:
+                    try:
+                        if datetime.date.fromisoformat(date) < datetime.date.today():
+                            self.add_message('ansible-deprecated-date', node=node, args=(date,))
+                    except ValueError:
+                        self.add_message('ansible-invalid-deprecated-date', node=node, args=(date,))
         except AttributeError:
             # Not the type of node we are interested in
             pass
