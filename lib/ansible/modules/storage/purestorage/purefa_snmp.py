@@ -53,7 +53,6 @@ options:
     type: str
     description:
     - IPv4 or IPv6 address or FQDN to send trap messages to.
-    required: True
   user:
     type: str
     description:
@@ -221,7 +220,6 @@ def create_manager(module, array):
                                           version=module.params['version'],
                                           community=module.params['community'],
                                           notification=module.params['notification'],
-                                          user=module.params['user'],
                                           host=module.params['host']
                                           )
             except Exception:
@@ -284,7 +282,7 @@ def main():
     argument_spec = purefa_argument_spec()
     argument_spec.update(dict(
         name=dict(type='str', required=True),
-        host=dict(type='str', required=True),
+        host=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present']),
         user=dict(type='str'),
         notification=dict(type='str', choices=['inform', 'trap'], default='trap'),
