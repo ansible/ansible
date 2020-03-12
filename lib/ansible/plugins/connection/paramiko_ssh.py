@@ -125,6 +125,17 @@ DOCUMENTATION = """
         ini:
           - section: defaults
             key: use_persistent_connections
+      banner_timeout:
+        type: float
+        default: 30
+        description:
+          - Configures, in seconds, the amount of time to wait for the SSH
+            banner to be presented.
+        ini:
+          - section: paramiko_connection
+            key: banner_timeout
+        env:
+          - name: ANSIBLE_PARAMIKO_BANNER_TIMEOUT
 # TODO:
 #timeout=self._play_context.timeout,
 """
@@ -347,6 +358,7 @@ class Connection(ConnectionBase):
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
                 port=port,
+                banner_timeout=self.get_option('banner_timeout'),
                 **ssh_connect_kwargs
             )
         except paramiko.ssh_exception.BadHostKeyException as e:
