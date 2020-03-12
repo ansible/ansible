@@ -651,7 +651,7 @@ class StorageDomainModule(BaseModule):
             equal(self.param('critical_space_action_blocker'), entity.critical_space_action_blocker) and
             equal(self.param('discard_after_delete'), entity.discard_after_delete) and
             equal(self.param('wipe_after_delete'), entity.wipe_after_delete) and
-            equal(self.param('warning_low_space_indicator'), entity.warning_low_space_indicator)
+            equal(self.param('warning_low_space'), entity.warning_low_space_indicator)
         )
 
 
