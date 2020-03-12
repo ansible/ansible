@@ -791,7 +791,7 @@ class Connection(NetworkConnectionBase):
 
     def _receive_data(self, buffer):
         if self._transport_type == 'libssh':
-            while True:
-                if self._ssh_shell.poll():
-                    break
+            while not self._ssh_shell.poll():
+                time.sleep(0.001)
+
         return self._ssh_shell.recv(buffer)

@@ -140,9 +140,9 @@ import logging
 display = Display()
 
 try:
-    from pylibssh.session import Session
-    from pylibssh.channel import Channel
-    from pylibssh.errors import LibsshSessionException
+    from pylibsshext.session import Session
+    from pylibsshext.channel import Channel
+    from pylibsshext.errors import LibsshSessionException
     HAS_PYLIBSSH = True
 except ImportError:
     HAS_PYLIBSSH = False
@@ -217,7 +217,7 @@ class Connection(ConnectionBase):
         ''' activates the connection object '''
 
         if not HAS_PYLIBSSH:
-            raise AnsibleError("pylibssh is not installed")
+            raise AnsibleError("ansible-pylibssh is not installed")
 
         ssh_connect_kwargs = {}
 
@@ -318,7 +318,7 @@ class Connection(ConnectionBase):
                     chan.poll(timeout=self._play_context.timeout)
                     chunk = chan.recv(bufsize)
                     display.debug("chunk is: %s" % chunk)
-                    q("chunk is: %s" % chunk)
+
                     if not chunk:
                         if b'unknown user' in become_output:
                             n_become_user = to_native(self.become.get_option('become_user',
