@@ -793,6 +793,47 @@ test_no_log - Invoked with:
         $actual | Assert-DictionaryEquals -Expected $expected
     }
 
+    "Removed at date" = {
+        $spec = @{
+            options = @{
+                removed1 = @{removed_at_date = "2020-03-10"}
+                removed2 = @{removed_at_date = "2020-03-11"}
+            }
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            removed1 = "value"
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            invocation = @{
+                module_args = @{
+                    removed1 = "value"
+                    removed2 = $null
+                }
+            }
+            deprecations = @(
+                @{
+                    msg = "Param 'removed1' is deprecated. See the module docs for more information"
+                    date = "2020-03-10"
+                }
+            )
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
     "Deprecated aliases" = {
         $spec = @{
             options = @{
@@ -803,8 +844,12 @@ test_no_log - Invoked with:
                     options = @{
                         option1 = @{ type = "str"; aliases = "alias1"; deprecated_aliases = @(@{name = "alias1"; version = "2.10"}) }
                         option2 = @{ type = "str"; aliases = "alias2"; deprecated_aliases = @(@{name = "alias2"; version = "2.11"}) }
+                        option3 = @{ type = "str"; aliases = "alias3"; deprecated_aliases = @(@{name = "alias3"; date = "2020-03-11"}) }
+                        option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = "2020-03-09"}) }
                     }
                 }
+                option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = "2020-03-10"}) }
+                option5 = @{ type = "str"; aliases = "alias5"; deprecated_aliases = @(@{name = "alias5"; date = "2020-03-12"}) }
             }
         }
 
@@ -814,7 +859,11 @@ test_no_log - Invoked with:
             option3 = @{
                 option1 = "option1"
                 alias2 = "alias2"
+                option3 = "option3"
+                alias4 = "alias4"
             }
+            option4 = "option4"
+            alias5 = "alias5"
         }
 
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
@@ -839,7 +888,13 @@ test_no_log - Invoked with:
                         option1 = "option1"
                         option2 = "alias2"
                         alias2 = "alias2"
+                        option3 = "option3"
+                        option4 = "alias4"
+                        alias4 = "alias4"
                     }
+                    option4 = "option4"
+                    option5 = "alias5"
+                    alias5 = "alias5"
                 }
             }
             deprecations = @(
@@ -850,6 +905,14 @@ test_no_log - Invoked with:
                 @{
                     msg = "Alias 'alias2' is deprecated. See the module docs for more information - found in option3"
                     version = "2.11"
+                }
+                @{
+                    msg = "Alias 'alias4' is deprecated. See the module docs for more information - found in option3"
+                    date = "2020-03-09"
+                }
+                @{
+                    msg = "Alias 'alias5' is deprecated. See the module docs for more information"
+                    date = "2020-03-12"
                 }
             )
         }
@@ -1652,7 +1715,7 @@ test_no_log - Invoked with:
         ("exception" -cin $actual.Keys) | Assert-Equals -Expected $true
     }
 
-    "Invalid deprecated aliases entry - no version" = {
+    "Invalid deprecated aliases entry - no version and date" = {
         $spec = @{
             options = @{
                 option_key = @{
@@ -1675,7 +1738,7 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equals -Expected $true
 
-        $expected_msg = "internal error: version is required in a deprecated_aliases entry"
+        $expected_msg = "internal error: One of version and date is required in a deprecated_aliases entry"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
         $actual.failed | Assert-Equals -Expected $true
@@ -1716,6 +1779,41 @@ test_no_log - Invoked with:
             $_.Exception.Message | Assert-Equals -Expected $expected_msg
         }
         $failed | Assert-Equals -Expected $true
+    }
+
+    "Invalid deprecated aliases entry - both version and date" = {
+        $spec = @{
+            options = @{
+                option_key = @{
+                    type = "str"
+                    aliases = ,"alias_name"
+                    deprecated_aliases = @(
+                        @{
+                            name = "alias_name"
+                            date = "2020-03-10"
+                            version = "2.11"
+                        }
+                    )
+                }
+            }
+        }
+
+        $failed = $false
+        try {
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 1"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected_msg = "internal error: Only one of version or date is allowed in a deprecated_aliases entry"
+
+        $actual.Keys.Count | Assert-Equals -Expected 3
+        $actual.failed | Assert-Equals -Expected $true
+        $actual.msg | Assert-Equals -Expected $expected_msg
+        ("exception" -cin $actual.Keys) | Assert-Equals -Expected $true
     }
 
     "Spec required and default set at the same time" = {

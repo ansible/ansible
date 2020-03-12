@@ -706,6 +706,16 @@ namespace Ansible.Basic
                             throw new ArgumentException(FormatOptionsContext(msg, " - "));
                         }
                     }
+                    if (!depInfo.ContainsKey("version") && !depInfo.ContainsKey("date"))
+                    {
+                        string msg = String.Format("One of version or date is required in a deprecated_aliases entry", keyName);
+                        throw new ArgumentException(FormatOptionsContext(msg, " - "));
+                    }
+                    if (depInfo.ContainsKey("version") && depInfo.ContainsKey("date"))
+                    {
+                        string msg = String.Format("Only one of version or date is allowed in a deprecated_aliases entry", keyName);
+                        throw new ArgumentException(FormatOptionsContext(msg, " - "));
+                    }
                     string aliasName = (string)depInfo["name"];
 
                     if (parameters.Contains(aliasName))
@@ -716,7 +726,7 @@ namespace Ansible.Basic
                             string depVersion = (string)depInfo["version"];
                             Deprecate(FormatOptionsContext(msg, " - "), version: depVersion);
                         }
-                        if (depInfo.ContainsKey("version"))
+                        if (depInfo.ContainsKey("date"))
                         {
                             string depDate = (string)depInfo["date"];
                             Deprecate(FormatOptionsContext(msg, " - "), date: depDate);
