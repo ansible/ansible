@@ -708,12 +708,12 @@ namespace Ansible.Basic
                     }
                     if (!depInfo.ContainsKey("version") && !depInfo.ContainsKey("date"))
                     {
-                        string msg = String.Format("One of version or date is required in a deprecated_aliases entry", keyName);
+                        string msg = "One of version or date is required in a deprecated_aliases entry";
                         throw new ArgumentException(FormatOptionsContext(msg, " - "));
                     }
                     if (depInfo.ContainsKey("version") && depInfo.ContainsKey("date"))
                     {
-                        string msg = String.Format("Only one of version or date is allowed in a deprecated_aliases entry", keyName);
+                        string msg = "Only one of version or date is allowed in a deprecated_aliases entry";
                         throw new ArgumentException(FormatOptionsContext(msg, " - "));
                     }
                     string aliasName = (string)depInfo["name"];
