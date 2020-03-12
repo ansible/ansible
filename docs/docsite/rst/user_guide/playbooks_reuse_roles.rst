@@ -297,7 +297,7 @@ In this example, Ansible runs ``foo`` twice because we have explicitly enabled i
 Using role dependencies
 =======================
 
-Role dependencies let you automatically pull in other roles when using a role. Ansible does not execute role dependencies when you include or import a role. You must use the ``roles`` keyword if you want Ansible to execute role dependencies.
+Role dependencies let you automatically pull in other roles when using a role.
 
 Role dependencies are stored in the ``meta/main.yml`` file within the role directory. This file should contain a list of roles and parameters to insert before the specified role. For example:
 
@@ -318,6 +318,19 @@ Role dependencies are stored in the ``meta/main.yml`` file within the role direc
           other_parameter: 12
 
 Ansible always executes role dependencies before the role that includes them. Ansible executes recursive role dependencies as well. If one role depends on a second role, and the second role depends on a third role, Ansible executes the third role, then the second role, then the first role.
+
+Alternatively you can specify dependencies under the `install_dependencies` attribute:
+
+.. code-block:: yaml
+
+    # roles/myapp/meta/main.yml
+    ---
+    install_dependencies:
+      - role: common
+      - role: apache
+
+By doing so, the dependencies will only be installed and will not be executed before the role that includes them. You can then import or include them manually in the role's tasks.
+
 
 Running role dependencies multiple times
 ----------------------------------------

@@ -429,6 +429,8 @@ When dependencies are encountered by ``ansible-galaxy``, it will automatically i
 
 .. note::
 
+    If you want to define dependencies that will only be installed and not handled during play execution you can specify them under `install_dependencies`. See :ref:`playbooks_reuse_roles`.
+
     Galaxy expects all role dependencies to exist in Galaxy, and therefore dependencies to be specified in the
     ``namespace.role_name`` format. If you import a role with a dependency where the ``src`` value is a URL, the import process will fail.
 
