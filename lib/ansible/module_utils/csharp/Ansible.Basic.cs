@@ -708,7 +708,7 @@ namespace Ansible.Basic
                     }
                     if (!depInfo.ContainsKey("version") && !depInfo.ContainsKey("date"))
                     {
-                        string msg = "One of version or date is required in a deprecated_aliases entry";
+                        string msg = "One of version and date is required in a deprecated_aliases entry";
                         throw new ArgumentException(FormatOptionsContext(msg, " - "));
                     }
                     if (depInfo.ContainsKey("version") && depInfo.ContainsKey("date"))
