@@ -5,6 +5,7 @@
 This directory contains the following scripts:
 
 - download.py - Download results from Shippable.
+- get_recent_coverage_runs.py - Retrieve Shippable URLs of recent coverage test runs.
 - incidental.py - Report on incidental code coverage using data from Shippable.
 - run.py - Start new runs on Shippable.
 
@@ -32,6 +33,11 @@ Reducing incidental test coverage, and eventually removing incidental tests invo
 
 1. Run the entire test suite with code coverage enabled. 
    This is done automatically each day on Shippable.
+   The URLs and statuses of the most recent such test runs can be found with:
+   ```shell
+   hacking/shippable/get_recent_coverage_runs.py <optional branch name>
+   ```
+   For now the branch name defaults to `temp-2.10-devel`.
 2. Download code coverage data from Shippable for local analysis. 
    Example:
    ```shell
