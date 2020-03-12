@@ -41,6 +41,7 @@ class RoleMetadata(Base, CollectionSearch):
 
     _allow_duplicates = FieldAttribute(isa='bool', default=False)
     _dependencies = FieldAttribute(isa='list', default=list)
+    _install_dependencies = FieldAttribute(isa='list', default=list)
     _galaxy_info = FieldAttribute(isa='GalaxyInfo')
 
     def __init__(self, owner=None):
