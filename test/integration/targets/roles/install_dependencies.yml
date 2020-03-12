@@ -1,0 +1,26 @@
+- name: "play should only run the base role since its dependency is listed under `install_dependencies`"
+  hosts: testhost
+  gather_facts: false
+  tags:
+    - role
+  roles:
+    - role: d
+
+- name: "play should only run the imported role since its dependency is listed under `install_dependencies`"
+  hosts: testhost
+  gather_facts: false
+  tags:
+    - import_role
+  tasks:
+    - import_role:
+        name: d
+
+
+- name: "play should only run the imported role since its dependency is listed under `install_dependencies`"
+  hosts: testhost
+  gather_facts: false
+  tags:
+    - include_role
+  tasks:
+    - include_role:
+        name: d
