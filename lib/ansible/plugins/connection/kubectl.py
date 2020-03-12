@@ -65,6 +65,7 @@ DOCUMENTATION = """
       kubectl_extra_args:
         description:
           - Extra arguments to pass to the kubectl command line.
+          - Please be aware that this passes information directly on the command line and it could expose sensitive data.
         default: ''
         vars:
           - name: ansible_kubectl_extra_args
@@ -109,6 +110,8 @@ DOCUMENTATION = """
       kubectl_password:
         description:
           - Provide a password for authenticating with the API.
+          - Please be aware that this passes information directly on the command line and it could expose sensitive data.
+            We recommend using the file based authentication options instead.
         default: ''
         vars:
           - name: ansible_kubectl_password
@@ -117,6 +120,8 @@ DOCUMENTATION = """
       kubectl_token:
         description:
           - API authentication bearer token.
+          - Please be aware that this passes information directly on the command line and it could expose sensitive data.
+            We recommend using the file based authentication options instead.
         vars:
           - name: ansible_kubectl_token
           - name: ansible_kubectl_api_key
