@@ -726,7 +726,11 @@ class AnsibleModule(object):
         self.log('[WARNING] %s' % warning)
 
     def deprecate(self, msg, version=None, date=None):
+        if version is not None and date is not None:
+            raise AssertionError("implementation error -- version and date must not both be set")
         deprecate(msg, version=version, date=date)
+        # For compatibility, we accept that neither version nor date is set,
+        # and treat that the same as if version would haven been set
         if date is not None:
             self.log('[DEPRECATION WARNING] %s %s' % (msg, date))
         else:

@@ -53,3 +53,10 @@ def test_deprecate_without_list(am, capfd):
     assert output['deprecations'] == [
         {u'msg': u'Simple deprecation warning', u'version': None},
     ]
+
+
+@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+def test_deprecate_without_list(am, capfd):
+    with pytest.raises(AssertionError) as ctx:
+        am.deprecate('Simple deprecation warning', date='', version='')
+    assert ctx.value.args[0] == "implementation error -- version and date must not both be set"

@@ -20,6 +20,8 @@ def warn(warning):
 
 def deprecate(msg, version=None, date=None):
     if isinstance(msg, string_types):
+        # For compatibility, we accept that neither version nor date is set,
+        # and treat that the same as if version would haven been set
         if date is not None:
             _global_deprecations.append({'msg': msg, 'date': date})
         else:
