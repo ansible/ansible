@@ -36,7 +36,14 @@ except ImportError:
 try:
     from importlib import import_module
 except ImportError:
-    import_module = __import__
+    # importlib.import_module returns the tail
+    # whereas __import__ returns the head
+    # compat to work like importlib.import_module
+    def import_module(name):
+        module = __import__(name)
+        for part in name.split('.')[1:]:
+            module = getattr(module, part)
+        return module
 
 display = Display()
 

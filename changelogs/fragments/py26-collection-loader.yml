@@ -1,0 +1,2 @@
+bugfixes:
+- Update the plugin loader as it pertains to collections to work with Python2.6
