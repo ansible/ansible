@@ -516,6 +516,8 @@ files:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_group.py:
     migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_image_facts.py:
+    migrated_to: openstack.cloud
   $modules/cloud/openstack/os_image_info.py:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_image.py:
@@ -527,6 +529,8 @@ files:
   $modules/cloud/openstack/os_ironic.py:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_keypair.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_domain_facts.py:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_keystone_domain_info.py:
     migrated_to: openstack.cloud
@@ -546,6 +550,8 @@ files:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_network.py:
     migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_networks_facts.py:
+    migrated_to: openstack.cloud
   $modules/cloud/openstack/os_networks_info.py:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_nova_flavor.py:
@@ -556,11 +562,15 @@ files:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_pool.py:
     migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_port_facts.py:
+    migrated_to: openstack.cloud
   $modules/cloud/openstack/os_port_info.py:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_port.py:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_project_access.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_project_facts.py:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_project_info.py:
     migrated_to: openstack.cloud
@@ -580,6 +590,8 @@ files:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_server_group.py:
     migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_facts.py:
+    migrated_to: openstack.cloud
   $modules/cloud/openstack/os_server_info.py:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_server_metadata.py:
@@ -592,9 +604,13 @@ files:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_subnet.py:
     migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_subnets_facts.py:
+    migrated_to: openstack.cloud
   $modules/cloud/openstack/os_subnets_info.py:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_user_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user_facts.py:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_user_info.py:
     migrated_to: openstack.cloud

@@ -1019,24 +1019,6 @@ plugin_routing:
       redirect: community.general.one_service
     one_vm:
       redirect: community.general.one_vm
-    os_flavor_facts:
-      redirect: community.general.os_flavor_facts
-    os_image_facts:
-      redirect: community.general.os_image_facts
-    os_keystone_domain_facts:
-      redirect: community.general.os_keystone_domain_facts
-    os_networks_facts:
-      redirect: community.general.os_networks_facts
-    os_port_facts:
-      redirect: community.general.os_port_facts
-    os_project_facts:
-      redirect: community.general.os_project_facts
-    os_server_facts:
-      redirect: community.general.os_server_facts
-    os_subnets_facts:
-      redirect: community.general.os_subnets_facts
-    os_user_facts:
-      redirect: community.general.os_user_facts
     oci_vcn:
       redirect: community.general.oci_vcn
     ovh_ip_failover:
@@ -6379,6 +6361,8 @@ plugin_routing:
       redirect: openstack.cloud.os_coe_cluster
     os_coe_cluster_template:
       redirect: openstack.cloud.os_coe_cluster_template
+    os_flavor_facts:
+      redirect: openstack.cloud.os_flavor_info
     os_flavor_info:
       redirect: openstack.cloud.os_flavor_info
     os_floating_ip:
@@ -6389,6 +6373,8 @@ plugin_routing:
       redirect: openstack.cloud.os_group_info
     os_image:
       redirect: openstack.cloud.os_image
+    os_image_facts:
+      redirect: openstack.cloud.os_image_info
     os_image_info:
       redirect: openstack.cloud.os_image_info
     os_ironic:
@@ -6401,6 +6387,8 @@ plugin_routing:
       redirect: openstack.cloud.os_keypair
     os_keystone_domain:
       redirect: openstack.cloud.os_keystone_domain
+    os_keystone_domain_facts:
+      redirect: openstack.cloud.os_keystone_domain_info
     os_keystone_domain_info:
       redirect: openstack.cloud.os_keystone_domain_info
     os_keystone_endpoint:
@@ -6417,7 +6405,7 @@ plugin_routing:
       redirect: openstack.cloud.os_member
     os_network:
       redirect: openstack.cloud.os_network
-    os_networks_info:
+    os_networks_facts:
       redirect: openstack.cloud.os_networks_info
     os_nova_flavor:
       redirect: openstack.cloud.os_nova_flavor
@@ -6429,12 +6417,16 @@ plugin_routing:
       redirect: openstack.cloud.os_pool
     os_port:
       redirect: openstack.cloud.os_port
+    os_port_facts:
+      redirect: openstack.cloud.os_port_info
     os_port_info:
       redirect: openstack.cloud.os_port_info
     os_project:
       redirect: openstack.cloud.os_project
     os_project_access:
       redirect: openstack.cloud.os_project_access
+    os_project_facts:
+      redirect: openstack.cloud.os_project_info
     os_project_info:
       redirect: openstack.cloud.os_project_info
     os_quota:
@@ -6453,6 +6445,10 @@ plugin_routing:
       redirect: openstack.cloud.os_server_action
     os_server_group:
       redirect: openstack.cloud.os_server_group
+    os_server_facts:
+      redirect: openstack.cloud.os_server_info
+    os_networks_info:
+      redirect: openstack.cloud.os_networks_info
     os_server_info:
       redirect: openstack.cloud.os_server_info
     os_server_metadata:
@@ -6463,12 +6459,16 @@ plugin_routing:
       redirect: openstack.cloud.os_stack
     os_subnet:
       redirect: openstack.cloud.os_subnet
+    os_subnets_facts:
+      redirect: openstack.cloud.os_subnets_info
     os_subnets_info:
       redirect: openstack.cloud.os_subnets_info
     os_user:
       redirect: openstack.cloud.os_user
     os_user_group:
       redirect: openstack.cloud.os_user_group
+    os_user_facts:
+      redirect: openstack.cloud.os_user_info
     os_user_info:
       redirect: openstack.cloud.os_user_info
     os_user_role:
