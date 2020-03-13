@@ -14,13 +14,8 @@ from types import ModuleType
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
+from ansible.utils.import_module import import_module
 from ansible.utils.singleton import Singleton
-
-# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
-try:
-    from importlib import import_module
-except ImportError:
-    import_module = __import__
 
 _SYNTHETIC_PACKAGES = {
     # these provide fallback package definitions when there are no on-disk paths

@@ -44,7 +44,7 @@ from ansible.plugins.loader import module_utils_loader
 from ansible.executor import action_write_locks
 
 from ansible.utils.display import Display
-
+from ansible.utils.import_module import import_module
 
 try:
     import importlib.util
@@ -52,13 +52,6 @@ try:
     imp = None
 except ImportError:
     import imp
-
-
-# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
-try:
-    from importlib import import_module
-except ImportError:
-    import_module = __import__
 
 # if we're on a Python that doesn't have FNFError, redefine it as IOError (since that's what we'll see)
 try:

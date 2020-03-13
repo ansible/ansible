@@ -51,13 +51,8 @@ from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
+from ansible.utils.import_module import import_module
 from ansible.utils.unsafe_proxy import wrap_var
-
-# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
-try:
-    from importlib import import_module
-except ImportError:
-    import_module = __import__
 
 display = Display()
 

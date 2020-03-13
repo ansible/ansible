@@ -24,6 +24,7 @@ from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
 from ansible.utils.collection_loader import AnsibleCollectionLoader, AnsibleFlatMapLoader, AnsibleCollectionRef
 from ansible.utils.display import Display
+from ansible.utils.import_module import import_module
 from ansible.utils.plugin_docs import add_fragments
 
 try:
@@ -31,19 +32,6 @@ try:
     imp = None
 except ImportError:
     import imp
-
-# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
-try:
-    from importlib import import_module
-except ImportError:
-    # importlib.import_module returns the tail
-    # whereas __import__ returns the head
-    # compat to work like importlib.import_module
-    def import_module(name):
-        module = __import__(name)
-        for part in name.split('.')[1:]:
-            module = getattr(module, part)
-        return module
 
 display = Display()
 
