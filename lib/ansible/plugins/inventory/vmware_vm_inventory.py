@@ -129,6 +129,7 @@ except ImportError:
 
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 
 class BaseVMwareInventory:
@@ -336,10 +337,19 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         # set _options from config data
         self._consume_options(config_data)
 
+        username = self.get_option('username')
+        password = self.get_option('password')
+
+        if isinstance(username, AnsibleVaultEncryptedUnicode):
+            username = username.data
+        
+        if isinstance(password, AnsibleVaultEncryptedUnicode):
+            password = password.data
+
         self.pyv = BaseVMwareInventory(
             hostname=self.get_option('hostname'),
-            username=self.get_option('username'),
-            password=self.get_option('password'),
+            username=username,
+            password=password,
             port=self.get_option('port'),
             with_tags=self.get_option('with_tags'),
             validate_certs=self.get_option('validate_certs')
