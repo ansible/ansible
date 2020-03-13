@@ -49,7 +49,7 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
             sys_installed_path = os.path.join(os.path.abspath(path), 'ansible_collections')
             if (
                     os.path.isdir(sys_installed_path)
-                    and sys_installed_path not in self._n_configured_paths
+                    and path not in self._n_configured_paths
             ):
                 self._n_configured_paths.append(path)
 
