@@ -1,7 +1,8 @@
 # intentionally stop execution of the play before reaching the include below
 # if the include is static as expected it will trigger a syntax error
 # however, if the include is dynamic a syntax error will not occur
-- fail:
+- name: EXPECTED SUCCESS
+  fail:
     msg:
       This task should never execute.
       The playbook should have failed due to a syntax error in 'syntax_error.yml' when attempting a static include of that file.
