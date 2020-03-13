@@ -49,4 +49,3 @@ mccabe == 0.6.1
 pylint == 2.3.1
 typed-ast == 1.4.0  # 1.4.0 is required to compile on Python 3.8
 wrapt == 1.11.1
-semantic_version == 2.6.0 # newer versions are not supported on Python 2.6
