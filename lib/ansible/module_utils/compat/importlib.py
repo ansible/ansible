@@ -7,7 +7,6 @@ __metaclass__ = type
 
 import sys
 
-# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
     from importlib import import_module
 except ImportError:
