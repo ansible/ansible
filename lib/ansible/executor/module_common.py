@@ -37,6 +37,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.compat.importlib import import_module
 from ansible.plugins.loader import module_utils_loader
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
@@ -44,7 +45,6 @@ from ansible.plugins.loader import module_utils_loader
 from ansible.executor import action_write_locks
 
 from ansible.utils.display import Display
-from ansible.utils.import_module import import_module
 
 try:
     import importlib.util

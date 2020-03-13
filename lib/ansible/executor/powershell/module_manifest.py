@@ -17,8 +17,8 @@ from distutils.version import LooseVersion
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.compat.importlib import import_module
 from ansible.plugins.loader import ps_module_utils_loader
-from ansible.utils.import_module import import_module
 
 
 class PSModuleDepFinder(object):

@@ -45,13 +45,13 @@ from ansible.module_utils.six import iteritems, string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Sequence, Mapping, MutableMapping
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.compat.importlib import import_module
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
-from ansible.utils.import_module import import_module
 from ansible.utils.unsafe_proxy import wrap_var
 
 display = Display()

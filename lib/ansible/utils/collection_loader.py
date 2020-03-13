@@ -13,8 +13,8 @@ import sys
 from types import ModuleType
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
-from ansible.utils.import_module import import_module
 from ansible.utils.singleton import Singleton
 
 _SYNTHETIC_PACKAGES = {
