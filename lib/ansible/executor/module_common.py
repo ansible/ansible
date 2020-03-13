@@ -666,8 +666,9 @@ class CollectionModuleInfo(ModuleInfo):
             # way our CollectionLoader works but not how python module loaders work in general.
 
             try:
-                module_found = AnsibleCollectionLoader().is_module_found(module_name)
-            except Exception as e:
+                module_found = AnsibleCollectionLoader().is_module_found(
+                    to_native(module_name, errors='surrogate_or_strict'))
+            except Exception:
                 # Just move on to trying the next version
                 continue
 
