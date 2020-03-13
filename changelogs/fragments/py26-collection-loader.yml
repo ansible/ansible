@@ -1,2 +1,2 @@
 bugfixes:
-- Update the plugin loader as it pertains to collections to work with Python2.6
+- Create an ``import_module`` compat util, for use across the codebase, to allow collection loading to work properly on Python26
