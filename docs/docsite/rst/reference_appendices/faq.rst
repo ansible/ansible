@@ -596,14 +596,14 @@ If you have a task that you don't want to show the results or command given to i
 
 This can be used to keep verbose output but hide sensitive information from others who would otherwise like to be able to see the output.
 
-The no_log attribute can also apply to an entire play::
+The ``no_log`` attribute can also apply to an entire play::
 
     - hosts: all
       no_log: True
 
 Though this will make the play somewhat difficult to debug.  It's recommended that this
 be applied to single tasks only, once a playbook is completed. Note that the use of the
-no_log attribute does not prevent data from being shown when debugging Ansible itself via
+``no_log`` attribute does not prevent data from being shown when debugging Ansible itself via
 the :envvar:`ANSIBLE_DEBUG` environment variable.
 
 
