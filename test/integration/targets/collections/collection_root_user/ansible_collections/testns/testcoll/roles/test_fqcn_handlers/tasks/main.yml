@@ -1,0 +1,5 @@
+- debug:
+    msg: Fire fqcn handler
+  changed_when: true
+  notify:
+    - 'testns.testcoll.common_handlers : test_fqcn_handler'
