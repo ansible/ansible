@@ -5,6 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import sys
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
@@ -14,7 +15,5 @@ except ImportError:
     # whereas __import__ returns the head
     # compat to work like importlib.import_module
     def import_module(name):
-        module = __import__(name)
-        for part in name.split('.')[1:]:
-            module = getattr(module, part)
-        return module
+        __import__(name)
+        return sys.modules[name]
