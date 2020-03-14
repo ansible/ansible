@@ -6354,131 +6354,131 @@ plugin_routing:
     bigiq_utility_license_assignment:
       redirect: f5networks.f5_modules.bigiq_utility_license_assignment
     os_auth:
-      redirect: openstack.cloud.os_auth
+      redirect: openstack.cloud.auth
     os_client_config:
-      redirect: openstack.cloud.os_client_config
+      redirect: openstack.cloud.client_config
     os_coe_cluster:
-      redirect: openstack.cloud.os_coe_cluster
+      redirect: openstack.cloud.coe_cluster
     os_coe_cluster_template:
-      redirect: openstack.cloud.os_coe_cluster_template
+      redirect: openstack.cloud.coe_cluster_template
     os_flavor_facts:
-      redirect: openstack.cloud.os_flavor_info
+      redirect: openstack.cloud.flavor_info
     os_flavor_info:
-      redirect: openstack.cloud.os_flavor_info
+      redirect: openstack.cloud.flavor_info
     os_floating_ip:
-      redirect: openstack.cloud.os_floating_ip
+      redirect: openstack.cloud.floating_ip
     os_group:
-      redirect: openstack.cloud.os_group
+      redirect: openstack.cloud.group
     os_group_info:
-      redirect: openstack.cloud.os_group_info
+      redirect: openstack.cloud.group_info
     os_image:
-      redirect: openstack.cloud.os_image
+      redirect: openstack.cloud.image
     os_image_facts:
-      redirect: openstack.cloud.os_image_info
+      redirect: openstack.cloud.image_info
     os_image_info:
-      redirect: openstack.cloud.os_image_info
+      redirect: openstack.cloud.image_info
     os_ironic:
-      redirect: openstack.cloud.os_ironic
+      redirect: openstack.cloud.ironic
     os_ironic_inspect:
-      redirect: openstack.cloud.os_ironic_inspect
+      redirect: openstack.cloud.ironic_inspect
     os_ironic_node:
-      redirect: openstack.cloud.os_ironic_node
+      redirect: openstack.cloud.ironic_node
     os_keypair:
-      redirect: openstack.cloud.os_keypair
+      redirect: openstack.cloud.keypair
     os_keystone_domain:
-      redirect: openstack.cloud.os_keystone_domain
+      redirect: openstack.cloud.keystone_domain
     os_keystone_domain_facts:
-      redirect: openstack.cloud.os_keystone_domain_info
+      redirect: openstack.cloud.keystone_domain_info
     os_keystone_domain_info:
-      redirect: openstack.cloud.os_keystone_domain_info
+      redirect: openstack.cloud.keystone_domain_info
     os_keystone_endpoint:
-      redirect: openstack.cloud.os_keystone_endpoint
+      redirect: openstack.cloud.keystone_endpoint
     os_keystone_role:
-      redirect: openstack.cloud.os_keystone_role
+      redirect: openstack.cloud.keystone_role
     os_keystone_service:
-      redirect: openstack.cloud.os_keystone_service
+      redirect: openstack.cloud.keystone_service
     os_listener:
-      redirect: openstack.cloud.os_listener
+      redirect: openstack.cloud.listener
     os_loadbalancer:
-      redirect: openstack.cloud.os_loadbalancer
+      redirect: openstack.cloud.loadbalancer
     os_member:
-      redirect: openstack.cloud.os_member
+      redirect: openstack.cloud.member
     os_network:
-      redirect: openstack.cloud.os_network
+      redirect: openstack.cloud.network
     os_networks_facts:
-      redirect: openstack.cloud.os_networks_info
+      redirect: openstack.cloud.networks_info
     os_nova_flavor:
-      redirect: openstack.cloud.os_nova_flavor
+      redirect: openstack.cloud.nova_flavor
     os_nova_host_aggregate:
-      redirect: openstack.cloud.os_nova_host_aggregate
+      redirect: openstack.cloud.nova_host_aggregate
     os_object:
-      redirect: openstack.cloud.os_object
+      redirect: openstack.cloud.object
     os_pool:
-      redirect: openstack.cloud.os_pool
+      redirect: openstack.cloud.pool
     os_port:
-      redirect: openstack.cloud.os_port
+      redirect: openstack.cloud.port
     os_port_facts:
-      redirect: openstack.cloud.os_port_info
+      redirect: openstack.cloud.port_info
     os_port_info:
-      redirect: openstack.cloud.os_port_info
+      redirect: openstack.cloud.port_info
     os_project:
-      redirect: openstack.cloud.os_project
+      redirect: openstack.cloud.project
     os_project_access:
-      redirect: openstack.cloud.os_project_access
+      redirect: openstack.cloud.project_access
     os_project_facts:
-      redirect: openstack.cloud.os_project_info
+      redirect: openstack.cloud.project_info
     os_project_info:
-      redirect: openstack.cloud.os_project_info
+      redirect: openstack.cloud.project_info
     os_quota:
-      redirect: openstack.cloud.os_quota
+      redirect: openstack.cloud.quota
     os_recordset:
-      redirect: openstack.cloud.os_recordset
+      redirect: openstack.cloud.recordset
     os_router:
-      redirect: openstack.cloud.os_router
+      redirect: openstack.cloud.router
     os_security_group:
-      redirect: openstack.cloud.os_security_group
+      redirect: openstack.cloud.security_group
     os_security_group_rule:
-      redirect: openstack.cloud.os_security_group_rule
+      redirect: openstack.cloud.security_group_rule
     os_server:
-      redirect: openstack.cloud.os_server
+      redirect: openstack.cloud.server
     os_server_action:
-      redirect: openstack.cloud.os_server_action
+      redirect: openstack.cloud.server_action
     os_server_group:
-      redirect: openstack.cloud.os_server_group
+      redirect: openstack.cloud.server_group
     os_server_facts:
-      redirect: openstack.cloud.os_server_info
+      redirect: openstack.cloud.server_info
     os_networks_info:
-      redirect: openstack.cloud.os_networks_info
+      redirect: openstack.cloud.networks_info
     os_server_info:
-      redirect: openstack.cloud.os_server_info
+      redirect: openstack.cloud.server_info
     os_server_metadata:
-      redirect: openstack.cloud.os_server_metadata
+      redirect: openstack.cloud.server_metadata
     os_server_volume:
-      redirect: openstack.cloud.os_server_volume
+      redirect: openstack.cloud.server_volume
     os_stack:
-      redirect: openstack.cloud.os_stack
+      redirect: openstack.cloud.stack
     os_subnet:
-      redirect: openstack.cloud.os_subnet
+      redirect: openstack.cloud.subnet
     os_subnets_facts:
-      redirect: openstack.cloud.os_subnets_info
+      redirect: openstack.cloud.subnets_info
     os_subnets_info:
-      redirect: openstack.cloud.os_subnets_info
+      redirect: openstack.cloud.subnets_info
     os_user:
-      redirect: openstack.cloud.os_user
+      redirect: openstack.cloud.user
     os_user_group:
-      redirect: openstack.cloud.os_user_group
+      redirect: openstack.cloud.user_group
     os_user_facts:
-      redirect: openstack.cloud.os_user_info
+      redirect: openstack.cloud.user_info
     os_user_info:
-      redirect: openstack.cloud.os_user_info
+      redirect: openstack.cloud.user_info
     os_user_role:
-      redirect: openstack.cloud.os_user_role
+      redirect: openstack.cloud.user_role
     os_volume:
-      redirect: openstack.cloud.os_volume
+      redirect: openstack.cloud.volume
     os_volume_snapshot:
-      redirect: openstack.cloud.os_volume_snapshot
+      redirect: openstack.cloud.volume_snapshot
     os_zone:
-      redirect: openstack.cloud.os_zone
+      redirect: openstack.cloud.zone
     junos_user:
       redirect: junipernetworks.junos.junos_user
     junos_l2_interface:
