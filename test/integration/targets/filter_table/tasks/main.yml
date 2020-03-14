@@ -1,0 +1,10 @@
+---
+- name: Test from_table filter
+  assert:
+    that:
+      - invalid_string | from_table == []
+      - table_string1 | from_table == result1 | from_yaml
+      - table_string2 | from_table == result2 | from_yaml
+      - table_string3 | from_table == result3 | from_yaml
+      - table_string4 | from_table == result4 | from_yaml
+      - table_string5 | from_table == result1 | from_yaml

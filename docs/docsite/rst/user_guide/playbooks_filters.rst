@@ -1611,6 +1611,35 @@ This can then be used to reference hashes in Pod specifications::
 
 .. _PyYAML documentation: https://pyyaml.org/wiki/PyYAMLDocumentation
 
+PrettyTable filters
+===================
+
+.. versionadded:: 2.10
+
+Use the "from_table" filter to convert a prettytable output into a list of dictionaries::
+
+    {{ table_string | from_table }}
+
+Which converts::
+
+.. code-block:: text
+
+    +----------+----------+
+    | Field A  | Field B  |
+    +----------+----------+
+    | Value 1A | Value 1B |
+    | Value 2A | Value 2B |
+    +----------+----------+
+
+into::
+
+.. code-block:: text
+
+    - Field A: Value 1A
+      Field B: Value 1B
+    - Field A: Value 2A
+      Field B: Value 2B
+
 
 .. seealso::
 

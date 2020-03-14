@@ -1,0 +1,118 @@
+---
+
+invalid_string: Not a table string
+
+# PrettyTable output
+table_string1: |
+  +-----------+------+------------+-----------------+
+  | City name | Area | Population | Annual Rainfall |
+  +-----------+------+------------+-----------------+
+  |  Adelaide | 1295 |  1158259   |      600.5      |
+  |  Brisbane | 5905 |  1857594   |      1146.4     |
+  |   Darwin  | 112  |   120900   |      1714.7     |
+  |   Hobart  | 1357 |   205556   |      619.5      |
+  |   Sydney  | 2058 |  4336374   |      1214.8     |
+  | Melbourne | 1566 |  3806092   |      646.9      |
+  |   Perth   | 5386 |  1554769   |      869.4      |
+  +-----------+------+------------+-----------------+
+
+result1:
+  - Annual Rainfall: '600.5'
+    Area: '1295'
+    City name: Adelaide
+    Population: '1158259'
+  - Annual Rainfall: '1146.4'
+    Area: '5905'
+    City name: Brisbane
+    Population: '1857594'
+  - Annual Rainfall: '1714.7'
+    Area: '112'
+    City name: Darwin
+    Population: '120900'
+  - Annual Rainfall: '619.5'
+    Area: '1357'
+    City name: Hobart
+    Population: '205556'
+  - Annual Rainfall: '1214.8'
+    Area: '2058'
+    City name: Sydney
+    Population: '4336374'
+  - Annual Rainfall: '646.9'
+    Area: '1566'
+    City name: Melbourne
+    Population: '3806092'
+  - Annual Rainfall: '869.4'
+    Area: '5386'
+    City name: Perth
+    Population: '1554769'
+
+# PrettyTable output: The fields contain UTF-8 characters
+table_string2: |
+  +--------+------------+----------+
+  | Kanji  |  Hiragana  | English  |
+  +--------+------------+----------+
+  |  東京  | とうきょう |  Tokyo   |
+  |  横浜  |  よこはま  | Yokohama |
+  |  大阪  |  おおさか  |  Osaka   |
+  +--------+------------+----------+
+
+result2:
+  - Kanji: 東京
+    Hiragana: とうきょう
+    English: Tokyo
+  - Kanji: 横浜
+    Hiragana: よこはま
+    English: Yokohama
+  - Kanji: 大阪
+    Hiragana: おおさか
+    English: Osaka
+
+# PrettyTable output: The fields contain '|'
+table_string3: |
+  +----------+--------+
+  | Operator | Syntax |
+  +----------+--------+
+  |   NOT    |   ~a   |
+  |   AND    | a & b  |
+  |    OR    | a | b  |
+  |   XOR    | a ^ b  |
+  +----------+--------+
+
+result3:
+  - Operator: NOT
+    Syntax: ~a
+  - Operator: AND
+    Syntax: a & b
+  - Operator: OR
+    Syntax: a | b
+  - Operator: XOR
+    Syntax: a ^ b
+
+# PrettyTable output: The fields contain UTF-8 characters and '|'
+table_string4: |
+  +----------------+------------+
+  |   Full-width   | Half-width |
+  +----------------+------------+
+  | あ|い|う|え|お | ｱ|ｲ|ｳ|ｴ|ｵ  |
+  | １|２|３|４|５ | 1|2|3|4|5  |
+  +----------------+------------+
+
+result4:
+  - Full-width: あ|い|う|え|お
+    Half-width: ｱ|ｲ|ｳ|ｴ|ｵ
+  - Full-width: １|２|３|４|５
+    Half-width: 1|2|3|4|5
+
+table_string5: |
+  +-----------+------+------------+-----------------+
+  | City name | Area | Population | Annual Rainfall |
+  +-----------+------+------------+-----------------+
+  |  Adelaide | 1295 |  1158259   |      600.5      |
+  |  Brisbane | 5905 |  1857594   |      1146.4     |
+  |   Darwin  | 112  |   120900   |      1714.7     |
+  |   Hobart  | 1357 |   205556   |      619.5      |
+  |   Sydney  | 2058 |  4336374   |      1214.8     |
+  | Melbourne | 1566 |  3806092   |      646.9      |
+  |   Perth   | 5386 |  1554769   |      869.4      |
+  +-----------+------+------------+-----------------+
+  | This line is ignored! |
