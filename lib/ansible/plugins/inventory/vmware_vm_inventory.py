@@ -17,7 +17,6 @@ DOCUMENTATION = '''
     description:
         - Get virtual machines as inventory hosts from VMware environment.
         - Uses any file which ends with vmware.yml, vmware.yaml, vmware_vm_inventory.yml, or vmware_vm_inventory.yaml as a YAML configuration file.
-        - The inventory_hostname is always the 'Name' and UUID of the virtual machine. UUID is added as VMware allows virtual machines with the same name.
     extends_documentation_fragment:
       - inventory_cache
     requirements:
@@ -72,11 +71,19 @@ DOCUMENTATION = '''
             type: list
             default: [ 'name', 'config.cpuHotAddEnabled', 'config.cpuHotRemoveEnabled',
                        'config.instanceUuid', 'config.hardware.numCPU', 'config.template',
-                       'config.name', 'guest.hostName', 'guest.ipAddress',
+                       'config.name', 'config.uuid' ,'guest.hostName', 'guest.ipAddress',
                        'guest.guestId', 'guest.guestState', 'runtime.maxMemoryUsage',
                        'customValue'
                        ]
             version_added: "2.9"
+        hostnames:
+            description:
+                - A list of templates in order of precedence to compose inventory_hostname.
+                - Ignores template if it resulted in empty string or None value
+                - You can use property specified in I(properties) as variables in template.
+            type: list
+            default: ['config.name + "_" + config.uuid']
+            version_added: "2.10.0.dev0"
 '''
 
 EXAMPLES = '''
@@ -105,6 +112,7 @@ EXAMPLES = '''
 import ssl
 import atexit
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils._text import to_text
 
 try:
     # requests is required for exception handling of the ConnectionError
@@ -128,7 +136,7 @@ except ImportError:
     HAS_VSPHERE = False
 
 
-from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 
@@ -306,7 +314,7 @@ class BaseVMwareInventory:
         return result
 
 
-class InventoryModule(BaseInventoryPlugin, Cacheable):
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'vmware_vm_inventory'
 
@@ -388,7 +396,15 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 for host in hosts:
                     self._populate_host_vars([host], hostvars.get(host, {}), group)
                 self.inventory.add_child('all', group)
+    
+    def _get_hostname(self, properties, hostnames):
 
+        hostname = None
+        for preference in hostnames:
+            hostname = self._compose(preference, properties)
+            if hostname:
+                return to_text(hostname)
+        
     def _populate_from_source(self, source_data, using_current_cache):
         """
         Populate inventory data from direct source
@@ -416,16 +432,16 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     cacheable_results[tag_obj.name] = {'hosts': []}
                     self.inventory.add_group(tag_obj.name)
 
+        hostnames = self.get_option('hostnames')
+
         for vm_obj in objects:
             for vm_obj_property in vm_obj.propSet:
-                # VMware does not provide a way to uniquely identify VM by its name
-                # i.e. there can be two virtual machines with same name
-                # Appending "_" and VMware UUID to make it unique
                 if not vm_obj.obj.config:
                     # Sometime orphaned VMs return no configurations
                     continue
 
-                current_host = vm_obj_property.val + "_" + vm_obj.obj.config.uuid
+                vm_properties = self._get_host_properties(vm_obj)
+                current_host = self._get_hostname(vm_properties, hostnames)
 
                 if current_host not in hostvars:
                     hostvars[current_host] = {}
@@ -435,7 +451,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     if host_ip:
                         self.inventory.set_variable(current_host, 'ansible_host', host_ip)
 
-                    self._populate_host_properties(vm_obj, current_host)
+                    self._populate_host_properties(vm_properties, current_host)
 
                     # Only gather facts related to tag if vCloud and vSphere is installed.
                     if HAS_VSPHERE and self.pyv.with_tags:
@@ -470,8 +486,13 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         return cacheable_results
 
-    def _populate_host_properties(self, vm_obj, current_host):
+    def _populate_host_properties(self, host_properties, current_host):
         # Load VM properties in host_vars
+        for k,v in host_properties.items():
+            self.inventory.set_variable(current_host, k, v)
+    
+    def _get_host_properties(self, vm_obj):
+        host_properties = {}
         vm_properties = self.get_option('properties') or []
 
         field_mgr = self.pyv.content.customFieldsManager.field
@@ -479,9 +500,15 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         for vm_prop in vm_properties:
             if vm_prop == 'customValue':
                 for cust_value in vm_obj.obj.customValue:
-                    self.inventory.set_variable(current_host,
-                                                [y.name for y in field_mgr if y.key == cust_value.key][0],
-                                                cust_value.value)
+                    host_properties[[y.name for y in field_mgr if y.key == cust_value.key][0]] = cust_value.value
             else:
-                vm_value = self.pyv._get_object_prop(vm_obj.obj, vm_prop.split("."))
-                self.inventory.set_variable(current_host, vm_prop, vm_value)
+                
+                prop_parents = vm_prop.split(".")
+                prop_dict = host_properties
+                for k in prop_parents[:-1]:
+                    prop_dict = prop_dict.setdefault(k, {})
+
+                vm_value = self.pyv._get_object_prop(vm_obj.obj, prop_parents)
+                prop_dict[prop_parents[-1]] = vm_value
+        
+        return host_properties
