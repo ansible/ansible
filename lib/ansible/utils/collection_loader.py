@@ -12,8 +12,6 @@ import sys
 
 from types import ModuleType
 
-import ansible
-
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
