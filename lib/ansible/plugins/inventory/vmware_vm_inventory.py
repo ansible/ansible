@@ -19,6 +19,7 @@ DOCUMENTATION = '''
         - Uses any file which ends with vmware.yml, vmware.yaml, vmware_vm_inventory.yml, or vmware_vm_inventory.yaml as a YAML configuration file.
     extends_documentation_fragment:
       - inventory_cache
+      - constructed
     requirements:
       - "Python >= 2.7"
       - "PyVmomi"
@@ -73,7 +74,7 @@ DOCUMENTATION = '''
                        'config.instanceUuid', 'config.hardware.numCPU', 'config.template',
                        'config.name', 'config.uuid' ,'guest.hostName', 'guest.ipAddress',
                        'guest.guestId', 'guest.guestState', 'runtime.maxMemoryUsage',
-                       'customValue'
+                       'customValue', 'summary.runtime.powerState', config.guestId
                        ]
             version_added: "2.9"
         hostnames:
@@ -467,9 +468,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     hostvars[current_host] = {}
                     self.inventory.add_host(current_host)
 
-                    host_ip = vm_obj.obj.guest.ipAddress
-                    if host_ip:
-                        self.inventory.set_variable(current_host, 'ansible_host', host_ip)
 
                     props = self._flatten_properties(vm_properties) if can_flatten_property else vm_properties
                     self._populate_host_properties(props, current_host)
@@ -484,22 +482,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         for tag_id in attached_tags:
                             self.inventory.add_child(tags_info[tag_id], current_host)
                             cacheable_results[tags_info[tag_id]]['hosts'].append(current_host)
-
-                    # Based on power state of virtual machine
-                    vm_power = str(vm_obj.obj.summary.runtime.powerState)
-                    if vm_power not in cacheable_results:
-                        cacheable_results[vm_power] = {'hosts': []}
-                        self.inventory.add_group(vm_power)
-                    cacheable_results[vm_power]['hosts'].append(current_host)
-                    self.inventory.add_child(vm_power, current_host)
-
-                    # Based on guest id
-                    vm_guest_id = vm_obj.obj.config.guestId
-                    if vm_guest_id and vm_guest_id not in cacheable_results:
-                        cacheable_results[vm_guest_id] = {'hosts': []}
-                        self.inventory.add_group(vm_guest_id)
-                    cacheable_results[vm_guest_id]['hosts'].append(current_host)
-                    self.inventory.add_child(vm_guest_id, current_host)
+                    
+                    # Use constructed if applicable
+                    strict = self.get_option('strict')
+                    # Composed variables
+                    self._set_composite_vars(self.get_option('compose'), vm_properties, current_host, strict=strict)
+                    # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
+                    self._add_host_to_composed_groups(self.get_option('groups'), vm_properties, current_host, strict=strict)
+                    # Create groups based on variable values and add the corresponding hosts to it
+                    self._add_host_to_keyed_groups(self.get_option('keyed_groups'), vm_properties, current_host, strict=strict)
 
         for host in hostvars:
             h = self.inventory.get_host(host)
