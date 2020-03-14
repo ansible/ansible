@@ -84,6 +84,12 @@ DOCUMENTATION = '''
             type: list
             default: ['config.name + "_" + config.uuid']
             version_added: "2.10.0.dev0"
+        flatten_property_name:
+            description:
+                - This option flatten nested hostvars.
+            type: bool
+            default: True
+            version_added: "2.10.0.dev0"
 '''
 
 EXAMPLES = '''
@@ -433,6 +439,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     self.inventory.add_group(tag_obj.name)
 
         hostnames = self.get_option('hostnames')
+        can_flatten_property  = self.get_option('flatten_property_name')
 
         for vm_obj in objects:
             for vm_obj_property in vm_obj.propSet:
@@ -451,7 +458,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     if host_ip:
                         self.inventory.set_variable(current_host, 'ansible_host', host_ip)
 
-                    self._populate_host_properties(vm_properties, current_host)
+                    props = self._flatten_properties(vm_properties) if can_flatten_property else vm_properties
+                    self._populate_host_properties(props, current_host)
 
                     # Only gather facts related to tag if vCloud and vSphere is installed.
                     if HAS_VSPHERE and self.pyv.with_tags:
@@ -491,9 +499,21 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         for k,v in host_properties.items():
             self.inventory.set_variable(current_host, k, v)
     
+    def _flatten_properties(self, properties):
+        vm_properties = self.get_option('properties')
+        host_properties = {}
+        for vm_prop in vm_properties: 
+            if vm_prop != 'customValue':
+                r = properties
+                for p in vm_prop.split("."):
+                    r = r[p]
+                host_properties[vm_prop] = r
+        return host_properties
+
+
     def _get_host_properties(self, vm_obj):
         host_properties = {}
-        vm_properties = self.get_option('properties') or []
+        vm_properties = self.get_option('properties')
 
         field_mgr = self.pyv.content.customFieldsManager.field
 
