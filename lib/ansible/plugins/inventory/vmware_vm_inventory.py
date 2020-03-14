@@ -90,6 +90,18 @@ DOCUMENTATION = '''
             type: bool
             default: True
             version_added: "2.10.0.dev0"
+        sanitize_property_name:
+            description:
+                - This option allows you use property name sanitization to create safe property names for use in Ansible.
+            type: bool
+            default: True
+            version_added: "2.10.0.dev0"
+        snake_cast_property_name:
+            description:
+                - This option transform property name to snake case.
+            type: bool
+            default: True
+            version_added: "2.10.0.dev0"
 '''
 
 EXAMPLES = '''
@@ -119,6 +131,7 @@ import ssl
 import atexit
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
 
 try:
     # requests is required for exception handling of the ConnectionError
@@ -496,7 +509,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def _populate_host_properties(self, host_properties, current_host):
         # Load VM properties in host_vars
+        if self.get_option('snake_cast_property_name'):
+            host_properties = camel_dict_to_snake_dict(host_properties)
+        
+        can_sanitize = self.get_option('sanitize_property_name')
         for k,v in host_properties.items():
+            k = self._sanitize_group_name(k) if can_sanitize else k
             self.inventory.set_variable(current_host, k, v)
     
     def _flatten_properties(self, properties):
@@ -530,5 +548,5 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
                 vm_value = self.pyv._get_object_prop(vm_obj.obj, prop_parents)
                 prop_dict[prop_parents[-1]] = vm_value
-        
+
         return host_properties
