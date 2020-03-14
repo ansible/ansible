@@ -56,14 +56,6 @@ DOCUMENTATION = '''
             type: boolean
             env:
               - name: VMWARE_VALIDATE_CERTS
-        with_tags:
-            description:
-            - Include tags and associated virtual machines.
-            - Requires 'vSphere Automation SDK' library to be installed on the given controller machine.
-            - Please refer following URLs for installation steps
-            - 'https://code.vmware.com/web/sdk/65/vsphere-automation-python'
-            default: False
-            type: boolean
         properties:
             description:
             - Specify the list of VMware schema properties associated with the VM.
@@ -74,7 +66,7 @@ DOCUMENTATION = '''
                        'config.instanceUuid', 'config.hardware.numCPU', 'config.template',
                        'config.name', 'config.uuid' ,'guest.hostName', 'guest.ipAddress',
                        'guest.guestId', 'guest.guestState', 'runtime.maxMemoryUsage',
-                       'customValue', 'summary.runtime.powerState', config.guestId
+                       'customValue', 'summary.runtime.powerState', 'config.guestId'
                        ]
             version_added: "2.9"
         hostnames:
@@ -113,7 +105,6 @@ EXAMPLES = '''
     username: administrator@vsphere.local
     password: Esxi@123$%
     validate_certs: False
-    with_tags: True
 
 # Gather minimum set of properties for VMware guest
     plugin: vmware_vm_inventory
@@ -122,7 +113,6 @@ EXAMPLES = '''
     username: administrator@vsphere.local
     password: Esxi@123$%
     validate_certs: False
-    with_tags: False
     properties:
     - 'name'
     - 'guest.ipAddress'
@@ -161,12 +151,11 @@ from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 
 class BaseVMwareInventory:
-    def __init__(self, hostname, username, password, port, validate_certs, with_tags):
+    def __init__(self, hostname, username, password, port, validate_certs):
         self.hostname = hostname
         self.username = username
         self.password = password
         self.port = port
-        self.with_tags = with_tags
         self.validate_certs = validate_certs
         self.content = None
         self.rest_content = None
@@ -177,8 +166,7 @@ class BaseVMwareInventory:
         """
         self.check_requirements()
         self.content = self._login()
-        if self.with_tags:
-            self.rest_content = self._login_vapi()
+        self.rest_content = self._login_vapi()
 
     def _login_vapi(self):
         """
@@ -266,7 +254,7 @@ class BaseVMwareInventory:
                                          " be >= %s, found: %s." % (".".join([str(w) for w in required_version]),
                                                                     requests.__version__))
 
-        if not HAS_VSPHERE and self.with_tags:
+        if not HAS_VSPHERE:
             raise AnsibleError("Unable to find 'vSphere Automation SDK' Python library which is required."
                                " Please refer this URL for installation steps"
                                " - https://code.vmware.com/web/sdk/65/vsphere-automation-python")
@@ -379,7 +367,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             username=username,
             password=password,
             port=self.get_option('port'),
-            with_tags=self.get_option('with_tags'),
             validate_certs=self.get_option('validate_certs')
         )
 
@@ -439,18 +426,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         objects = self.pyv._get_managed_objects_properties(vim_type=vim.VirtualMachine,
                                                            properties=['name'])
 
-        if self.pyv.with_tags:
-            tag_svc = self.pyv.rest_content.tagging.Tag
-            tag_association = self.pyv.rest_content.tagging.TagAssociation
-
-            tags_info = dict()
-            tags = tag_svc.list()
-            for tag in tags:
-                tag_obj = tag_svc.get(tag)
-                tags_info[tag_obj.id] = tag_obj.name
-                if tag_obj.name not in cacheable_results:
-                    cacheable_results[tag_obj.name] = {'hosts': []}
-                    self.inventory.add_group(tag_obj.name)
+        tag_svc = self.pyv.rest_content.tagging.Tag
+        tag_association = self.pyv.rest_content.tagging.TagAssociation
+        tags_info = dict()
+        tags = tag_svc.list()
+        for tag in tags:
+            tag_obj = tag_svc.get(tag)
+            tags_info[tag_obj.id] = tag_obj.name
 
         hostnames = self.get_option('hostnames')
         can_flatten_property  = self.get_option('flatten_property_name')
@@ -461,7 +443,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     # Sometime orphaned VMs return no configurations
                     continue
 
+                if HAS_VSPHERE:
+                    # Add virtual machine to appropriate tag group
+                    vm_mo_id = vm_obj.obj._GetMoId()
+                    vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
+                    attached_tags = [tags_info[tag_id] for tag_id in tag_association.list_attached_tags(vm_dynamic_id)]
+                
                 vm_properties = self._get_host_properties(vm_obj)
+                vm_properties['tags'] = attached_tags
                 current_host = self._get_hostname(vm_properties, hostnames)
 
                 if current_host not in hostvars:
@@ -471,17 +460,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
                     props = self._flatten_properties(vm_properties) if can_flatten_property else vm_properties
                     self._populate_host_properties(props, current_host)
-
-                    # Only gather facts related to tag if vCloud and vSphere is installed.
-                    if HAS_VSPHERE and self.pyv.with_tags:
-                        # Add virtual machine to appropriate tag group
-                        vm_mo_id = vm_obj.obj._GetMoId()
-                        vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
-                        attached_tags = tag_association.list_attached_tags(vm_dynamic_id)
-
-                        for tag_id in attached_tags:
-                            self.inventory.add_child(tags_info[tag_id], current_host)
-                            cacheable_results[tags_info[tag_id]]['hosts'].append(current_host)
                     
                     # Use constructed if applicable
                     strict = self.get_option('strict')
