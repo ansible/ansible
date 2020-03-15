@@ -412,9 +412,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         """
         hostvars = {}
-        objects = self.pyv._get_managed_objects_properties(vim_type=vim.VirtualMachine,
-                                                           properties=['name'])
+        vm_properties = self.get_option('properties')
 
+        objects = self.pyv._get_managed_objects_properties(vim_type=vim.VirtualMachine,
+                                                           properties=[x for x in vm_properties if x != "customValue"])
         tag_svc = self.pyv.rest_content.tagging.Tag
         tag_association = self.pyv.rest_content.tagging.TagAssociation
         tags_info = dict()
@@ -426,34 +427,44 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         hostnames = self.get_option('hostnames')
 
         for vm_obj in objects:
+            if not vm_obj.obj.config:
+                # Sometime orphaned VMs return no configurations
+                continue
+
+            properties = {}
             for vm_obj_property in vm_obj.propSet:
-                if not vm_obj.obj.config:
-                    # Sometime orphaned VMs return no configurations
-                    continue
+                properties[vm_obj_property.name] = vm_obj_property.val
+            
+            # Custom values
+            if 'customValue' in vm_properties:
+                field_mgr = self.pyv.content.customFieldsManager.field
+                for cust_value in vm_obj.obj.customValue:
+                    properties[[y.name for y in field_mgr if y.key == cust_value.key][0]] = cust_value.value
 
-                if HAS_VSPHERE:
-                    # Add virtual machine to appropriate tag group
-                    vm_mo_id = vm_obj.obj._GetMoId()
-                    vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
-                    attached_tags = [tags_info[tag_id] for tag_id in tag_association.list_attached_tags(vm_dynamic_id)]
-                
-                host_properties = self._get_host_properties(vm_obj)
-                host_properties['tags'] = attached_tags
+            # Tags
+            if HAS_VSPHERE:
+                # Add virtual machine to appropriate tag group
+                vm_mo_id = vm_obj.obj._GetMoId()
+                vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
+                attached_tags = [tags_info[tag_id] for tag_id in tag_association.list_attached_tags(vm_dynamic_id)]
+            
+            host_properties = to_nested_dict(properties)
+            host_properties['tags'] = attached_tags
 
-                # Build path
-                path = []
-                parent = vm_obj.obj.parent
-                while parent:
-                    path.append(parent.name)
-                    parent = parent.parent
-                path.reverse()
-                host_properties['path'] = "/".join(path)
+            # Build path
+            path = []
+            parent = vm_obj.obj.parent
+            while parent:
+                path.append(parent.name)
+                parent = parent.parent
+            path.reverse()
+            host_properties['path'] = "/".join(path)
 
-                host = self._get_hostname(host_properties, hostnames)
+            host = self._get_hostname(host_properties, hostnames)
 
-                if host not in hostvars:
-                    hostvars[host] = host_properties
-                    self._populate_host_properties(host_properties, host)
+            if host not in hostvars:
+                hostvars[host] = host_properties
+                self._populate_host_properties(host_properties, host)
 
         return hostvars
 
@@ -490,7 +501,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.inventory.add_host(host, result_gname)
 
         # Hostvars formats manipulation 
-        host_properties = flatten_dict(host_properties) if can_flatten_property else host_properties
+        host_properties = to_flatten_dict(host_properties) if can_flatten_property else host_properties
         
         if self.get_option('snake_cast_property_name'):
             host_properties = camel_dict_to_snake_dict(host_properties)
@@ -501,35 +512,26 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self.inventory.set_variable(host, k, v)
     
 
-    def _get_host_properties(self, vm_obj):
-        host_properties = {}
-        vm_properties = self.get_option('properties')
+def to_nested_dict(vm_properties):
+    host_properties = {}
 
-        field_mgr = self.pyv.content.customFieldsManager.field
+    for vm_prop in vm_properties:
+        prop_parents = vm_prop.split(".")
+        prop_dict = host_properties
+        for k in prop_parents[:-1]:
+            prop_dict = prop_dict.setdefault(k, {})
 
-        for vm_prop in vm_properties:
-            if vm_prop == 'customValue':
-                for cust_value in vm_obj.obj.customValue:
-                    host_properties[[y.name for y in field_mgr if y.key == cust_value.key][0]] = cust_value.value
-            else:
-                
-                prop_parents = vm_prop.split(".")
-                prop_dict = host_properties
-                for k in prop_parents[:-1]:
-                    prop_dict = prop_dict.setdefault(k, {})
+        prop_dict[prop_parents[-1]] = vm_properties[vm_prop]
 
-                vm_value = self.pyv._get_object_prop(vm_obj.obj, prop_parents)
-                prop_dict[prop_parents[-1]] = vm_value
-
-        return host_properties
+    return host_properties
 
 
-def flatten_dict(d, parent_key='', sep='.'):
+def to_flatten_dict(d, parent_key='', sep='.'):
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
         if v and isinstance(v, dict):
-            items.extend(flatten_dict(v, new_key, sep=sep).items())
+            items.extend(to_flatten_dict(v, new_key, sep=sep).items())
         else:
             items.append((new_key, v))
     return dict(items)
