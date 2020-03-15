@@ -15,6 +15,7 @@ extends_documentation_fragment:
   - shell_common
 '''
 
+from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins.shell import ShellBase
 
@@ -43,6 +44,15 @@ class ShellModule(ShellBase):
     _SHELL_SUB_RIGHT = '`"'
     _SHELL_GROUP_LEFT = '('
     _SHELL_GROUP_RIGHT = ')'
+
+    def env_prefix(self, **kwargs):
+        ret = []
+        for k, v in kwargs.items():
+            if v is None:
+                ret.append('unset %s;' % k)
+            else:
+                ret.append('export %s=%s;' % (k, shlex_quote(text_type(v))))
+        return ' '.join(ret)
 
     def checksum(self, path, python_interp):
         # In the following test, each condition is a check and logical

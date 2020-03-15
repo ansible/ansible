@@ -29,6 +29,9 @@ from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_native
 from ansible.plugins import AnsiblePlugin
+from ansible.utils.display import Display
+
+display = Display()
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
@@ -77,6 +80,8 @@ class ShellBase(AnsiblePlugin):
             pass
 
     def env_prefix(self, **kwargs):
+        if None in kwargs.values():
+            display.warning("You specified a null environment variable value, but your shell plugin does not support unsetting environment variables")
         return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in kwargs.items()])
 
     def join_path(self, *args):

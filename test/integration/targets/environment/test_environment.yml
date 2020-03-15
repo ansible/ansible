@@ -171,3 +171,18 @@
       assert:
         that:
           - "{{ test_foo.results[0].stdout == 'outer' }}"
+
+- name: test unsetting environment variables
+  hosts: testhost
+  environment:
+    # We use multiple common env vars to account for platforms where not all of
+    # them are defined by default to make the test meaningful everywhere.
+    # NOTE: make sure not to use env vars such as PATH that may need to have a
+    # meaningful value in order for fact gathering to work
+    HOME: ~
+    TERM: ~
+  tasks:
+    - assert:
+        that:
+          - ansible_env.HOME is undefined
+          - ansible_env.TERM is undefined

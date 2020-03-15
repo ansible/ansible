@@ -68,6 +68,15 @@ to define an environment hash might be a group_vars file, like so::
       http_proxy: http://proxy.bos.example.com:8080
       https_proxy: http://proxy.bos.example.com:8080
 
+.. versionadded:: 2.10
+
+It's also possible to unset environment variables that are defined by default on the target host by setting a null value for an environment variable (if your shell plugin supports it)::
+
+    - hosts: yourhost
+      environment:
+        http_proxy: ~
+        https_proxy: ~
+
 
 Working With Language-Specific Version Managers
 ===============================================
