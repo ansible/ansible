@@ -26,10 +26,12 @@ options:
     description:
      - Droplet ID that can be used to identify and reference a droplet.
     required: false
+    type: int
   tag_name:
     description:
      - Tag name that can be used to filter droplets by a tag.
     required: false
+    type: str
 author: "Nicolas Boutet (@boutetnico)"
 extends_documentation_fragment: digital_ocean.documentation
 notes:
@@ -47,7 +49,7 @@ EXAMPLES = '''
 - name: Gather information about a droplet with given id
   digital_ocean_droplet_info:
     oauth_token: "{{ my_do_key }}"
-    droplet_id: "3164444"
+    droplet_id: 3164444
 
 - name: Gather information about droplets having a given tag
   digital_ocean_droplet_info:
@@ -173,7 +175,8 @@ def core(module):
 
         if status_code != 200:
             module.fail_json(msg='Error fetching droplet information [{0}: {1}]'.format(
-            status_code, response.json['message']))
+                status_code, response.json['message'])
+            )
 
         resp_json = response.json
         droplets = [resp_json['droplet']]
@@ -181,7 +184,7 @@ def core(module):
         base_url = "{0}?tag_name={1}&".format(base_url, tag_name)
         droplets = rest.get_paginated_data(base_url=base_url, data_key_name='droplets')
     else:
-        droplets = rest.get_paginated_data(base_url=base_url+'?', data_key_name='droplets')
+        droplets = rest.get_paginated_data(base_url=base_url + '?', data_key_name='droplets')
 
     module.exit_json(changed=False, data=droplets)
 
@@ -189,14 +192,14 @@ def core(module):
 def main():
     argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
     argument_spec.update(
-        droplet_id=dict(type='str', required=False),
+        droplet_id=dict(type='int', required=False),
         tag_name=dict(type='str', required=False),
     )
     module = AnsibleModule(
-      argument_spec=argument_spec,
-      mutually_exclusive=(
-          ['droplet_id', 'tag_name'],
-      ),
+        argument_spec=argument_spec,
+        mutually_exclusive=(
+            ['droplet_id', 'tag_name'],
+        ),
     )
 
     core(module)
