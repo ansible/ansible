@@ -374,35 +374,28 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         self.pyv.check_requirements()
 
-        source_data = None
         if cache:
             cache = self.get_option('cache')
 
         update_cache = False
         if cache:
             try:
-                source_data = self._cache[cache_key]
+                cacheable_results = self._cache[cache_key]
             except KeyError:
                 update_cache = True
 
-        using_current_cache = cache and not update_cache
-        cacheable_results = self._populate_from_source(source_data, using_current_cache)
+        if cache and not update_cache:
+            self._populate_from_cache(cacheable_results)
+        else: 
+            cacheable_results = self._populate_from_source()
 
-        if update_cache:
+        if update_cache or (not cache and self.get_option('cache')):
             self._cache[cache_key] = cacheable_results
 
-    def _populate_from_cache(self, source_data):
+    def _populate_from_cache(self, cache_data):
         """ Populate cache using source data """
-        hostvars = source_data.pop('_meta', {}).get('hostvars', {})
-        for group in source_data:
-            if group == 'all':
-                continue
-            else:
-                self.inventory.add_group(group)
-                hosts = source_data[group].get('hosts', [])
-                for host in hosts:
-                    self._populate_host_vars([host], hostvars.get(host, {}), group)
-                self.inventory.add_child('all', group)
+        for host, host_properties in cache_data.items():
+            self._populate_host_properties(host_properties, host)
     
     def _get_hostname(self, properties, hostnames):
 
@@ -412,16 +405,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             if hostname:
                 return to_text(hostname)
         
-    def _populate_from_source(self, source_data, using_current_cache):
+    def _populate_from_source(self):
         """
         Populate inventory data from direct source
 
         """
-        if using_current_cache:
-            self._populate_from_cache(source_data)
-            return source_data
-
-        cacheable_results = {'_meta': {'hostvars': {}}}
         hostvars = {}
         objects = self.pyv._get_managed_objects_properties(vim_type=vim.VirtualMachine,
                                                            properties=['name'])
@@ -435,7 +423,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             tags_info[tag_obj.id] = tag_obj.name
 
         hostnames = self.get_option('hostnames')
-        can_flatten_property  = self.get_option('flatten_property_name')
 
         for vm_obj in objects:
             for vm_obj_property in vm_obj.propSet:
@@ -449,42 +436,41 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
                     attached_tags = [tags_info[tag_id] for tag_id in tag_association.list_attached_tags(vm_dynamic_id)]
                 
-                vm_properties = self._get_host_properties(vm_obj)
-                vm_properties['tags'] = attached_tags
-                current_host = self._get_hostname(vm_properties, hostnames)
+                host_properties = self._get_host_properties(vm_obj)
+                host_properties['tags'] = attached_tags
+                host = self._get_hostname(host_properties, hostnames)
 
-                if current_host not in hostvars:
-                    hostvars[current_host] = {}
-                    self.inventory.add_host(current_host)
+                if host not in hostvars:
+                    hostvars[host] = host_properties
+                    self._populate_host_properties(host_properties, host)
 
+        return hostvars
 
-                    props = self._flatten_properties(vm_properties) if can_flatten_property else vm_properties
-                    self._populate_host_properties(props, current_host)
-                    
-                    # Use constructed if applicable
-                    strict = self.get_option('strict')
-                    # Composed variables
-                    self._set_composite_vars(self.get_option('compose'), vm_properties, current_host, strict=strict)
-                    # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
-                    self._add_host_to_composed_groups(self.get_option('groups'), vm_properties, current_host, strict=strict)
-                    # Create groups based on variable values and add the corresponding hosts to it
-                    self._add_host_to_keyed_groups(self.get_option('keyed_groups'), vm_properties, current_host, strict=strict)
-
-        for host in hostvars:
-            h = self.inventory.get_host(host)
-            cacheable_results['_meta']['hostvars'][h.name] = h.vars
-
-        return cacheable_results
-
-    def _populate_host_properties(self, host_properties, current_host):
+    def _populate_host_properties(self, host_properties, host):
         # Load VM properties in host_vars
+        can_flatten_property = self.get_option('flatten_property_name')
+
+        self.inventory.add_host(host)
+       
+        # Use constructed if applicable
+        strict = self.get_option('strict')
+        # Composed variables
+        self._set_composite_vars(self.get_option('compose'), host_properties, host, strict=strict)
+        # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
+        self._add_host_to_composed_groups(self.get_option('groups'), host_properties, host, strict=strict)
+        # Create groups based on variable values and add the corresponding hosts to it
+        self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host_properties, host, strict=strict)
+
+        # Hostvars formats manipulation 
+        host_properties = self._flatten_properties(host_properties) if can_flatten_property else host_properties
+        
         if self.get_option('snake_cast_property_name'):
             host_properties = camel_dict_to_snake_dict(host_properties)
         
         can_sanitize = self.get_option('sanitize_property_name')
         for k,v in host_properties.items():
             k = self._sanitize_group_name(k) if can_sanitize else k
-            self.inventory.set_variable(current_host, k, v)
+            self.inventory.set_variable(host, k, v)
     
     def _flatten_properties(self, properties):
         vm_properties = self.get_option('properties')
