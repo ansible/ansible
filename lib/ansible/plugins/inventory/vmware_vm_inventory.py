@@ -61,6 +61,7 @@ DOCUMENTATION = '''
             - Specify the list of VMware schema properties associated with the VM.
             - These properties will be populated in hostvars of the given VM.
             - Each value in the list specifies the path to a specific property in VM object.
+            - See: U(https://github.com/monkey-mas/lab/blob/master/pyvmomi/docs/vim/VirtualMachine.rst#attributes) for all properties.
             type: list
             default: [ 'name', 'config.cpuHotAddEnabled', 'config.cpuHotRemoveEnabled',
                        'config.instanceUuid', 'config.hardware.numCPU', 'config.template',
@@ -438,6 +439,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 
                 host_properties = self._get_host_properties(vm_obj)
                 host_properties['tags'] = attached_tags
+
+                # Build path
+                path = []
+                parent = vm_obj.obj.parent
+                while parent:
+                    path.append(parent.name)
+                    parent = parent.parent
+                path.reverse()
+                host_properties['path'] = "/".join(path)
+
                 host = self._get_hostname(host_properties, hostnames)
 
                 if host not in hostvars:
@@ -460,6 +471,23 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self._add_host_to_composed_groups(self.get_option('groups'), host_properties, host, strict=strict)
         # Create groups based on variable values and add the corresponding hosts to it
         self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host_properties, host, strict=strict)
+
+        # group by parents
+        # TODO: This should be a feature of Constractable:
+        #   keyed_groups:
+        #       - parent_group: '{{ path.split("/") }}'
+        #
+        parents = host_properties['path'].split('/')
+        for i in range(len(parents)-1):
+            parent_name = self._sanitize_group_name(parents[i])
+            gname = self._sanitize_group_name(parents[i+1])
+
+            result_gname = self.inventory.add_group(gname)
+            self.inventory.add_group(parent_name)
+
+            self.inventory.add_child(parent_name, result_gname)
+
+        self.inventory.add_host(host, result_gname)
 
         # Hostvars formats manipulation 
         host_properties = self._flatten_properties(host_properties) if can_flatten_property else host_properties
