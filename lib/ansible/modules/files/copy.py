@@ -587,14 +587,16 @@ def main():
                 e.result['msg'] += ' Could not copy to {0}'.format(dest)
                 module.fail_json(**e.results)
 
-            os.makedirs(b_dirname)
+            if not module.check_mode:
+                os.makedirs(b_dirname)
             directory_args = module.load_file_common_arguments(module.params)
             directory_mode = module.params["directory_mode"]
             if directory_mode is not None:
                 directory_args['mode'] = directory_mode
             else:
                 directory_args['mode'] = None
-            adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed)
+            if not module.check_mode:
+                adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed)
 
     if os.path.isdir(b_dest):
         basename = os.path.basename(src)
@@ -612,7 +614,7 @@ def main():
         if os.access(b_dest, os.R_OK) and os.path.isfile(b_dest):
             checksum_dest = module.sha1(dest)
     else:
-        if not os.path.exists(os.path.dirname(b_dest)):
+        if not os.path.exists(os.path.dirname(b_dest)) and not module.check_mode:
             try:
                 # os.path.exists() can return false in some
                 # circumstances where the directory does not have
@@ -624,7 +626,7 @@ def main():
                     module.fail_json(msg="Destination directory %s is not accessible" % (os.path.dirname(dest)))
             module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
 
-    if not os.access(os.path.dirname(b_dest), os.W_OK) and not module.params['unsafe_writes']:
+    if not os.access(os.path.dirname(b_dest), os.W_OK) and not module.params['unsafe_writes'] and not module.check_mode:
         module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
     backup_file = None
