@@ -100,7 +100,7 @@ EXAMPLES = r'''
 - name: Remove 'bar' and 'zed' from the list of aliases for foo (192.168.1.100)
   win_hosts:
     state: present
-    canoncial_name: foo
+    canonical_name: foo
     ip_address: 192.168.1.100
     action: remove
     aliases:
