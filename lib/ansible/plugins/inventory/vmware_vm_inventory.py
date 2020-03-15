@@ -490,7 +490,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.inventory.add_host(host, result_gname)
 
         # Hostvars formats manipulation 
-        host_properties = self._flatten_properties(host_properties) if can_flatten_property else host_properties
+        host_properties = flatten_dict(host_properties) if can_flatten_property else host_properties
         
         if self.get_option('snake_cast_property_name'):
             host_properties = camel_dict_to_snake_dict(host_properties)
@@ -500,17 +500,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             k = self._sanitize_group_name(k) if can_sanitize else k
             self.inventory.set_variable(host, k, v)
     
-    def _flatten_properties(self, properties):
-        vm_properties = self.get_option('properties')
-        host_properties = {}
-        for vm_prop in vm_properties: 
-            if vm_prop != 'customValue':
-                r = properties
-                for p in vm_prop.split("."):
-                    r = r[p]
-                host_properties[vm_prop] = r
-        return host_properties
-
 
     def _get_host_properties(self, vm_obj):
         host_properties = {}
@@ -533,3 +522,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 prop_dict[prop_parents[-1]] = vm_value
 
         return host_properties
+
+
+def flatten_dict(d, parent_key='', sep='.'):
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if v and isinstance(v, dict):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
