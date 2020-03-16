@@ -303,6 +303,8 @@ class GalaxyCLI(CLI):
                                    help='Ignore errors during verification and continue with the next specified collection.')
         verify_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                    help='A file containing a list of collections to be verified.')
+        verify_parser.add_argument('--pre', '--pre-release', dest='pre_release', action='store_true',
+                                   help='Allow pre-releases')
 
     def add_install_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -339,6 +341,8 @@ class GalaxyCLI(CLI):
                                         help='The path to the directory containing your collections.')
             install_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                         help='A file containing a list of collections to be installed.')
+            install_parser.add_argument('--pre', '--pre-release', dest='pre_release', action='store_true',
+                                        help='Allow pre-releases')
         else:
             install_parser.add_argument('-r', '--role-file', dest='role_file',
                                         help='A file containing a list of roles to be imported.')
@@ -897,7 +901,8 @@ class GalaxyCLI(CLI):
 
         resolved_paths = [validate_collection_path(GalaxyCLI._resolve_path(path)) for path in search_paths]
 
-        verify_collections(requirements, resolved_paths, self.api_servers, (not ignore_certs), ignore_errors)
+        verify_collections(requirements, resolved_paths, self.api_servers, (not ignore_certs), ignore_errors,
+                           allow_pre_release=context.CLIARGS['pre_release'])
 
         return 0
 
@@ -941,7 +946,7 @@ class GalaxyCLI(CLI):
                 os.makedirs(b_output_path)
 
             install_collections(requirements, output_path, self.api_servers, (not ignore_certs), ignore_errors,
-                                no_deps, force, force_deps)
+                                no_deps, force, force_deps, context.CLIARGS['pre_release'])
 
             return 0
 
