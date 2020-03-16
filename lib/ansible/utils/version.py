@@ -199,6 +199,8 @@ class SemanticVersion(Version):
             other = SemanticVersion(other)
 
         if self.core != other.core:
+            # if the core version doesn't match
+            # prerelease and buildmetadata doesn't matter
             if self.core < other.core:
                 return -1
             else:
@@ -207,29 +209,31 @@ class SemanticVersion(Version):
         if not any((self.prerelease, other.prerelease, self.buildmetadata, other.buildmetadata)):
             return 0
 
-        val = 0
-
         if self.prerelease and not other.prerelease:
-            val -= 1
+            return -1
         elif not self.prerelease and other.prerelease:
-            val += 1
+            return 1
         elif self.prerelease and other.prerelease:
             if self.prerelease < other.prerelease:
-                val -= 1
+                return -1
             elif self.prerelease > other.prerelease:
-                val += 1
+                return 1
+
+        # If there is a difference in prerelease,
+        # buildmetadata doesn't matter
 
         if self.buildmetadata and not other.buildmetadata:
-            val += 1
+            return 1
         elif not self.buildmetadata and other.buildmetadata:
-            val -= 1
+            return -1
         elif self.buildmetadata and other.buildmetadata:
             if self.buildmetadata < other.buildmetadata:
-                val -= 1
+                return -1
             elif self.buildmetadata > other.buildmetadata:
-                val += 1
+                return 1
 
-        return val
+        # If we have made it here, things should be equal
+        return 0
 
     # The Py2 and Py3 implementations of distutils.version.Version
     # are quite different, this makes the Py2 and Py3 implementations

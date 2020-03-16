@@ -15,6 +15,7 @@ EQ = [
     ('1.0.0', '1.0.0-beta', False),
     ('1.0.0-beta2+build1', '1.0.0-beta.2+build.1', False),
     ('1.0.0-beta+build', '1.0.0-beta+build', True),
+    ('1.0.0-beta+a', '1.0.0-alpha+bar', False),
 ]
 
 NE = [
@@ -22,6 +23,7 @@ NE = [
     ('1.0.0', '1.0.0-beta', True),
     ('1.0.0-beta2+build1', '1.0.0-beta.2+build.1', True),
     ('1.0.0-beta+build', '1.0.0-beta+build', False),
+    ('1.0.0-beta+a', '1.0.0-alpha+bar', True),
 ]
 
 LT = [
@@ -31,6 +33,7 @@ LT = [
     ('1.0.0-beta', '1.0.0-alpha3', False),
     ('1.0.0+foo', '1.0.0-alpha', False),
     ('1.0.0-beta.1', '1.0.0-beta.a', True),
+    ('1.0.0-beta+a', '1.0.0-alpha+bar', False),
 ]
 
 GT = [
@@ -40,6 +43,7 @@ GT = [
     ('1.0.0-beta', '1.0.0-alpha3', True),
     ('1.0.0+foo', '1.0.0-alpha', True),
     ('1.0.0-beta.1', '1.0.0-beta.a', False),
+    ('1.0.0-beta+a', '1.0.0-alpha+bar', True),
 ]
 
 LE = [
