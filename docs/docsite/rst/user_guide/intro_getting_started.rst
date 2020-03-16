@@ -5,6 +5,7 @@ Getting Started
 ***************
 
 Now that you have read the :ref:`installation guide<installation_guide>` and installed Ansible on a control node, you are ready to learn how Ansible works. A basic Ansible command or playbook:
+
   * selects machines to execute against from inventory
   * connects to those machines (or network devices, or other managed nodes), usually over SSH
   * copies one or more modules to the remote machines and starts execution there
@@ -47,6 +48,7 @@ Confirm that you can connect using SSH to all the nodes in your inventory using 
 Beyond the basics
 -----------------
 You can override the default remote user name in several ways, including:
+
   * passing the ``-u`` parameter at the command line
   * setting user information in your inventory file
   * setting user information in your configuration file
