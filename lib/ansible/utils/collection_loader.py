@@ -33,14 +33,16 @@ _SYNTHETIC_PACKAGES = {
 class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
     def __init__(self, config=None):
         if config:
-            self._n_configured_paths = config.get_config_value('COLLECTIONS_PATHS')
+            paths = config.get_config_value('COLLECTIONS_PATHS')
         else:
-            self._n_configured_paths = os.environ.get('ANSIBLE_COLLECTIONS_PATHS', '').split(os.pathsep)
+            paths = os.environ.get('ANSIBLE_COLLECTIONS_PATHS', '').split(os.pathsep)
 
-        if isinstance(self._n_configured_paths, string_types):
-            self._n_configured_paths = [self._n_configured_paths]
-        elif self._n_configured_paths is None:
-            self._n_configured_paths = []
+        if isinstance(paths, string_types):
+            paths = [paths]
+        elif paths is None:
+            paths = []
+
+        self._n_configured_paths = [to_native(p) for p in paths]
 
         # Append all ``ansible_collections`` dirs from sys.path to the end
         for path in sys.path:
