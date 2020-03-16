@@ -188,7 +188,7 @@ options:
     - ' - C(type) (string): Valid values are:'
     - '     - C(thin) thin disk'
     - '     - C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5'
-    - '     Default: C(None) thick disk, no eagerzero.'
+    - '     Default: C(thick) thick disk, no eagerzero.'
     - ' - C(datastore) (string): The name of datastore which will be used for the disk. If C(autoselect_datastore) is set to True,
           then will select the less used datastore whose name contains this "disk.datastore" string.'
     - ' - C(filename) (string): Existing disk image to be used. Filename must already exist on the datastore.'
