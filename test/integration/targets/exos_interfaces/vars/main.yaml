@@ -1,0 +1,66 @@
+---
+deleted:
+  requests_1:
+    - data: '{"openconfig-interfaces:config": {"enabled": true}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=3/config
+
+  requests_2:
+    - data: '{"openconfig-interfaces:config": {"enabled": true}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=1/config
+  
+  commands_1:
+    - "unconfigure ports 2 description-string"
+    - "configure ports 2 auto on"
+    - "configure ports 3 auto on"
+  
+  commands_2:
+    - "unconfigure ports 1 description-string"
+    - "disable jumbo-frame ports 1"
+    - "disable jumbo-frame ports 4"
+    - "configure ports 4 auto on"
+
+merged:
+  requests:
+    - data: '{"openconfig-interfaces:config": {"enabled": true}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=3/config
+    - data: '{"openconfig-interfaces:config": {"description": "Port 2"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=2/config
+    - data: '{"openconfig-if-ethernet:config": {"auto-negotiate": true, "duplex-mode": "FULL", "port-speed": "SPEED_1GB"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=1/openconfig-if-ethernet:ethernet/config
+
+  commands:
+    - "disable jumbo-frame ports 1"
+    - "configure ports 2 auto on speed 1000"
+    - "configure ports 3 auto on duplex FULL"
+
+overridden:
+  requests:
+    - data: '{"openconfig-interfaces:config": {"enabled": true}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=3/config
+    - data: '{"openconfig-interfaces:config": {"description": "Interface 1"}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=1/config
+
+  commands:
+    - "disable jumbo-frame ports 1"
+    - "configure ports 3 auto on speed 100"
+    - "unconfigure ports 2 description-string"
+    - "disable jumbo-frame ports 4"
+    - "configure ports 2 auto on"
+    - "configure ports 4 auto on"
+
+replaced:
+  requests:
+    - data: '{"openconfig-interfaces:config": {"enabled": true}}'
+      method: PATCH
+      path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=3/config
+
+  commands:
+    - "disable jumbo-frame ports 4"
+    - "configure ports 3 auto on speed 1000 duplex FULL"

@@ -1,0 +1,13 @@
+---
+- name: Populate config
+  exos_config:
+    lines:
+      - configure ports 1 description-string Port1
+      - disable ports 1
+      - enable jumbo-frame ports 1
+      - configure ports 2 description-string Interface2
+      - configure ports 2 auto on duplex full
+      - disable ports 3
+      - configure ports 3 auto on speed 1000
+      - enable jumbo-frame ports 4
+      - configure ports 4 auto on duplex full speed 1000

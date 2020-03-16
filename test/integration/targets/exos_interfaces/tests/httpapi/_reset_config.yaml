@@ -1,0 +1,8 @@
+---
+- name: Restore initial configuration
+  exos_config:
+    lines:
+      - unconfigure ports 1-58 description-string
+      - enable ports all
+      - disable jumbo-frame ports all
+      - configure ports 1-48 auto on
