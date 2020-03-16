@@ -294,8 +294,10 @@ def map_obj_to_commands(updates, module):
         if want['state'] == 'absent':
             if have['sshkey']:
                 add_ssh(commands, want)
-            else:
-                commands.append(user_del_cmd(want['name']))
+
+            # Add delete the username on top of deleting user SSH key or just delete user
+            # This should be executed regardless I believe
+            commands.append(user_del_cmd(want['name']))
 
         if needs_update(want, have, 'view'):
             add(commands, want, 'view %s' % want['view'])
