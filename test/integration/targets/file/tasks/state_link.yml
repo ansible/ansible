@@ -360,3 +360,24 @@
     that:
       - src_state is failed
       - "'src option requires state to be' in src_state.msg"
+
+# Test creating a symlink when the destination exists and is a file
+- name: create a test file
+  copy:
+    dest: '{{output_dir}}/file.txt'
+    content: 'this is a test file\n'
+    mode: 0666
+
+- name: Create a symlink with dest already a file
+  file: src={{output_file}} dest={{output_dir}}/file.txt state=link
+  ignore_errors: true
+  register: dest_is_existing_file_fail
+
+- name: Create a symlink with dest already a file
+  file: src={{output_file}} dest={{output_dir}}/file.txt state=link force=true
+  register: dest_is_existing_file_force
+
+- assert:
+    that:
+    - dest_is_existing_file_fail is failed
+    - dest_is_existing_file_force is changed
