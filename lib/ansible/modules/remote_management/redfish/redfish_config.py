@@ -60,7 +60,7 @@ options:
     description:
       - value of BIOS attribute to update
     default: 'null'
-    type: str
+    type: raw
     version_added: "2.8"
   timeout:
     description:
