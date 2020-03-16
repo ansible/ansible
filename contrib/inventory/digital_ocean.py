@@ -230,14 +230,14 @@ class DoManager:
         return resp['tags']
 
     def show_project_resources(self, project_id):
-        resp = self.send('projects/{}/resources'.format(project_id))
+        resp = self.send('projects/{0}/resources'.format(project_id))
         return resp['resources']
 
     def all_projects(self):
         resp = self.send('projects')
         projects = resp['projects']
 
-        for index, _ in enumerate(projects):
+        for index in range(0, len(projects)):
             cur_project = projects[index]
             cur_project['resources'] = self.show_project_resources(cur_project['id'])
 
