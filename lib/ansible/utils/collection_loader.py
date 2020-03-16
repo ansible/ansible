@@ -50,7 +50,13 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
 
         # Append all ``ansible_collections`` dirs from sys.path to the end
         for path in sys.path:
-            if path not in paths and os.path.isdir(os.path.join(path, 'ansible_collections')):
+            if (
+                    path not in paths and
+                    os.path.isdir(to_bytes(
+                        os.path.join(path, 'ansible_collections'),
+                        errors='surrogate_or_strict',
+                    ))
+            ):
                 paths.append(path)
 
         self._n_configured_paths = paths
