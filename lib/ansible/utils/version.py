@@ -39,10 +39,17 @@ SEMVER_RE = re.compile(
 )
 
 
-class _Alpha(text_type):
-    """Class to easily allow comparing strings"""
+class _Alpha:
+    """Class to easily allow comparing strings
+
+    Largely this exists to make comparing an interger and a string on py3
+    so that it works like py2.
+    """
     def __init__(self, specifier):
         self.specifier = specifier
+
+    def repr(self):
+        return self.specifier
 
     def __eq__(self, other):
         if isinstance(other, _Alpha):
@@ -75,10 +82,17 @@ class _Alpha(text_type):
         return self.__gt__(other) or self.__eq__(other)
 
 
-class _Numeric(int):
-    """Class to easily allow comparing numbers"""
+class _Numeric:
+    """Class to easily allow comparing numbers
+
+    Largely this exists to make comparing an interger and a string on py3
+    so that it works like py2.
+    """
     def __init__(self, specifier):
         self.specifier = int(specifier)
+
+    def repr(self):
+        return self.specifier
 
     def __eq__(self, other):
         if isinstance(other, _Numeric):
