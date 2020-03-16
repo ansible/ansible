@@ -153,7 +153,11 @@ class SemanticVersion(Version):
         if not isinstance(loose_version, LooseVersion):
             raise ValueError("%r is not a LooseVersion" % loose_version)
 
-        version = loose_version.version[:]
+        try:
+            version = loose_version.version[:]
+        except AttributeError:
+            raise ValueError("%r is not a LooseVersion" % loose_version)
+
         if set(type(v) for v in version[:3]) != set((int,)):
             raise ValueError("Non integer values in %r" % loose_version)
 
