@@ -63,7 +63,7 @@ options:
     description:
       - 'Transition noncurrent versions to this storage class'
     default: glacier
-    choices: ['glacier', 'onezone_ia', 'standard_ia']
+    choices: [ 'glacier', 'onezone_ia', 'standard_ia', 'intelligent_tiering', 'deep_archive' ]
     required: false
     version_added: 2.6
     type: str
@@ -100,10 +100,9 @@ options:
     type: str
   storage_class:
     description:
-      - "The storage class to transition to. Currently there are two supported values - 'glacier',  'onezone_ia', or 'standard_ia'."
-      - "The 'standard_ia' class is only being available from Ansible version 2.2."
+      - "The storage class to transition to."
     default: glacier
-    choices: [ 'glacier', 'onezone_ia', 'standard_ia']
+    choices: [ 'glacier', 'onezone_ia', 'standard_ia', 'intelligent_tiering', 'deep_archive' ]
     type: str
   transition_date:
     description:
@@ -445,12 +444,15 @@ def destroy_lifecycle_rule(client, module):
 
 
 def main():
+
+    s3_storage_class=['glacier', 'onezone_ia', 'standard_ia', 'intelligent_tiering', 'deep_archive']
+
     argument_spec = dict(
         name=dict(required=True, type='str'),
         expiration_days=dict(type='int'),
         expiration_date=dict(),
         noncurrent_version_expiration_days=dict(type='int'),
-        noncurrent_version_storage_class=dict(default='glacier', type='str', choices=['glacier', 'onezone_ia', 'standard_ia']),
+        noncurrent_version_storage_class=dict(default='glacier', type='str', choices=s3_storage_class),
         noncurrent_version_transition_days=dict(type='int'),
         noncurrent_version_transitions=dict(type='list'),
         prefix=dict(),
@@ -458,7 +460,7 @@ def main():
         rule_id=dict(),
         state=dict(default='present', choices=['present', 'absent']),
         status=dict(default='enabled', choices=['enabled', 'disabled']),
-        storage_class=dict(default='glacier', type='str', choices=['glacier', 'onezone_ia', 'standard_ia']),
+        storage_class=dict(default='glacier', type='str', choices=s3_storage_class),
         transition_days=dict(type='int'),
         transition_date=dict(),
         transitions=dict(type='list'),
