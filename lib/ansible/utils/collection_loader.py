@@ -42,15 +42,18 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         elif paths is None:
             paths = []
 
-        self._n_configured_paths = [to_native(p) for p in paths]
+        # expand any placeholders in configured paths
+        paths = [
+            to_native(os.path.expanduser(p), errors='surrogate_or_strict')
+            for p in paths
+        ]
 
         # Append all ``ansible_collections`` dirs from sys.path to the end
         for path in sys.path:
-            if path not in self._n_configured_paths and os.path.isdir(os.path.join(path, 'ansible_collections')):
-                self._n_configured_paths.append(path)
+            if path not in paths and os.path.isdir(os.path.join(path, 'ansible_collections')):
+                paths.append(path)
 
-        # expand any placeholders in configured paths
-        self._n_configured_paths = [to_native(os.path.expanduser(p), errors='surrogate_or_strict') for p in self._n_configured_paths]
+        self._n_configured_paths = paths
 
         self._n_playbook_paths = []
         self._default_collection = None
