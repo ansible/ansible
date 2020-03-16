@@ -461,12 +461,12 @@ EXAMPLES = r'''
 
   - name: Add an Ethernet connection with static IP configuration
     nmcli:
-    conn_name: my-eth1
-    ifname: eth1
-    type: ethernet
-    ip4: 192.0.2.100/24
-    gw4: 192.0.2.1
-    state: present
+      conn_name: my-eth1
+      ifname: eth1
+      type: ethernet
+      ip4: 192.0.2.100/24
+      gw4: 192.0.2.1
+      state: present
 
   - name: Add an Team connection with static IP configuration
     nmcli:
