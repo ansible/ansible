@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-test now uses modules from the ``ansible.windows`` collection for setup and teardown of ``windows-integration`` tests and code coverage

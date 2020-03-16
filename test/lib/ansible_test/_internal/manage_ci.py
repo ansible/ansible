@@ -76,7 +76,7 @@ class ManageWindowsCI:
         name = 'windows_%s' % self.core_ci.version
 
         env = ansible_environment(self.core_ci.args)
-        cmd = ['ansible', '-m', 'win_ping', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
+        cmd = ['ansible', '-m', 'ansible.windows.win_ping', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
 
         for dummy in range(1, 120):
             try:
