@@ -18,6 +18,7 @@ import yaml
 
 from collections import namedtuple
 from contextlib import contextmanager
+from distutils.version import LooseVersion
 from hashlib import sha256
 from io import BytesIO
 from yaml.error import YAMLError
@@ -298,7 +299,7 @@ class CollectionRequirement:
             elif requirement == '*' or version == '*':
                 continue
 
-            if not op(SemanticVersion(version), SemanticVersion(requirement)):
+            if not op(SemanticVersion(version), SemanticVersion.from_loose_version(LooseVersion(requirement))):
                 break
         else:
             return True
@@ -590,7 +591,8 @@ def verify_collections(collections, search_paths, apis, validate_certs, ignore_e
 
                     # Download collection on a galaxy server for comparison
                     try:
-                        remote_collection = CollectionRequirement.from_name(collection_name, apis, collection_version, False, parent=None, allow_pre_release=allow_pre_release)
+                        remote_collection = CollectionRequirement.from_name(collection_name, apis, collection_version, False, parent=None,
+                                                                            allow_pre_release=allow_pre_release)
                     except AnsibleError as e:
                         if e.message == 'Failed to find collection %s:%s' % (collection[0], collection[1]):
                             raise AnsibleError('Failed to find remote collection %s:%s on any of the galaxy servers' % (collection[0], collection[1]))

@@ -7,7 +7,7 @@ __metaclass__ = type
 
 import re
 
-from distutils.version import Version
+from distutils.version import LooseVersion, Version
 
 from ansible.module_utils.six import text_type
 
@@ -48,8 +48,8 @@ class _Alpha:
     def __init__(self, specifier):
         self.specifier = specifier
 
-    def repr(self):
-        return self.specifier
+    def __repr__(self):
+        return repr(self.specifier)
 
     def __eq__(self, other):
         if isinstance(other, _Alpha):
@@ -91,8 +91,8 @@ class _Numeric:
     def __init__(self, specifier):
         self.specifier = int(specifier)
 
-    def repr(self):
-        return self.specifier
+    def __repr__(self):
+        return repr(self.specifier)
 
     def __eq__(self, other):
         if isinstance(other, _Numeric):
@@ -141,6 +141,31 @@ class SemanticVersion(Version):
 
     def __repr__(self):
         return 'SemanticVersion(%r)' % self.vstring
+
+    @staticmethod
+    def from_loose_version(loose_version):
+        """This method is designed to take a ``LooseVersion``
+        and attempt to construct a ``SemanticVersion`` from it
+
+        This is useful where you want to do simple version math
+        without requiring users to provide a compliant semver.
+        """
+        if not isinstance(loose_version, LooseVersion):
+            raise ValueError("%r is not a LooseVersion" % loose_version)
+
+        version = loose_version.version[:]
+        if set(type(v) for v in version[:3]) != set((int,)):
+            raise ValueError("Non integer values in %r" % loose_version)
+
+        # Extra is everything to the right of the core version
+        extra = re.search('[+-].+$', loose_version.vstring)
+        version[:] = version[:3] + [0] * (3 - len(version[:3]))
+        return SemanticVersion(
+            '%s%s' % (
+                '.'.join(str(v) for v in version),
+                extra.group(0) if extra else ''
+            )
+        )
 
     def parse(self, vstring):
         match = SEMVER_RE.match(vstring)
