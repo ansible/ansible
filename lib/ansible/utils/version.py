@@ -149,7 +149,7 @@ class SemanticVersion(Version):
 
     @property
     def is_prerelease(self):
-        return self.major == 0 or any((self.prerelease, self.buildmetadata))
+        return self.major == 0 or self.prerelease
 
     def _cmp(self, other):
         if isinstance(other, str):
