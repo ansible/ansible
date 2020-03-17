@@ -47,11 +47,13 @@ class GalaxyRole(object):
     SUPPORTED_SCMS = set(['git', 'hg'])
     META_MAIN = (os.path.join('meta', 'main.yml'), os.path.join('meta', 'main.yaml'))
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
+    META_REQUIREMENTS = (os.path.join('meta', 'requirements.yml'), os.path.join('meta', 'requirements.yaml'))
     ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
 
     def __init__(self, galaxy, api, name, src=None, version=None, scm=None, path=None):
 
         self._metadata = None
+        self._requirements = None
         self._install_info = None
         self._validate_certs = not context.CLIARGS['ignore_certs']
 
@@ -365,3 +367,24 @@ class GalaxyRole(object):
         }
         """
         return dict(scm=self.scm, src=self.src, version=self.version, name=self.name)
+
+    @property
+    def requirements(self):
+        """
+        Returns role requirements
+        """
+        if self._requirements is None:
+            self._requirements = []
+            for meta_requirements in self.META_REQUIREMENTS:
+                meta_path = os.path.join(self.path, meta_requirements)
+                if os.path.isfile(meta_path):
+                    try:
+                        f = open(meta_path, 'r')
+                        self._requirements = yaml.safe_load(f)
+                    except Exception:
+                        display.vvvvv("Unable to load requirements for %s" % self.name)
+                        return False
+                    finally:
+                        f.close()
+
+        return self._requirements
