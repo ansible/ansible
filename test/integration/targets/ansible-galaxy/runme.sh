@@ -12,35 +12,71 @@ ansible-galaxy --version
 # Need a relative custom roles path for testing various scenarios of -p
 galaxy_relative_rolespath="my/custom/roles/path"
 
-# Prep the local git repo with a role and make a tar archive so we can test
-# different things
-galaxy_local_test_role="test-role"
-galaxy_local_test_role_dir=$(mktemp -d)
-galaxy_local_test_role_git_repo="${galaxy_local_test_role_dir}/${galaxy_local_test_role}"
-galaxy_local_test_role_tar="${galaxy_local_test_role_dir}/${galaxy_local_test_role}.tar"
-pushd "${galaxy_local_test_role_dir}"
-    ansible-galaxy init "${galaxy_local_test_role}"
-    pushd "${galaxy_local_test_role}"
-        git init .
-
-        # Prep git, becuase it doesn't work inside a docker container without it
-        git config user.email "tester@ansible.com"
-        git config user.name "Ansible Tester"
-
-        git add .
-        git commit -m "local testing ansible galaxy role"
-        git archive \
-            --format=tar \
-            --prefix="${galaxy_local_test_role}/" \
-            master > "${galaxy_local_test_role_tar}"
-    popd # "${galaxy_local_test_role}"
-popd # "${galaxy_local_test_role_dir}"
-
 # Status message function (f_ to designate that it's a function)
 f_ansible_galaxy_status()
 {
     printf "\n\n\n### Testing ansible-galaxy: %s\n" "${@}"
 }
+
+# Use to initialize a repository. Must call the post function too.
+f_ansible_galaxy_create_role_repo_pre()
+{
+    repo_name=$1
+    repo_dir=$2
+
+    pushd "${repo_dir}"
+        ansible-galaxy init "${repo_name}"
+        pushd "${repo_name}"
+            git init .
+
+            # Prep git, becuase it doesn't work inside a docker container without it
+            git config user.email "tester@ansible.com"
+            git config user.name "Ansible Tester"
+
+    # f_ansible_galaxy_create_role_repo_post
+}
+
+# Call after f_ansible_galaxy_create_repo_pre.
+f_ansible_galaxy_create_role_repo_post()
+{
+    repo_name=$1
+    repo_tar=$2
+
+    # f_ansible_galaxy_create_role_repo_pre
+
+            git add .
+            git commit -m "local testing ansible galaxy role"
+
+            git archive \
+                --format=tar \
+                --prefix="${repo_name}/" \
+                master > "${repo_tar}"
+        popd # "${repo_name}"
+    popd # "${repo_dir}"
+}
+
+# Prep the local git repos with role and make a tar archive so we can test
+# different things
+galaxy_local_test_role="test-role"
+galaxy_local_test_role_dir=$(mktemp -d)
+galaxy_local_test_role_git_repo="${galaxy_local_test_role_dir}/${galaxy_local_test_role}"
+galaxy_local_test_role_tar="${galaxy_local_test_role_dir}/${galaxy_local_test_role}.tar"
+
+f_ansible_galaxy_create_role_repo_pre "${galaxy_local_test_role}" "${galaxy_local_test_role_dir}"
+f_ansible_galaxy_create_role_repo_post "${galaxy_local_test_role}" "${galaxy_local_test_role_tar}"
+
+galaxy_local_parent_role="parent-role"
+galaxy_local_parent_role_dir=$(mktemp -d)
+galaxy_local_parent_role_git_repo="${galaxy_local_parent_role_dir}/${galaxy_local_parent_role}"
+galaxy_local_parent_role_tar="${galaxy_local_parent_role_dir}/${galaxy_local_parent_role}.tar"
+
+# Create parent-role repository
+f_ansible_galaxy_create_role_repo_pre "${galaxy_local_parent_role}" "${galaxy_local_parent_role_dir}"
+
+    cat <<EOF > meta/requirements.yml
+- src: git+file:///${galaxy_local_test_role_git_repo}
+EOF
+f_ansible_galaxy_create_role_repo_post "${galaxy_local_parent_role}" "${galaxy_local_parent_role_tar}"
 
 # Galaxy install test case
 #
@@ -55,6 +91,7 @@ pushd "${galaxy_testdir}"
     [[ -d "${HOME}/.ansible/roles/${galaxy_local_test_role}" ]]
 popd # ${galaxy_testdir}
 rm -fr "${galaxy_testdir}"
+rm -fr "${HOME}/.ansible/roles/${galaxy_local_test_role}"
 
 # Galaxy install test case
 #
@@ -70,6 +107,45 @@ pushd "${galaxy_testdir}"
     [[ -d "${galaxy_relative_rolespath}/${galaxy_local_test_role}" ]]
 popd # ${galaxy_testdir}
 rm -fr "${galaxy_testdir}"
+
+# Galaxy install test case
+#
+# Install local git repo with a meta/requirements.yml
+f_ansible_galaxy_status "install of local git repo with meta/requirements.yml"
+galaxy_testdir=$(mktemp -d)
+pushd "${galaxy_testdir}"
+
+    ansible-galaxy install git+file:///"${galaxy_local_parent_role_git_repo}" "$@"
+
+    # Test that the role was installed to the expected directory
+    [[ -d "${HOME}/.ansible/roles/${galaxy_local_parent_role}" ]]
+
+    # Test that the dependency was also installed
+    [[ -d "${HOME}/.ansible/roles/${galaxy_local_test_role}" ]]
+
+popd # ${galaxy_testdir}
+rm -fr "${galaxy_testdir}"
+rm -fr "${HOME}/.ansible/roles/${galaxy_local_parent_role}"
+rm -fr "${HOME}/.ansible/roles/${galaxy_local_test_role}"
+
+# Galaxy install test case
+#
+# Install local git repo with a meta/requirements.yml + --no-deps argument
+f_ansible_galaxy_status "install of local git repo with meta/requirements.yml + --no-deps argument"
+galaxy_testdir=$(mktemp -d)
+pushd "${galaxy_testdir}"
+
+    ansible-galaxy install git+file:///"${galaxy_local_parent_role_git_repo}" --no-deps "$@"
+
+    # Test that the role was installed to the expected directory
+    [[ -d "${HOME}/.ansible/roles/${galaxy_local_parent_role}" ]]
+
+    # Test that the dependency was not installed
+    [[ ! -d "${HOME}/.ansible/roles/${galaxy_local_test_role}" ]]
+
+popd # ${galaxy_testdir}
+rm -fr "${galaxy_testdir}"
+rm -fr "${HOME}/.ansible/roles/${galaxy_local_test_role}"
 
 # Galaxy install test case
 #
