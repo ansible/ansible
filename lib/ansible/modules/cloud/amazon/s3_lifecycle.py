@@ -445,7 +445,7 @@ def destroy_lifecycle_rule(client, module):
 
 def main():
 
-    s3_storage_class=['glacier', 'onezone_ia', 'standard_ia', 'intelligent_tiering', 'deep_archive']
+    s3_storage_class = ['glacier', 'onezone_ia', 'standard_ia', 'intelligent_tiering', 'deep_archive']
 
     argument_spec = dict(
         name=dict(required=True, type='str'),
