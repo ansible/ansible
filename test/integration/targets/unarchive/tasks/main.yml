@@ -201,7 +201,7 @@
     - unarchive02e is changed
     - unarchive02e_file_stat.stat.exists
     - unarchive02e_file_stat.stat.pw_name == 'testuser'
-    - unarchive02e_file_stat.stat.gr_name == 'testuser'
+    - unarchive02e_file_stat.stat.gr_name == 'testgroup'
 
 - name: Remove testuser
   user:
