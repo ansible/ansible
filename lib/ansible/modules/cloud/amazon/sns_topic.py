@@ -71,6 +71,18 @@ options:
         Blame Amazon."
     default: true
     type: bool
+  tags:
+    description:
+      - Tag dict to apply to the queue.
+      - To remove all tags set I(tags={}) and I(purge_tags=true).
+    version_added: "2.10"
+    type: dict
+  purge_tags:
+    description:
+      - Remove tags not listed in I(tags).
+    type: bool
+    default: false
+    version_added: "2.10"
 extends_documentation_fragment:
   - aws
   - ec2
@@ -100,6 +112,9 @@ EXAMPLES = """
         protocol: "email"
       - endpoint: "my_mobile_number"
         protocol: "sms"
+    tags:
+      Environment: dev
+      Automated: 'true'
 
 """
 
@@ -198,6 +213,11 @@ sns_topic:
       returned: always
       type: bool
       sample: true
+    tags:
+      description: List of topic tags
+      type: dict
+      returned: always
+      sample: '{"Environment": "dev"}'
     topic_arn:
       description: ARN of the SNS topic (equivalent to sns_arn)
       returned: when topic is owned by this AWS account
@@ -225,7 +245,14 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
-from ansible.module_utils.ec2 import compare_policies, AWSRetry, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import (
+    ansible_dict_to_boto3_tag_list,
+    AWSRetry,
+    boto3_tag_list_to_ansible_dict,
+    camel_dict_to_snake_dict,
+    compare_aws_tags,
+    compare_policies,
+)
 
 
 class SnsTopicManager(object):
@@ -240,9 +267,11 @@ class SnsTopicManager(object):
                  delivery_policy,
                  subscriptions,
                  purge_subscriptions,
+                 tags,
+                 purge_tags,
                  check_mode):
 
-        self.connection = module.client('sns')
+        self.connection = module.client('sns', retry_decorator=AWSRetry.jittered_backoff())
         self.module = module
         self.name = name
         self.state = state
@@ -259,6 +288,9 @@ class SnsTopicManager(object):
         self.topic_deleted = False
         self.topic_arn = None
         self.attributes_set = []
+        self.tags = {}
+        self.set_tags = tags
+        self.purge_tags = purge_tags
 
     @AWSRetry.jittered_backoff()
     def _list_topics_with_backoff(self):
@@ -291,12 +323,82 @@ class SnsTopicManager(object):
                 return topic
 
     def _create_topic(self):
-        if not self.check_mode:
-            try:
-                response = self.connection.create_topic(Name=self.name)
-            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                self.module.fail_json_aws(e, msg="Couldn't create topic %s" % self.name)
-            self.topic_arn = response['TopicArn']
+        if self.check_mode:
+            return True
+
+        try:
+            response = self.connection.create_topic(
+                Name=self.name,
+                Tags=ansible_dict_to_boto3_tag_list(self.set_tags)
+            )
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self.module.fail_json_aws(e, msg="Couldn't create topic %s" % self.name)
+
+        self.topic_arn = response['TopicArn']
+        self.tags = self.set_tags
+
+        return True
+
+    def _set_topic_tags(self):
+        try:
+            self.tags = boto3_tag_list_to_ansible_dict(
+                self.connection.list_tags_for_resource(
+                    ResourceArn=self.topic_arn,
+                    aws_retry=True
+                )['Tags']
+            )
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json_aws(e, msg="Failed to get resource tags.")
+
+        if not self.set_tags and not self.purge_tags:
+            return False
+
+        tags_to_add, tags_to_remove = compare_aws_tags(
+            self.tags,
+            self.set_tags,
+            purge_tags=self.purge_tags
+        )
+
+        if not tags_to_add and not tags_to_remove:
+            return False
+
+        if self.check_mode:
+            tags = dict(
+                (k, v)
+                for k, v
+                in self.tags.items()
+                if k not in tags_to_remove
+            )
+            tags.update(tags_to_add)
+            self.tags = tags
+
+            return True
+
+        try:
+            if tags_to_remove:
+                self.connection.untag_resource(
+                    ResourceArn=self.topic_arn,
+                    TagKeys=tags_to_remove,
+                    aws_retry=True
+                )
+
+            if tags_to_add:
+                self.connection.tag_resource(
+                    ResourceArn=self.topic_arn,
+                    Tags=ansible_dict_to_boto3_tag_list(tags_to_add),
+                    aws_retry=True
+                )
+
+            self.tags = boto3_tag_list_to_ansible_dict(
+                self.connection.list_tags_for_resource(
+                    ResourceArn=self.topic_arn,
+                    aws_retry=True
+                )['Tags']
+            )
+
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json_aws(e, msg="Failed to update resource tags.")
+
         return True
 
     def _compare_delivery_policies(self, policy_a, policy_b):
@@ -434,12 +536,18 @@ class SnsTopicManager(object):
             self.topic_arn = self.name
         else:
             self.topic_arn = self._topic_arn_lookup()
+
         if not self.topic_arn:
             changed = self._create_topic()
+
         if self.topic_arn in self._list_topics():
             changed |= self._set_topic_attrs()
+            changed |= self._set_topic_tags()
         elif self.display_name or self.policy or self.delivery_policy:
-            self.module.fail_json(msg="Cannot set display name, policy or delivery policy for SNS topics not owned by this account")
+            self.module.fail_json(
+                msg="Cannot set display name, policy or delivery policy for SNS topics not owned by this account"
+            )
+
         changed |= self._set_topic_subs()
         return changed
 
@@ -469,7 +577,9 @@ class SnsTopicManager(object):
             'topic_created': self.topic_created,
             'topic_deleted': self.topic_deleted,
             'attributes_set': self.attributes_set,
+            'tags': self.tags,
         }
+
         if self.state != 'absent':
             if self.topic_arn in self._list_topics():
                 info.update(camel_dict_to_snake_dict(self.connection.get_topic_attributes(TopicArn=self.topic_arn)['Attributes']))
@@ -488,6 +598,8 @@ def main():
         delivery_policy=dict(type='dict'),
         subscriptions=dict(default=[], type='list'),
         purge_subscriptions=dict(type='bool', default=True),
+        tags=dict(type='dict'),
+        purge_tags=dict(type='bool', default=False),
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -500,6 +612,8 @@ def main():
     delivery_policy = module.params.get('delivery_policy')
     subscriptions = module.params.get('subscriptions')
     purge_subscriptions = module.params.get('purge_subscriptions')
+    tags = module.params.get('tags')
+    purge_tags = module.params.get('purge_tags')
     check_mode = module.check_mode
 
     sns_topic = SnsTopicManager(module,
@@ -510,6 +624,8 @@ def main():
                                 delivery_policy,
                                 subscriptions,
                                 purge_subscriptions,
+                                tags,
+                                purge_tags,
                                 check_mode)
 
     if state == 'present':

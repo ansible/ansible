@@ -220,10 +220,13 @@
               "SNS:GetTopicAttributes",
               "SNS:ListSubscriptions",
               "SNS:ListSubscriptionsByTopic",
+              "SNS:ListTagsForResource",
               "SNS:ListTopics",
               "SNS:SetTopicAttributes",
               "SNS:Subscribe",
-              "SNS:Unsubscribe"
+              "SNS:TagResource",
+              "SNS:Unsubscribe",
+              "SNS:UntagResource"
             ],
             "Resource": [
               "*"

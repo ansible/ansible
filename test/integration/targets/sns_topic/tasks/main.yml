@@ -41,12 +41,20 @@
       sns_topic:
         name: "{{ sns_topic_topic_name }}"
         display_name: "My topic name"
+        tags:
+          First: one
       register: sns_topic_create
 
     - name: assert that creation worked
       assert:
         that:
           - sns_topic_create.changed
+
+    - name: assert that tag was added on creation
+      assert:
+        that:
+          - sns_topic_create.sns_topic.tags | length == 1
+          - sns_topic_create.sns_topic.tags.First == 'one'
 
     - name: set sns_arn fact
       set_fact:
@@ -63,6 +71,34 @@
         that:
           - not sns_topic_no_change.changed
           - sns_topic_no_change.sns_arn == sns_topic_create.sns_arn
+
+    - name: add topic tag
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        tags:
+          Second: two
+      register: sns_topic_tags
+
+    - name: assert that second tag was added
+      assert:
+        that:
+          - sns_topic_tags.sns_topic.tags | length == 2
+          - sns_topic_tags.sns_topic.tags.First == 'one'
+          - sns_topic_tags.sns_topic.tags.Second == 'two'
+
+    - name: purge old topic tags and add a new one
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        purge_tags: yes
+        tags:
+          Third: three
+      register: sns_topic_tags
+
+    - name: assert topic tags purging
+      assert:
+        that:
+          - sns_topic_tags.sns_topic.tags | length == 1
+          - sns_topic_tags.sns_topic.tags.Third == 'three'
 
     - name: update display name
       sns_topic:
