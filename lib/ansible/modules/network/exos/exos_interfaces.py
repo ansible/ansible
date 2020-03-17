@@ -858,7 +858,7 @@ EXAMPLES = """
       - name: "1"
         description: "Interface 1"
       - name: "2"
-        speed: "SPEED_10GB",
+        speed: "SPEED_10GB"
         duplex: "FULL"
         jumbo_frames:
           enabled: false
