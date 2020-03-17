@@ -159,7 +159,7 @@ class Interfaces(ConfigBase):
                 if w['name'] == h['name']:
                     diff = dict_diff(h, w)
                     if diff:
-                        interface_request, interface_command = self._update_patch_request(diff, h)
+                        interface_request, interface_command = self._update_patch_request(diff, h, w)
                         for request in interface_request:
                             if request["data"].get("openconfig-interfaces:config") and len(request["data"]["openconfig-interfaces:config"]):
                                 request['data'] = json.dumps(request['data'])
@@ -187,7 +187,7 @@ class Interfaces(ConfigBase):
                 if w['name'] == h['name']:
                     diff = dict_diff(h, w)
                     if diff:
-                        interface_request, interface_command = self._update_patch_request(diff, h)
+                        interface_request, interface_command = self._update_patch_request(diff, h, w)
                         for request in interface_request:
                             if request["data"].get("openconfig-interfaces:config") and len(request["data"]["openconfig-interfaces:config"]):
                                 request['data'] = json.dumps(request['data'])
@@ -223,7 +223,7 @@ class Interfaces(ConfigBase):
                 if w['name'] == h['name']:
                     diff = dict_diff(h, w)
                     if diff:
-                        interface_request, interface_command = self._update_patch_request(diff, h)
+                        interface_request, interface_command = self._update_patch_request(diff, h, w)
                         for request in interface_request:
                             if request["data"].get("openconfig-interfaces:config") and len(request["data"]["openconfig-interfaces:config"]):
                                 request['data'] = json.dumps(request['data'])
@@ -280,7 +280,7 @@ class Interfaces(ConfigBase):
 
         return interface_del_req, interface_del_cmd
 
-    def _update_patch_request(self, diff, have):
+    def _update_patch_request(self, diff, have, want):
 
         requests = []
         commands = []
@@ -288,8 +288,8 @@ class Interfaces(ConfigBase):
         interface_request = deepcopy(self.INTERFACE_CONFIG)
         if diff.get('description'):
             interface_request['data']['openconfig-interfaces:config']['description'] = diff['description']
-        if diff.get('enabled') == False or diff.get('enabled') == True:
-            interface_request['data']['openconfig-interfaces:config']['enabled'] = diff['enabled']
+        if have['enabled'] != want['enabled']:
+            interface_request['data']['openconfig-interfaces:config']['enabled'] = want['enabled']
         interface_request["path"] = self.INTERFACE_PATH + have['name'] + '/config'
         requests.append(interface_request)
 
@@ -323,7 +323,7 @@ class Interfaces(ConfigBase):
         if duplex == 'AUTO' and speed != 'AUTO':
             return 'configure ports ' + name + ' auto on speed ' + self.PORT_SPEED[speed]
         elif duplex != 'AUTO' and speed == 'AUTO':
-            return 'configure ports ' + name + ' auto on duplex '+duplex
+            return 'configure ports ' + name + ' auto on duplex ' + duplex
         elif duplex == 'AUTO' and speed == 'AUTO':
             return 'configure ports ' + name + ' auto on'
         else:

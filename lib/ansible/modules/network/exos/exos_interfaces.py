@@ -63,7 +63,7 @@ options:
         type: str
       duplex:
         description:
-          - Interface link status. 
+          - Interface link status.
             Applicable for Ethernet interfaces only, either in half duplex, full duplex or in automatic state which negotiates the duplex automatically.
         type: str
         choices:
@@ -671,8 +671,8 @@ EXAMPLES = """
   exos_interfaces:
     config:
       - name: "1"
-        description: "Interface 1",
-        speed: "SPEED_100MB",
+        description: "Interface 1"
+        speed: "SPEED_100MB"
         duplex: "FULL"
     state: overridden
 
