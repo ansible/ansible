@@ -609,3 +609,12 @@ def to_flatten_dict(d, parent_key='', sep='.'):
         else:
             items.append((new_key, v))
     return dict(items)
+
+
+# Patch AnsibleDumper
+# This for 'ansible-test' with '--debug'
+# TODO: Move it to 'ansible.parsing.yaml.dumper'
+from  ansible.vars.manager import VarsWithSources
+from ansible.parsing.yaml.dumper import AnsibleDumper, represent_hostvars
+
+AnsibleDumper.add_representer(VarsWithSources, represent_hostvars)
