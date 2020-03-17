@@ -111,6 +111,14 @@ DOCUMENTATION = '''
             type: bool
             default: False
             version_added: "2.10.0.dev0"
+        keyed_groups:
+            description: Add hosts to group based on the values of a variable.
+            type: list
+            default: [
+                {key: 'config.guestId', separator: ''},
+                {key: 'summary.runtime.powerState', separator: ''},
+            ]
+            version_added: "2.10.0.dev0"
 '''
 
 EXAMPLES = '''
