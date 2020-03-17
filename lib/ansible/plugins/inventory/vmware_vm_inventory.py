@@ -56,11 +56,19 @@ DOCUMENTATION = '''
             type: boolean
             env:
               - name: VMWARE_VALIDATE_CERTS
+        with_tags:
+            description:
+            - Include tags and associated virtual machines.
+            - Requires 'vSphere Automation SDK' library to be installed on the given controller machine.
+            - Please refer following URLs for installation steps
+            - 'https://code.vmware.com/web/sdk/65/vsphere-automation-python'
+            default: False
+            type: boolean
         properties:
             description:
             - Specify the list of VMware schema properties associated with the VM.
             - These properties will be populated in hostvars of the given VM.
-            - Each value in the list specifies the path to a specific property in VM object.
+            - Each value in the list can be a path to a specific property in VM object or a path to a collection of VM objects.
             - See: U(https://github.com/monkey-mas/lab/blob/master/pyvmomi/docs/vim/VirtualMachine.rst#attributes) for all properties.
             type: list
             default: [ 'name', 'config.cpuHotAddEnabled', 'config.cpuHotRemoveEnabled',
@@ -88,13 +96,13 @@ DOCUMENTATION = '''
             description:
                 - This option allows you use property name sanitization to create safe property names for use in Ansible.
             type: bool
-            default: True
+            default: False
             version_added: "2.10.0.dev0"
         snake_cast_property_name:
             description:
                 - This option transform property name to snake case.
             type: bool
-            default: True
+            default: False
             version_added: "2.10.0.dev0"
 '''
 
@@ -106,6 +114,7 @@ EXAMPLES = '''
     username: administrator@vsphere.local
     password: Esxi@123$%
     validate_certs: False
+    with_tags: True
 
 # Gather minimum set of properties for VMware guest
     plugin: vmware_vm_inventory
@@ -114,6 +123,7 @@ EXAMPLES = '''
     username: administrator@vsphere.local
     password: Esxi@123$%
     validate_certs: False
+    with_tags: True
     properties:
     - 'name'
     - 'guest.ipAddress'
@@ -121,9 +131,11 @@ EXAMPLES = '''
 
 import ssl
 import atexit
+import base64
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_text
-from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
+from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict, dict_merge
+from ansible.module_utils.six import PY3
 
 try:
     # requests is required for exception handling of the ConnectionError
@@ -135,6 +147,7 @@ except ImportError:
 try:
     from pyVim import connect
     from pyVmomi import vim, vmodl
+    from pyVmomi.VmomiSupport import DataObject
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
@@ -152,14 +165,17 @@ from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 
 class BaseVMwareInventory:
-    def __init__(self, hostname, username, password, port, validate_certs):
+    def __init__(self, hostname, username, password, port, validate_certs, with_tags):
         self.hostname = hostname
         self.username = username
         self.password = password
         self.port = port
+        self.with_tags = with_tags
         self.validate_certs = validate_certs
         self.content = None
         self.rest_content = None
+
+        self.check_requirements()
 
     def do_login(self):
         """
@@ -167,7 +183,8 @@ class BaseVMwareInventory:
         """
         self.check_requirements()
         self.content = self._login()
-        self.rest_content = self._login_vapi()
+        if self.with_tags:
+            self.rest_content = self._login_vapi()
 
     def _login_vapi(self):
         """
@@ -184,10 +201,14 @@ class BaseVMwareInventory:
         server = self.hostname
         if self.port:
             server += ":" + str(self.port)
-        client = create_vsphere_client(server=server,
-                                       username=self.username,
-                                       password=self.password,
-                                       session=session)
+        try:
+            client = create_vsphere_client(server=server,
+                                        username=self.username,
+                                        password=self.password,
+                                        session=session)
+        except:
+            client = None
+
         if client is None:
             raise AnsibleError("Failed to login to %s using %s" % (server, self.username))
         return client
@@ -255,7 +276,7 @@ class BaseVMwareInventory:
                                          " be >= %s, found: %s." % (".".join([str(w) for w in required_version]),
                                                                     requests.__version__))
 
-        if not HAS_VSPHERE:
+        if not HAS_VSPHERE and self.with_tags:
             raise AnsibleError("Unable to find 'vSphere Automation SDK' Python library which is required."
                                " Please refer this URL for installation steps"
                                " - https://code.vmware.com/web/sdk/65/vsphere-automation-python")
@@ -368,12 +389,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             username=username,
             password=password,
             port=self.get_option('port'),
+            with_tags=self.get_option('with_tags'),
             validate_certs=self.get_option('validate_certs')
         )
 
         self.pyv.do_login()
-
-        self.pyv.check_requirements()
 
         if cache:
             cache = self.get_option('cache')
@@ -416,13 +436,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         objects = self.pyv._get_managed_objects_properties(vim_type=vim.VirtualMachine,
                                                            properties=[x for x in vm_properties if x != "customValue"])
-        tag_svc = self.pyv.rest_content.tagging.Tag
-        tag_association = self.pyv.rest_content.tagging.TagAssociation
-        tags_info = dict()
-        tags = tag_svc.list()
-        for tag in tags:
-            tag_obj = tag_svc.get(tag)
-            tags_info[tag_obj.id] = tag_obj.name
+        tags_info = None
+        if self.pyv.rest_content:
+            tag_svc = self.pyv.rest_content.tagging.Tag
+            tag_association = self.pyv.rest_content.tagging.TagAssociation
+            tags_info = dict()
+            tags = tag_svc.list()
+            for tag in tags:
+                tag_obj = tag_svc.get(tag)
+                tags_info[tag_obj.id] = tag_obj.name
 
         hostnames = self.get_option('hostnames')
 
@@ -442,14 +464,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     properties[[y.name for y in field_mgr if y.key == cust_value.key][0]] = cust_value.value
 
             # Tags
-            if HAS_VSPHERE:
+            if tags_info :
                 # Add virtual machine to appropriate tag group
                 vm_mo_id = vm_obj.obj._GetMoId()
                 vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
                 attached_tags = [tags_info[tag_id] for tag_id in tag_association.list_attached_tags(vm_dynamic_id)]
-            
-            host_properties = to_nested_dict(properties)
-            host_properties['tags'] = attached_tags
+                properties['tags'] = attached_tags
+
 
             # Build path
             path = []
@@ -458,8 +479,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 path.append(parent.name)
                 parent = parent.parent
             path.reverse()
-            host_properties['path'] = "/".join(path)
+            properties['path'] = "/".join(path)
 
+            host_properties = to_nested_dict(properties)
             host = self._get_hostname(host_properties, hostnames)
 
             if host not in hostvars:
@@ -510,18 +532,48 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         for k,v in host_properties.items():
             k = self._sanitize_group_name(k) if can_sanitize else k
             self.inventory.set_variable(host, k, v)
+
+def parse_vim_property(vim_prop, key):
+    # For '--yaml' sake!
+    #   Unexpected Exception, this is probably a bug: ('cannot represent an object', <data>
+    prop_type = type(vim_prop).__name__
+
+    if prop_type.startswith("vim"):
+        if isinstance(vim_prop, DataObject):
+            r = {}
+            for prop in vim_prop._GetPropertyList():
+                sub_prop = getattr(vim_prop, prop.name)
+                r[prop.name] = parse_vim_property(sub_prop, key + "/" + prop.name)
+            return r
+
+        elif isinstance(vim_prop, list):
+            r = []
+            for prop in vim_prop:
+                r.append(parse_vim_property(prop, key))
+            return r
+        return vim_prop.__str__()
+
+    elif  prop_type == "long" :
+        vim_prop = int(vim_prop)
+
+    elif  prop_type == "binary" : 
+        r = base64.b64encode(vim_prop)
+        if PY3:
+            r = str(r, 'utf-8')
+        return r
     
+    return vim_prop
 
 def to_nested_dict(vm_properties):
     host_properties = {}
 
-    for vm_prop in vm_properties:
-        prop_parents = vm_prop.split(".")
-        prop_dict = host_properties
-        for k in prop_parents[:-1]:
-            prop_dict = prop_dict.setdefault(k, {})
-
-        prop_dict[prop_parents[-1]] = vm_properties[vm_prop]
+    for vm_prop_name, vm_prop_val in vm_properties.items():
+        prop_parents = reversed(vm_prop_name.split("."))
+        prop_dict = parse_vim_property(vm_prop_val, vm_prop_name)
+        
+        for k in prop_parents:
+            prop_dict = {k: prop_dict }
+        host_properties = dict_merge(host_properties, prop_dict)
 
     return host_properties
 
