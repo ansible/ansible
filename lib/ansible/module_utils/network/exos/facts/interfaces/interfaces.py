@@ -72,7 +72,7 @@ class InterfacesFacts(object):
             for d in data[0]["openconfig-interfaces:interfaces"]["interface"]:
                 obj = self.render_config(self.generated_spec, d)
                 if obj:
-                    objs.append(obj)                
+                    objs.append(obj)
 
         ansible_facts['ansible_network_resources'].pop('interfaces', None)
         facts = {}
@@ -98,7 +98,7 @@ class InterfacesFacts(object):
             config["name"] = conf["name"]
             config["description"] = conf["config"]["description"]
             config["enabled"] = conf["config"]["enabled"]
-            dic = [{"command":'debug cfgmgr show next vlan.show_ports_info_detail portList='+conf["name"], "output": "json"}]
+            dic = [{"command": 'debug cfgmgr show next vlan.show_ports_info_detail portList=' + conf["name"], "output": "json"}]
             conf_json = run_commands(self._module, commands=dic)
             config["jumbo_frames"]["enabled"] = True if conf_json[0]["data"][0]["isJumboEnabled"] == "1" else False
             if conf_json[0]["data"][0]["duplexSpeedCfg"] == "1":

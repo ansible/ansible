@@ -51,7 +51,7 @@ class InterfacesArgs(object):  # pylint: disable=R0903
                         'enabled': {'type': 'bool'}},
                     'type': 'dict'},
                 'name': {
-                    'required': True, 
+                    'required': True,
                     'type': 'str'},
                 'speed': {'type': 'str'}},
             'type': 'list'},

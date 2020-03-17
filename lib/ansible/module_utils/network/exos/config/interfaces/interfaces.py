@@ -156,7 +156,7 @@ class Interfaces(ConfigBase):
         commands = []
         for w in want:
             for h in have:
-                if w['name']  == h['name']:
+                if w['name'] == h['name']:
                     diff = dict_diff(h, w)
                     if diff:
                         interface_request, interface_command = self._update_patch_request(diff, h)
@@ -184,7 +184,7 @@ class Interfaces(ConfigBase):
         have_copy = []
         for w in want:
             for h in have:
-                if w['name']  == h['name']:
+                if w['name'] == h['name']:
                     diff = dict_diff(h, w)
                     if diff:
                         interface_request, interface_command = self._update_patch_request(diff, h)
@@ -220,7 +220,7 @@ class Interfaces(ConfigBase):
         commands = []
         for w in want:
             for h in have:
-                if w['name']  == h['name']:
+                if w['name'] == h['name']:
                     diff = dict_diff(h, w)
                     if diff:
                         interface_request, interface_command = self._update_patch_request(diff, h)
@@ -271,12 +271,12 @@ class Interfaces(ConfigBase):
         interface_del_req["path"] = self.INTERFACE_PATH + have["name"] + "/config"
 
         interface_del_cmd = []
-        if have['description'] != None and have['description'] != 'Insight':
-            interface_del_cmd.append('unconfigure ports '+have['name']+' description-string')
+        if have['description'] is not None and have['description'] != 'Insight':
+            interface_del_cmd.append('unconfigure ports ' + have['name'] + ' description-string')
         if have["jumbo_frames"]["enabled"]:
-            interface_del_cmd.append("disable jumbo-frame ports "+have["name"])
+            interface_del_cmd.append("disable jumbo-frame ports " + have["name"])
         if have['speed'] != 'AUTO' or have['duplex'] != 'AUTO':
-            interface_del_cmd.append("configure ports "+have["name"]+" auto on")
+            interface_del_cmd.append("configure ports " + have["name"] + " auto on")
 
         return interface_del_req, interface_del_cmd
 
@@ -298,37 +298,37 @@ class Interfaces(ConfigBase):
                 self._module.fail_json(msg="Unable to configure port-speed with provided configuration")
             else:
                 if (diff['duplex'] != 'AUTO' and diff['speed'] != 'AUTO') and (have['duplex'] == 'AUTO' and have['speed'] == 'AUTO'):
-                    requests.append(self._conf_auto_neg_requests(have['name'], diff['duplex'], diff['speed']))              
+                    requests.append(self._conf_auto_neg_requests(have['name'], diff['duplex'], diff['speed']))
                 else:
                     commands.append(self._conf_auto_neg_commands(have['name'], diff['duplex'], diff['speed']))
-                
+
         elif diff.get('duplex'):
             commands.append(self._conf_auto_neg_commands(have['name'], diff['duplex'], have['speed']))
 
         elif diff.get('speed'):
-            if diff['speed'] in self.PORT_SPEED.keys() or diff['speed'] == 'AUTO':                
+            if diff['speed'] in self.PORT_SPEED.keys() or diff['speed'] == 'AUTO':
                 commands.append(self._conf_auto_neg_commands(have['name'], have['duplex'], diff['speed']))
             else:
                 self._module.fail_json(msg="Unable to configure port-speed with provided configuration")
 
         if diff.get('jumbo_frames'):
             if diff['jumbo_frames']['enabled']:
-                commands.append('enable jumbo-frame ports '+have["name"])
+                commands.append('enable jumbo-frame ports ' + have["name"])
             else:
-                commands.append('disable jumbo-frame ports '+have["name"])
+                commands.append('disable jumbo-frame ports ' + have["name"])
 
         return requests, commands
 
     def _conf_auto_neg_commands(self, name, duplex, speed):
         if duplex == 'AUTO' and speed != 'AUTO':
-            return 'configure ports '+name+' auto on speed '+self.PORT_SPEED[speed]
+            return 'configure ports ' + name + ' auto on speed ' + self.PORT_SPEED[speed]
         elif duplex != 'AUTO' and speed == 'AUTO':
-            return 'configure ports '+name+' auto on duplex '+duplex
+            return 'configure ports ' + name + ' auto on duplex '+duplex
         elif duplex == 'AUTO' and speed == 'AUTO':
-            return 'configure ports '+name+' auto on'
+            return 'configure ports ' + name + ' auto on'
         else:
-            return 'configure ports '+name+' auto on speed '+self.PORT_SPEED[speed]+' duplex '+duplex
-    
+            return 'configure ports ' + name + ' auto on speed ' + self.PORT_SPEED[speed] + ' duplex ' + duplex
+
     def _conf_auto_neg_requests(self, name, duplex, speed):
         interface_auto_request = deepcopy(self.INTERFACE_AUTO)
         interface_auto_request['data']['openconfig-if-ethernet:config']['duplex-mode'] = duplex

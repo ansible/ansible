@@ -51,7 +51,7 @@ options:
     description: A dictionary of interface options
     type: list
     elements: dict
-    suboptions:        
+    suboptions:
       name:
         description:
           - Full name of the interface.
@@ -63,7 +63,8 @@ options:
         type: str
       duplex:
         description:
-          - Interface link status. Applicable for Ethernet interfaces only, either in half duplex, full duplex or in automatic state which negotiates the duplex automatically.
+          - Interface link status. 
+            Applicable for Ethernet interfaces only, either in half duplex, full duplex or in automatic state which negotiates the duplex automatically.
         type: str
         choices:
           - FULL
@@ -73,7 +74,6 @@ options:
         description:
           - Administrative state of the interface. Set the value to true to administratively enable the interface or false to disable it.
         type: bool
-        default: true
       jumbo_frames:
         description:
           - Jumbo frames support on the interface.
@@ -120,7 +120,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         },  
+#         },
 #       },
 #       {
 #         "config": {
@@ -133,7 +133,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         }, 
+#         },
 #       }
 #     ]
 #   }
@@ -192,7 +192,7 @@ EXAMPLES = """
 #     {
 #        "disable jumbo-frame ports 2",
 #        "configure ports 2 auto on"
-#     }    
+#     }
 # ],
 #
 # "after": [
@@ -238,7 +238,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         },  
+#         },
 #       },
 #       {
 #         "config": {
@@ -251,7 +251,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_UNKNOWN"
-#         }, 
+#         },
 #       }
 #     ]
 #   }
@@ -283,7 +283,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         },  
+#         },
 #       },
 #       {
 #         "config": {
@@ -296,7 +296,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         }, 
+#         },
 #       }
 #     ]
 #   }
@@ -364,7 +364,7 @@ EXAMPLES = """
 #        "configure ports 1 auto on",
 #        "disable jumbo-frame ports 2",
 #        "configure ports 2 auto on"
-#     }    
+#     }
 # ],
 #
 # "after": [
@@ -410,7 +410,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_UNKNOWN"
-#         },  
+#         },
 #       },
 #       {
 #         "config": {
@@ -423,7 +423,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_UNKNOWN"
-#         }, 
+#         },
 #       }
 #     ]
 #   }
@@ -455,7 +455,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         },  
+#         },
 #       },
 #       {
 #         "config": {
@@ -468,7 +468,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         }, 
+#         },
 #       }
 #     ]
 #   }
@@ -483,13 +483,13 @@ EXAMPLES = """
   exos_interfaces:
     config:
       - name: "1"
-        enabled: false 
+        enabled: false
         jumbo_frames:
-          enabled: false        
+          enabled: false
       - name: "2"
         description: "Interface 2"
-        speed: "SPEED_100MB",
-        duplex: "FULL"              
+        speed: "SPEED_100MB"
+        duplex: "FULL"
     state: merged
 
 # Module Execution Results:
@@ -527,7 +527,7 @@ EXAMPLES = """
 #        }
 #        "method": "PATCH",
 #        "path": "rest/restconf/data/openconfig-interfaces:interfaces/interface=1/config"
-#     },    
+#     },
 #     {
 #        "data": {
 #          "openconfig-interfaces:config": {
@@ -552,7 +552,7 @@ EXAMPLES = """
 # "commands": [
 #     {
 #        "disable jumbo-frame ports 1"
-#     }    
+#     }
 # ],
 #
 # "after": [
@@ -598,7 +598,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         },  
+#         },
 #       },
 #       {
 #         "config": {
@@ -643,7 +643,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         },  
+#         },
 #       },
 #       {
 #         "config": {
@@ -656,7 +656,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         }, 
+#         },
 #       }
 #     ]
 #   }
@@ -673,7 +673,7 @@ EXAMPLES = """
       - name: "1"
         description: "Interface 1",
         speed: "SPEED_100MB",
-        duplex: "FULL"          
+        duplex: "FULL"
     state: overridden
 
 # Module Execution Results:
@@ -711,7 +711,7 @@ EXAMPLES = """
 #        }
 #        "method": "PATCH",
 #        "path": "rest/restconf/data/openconfig-interfaces:interfaces/interface=1/config"
-#     },    
+#     },
 #     {
 #        "data": {
 #          "openconfig-if-ethernet:config": {
@@ -737,7 +737,7 @@ EXAMPLES = """
 #     {
 #        "disable jumbo-frame ports 2",
 #        "configure ports 2 auto on"
-#     }    
+#     }
 # ],
 #
 # "after": [
@@ -783,7 +783,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_100MB"
-#         },  
+#         },
 #       },
 #       {
 #         "config": {
@@ -828,7 +828,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         },  
+#         },
 #       },
 #       {
 #         "config": {
@@ -841,7 +841,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         }, 
+#         },
 #       }
 #     ]
 #   }
@@ -856,12 +856,12 @@ EXAMPLES = """
   exos_interfaces:
     config:
       - name: "1"
-        description: "Interface 1"        
-      - name: "2"        
+        description: "Interface 1"
+      - name: "2"
         speed: "SPEED_10GB",
         duplex: "FULL"
         jumbo_frames:
-          enabled: false          
+          enabled: false
     state: replaced
 
 # Module Execution Results:
@@ -899,7 +899,7 @@ EXAMPLES = """
 #        }
 #        "method": "PATCH",
 #        "path": "rest/restconf/data/openconfig-interfaces:interfaces/interface=1/config"
-#     },    
+#     },
 #     {
 #        "data": {
 #          "openconfig-if-ethernet:config": {
@@ -915,7 +915,7 @@ EXAMPLES = """
 # "commands": [
 #     {
 #        "disable jumbo-frame ports 2"
-#     }    
+#     }
 # ],
 #
 # "after": [
@@ -961,7 +961,7 @@ EXAMPLES = """
 #             "auto-negotiate": true,
 #             "duplex-mode": "FULL",
 #             "port-speed": "SPEED_1GB"
-#         },  
+#         },
 #       },
 #       {
 #         "config": {
@@ -1027,7 +1027,7 @@ def main():
     :returns: the result form module invocation
     """
     required_if = [('state', 'merged', ('config', )),
-                   ('state', 'replaced', ('config', ))]    
+                   ('state', 'replaced', ('config', ))]
     module = AnsibleModule(argument_spec=InterfacesArgs.argument_spec, required_if=required_if,
                            supports_check_mode=True)
 
