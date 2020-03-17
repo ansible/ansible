@@ -78,6 +78,13 @@ DOCUMENTATION = '''
                        'customValue', 'summary.runtime.powerState', 'config.guestId'
                        ]
             version_added: "2.9"
+        with_path:
+            description:
+            - Include virtual machines path.
+            - Set this option to a string value to replace root name from I('Datacenters')
+            default: False
+            type: boolean or string
+            version_added: "2.10.0.dev0"
         hostnames:
             description:
                 - A list of templates in order of precedence to compose inventory_hostname.
@@ -446,6 +453,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 tag_obj = tag_svc.get(tag)
                 tags_info[tag_obj.id] = tag_obj.name
 
+        with_path = self.get_option('with_path')
         hostnames = self.get_option('hostnames')
 
         for vm_obj in objects:
@@ -473,13 +481,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
 
             # Build path
-            path = []
-            parent = vm_obj.obj.parent
-            while parent:
-                path.append(parent.name)
-                parent = parent.parent
-            path.reverse()
-            properties['path'] = "/".join(path)
+            if with_path:
+                path = []
+                parent = vm_obj.obj.parent
+                while parent:
+                    path.append(parent.name)
+                    parent = parent.parent
+                path.reverse()
+                properties['path'] = "/".join(path)
 
             host_properties = to_nested_dict(properties)
             host = self._get_hostname(host_properties, hostnames)
@@ -492,6 +501,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def _populate_host_properties(self, host_properties, host):
         # Load VM properties in host_vars
+        with_path = self.get_option('with_path')
         can_flatten_property = self.get_option('flatten_property_name')
 
         self.inventory.add_host(host)
@@ -510,17 +520,21 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         #   keyed_groups:
         #       - parent_group: '{{ path.split("/") }}'
         #
-        parents = host_properties['path'].split('/')
-        for i in range(len(parents)-1):
-            parent_name = self._sanitize_group_name(parents[i])
-            gname = self._sanitize_group_name(parents[i+1])
+        if with_path:
+            parents = host_properties['path'].split('/')
+            if isinstance(with_path, str):
+                parents[0] = with_path
+            
+            for i in range(len(parents)-1):
+                parent_name = self._sanitize_group_name(parents[i])
+                gname = self._sanitize_group_name(parents[i+1])
 
-            result_gname = self.inventory.add_group(gname)
-            self.inventory.add_group(parent_name)
+                result_gname = self.inventory.add_group(gname)
+                self.inventory.add_group(parent_name)
 
-            self.inventory.add_child(parent_name, result_gname)
+                self.inventory.add_child(parent_name, result_gname)
 
-        self.inventory.add_host(host, result_gname)
+            self.inventory.add_host(host, result_gname)
 
         # Hostvars formats manipulation 
         host_properties = to_flatten_dict(host_properties) if can_flatten_property else host_properties
@@ -533,7 +547,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             k = self._sanitize_group_name(k) if can_sanitize else k
             self.inventory.set_variable(host, k, v)
 
-def parse_vim_property(vim_prop, key):
+def parse_vim_property(vim_prop):
     # For '--yaml' sake!
     #   Unexpected Exception, this is probably a bug: ('cannot represent an object', <data>
     prop_type = type(vim_prop).__name__
@@ -543,13 +557,13 @@ def parse_vim_property(vim_prop, key):
             r = {}
             for prop in vim_prop._GetPropertyList():
                 sub_prop = getattr(vim_prop, prop.name)
-                r[prop.name] = parse_vim_property(sub_prop, key + "/" + prop.name)
+                r[prop.name] = parse_vim_property(sub_prop)
             return r
 
         elif isinstance(vim_prop, list):
             r = []
             for prop in vim_prop:
-                r.append(parse_vim_property(prop, key))
+                r.append(parse_vim_property(prop))
             return r
         return vim_prop.__str__()
 
@@ -569,7 +583,7 @@ def to_nested_dict(vm_properties):
 
     for vm_prop_name, vm_prop_val in vm_properties.items():
         prop_parents = reversed(vm_prop_name.split("."))
-        prop_dict = parse_vim_property(vm_prop_val, vm_prop_name)
+        prop_dict = parse_vim_property(vm_prop_val)
         
         for k in prop_parents:
             prop_dict = {k: prop_dict }
