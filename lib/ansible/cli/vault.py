@@ -76,7 +76,7 @@ class VaultCLI(CLI):
         create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
         create_parser.set_defaults(func=self.execute_create)
         create_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
-        create_parser.add_argument('-n','--no-check',default=False, help='skip TTY check', dest='no_check', action='store_true')
+        create_parser.add_argument('-n', '--no-check', default=False, help='skip TTY check', dest='no_check', action='store_true')
 
         decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file', parents=[output, common])
         decrypt_parser.set_defaults(func=self.execute_decrypt)
@@ -430,7 +430,7 @@ class VaultCLI(CLI):
 
         if sys.stdout.isatty() or context.CLIARGS['no_check']:
             self.editor.create_file(context.CLIARGS['args'][0], self.encrypt_secret,
-                                vault_id=self.encrypt_vault_id)
+                                    vault_id=self.encrypt_vault_id)
         else:
             raise AnsibleOptionsError("not a tty, editor cannot be opened")
 
@@ -459,4 +459,3 @@ class VaultCLI(CLI):
                                    self.new_encrypt_vault_id)
 
         display.display("Rekey successful", stderr=True)
-
