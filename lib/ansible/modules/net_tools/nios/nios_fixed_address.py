@@ -41,14 +41,23 @@ options:
   network:
     description:
       - Specifies the network range in which ipaddr exists.
-    aliases:
-      - network
   network_view:
     description:
       - Configures the name of the network view to associate with this
         configured instance.
     required: false
     default: default
+  use_options:
+    description:
+      - Used to indicate the Fixed Address should use locally configured DHCP
+        options as an override to inherited options.  Only to be used for
+        options that do not explicitly require the 'use_option' field set
+        in the 'options' sub option.
+    required: false
+    default: false
+    choices:
+      - true
+      - false
   options:
     description:
       - Configures the set of DHCP options to be included as part of
@@ -68,9 +77,11 @@ options:
         required: true
       use_option:
         description:
-          - Only applies to a subset of options (see NIOS API documentation)
+          - Only applies to a subset of options:
+              ['routers', 'router-templates', 'domain-name-servers',
+              'domain-name', 'broadcast-address', 'broadcast-address-offset',
+              'dhcp-lease-time', 'dhcp6.name-servers']
         type: bool
-        default: 'yes'
       vendor_class:
         description:
           - The name of the space this DHCP option is associated to
@@ -189,13 +200,22 @@ def options(module):
     special_options = ['routers', 'router-templates', 'domain-name-servers',
                        'domain-name', 'broadcast-address', 'broadcast-address-offset',
                        'dhcp-lease-time', 'dhcp6.name-servers']
+    # IANA assigned numbers:
+    # MISSING: router-templates, broadcast-address-offset
+    # [ 'routers', 'domain-name-servers', 'domain-name', 'broadcast-address', 'dhcp-lease-time', 'dhcp6.name-servers' ]
+    special_options_num = { 'ipv4': [ 3, 5, 6, 28, 51 ], 'ipv6': [ 23 ] }
     options = list()
     for item in module.params['options']:
         opt = dict([(k, v) for k, v in iteritems(item) if v is not None])
         if 'name' not in opt and 'num' not in opt:
             module.fail_json(msg='one of `name` or `num` is required for option value')
-        if opt['name'] not in special_options:
-            del opt['use_option']
+        if 'name' in opt:
+            if opt['name'] not in special_options and 'use_option' in opt:
+                module.fail_json(msg='`use_option` not applicable for option `%s`' % opt['name'])
+        if 'num' in opt:
+            # Need to differentiate IPv4 vs IPv6 prior to this check.  Future enhancement.
+            if opt['num'] not in special_options['ipv4'] and opt['num'] not in special_options['ipv6'] and 'use_option' in opt:
+                module.fail_json(msg='`use_option` not applicable for option number `%s`' % opt['num'])
         options.append(opt)
     return options
 
@@ -220,23 +240,24 @@ def main():
     '''
     option_spec = dict(
         # one of name or num is required; enforced by the function options()
-        name=dict(),
+        name=dict(type='str'),
         num=dict(type='int'),
 
         value=dict(required=True),
 
-        use_option=dict(type='bool', default=True),
+        use_option=dict(type='bool'),
         vendor_class=dict(default='DHCP')
     )
 
     ib_spec = dict(
         name=dict(required=True),
-        ipaddr=dict(required=True, aliases=['ipaddr'], ib_req=True),
-        mac=dict(required=True, aliases=['mac'], ib_req=True),
-        network=dict(required=True, aliases=['network']),
-        network_view=dict(default='default', aliases=['network_view']),
+        ipaddr=dict(required=True, ib_req=True),
+        mac=dict(required=True, ib_req=True),
+        network=dict(required=True),
+        network_view=dict(default='default'),
 
         options=dict(type='list', elements='dict', options=option_spec, transform=options),
+        use_options=dict(type='bool'),
 
         extattrs=dict(type='dict'),
         comment=dict()
