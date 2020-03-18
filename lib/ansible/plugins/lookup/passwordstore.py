@@ -16,10 +16,10 @@ DOCUMENTATION = """
         It also retrieves YAML style keys stored as multilines in the passwordfile.
     options:
       _terms:
-        description: query key
+        description: query key.
         required: True
       passwordstore:
-        description: location of the password store
+        description: location of the password store.
         default: '~/.password-store'
       directory:
         description: The directory of the password store.
@@ -43,7 +43,7 @@ DOCUMENTATION = """
       userpass:
         description: Specify a password to save, instead of a generated one.
       length:
-        description: The length of the generated password
+        description: The length of the generated password.
         type: integer
         default: 16
       backup:
@@ -52,7 +52,7 @@ DOCUMENTATION = """
         default: 'no'
         version_added: 2.7
       nosymbols:
-        description: use alphanumeric characters
+        description: use alphanumeric characters.
         type: bool
         default: 'no'
         version_added: 2.8
@@ -156,7 +156,7 @@ class LookupModule(LookupBase):
             # next parse the optional parameters in keyvalue pairs
             try:
                 for param in params[1:]:
-                    name, value = param.split('=')
+                    name, value = param.split('=', 1)
                     if name not in self.paramvals:
                         raise AnsibleAssertionError('%s not in paramvals' % name)
                     self.paramvals[name] = value
