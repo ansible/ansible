@@ -2,10 +2,6 @@
 - name: collect the coverage files from the Windows host
   hosts: windows
   gather_facts: no
-  # The collections keyword is required to allow fetch to work.
-  # See: https://github.com/ansible/ansible/issues/68269
-  collections:
-  - ansible.windows
   tasks:
   - name: make sure all vars have been set
     assert:
