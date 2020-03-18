@@ -346,7 +346,7 @@ The development version of Ansible can be directly installed from GitHub with pi
 
     $ python -m pip install --user https://github.com/ansible/ansible/archive/devel.tar.gz
 
-Replace ``devel`` in the URL mentioned above, with any other branch or tag on GitHub to install that version such as::
+Replace ``devel`` in the URL mentioned above, with any other branch or tag on GitHub to install that version::
 
     $ python -m pip install --user https://github.com/ansible/ansible/archive/stable-2.9.tar.gz
 
