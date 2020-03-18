@@ -54,7 +54,7 @@ options:
         options that do not explicitly require the 'use_option' field set
         in the 'options' sub option.
     required: false
-    default: false
+    version_added: "2.10"
   options:
     description:
       - Configures the set of DHCP options to be included as part of
@@ -74,7 +74,7 @@ options:
         required: true
       use_option:
         description:
-          - Only applies to a subset of options:
+          - Only applies to a subset of options
             - routers
             - router-templates
             - domain-name-servers
