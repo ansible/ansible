@@ -154,7 +154,7 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
         cli = VaultCLI(args=['ansible-vault', 'create', '/dev/null/foo'])
         cli.parse()
-        self.assertRaisesRegex(errors.AnsibleOptionsError,
+        self.assertRaisesRegexp(errors.AnsibleOptionsError,
                                 "not a tty, editor cannot be opened",
                                 cli.run)
 
