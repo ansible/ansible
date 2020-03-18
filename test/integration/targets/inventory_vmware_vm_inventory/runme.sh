@@ -23,6 +23,7 @@ with_tags: False
 VMWARE_YAML
 
 cleanup() {
+    ec=$?
     echo "Cleanup"
     if [ -f "${VMWARE_CONFIG}" ]; then
         rm -f "${VMWARE_CONFIG}"
@@ -32,7 +33,7 @@ cleanup() {
         rm -rf "${inventory_cache}"
     fi
     echo "Done"
-    exit 0
+    exit $ec
 }
 
 trap cleanup INT TERM EXIT
@@ -62,9 +63,7 @@ echo "Cache is working"
 ansible-inventory -i ${VMWARE_CONFIG} --list --yaml
 
 # Install TOML for --toml
-${PYTHON} -m pip freeze | grep toml > /dev/null 2>&1
-TOML_TEST_RESULT=$?
-if [ $TOML_TEST_RESULT -ne 0 ]; then
+if ${PYTHON} -m pip freeze | grep toml > /dev/null 2>&1; then
     echo "Installing TOML package"
     ${PYTHON} -m pip install toml
 else
@@ -72,9 +71,7 @@ else
 fi
 
 # Get inventory using TOML
-ansible-inventory -i ${VMWARE_CONFIG} --list --toml
-TOML_INVENTORY_LIST_RESULT=$?
-if [ $TOML_INVENTORY_LIST_RESULT -ne 0 ]; then
+if [ ansible-inventory -i ${VMWARE_CONFIG} --list --toml ]; then
     echo "Inventory plugin failed to list inventory host using --toml, please debug"
     exit 1
 fi
