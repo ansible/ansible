@@ -165,6 +165,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # Check to determine if PowerShell modules are supported, and apply
             # some fixes (hacks) to module name + args.
             if mod_type == '.ps1':
+                # FIXME: This should be temporary and moved to an exec subsystem plugin where we can define the mapping
+                # for each subsystem.
                 win_collection = 'ansible.windows'
 
                 # async_status, win_stat, win_file, win_copy, and win_ping are not just like their
