@@ -1,79 +1,72 @@
 ---
-# A Note about ec2 environment variable name preference:
-#  - EC2_URL -> AWS_URL
-#  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
-#  - EC2_SECRET_KEY -> AWS_SECRET_ACCESS_KEY -> AWX_SECRET_KEY
-#  - EC2_REGION -> AWS_REGION
-#
+# tasks file for test_dyamodb_table
 
-# - include: ../../setup_ec2/tasks/common.yml module_name: ec2_group
-
-- block:
+- name: test incomplete credentials
+  block:
     # ============================================================
-    - debug:
-        msg: "{{ aws_access_key }}"
     - name: test failure with no parameters
       dynamodb_table:
       register: result
-      ignore_errors: true
+      ignore_errors: yes
 
     - name: assert failure with no parameters
       assert:
         that:
-           - 'result.failed'
-           - 'result.msg == "missing required arguments: name"'
+          - result is failed
+          - 'result.msg == "missing required arguments: name"'
 
     - name: test credentials from environment
       dynamodb_table:
-        name: '{{ table_name }}'
-        hash_key_name: "myhashkey"
+        name: "{{ table_name }}"
+        hash_key_name: myhashkey
       environment:
-        EC2_REGION: '{{ec2_region}}'
+        EC2_REGION: "{{ ec2_region }}"
         EC2_ACCESS_KEY: bogus_access_key
         EC2_SECRET_KEY: bogus_secret_key
       register: result
-      ignore_errors: true
+      ignore_errors: yes
 
     - name: assert dynamodb_table with valid ec2_url
       assert:
         that:
-           - 'result.failed'
-           - '"Authentication failure" in result.msg'
+          - result is failed
+          - >
+            "Authentication failure" in result.msg
+            or "token included in the request is invalid" in result.msg
 
     # ============================================================
     - name: test credential parameters
       dynamodb_table:
-        name: '{{ table_name }}'
-        hash_key_name: "myhashkey"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: 'bogus_access_key'
-        ec2_secret_key: 'bogus_secret_key'
-        security_token: "{{ security_token }}"
+        name: "{{ table_name }}"
+        hash_key_name: myhashkey
+        ec2_region: "{{ ec2_region }}"
+        ec2_access_key: bogus_access_key
+        ec2_secret_key: bogus_secret_key
+        security_token: "{{ security_token | d(omit) }}"
       register: result
-      ignore_errors: true
-    - debug:
-        msg: "{{ result }}"
+      ignore_errors: yes
     - name: assert credential parameters
       assert:
         that:
-           - 'result.failed'
-           - '"Authentication failure" in result.msg'
+          - result is failed
+          - >
+            "Authentication failure" in result.msg
+            or "token included in the request is invalid" in result.msg
 
-- module_defaults:
+- name: dynamodb table integration tests
+  module_defaults:
     dynamodb_table:
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
       region: "{{ aws_region }}"
-      security_token: "{{ security_token }}"
+      security_token: "{{ security_token | d(omit) }}"
   block:
     # ============================================================
-    - debug:
-        msg: "{{ aws_region }}"
-    - name: test create a table
+    - name: create table
       dynamodb_table:
-        name: '{{ table_name }}'
-        hash_key_name: "myhashkey"
-        range_key_name: "myrangekey"
+        name: "{{ table_name }}"
+        hash_key_name: myhashkey
+        range_key_name: myrangekey
         state: present
         indexes:
           - name: NamedIndex
@@ -88,23 +81,19 @@
             hash_key_name: myhashkey
             range_key_name: mylocalrangekey
         tags:
-          newtag: "hellotag"
-          ntak: "helovdg"
+          First: one
+          Second: two
       register: result
-      ignore_errors: true
       until:
-        - result| json_query('global_secondary_indexes[?IndexName==`NamedIndexV2`].IndexStatus') == ['ACTIVE']
-        - result| json_query('global_secondary_indexes[?IndexName==`NamedIndex`].IndexStatus') == ['ACTIVE']
-      retries: 10
-      delay: 30
-
-    - debug:
-        msg: "{{ result| json_query('global_secondary_indexes[?IndexName==`NamedIndexV2`].IndexStatus')}}"
+        - result | json_query('global_secondary_indexes[?IndexName==`NamedIndexV2`].IndexStatus') == ['ACTIVE']
+        - result | json_query('global_secondary_indexes[?IndexName==`NamedIndex`].IndexStatus') == ['ACTIVE']
+      retries: 6
+      delay: 10
 
     - name: update index on the existing table
       dynamodb_table:
-        name: '{{ table_name }}'
-        hash_key_name: "myhashkey"
+        name: "{{ table_name }}"
+        hash_key_name: myhashkey
         indexes:
           - name: NamedIndex
             type: global_all
@@ -116,32 +105,104 @@
             read_capacity: 10
             write_capacity: 10
       register: result
-      ignore_errors: true
       until:
-        - result|json_query('global_secondary_indexes[?IndexName==`NamedIndexV2`].ProvisionedThroughput.ReadCapacityUnits') == [10]
-        - result|json_query('global_secondary_indexes[?IndexName==`NamedIndexV2`].ProvisionedThroughput.WriteCapacityUnits') == [10]
-      retries: 10
-      delay: 30
+        - result | json_query('indexes[?name==`NamedIndexV2`].read_capacity') == [10]
+        - result | json_query('indexes[?name==`NamedIndexV2`].write_capacity') == [10]
+      retries: 6
+      delay: 10
 
     - name: delete index on the existing table
       dynamodb_table:
-        name: '{{ table_name }}'
-        hash_key_name: "myhashkey"
+        name: "{{ table_name }}"
+        hash_key_name: myhashkey
         indexes:
           - name: NamedIndex
             type: global_all
             hash_key_name: myhashkey
       register: result
-      until:
-        result|json_query('global_secondary_indexes') | length == 1
-      retries: 10
-      delay: 30
+      until: >
+        result.indexes is defined
+        and result.indexes is sequence
+        and result.indexes | length == 1
+      retries: 6
+      delay: 10
+
+    # NOTE: Dropping indexes to speed up billing and backup tests.
+    - name: drop all indexes on the existing table
+      dynamodb_table:
+        name: "{{ table_name }}"
+        hash_key_name: myhashkey
+      register: result
+      until: >
+        result.indexes is defined
+        and result.indexes is sequence
+        and result.indexes | length == 0
+      retries: 6
+      delay: 10
+
+    - name: assert current billing mode
+      assert:
+        that:
+          - result.billing_mode == 'PROVISIONED'
+
+    # NOTE: Changing billing_mode to PAY_PER_REQUEST takes long time
+    # to provision and will significantly delay next step because
+    # table will be in stuck UPDATING state.
+    - name: change billing mode
+      dynamodb_table:
+        name: "{{ table_name }}"
+        hash_key_name: myhashkey
+        billing_mode: PAY_PER_REQUEST
+      register: result
+      until: result.billing_mode | d('') == 'PAY_PER_REQUEST'
+      retries: 6
+      delay: 10
+
+    - name: omit billing mode to ensure no effect
+      dynamodb_table:
+        name: "{{ table_name }}"
+        hash_key_name: myhashkey
+      register: result
+      until: result is succeeded
+      retries: 12
+      delay: 10
+
+    - name: assert billing mode was not changed
+      assert:
+        that:
+          - result.billing_mode == 'PAY_PER_REQUEST'
+
+    - name: assert point in time recovery is disabled
+      assert:
+        that:
+          - not result.point_in_time_recovery
+
+    - name: enable point in time recovery
+      dynamodb_table:
+        name: "{{ table_name }}"
+        hash_key_name: myhashkey
+        point_in_time_recovery: yes
+      register: result
+      until: result.point_in_time_recovery | d(False)
+      retries: 6
+      delay: 10
+
 
   always:
+    - name: disable point in time recovery to avoid leftover backup
+      dynamodb_table:
+        name: "{{ table_name }}"
+        hash_key_name: myhashkey
+        point_in_time_recovery: no
+      register: teardown_result
+      until: teardown_result is succeeded
+      retries: 6
+      delay: 10
+
     - name: delete the table
       dynamodb_table:
         name: "{{ table_name }}"
         state: absent
-      register: result
-    - debug:
-        msg: "{{ result }}"
+      register: teardown_result
+      retries: 10
+      until: teardown_result is succeeded

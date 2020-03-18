@@ -118,6 +118,25 @@
             "dms:ModifyEndpoint"
           ],
           "Resource": ["*"]
+        },
+        {
+            "Sid": "AllowDynamoDBTableManagement",
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:CreateTable",
+                "dynamodb:DeleteTable",
+                "dynamodb:DescribeContinuousBackups",
+                "dynamodb:DescribeTable",
+                "dynamodb:ListTables",
+                "dynamodb:ListTagsOfResource",
+                "dynamodb:TagResource",
+                "dynamodb:UntagResource",
+                "dynamodb:UpdateContinuousBackups",
+                "dynamodb:UpdateTable"
+            ],
+            "Resource": [
+                "arn:aws:dynamodb:{{ aws_region }}:{{ aws_account }}:table/ansible-test-*"
+            ]
         }
     ]
 }

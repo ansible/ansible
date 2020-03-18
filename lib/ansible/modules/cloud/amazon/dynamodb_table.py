@@ -482,7 +482,6 @@ def create_or_update_dynamo_table(resource, module):
         except is_boto3_error_code('ResourceNotFoundException'):
             table_status = 'TABLE_NOT_FOUND'
 
-
         if table_status in ('ACTIVE', 'CREATING', 'UPDATING'):
             # The table exists and might need to be updated.
             wait_for_table_active(table)
@@ -524,7 +523,6 @@ def create_or_update_dynamo_table(resource, module):
                     result['changed'] = True
 
                 result['tags'] = tags_change['tags']
-
 
         elif not module.check_mode:
             # The table doesn't exist and needs to be created.
@@ -615,7 +613,6 @@ def create_or_update_dynamo_table(resource, module):
             # The table doesn't exist and creation skipped due to check_mode.
             result['changed'] = True
             result['tags'] = tags
-
 
     except NoCredentialsError as e:
         module.fail_json_aws(e, 'Unable to locate credentials: ' + traceback.format_exc())
@@ -1051,7 +1048,7 @@ def serialize_indexes(all_indexes):
             index_type,
             serialized_index_to_json,
             serialized_index_attribute_definitions
-         ) = serialize_index_to_json(index)
+        ) = serialize_index_to_json(index)
 
         indexes_attr_definitions.append(serialized_index_attribute_definitions)
 

@@ -1,4 +1,3 @@
 ---
-# defaults file for test_ec2_group
-table_name: 'ansible-table-'
-ec2_region: 'us-west-2'
+table_name: ansible-test-1
+ec2_region: us-west-2
