@@ -70,7 +70,7 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'view', '/dev/null/foo'])
         cli.parse()
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
                                 "A vault password is required to use Ansible's Vault",
                                 cli.run)
 
@@ -79,7 +79,7 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'encrypt', '/dev/null/foo'])
         cli.parse()
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
                                 "A vault password is required to use Ansible's Vault",
                                 cli.run)
 
