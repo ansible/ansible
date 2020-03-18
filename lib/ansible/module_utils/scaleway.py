@@ -90,7 +90,7 @@ class Scaleway(object):
         self.headers = {
             'X-Auth-Token': self.module.params.get('api_token'),
             'User-Agent': self.get_user_agent_string(module),
-            'Content-type': 'application/json',
+            'Content-Type': 'application/json',
         }
         self.name = None
 
