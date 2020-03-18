@@ -88,11 +88,7 @@ class ActionModule(ActionBase):
             except AttributeError:
                 pass
 
-            # Use win_ping on winrm/powershell, else use ping
-            if getattr(self._connection._shell, "_IS_WINDOWS", False):
-                ping_result = self._execute_module(module_name='win_ping', module_args=dict(), task_vars=task_vars)
-            else:
-                ping_result = self._execute_module(module_name='ping', module_args=dict(), task_vars=task_vars)
+            ping_result = self._execute_module(module_name='ping', module_args=dict(), task_vars=task_vars)
 
             # Test module output
             if ping_result['ping'] != 'pong':
