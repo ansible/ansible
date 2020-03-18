@@ -63,7 +63,7 @@ RETURN = '''
 data:
     description: List of droplets on DigitalOcean
     returned: success and no resource constraint
-    type: dict
+    type: list
     sample: [
       {
         "id": 3164444,
