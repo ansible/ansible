@@ -74,6 +74,7 @@ options:
   path:
     description:
       - The path to the json file containing the Grafana dashboard to import or export.
+      - Required if C(state) is C(export) or C(present)
   overwrite:
     description:
       - Override existing dashboard when state is present.
