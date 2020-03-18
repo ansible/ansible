@@ -258,7 +258,7 @@ def request(url, user, passwd, timeout, data=None, method=None):
                                         'Authorization': "Basic %s" % auth})
 
     if info['status'] not in (200, 201, 204):
-        module.fail_json(msg=info['msg'])
+        module.fail_json(msg=info['body'])
 
     body = response.read()
 
