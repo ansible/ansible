@@ -330,12 +330,14 @@ class HashiVault:
         self.client.auth.aws.iam_login(access_key, secret_key, session_token=session_token, header_value=header_value, role=role, region=region, mount_point=mount_point)
 
     def auth_aws_ec2(self, **kwargs):
-        url = "{base}/latest/dynamic/instance-identity/pkcs7".format(base=AWS_EC2_METADATA_URL_BASE)
+        pkcs7 = kwargs.get('pkcs7')
 
-        try:
-            pkcs7 = requests.get(url, timeout=0.1).text.replace('\n', '')
-        except requests.exceptions.ConnectionError:
-            raise AnsibleError("hashi_vault lookup plugin failed to connect to {base}, Make sure you are running from a AWS EC2 instance".format(base=AWS_EC2_METADATA_URL_BASE))
+        if pkcs7 is None:
+          url = "{base}/latest/dynamic/instance-identity/pkcs7".format(base=AWS_EC2_METADATA_URL_BASE)
+          try:
+              pkcs7 = requests.get(url, timeout=0.1).text.replace('\n', '')
+          except requests.exceptions.ConnectionError:
+              raise AnsibleError("hashi_vault lookup plugin failed to connect to {base}, Make sure you are running from a AWS EC2 instance".format(base=AWS_EC2_METADATA_URL_BASE))
 
         nonce = kwargs.get('nonce')
 
