@@ -158,6 +158,7 @@ except ImportError:
 
 
 ANSIBLE_HASHI_VAULT_ADDR = 'http://127.0.0.1:8200'
+AWS_EC2_METADATA_URL_BASE = 'http://169.254.169.254'
 
 if os.getenv('VAULT_ADDR') is not None:
     ANSIBLE_HASHI_VAULT_ADDR = os.environ['VAULT_ADDR']
@@ -329,12 +330,12 @@ class HashiVault:
         self.client.auth.aws.iam_login(access_key, secret_key, session_token=session_token, header_value=header_value, role=role, region=region, mount_point=mount_point)
 
     def auth_aws_ec2(self, **kwargs):
-        url = "http://169.254.169.254/latest/dynamic/instance-identity/pkcs7"
+        url = "{base}/latest/dynamic/instance-identity/pkcs7".format(base=AWS_EC2_METADATA_URL_BASE)
 
         try:
             pkcs7 = requests.get(url, timeout=0.1).text.replace('\n', '')
         except requests.exceptions.ConnectionError:
-            raise AnsibleError("hashi_vault lookup plugin failed to connect to http://169.254.169.254, Make sure you are running from a AWS EC2 instance")
+            raise AnsibleError("hashi_vault lookup plugin failed to connect to {base}, Make sure you are running from a AWS EC2 instance".format(base=AWS_EC2_METADATA_URL_BASE))
 
         nonce = kwargs.get('nonce')
 
