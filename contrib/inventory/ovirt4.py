@@ -103,9 +103,9 @@ def parse_args():
     return parser.parse_args()
 
 
-def create_connection():
+def get_config():
     """
-    Create a connection to oVirt engine API.
+    Get configuration options
     """
     # Get the path of the configuration file, by default use
     # 'ovirt.ini' file in script directory:
@@ -122,13 +122,21 @@ def create_connection():
             'ovirt_username': os.environ.get('OVIRT_USERNAME'),
             'ovirt_password': os.environ.get('OVIRT_PASSWORD'),
             'ovirt_ca_file': os.environ.get('OVIRT_CAFILE', ''),
+            'ovirt_host_nic': os.environ.get('OVIRT_HOST_NIC', ''),
         }
     )
     if not config.has_section('ovirt'):
         config.add_section('ovirt')
     config.read(config_path)
+    return config
 
-    # Create a connection with options defined in ini file:
+
+def create_connection(config):
+    """
+    Create a connection to oVirt engine API.
+    """
+
+    # Create a connection with options defined in config:
     return sdk.Connection(
         url=config.get('ovirt', 'ovirt_url'),
         username=config.get('ovirt', 'ovirt_username'),
@@ -138,10 +146,21 @@ def create_connection():
     )
 
 
-def get_dict_of_struct(connection, vm):
+def get_ansible_host_ip(devices, nic_name):
+    """
+    Return first IP address or IP of preferred named nic (i.e. eth0)
+    """
+
+    first_ip = next((device.ips[0].address for device in devices if device.ips), None)
+    preferred_nic = next((device.ips[0].address for device in devices if device.ips and device.name == nic_name), None)
+    return preferred_nic if preferred_nic else first_ip
+
+
+def get_dict_of_struct(connection, config, vm):
     """
     Transform SDK Vm Struct type to Python dictionary.
     """
+    nic_name = config.get('ovirt', 'ovirt_host_nic') or None
     if vm is None:
         return dict()
 
@@ -178,11 +197,12 @@ def get_dict_of_struct(connection, vm):
         'devices': dict(
             (device.name, [ip.address for ip in device.ips]) for device in devices if device.ips
         ),
-        'ansible_host': next((device.ips[0].address for device in devices if device.ips), None)
+        #'ansible_host': next((device.ips[0].address for device in devices if device.ips), None)
+        'ansible_host': get_ansible_host_ip(devices, nic_name)
     }
 
 
-def get_data(connection, vm_name=None):
+def get_data(connection, config, vm_name=None):
     """
     Obtain data of `vm_name` if specified, otherwise obtain data of all vms.
     """
@@ -193,6 +213,7 @@ def get_data(connection, vm_name=None):
         vm = vms_service.list(search='name=%s' % vm_name) or [None]
         data = get_dict_of_struct(
             connection=connection,
+            config=config,
             vm=vm[0],
         )
     else:
@@ -204,7 +225,7 @@ def get_data(connection, vm_name=None):
             cluster_service = clusters_service.cluster_service(vm.cluster.id)
 
             # Add vm to vms dict:
-            vms[name] = get_dict_of_struct(connection, vm)
+            vms[name] = get_dict_of_struct(connection, config, vm)
 
             # Add vm to cluster group:
             cluster_name = connection.follow_link(vm.cluster).name
@@ -239,12 +260,14 @@ def get_data(connection, vm_name=None):
 
 def main():
     args = parse_args()
-    connection = create_connection()
+    config = get_config()
+    connection = create_connection(config)
 
     print(
         json.dumps(
             obj=get_data(
                 connection=connection,
+                config=config,
                 vm_name=args.host,
             ),
             sort_keys=args.pretty,
