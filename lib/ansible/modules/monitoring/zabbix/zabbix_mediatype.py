@@ -278,6 +278,7 @@ def construct_parameters(**kwargs):
     """
     if kwargs['transport_type'] == 'email':
         return dict(
+            name=kwargs['name'],
             description=kwargs['name'],
             status=to_numeric_value(kwargs['status'],
                                     {'enabled': '0',
@@ -464,6 +465,10 @@ def get_update_params(module, zbx, mediatype_id, **kwargs):
         'output': 'extend',
         'mediatypeids': [mediatype_id]
     })[0]
+    
+    temp = dict(existing_mediatype)
+    for key in temp.keys():
+        existing_mediatype[key.decode('utf-8')] = existing_mediatype[key]
 
     if existing_mediatype['type'] != kwargs['type']:
         return kwargs, diff(existing_mediatype, kwargs)
