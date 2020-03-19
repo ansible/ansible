@@ -38,6 +38,7 @@ connconfig = dict(
 from ldap3_orm import ObjectDef, Reader
 from ldap3_orm._config import read_config, config
 
+from ansible.module_utils.six import iteritems
 from ansible.plugins.inventory import BaseInventoryPlugin
 
 
@@ -56,11 +57,22 @@ class InventoryModule(BaseInventoryPlugin):
         # late import to create connection in respect to loaded config
         from ldap3_orm.connection import conn
 
-        r = Reader(conn, ObjectDef("ipaHostGroup", conn),
-                   config.userconfig.get("hostgroup_base_dn",
-                                         "cn=hostgroups," + config.base_dn))
+        hg_base_dn = config.userconfig.get("hostgroup_base_dn",
+                                           "cn=hostgroups," + config.base_dn)
+        group_bases = {}  # collect one-level of inherited host groups
+        r = Reader(conn, ObjectDef("ipaHostGroup", conn), hg_base_dn)
         for hg in r.search():
-            group = self.inventory.add_group(hg.cn.value)
+            group_name = hg.cn.value
+            group = self.inventory.add_group(group_name)
             for dn in hg.member:
                 host = dn.split(',')[0].replace("fqdn=", '')
                 self.inventory.add_host(host, group)
+                for hg_member in hg.memberOf:
+                    if hg_member.endswith(hg_base_dn):
+                        hg_name = hg_member.split(',')[0].replace("cn=", '')
+                        group_bases.setdefault(hg_name, []).append(group_name)
+
+        # update host groups with one-level of indirect host members
+        for name, groups in iteritems(group_bases):
+            for group_name in groups:
+                self.inventory.add_child(name, group_name)
