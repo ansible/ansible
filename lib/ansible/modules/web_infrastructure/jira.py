@@ -4,7 +4,7 @@
 # (c) 2014, Steve Smith <ssmith@atlassian.com>
 # Atlassian open-source approval reference OSR-76.
 #
-# (c) 2020, Per Abildgaard Toft <per@minfejl> Search function 
+# (c) 2020, Per Abildgaard Toft <per@minfejl> Search function
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -135,10 +135,9 @@ options:
 notes:
   - "Currently this only works with basic-auth."
 
-author: 
+author:
 - "Steve Smith (@tarka)"
 - "Per Abildgaard Toft (@pertoft)"
-
 """
 
 EXAMPLES = """
@@ -153,7 +152,7 @@ EXAMPLES = """
     summary: Example Issue
     description: Created using Ansible
     issuetype: Task
-  args: 
+  args:
     fields:
       customfield_13225: "test"
       customfield_12931: '{"value": "Test"}'
@@ -227,7 +226,7 @@ register: issue
     operation: search
     jql: project=cmdb AND cf[13225]="test"
   args:
-    fields: 
+    fields:
        lastViewed: null
   register: issue
 
@@ -282,7 +281,6 @@ def request(url, user, passwd, timeout, data=None, method=None):
     # inject the basic-auth header up-front to ensure that JIRA treats
     # the requests as authorized for this user.
     auth = to_text(base64.b64encode(to_bytes('{0}:{1}'.format(user, passwd), errors='surrogate_or_strict')))
-    
     response, info = fetch_url(module, url, data=data, method=method, timeout=timeout,
                                headers={'Content-Type': 'application/json',
                                         'Authorization': "Basic %s" % auth})
@@ -291,10 +289,10 @@ def request(url, user, passwd, timeout, data=None, method=None):
         module.fail_json(msg=info)
         error = json.loads(info['body'])
         if error:
-          module.fail_json(msg=error['errorMessages'])
+            module.fail_json(msg=error['errorMessages'])
         else:
-          #Fallback print body, if it cant be decoded
-          module.fail_json(msg=info['body'])
+            # Fallback print body, if it cant be decoded
+            module.fail_json(msg=info['body'])
 
     body = response.read()
 
@@ -367,14 +365,13 @@ def fetch(restbase, user, passwd, params):
     ret = get(url, user, passwd, params['timeout'])
     return ret
 
+
 def search(restbase, user, passwd, params):
     url = restbase + '/search?jql=' + urllib.request.pathname2url(params['jql']) + '&maxResults=10'
-    
     if params['fields']:
         fields = params['fields'].keys()
         for f in fields:
             url = url + '&fields=' + urllib.request.pathname2url(f)
-        
     ret = get(url, user, passwd, params['timeout'])
     return ret
 
