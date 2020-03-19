@@ -1,0 +1,2 @@
+minor_changes:
+  - ovirt_vm - add bios_type option (https://github.com/ansible/ansible/issues/63437)
