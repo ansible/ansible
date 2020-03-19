@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.10',
+ANSIBLE_METADATA = {'metadata_version': '2.10',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -262,7 +262,7 @@ EXAMPLES = """
 import base64
 import json
 import sys
-import urllib.parse
+import urllib
 from ansible.module_utils._text import to_text, to_bytes
 
 from ansible.module_utils.basic import AnsibleModule
