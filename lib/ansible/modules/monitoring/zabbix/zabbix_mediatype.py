@@ -465,7 +465,7 @@ def get_update_params(module, zbx, mediatype_id, **kwargs):
         'output': 'extend',
         'mediatypeids': [mediatype_id]
     })[0]
-    
+
     temp = dict(existing_mediatype)
     for key in temp.keys():
         existing_mediatype[key.decode('utf-8')] = existing_mediatype[key]
