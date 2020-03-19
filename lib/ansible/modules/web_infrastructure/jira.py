@@ -4,7 +4,7 @@
 # (c) 2014, Steve Smith <ssmith@atlassian.com>
 # Atlassian open-source approval reference OSR-76.
 #
-# (c) 2020, Per Abildgaard Toft <per@minfejl> Search function
+# (c) 2020, Per Abildgaard Toft <per@minfejl.dk> Search function
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -114,6 +114,7 @@ options:
 
   jql:
     required: false
+    version_added: 2.10
     description:
      - Query JIRA in JQL Syntax E.g. 'CMDB Hostname'='test.example.com'
 
