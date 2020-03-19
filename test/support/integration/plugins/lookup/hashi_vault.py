@@ -84,7 +84,7 @@ DOCUMENTATION = """
       default: True
     namespace:
       version_added: "2.8"
-      description: namespace where secrets reside. requires HVAC 0.7.0+ and Vault 0.11+.
+      description: namespace where secrets reside. requires HVAC 0.9.3+ and Vault 0.11+.
 """
 
 EXAMPLES = """
@@ -326,7 +326,7 @@ class HashiVault:
         if region is None:
             region = 'us-east-1'
 
-        self.client.auth_aws_iam(access_key, secret_key, session_token, header_value, mount_point, role, region=region)
+        self.client.auth.aws.iam_login(access_key, secret_key, session_token=session_token, header_value=header_value, role=role, region=region, mount_point=mount_point)
 
     def auth_aws_ec2(self, **kwargs):
         url = "http://169.254.169.254/latest/dynamic/instance-identity/pkcs7"
@@ -346,7 +346,7 @@ class HashiVault:
         if mount_point is None:
             mount_point = 'aws'
 
-        self.client.auth_ec2(pkcs7, nonce, role, mount_point=mount_point)
+        self.client.auth.aws.ec2_login(pkcs7, nonce, role=role, mount_point=mount_point)
 
 
 class LookupModule(LookupBase):
