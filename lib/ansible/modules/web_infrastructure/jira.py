@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.2',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -33,7 +33,7 @@ options:
   operation:
     required: true
     aliases: [ command ]
-    choices: [ create, comment, edit, fetch, transition , link ]
+    choices: [ create, comment, edit, fetch, transition , link, search ]
     description:
       - The operation to perform.
 
@@ -154,9 +154,9 @@ EXAMPLES = """
     issuetype: Task
   args:
     fields:
-      customfield_13225: "test"
-      customfield_12931: '{"value": "Test"}'
-register: issue
+        customfield_13225: "test"
+        customfield_12931: '{"value": "Test"}'
+  register: issue
 
 - name: Comment on issue
   jira:
@@ -227,7 +227,7 @@ register: issue
     jql: project=cmdb AND cf[13225]="test"
   args:
     fields:
-       lastViewed: null
+      lastViewed: null
   register: issue
 
 - name: Create a unix account for the reporter
