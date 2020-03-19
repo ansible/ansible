@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '2.10',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -114,7 +114,7 @@ options:
 
   jql:
     required: false
-    version_added: 2.10
+    version_added: 2.5
     description:
      - Query JIRA in JQL Syntax E.g. 'CMDB Hostname'='test.example.com'
 
