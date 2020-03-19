@@ -52,6 +52,17 @@ COVERAGE_CONFIG_PATH = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'coveragerc')
 COVERAGE_OUTPUT_FILE_NAME = 'coverage'
 
 
+class CoverageConfig(EnvironmentConfig):
+    """Configuration for the coverage command."""
+    def __init__(self, args):  # type: (t.Any) -> None
+        super(CoverageConfig, self).__init__(args, 'coverage')
+
+        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
+        self.all = args.all if 'all' in args else False  # type: bool
+        self.stub = args.stub if 'stub' in args else False  # type: bool
+        self.coverage = False  # temporary work-around to support intercept_command in cover.py
+
+
 def initialize_coverage(args):  # type: (CoverageConfig) -> coverage_module
     """Delegate execution if requested, install requirements, then import and return the coverage module. Raises an exception if coverage is not available."""
     if args.delegate:
@@ -245,17 +256,6 @@ def sanitize_filename(
         filename = new_name
 
     return filename
-
-
-class CoverageConfig(EnvironmentConfig):
-    """Configuration for the coverage command."""
-    def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageConfig, self).__init__(args, 'coverage')
-
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
-        self.all = args.all if 'all' in args else False  # type: bool
-        self.stub = args.stub if 'stub' in args else False  # type: bool
-        self.coverage = False  # temporary work-around to support intercept_command in cover.py
 
 
 class PathChecker:
