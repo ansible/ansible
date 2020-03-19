@@ -128,7 +128,7 @@ To enable the Ansible Engine repository for RHEL 7, run the following command:
 
     $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.9-rpms
 
-RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
+RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_.
 
 Ansible version 2.4 and later can manage earlier operating systems that contain Python 2.6 or higher.
 
