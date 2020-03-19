@@ -114,7 +114,7 @@ options:
 
   jql:
     required: false
-    version_added: 2.10
+    version_added: '2.10'
     description:
      - Query JIRA in JQL Syntax E.g. 'CMDB Hostname'='test.example.com'
 
