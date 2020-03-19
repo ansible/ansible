@@ -83,7 +83,7 @@ def main():
                         'test/integration/targets/module_precedence/lib_with_extension',
                 ):
                     is_module = True
-            elif dirname == 'plugins/modules':
+            elif path.startswith('plugins/modules/'):
                 is_module = True
 
             if is_module:
