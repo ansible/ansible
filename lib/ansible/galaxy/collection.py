@@ -418,6 +418,7 @@ class CollectionRequirement:
                         requirement.startswith('!=')):
                     if requirement.startswith('='):
                         requirement = requirement.lstrip('=')
+                        allow_pre_release = True
 
                     resp = api.get_collection_version_metadata(namespace, name, requirement)
 
