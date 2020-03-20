@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2020, Florent Madiot (scodeman@scode.io)
- # Based on code:
+# Based on code:
 # Copyright: (c) 2019, Markus Bergholz (markuman@gmail.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
