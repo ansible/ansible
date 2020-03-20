@@ -339,8 +339,8 @@ class GalaxyCLI(CLI):
                                         help='The path to the directory containing your collections.')
             install_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                         help='A file containing a list of collections to be installed.')
-            install_parser.add_argument('--pre', '--pre-release', dest='pre_release', action='store_true',
-                                        help='Allow pre-releases')
+            install_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
+                                        help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
         else:
             install_parser.add_argument('-r', '--role-file', dest='role_file',
                                         help='A file containing a list of roles to be imported.')
@@ -944,7 +944,7 @@ class GalaxyCLI(CLI):
                 os.makedirs(b_output_path)
 
             install_collections(requirements, output_path, self.api_servers, (not ignore_certs), ignore_errors,
-                                no_deps, force, force_deps, context.CLIARGS['pre_release'])
+                                no_deps, force, force_deps, context.CLIARGS['allow_pre_release'])
 
             return 0
 
