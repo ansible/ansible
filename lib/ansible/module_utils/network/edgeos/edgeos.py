@@ -122,11 +122,10 @@ def load_config(module, commands, commit=False, comment=None):
         except ConnectionError:
             connection.discard_changes()
             module.fail_json(msg='commit failed: %s' % out)
-
-    if not commit:
-        connection.discard_changes()
     else:
-        connection.get('exit')
+        connection.discard_changes()
+
+    connection.get('exit')
 
     if diff:
         return diff
