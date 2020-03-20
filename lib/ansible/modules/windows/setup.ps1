@@ -314,11 +314,12 @@ if($gather_subset.Contains('platform')) {
     $win32_cs = Get-LazyCimInstance Win32_ComputerSystem
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
     $domain_suffix = $win32_cs.Domain.Substring($win32_cs.Workgroup.length)
-    $fqdn = $win32_cs.DNSHostname
+    $ip_props = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties()
+    $fqdn = $ip_props.HostName
 
-    if( $domain_suffix -ne "")
+    if ($ip_props.DomainName)
     {
-        $fqdn = $win32_cs.DNSHostname + "." + $domain_suffix
+        $fqdn = "$($fqdn).$($ip_props.DomainName)"
     }
 
     try {
@@ -332,7 +333,7 @@ if($gather_subset.Contains('platform')) {
         ansible_architecture = $win32_os.OSArchitecture
         ansible_domain = $domain_suffix
         ansible_fqdn = $fqdn
-        ansible_hostname = $win32_cs.DNSHostname
+        ansible_hostname = $ip_props.HostName
         ansible_netbios_name = $win32_cs.Name
         ansible_kernel = $osversion.Version.ToString()
         ansible_nodename = $fqdn
