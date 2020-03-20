@@ -177,7 +177,7 @@ class VmwareRestClient(object):
             return tags
         dynamic_managed_object = DynamicID(type=type, id=mid)
 
-        temp_tags_model = self.get_tags_for_object(dynamic_managed_object)
+        temp_tags_model = self.get_tags_for_object(dobj=dynamic_managed_object)
 
         category_service = self.api_client.tagging.Category
 
