@@ -121,7 +121,28 @@ EXAMPLES = '''
       resource_name: myVmss
       api_version: "2017-12-01"
       body: { body }
-'''
+   
+  - name: Create Disk Encryption Sets
+    azure_rm_resource:
+      resource_group: "{{ resource_group }}"
+      provider: compute
+      resource_type: diskEncryptionSets
+      resource_name: mydisk1
+      api_version: '2019-07-01'
+      body:
+           "location": "{{ location }}"
+           "identity": {
+              "type": "SystemAssigned"}
+           "properties": {
+               "activeKey": {
+                   "sourceVault": {
+                   "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/shnawa_east_rg/providers/Microsoft.KeyVault/vaults/shnawakv"
+                      },
+                   "keyUrl": "https://shnawakv.vault.azure.net/keys/shnawakey/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    }
+                 }
+                 
+ '''
 
 RETURN = '''
 response:
