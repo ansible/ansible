@@ -303,8 +303,6 @@ class GalaxyCLI(CLI):
                                    help='Ignore errors during verification and continue with the next specified collection.')
         verify_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                    help='A file containing a list of collections to be verified.')
-        verify_parser.add_argument('--pre', '--pre-release', dest='pre_release', action='store_true',
-                                   help='Allow pre-releases')
 
     def add_install_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -902,7 +900,7 @@ class GalaxyCLI(CLI):
         resolved_paths = [validate_collection_path(GalaxyCLI._resolve_path(path)) for path in search_paths]
 
         verify_collections(requirements, resolved_paths, self.api_servers, (not ignore_certs), ignore_errors,
-                           allow_pre_release=context.CLIARGS['pre_release'])
+                           allow_pre_release=True)
 
         return 0
 
