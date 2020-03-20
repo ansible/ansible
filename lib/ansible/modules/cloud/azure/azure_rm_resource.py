@@ -127,7 +127,7 @@ EXAMPLES = '''
       resource_group: "{{ resource_group }}"
       provider: compute
       resource_type: diskEncryptionSets
-      resource_name: mydisk1
+      resource_name: MydiskEncryptionSets
       api_version: '2019-07-01'
       body:
            "location": "{{ location }}"
