@@ -106,7 +106,9 @@ class CollectionRequirement:
 
     @property
     def versions(self):
-        return set(v for v in self._versions if '*' in v or self.allow_pre_releases or not SemanticVersion(v).is_prerelease)
+        if self.allow_pre_releases:
+            return self._versions
+        return set(v for v in self._versions if v == '*' or not SemanticVersion(v).is_prerelease)
 
     @versions.setter
     def versions(self, value):
@@ -359,8 +361,13 @@ class CollectionRequirement:
         version = meta['version']
         meta = CollectionVersionMetadata(namespace, name, version, None, None, meta['dependencies'])
 
+        if SemanticVersion(version).is_prerelease:
+            allow_pre_release = True
+        else:
+            allow_pre_release = False
+
         return CollectionRequirement(namespace, name, b_path, None, [version], version, force, parent=parent,
-                                     metadata=meta, files=files)
+                                     metadata=meta, files=files, allow_pre_releases=allow_pre_release)
 
     @staticmethod
     def from_path(b_path, force, parent=None):
@@ -377,6 +384,7 @@ class CollectionRequirement:
                     raise AnsibleError("Collection file at '%s' does not contain a valid json string."
                                        % to_native(b_file_path))
 
+        allow_pre_release = False
         if 'manifest_file' in info:
             manifest = info['manifest_file']['collection_info']
             namespace = manifest['namespace']
@@ -384,7 +392,10 @@ class CollectionRequirement:
             version = to_text(manifest['version'], errors='surrogate_or_strict')
 
             try:
-                SemanticVersion().parse(version)
+                _v = SemanticVersion()
+                _v.parse(version)
+                if _v.is_prerelease:
+                    allow_pre_release = True
             except ValueError:
                 display.warning("Collection at '%s' does not have a valid version set, falling back to '*'. Found "
                                 "version: '%s'" % (to_text(b_path), version))
@@ -405,7 +416,7 @@ class CollectionRequirement:
         files = info.get('files_file', {}).get('files', {})
 
         return CollectionRequirement(namespace, name, b_path, None, [version], version, force, parent=parent,
-                                     metadata=meta, files=files, skip=True)
+                                     metadata=meta, files=files, skip=True, allow_pre_releases=allow_pre_release)
 
     @staticmethod
     def from_name(collection, apis, requirement, force, parent=None, allow_pre_release=False):
@@ -416,9 +427,11 @@ class CollectionRequirement:
             try:
                 if not (requirement == '*' or requirement.startswith('<') or requirement.startswith('>') or
                         requirement.startswith('!=')):
+                    # Exact requirement
+                    allow_pre_release = True
+
                     if requirement.startswith('='):
                         requirement = requirement.lstrip('=')
-                        allow_pre_release = True
 
                     resp = api.get_collection_version_metadata(namespace, name, requirement)
 
