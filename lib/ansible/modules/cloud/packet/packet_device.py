@@ -35,7 +35,7 @@ author:
 options:
   auth_token:
     description:
-      - Packet api token. You can also supply it in env var C(PACKET_API_TOKEN).
+      - Packet API token. You can also supply it in env var C(PACKET_API_TOKEN).
 
   count:
     description:
@@ -135,7 +135,7 @@ notes:
 '''
 
 EXAMPLES = '''
-# All the examples assume that you have your Packet api token in env var PACKET_API_TOKEN.
+# All the examples assume that you have your Packet API token in env var PACKET_API_TOKEN.
 # You can also pass it to the auth_token parameter of the module instead.
 
 # Creating devices
@@ -151,7 +151,7 @@ EXAMPLES = '''
       facility: sjc1
 
 # Create the same device and wait until it is in state "active", (when it's
-# ready for other API operations). Fail if the devices in not "active" in
+# ready for other API operations). Fail if the device is not "active" in
 # 10 minutes.
 
 - name: create device and wait up to 10 minutes for active state
