@@ -42,7 +42,7 @@ SEMVER_RE = re.compile(
 class _Alpha:
     """Class to easily allow comparing strings
 
-    Largely this exists to make comparing an interger and a string on py3
+    Largely this exists to make comparing an integer and a string on py3
     so that it works like py2.
     """
     def __init__(self, specifier):
@@ -85,7 +85,7 @@ class _Alpha:
 class _Numeric:
     """Class to easily allow comparing numbers
 
-    Largely this exists to make comparing an interger and a string on py3
+    Largely this exists to make comparing an integer and a string on py3
     so that it works like py2.
     """
     def __init__(self, specifier):
