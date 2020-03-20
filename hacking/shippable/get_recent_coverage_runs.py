@@ -20,6 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.utils.color import stringc
 import requests
 import sys
 
@@ -63,14 +64,22 @@ def pretty_coverage_runs(runs):
 
     for run in sorted(ended, key=lambda x: x['endedAt']):
         if run['statusCode'] == 30:
-            print('🙂 [PASS] https://app.shippable.com/github/ansible/ansible/runs/%s (%s)' % (run['runNumber'], run['endedAt']))
+            print('🙂 [%s] https://app.shippable.com/github/ansible/ansible/runs/%s (%s)' % (
+                stringc('PASS', 'green'),
+                run['runNumber'],
+                run['endedAt']))
         else:
-            print('😢 [FAIL] https://app.shippable.com/github/ansible/ansible/runs/%s (%s)' % (run['runNumber'], run['endedAt']))
+            print('😢 [%s] https://app.shippable.com/github/ansible/ansible/runs/%s (%s)' % (
+                stringc('FAIL', 'red'),
+                run['runNumber'],
+                run['endedAt']))
 
     if in_progress:
         print('The following runs are ongoing:')
         for run in in_progress:
-            print('🤔 [FATE] https://app.shippable.com/github/ansible/ansible/runs/%s' % run['runNumber'])
+            print('🤔 [%s] https://app.shippable.com/github/ansible/ansible/runs/%s' % (
+                stringc('FATE', 'yellow'),
+                run['runNumber']))
 
 def main():
     pretty_coverage_runs(get_coverage_runs())
