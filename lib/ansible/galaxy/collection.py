@@ -57,7 +57,7 @@ class CollectionRequirement:
     _FILE_MAPPING = [(b'MANIFEST.json', 'manifest_file'), (b'FILES.json', 'files_file')]
 
     def __init__(self, namespace, name, b_path, api, versions, requirement, force, parent=None, metadata=None,
-                 files=None, skip=False):
+                 files=None, skip=False, allow_pre_releases=False):
         """
         Represents a collection requirement, the versions that are available to be installed as well as any
         dependencies the collection has.
@@ -76,15 +76,17 @@ class CollectionRequirement:
             collection artifact.
         :param skip: Whether to skip installing the collection. Should be set if the collection is already installed
             and force is not set.
+        :param allow_pre_releases: Whether to skip pre-release versions of collections.
         """
         self.namespace = namespace
         self.name = name
         self.b_path = b_path
         self.api = api
-        self.versions = set(versions)
+        self._versions = set(versions)
         self.force = force
         self.skip = skip
         self.required_by = []
+        self.allow_pre_releases = allow_pre_releases
 
         self._metadata = metadata
         self._files = files
@@ -101,6 +103,18 @@ class CollectionRequirement:
     def metadata(self):
         self._get_metadata()
         return self._metadata
+
+    @property
+    def versions(self):
+        return set(v for v in self._versions if '*' in v or self.allow_pre_releases or not SemanticVersion(v).is_prerelease)
+
+    @versions.setter
+    def versions(self, value):
+        self._versions = set(value)
+
+    @property
+    def pre_releases(self):
+        return set(v for v in self._versions if SemanticVersion(v).is_prerelease)
 
     @property
     def latest_version(self):
@@ -146,9 +160,17 @@ class CollectionRequirement:
             )
 
             versions = ", ".join(sorted(self.versions, key=SemanticVersion))
+            if not self.versions and self.pre_releases:
+                pre_release_msg = (
+                    '\nThis collection only contains pre-releases. Utilize `--pre` to install pre-releases, or '
+                    'explicitly provide the pre-release version.'
+                )
+            else:
+                pre_release_msg = ''
+
             raise AnsibleError(
-                "%s from source '%s'. Available versions before last requirement added: %s\nRequirements from:\n%s"
-                % (msg, collection_source, versions, req_by)
+                "%s from source '%s'. Available versions before last requirement added: %s\nRequirements from:\n%s%s"
+                % (msg, collection_source, versions, req_by, pre_release_msg)
             )
 
         self.versions = new_versions
@@ -403,11 +425,7 @@ class CollectionRequirement:
                     versions = [resp.version]
                 else:
                     resp = api.get_collection_versions(namespace, name)
-
-                    if allow_pre_release:
-                        versions = resp
-                    else:
-                        versions = [v for v in resp if not SemanticVersion(v).is_prerelease]
+                    versions = resp
             except GalaxyError as err:
                 if err.http_code == 404:
                     display.vvv("Collection '%s' is not available from server %s %s"
@@ -421,7 +439,7 @@ class CollectionRequirement:
             raise AnsibleError("Failed to find collection %s:%s" % (collection, requirement))
 
         req = CollectionRequirement(namespace, name, None, api, versions, requirement, force, parent=parent,
-                                    metadata=galaxy_meta)
+                                    metadata=galaxy_meta, allow_pre_releases=allow_pre_release)
         return req
 
 
