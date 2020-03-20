@@ -15,6 +15,7 @@ EQ = [
     ('1.0.0', '1.0.0-beta', False),
     ('1.0.0-beta2+build1', '1.0.0-beta.2+build.1', False),
     ('1.0.0-beta+build', '1.0.0-beta+build', True),
+    ('1.0.0-beta+build1', '1.0.0-beta+build2', True),
     ('1.0.0-beta+a', '1.0.0-alpha+bar', False),
 ]
 
@@ -55,7 +56,6 @@ GE = [
     ('1.0.0', '1.0.0', True),
     ('1.0.0', '2.0.0', False),
 ]
-
 
 VALID = [
     "0.0.4",
@@ -133,6 +133,27 @@ INVALID = [
     "9.8.7-whatever+meta+meta",
 ]
 
+PRERELEASE = [
+    ('1.0.0-alpha', True),
+    ('1.0.0-alpha.1', True),
+    ('1.0.0-0.3.7', True),
+    ('1.0.0-x.7.z.92', True),
+    ('0.1.2', False),
+    ('0.1.2+bob', False),
+    ('1.0.0', False),
+]
+
+STABLE = [
+    ('1.0.0-alpha', False),
+    ('1.0.0-alpha.1', False),
+    ('1.0.0-0.3.7', False),
+    ('1.0.0-x.7.z.92', False),
+    ('0.1.2', False),
+    ('0.1.2+bob', False),
+    ('1.0.0', True),
+    ('1.0.0+bob', True),
+]
+
 
 @pytest.mark.parametrize('left,right,expected', EQ)
 def test_eq(left, right, expected):
@@ -172,3 +193,22 @@ def test_valid(value):
 @pytest.mark.parametrize('value', INVALID)
 def test_invalid(value):
     pytest.raises(ValueError, SemanticVersion, value)
+
+
+def test_example_precedence():
+    # https://semver.org/#spec-item-11
+    sv = SemanticVersion
+    assert sv('1.0.0') < sv('2.0.0') < sv('2.1.0') < sv('2.1.1')
+    assert sv('1.0.0-alpha') < sv('1.0.0')
+    assert sv('1.0.0-alpha') < sv('1.0.0-alpha.1') < sv('1.0.0-alpha.beta')
+    assert sv('1.0.0-beta') < sv('1.0.0-beta.2') < sv('1.0.0-beta.11') < sv('1.0.0-rc.1') < sv('1.0.0')
+
+
+@pytest.mark.parametrize('value,expected', PRERELEASE)
+def test_prerelease(value, expected):
+    assert SemanticVersion(value).is_prerelease is expected
+
+
+@pytest.mark.parametrize('value,expected', STABLE)
+def test_stable(value, expected):
+    assert SemanticVersion(value).is_stable is expected

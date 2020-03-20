@@ -126,6 +126,11 @@ class _Numeric:
 
 
 class SemanticVersion(Version):
+    """Version comparison class that implements Semantic Versioning 2.0.0
+
+    Based off of ``distutils.version.Version``
+    """
+
     version_re = SEMVER_RE
 
     def __init__(self, vstring=None):
@@ -194,6 +199,13 @@ class SemanticVersion(Version):
     def is_prerelease(self):
         return bool(self.prerelease)
 
+    @property
+    def is_stable(self):
+        # Major version zero (0.y.z) is for initial development. Anything MAY change at any time.
+        # The public API SHOULD NOT be considered stable.
+        # https://semver.org/#spec-item-4
+        return not (self.major == 0 or self.is_prerelease)
+
     def _cmp(self, other):
         if isinstance(other, str):
             other = SemanticVersion(other)
@@ -206,7 +218,7 @@ class SemanticVersion(Version):
             else:
                 return 1
 
-        if not any((self.prerelease, other.prerelease, self.buildmetadata, other.buildmetadata)):
+        if not any((self.prerelease, other.prerelease)):
             return 0
 
         if self.prerelease and not other.prerelease:
@@ -219,18 +231,9 @@ class SemanticVersion(Version):
             elif self.prerelease > other.prerelease:
                 return 1
 
-        # If there is a difference in prerelease,
-        # buildmetadata doesn't matter
-
-        if self.buildmetadata and not other.buildmetadata:
-            return 1
-        elif not self.buildmetadata and other.buildmetadata:
-            return -1
-        elif self.buildmetadata and other.buildmetadata:
-            if self.buildmetadata < other.buildmetadata:
-                return -1
-            elif self.buildmetadata > other.buildmetadata:
-                return 1
+        # Build metadata MUST be ignored when determining version precedence
+        # https://semver.org/#spec-item-10
+        # With the above in mind it is ignored here
 
         # If we have made it here, things should be equal
         return 0
