@@ -68,11 +68,6 @@ def parse_args():
                         default=source,
                         help='path to git repository containing Ansible source')
 
-    parser.add_argument('--targets',
-                        type=regex,
-                        default='^incidental_',
-                        help='regex for targets to analyze, default: %(default)s')
-
     parser.add_argument('--skip-checks',
                         action='store_true',
                         help='skip integrity checks, use only for debugging')
@@ -81,6 +76,16 @@ def parse_args():
                         dest='use_cache',
                         action='store_false',
                         help='ignore cached files')
+
+    targets = parser.add_mutually_exclusive_group()
+
+    targets.add_argument('--targets',
+                         type=regex,
+                         default='^incidental_',
+                         help='regex for targets to analyze, default: %(default)s')
+
+    targets.add_argument('--plugin-path',
+                         help='path to plugin to report incidental coverage on')
 
     if argcomplete:
         argcomplete.autocomplete(parser)
@@ -155,9 +160,24 @@ def incidental_report(args):
     with open(combined_path) as combined_file:
         combined = json.load(combined_file)
 
+    if args.plugin_path:
+        # reporting on coverage missing from the test target for the specified plugin
+        # the report will be on a single target
+        cache_path_format = '%s' + '-for-%s' % os.path.splitext(os.path.basename(args.plugin_path))[0]
+        target_pattern = '^%s$' % get_target_name_from_plugin_path(args.plugin_path)
+        include_path = args.plugin_path
+        missing = True
+    else:
+        # reporting on coverage exclusive to the matched targets
+        # the report can contain multiple targets
+        cache_path_format = '%s'
+        target_pattern = args.targets
+        include_path = None
+        missing = False
+
     # identify integration test targets to analyze
     target_names = sorted(combined['targets'])
-    incidental_target_names = [target for target in target_names if re.search(args.targets, target)]
+    incidental_target_names = [target for target in target_names if re.search(target_pattern, target)]
 
     if not incidental_target_names:
         raise ApplicationError('no targets to analyze')
@@ -171,27 +191,34 @@ def incidental_report(args):
     summary = {}
 
     for target_name in incidental_target_names:
-        only_target_path = os.path.join(data_path, 'only-%s.json' % target_name)
+        cache_name = cache_path_format % target_name
+
+        only_target_path = os.path.join(data_path, 'only-%s.json' % cache_name)
         cached(only_target_path, args.use_cache,
-               lambda: ct.filter(combined_path, only_target_path, include_targets=[target_name], exclude_path=exclude_path))
+               lambda: ct.filter(combined_path, only_target_path, include_targets=[target_name], include_path=include_path, exclude_path=exclude_path))
 
-        without_target_path = os.path.join(data_path, 'without-%s.json' % target_name)
+        without_target_path = os.path.join(data_path, 'without-%s.json' % cache_name)
         cached(without_target_path, args.use_cache,
-               lambda: ct.filter(combined_path, without_target_path, exclude_targets=[target_name], exclude_path=exclude_path))
+               lambda: ct.filter(combined_path, without_target_path, exclude_targets=[target_name], include_path=include_path, exclude_path=exclude_path))
 
-        exclusive_target_path = os.path.join(data_path, 'exclusive-%s.json' % target_name)
-        cached(exclusive_target_path, args.use_cache,
-               lambda: ct.missing(only_target_path, without_target_path, exclusive_target_path, only_gaps=True))
+        if missing:
+            source_target_path = missing_target_path = os.path.join(data_path, 'missing-%s.json' % cache_name)
+            cached(missing_target_path, args.use_cache,
+                   lambda: ct.missing(without_target_path, only_target_path, missing_target_path, only_gaps=True))
+        else:
+            source_target_path = exclusive_target_path = os.path.join(data_path, 'exclusive-%s.json' % cache_name)
+            cached(exclusive_target_path, args.use_cache,
+                   lambda: ct.missing(only_target_path, without_target_path, exclusive_target_path, only_gaps=True))
 
-        exclusive_expanded_target_path = os.path.join(data_path, 'exclusive-expanded-%s.json' % target_name)
-        cached(exclusive_expanded_target_path, args.use_cache,
-               lambda: ct.expand(exclusive_target_path, exclusive_expanded_target_path))
+        source_expanded_target_path = os.path.join(os.path.dirname(source_target_path), 'expanded-%s' % os.path.basename(source_target_path))
+        cached(source_expanded_target_path, args.use_cache,
+               lambda: ct.expand(source_target_path, source_expanded_target_path))
 
-        summary[target_name] = sources = collect_sources(exclusive_expanded_target_path, git, coverage_data)
+        summary[target_name] = sources = collect_sources(source_expanded_target_path, git, coverage_data)
 
-        txt_report_path = os.path.join(reports_path, '%s.txt' % target_name)
+        txt_report_path = os.path.join(reports_path, '%s.txt' % cache_name)
         cached(txt_report_path, args.use_cache,
-               lambda: generate_report(sources, txt_report_path, coverage_data, target_name))
+               lambda: generate_report(sources, txt_report_path, coverage_data, target_name, missing=missing))
 
     # provide a summary report of results
     for target_name in incidental_target_names:
@@ -204,8 +231,33 @@ def incidental_report(args):
             len(sources),
         ))
 
-    sys.stderr.write('NOTE: This report shows only coverage exclusive to the reported targets. '
-                     'As targets are removed, exclusive coverage on the remaining targets will increase.\n')
+    if not missing:
+        sys.stderr.write('NOTE: This report shows only coverage exclusive to the reported targets. '
+                         'As targets are removed, exclusive coverage on the remaining targets will increase.\n')
+
+
+def get_target_name_from_plugin_path(path):  # type: (str) -> str
+    """Return the integration test target name for the given plugin path."""
+    parts = os.path.splitext(path)[0].split(os.path.sep)
+    plugin_name = parts[-1]
+
+    if path.startswith('lib/ansible/modules/'):
+        plugin_type = None
+    elif path.startswith('lib/ansible/plugins/'):
+        plugin_type = parts[3]
+    elif path.startswith('lib/ansible/module_utils/'):
+        plugin_type = parts[2]
+    elif path.startswith('plugins/'):
+        plugin_type = parts[1]
+    else:
+        raise ApplicationError('Cannot determine plugin type from plugin path: %s' % path)
+
+    if plugin_type is None:
+        target_name = plugin_name
+    else:
+        target_name = '%s_%s' % (plugin_type, plugin_name)
+
+    return target_name
 
 
 class CoverageData:
@@ -259,7 +311,7 @@ class CoverageTool:
     def combine(self, input_paths, output_path):
         subprocess.check_call(self.analyze_cmd + ['combine'] + input_paths + [output_path])
 
-    def filter(self, input_path, output_path, include_targets=None, exclude_targets=None, exclude_path=None):
+    def filter(self, input_path, output_path, include_targets=None, exclude_targets=None, include_path=None, exclude_path=None):
         args = []
 
         if include_targets:
@@ -269,6 +321,9 @@ class CoverageTool:
         if exclude_targets:
             for target in exclude_targets:
                 args.extend(['--exclude-target', target])
+
+        if include_path:
+            args.extend(['--include-path', include_path])
 
         if exclude_path:
             args.extend(['--exclude-path', exclude_path])
@@ -320,9 +375,9 @@ def collect_sources(data_path, git, coverage_data):
     return sources
 
 
-def generate_report(sources, report_path, coverage_data, target_name):
+def generate_report(sources, report_path, coverage_data, target_name, missing):
     output = [
-        'Target: %s' % target_name,
+        'Target: %s (%s coverage)' % (target_name, 'missing' if missing else 'exclusive'),
         'GitHub: %stest/integration/targets/%s' % (coverage_data.github_base_url, target_name),
     ]
 
