@@ -4,7 +4,7 @@
 # (c) 2014, Steve Smith <ssmith@atlassian.com>
 # Atlassian open-source approval reference OSR-76.
 #
-# (c) 2020, Per Abildgaard Toft <per@minfejl.dk> Search function
+# (c) 2020, Per Abildgaard Toft <per@minfejl.dk> Search and update function
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -33,7 +33,7 @@ options:
   operation:
     required: true
     aliases: [ command ]
-    choices: [ create, comment, edit, fetch, transition , link, search ]
+    choices: [ create, comment, edit, update, fetch, transition , link, search ]
     description:
       - The operation to perform.
 
@@ -205,6 +205,22 @@ EXAMPLES = """
           - autocreated
           - ansible
 
+# Updating a field using operations: add, set & remove
+- name: Change the value of a Select dropdown
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    issue: '{{ issue.meta.key }}'
+    operation: update
+  args:
+    fields:
+      customfield_12931: [ {'set': {'value': 'Virtual'}} ]
+      customfield_13820: [ {'set': {'value':'Manually'}} ]
+  register: cmdb_issue
+  delegate_to: localhost
+
+
 # Retrieve metadata for an issue and use it to create an account
 - name: Get an issue
   jira:
@@ -361,6 +377,17 @@ def edit(restbase, user, passwd, params):
     return ret
 
 
+def update(restbase, user, passwd, params):
+    data = {
+        "update": params['fields']
+    }
+    url = restbase + '/issue/' + params['issue']
+
+    ret = put(url, user, passwd, params['timeout'], data)
+
+    return ret
+
+
 def fetch(restbase, user, passwd, params):
     url = restbase + '/issue/' + params['issue']
     ret = get(url, user, passwd, params['timeout'])
@@ -420,6 +447,7 @@ def link(restbase, user, passwd, params):
 OP_REQUIRED = dict(create=['project', 'issuetype', 'summary'],
                    comment=['issue', 'comment'],
                    edit=[],
+                   update=[],
                    fetch=['issue'],
                    transition=['status'],
                    link=['linktype', 'inwardissue', 'outwardissue'],
@@ -432,7 +460,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(required=True),
-            operation=dict(choices=['create', 'comment', 'edit', 'fetch', 'transition', 'link', 'search'],
+            operation=dict(choices=['create', 'comment', 'edit', 'update', 'fetch', 'transition', 'link', 'search'],
                            aliases=['command'], required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
