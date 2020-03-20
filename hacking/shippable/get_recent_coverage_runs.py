@@ -81,6 +81,7 @@ def pretty_coverage_runs(runs):
                 stringc('FATE', 'yellow'),
                 run['runNumber']))
 
+
 def main():
     pretty_coverage_runs(get_coverage_runs())
 
