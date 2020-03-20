@@ -60,7 +60,7 @@ options:
     description:
       - value of BIOS attr to update (deprecated - use bios_attributes instead)
     default: 'null'
-    type: str
+    type: raw
     version_added: "2.8"
   bios_attributes:
     required: false
@@ -241,7 +241,7 @@ def main():
             username=dict(required=True),
             password=dict(required=True, no_log=True),
             bios_attribute_name=dict(default='null'),
-            bios_attribute_value=dict(default='null'),
+            bios_attribute_value=dict(default='null', type='raw'),
             bios_attributes=dict(type='dict', default={}),
             timeout=dict(type='int', default=10),
             boot_order=dict(type='list', elements='str', default=[]),
