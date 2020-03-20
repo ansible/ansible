@@ -62,6 +62,26 @@ When incidental tests no longer provide exclusive coverage they can be removed.
 
 > CAUTION: Only one incidental test should be removed at a time, as doing so may cause another test to gain exclusive incidental coverage.
 
+#### Incidental Plugin Coverage
+
+Incidental test coverage is not limited to ``incidental_`` prefixed tests.
+For example, incomplete code coverage from a filter plugin's own tests may be covered by an unrelated test.
+The ``incidental.py`` script can be used to identify these gaps as well.
+
+Follow the steps 1 and 2 as outlined in the previous section.
+For step 3, add the ``--plugin-path {path_to_plugin}`` option.
+Repeat step 3 for as many plugins as desired.
+
+To report on multiple plugins at once, such as all ``filter`` plugins, the following command can be used:
+
+```shell
+find lib/ansible/plugins/filter -name '*.py' -not -name __init__.py -exec hacking/shippable/incidental.py ansible/ansible/162160 --plugin-path '{}' ';'
+```
+
+Each report will show the incidental code coverage missing from the plugin's own tests.
+
+> NOTE: The report does not identify where the incidental coverage comes from.
+
 ### Reading Incidental Coverage Reports
 
 Each line of code covered will be included in a report.
