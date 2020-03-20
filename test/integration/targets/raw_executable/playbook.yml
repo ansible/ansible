@@ -1,0 +1,24 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+  - name: use sh
+    raw: echo $0
+    args:
+      executable: "/bin/sh"
+    become: true
+    become_method: sudo
+    register: sh_output
+  - name: assert sh
+    assert:
+      that: "(sh_output.stdout | trim) == '/bin/sh'"
+  - name: use bash
+    raw: echo $0
+    args:
+      executable: "/bin/bash"
+    become: true
+    become_method: sudo
+    register: bash_output
+  - name: assert bash
+    assert:
+      that: "(bash_output.stdout | trim) == '/bin/bash'"
+
