@@ -1,0 +1,48 @@
+---
+- name: Test inventory cache
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - find: 
+        paths: "inventory_cache"
+        patterns: "vmware_vm_inventory_*"
+      register: result
+
+    - name: Cache directory exist
+      fail:
+        msg:  not found. Please debug.
+      when: result.matched|int != 0
+
+    - set_fact:
+        cached_groups: "{{groups}}"
+        cached_hostvars: "{{hostvars}}"
+    
+    - meta: refresh_inventory
+
+    - name: 'Compare groups'
+      fail:
+        msg: "{{ item.key }} not found in cached groups. Please debug."
+      when: cached_groups[item.key] is not defined
+      loop:  "{{ q('dict', groups) }}" 
+      loop_control:
+        label: "{{ item.key }}"
+  
+    - name: 'Compare hosts'
+      fail:
+        msg: "{{ item.key }} not found in cached hosts. Please debug."
+      when: cached_hostvars[item.key] is not defined
+      loop:  "{{ q('dict', hostvars) }}" 
+      loop_control:
+        label: "{{ item.key }}"
+
+    - set_fact:
+        test_host: "{{ hostvars | dict2items | first }}"
+
+    - name: 'Compare hostvars'
+      fail:
+        msg: "{{ item.key }} not found in cached hostvars. Please debug."
+      when: cached_hostvars[test_host.key][item.key] is not defined
+      loop:  "{{ q('dict', test_host.value) }}"
+      loop_control:
+        label: "{{ item.key }}"
