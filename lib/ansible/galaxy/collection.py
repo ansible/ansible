@@ -438,8 +438,7 @@ class CollectionRequirement:
                     galaxy_meta = resp
                     versions = [resp.version]
                 else:
-                    resp = api.get_collection_versions(namespace, name)
-                    versions = resp
+                    versions = api.get_collection_versions(namespace, name)
             except GalaxyError as err:
                 if err.http_code == 404:
                     display.vvv("Collection '%s' is not available from server %s %s"
