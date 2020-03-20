@@ -77,6 +77,10 @@ def parse_args():
                         action='store_false',
                         help='ignore cached files')
 
+    parser.add_argument('-v', '--verbose',
+                        action='store_true',
+                        help='increase verbosity')
+
     targets = parser.add_mutually_exclusive_group()
 
     targets.add_argument('--targets',
@@ -154,7 +158,7 @@ def incidental_report(args):
 
     # combine coverage results into a single file
     combined_path = os.path.join(output_path, 'combined.json')
-    cached(combined_path, args.use_cache,
+    cached(combined_path, args.use_cache, args.verbose,
            lambda: ct.combine(coverage_data.paths, combined_path))
 
     with open(combined_path) as combined_file:
@@ -195,46 +199,51 @@ def incidental_report(args):
     # process coverage for each target and then generate a report
     # save sources for generating a summary report at the end
     summary = {}
+    report_paths = {}
 
     for target_name in incidental_target_names:
         cache_name = cache_path_format % target_name
 
         only_target_path = os.path.join(data_path, 'only-%s.json' % cache_name)
-        cached(only_target_path, args.use_cache,
+        cached(only_target_path, args.use_cache, args.verbose,
                lambda: ct.filter(combined_path, only_target_path, include_targets=[target_name], include_path=include_path, exclude_path=exclude_path))
 
         without_target_path = os.path.join(data_path, 'without-%s.json' % cache_name)
-        cached(without_target_path, args.use_cache,
+        cached(without_target_path, args.use_cache, args.verbose,
                lambda: ct.filter(combined_path, without_target_path, exclude_targets=[target_name], include_path=include_path, exclude_path=exclude_path))
 
         if missing:
             source_target_path = missing_target_path = os.path.join(data_path, 'missing-%s.json' % cache_name)
-            cached(missing_target_path, args.use_cache,
+            cached(missing_target_path, args.use_cache, args.verbose,
                    lambda: ct.missing(without_target_path, only_target_path, missing_target_path, only_gaps=True))
         else:
             source_target_path = exclusive_target_path = os.path.join(data_path, 'exclusive-%s.json' % cache_name)
-            cached(exclusive_target_path, args.use_cache,
+            cached(exclusive_target_path, args.use_cache, args.verbose,
                    lambda: ct.missing(only_target_path, without_target_path, exclusive_target_path, only_gaps=True))
 
         source_expanded_target_path = os.path.join(os.path.dirname(source_target_path), 'expanded-%s' % os.path.basename(source_target_path))
-        cached(source_expanded_target_path, args.use_cache,
+        cached(source_expanded_target_path, args.use_cache, args.verbose,
                lambda: ct.expand(source_target_path, source_expanded_target_path))
 
         summary[target_name] = sources = collect_sources(source_expanded_target_path, git, coverage_data)
 
         txt_report_path = os.path.join(reports_path, '%s.txt' % cache_name)
-        cached(txt_report_path, args.use_cache,
+        cached(txt_report_path, args.use_cache, args.verbose,
                lambda: generate_report(sources, txt_report_path, coverage_data, target_name, missing=missing))
+
+        report_paths[target_name] = txt_report_path
 
     # provide a summary report of results
     for target_name in incidental_target_names:
         sources = summary[target_name]
+        report_path = os.path.relpath(report_paths[target_name])
 
-        print('%s: %d arcs, %d lines, %d files' % (
+        print('%s: %d arcs, %d lines, %d files - %s' % (
             target_name,
             sum(len(s.covered_arcs) for s in sources),
             sum(len(s.covered_lines) for s in sources),
             len(sources),
+            report_path,
         ))
 
     if not missing:
@@ -435,17 +444,22 @@ def parse_arc(value):
     return tuple(int(v) for v in value.split(':'))
 
 
-def cached(path, use_cache, func):
+def cached(path, use_cache, show_messages, func):
     if os.path.exists(path) and use_cache:
-        sys.stderr.write('%s: cached\n' % path)
-        sys.stderr.flush()
+        if show_messages:
+            sys.stderr.write('%s: cached\n' % path)
+            sys.stderr.flush()
         return
 
-    sys.stderr.write('%s: generating ... ' % path)
-    sys.stderr.flush()
+    if show_messages:
+        sys.stderr.write('%s: generating ... ' % path)
+        sys.stderr.flush()
+
     func()
-    sys.stderr.write('done\n')
-    sys.stderr.flush()
+
+    if show_messages:
+        sys.stderr.write('done\n')
+        sys.stderr.flush()
 
 
 def check_failed(args, message):
