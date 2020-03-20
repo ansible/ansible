@@ -1669,17 +1669,18 @@ class CloudFrontValidationManager(object):
             if not origins and default_origin_domain_name is None and create_distribution:
                 self.module.fail_json(msg="Both origins[] and default_origin_domain_name have not been specified. Please specify at least one.")
             all_origins = OrderedDict()
-            new_domains = list()
+            get_origin_key = lambda origin: origin.get('id') if 'id' in origin else origin.get('domain_name') + (origin.get('origin_path') or '')
+            new_origins = list()
             for origin in config:
-                all_origins[origin.get('domain_name')] = origin
+                all_origins[get_origin_key(origin)] = origin
             for origin in origins:
-                origin = self.validate_origin(client, all_origins.get(origin.get('domain_name'), {}), origin, default_origin_path)
-                all_origins[origin['domain_name']] = origin
-                new_domains.append(origin['domain_name'])
+                origin = self.validate_origin(client, all_origins.get(get_origin_key(origin), {}), origin, default_origin_path)
+                all_origins[get_origin_key(origin)] = origin
+                new_origins.append(get_origin_key(origin))
             if purge_origins:
-                for domain in list(all_origins.keys()):
-                    if domain not in new_domains:
-                        del(all_origins[domain])
+                for origin_key in list(all_origins.keys()):
+                    if origin_key not in new_origins:
+                        del(all_origins[origin_key])
             return ansible_list_to_cloudfront_list(list(all_origins.values()))
         except Exception as e:
             self.module.fail_json_aws(e, msg="Error validating distribution origins")
