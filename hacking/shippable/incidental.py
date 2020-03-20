@@ -50,7 +50,7 @@ def main():
 
 def parse_args():
     """Parse and return args."""
-    source = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    source = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     parser = argparse.ArgumentParser(description='Report on incidental test coverage downloaded from Shippable.')
 
