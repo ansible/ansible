@@ -231,12 +231,13 @@ def main():
     ou_state = module.params.get('state')
 
     if ou_arn:
-        if not ou_arn.startswith("arn:aws:organizations::"):
+        if not ou_arn.startswith("arn:aws:organizations::") and \
+           not ou_arn.startswith("arn:aws-us-gov:organizations::"):
             module.fail_json(msg="Invalid ARN format")
         try:
             client = AwsOrganizationalUnit(module, arn=ou_arn)
         except (BotoCoreError, ClientError) as e:
-            module.fail_json(msg="Boto failure")
+            module.fail_json_aws(e, msg="Boto failure")
     else:
         client = AwsOrganizationalUnit(module, name=ou_name)
 
@@ -264,7 +265,7 @@ def main():
                 try:
                     result['ou'] = client.create_aws_organizational_unit()
                 except (BotoCoreError, ClientError, ParentOrganizationalUnitDoesNotExist) as e:
-                    module.fail_json(msg="Failed to create organizational unit")
+                    module.fail_json_aws(e, msg="Failed to create organizational unit")
     module.exit_json(**result)
 
 
