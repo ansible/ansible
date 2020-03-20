@@ -388,7 +388,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # Fetch interface data
         return self._fetch_information(url)
 
-    def extract_interfaces(self, host):        
+    def extract_interfaces(self, host):
         try:
             interface = {}
             interfaces = []
@@ -403,7 +403,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         interface = {}
                     return interfaces
                 else:
-                    return []       
+                    return []
         except Exception:
             return
 
@@ -415,7 +415,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def extract_interface_ip_addresses(self, interface):
         ip_address = {}
         ip_addresses = []
-        try:           
+        try:
             # Get all IP addresses on this interface
             ip_addresses_lookup = self.ip_addresses_lookup(interface)
             if 'results' in ip_addresses_lookup:
