@@ -41,6 +41,11 @@ DOCUMENTATION = '''
                   region, site, role, platform, and/or tenant. Please check official netbox docs for more info.
             default: False
             type: boolean
+        interfaces:
+            description:
+                - If True, it adds information about all interfaces.
+            default: False
+            type: boolean
         token:
             required: True
             description: NetBox token.
@@ -83,6 +88,7 @@ plugin: netbox
 api_endpoint: http://localhost:8000
 validate_certs: True
 config_context: False
+interfaces: True
 group_by:
   - device_roles
 query_filters:
@@ -327,6 +333,127 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def extract_tags(self, host):
         return host["tags"]
 
+    @property
+    def interface_extractors(self):
+        return {
+            "mtu": self.extract_interface_mtu,
+            "name": self.extract_interface_name,
+            "mac_address": self.extract_interface_mac_address,
+            "mode": self.extract_interface_mode,
+            "tagged_vlans": self.extract_interface_tagged_vlans,
+            "untagged_vlan": self.extract_interface_untagged_vlan,
+            "type": self.extract_interface_type,
+            "ip_addresses": self.extract_interface_ip_addresses,
+        }
+
+    def extract_interface_mtu(self, interface):
+        return interface.get("mtu")
+
+    def extract_interface_name(self, interface):
+        return interface.get("name")
+
+    def extract_interface_mac_address(self, interface):
+        try:
+            return "" if interface.get("mac_address") is None else interface.get("mac_address")
+        except Exception:
+            return ""
+
+    def extract_interface_mode(self, interface):
+        try:
+            return interface.get("mode").get("label")
+        except Exception:
+            return ""
+
+    def extract_interface_tagged_vlans(self, interface):
+        return interface.get("tagged_vlans")
+
+    def extract_interface_untagged_vlan(self, interface):
+        try:
+            return interface.get("untagged_vlan").get("name")
+        except Exception:
+            return ""
+
+    def extract_interface_type(self, interface):
+        try:
+            return interface.get("type").get("label")
+        except Exception:
+            return ""
+
+    def interface_lookup(self, host):
+        # Check if virtual device
+        if host["cluster"] is None:
+            url = self.api_endpoint + "/api/dcim/interfaces/?device_id=" + str(host["id"])
+        else:
+            url = self.api_endpoint + "/api/virtualization/interfaces/?virtual_machine_id=" + str(host["id"])
+        # Fetch interface data
+        return self._fetch_information(url)
+
+    def extract_interfaces(self, host):        
+        try:
+            interface = {}
+            interfaces = []
+            if self.interfaces:
+                interface_lookup = self.interface_lookup(host)
+                # Check results
+                if 'results' in interface_lookup:
+                    for nic in interface_lookup['results']:
+                        for attribute, extractor in self.interface_extractors.items():
+                            interface[attribute] = extractor(nic)
+                        interfaces.append(interface)
+                        interface = {}
+                    return interfaces
+                else:
+                    return []       
+        except Exception:
+            return
+
+    def ip_addresses_lookup(self, interface):
+        url = self.api_endpoint + "/api/ipam/ip-addresses/?interface_id=" + str(interface["id"])
+        # Fetch interface data
+        return self._fetch_information(url)
+
+    def extract_interface_ip_addresses(self, interface):
+        ip_address = {}
+        ip_addresses = []
+        try:           
+            # Get all IP addresses on this interface
+            ip_addresses_lookup = self.ip_addresses_lookup(interface)
+            if 'results' in ip_addresses_lookup:
+                for ip in ip_addresses_lookup['results']:
+                    for attribute, extractor in self.ip_address_extractors.items():
+                        ip_address[attribute] = extractor(ip)
+                    ip_addresses.append(ip_address)
+                    ip_address = {}
+                return ip_addresses
+            else:
+                return ip_addresses
+        except Exception:
+            return ip_addresses
+
+    @property
+    def ip_address_extractors(self):
+        return {
+            "address": self.extract_ip_address,
+            "dns_name": self.extract_ip_dns_name,
+            "status": self.extract_ip_status,
+            "vrf": self.extract_ip_vrf,
+        }
+
+    def extract_ip_vrf(self, ip):
+        try:
+            return "" if ip.get("vrf") is None else ip.get("vrf").get("name")
+        except Exception:
+            return ""
+
+    def extract_ip_dns_name(self, ip):
+        return ip.get("dns_name")
+
+    def extract_ip_address(self, ip):
+        return ip.get("address")
+
+    def extract_ip_status(self, ip):
+        return ip.get("status").get("value")
+
     def refresh_platforms_lookup(self):
         url = self.api_endpoint + "/api/dcim/platforms/?limit=0"
         platforms = self.get_resource_list(api_url=url)
@@ -453,6 +580,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if self.extract_primary_ip6(host):
             self.inventory.set_variable(hostname, "primary_ip6", self.extract_primary_ip6(host=host))
 
+        if self.interfaces:
+            self.inventory.set_variable(hostname, "interfaces", self.extract_interfaces(host=host))
+
     def main(self):
         self.refresh_lookups()
         self.refresh_url()
@@ -487,6 +617,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.timeout = self.get_option("timeout")
         self.validate_certs = self.get_option("validate_certs")
         self.config_context = self.get_option("config_context")
+        self.interfaces = self.get_option("interfaces")
         self.headers = {
             'Authorization': "Token %s" % token,
             'User-Agent': "ansible %s Python %s" % (ansible_version, python_version.split(' ')[0]),
