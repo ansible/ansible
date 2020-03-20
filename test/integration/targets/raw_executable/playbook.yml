@@ -21,4 +21,3 @@
   - name: assert bash
     assert:
       that: "(bash_output.stdout | trim) == '/bin/bash'"
-
