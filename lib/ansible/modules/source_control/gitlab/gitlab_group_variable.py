@@ -21,7 +21,7 @@ description:
   - When a group variable does exist, its value will be updated when the values are different.
   - Variables which are untouched in the playbook, but are not untouched in the GitLab group,
     they stay untouched (I(purge) is C(false)) or will be deleted (I(purge) is C(true)).
-version_added: "2.9"
+version_added: "2.10"
 author:
   - "Florent Madiot (@scodeman)"
 requirements:
@@ -164,7 +164,7 @@ class GitlabGroupVariables(object):
         if self._module.check_mode:
             return
         return self.group.variables.create({"key": key, "value": value,
-                                              "masked": masked, "protected": protected})
+                                            "masked": masked, "protected": protected})
 
     def update_variable(self, key, var, value, masked, protected):
         if var.value == value and var.protected == protected and var.masked == masked:
