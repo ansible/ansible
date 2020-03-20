@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2020, Florent Madiot (scodeman@scode.io)
+# Copyright: (c) 2020, Scodeman (scodeman@scode.io)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -21,7 +21,7 @@ description:
     they stay untouched (I(purge) is C(false)) or will be deleted (I(purge) is C(true)).
 version_added: "2.9"
 author:
-  - "Florent Madiot (@scodeman)"
+  - "Scodeman (@scodeman)"
 requirements:
   - python >= 2.7
   - python-gitlab python module
