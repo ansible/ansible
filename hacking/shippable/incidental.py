@@ -167,6 +167,7 @@ def incidental_report(args):
         target_pattern = '^%s$' % get_target_name_from_plugin_path(args.plugin_path)
         include_path = args.plugin_path
         missing = True
+        target_name = get_target_name_from_plugin_path(args.plugin_path)
     else:
         # reporting on coverage exclusive to the matched targets
         # the report can contain multiple targets
@@ -174,13 +175,18 @@ def incidental_report(args):
         target_pattern = args.targets
         include_path = None
         missing = False
+        target_name = None
 
     # identify integration test targets to analyze
     target_names = sorted(combined['targets'])
     incidental_target_names = [target for target in target_names if re.search(target_pattern, target)]
 
     if not incidental_target_names:
-        raise ApplicationError('no targets to analyze')
+        if target_name:
+            # if the plugin has no tests we still want to know what coverage is missing
+            incidental_target_names = [target_name]
+        else:
+            raise ApplicationError('no targets to analyze')
 
     # exclude test support plugins from analysis
     # also exclude six, which for an unknown reason reports bogus coverage lines (indicating coverage of comments)
