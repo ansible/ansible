@@ -144,10 +144,10 @@ def enumerate_module_utils():
     for path in data_context().content.walk_files(data_context().content.module_utils_path):
         ext = os.path.splitext(path)[1]
 
-        if path == os.path.join(data_context().content.module_utils_path, '__init__.py'):
+        if ext != '.py':
             continue
 
-        if ext != '.py':
+        if os.path.getsize(path) == 0:
             continue
 
         module_utils.append(get_python_module_utils_name(path))
