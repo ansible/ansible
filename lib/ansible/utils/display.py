@@ -260,11 +260,7 @@ class Display(with_metaclass(Singleton, object)):
             if version:
                 new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
             elif date:
-                try:
-                    date = datetime.date.fromisoformat(date)
-                except ValueError as e:
-                    raise AnsibleError("Invalid deprecation date format '%s': %s" % (date, e))
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed after %s." % (msg, date.isoformat())
+                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a release after %s." % (msg, date)
             else:
                 new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
             new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
