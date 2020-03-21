@@ -69,6 +69,7 @@ DOCUMENTATION = '''
             - Specify the list of VMware schema properties associated with the VM.
             - These properties will be populated in hostvars of the given VM.
             - Each value in the list can be a path to a specific property in VM object or a path to a collection of VM objects.
+            - Set value to 'all' to query all properties
             - See: U(https://github.com/monkey-mas/lab/blob/master/pyvmomi/docs/vim/VirtualMachine.rst#attributes) for all properties.
             type: list
             default: [ 'name', 'config.cpuHotAddEnabled', 'config.cpuHotRemoveEnabled',
@@ -310,8 +311,12 @@ class BaseVMwareInventory:
         # Get Root Folder
         root_folder = self.content.rootFolder
 
+        is_all = False
         if properties is None:
             properties = ['name']
+        elif isinstance(properties, str) and properties.lower() == 'all':
+            is_all = True
+            properties = None
 
         # Create Container View with default root folder
         mor = self.content.viewManager.CreateContainerView(root_folder, [vim_type], True)
@@ -327,7 +332,7 @@ class BaseVMwareInventory:
         # Create Property Spec
         property_spec = vmodl.query.PropertyCollector.PropertySpec(
             type=vim_type,  # Type of object to retrieved
-            all=False,
+            all= is_all,
             pathSet=properties
         )
 
@@ -448,9 +453,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         """
         hostvars = {}
         vm_properties = self.get_option('properties')
-
+        
+        if isinstance(vm_properties, str):
+            query_props = vm_properties
+        else:
+            query_props = [x for x in vm_properties if x != "customValue"]
+        
         objects = self.pyv._get_managed_objects_properties(vim_type=vim.VirtualMachine,
-                                                           properties=[x for x in vm_properties if x != "customValue"])
+                                                           properties=query_props)
+
         tags_info = None
         if self.pyv.rest_content:
             tag_svc = self.pyv.rest_content.tagging.Tag
@@ -555,17 +566,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             k = self._sanitize_group_name(k) if can_sanitize else k
             self.inventory.set_variable(host, k, v)
 
+from pyVmomi import Iso8601
 def parse_vim_property(vim_prop):
     # For '--yaml' sake!
     #   Unexpected Exception, this is probably a bug: ('cannot represent an object', <data>
     prop_type = type(vim_prop).__name__
-
-    if prop_type.startswith("vim"):
+    if prop_type.startswith("vim") or prop_type.startswith("vmodl"):
         if isinstance(vim_prop, DataObject):
             r = {}
             for prop in vim_prop._GetPropertyList():
-                sub_prop = getattr(vim_prop, prop.name)
-                r[prop.name] = parse_vim_property(sub_prop)
+                if prop.name not in ['dynamicProperty', 'dynamicType']:
+                    sub_prop = getattr(vim_prop, prop.name)
+                    r[prop.name] = parse_vim_property(sub_prop)
             return r
 
         elif isinstance(vim_prop, list):
@@ -575,9 +587,19 @@ def parse_vim_property(vim_prop):
             return r
         return vim_prop.__str__()
 
-    elif  prop_type == "long" :
-        vim_prop = int(vim_prop)
+    elif  prop_type == "datetime" :
+        return Iso8601.ISO8601Format(vim_prop)
 
+    elif  prop_type == "long" :
+        return int(vim_prop)
+    elif  prop_type == "long[]" :
+        return [int(x) for x in vim_prop]
+ 
+    elif  prop_type == "ManagedObject" :
+        return str(vim_prop)
+    elif  prop_type == "ManagedObject[]" :
+        return [str(x) for x in vim_prop]
+        
     elif  prop_type == "binary" : 
         r = base64.b64encode(vim_prop)
         if PY3:
