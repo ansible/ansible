@@ -58,7 +58,7 @@ MSGS = {
               "Display.deprecated or AnsibleModule.deprecate",
               "ansible-invalid-deprecated-date",
               "Used when a call to Display.deprecated specifies an invalid "
-              "date. It must be a string in format YYYY-MM-DD",
+              "date. It must be a string in format YYYY-MM-DD (ISO 8601)",
               {'minversion': (2, 6)}),
 }
 
