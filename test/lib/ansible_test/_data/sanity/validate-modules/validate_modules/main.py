@@ -241,7 +241,8 @@ class ModuleValidator(Validator):
 
     WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
-    def __init__(self, path, analyze_arg_spec=False, collection=None, base_branch=None, git_cache=None, reporter=None, routing=None):
+    def __init__(self, path, analyze_arg_spec=False, validate_deprecation=False, collection=None,
+                 base_branch=None, git_cache=None, reporter=None, routing=None):
         super(ModuleValidator, self).__init__(reporter=reporter or Reporter())
 
         self.path = path
@@ -249,6 +250,7 @@ class ModuleValidator(Validator):
         self.name = os.path.splitext(self.basename)[0]
 
         self.analyze_arg_spec = analyze_arg_spec
+        self.validate_deprecation = validate_deprecation
 
         self.collection = collection
         self.routing = routing
@@ -1454,7 +1456,7 @@ class ModuleValidator(Validator):
                 )
                 continue
 
-            if not self.collection:
+            if not self.collection and self.validate_deprecation:
                 removed_in_version = data.get('removed_in_version', None)
                 if removed_in_version is not None and LOOSE_ANSIBLE_VERSION >= LooseVersion(str(removed_in_version)):
                     msg = "Argument '%s' in argument_spec" % arg
@@ -2165,6 +2167,9 @@ def run():
                              'validating files within a collection. Ensure '
                              'that ANSIBLE_COLLECTIONS_PATHS is set so the '
                              'contents of the collection can be located')
+    parser.add_argument('--validate-deprecation', action='store_true',
+                        help='Compare deprecation versions to current Ansible '
+                             'version (not for collections)')
 
     args = parser.parse_args()
 
@@ -2197,6 +2202,7 @@ def run():
             if ModuleValidator.is_blacklisted(path):
                 continue
             with ModuleValidator(path, collection=args.collection, analyze_arg_spec=args.arg_spec,
+                                 validate_deprecation=args.validate_deprecation,
                                  base_branch=args.base_branch, git_cache=git_cache, reporter=reporter, routing=routing) as mv1:
                 mv1.validate()
                 check_dirs.add(os.path.dirname(path))

@@ -241,6 +241,7 @@ class SanityConfig(TestConfig):
         self.skip_test = args.skip_test  # type: t.List[str]
         self.list_tests = args.list_tests  # type: bool
         self.allow_disabled = args.allow_disabled  # type: bool
+        self.validate_deprecation = args.validate_deprecation  # type: bool
 
         if args.base_branch:
             self.base_branch = args.base_branch  # str

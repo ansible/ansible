@@ -216,6 +216,10 @@ class PylintTest(SanitySingleVersion):
             '--load-plugins', ','.join(load_plugins),
         ] + paths
 
+        if args.validate_deprecation:
+            if not data_context().content.collection:
+                cmd.extend(['--enable', 'ansible-deprecated-version'])
+
         append_python_path = [plugin_dir]
 
         if data_context().content.collection:
