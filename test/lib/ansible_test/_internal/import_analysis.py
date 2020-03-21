@@ -190,7 +190,7 @@ def get_import_path(name, package=False):  # type: (str, bool) -> str
     else:
         filename = '%s.py' % name.replace('.', '/')
 
-    if name.startswith('ansible.module_utils.'):
+    if name.startswith('ansible.module_utils.') or name == 'ansible.module_utils':
         path = os.path.join('lib', filename)
     elif data_context().content.collection and name.startswith('ansible_collections.%s.plugins.module_utils.' % data_context().content.collection.full_name):
         path = '/'.join(filename.split('/')[3:])
@@ -273,6 +273,11 @@ class ModuleUtilFinder(ast.NodeVisitor):
 
         if is_subdir(self.path, data_context().content.test_path):
             return  # invalid imports in tests are ignored
+
+        path = get_import_path(name, True)
+
+        if os.path.exists(path) and os.path.getsize(path) == 0:
+            return  # zero length __init__.py files are ignored during earlier processing, do not warn about them now
 
         # Treat this error as a warning so tests can be executed as best as possible.
         # This error should be detected by unit or integration tests.
