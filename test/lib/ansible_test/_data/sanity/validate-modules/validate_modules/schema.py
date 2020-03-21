@@ -6,6 +6,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import datetime
 import re
 
 from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
@@ -98,6 +99,21 @@ def options_with_apply_defaults(v):
     return v
 
 
+def isodate(v):
+    msg = 'Expected ISO 8601 date string (YYYY-MM-DD)'
+    if not isinstance(v, string_types):
+        raise Invalid(msg)
+    # From Python 3.7 in, there is datetime.date.fromisoformat(). For older versions,
+    # we have to do things manually.
+    if not re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2}$', v):
+        raise Invalid(msg)
+    try:
+        datetime.datetime.strptime(v, '%Y-%m-%d')
+    except ValueError:
+        raise Invalid(msg)
+    return v
+
+
 def argument_spec_schema():
     any_string_types = Any(*string_types)
     schema = {
@@ -115,7 +131,7 @@ def argument_spec_schema():
             'aliases': Any(list_string_types, tuple(list_string_types)),
             'apply_defaults': bool,
             'removed_in_version': Any(float, *string_types),
-            'removed_at_date': Any(*string_types),
+            'removed_at_date': Any(isodate),
             'options': Self,
             'deprecated_aliases': Any([Any(
                 Schema({
@@ -124,7 +140,7 @@ def argument_spec_schema():
                 }),
                 Schema({
                     Required('name'): Any(*string_types),
-                    Required('date'): Any(*string_types),
+                    Required('date'): Any(isodate),
                 }),
             )]),
         }
