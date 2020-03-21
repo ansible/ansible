@@ -94,21 +94,16 @@ DOCUMENTATION = '''
             type: list
             default: ['config.name + "_" + config.uuid']
             version_added: "2.10.0.dev0"
-        flatten_property_name:
+        with_nested_properties:
             description:
-                - This option flatten nested hostvars.
-            type: bool
-            default: True
-            version_added: "2.10.0.dev0"
-        sanitize_property_name:
-            description:
-                - This option allows you use property name sanitization to create safe property names for use in Ansible.
+                - This option transform flatten properties name to nested dictionary.
             type: bool
             default: False
             version_added: "2.10.0.dev0"
-        snake_cast_property_name:
+        with_sanitized_property_name:
             description:
-                - This option transform property name to snake case.
+                - This option allows you use property name sanitization to create safe property names for use in Ansible.
+                - Also transform property name to snake case
             type: bool
             default: False
             version_added: "2.10.0.dev0"
@@ -149,7 +144,7 @@ import ssl
 import atexit
 import base64
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict, dict_merge
 from ansible.module_utils.six import PY3
 
@@ -439,10 +434,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._populate_host_properties(host_properties, host)
     
     def _get_hostname(self, properties, hostnames):
-
+        strict = self.get_option('strict')
         hostname = None
+
         for preference in hostnames:
-            hostname = self._compose(preference, properties)
+            try:
+                hostname = self._compose(preference, properties)
+            except Exception as e:
+                if strict:
+                    raise AnsibleError("Could not compose %s as hostnames %s" % (preference, to_native(e)))
+            
             if hostname:
                 return to_text(hostname)
         
@@ -521,7 +522,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def _populate_host_properties(self, host_properties, host):
         # Load VM properties in host_vars
         with_path = self.get_option('with_path')
-        can_flatten_property = self.get_option('flatten_property_name')
+        with_nested_properties = self.get_option('with_nested_properties')
 
         self.inventory.add_host(host)
        
@@ -541,27 +542,31 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         #
         if with_path:
             parents = host_properties['path'].split('/')
-            if isinstance(with_path, str):
-                parents[0] = with_path
-            
-            for i in range(len(parents)-1):
-                parent_name = self._sanitize_group_name(parents[i])
-                gname = self._sanitize_group_name(parents[i+1])
+            if parents:
+                if isinstance(with_path, str):
+                    parents = [with_path] + parents
+                
+                c_name = self._sanitize_group_name('/'.join(parents))
+                c_group = self.inventory.add_group(c_name)
+                self.inventory.add_host(host, c_group)
+                parents.pop()
 
-                result_gname = self.inventory.add_group(gname)
-                self.inventory.add_group(parent_name)
+                while len(parents) > 0:
+                    p_name = self._sanitize_group_name('/'.join(parents))
+                    p_group = self.inventory.add_group(p_name)
 
-                self.inventory.add_child(parent_name, result_gname)
+                    self.inventory.add_child(p_group, c_group)
+                    c_group = p_group
+                    parents.pop()
 
-            self.inventory.add_host(host, result_gname)
 
         # Hostvars formats manipulation 
-        host_properties = to_flatten_dict(host_properties) if can_flatten_property else host_properties
+        host_properties = host_properties if with_nested_properties else to_flatten_dict(host_properties)
         
-        if self.get_option('snake_cast_property_name'):
+        if self.get_option('with_sanitized_property_name'):
             host_properties = camel_dict_to_snake_dict(host_properties)
         
-        can_sanitize = self.get_option('sanitize_property_name')
+        can_sanitize = self.get_option('with_sanitized_property_name')
         for k,v in host_properties.items():
             k = self._sanitize_group_name(k) if can_sanitize else k
             self.inventory.set_variable(host, k, v)
