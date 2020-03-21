@@ -134,14 +134,14 @@ def argument_spec_schema():
             'removed_at_date': Any(isodate),
             'options': Self,
             'deprecated_aliases': Any([Any(
-                Schema({
-                    Required('name'): Any(*string_types),
-                    Required('version'): Any(float, *string_types),
-                }),
-                Schema({
+                {
                     Required('name'): Any(*string_types),
                     Required('date'): Any(isodate),
-                }),
+                },
+                {
+                    Required('name'): Any(*string_types),
+                    Required('version'): Any(float, *string_types),
+                },
             )]),
         }
     }
