@@ -5,6 +5,45 @@ Set-StrictMode -Version 2.0
 $ErrorActionPreference = "Stop"
 $WarningPreference = "Stop"
 
+Function Resolve-CircularReference {
+    <#
+    .SYNOPSIS
+    Removes known types that cause a circular reference in their json serialization.
+
+    .PARAMETER Hash
+    The hash to scan for circular references
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [System.Collections.IDictionary]
+        $Hash
+    )
+
+    foreach ($key in [String[]]$Hash.Keys) {
+        $value = $Hash[$key]
+        if ($value -is [System.Collections.IDictionary]) {
+            Resolve-CircularReference -Hash $value
+        } elseif ($value -is [Array] -or $value -is [System.Collections.IList]) {
+            $values = @(foreach ($v in $value) {
+                if ($v -is [System.Collections.IDictionary]) {
+                    Resolve-CircularReference -Hash $v
+                }
+                ,$v
+            })
+            $Hash[$key] = $values
+        } elseif ($value -is [delegate]) {
+            # Type can be set to a delegate function which defines it's own type. For the documentation we just
+            # reflection that as raw
+            if ($key -eq 'type') {
+                $Hash[$key] = 'raw'
+            } else {
+                $Hash[$key] = $value.ToString()  # Shouldn't ever happen but just in case.
+            }
+        }
+    }
+}
+
 $manifest = ConvertFrom-Json -InputObject $args[0] -AsHashtable
 if (-not $manifest.Contains('module_path') -or -not $manifest.module_path) {
     Write-Error -Message "No module specified."
@@ -33,9 +72,8 @@ namespace Ansible.Basic
     {
         public AnsibleModule(string[] args, IDictionary argumentSpec)
         {
-            PSObject rawOut = ScriptBlock.Create("ConvertTo-Json -InputObject $args[0] -Depth 99 -Compress").Invoke(argumentSpec)[0];
-            Console.WriteLine(rawOut.BaseObject.ToString());
-            ScriptBlock.Create("Set-Variable -Name LASTEXITCODE -Value 0 -Scope Global; exit 0").Invoke();
+            ScriptBlock.Create("Set-Variable -Name arg_spec -Value $args[0] -Scope Global; exit 0"
+                ).Invoke(new Object[] { argumentSpec });
         }
 
         public static AnsibleModule Create(string[] args, IDictionary argumentSpec)
@@ -81,3 +119,8 @@ if ($powershell.HadErrors) {
     $powershell.Streams.Error
     exit 1
 }
+
+$arg_spec = $powershell.Runspace.SessionStateProxy.GetVariable('arg_spec')
+Resolve-CircularReference -Hash $arg_spec
+
+ConvertTo-Json -InputObject $arg_spec -Compress -Depth 99
