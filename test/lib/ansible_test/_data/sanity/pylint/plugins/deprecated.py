@@ -69,17 +69,14 @@ class AnsibleDeprecatedChecker(BaseChecker):
         }),
     )
 
-
     def __init__(self):
         self.collection_version = None
         self.version_to_check = ANSIBLE_VERSION
-
 
     def set_option(self, optname, value, action=None, optdict=None):
         if optname == 'collection-version' and value is not None:
             self.collection_version = LooseVersion(value)
             self.version_to_check = self.collection_version
-
 
     @check_messages(*(MSGS.keys()))
     def visit_call(self, node):
