@@ -13,8 +13,8 @@ export VMWARE_PASSWORD="${VCENTER_PASSWORD}"
 export VMWARE_VALIDATE_CERTS="no" # Note: Should be set by ansible-test
 
 INVENTORY_DIR="${PWD}/_test/hosts"
-mkdir -p ${INVENTORY_DIR} 2>/dev/null
-touch ${INVENTORY_DIR}/empty.yml
+mkdir -p "${INVENTORY_DIR}" 2>/dev/null
+touch "${INVENTORY_DIR}/empty.yml"
 
 cleanup() {
     ec=$?
@@ -62,5 +62,5 @@ ansible-playbook playbook/test_vmware_vm_inventory.yml "$@"
 
 
 # Test options
-set_inventory ${INVENTORY_DIR}
+set_inventory "${INVENTORY_DIR}"
 ansible-playbook playbook/test_options.yml "$@"

@@ -146,7 +146,7 @@ import base64
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict, dict_merge
-from ansible.module_utils.six import PY3
+from ansible.module_utils.six import text_type
 
 try:
     # requests is required for exception handling of the ConnectionError
@@ -310,7 +310,7 @@ class BaseVMwareInventory:
         is_all = False
         if properties is None:
             properties = ['name']
-        elif isinstance(properties, str) and properties.lower() == 'all':
+        elif isinstance(properties, text_type) and properties.lower() == 'all':
             is_all = True
             properties = None
 
@@ -455,8 +455,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         """
         hostvars = {}
         vm_properties = self.get_option('properties')
-
-        if isinstance(vm_properties, str):
+        if isinstance(vm_properties, text_type):
             query_props = vm_properties
         else:
             query_props = [x for x in vm_properties if x != "customValue"]
@@ -543,7 +542,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if with_path:
             parents = host_properties['path'].split('/')
             if parents:
-                if isinstance(with_path, str):
+                if isinstance(with_path, text_type):
                     parents = [with_path] + parents
 
                 c_name = self._sanitize_group_name('/'.join(parents))
@@ -571,7 +570,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self.inventory.set_variable(host, k, v)
 
 
-def parse_vim_property(vim_prop):
+def parse_vim_property(vim_prop, key=""):
     # For '--yaml' sake!
     #   Unexpected Exception, this is probably a bug: ('cannot represent an object', <data>
     prop_type = type(vim_prop).__name__
@@ -579,9 +578,9 @@ def parse_vim_property(vim_prop):
         if isinstance(vim_prop, DataObject):
             r = {}
             for prop in vim_prop._GetPropertyList():
-                if prop.name not in ['dynamicProperty', 'dynamicType']:
+                if prop.name not in ['dynamicProperty', 'dynamicType', 'managedObjectType']:
                     sub_prop = getattr(vim_prop, prop.name)
-                    r[prop.name] = parse_vim_property(sub_prop)
+                    r[prop.name] = parse_vim_property(sub_prop, prop.name)
             return r
 
         elif isinstance(vim_prop, list):
@@ -599,18 +598,13 @@ def parse_vim_property(vim_prop):
     elif prop_type == "long[]":
         return [int(x) for x in vim_prop]
 
-    elif prop_type == "ManagedObject":
-        return str(vim_prop)
-    elif prop_type == "ManagedObject[]":
-        return [str(x) for x in vim_prop]
+    elif isinstance(vim_prop, list):
+        return [parse_vim_property(x) for x in vim_prop]
 
-    elif prop_type == "binary":
-        r = base64.b64encode(vim_prop)
-        if PY3:
-            r = str(r, 'utf-8')
-        return r
+    elif prop_type in ['bool', 'int', 'NoneType']:
+        return vim_prop
 
-    return vim_prop
+    return to_text(vim_prop)
 
 
 def to_nested_dict(vm_properties):
@@ -618,7 +612,7 @@ def to_nested_dict(vm_properties):
 
     for vm_prop_name, vm_prop_val in vm_properties.items():
         prop_parents = reversed(vm_prop_name.split("."))
-        prop_dict = parse_vim_property(vm_prop_val)
+        prop_dict = parse_vim_property(vm_prop_val, vm_prop_name)
 
         for k in prop_parents:
             prop_dict = {k: prop_dict}

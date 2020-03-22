@@ -6,4 +6,3 @@
   tasks:
     - pip:
         name: toml
-

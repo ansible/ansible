@@ -12,10 +12,10 @@
 
     - name: Check that there are 'all' and 'otherGuest' groups present in inventory
       assert:
-        that: "'{{ item }}' in {{ groups.keys() | list }}"
-      with_items:
-      - all
-      - otherGuest
+        that:
+          - "'all' in groups"
+          - "'otherGuest' in groups"
+
 
     - name: Check if Hostname and other details are populated in hostvars
       assert:

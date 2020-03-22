@@ -5,3 +5,4 @@ validate_certs: False
 cache: True
 cache_plugin: jsonfile
 cache_connection: inventory_cache
+properties: ALL
