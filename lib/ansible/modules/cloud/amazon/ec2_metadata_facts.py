@@ -15,15 +15,20 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ec2_metadata_facts
-short_description: Gathers facts (instance metadata) about remote hosts within ec2
+short_description: Gathers facts (instance metadata) about remote hosts within EC2
 version_added: "1.0"
 author:
     - Silviu Dicu (@silviud)
     - Vinay Dandekar (@roadmapper)
 description:
-    - This module fetches data from the instance metadata endpoint in ec2 as per
+    - This module fetches data from the instance metadata endpoint in EC2 as per
       U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html).
     - The module must be called from within the EC2 instance itself.
+    - The module is configured to utilize the session oriented Instance Metadata Service v2 (IMDSv2)
+      U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html).
+    - If the HttpEndpoint parameter
+      U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyInstanceMetadataOptions.html#API_ModifyInstanceMetadataOptions_RequestParameters)
+      is set to disabled for the EC2 instance, the module will return an error while retrieving a session token.
 notes:
     - Parameters to filter on ec2_metadata_facts may be added later.
 '''
@@ -271,7 +276,7 @@ ansible_facts:
             type: str
             sample: "00:11:22:33:44:55"
         ansible_ec2_metrics_vhostmd:
-            description: Metrics.
+            description: Metrics; no longer available.
             type: str
             sample: ""
         ansible_ec2_network_interfaces_macs_<mac address>_device_number:
@@ -543,14 +548,14 @@ class Ec2Metadata(object):
         headers = {'X-aws-ec2-metadata-token-ttl-seconds': '60'}
         response, info = fetch_url(self.module, uri_token, method='PUT', headers=headers, force=True)
 
-        if info.get('status') in (403):
+        if info.get('status') == 403:
             self.module.fail_json(msg='Failed to retrieve metadata token from AWS: {0}'.format(info['msg']), response=info)
         elif info.get('status') not in (200, 404):
             time.sleep(3)
             # request went bad, retry once then raise
             self.module.warn('Retrying query to metadata service. First attempt failed: {0}'.format(info['msg']))
             response, info = fetch_url(self.module, uri_token, method='PUT', headers=headers, force=True)
-            if info.get('status') not 200:
+            if info.get('status') != 200:
                 # fail out now
                 self.module.fail_json(msg='Failed to retrieve metadata token from AWS: {0}'.format(info['msg']), response=info)
         if response:
