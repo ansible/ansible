@@ -85,7 +85,7 @@ DOCUMENTATION = '''
             - Set this option to a string value to replace root name from I('Datacenters')
             default: False
             type: boolean or string
-            version_added: "2.10.0.dev0"
+            version_added: "2.10"
         hostnames:
             description:
                 - A list of templates in order of precedence to compose inventory_hostname.
@@ -93,20 +93,20 @@ DOCUMENTATION = '''
                 - You can use property specified in I(properties) as variables in template.
             type: list
             default: ['config.name + "_" + config.uuid']
-            version_added: "2.10.0.dev0"
+            version_added: "2.10"
         with_nested_properties:
             description:
                 - This option transform flatten properties name to nested dictionary.
             type: bool
             default: False
-            version_added: "2.10.0.dev0"
+            version_added: "2.10"
         with_sanitized_property_name:
             description:
                 - This option allows you use property name sanitization to create safe property names for use in Ansible.
                 - Also transform property name to snake case
             type: bool
             default: False
-            version_added: "2.10.0.dev0"
+            version_added: "2.10"
         keyed_groups:
             description: Add hosts to group based on the values of a variable.
             type: list
@@ -114,7 +114,7 @@ DOCUMENTATION = '''
                 {key: 'config.guestId', separator: ''},
                 {key: 'summary.runtime.powerState', separator: ''},
             ]
-            version_added: "2.10.0.dev0"
+            version_added: "2.10"
 '''
 
 EXAMPLES = '''
