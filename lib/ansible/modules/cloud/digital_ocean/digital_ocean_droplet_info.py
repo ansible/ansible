@@ -207,6 +207,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.digital_ocean import DigitalOceanHelper
 from ansible.module_utils._text import to_native
 
+
 class DODroplet(object):
     def __init__(self, module):
         self.rest = DigitalOceanHelper(module)
@@ -279,6 +280,7 @@ def main():
         core(module)
     except Exception as e:
         module.fail_json(msg=to_native(e), exception=format_exc())
+
 
 if __name__ == '__main__':
     main()
