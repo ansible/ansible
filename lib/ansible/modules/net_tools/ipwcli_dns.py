@@ -189,39 +189,18 @@ class ResourceRecord(object):
 
     def create_naptrrecord(self):
         # create NAPTR record with the given params
-        if not self.preference:
-            self.module.fail_json(msg='missing required arguments for NAPTR record: preference')
-
-        if not self.order:
-            self.module.fail_json(msg='missing required arguments for NAPTR record: order')
-
-        if not self.service:
-            self.module.fail_json(msg='missing required arguments for NAPTR record: service')
-
-        if not self.replacement:
-            self.module.fail_json(msg='missing required arguments for NAPTR record: replacement')
-
         record = ('naptrrecord %s -set ttl=%s;container=%s;order=%s;preference=%s;flags="%s";service="%s";replacement="%s"'
                   % (self.dnsname, self.ttl, self.container, self.order, self.preference, self.flags, self.service, self.replacement))
         return record
 
     def create_srvrecord(self):
         # create SRV record with the given params
-        if not self.port:
-            self.module.fail_json(msg='missing required arguments for SRV record: port')
-
-        if not self.target:
-            self.module.fail_json(msg='missing required arguments for SRV record: target')
-
         record = ('srvrecord %s -set ttl=%s;container=%s;priority=%s;weight=%s;port=%s;target=%s'
                   % (self.dnsname, self.ttl, self.container, self.priority, self.weight, self.port, self.target))
         return record
 
     def create_arecord(self):
         # create A record with the given params
-        if not self.address:
-            self.module.fail_json(msg='missing required arguments for A record: address')
-
         if self.dnstype == 'AAAA':
             record = 'aaaarecord %s %s -set ttl=%s;container=%s' % (self.dnsname, self.address, self.ttl, self.container)
         else:
@@ -313,6 +292,12 @@ def run_module():
     # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
+        required_if=[
+            ['type', 'A', ['address']],
+            ['type', 'AAAA', ['address']],
+            ['type', 'SRV', ['port', 'target']],
+            ['type', 'NAPTR', ['preference', 'order', 'service', 'replacement']],
+        ],
         supports_check_mode=True
     )
 
