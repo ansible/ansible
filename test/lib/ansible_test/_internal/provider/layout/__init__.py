@@ -10,6 +10,7 @@ from ... import types as t
 
 from ...util import (
     ANSIBLE_SOURCE_ROOT,
+    ApplicationError,
 )
 
 from .. import (
@@ -169,6 +170,19 @@ class CollectionDetail:
         self.full_name = '%s.%s' % (namespace, name)
         self.prefix = '%s.' % self.full_name
         self.directory = os.path.join('ansible_collections', namespace, name)
+        self.version = None
+
+        try:
+            import yaml
+        except ImportError:
+            raise ApplicationError('Need PyYAML to load galaxy.yml. Please make sure that PyYAML has been installed.')
+        try:
+            with open(os.path.join(self.root, self.directory, 'galaxy.yml')) as f:
+                galaxy = yaml.safe_load(f)
+        except IOError as e:
+            raise ApplicationError('Error while reading galaxy.yml: {0}'.format(e))
+        self.version = galaxy.get('version')
+        print(self.version)
 
 
 class LayoutProvider(PathProvider):

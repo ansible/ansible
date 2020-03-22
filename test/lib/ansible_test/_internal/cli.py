@@ -533,7 +533,7 @@ def parse_args():
     sanity.add_argument('--validate-deprecation',
                         action='store_true',
                         help='Compare deprecation versions to current Ansible '
-                             'version (not for collections)')
+                             'version resp. collection version')
 
     add_lint(sanity)
     add_extra_docker_options(sanity, integration=False)

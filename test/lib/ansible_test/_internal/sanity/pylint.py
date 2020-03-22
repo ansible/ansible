@@ -219,6 +219,9 @@ class PylintTest(SanitySingleVersion):
         if args.validate_deprecation:
             if not data_context().content.collection:
                 cmd.extend(['--enable', 'ansible-deprecated-version'])
+            elif data_context().content.collection.version is not None:
+                cmd.extend(['--enable', 'ansible-deprecated-version'])
+                cmd.extend(['--collection-version', data_context().content.collection.version])
 
         append_python_path = [plugin_dir]
 

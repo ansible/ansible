@@ -78,6 +78,8 @@ class ValidateModulesTest(SanitySingleVersion):
 
         if data_context().content.collection:
             cmd.extend(['--collection', data_context().content.collection.directory])
+            if data_context().content.collection.version is not None:
+                cmd.extend(['--collection-version', data_context().content.collection.version])
         else:
             if args.base_branch:
                 cmd.extend([
