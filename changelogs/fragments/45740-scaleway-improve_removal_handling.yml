@@ -1,0 +1,2 @@
+bugfixes:
+ - "scaleway_compute: Removing a running node could fail because of improper transition handling (https://github.com/ansible/ansible/issues/45740)"

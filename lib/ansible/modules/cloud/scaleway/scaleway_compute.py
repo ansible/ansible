@@ -203,10 +203,12 @@ def fetch_state(compute_api, server):
         compute_api.module.fail_json(msg="Could not fetch state in %s" % response.json)
 
 
-def wait_to_complete_state_transition(compute_api, server):
-    wait = compute_api.module.params["wait"]
+def wait_to_complete_state_transition(compute_api, server, wait=None):
+    if wait is None:
+        wait = compute_api.module.params["wait"]
     if not wait:
         return
+
     wait_timeout = compute_api.module.params["wait_timeout"]
     wait_sleep_time = compute_api.module.params["wait_sleep_time"]
 
@@ -360,7 +362,7 @@ def absent_strategy(compute_api, wished_server):
 
     # A server MUST be stopped to be deleted.
     while fetch_state(compute_api=compute_api, server=target_server) != "stopped":
-        wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
+        wait_to_complete_state_transition(compute_api=compute_api, server=target_server, wait=True)
         response = stop_server(compute_api=compute_api, server=target_server)
 
         if not response.ok:
@@ -368,7 +370,7 @@ def absent_strategy(compute_api, wished_server):
                                                                                            response.json)
             compute_api.module.fail_json(msg=err_msg)
 
-        wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
+        wait_to_complete_state_transition(compute_api=compute_api, server=target_server, wait=True)
 
     response = remove_server(compute_api=compute_api, server=target_server)
 
