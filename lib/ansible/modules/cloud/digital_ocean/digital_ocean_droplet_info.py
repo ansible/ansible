@@ -247,6 +247,7 @@ class DODroplet(object):
                 return [droplet]
         return None
 
+
 def core(module):
     droplet = DODroplet(module)
     if module.params.get('id'):
@@ -265,7 +266,7 @@ def main():
     argument_spec.update(
         dict(
             name=dict(type='str'),
-            id=dict(aliases=['droplet_id'], type='int'),
+            id=dict(type='int'),
             all=dict(type='bool', default=False),
         )
     )
