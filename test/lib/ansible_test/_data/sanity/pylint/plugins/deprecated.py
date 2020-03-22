@@ -69,7 +69,8 @@ class AnsibleDeprecatedChecker(BaseChecker):
         }),
     )
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super(AnsibleDeprecatedChecker, self).__init__(*args, **kwargs)
         self.collection_version = None
         self.version_to_check = ANSIBLE_VERSION
 
