@@ -19,7 +19,8 @@ MSGS = {
               "or AnsibleModule.deprecate",
               "ansible-deprecated-version",
               "Used when a call to Display.deprecated specifies a version "
-              "less than or equal to the current version of Ansible",
+              "less than or equal to the current version of Ansible resp. "
+              "this collection",
               {'minversion': (2, 6)}),
     'E9502': ("Display.deprecated call without a version",
               "ansible-deprecated-no-version",
@@ -59,6 +60,26 @@ class AnsibleDeprecatedChecker(BaseChecker):
     name = 'deprecated'
     msgs = MSGS
 
+    options = (
+        ('collection-version', {
+            'default': None,
+            'type': 'string',
+            'metavar': '<version>',
+            'help': 'The collection\'s version number used to check deprecations.',
+        }),
+    )
+
+
+    def set_option(self, optname, value, action=None, optdict=None):
+        if optname == 'collection-version':
+            if value is None:
+                self.collection_version = None
+                self.version_to_check = ANSIBLE_VERSION
+            else:
+                self.collection_version = LooseVersion(value)
+                self.version_to_check = self.collection_version
+
+
     @check_messages(*(MSGS.keys()))
     def visit_call(self, node):
         version = None
@@ -83,7 +104,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
                         return
 
                 try:
-                    if ANSIBLE_VERSION >= LooseVersion(str(version)):
+                    if self.version_to_check >= LooseVersion(str(version)):
                         self.add_message('ansible-deprecated-version', node=node, args=(version,))
                 except ValueError:
                     self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))

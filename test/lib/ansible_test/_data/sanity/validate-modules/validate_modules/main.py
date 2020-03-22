@@ -242,7 +242,7 @@ class ModuleValidator(Validator):
     WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
     def __init__(self, path, analyze_arg_spec=False, validate_deprecation=False, collection=None,
-                 base_branch=None, git_cache=None, reporter=None, routing=None):
+                 collection_version=None, base_branch=None, git_cache=None, reporter=None, routing=None):
         super(ModuleValidator, self).__init__(reporter=reporter or Reporter())
 
         self.path = path
@@ -254,6 +254,10 @@ class ModuleValidator(Validator):
 
         self.collection = collection
         self.routing = routing
+        self.collection_version = None
+        if collection_version is not None:
+            self.collection_version_str = collection_version
+            self.collection_version = LooseVersion(collection_version)
 
         self.base_branch = base_branch
         self.git_cache = git_cache or GitCache()
@@ -1456,14 +1460,21 @@ class ModuleValidator(Validator):
                 )
                 continue
 
-            if not self.collection and self.validate_deprecation:
+            if self.validate_deprecation and (not self.collection or self.collection_version is not None):
+                if self.collection:
+                    compare_version = self.collection_version
+                    version_of_what = "this collection (%s)" % self.collection_version_str
+                else:
+                    compare_version = LOOSE_ANSIBLE_VERSION
+                    version_of_what = "Ansible (%s)" % ansible_version
+
                 removed_in_version = data.get('removed_in_version', None)
-                if removed_in_version is not None and LOOSE_ANSIBLE_VERSION >= LooseVersion(str(removed_in_version)):
+                if removed_in_version is not None and compare_version >= LooseVersion(str(removed_in_version)):
                     msg = "Argument '%s' in argument_spec" % arg
                     if context:
                         msg += " found in %s" % " -> ".join(context)
                     msg += " has a deprecated removed_in_version '%s'," % removed_in_version
-                    msg += " i.e. the version is less than or equal to the current version of Ansible (%s)" % ansible_version
+                    msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
                     self.reporter.error(
                         path=self.object_path,
                         code='ansible-deprecated-version',
@@ -1473,13 +1484,13 @@ class ModuleValidator(Validator):
                 deprecated_aliases = data.get('deprecated_aliases', None)
                 if deprecated_aliases is not None:
                     for deprecated_alias in deprecated_aliases:
-                        if LOOSE_ANSIBLE_VERSION >= LooseVersion(str(deprecated_alias['version'])):
+                        if compare_version >= LooseVersion(str(deprecated_alias['version'])):
                             msg = "Argument '%s' in argument_spec" % arg
                             if context:
                                 msg += " found in %s" % " -> ".join(context)
                             msg += " has deprecated aliases '%s' with removal in version '%s'," % (
                                 deprecated_alias['name'], deprecated_alias['version'])
-                            msg += " i.e. the version is less than or equal to the current version of Ansible (%s)" % ansible_version
+                            msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
                             self.reporter.error(
                                 path=self.object_path,
                                 code='ansible-deprecated-version',
@@ -2169,7 +2180,11 @@ def run():
                              'contents of the collection can be located')
     parser.add_argument('--validate-deprecation', action='store_true',
                         help='Compare deprecation versions to current Ansible '
-                             'version (not for collections)')
+                             'version, or for collections, --collection-version '
+                             'if specified')
+    parser.add_argument('--collection-version',
+                        help='The collection\'s version number used to check '
+                             'deprecations')
 
     args = parser.parse_args()
 
@@ -2201,8 +2216,8 @@ def run():
                 continue
             if ModuleValidator.is_blacklisted(path):
                 continue
-            with ModuleValidator(path, collection=args.collection, analyze_arg_spec=args.arg_spec,
-                                 validate_deprecation=args.validate_deprecation,
+            with ModuleValidator(path, collection=args.collection, collection_version=args.collection_version,
+                                 analyze_arg_spec=args.arg_spec, validate_deprecation=args.validate_deprecation,
                                  base_branch=args.base_branch, git_cache=git_cache, reporter=reporter, routing=routing) as mv1:
                 mv1.validate()
                 check_dirs.add(os.path.dirname(path))
