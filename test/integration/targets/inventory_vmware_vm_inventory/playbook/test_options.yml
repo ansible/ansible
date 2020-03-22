@@ -1,0 +1,196 @@
+---
+- name: Test Hostnames option
+  hosts: localhost
+  tasks:
+
+    - name: Inventory with 'hostnames' option
+      include_tasks: build_inventory.yml
+      vars:
+        content: |-
+          plugin: vmware_vm_inventory
+          strict: False
+          validate_certs: False
+          with_nested_properties: False
+          properties:
+            - config.name
+            - runtime.powerState
+          hostnames:
+            - 'skip_undefined_empty_none_var'
+            - 'config.name + "_" + runtime.powerState'
+   
+    - name: Test properties option are populate  
+      assert:
+        that:
+          - "'config.name' in test_host.value"
+          - "'runtime.powerState' in test_host.value"
+          - "'name' not in test_host.value"
+
+    - name: Test hostnames option
+      assert:
+        that:
+          - test_host.key == (test_host.value['config.name'] + "_" + test_host.value['runtime.powerState'])
+
+
+    - name: Inventory with 'ALL' properties
+      include_tasks: build_inventory.yml
+      vars:
+        content: |-
+          plugin: vmware_vm_inventory
+          strict: False
+          validate_certs: False
+          with_nested_properties: False
+          properties: ALL
+   
+    - name: Test properties(ALL) option are populate  
+      assert:
+        that:
+          - "'name' in test_host.value"
+          - "'config.name' in test_host.value"
+
+
+    - name: Inventory with 'config' root properties
+      include_tasks: build_inventory.yml
+      vars:
+        content: |-
+          plugin: vmware_vm_inventory
+          strict: False
+          validate_certs: False
+          with_nested_properties: False
+          properties:
+            - config
+   
+    - name: Test properties(config) option are populate  
+      assert:
+        that:
+          - "'name' not in test_host.value"
+          - "'config.name' in test_host.value"
+
+
+    - name: Inventory with 'with_path' option
+      include_tasks: build_inventory.yml
+      vars:
+        content: |-
+          plugin: vmware_vm_inventory
+          strict: False
+          validate_certs: False
+          with_path: True
+   
+    - name: Test path option
+      assert:
+        that:
+          - "'path' in test_host.value"
+
+    - name: Inventory with rooted 'with_path' option
+      include_tasks: build_inventory.yml
+      vars:
+        content: |-
+          plugin: vmware_vm_inventory
+          strict: False
+          validate_certs: False
+          with_path: my_center
+
+    - name: Test path option with rooted path
+      assert:
+        that:
+          - "'path' in test_host.value"
+          - "'my_center' in test_host.value.group_names"
+
+
+    - name: Inventory 'with_nested_properties' option
+      include_tasks: build_inventory.yml
+      vars:
+        content: |-
+          plugin: vmware_vm_inventory
+          strict: False
+          validate_certs: False
+          properties:
+            - config.name
+            - config.uuid
+
+          with_nested_properties: True
+
+    - name: Test 'with_nested_properties' option
+      assert:
+        that:
+          - test_host.value.config.name is defined
+
+
+    - name: Inventory 'sanitize_property_name' option
+      include_tasks: build_inventory.yml
+      vars:
+        content: |-
+          plugin: vmware_vm_inventory
+          strict: False
+          validate_certs: False
+          properties:
+            - config.name
+            - config.uuid
+            - runtime.powerState
+
+          with_nested_properties: False
+          with_sanitized_property_name: True
+
+    - name: Test 'with_nested_properties' option
+      assert:
+        that:
+          - test_host.value.runtime_power_state is defined
+
+
+    - name: Inventory 'Constructable' options
+      include_tasks: build_inventory.yml
+      vars:
+        content: |-
+          plugin: vmware_vm_inventory
+          strict: False
+          validate_certs: False
+          with_nested_properties: True
+          properties:
+            - config.name
+            - config.uuid
+            - config.guestId
+            - runtime.powerState
+
+          compose:
+            ansible_host: 'config.name'
+            composed_var: 'config.name'
+
+          groups:
+            VMs: true
+
+          keyed_groups:
+            - key: 'config.guestId'
+              separator: ''
+            - key: 'runtime.powerState'
+              separator: ''
+
+    - name: Test 'Constructable' options
+      assert:
+        that:
+          - "'VMs' in test_host.value.group_names"
+          - "'poweredOff' in test_host.value.group_names"
+          - "'ansible_host' in test_host.value"
+          - "'composed_var' in test_host.value"
+          - test_host.value.ansible_host == test_host.value.config.name
+          - test_host.value.composed_var == test_host.value.config.name
+
+    - when: vcsim is not defined 
+      block:
+        - name: Inventory 'with_tag' option
+          include_tasks: build_inventory.yml
+          vars:
+            content: |-
+              plugin: vmware_vm_inventory
+              strict: False
+              validate_certs: False
+              with_nested_properties: True
+              with_tags: True
+              properties:
+                - config.name
+                - config.uuid
+                - config.guestId
+                - runtime.powerState
+
+        - name: Test 'with_tags' options
+          assert:
+            that:
+              - "'tags' in test_host.value"

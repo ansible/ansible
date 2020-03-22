@@ -1,0 +1,11 @@
+---
+  - name: Set inventory content
+    copy:
+      dest: "{{ lookup('env', 'ANSIBLE_INVENTORY') }}/tmp.vmware.yml"
+      content: "{{ content }}"
+
+  - meta: refresh_inventory
+
+  - name: Refresh test_host
+    set_fact:
+      test_host: "{{ hostvars | dict2items | first}}"

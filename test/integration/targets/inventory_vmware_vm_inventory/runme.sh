@@ -6,12 +6,15 @@ set -euo pipefail
 
 # Required to differentiate between Python 2 and 3 environ
 export ANSIBLE_PYTHON_INTERPRETER=${ANSIBLE_TEST_PYTHON_INTERPRETER:-$(which python)}
-
 # prepare_vmware_test envs!
 export VMWARE_HOST="${VCENTER_HOSTNAME}"
 export VMWARE_USER="${VCENTER_USERNAME}"
 export VMWARE_PASSWORD="${VCENTER_PASSWORD}"
 export VMWARE_VALIDATE_CERTS="no" # Note: Should be set by ansible-test
+
+INVENTORY_DIR="${PWD}/_test/hosts"
+mkdir -p ${INVENTORY_DIR} 2>/dev/null
+touch ${INVENTORY_DIR}/empty.yml
 
 cleanup() {
     ec=$?
@@ -33,13 +36,13 @@ set_inventory(){
 
 
 # Install dependencies
-ansible-playbook -i 'localhost,' playbook/install_dependencies.yaml "$@"
+ansible-playbook -i 'localhost,' playbook/install_dependencies.yml "$@"
 
 # Prepare tests
-ansible-playbook -i 'localhost,' playbook/prepare_vmware.yaml "$@"
+ansible-playbook -i 'localhost,' playbook/prepare_vmware.yml "$@"
 
 
-set_inventory "inventory/defaults_with_cache.vmware.yaml"
+set_inventory "inventory/defaults_with_cache.vmware.yml"
 # Get inventory
 ansible-inventory --list 1>/dev/null
 
@@ -53,6 +56,11 @@ ansible-inventory --list --yaml 1>/dev/null
 ansible-inventory --list --toml 1>/dev/null
 
 
-set_inventory "inventory/defaults.vmware.yaml"
-# Test playbook with given inventory
+set_inventory "inventory/defaults.vmware.yml"
+# # Test playbook with given inventory
 ansible-playbook playbook/test_vmware_vm_inventory.yml "$@"
+
+
+# Test options
+set_inventory ${INVENTORY_DIR}
+ansible-playbook playbook/test_options.yml "$@"
