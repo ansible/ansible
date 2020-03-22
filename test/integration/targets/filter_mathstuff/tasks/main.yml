@@ -2,12 +2,14 @@
   set_fact:
     unique_fallback_exc1: '{{ [{"foo": "bar", "moo": "cow"}]|unique(case_sensitive=True) }}'
   ignore_errors: true
+  tags: unique
   register: unique_fallback_exc1_res
 
 - name: Verify unique's fallback's exception throwing for a Hashable thing that triggers TypeError
   set_fact:
     unique_fallback_exc2: '{{ True|unique }}'
   ignore_errors: true
+  tags: unique
   register: unique_fallback_exc2_res
 
 - name: Verify unique
@@ -87,6 +89,7 @@
   set_fact:
     logarithm_exc1: '{{ "yo"|log }}'
   ignore_errors: true
+  tags: logarithm
   register: logarithm_exc1_res
 
 - name: Verify logarithm (which is passed to Jinja as "log" because consistency is boring)
@@ -104,8 +107,9 @@
 
 - name: Verify power on a value of invalid type
   set_fact:
-    logarithm_exc1: '{{ "yo"|pow(4) }}'
+    power_exc1: '{{ "yo"|pow(4) }}'
   ignore_errors: true
+  tags: power
   register: power_exc1_res
 
 - name: Verify power (which is passed to Jinja as "pow" because consistency is boring)
@@ -120,6 +124,7 @@
   set_fact:
     inversepower_exc1: '{{ "yo"|root }}'
   ignore_errors: true
+  tags: inversepower
   register: inversepower_exc1_res
 
 - name: Verify inversepower (which is passed to Jinja as "root" because consistency is boring)
@@ -137,6 +142,7 @@
   set_fact:
     human_readable_exc1: '{{ "monkeys"|human_readable }}'
   ignore_errors: true
+  tags: human_readable
   register: human_readable_exc1_res
 
 - name: Verify human_readable
@@ -178,6 +184,7 @@
     that: "{{_human_bytes_test.failed}}"
 
 - name: Verify that union can be chained
+  tags: union
   vars:
     unions: '{{ [1,2,3]|union([4,5])|union([6,7]) }}'
   assert:
@@ -186,6 +193,7 @@
       - "unions|length == 7"
 
 - name: Test union with unhashable item
+  tags: union
   vars:
     unions: '{{ [1,2,3]|union([{}]) }}'
   assert:
@@ -197,30 +205,35 @@
   set_fact:
     rekey_on_member_exc1: '{{ []|rekey_on_member("asdf", duplicates="boo") }}'
   ignore_errors: true
+  tags: rekey_on_member
   register: rekey_on_member_exc1_res
 
 - name: Verify rekey_on_member with invalid data
   set_fact:
     rekey_on_member_exc2: '{{ "minkeys"|rekey_on_member("asdf") }}'
   ignore_errors: true
+  tags: rekey_on_member
   register: rekey_on_member_exc2_res
 
 - name: Verify rekey_on_member with partially invalid data (list item is not dict)
   set_fact:
     rekey_on_member_exc3: '{{ [True]|rekey_on_member("asdf") }}'
   ignore_errors: true
+  tags: rekey_on_member
   register: rekey_on_member_exc3_res
 
 - name: Verify rekey_on_member with partially invalid data (key not in all dicts)
   set_fact:
     rekey_on_member_exc4: '{{ [{"foo": "bar", "baz": "buzz"}, {"hello": 8, "different": "haha"}]|rekey_on_member("foo") }}'
   ignore_errors: true
+  tags: rekey_on_member
   register: rekey_on_member_exc4_res
 
 - name: Verify rekey_on_member with duplicates and duplicates=error
   set_fact:
     rekey_on_member_exc5: '{{ [{"proto": "eigrp", "state": "enabled"}, {"proto": "eigrp", "state": "enabled"}]|rekey_on_member("proto", duplicates="error") }}'
   ignore_errors: true
+  tags: rekey_on_member
   register: rekey_on_member_exc5_res
 
 - name: Verify rekey_on_member
