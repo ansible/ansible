@@ -177,10 +177,10 @@ class CollectionDetail:
         except ImportError:
             raise ApplicationError('Need PyYAML to load galaxy.yml. Please make sure that PyYAML has been installed.')
         try:
-            with open(os.path.join(self.root, self.directory, 'galaxy.yml')) as f:
-                galaxy = yaml.safe_load(f)
-        except IOError as e:
-            raise ApplicationError('Error while reading galaxy.yml: {0}'.format(e))
+            with open(os.path.join(self.root, self.directory, 'galaxy.yml')) as galaxy_file:
+                galaxy = yaml.safe_load(galaxy_file)
+        except IOError as exc:
+            raise ApplicationError('Error while reading galaxy.yml: {0}'.format(exc))
 
         self.version = galaxy.get('version')
 
