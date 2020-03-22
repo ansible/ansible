@@ -181,8 +181,8 @@ class CollectionDetail:
                 galaxy = yaml.safe_load(f)
         except IOError as e:
             raise ApplicationError('Error while reading galaxy.yml: {0}'.format(e))
+
         self.version = galaxy.get('version')
-        print(self.version)
 
 
 class LayoutProvider(PathProvider):
