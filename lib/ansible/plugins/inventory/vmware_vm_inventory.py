@@ -70,7 +70,7 @@ DOCUMENTATION = '''
             - These properties will be populated in hostvars of the given VM.
             - Each value in the list can be a path to a specific property in VM object or a path to a collection of VM objects.
             - Set value to 'all' to query all properties
-            - See: U(https://github.com/monkey-mas/lab/blob/master/pyvmomi/docs/vim/VirtualMachine.rst#attributes) for all properties.
+            - See 'https://github.com/monkey-mas/lab/blob/master/pyvmomi/docs/vim/VirtualMachine.rst#attributes' for all properties.
             type: list
             default: [ 'name', 'config.cpuHotAddEnabled', 'config.cpuHotRemoveEnabled',
                        'config.instanceUuid', 'config.hardware.numCPU', 'config.template',
@@ -84,7 +84,7 @@ DOCUMENTATION = '''
             - Include virtual machines path.
             - Set this option to a string value to replace root name from I('Datacenters')
             default: False
-            type: boolean or string
+            type: boolean
             version_added: "2.10"
         hostnames:
             description:
@@ -159,6 +159,7 @@ try:
     from pyVim import connect
     from pyVmomi import vim, vmodl
     from pyVmomi.VmomiSupport import DataObject
+    from pyVmomi import Iso8601
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
@@ -205,19 +206,19 @@ class BaseVMwareInventory:
         """
         session = requests.Session()
         session.verify = self.validate_certs
-        if not self.validate_certs:
-            # Disable warning shown at stdout
-            requests.packages.urllib3.disable_warnings()
+        # if not self.validate_certs:
+        #     # Disable warning shown at stdout
+        #     requests.packages.urllib3.disable_warnings()
 
         server = self.hostname
         if self.port:
             server += ":" + str(self.port)
         try:
             client = create_vsphere_client(server=server,
-                                        username=self.username,
-                                        password=self.password,
-                                        session=session)
-        except:
+                                           username=self.username,
+                                           password=self.password,
+                                           session=session)
+        except Exception:
             client = None
 
         if client is None:
@@ -327,7 +328,7 @@ class BaseVMwareInventory:
         # Create Property Spec
         property_spec = vmodl.query.PropertyCollector.PropertySpec(
             type=vim_type,  # Type of object to retrieved
-            all= is_all,
+            all=is_all,
             pathSet=properties
         )
 
@@ -395,7 +396,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if isinstance(username, AnsibleVaultEncryptedUnicode):
             username = username.data
-        
+
         if isinstance(password, AnsibleVaultEncryptedUnicode):
             password = password.data
 
@@ -422,7 +423,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if cache and not update_cache:
             self._populate_from_cache(cacheable_results)
-        else: 
+        else:
             cacheable_results = self._populate_from_source()
 
         if update_cache or (not cache and self.get_option('cache')):
@@ -432,7 +433,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         """ Populate cache using source data """
         for host, host_properties in cache_data.items():
             self._populate_host_properties(host_properties, host)
-    
+
     def _get_hostname(self, properties, hostnames):
         strict = self.get_option('strict')
         hostname = None
@@ -443,10 +444,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             except Exception as e:
                 if strict:
                     raise AnsibleError("Could not compose %s as hostnames %s" % (preference, to_native(e)))
-            
+
             if hostname:
                 return to_text(hostname)
-        
+
     def _populate_from_source(self):
         """
         Populate inventory data from direct source
@@ -454,12 +455,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         """
         hostvars = {}
         vm_properties = self.get_option('properties')
-        
+
         if isinstance(vm_properties, str):
             query_props = vm_properties
         else:
             query_props = [x for x in vm_properties if x != "customValue"]
-        
+
         objects = self.pyv._get_managed_objects_properties(vim_type=vim.VirtualMachine,
                                                            properties=query_props)
 
@@ -484,7 +485,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             properties = {}
             for vm_obj_property in vm_obj.propSet:
                 properties[vm_obj_property.name] = vm_obj_property.val
-            
+
             # Custom values
             if 'customValue' in vm_properties:
                 field_mgr = self.pyv.content.customFieldsManager.field
@@ -492,13 +493,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     properties[[y.name for y in field_mgr if y.key == cust_value.key][0]] = cust_value.value
 
             # Tags
-            if tags_info :
+            if tags_info:
                 # Add virtual machine to appropriate tag group
                 vm_mo_id = vm_obj.obj._GetMoId()
                 vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
                 attached_tags = [tags_info[tag_id] for tag_id in tag_association.list_attached_tags(vm_dynamic_id)]
                 properties['tags'] = attached_tags
-
 
             # Build path
             if with_path:
@@ -525,7 +525,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         with_nested_properties = self.get_option('with_nested_properties')
 
         self.inventory.add_host(host)
-       
+
         # Use constructed if applicable
         strict = self.get_option('strict')
         # Composed variables
@@ -545,7 +545,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             if parents:
                 if isinstance(with_path, str):
                     parents = [with_path] + parents
-                
+
                 c_name = self._sanitize_group_name('/'.join(parents))
                 c_group = self.inventory.add_group(c_name)
                 self.inventory.add_host(host, c_group)
@@ -559,19 +559,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     c_group = p_group
                     parents.pop()
 
-
-        # Hostvars formats manipulation 
+        # Hostvars formats manipulation
         host_properties = host_properties if with_nested_properties else to_flatten_dict(host_properties)
-        
+
         if self.get_option('with_sanitized_property_name'):
             host_properties = camel_dict_to_snake_dict(host_properties)
-        
+
         can_sanitize = self.get_option('with_sanitized_property_name')
-        for k,v in host_properties.items():
+        for k, v in host_properties.items():
             k = self._sanitize_group_name(k) if can_sanitize else k
             self.inventory.set_variable(host, k, v)
 
-from pyVmomi import Iso8601
+
 def parse_vim_property(vim_prop):
     # For '--yaml' sake!
     #   Unexpected Exception, this is probably a bug: ('cannot represent an object', <data>
@@ -592,26 +591,27 @@ def parse_vim_property(vim_prop):
             return r
         return vim_prop.__str__()
 
-    elif  prop_type == "datetime" :
+    elif prop_type == "datetime":
         return Iso8601.ISO8601Format(vim_prop)
 
-    elif  prop_type == "long" :
+    elif prop_type == "long":
         return int(vim_prop)
-    elif  prop_type == "long[]" :
+    elif prop_type == "long[]":
         return [int(x) for x in vim_prop]
- 
-    elif  prop_type == "ManagedObject" :
+
+    elif prop_type == "ManagedObject":
         return str(vim_prop)
-    elif  prop_type == "ManagedObject[]" :
+    elif prop_type == "ManagedObject[]":
         return [str(x) for x in vim_prop]
-        
-    elif  prop_type == "binary" : 
+
+    elif prop_type == "binary":
         r = base64.b64encode(vim_prop)
         if PY3:
             r = str(r, 'utf-8')
         return r
-    
+
     return vim_prop
+
 
 def to_nested_dict(vm_properties):
     host_properties = {}
@@ -619,9 +619,9 @@ def to_nested_dict(vm_properties):
     for vm_prop_name, vm_prop_val in vm_properties.items():
         prop_parents = reversed(vm_prop_name.split("."))
         prop_dict = parse_vim_property(vm_prop_val)
-        
+
         for k in prop_parents:
-            prop_dict = {k: prop_dict }
+            prop_dict = {k: prop_dict}
         host_properties = dict_merge(host_properties, prop_dict)
 
     return host_properties
@@ -641,7 +641,7 @@ def to_flatten_dict(d, parent_key='', sep='.'):
 # Patch AnsibleDumper
 # This for 'ansible-test' with '--debug'
 # TODO: Move it to 'ansible.parsing.yaml.dumper'
-from  ansible.vars.manager import VarsWithSources
+from ansible.vars.manager import VarsWithSources
 from ansible.parsing.yaml.dumper import AnsibleDumper, represent_hostvars
 
 AnsibleDumper.add_representer(VarsWithSources, represent_hostvars)
