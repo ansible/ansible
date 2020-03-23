@@ -4,9 +4,13 @@
 
 - name: Test urlencode filter
   set_fact:
-    urlencoded_string: '{{ urldecoded_string|urlencode }}'
+    urlencoded_string: 'key%3D%22%40%7B%7D%C3%A9%26%25%C2%A3%20foo%20bar%20%27%28%3B%5C%3C%3E%22%22%C2%B0%29'
 
-- name: Verify urlencode en urldecode
+- name: Verify urlencode / urldecode isomorphism
   assert:
     that:
     - urldecoded_string == urlencoded_string|urldecode
+    - urlencoded_string == urldecoded_string|urlencode
+
+# NOTE: See also the filter_urls_jinja26 test where we force jinja 2.6 and
+#       test some of the fallback functionality in urls.py
