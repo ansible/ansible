@@ -24,7 +24,7 @@ from ansible.utils.color import stringc
 import requests
 import sys
 
-BRANCH = 'temp-2.10-devel'
+BRANCH = 'devel'
 
 if len(sys.argv) > 1:
     BRANCH = sys.argv[1]
