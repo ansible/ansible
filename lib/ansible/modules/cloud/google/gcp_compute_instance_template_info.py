@@ -162,6 +162,11 @@ resources:
           returned: success
           type: complex
           contains:
+            licenses:
+              description:
+              - Any applicable license URI.
+              returned: success
+              type: list
             autoDelete:
               description:
               - Specifies whether the disk will be auto-deleted when the instance

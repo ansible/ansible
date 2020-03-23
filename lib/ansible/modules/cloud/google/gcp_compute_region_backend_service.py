@@ -52,6 +52,7 @@ options:
   backends:
     description:
     - The set of backends that serve this RegionBackendService.
+    elements: dict
     required: false
     type: list
     suboptions:
@@ -66,6 +67,9 @@ options:
         description:
         - A multiplier applied to the group's maximum servicing capacity (based on
           UTILIZATION, RATE or CONNECTION).
+        - "~>**NOTE**: This field cannot be set for INTERNAL region backend services
+          (default loadBalancingScheme), but is required for non-INTERNAL backend
+          service. The total capacity_scaler for all backends must be non-zero."
         - A setting of 0 means the group is completely drained, offering 0% of its
           available Capacity. Valid range is [0.0,1.0].
         required: false
@@ -96,6 +100,7 @@ options:
         description:
         - The max number of simultaneous connections for the group. Can be used with
           either CONNECTION or UTILIZATION balancing modes.
+        - Cannot be set for INTERNAL backend services.
         - For CONNECTION mode, either maxConnections or one of maxConnectionsPerInstance
           or maxConnectionsPerEndpoint, as appropriate for group type, must be set.
         required: false
@@ -103,8 +108,9 @@ options:
       max_connections_per_instance:
         description:
         - The max number of simultaneous connections that a single backend instance
-          can handle. This is used to calculate the capacity of the group. Can be
-          used in either CONNECTION or UTILIZATION balancing modes.
+          can handle. Cannot be set for INTERNAL backend services.
+        - This is used to calculate the capacity of the group.
+        - Can be used in either CONNECTION or UTILIZATION balancing modes.
         - For CONNECTION mode, either maxConnections or maxConnectionsPerInstance
           must be set.
         required: false
@@ -112,15 +118,16 @@ options:
       max_connections_per_endpoint:
         description:
         - The max number of simultaneous connections that a single backend network
-          endpoint can handle. This is used to calculate the capacity of the group.
-          Can be used in either CONNECTION or UTILIZATION balancing modes.
-        - For CONNECTION mode, either maxConnections or maxConnectionsPerEndpoint
-          must be set.
+          endpoint can handle. Cannot be set for INTERNAL backend services.
+        - This is used to calculate the capacity of the group. Can be used in either
+          CONNECTION or UTILIZATION balancing modes. For CONNECTION mode, either maxConnections
+          or maxConnectionsPerEndpoint must be set.
         required: false
         type: int
       max_rate:
         description:
-        - The max requests per second (RPS) of the group.
+        - The max requests per second (RPS) of the group. Cannot be set for INTERNAL
+          backend services.
         - Can be used with either RATE or UTILIZATION balancing modes, but required
           if RATE mode. Either maxRate or one of maxRatePerInstance or maxRatePerEndpoint,
           as appropriate for group type, must be set.
@@ -131,7 +138,7 @@ options:
         - The max requests per second (RPS) that a single backend instance can handle.
           This is used to calculate the capacity of the group. Can be used in either
           balancing mode. For RATE mode, either maxRate or maxRatePerInstance must
-          be set.
+          be set. Cannot be set for INTERNAL backend services.
         required: false
         type: str
       max_rate_per_endpoint:
@@ -139,13 +146,14 @@ options:
         - The max requests per second (RPS) that a single backend network endpoint
           can handle. This is used to calculate the capacity of the group. Can be
           used in either balancing mode. For RATE mode, either maxRate or maxRatePerEndpoint
-          must be set.
+          must be set. Cannot be set for INTERNAL backend services.
         required: false
         type: str
       max_utilization:
         description:
         - Used when balancingMode is UTILIZATION. This ratio defines the CPU utilization
           target for the group. Valid range is [0.0, 1.0].
+        - Cannot be set for INTERNAL backend services.
         required: false
         type: str
   connection_draining:
@@ -170,6 +178,7 @@ options:
     description:
     - The set of URLs to HealthCheck resources for health checking this RegionBackendService.
       Currently at most one health check can be specified, and a health check is required.
+    elements: str
     required: true
     type: list
   load_balancing_scheme:
@@ -318,6 +327,9 @@ backends:
       description:
       - A multiplier applied to the group's maximum servicing capacity (based on UTILIZATION,
         RATE or CONNECTION).
+      - "~>**NOTE**: This field cannot be set for INTERNAL region backend services
+        (default loadBalancingScheme), but is required for non-INTERNAL backend service.
+        The total capacity_scaler for all backends must be non-zero."
       - A setting of 0 means the group is completely drained, offering 0% of its available
         Capacity. Valid range is [0.0,1.0].
       returned: success
@@ -348,6 +360,7 @@ backends:
       description:
       - The max number of simultaneous connections for the group. Can be used with
         either CONNECTION or UTILIZATION balancing modes.
+      - Cannot be set for INTERNAL backend services.
       - For CONNECTION mode, either maxConnections or one of maxConnectionsPerInstance
         or maxConnectionsPerEndpoint, as appropriate for group type, must be set.
       returned: success
@@ -355,8 +368,9 @@ backends:
     maxConnectionsPerInstance:
       description:
       - The max number of simultaneous connections that a single backend instance
-        can handle. This is used to calculate the capacity of the group. Can be used
-        in either CONNECTION or UTILIZATION balancing modes.
+        can handle. Cannot be set for INTERNAL backend services.
+      - This is used to calculate the capacity of the group.
+      - Can be used in either CONNECTION or UTILIZATION balancing modes.
       - For CONNECTION mode, either maxConnections or maxConnectionsPerInstance must
         be set.
       returned: success
@@ -364,15 +378,16 @@ backends:
     maxConnectionsPerEndpoint:
       description:
       - The max number of simultaneous connections that a single backend network endpoint
-        can handle. This is used to calculate the capacity of the group. Can be used
-        in either CONNECTION or UTILIZATION balancing modes.
-      - For CONNECTION mode, either maxConnections or maxConnectionsPerEndpoint must
-        be set.
+        can handle. Cannot be set for INTERNAL backend services.
+      - This is used to calculate the capacity of the group. Can be used in either
+        CONNECTION or UTILIZATION balancing modes. For CONNECTION mode, either maxConnections
+        or maxConnectionsPerEndpoint must be set.
       returned: success
       type: int
     maxRate:
       description:
-      - The max requests per second (RPS) of the group.
+      - The max requests per second (RPS) of the group. Cannot be set for INTERNAL
+        backend services.
       - Can be used with either RATE or UTILIZATION balancing modes, but required
         if RATE mode. Either maxRate or one of maxRatePerInstance or maxRatePerEndpoint,
         as appropriate for group type, must be set.
@@ -383,7 +398,7 @@ backends:
       - The max requests per second (RPS) that a single backend instance can handle.
         This is used to calculate the capacity of the group. Can be used in either
         balancing mode. For RATE mode, either maxRate or maxRatePerInstance must be
-        set.
+        set. Cannot be set for INTERNAL backend services.
       returned: success
       type: str
     maxRatePerEndpoint:
@@ -391,13 +406,14 @@ backends:
       - The max requests per second (RPS) that a single backend network endpoint can
         handle. This is used to calculate the capacity of the group. Can be used in
         either balancing mode. For RATE mode, either maxRate or maxRatePerEndpoint
-        must be set.
+        must be set. Cannot be set for INTERNAL backend services.
       returned: success
       type: str
     maxUtilization:
       description:
       - Used when balancingMode is UTILIZATION. This ratio defines the CPU utilization
         target for the group. Valid range is [0.0, 1.0].
+      - Cannot be set for INTERNAL backend services.
       returned: success
       type: str
 connectionDraining:

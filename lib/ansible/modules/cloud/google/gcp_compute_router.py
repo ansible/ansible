@@ -101,6 +101,7 @@ options:
           to any specified prefixes. Leave this field blank to advertise no custom
           groups.
         - 'This enum field has the one valid value: ALL_SUBNETS .'
+        elements: str
         required: false
         type: list
       advertised_ip_ranges:
@@ -110,6 +111,7 @@ options:
           to all peers of the router. These IP ranges will be advertised in addition
           to any specified groups.
         - Leave this field blank to advertise no custom IP ranges.
+        elements: dict
         required: false
         type: list
         suboptions:

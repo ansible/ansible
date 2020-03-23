@@ -108,6 +108,7 @@ options:
   tags:
     description:
     - A list of instance tags to which this route applies.
+    elements: str
     required: false
     type: list
   next_hop_gateway:

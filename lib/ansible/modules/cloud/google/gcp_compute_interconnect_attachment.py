@@ -130,6 +130,7 @@ options:
       from the supplied candidate prefix(es). The request will fail if all possible
       /29s are in use on Google's edge. If not supplied, Google will randomly select
       an unused /29 from all of link-local space.
+    elements: str
     required: false
     type: list
   vlan_tag8021q:

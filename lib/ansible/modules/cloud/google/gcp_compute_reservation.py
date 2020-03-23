@@ -108,6 +108,7 @@ options:
           guest_accelerators:
             description:
             - Guest accelerator type and count.
+            elements: dict
             required: false
             type: list
             suboptions:
@@ -128,6 +129,7 @@ options:
             description:
             - The amount of local ssd to reserve with each instance. This reserves
               disks of type `local-ssd`.
+            elements: dict
             required: false
             type: list
             suboptions:

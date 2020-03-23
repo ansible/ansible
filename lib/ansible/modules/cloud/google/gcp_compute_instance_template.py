@@ -90,6 +90,7 @@ options:
         description:
         - An array of disks that are associated with the instances that are created
           from this template.
+        elements: dict
         required: false
         type: list
         suboptions:
@@ -258,6 +259,7 @@ options:
         description:
         - List of the type and count of accelerator cards attached to the instance
           .
+        elements: dict
         required: false
         type: list
         suboptions:
@@ -277,6 +279,7 @@ options:
         - An array of configurations for this interface. This specifies how this interface
           is configured to interact with other network services, such as connecting
           to the internet. Only one network interface is supported per instance.
+        elements: dict
         required: false
         type: list
         suboptions:
@@ -285,6 +288,7 @@ options:
             - An array of configurations for this interface. Currently, only one access
               config, ONE_TO_ONE_NAT, is supported. If there are no accessConfigs
               specified, then this instance will have no external internet access.
+            elements: dict
             required: false
             type: list
             suboptions:
@@ -346,6 +350,7 @@ options:
             description:
             - An array of alias IP ranges for this network interface. Can only be
               specified for network interfaces on subnet-mode networks.
+            elements: dict
             required: false
             type: list
             suboptions:
@@ -432,6 +437,7 @@ options:
         description:
         - A list of service accounts, with their specified scopes, authorized for
           this instance. Only one service account per VM instance is supported.
+        elements: dict
         required: false
         type: list
         suboptions:
@@ -443,6 +449,7 @@ options:
           scopes:
             description:
             - The list of scopes to be made available for this service account.
+            elements: str
             required: false
             type: list
       tags:
@@ -467,6 +474,7 @@ options:
             description:
             - An array of tags. Each tag must be 1-63 characters long, and comply
               with RFC1035.
+            elements: str
             required: false
             type: list
   project:
@@ -600,6 +608,11 @@ properties:
       returned: success
       type: complex
       contains:
+        licenses:
+          description:
+          - Any applicable license URI.
+          returned: success
+          type: list
         autoDelete:
           description:
           - Specifies whether the disk will be auto-deleted when the instance is deleted

@@ -72,6 +72,7 @@ options:
   licenses:
     description:
     - Any applicable publicly visible licenses.
+    elements: str
     required: false
     type: list
   name:
@@ -106,6 +107,7 @@ options:
   replica_zones:
     description:
     - URLs of the zones where the disk should be replicated to.
+    elements: str
     required: true
     type: list
   type:
