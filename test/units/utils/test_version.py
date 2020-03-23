@@ -177,7 +177,7 @@ LOOSE_VERSION_INVALID = [
 
 
 def test_semanticversion_none():
-    assert SemanticVersion().major == None
+    assert SemanticVersion().major is None
 
 
 @pytest.mark.parametrize('left,right,expected', EQ)
