@@ -9,7 +9,7 @@ from distutils.version import LooseVersion, StrictVersion
 
 import pytest
 
-from ansible.utils.version import SemanticVersion
+from ansible.utils.version import _Alpha, _Numeric, SemanticVersion
 
 
 EQ = [
@@ -176,6 +176,10 @@ LOOSE_VERSION_INVALID = [
 ]
 
 
+def test_semanticversion_none():
+    assert SemanticVersion().major == None
+
+
 @pytest.mark.parametrize('left,right,expected', EQ)
 def test_eq(left, right, expected):
     assert (SemanticVersion(left) == SemanticVersion(right)) is expected
@@ -243,3 +247,39 @@ def test_from_loose_version(value, expected):
 @pytest.mark.parametrize('value', LOOSE_VERSION_INVALID)
 def test_from_loose_version_invalid(value):
     pytest.raises((AttributeError, ValueError), SemanticVersion.from_loose_version, value)
+
+
+def test_comparison_with_string():
+    assert SemanticVersion('1.0.0') > '0.1.0'
+
+
+def test_alpha():
+    assert _Alpha('a') == _Alpha('a')
+    assert _Alpha('a') == 'a'
+    assert _Alpha('a') != _Alpha('b')
+    assert _Alpha('a') != 1
+    assert _Alpha('a') < _Alpha('b')
+    assert _Alpha('a') < 'c'
+    assert _Alpha('a') > _Numeric(1)
+    with pytest.raises(ValueError):
+        _Alpha('a') < None
+    assert _Alpha('a') <= _Alpha('a')
+    assert _Alpha('a') <= _Alpha('b')
+    assert _Alpha('b') >= _Alpha('a')
+    assert _Alpha('b') >= _Alpha('b')
+
+
+def test_numeric():
+    assert _Numeric(1) == _Numeric(1)
+    assert _Numeric(1) == 1
+    assert _Numeric(1) != _Numeric(2)
+    assert _Numeric(1) != 'a'
+    assert _Numeric(1) < _Numeric(2)
+    assert _Numeric(1) < 3
+    assert _Numeric(1) < _Alpha('b')
+    with pytest.raises(ValueError):
+        _Numeric(1) < None
+    assert _Numeric(1) <= _Numeric(1)
+    assert _Numeric(1) <= _Numeric(2)
+    assert _Numeric(2) >= _Numeric(1)
+    assert _Numeric(2) >= _Numeric(2)

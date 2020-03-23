@@ -237,7 +237,7 @@ class SemanticVersion(Version):
             return -1
         elif not self.prerelease and other.prerelease:
             return 1
-        elif self.prerelease and other.prerelease:
+        else:
             if self.prerelease < other.prerelease:
                 return -1
             elif self.prerelease > other.prerelease:
