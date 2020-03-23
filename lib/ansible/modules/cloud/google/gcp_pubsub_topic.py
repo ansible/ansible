@@ -84,6 +84,7 @@ options:
           non-allowed GCP regions (or running outside of GCP altogether) will be routed
           for storage in one of the allowed regions. An empty list means that no regions
           are allowed, and is not a valid configuration.
+        elements: str
         required: true
         type: list
   project:

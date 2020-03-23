@@ -60,6 +60,7 @@ options:
       Statements can create tables, indexes, etc. These statements execute atomically
       with the creation of the database: if there is an error in any statement, the
       database is not created.'
+    elements: str
     required: false
     type: list
   instance:

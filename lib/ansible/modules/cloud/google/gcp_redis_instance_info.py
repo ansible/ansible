@@ -123,6 +123,12 @@ resources:
         connected. If left unspecified, the default network will be used.
       returned: success
       type: str
+    connectMode:
+      description:
+      - The connection mode of the Redis instance. Can be either `DIRECT_PEERING`
+        or `PRIVATE_SERVICE_ACCESS`. The default connect mode if not provided is `DIRECT_PEERING`.
+      returned: success
+      type: str
     createTime:
       description:
       - The time the instance was created in RFC3339 UTC "Zulu" format, accurate to

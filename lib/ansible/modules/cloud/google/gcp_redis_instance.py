@@ -61,6 +61,15 @@ options:
       connected. If left unspecified, the default network will be used.
     required: false
     type: str
+  connect_mode:
+    description:
+    - The connection mode of the Redis instance. Can be either `DIRECT_PEERING` or
+      `PRIVATE_SERVICE_ACCESS`. The default connect mode if not provided is `DIRECT_PEERING`.
+    - 'Some valid choices include: "DIRECT_PEERING", "PRIVATE_SERVICE_ACCESS"'
+    required: false
+    default: DIRECT_PEERING
+    type: str
+    version_added: '2.10'
   display_name:
     description:
     - An arbitrary and optional user-provided name for the instance.
@@ -220,6 +229,12 @@ authorizedNetwork:
     If left unspecified, the default network will be used.
   returned: success
   type: str
+connectMode:
+  description:
+  - The connection mode of the Redis instance. Can be either `DIRECT_PEERING` or `PRIVATE_SERVICE_ACCESS`.
+    The default connect mode if not provided is `DIRECT_PEERING`.
+  returned: success
+  type: str
 createTime:
   description:
   - The time the instance was created in RFC3339 UTC "Zulu" format, accurate to nanoseconds.
@@ -329,6 +344,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             alternative_location_id=dict(type='str'),
             authorized_network=dict(type='str'),
+            connect_mode=dict(default='DIRECT_PEERING', type='str'),
             display_name=dict(type='str'),
             labels=dict(type='dict'),
             redis_configs=dict(type='dict'),
@@ -407,6 +423,7 @@ def resource_to_request(module):
     request = {
         u'alternativeLocationId': module.params.get('alternative_location_id'),
         u'authorizedNetwork': module.params.get('authorized_network'),
+        u'connectMode': module.params.get('connect_mode'),
         u'displayName': module.params.get('display_name'),
         u'labels': module.params.get('labels'),
         u'redisConfigs': module.params.get('redis_configs'),
@@ -487,6 +504,7 @@ def response_to_hash(module, response):
     return {
         u'alternativeLocationId': module.params.get('alternative_location_id'),
         u'authorizedNetwork': module.params.get('authorized_network'),
+        u'connectMode': module.params.get('connect_mode'),
         u'createTime': response.get(u'createTime'),
         u'currentLocationId': module.params.get('current_location_id'),
         u'displayName': response.get(u'displayName'),

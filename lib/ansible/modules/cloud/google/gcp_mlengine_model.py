@@ -76,6 +76,7 @@ options:
     description:
     - The list of regions where the model is going to be deployed.
     - Currently only one region per model is supported .
+    elements: str
     required: false
     type: list
   online_prediction_logging:

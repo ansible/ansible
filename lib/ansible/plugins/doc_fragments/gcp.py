@@ -35,7 +35,6 @@ options:
         description:
             - Array of scopes to be used.
         type: list
-        elements: str
     env_type:
         description:
             - Specifies which Ansible environment you're running this module within.
