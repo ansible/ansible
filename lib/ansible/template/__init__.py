@@ -332,9 +332,10 @@ class JinjaPluginIntercept(MutableMapping):
         if not acr:
             raise KeyError('invalid plugin name: {0}'.format(key))
 
-        # FIXME: error handling for bogus plugin name, bogus impl, bogus filter/test
-
-        pkg = import_module(acr.n_python_package_name)
+        try:
+            pkg = import_module(acr.n_python_package_name)
+        except ImportError:
+            raise KeyError()
 
         parent_prefix = acr.collection
 
@@ -345,7 +346,10 @@ class JinjaPluginIntercept(MutableMapping):
             if ispkg:
                 continue
 
-            plugin_impl = self._pluginloader.get(module_name)
+            try:
+                plugin_impl = self._pluginloader.get(module_name)
+            except Exception as e:
+                raise TemplateSyntaxError(to_native(e), 0)
 
             method_map = getattr(plugin_impl, self._method_map_name)
 
