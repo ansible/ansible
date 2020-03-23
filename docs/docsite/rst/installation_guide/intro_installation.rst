@@ -128,7 +128,7 @@ To enable the Ansible Engine repository for RHEL 7, run the following command:
 
     $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.9-rpms
 
-RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
+RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_.
 
 Ansible version 2.4 and later can manage earlier operating systems that contain Python 2.6 or higher.
 
@@ -241,6 +241,11 @@ The preferred way to install Ansible on a Mac is with ``pip``.
 
 The instructions can be found in :ref:`from_pip`. If you are running macOS version 10.12 or older, then you should upgrade to the latest ``pip`` to connect to the Python Package Index securely. It should be noted that pip must be run as a module on macOS, and the linked ``pip`` instructions will show you how to do that.
 
+If you are installing on macOS Mavericks (10.9), you may encounter some noise from your compiler. A workaround is to do the following::
+
+    $ CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install --user ansible
+
+
 .. _from_pkgutil:
 
 Installing Ansible on Solaris
@@ -300,49 +305,23 @@ Update of the software will be managed by the swupd tool::
 Installing Ansible with ``pip``
 --------------------------------
 
-Ansible can be installed with ``pip``, the Python package manager. It should be noted that macOS requires a slightly different use of ``pip`` than ``*nix`` due to ``openssl`` requirements, therefore pip must be run as a module.  If ``pip`` isn't already available on your system of Python, run the following commands to install it::
+Ansible can be installed with ``pip``, the Python package manager. If ``pip`` isn't already available on your system of Python, run the following commands to install it::
 
     $ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
     $ python get-pip.py --user
 
 Then install Ansible [1]_::
 
-    $ pip install --user ansible
-
-For macOS, there is no need to use ``sudo`` or install additional fixes, simply access the Python module namespace for ``pip``::
-
     $ python -m pip install --user ansible
-
-Or if you are looking for the development version::
-
-    $ pip install --user git+https://github.com/ansible/ansible.git@devel
-
-For macOS::
-
-    $ python -m pip install --user git+https://github.com/ansible/ansible.git@devel
-
-If you are installing on macOS Mavericks (10.9), you may encounter some noise from your compiler. A workaround is to do the following::
-
-    $ CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install --user ansible
 
 In order to use the ``paramiko`` connection plugin or modules that require ``paramiko``, install the required module [2]_::
 
-    $ pip install --user paramiko
-
-For macOS::
-
     $ python -m pip install --user paramiko
-
-Ansible can also be installed inside a new or existing ``virtualenv``::
-
-    $ python -m virtualenv ansible  # Create a virtualenv if one does not already exist
-    $ source ansible/bin/activate   # Activate the virtual environment
-    $ pip install ansible
 
 If you wish to install Ansible globally, run the following commands::
 
     $ sudo python get-pip.py
-    $ sudo pip install ansible
+    $ sudo python -m pip install ansible
 
 .. note::
 
@@ -354,7 +333,35 @@ If you wish to install Ansible globally, run the following commands::
     Please make sure you have the latest version of ``pip`` before installing Ansible.
     If you have an older version of ``pip`` installed, you can upgrade by following `pip's upgrade instructions <https://pip.pypa.io/en/stable/installing/#upgrading-pip>`_ .
 
+.. _from_pip_devel:
 
+Installing the development version of Ansible
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. note::
+
+    You should only run Ansible from ``devel`` if you are modifying the Ansible engine, or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
+
+The development version of Ansible can be directly installed from GitHub with pip::
+
+    $ python -m pip install --user https://github.com/ansible/ansible/archive/devel.tar.gz
+
+Replace ``devel`` in the URL mentioned above, with any other branch or tag on GitHub to install that version::
+
+    $ python -m pip install --user https://github.com/ansible/ansible/archive/stable-2.9.tar.gz
+
+See :ref:`from_source` for instructions on how to run Ansible directly from source, without the requirement of installation.
+
+.. _from_pip_venv:
+
+Virtual Environments
+^^^^^^^^^^^^^^^^^^^^
+
+Ansible can also be installed inside a new or existing ``virtualenv``::
+
+    $ python -m virtualenv ansible  # Create a virtualenv if one does not already exist
+    $ source ansible/bin/activate   # Activate the virtual environment
+    $ python -m pip install ansible
 
 .. _from_source:
 
@@ -406,7 +413,7 @@ Ansible also uses the following Python modules that need to be installed [1]_:
 
 .. code-block:: bash
 
-    $ pip install --user -r ./requirements.txt
+    $ python -m pip install --user -r ./requirements.txt
 
 To update Ansible checkouts, use pull-with-rebase so any local changes are replayed.
 
@@ -490,7 +497,7 @@ Installing ``argcomplete`` with ``pip``
 
 .. code-block:: bash
 
-    $ pip install argcomplete
+    $ python -m pip install argcomplete
 
 Configuring ``argcomplete``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
