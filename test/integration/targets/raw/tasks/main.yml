@@ -90,6 +90,7 @@
   args:
     executable: "{{ sh_path.stdout }}"
   become: true
+  become_method: su
   register: sh_output
 - name: assert sh
   assert:
@@ -99,6 +100,7 @@
   args:
     executable: "{{ bash_path.stdout }}"
   become: true
+  become_method: su
   register: bash_output
 - name: assert bash
   assert:
