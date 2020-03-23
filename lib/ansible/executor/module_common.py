@@ -411,8 +411,8 @@ else:
 # Do this instead of getting site-packages from distutils.sysconfig so we work when we
 # haven't been installed
 site_packages = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>ansible/modules/.*)\.py$' % site_packages)
-COLLECTION_PATH_RE = re.compile(r'/(?P<path>ansible_collections/[^/]+/[^/]+/plugins/modules/.*)\.py$')
+CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>ansible/modules/.*)\.(py|ps1)$' % site_packages)
+COLLECTION_PATH_RE = re.compile(r'/(?P<path>ansible_collections/[^/]+/[^/]+/plugins/modules/.*)\.(py|ps1)$')
 
 # Detect new-style Python modules by looking for required imports:
 # import ansible_collections.[my_ns.my_col.plugins.module_utils.my_module_util]
@@ -1000,6 +1000,17 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     output = BytesIO()
     py_module_names = set()
 
+    try:
+        remote_module_fqn = _get_ansible_module_fqn(module_path)
+    except ValueError:
+        # Modules in roles currently are not found by the fqn heuristic so we
+        # fallback to this.  This means that relative imports inside a module from
+        # a role may fail.  Absolute imports should be used for future-proofness.
+        # People should start writing collections instead of modules in roles so we
+        # may never fix this
+        display.debug('ANSIBALLZ: Could not determine module FQN')
+        remote_module_fqn = 'ansible.modules.%s' % module_name
+
     if module_substyle == 'python':
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
         try:
@@ -1012,17 +1023,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         except AttributeError:
             display.warning(u'Bad module compression string specified: %s.  Using ZIP_STORED (no compression)' % module_compression)
             compression_method = zipfile.ZIP_STORED
-
-        try:
-            remote_module_fqn = _get_ansible_module_fqn(module_path)
-        except ValueError:
-            # Modules in roles currently are not found by the fqn heuristic so we
-            # fallback to this.  This means that relative imports inside a module from
-            # a role may fail.  Absolute imports should be used for future-proofness.
-            # People should start writing collections instead of modules in roles so we
-            # may never fix this
-            display.debug('ANSIBALLZ: Could not determine module FQN')
-            remote_module_fqn = 'ansible.modules.%s' % module_name
 
         lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ansiballz_cache')
         cached_module_filename = os.path.join(lookup_path, "%s-%s" % (module_name, module_compression))
@@ -1191,7 +1191,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         b_module_data = ps_manifest._create_powershell_wrapper(
             b_module_data, module_path, module_args, environment,
             async_timeout, become, become_method, become_user, become_password,
-            become_flags, module_substyle, task_vars
+            become_flags, module_substyle, task_vars, remote_module_fqn
         )
 
     elif module_substyle == 'jsonargs':
