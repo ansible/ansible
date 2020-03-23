@@ -188,14 +188,16 @@ rm -fr "${galaxy_testdir}"
 #
 # Basic tests to ensure listing roles works
 
-f_ansible_galaxy_status \
-    "role list"
+f_ansible_galaxy_status "role list"
+galaxy_testdir=$(mktemp -d)
+pushd "${galaxy_testdir}"
+    ansible-galaxy install git+file:///"${galaxy_local_test_role_git_repo}" "$@"
 
     ansible-galaxy role list | tee out.txt
     ansible-galaxy role list test-role | tee -a out.txt
 
     [[ $(grep -c '^- test-role' out.txt ) -eq 2 ]]
-
+popd # ${galaxy_testdir}
 
 # Properly list roles when the role name is a subset of the path, or the role
 # name is the same name as the parent directory of the role. Issue #67365
