@@ -61,7 +61,6 @@ options:
     description:
       - Controls how you are charged for read and write throughput and how you manage capacity.
     choices: ['PROVISIONED', 'PAY_PER_REQUEST']
-    default: 'PROVISIONED'
     type: str
   read_capacity:
     description:
@@ -142,28 +141,31 @@ options:
     default: 60
     type: int
   sse_enabled:
-    version_added: "2.8"
+    version_added: "2.10"
     type: bool
     description:
     - boolean for setting server-side encryption
   stream_enabled:
-    version_added: "2.8"
+    version_added: "2.10"
     type: bool
     description:
     - Indicates whether DynamoDB Streams is enabled (true) or disabled (false) on the table
   stream_view_type:
-    version_added: "2.8"
+    version_added: "2.10"
+    type: str
     choices: ['KEYS_ONLY', 'NEW_IMAGE', 'OLD_IMAGE', 'NEW_AND_OLD_IMAGES']
     description:
     - when an item in the table is modified, stream_view_type determines what information is written to the stream for this table.
     - "valid types: : ['KEYS_ONLY', 'NEW_IMAGE', 'OLD_IMAGE', 'NEW_AND_OLD_IMAGES']"
   sse_type:
-    version_added: "2.8"
+    version_added: "2.10"
+    type: str
     choices: ['AES256', 'KMS']
     description:
     - server-side encryption type
   sse_kms_master_key_id:
-    version_added: "2.8"
+    version_added: "2.10"
+    type: str
     description:
     - The KMS Master Key (CMK) which should be used for the KMS encryption.
     - To specify a CMK, use its key ID, Amazon Resource Name (ARN), alias name, or alias ARN.
@@ -172,7 +174,7 @@ extends_documentation_fragment:
     - ec2
 """
 
-EXAMPLES = '''
+EXAMPLES = """
 # Create dynamo table with hash and range primary key
 - dynamodb_table:
     name: my-table
@@ -221,34 +223,33 @@ EXAMPLES = '''
     name: my-table
     region: us-east-1
     state: absent
-'''
+"""
 
-RETURN = '''
+RETURN = """
 table_status:
     description: The current status of the table.
     returned: success
     type: str
     sample: ACTIVE
-'''
+"""
 
 import traceback
 
 try:
     from ansible.module_utils.ec2 import (
+        AWSRetry,
         ansible_dict_to_boto3_tag_list,
         boto3_tag_list_to_ansible_dict,
         compare_aws_tags,
-        ec2_argument_spec,
-        AWSRetry
     )
     from ansible.module_utils.aws.core import (
         AnsibleAWSModule,
-        is_boto3_error_code
+        is_boto3_error_code,
     )
-    from ansible.utils.vars import merge_hash
+    from ansible.module_utils.common.dict_transformations import dict_merge
     from botocore.exceptions import (
         ClientError,
-        NoCredentialsError
+        NoCredentialsError,
     )
 except ImportError:
     pass  # caught by AnsibleAWSModule
@@ -292,7 +293,7 @@ def wait_for_table_active(table):
             {
                 'Error': {
                     'Code': 'DynamoDBTableNotActive',
-                    'Message': "Table '{}' status is {}. Expecting ACTIVE.".format(
+                    'Message': "Table '{0}' status is {1}. Expecting ACTIVE.".format(
                         table.table_name,
                         table.table_status
                     )
@@ -302,7 +303,7 @@ def wait_for_table_active(table):
         )
 
     raise Exception(
-        "Error validating ACTIVE state of '{}' DynamoDB table.".format(table.table_name)
+        "Error validating ACTIVE state of '{0}' DynamoDB table.".format(table.table_name)
     )
 
 
@@ -325,11 +326,11 @@ def get_table_tags_change(
         purge_tags=purge_tags
     )
 
-    result_tags = {
-        key: value
-        for key, value in merge_hash(tags, table_tags).items()
-        if key not in tags_remove
-    }
+    result_tags = dict(
+        (k, v)
+        for k, v in dict_merge(tags, table_tags).items()
+        if k not in tags_remove
+    )
 
     return {
         'changed': tags_add or tags_remove,
@@ -1067,8 +1068,7 @@ def serialize_indexes(all_indexes):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(default='present', choices=['present', 'absent']),
         name=dict(required=True, type='str'),
         hash_key_name=dict(type='str'),
@@ -1078,7 +1078,7 @@ def main():
         billing_mode=dict(default=None, type='str', choices=['PROVISIONED', 'PAY_PER_REQUEST']),
         read_capacity=dict(default=1, type='int'),
         write_capacity=dict(default=1, type='int'),
-        indexes=dict(default=[], type='list'),
+        indexes=dict(default=[], type='list', elements='dict'),
         tags=dict(type='dict'),
         purge_tags=dict(default=False, type='bool'),
         wait_for_active_timeout=dict(default=60, type='int'),
@@ -1088,14 +1088,13 @@ def main():
         sse_type=dict(type='str', choices=['AES256', 'KMS']),
         sse_kms_master_key_id=dict(type='str'),
         point_in_time_recovery=dict(default=False, type='bool')
-    ))
+    )
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
             ['state', 'present', ['name', 'hash_key_name']],
-            ['sse_type', 'KMS', ['sse_type']],
             ['sse_enabled', 'True', ['sse_type']],
             ['stream_enabled', 'True', ['stream_view_type']]
         ]
