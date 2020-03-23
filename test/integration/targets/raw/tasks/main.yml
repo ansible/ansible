@@ -103,5 +103,3 @@
 - name: assert bash
   assert:
     that: "(bash_output.stdout | trim) == bash_path.stdout"
-
-
