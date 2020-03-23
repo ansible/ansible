@@ -66,7 +66,11 @@ options:
     url:
         description:
             - git repo URL. If not provided, the module will use the same mode used by "git clone"
-
+    accept_hostkey:
+        description:
+            - Accept ssh fingerprint. if True, ensure that "-o StrictHostKeyChecking=no" is
+              present as an ssh option.
+        type: bool
 requirements:
     - git>=2.19.0 (the command line tool)
 
@@ -118,6 +122,88 @@ import subprocess
 
 from ansible.module_utils.basic import AnsibleModule
 
+
+def git_commit(module):
+
+    commands = list()
+
+    add = module.params.get('add')
+    folder_path = module.params.get('folder_path')
+    comment = module.params.get('comment')
+    
+    if add:
+        commands.append('git -C {0} add {1}'.format(
+            folder_path, 
+            ' '.join(add)
+            ))
+
+    if comment:
+        commands.append('git -C {0} commit -m "{1}"'.format(
+            folder_path,
+            comment
+            ))
+
+    return commands
+
+
+def git_push(module):
+
+    commands = list()
+
+    folder_path = module.params.get('folder_path')
+    url = module.params.get('url')
+    user = module.params.get('user')
+    token = module.params.get('token')
+    branch = module.params.get('branch')
+    push_option = module.params.get('push_option')
+    https = module.params.get('https')
+    ssh = module.params.get('ssh')
+    # accept_hostkey = module.params.get('accept_hostkey')
+
+    if not ssh and not https:
+        if url.startswith('git@'):
+            ssh = True
+            https = False
+        if url.startswith('https://'):
+            ssh = False
+            https = True
+
+    if https:
+        ssh = False
+        cmd = 'git -C {folder_path} https://{user}:{token}@{url} HEAD:{branch}'.format(
+            folder_path=folder_path,
+            option=push_option,
+            user=user,
+            token=token,
+            url=url[8:],
+            branch=branch
+        )
+
+        if push_option:
+            index = cmd.find(folder_path)
+            commands.append(cmd[:index] + '--push-option={option}'.format(option=push_option) + cmd[index:])
+        if not push_option:
+            commands.append(cmd)
+
+    if ssh:
+        cmd = 'git -C {folder_path} {url} HEAD:{branch}'.format(
+            folder_path=folder_path,
+            option=push_option,
+            user=user,
+            token=token,
+            url=url,
+            branch=branch
+        )
+
+        if push_option:
+            index = cmd.find(folder_path)
+            commands.append(cmd[:index] + '--push-option={option}'.format(option=push_option) + cmd[index:])
+        if not push_option:
+            commands.append(cmd)
+
+    return commands
+
+
 def main():
 
     argument_spec = dict(
@@ -128,11 +214,13 @@ def main():
         add=dict(type="list", default=[ "." ]),
         branch=dict(required=True),
         push=dict(type="bool", default=True),
-        commit=dict(),
+        commit=dict(type="bool", default=True),
         push_option=dict(),
         mode=dict(choices=["ssh","https"], default="ssh", required=True),
         url=dict(),
+        accept_hostkey=dict(type='bool', default=False)
     )
+
 
     mutually_exclusive = [("ssh", "https")]
     required_if = [
@@ -141,17 +229,49 @@ def main():
         ("push", True, ["branch"]),
         ]
 
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=mutually_exclusive,
         required_if=required_if,
     )
 
+
+    folder_path = module.params.get('folder_path')
+    url = module.params.get('url')
+
+    if folder_path and not url:
+        if os.path.isdir("{0}/.git".format(folder_path)):
+            git_path = "{0}/.git".format(folder_path)
+        else:
+            module.fail_json(msg='".git/" folder not found in {0}.'.format(folder_path))
+   
+        if os.path.isfile('{0}/config'.format(git_path)):       
+            with open('{0}/config'.format(git_path)) as config:
+                content = config.readlines()
+            for line in content:
+                if 'url =' in line:
+                    url = line.split()[2]
+                    updated_url = {'url': url}
+                    module.params.update(updated_url)
+        else:
+            module.fail_json(msg='"config" file not found in {0}.'.format(git_path))
+
+
     result = dict(changed=False, warnings=list())
 
+
+    if module.params.get('commit'):
+        result['git_commit'] = git_commit(module)
+
+    if module.params.get('push'):
+        result['git_push'] = git_push(module)
+
+
+    module.exit_json(**result)
     # if module.params['accept_hostkey']:
     #     if ssh_opts is not None:
     #         if "-o StrictHostKeyChecking=no" not in ssh_opts:
     #             ssh_opts += " -o StrictHostKeyChecking=no"
     #     else:
-    #         ssh_opts = "-o StrictHostKeyChecking=no"
+    #         ssh_opts = "-o StrictHostKeyChecking=no"1
