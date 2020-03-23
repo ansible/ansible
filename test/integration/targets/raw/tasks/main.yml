@@ -81,7 +81,7 @@
           - 'raw_result2.stdout_lines is defined'
           - 'raw_result2.rc == 0'
           - 'raw_result2.stdout_lines == ["foobar"]'
-# the following added to test https://github.com/ansible/ansible/pull/68315
+# the following five tests added to test https://github.com/ansible/ansible/pull/68315
 - name: get the path to sh
   shell: which sh
   register: sh_path
@@ -90,7 +90,6 @@
   args:
     executable: "{{ sh_path.stdout }}"
   become: true
-  become_method: sudo
   register: sh_output
 - name: assert sh
   assert:
@@ -100,7 +99,6 @@
   args:
     executable: "{{ bash_path.stdout }}"
   become: true
-  become_method: sudo
   register: bash_output
 - name: assert bash
   assert:
