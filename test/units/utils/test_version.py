@@ -5,6 +5,8 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from distutils.version import LooseVersion, StrictVersion
+
 import pytest
 
 from ansible.utils.version import SemanticVersion
@@ -30,6 +32,7 @@ NE = [
 LT = [
     ('1.0.0', '2.0.0', True),
     ('1.0.0-beta', '2.0.0-alpha', True),
+    ('1.0.0-alpha', '2.0.0-beta', True),
     ('1.0.0-alpha', '1.0.0', True),
     ('1.0.0-beta', '1.0.0-alpha3', False),
     ('1.0.0+foo', '1.0.0-alpha', False),
@@ -40,6 +43,7 @@ LT = [
 GT = [
     ('1.0.0', '2.0.0', False),
     ('1.0.0-beta', '2.0.0-alpha', False),
+    ('1.0.0-alpha', '2.0.0-beta', False),
     ('1.0.0-alpha', '1.0.0', False),
     ('1.0.0-beta', '1.0.0-alpha3', True),
     ('1.0.0+foo', '1.0.0-alpha', True),
@@ -50,11 +54,15 @@ GT = [
 LE = [
     ('1.0.0', '1.0.0', True),
     ('1.0.0', '2.0.0', True),
+    ('1.0.0-alpha', '1.0.0-beta', True),
+    ('1.0.0-beta', '1.0.0-alpha', False),
 ]
 
 GE = [
     ('1.0.0', '1.0.0', True),
     ('1.0.0', '2.0.0', False),
+    ('1.0.0-alpha', '1.0.0-beta', False),
+    ('1.0.0-beta', '1.0.0-alpha', True),
 ]
 
 VALID = [
@@ -154,6 +162,19 @@ STABLE = [
     ('1.0.0+bob', True),
 ]
 
+LOOSE_VERSION = [
+    (LooseVersion('1'), SemanticVersion('1.0.0')),
+    (LooseVersion('1-alpha'), SemanticVersion('1.0.0-alpha')),
+    (LooseVersion('1.0.0-alpha+build'), SemanticVersion('1.0.0-alpha+build')),
+]
+
+LOOSE_VERSION_INVALID = [
+    LooseVersion('1.a.3'),
+    LooseVersion(),
+    'bar',
+    StrictVersion('1.2.3'),
+]
+
 
 @pytest.mark.parametrize('left,right,expected', EQ)
 def test_eq(left, right, expected):
@@ -212,3 +233,13 @@ def test_prerelease(value, expected):
 @pytest.mark.parametrize('value,expected', STABLE)
 def test_stable(value, expected):
     assert SemanticVersion(value).is_stable is expected
+
+
+@pytest.mark.parametrize('value,expected', LOOSE_VERSION)
+def test_from_loose_version(value, expected):
+    assert SemanticVersion.from_loose_version(value) == expected
+
+
+@pytest.mark.parametrize('value', LOOSE_VERSION_INVALID)
+def test_from_loose_version_invalid(value):
+    pytest.raises((AttributeError, ValueError), SemanticVersion.from_loose_version, value)

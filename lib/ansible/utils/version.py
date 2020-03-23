@@ -163,12 +163,24 @@ class SemanticVersion(Version):
         except AttributeError:
             raise ValueError("%r is not a LooseVersion" % loose_version)
 
-        if set(type(v) for v in version[:3]) != set((int,)):
+        extra_idx = 3
+        for marker in ('-', '+'):
+            try:
+                idx = version.index(marker)
+            except ValueError:
+                continue
+            else:
+                if idx < extra_idx:
+                    extra_idx = idx
+        version[:] = version[:extra_idx]
+
+        if version and set(type(v) for v in version) != set((int,)):
             raise ValueError("Non integer values in %r" % loose_version)
 
         # Extra is everything to the right of the core version
         extra = re.search('[+-].+$', loose_version.vstring)
-        version[:] = version[:3] + [0] * (3 - len(version[:3]))
+
+        version[:] = version + [0] * (3 - len(version))
         return SemanticVersion(
             '%s%s' % (
                 '.'.join(str(v) for v in version),
