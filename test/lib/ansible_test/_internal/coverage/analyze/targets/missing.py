@@ -25,6 +25,19 @@ if t.TYPE_CHECKING:
     )
 
 
+class CoverageAnalyzeTargetsMissingConfig(CoverageAnalyzeTargetsConfig):
+    """Configuration for the `coverage analyze targets missing` command."""
+    def __init__(self, args):  # type: (t.Any) -> None
+        super(CoverageAnalyzeTargetsMissingConfig, self).__init__(args)
+
+        self.from_file = args.from_file  # type: str
+        self.to_file = args.to_file  # type: str
+        self.output_file = args.output_file  # type: str
+
+        self.only_gaps = args.only_gaps  # type: bool
+        self.only_exists = args.only_exists  # type: bool
+
+
 def command_coverage_analyze_targets_missing(args):  # type: (CoverageAnalyzeTargetsMissingConfig) -> None
     """Identify aggregated coverage in one file missing from another."""
     from_targets, from_path_arcs, from_path_lines = read_report(args.from_file)
@@ -94,16 +107,3 @@ def find_missing(
                 target_index.update(get_target_index(name, target_indexes) for name in remaining_targets)
 
     return target_data
-
-
-class CoverageAnalyzeTargetsMissingConfig(CoverageAnalyzeTargetsConfig):
-    """Configuration for the `coverage analyze targets missing` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsMissingConfig, self).__init__(args)
-
-        self.from_file = args.from_file  # type: str
-        self.to_file = args.to_file  # type: str
-        self.output_file = args.output_file  # type: str
-
-        self.only_gaps = args.only_gaps  # type: bool
-        self.only_exists = args.only_exists  # type: bool

@@ -52,6 +52,17 @@ COVERAGE_CONFIG_PATH = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'coveragerc')
 COVERAGE_OUTPUT_FILE_NAME = 'coverage'
 
 
+class CoverageConfig(EnvironmentConfig):
+    """Configuration for the coverage command."""
+    def __init__(self, args):  # type: (t.Any) -> None
+        super(CoverageConfig, self).__init__(args, 'coverage')
+
+        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
+        self.all = args.all if 'all' in args else False  # type: bool
+        self.stub = args.stub if 'stub' in args else False  # type: bool
+        self.coverage = False  # temporary work-around to support intercept_command in cover.py
+
+
 def initialize_coverage(args):  # type: (CoverageConfig) -> coverage_module
     """Delegate execution if requested, install requirements, then import and return the coverage module. Raises an exception if coverage is not available."""
     if args.delegate:
@@ -81,19 +92,19 @@ def run_coverage(args, output_file, command, cmd):  # type: (CoverageConfig, str
     intercept_command(args, target_name='coverage', env=env, cmd=cmd, disable_coverage=True)
 
 
-def get_python_coverage_files():  # type: () -> t.List[str]
+def get_python_coverage_files(path=None):  # type: (t.Optional[str]) -> t.List[str]
     """Return the list of Python coverage file paths."""
-    return get_coverage_files('python')
+    return get_coverage_files('python', path)
 
 
-def get_powershell_coverage_files():  # type: () -> t.List[str]
+def get_powershell_coverage_files(path=None):  # type: (t.Optional[str]) -> t.List[str]
     """Return the list of PowerShell coverage file paths."""
-    return get_coverage_files('powershell')
+    return get_coverage_files('powershell', path)
 
 
-def get_coverage_files(language):  # type: (str) -> t.List[str]
+def get_coverage_files(language, path=None):  # type: (str, t.Optional[str]) -> t.List[str]
     """Return the list of coverage file paths for the given language."""
-    coverage_dir = ResultType.COVERAGE.path
+    coverage_dir = path or ResultType.COVERAGE.path
     coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
                       if '=coverage.' in f and '=%s' % language in f]
 
@@ -245,17 +256,6 @@ def sanitize_filename(
         filename = new_name
 
     return filename
-
-
-class CoverageConfig(EnvironmentConfig):
-    """Configuration for the coverage command."""
-    def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageConfig, self).__init__(args, 'coverage')
-
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
-        self.all = args.all if 'all' in args else False  # type: bool
-        self.stub = args.stub if 'stub' in args else False  # type: bool
-        self.coverage = False  # temporary work-around to support intercept_command in cover.py
 
 
 class PathChecker:

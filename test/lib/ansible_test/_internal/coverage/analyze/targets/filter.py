@@ -22,6 +22,19 @@ if t.TYPE_CHECKING:
     )
 
 
+class CoverageAnalyzeTargetsFilterConfig(CoverageAnalyzeTargetsConfig):
+    """Configuration for the `coverage analyze targets filter` command."""
+    def __init__(self, args):  # type: (t.Any) -> None
+        super(CoverageAnalyzeTargetsFilterConfig, self).__init__(args)
+
+        self.input_file = args.input_file  # type: str
+        self.output_file = args.output_file  # type: str
+        self.include_targets = args.include_targets  # type: t.List[str]
+        self.exclude_targets = args.exclude_targets  # type: t.List[str]
+        self.include_path = args.include_path  # type: t.Optional[str]
+        self.exclude_path = args.exclude_path  # type: t.Optional[str]
+
+
 def command_coverage_analyze_targets_filter(args):  # type: (CoverageAnalyzeTargetsFilterConfig) -> None
     """Filter target names in an aggregated coverage file."""
     covered_targets, covered_path_arcs, covered_path_lines = read_report(args.input_file)
@@ -89,16 +102,3 @@ def filter_data(
             result[src_path] = dst_points
 
     return result
-
-
-class CoverageAnalyzeTargetsFilterConfig(CoverageAnalyzeTargetsConfig):
-    """Configuration for the `coverage analyze targets filter` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsFilterConfig, self).__init__(args)
-
-        self.input_file = args.input_file  # type: str
-        self.output_file = args.output_file  # type: str
-        self.include_targets = args.include_targets  # type: t.List[str]
-        self.exclude_targets = args.exclude_targets  # type: t.List[str]
-        self.include_path = args.include_path  # type: t.Optional[str]
-        self.exclude_path = args.exclude_path  # type: t.Optional[str]

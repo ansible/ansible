@@ -44,25 +44,35 @@ if t.TYPE_CHECKING:
     )
 
 
+class CoverageAnalyzeTargetsGenerateConfig(CoverageAnalyzeTargetsConfig):
+    """Configuration for the `coverage analyze targets generate` command."""
+    def __init__(self, args):  # type: (t.Any) -> None
+        super(CoverageAnalyzeTargetsGenerateConfig, self).__init__(args)
+
+        self.input_dir = args.input_dir or ResultType.COVERAGE.path  # type: str
+        self.output_file = args.output_file  # type: str
+
+
 def command_coverage_analyze_targets_generate(args):  # type: (CoverageAnalyzeTargetsGenerateConfig) -> None
     """Analyze code coverage data to determine which integration test targets provide coverage for each arc or line."""
     root = data_context().content.root
     target_indexes = {}
-    arcs = dict((os.path.relpath(path, root), data) for path, data in analyze_python_coverage(args, target_indexes).items())
-    lines = dict((os.path.relpath(path, root), data) for path, data in analyze_powershell_coverage(args, target_indexes).items())
+    arcs = dict((os.path.relpath(path, root), data) for path, data in analyze_python_coverage(args, args.input_dir, target_indexes).items())
+    lines = dict((os.path.relpath(path, root), data) for path, data in analyze_powershell_coverage(args, args.input_dir, target_indexes).items())
     report = make_report(target_indexes, arcs, lines)
     write_report(args, report, args.output_file)
 
 
 def analyze_python_coverage(
-        args,  # type: CoverageAnalyzeTargetsConfig
+        args,  # type: CoverageAnalyzeTargetsGenerateConfig
+        path,  # type: str
         target_indexes,  # type: TargetIndexes
 ):  # type: (...) -> Arcs
     """Analyze Python code coverage."""
     results = {}  # type: Arcs
     collection_search_re, collection_sub_re = get_collection_path_regexes()
     modules = get_python_modules()
-    python_files = get_python_coverage_files()
+    python_files = get_python_coverage_files(path)
     coverage = initialize_coverage(args)
 
     for python_file in python_files:
@@ -85,13 +95,14 @@ def analyze_python_coverage(
 
 
 def analyze_powershell_coverage(
-        args,  # type: CoverageAnalyzeTargetsConfig
+        args,  # type: CoverageAnalyzeTargetsGenerateConfig
+        path,  # type: str
         target_indexes,  # type: TargetIndexes
 ):  # type: (...) -> Lines
     """Analyze PowerShell code coverage"""
     results = {}  # type: Lines
     collection_search_re, collection_sub_re = get_collection_path_regexes()
-    powershell_files = get_powershell_coverage_files()
+    powershell_files = get_powershell_coverage_files(path)
 
     for powershell_file in powershell_files:
         if not is_integration_coverage_file(powershell_file):
@@ -113,7 +124,7 @@ def analyze_powershell_coverage(
 
 
 def prune_invalid_filenames(
-        args,  # type: CoverageAnalyzeTargetsConfig
+        args,  # type: CoverageAnalyzeTargetsGenerateConfig
         results,  # type: t.Dict[str, t.Any]
         collection_search_re=None,  # type: t.Optional[str]
 ):  # type: (...) -> None
@@ -133,12 +144,3 @@ def get_target_name(path):  # type: (str) -> str
 def is_integration_coverage_file(path):  # type: (str) -> bool
     """Returns True if the coverage file came from integration tests, otherwise False."""
     return os.path.basename(path).split('=')[0] in ('integration', 'windows-integration', 'network-integration')
-
-
-class CoverageAnalyzeTargetsGenerateConfig(CoverageAnalyzeTargetsConfig):
-    """Configuration for the `coverage analyze targets generate` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsGenerateConfig, self).__init__(args)
-
-        self.input_dir = args.input_dir or ResultType.COVERAGE.path  # type: str
-        self.output_file = args.output_file  # type: str
