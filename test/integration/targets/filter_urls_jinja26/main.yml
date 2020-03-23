@@ -21,4 +21,3 @@
           - "{'foo': 'bar'}|urlencode == 'foo=bar'"
           - "{'foo': 'bar', 'baz': 'buz'}|urlencode == 'foo=bar&baz=buz'"
           - "()|urlencode == ''"
-
