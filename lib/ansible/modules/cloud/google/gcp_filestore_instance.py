@@ -73,6 +73,7 @@ options:
     description:
     - File system shares on the instance. For this version, only a single file share
       is supported.
+    elements: dict
     required: true
     type: list
     suboptions:
@@ -91,6 +92,7 @@ options:
     description:
     - VPC networks to which the instance is connected. For this version, only a single
       network is supported.
+    elements: dict
     required: true
     type: list
     suboptions:
@@ -102,6 +104,7 @@ options:
       modes:
         description:
         - IP versions for which the instance has IP addresses assigned.
+        elements: str
         required: true
         type: list
       reserved_ip_range:

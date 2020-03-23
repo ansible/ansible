@@ -174,6 +174,12 @@ validBeforeTime:
   - Key can only be used before this time.
   returned: success
   type: str
+keyType:
+  description:
+  - Specifies the type of the key. Possible values include KEY_TYPE_UNSPECIFIED, USER_MANAGED
+    and SYSTEM_MANAGED .
+  returned: success
+  type: str
 serviceAccount:
   description:
   - The name of the serviceAccount.

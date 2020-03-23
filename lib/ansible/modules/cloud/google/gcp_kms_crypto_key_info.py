@@ -116,7 +116,7 @@ resources:
       - The resource name for the CryptoKey.
       returned: success
       type: str
-    creationTime:
+    createTime:
       description:
       - The time that this resource was created on the server.
       - This is in RFC3339 text format.
@@ -160,6 +160,11 @@ resources:
           - The protection level to use when creating a version based on this template.
           returned: success
           type: str
+    nextRotationTime:
+      description:
+      - The time when KMS will create a new version of this Crypto Key.
+      returned: success
+      type: str
     keyRing:
       description:
       - The KeyRing that this key belongs to.

@@ -402,6 +402,19 @@ resources:
         a /14 block in 10.0.0.0/8.
       returned: success
       type: str
+    enableTpu:
+      description:
+      - "(Optional) Whether to enable Cloud TPU resources in this cluster."
+      - See the official documentation - U(https://cloud.google.com/tpu/docs/kubernetes-engine-setup)
+        .
+      returned: success
+      type: bool
+    tpuIpv4CidrBlock:
+      description:
+      - The IP address range of the Cloud TPUs in this cluster, in [CIDR](http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)
+        notation (e.g. `1.2.3.4/29`).
+      returned: success
+      type: str
     addonsConfig:
       description:
       - Configurations for the various addons available to run in the cluster.
@@ -651,16 +664,6 @@ resources:
       - The time the cluster will be automatically deleted in RFC3339 text format.
       returned: success
       type: str
-    enableTpu:
-      description:
-      - Enable the ability to use Cloud TPUs in this cluster.
-      returned: success
-      type: bool
-    tpuIpv4CidrBlock:
-      description:
-      - The IP address range of the Cloud TPUs in this cluster, in CIDR notation.
-      returned: success
-      type: str
     conditions:
       description:
       - Which conditions caused the current cluster state.
@@ -705,6 +708,28 @@ resources:
               - Block specified in CIDR notation.
               returned: success
               type: str
+    nodePools:
+      description:
+      - Node pools belonging to this cluster.
+      returned: success
+      type: complex
+      contains:
+        name:
+          description:
+          - Name of the node pool.
+          returned: success
+          type: str
+    binaryAuthorization:
+      description:
+      - Configuration for the BinaryAuthorization feature.
+      returned: success
+      type: complex
+      contains:
+        enabled:
+          description:
+          - If enabled, all container images will be validated by Binary Authorization.
+          returned: success
+          type: bool
     location:
       description:
       - The location where the cluster is deployed.

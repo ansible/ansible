@@ -186,6 +186,13 @@ resources:
             associated with user-visible concepts, such as Quota.
           returned: success
           type: str
+        type:
+          description:
+          - The metric type, including its DNS name prefix. The type is not URL-encoded.
+          - All user-defined metric types have the DNS name `custom.googleapis.com`
+            or `external.googleapis.com`.
+          returned: success
+          type: str
     labelExtractors:
       description:
       - A map from a label key string to an extractor expression which is used to

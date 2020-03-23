@@ -72,6 +72,7 @@ options:
   target:
     description:
     - As defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1) .
+    elements: str
     required: false
     type: list
   managed_zone:

@@ -106,6 +106,7 @@ options:
           communicating with gcr.io (the Google Container Registry).
         - If unspecified, no scopes are added, unless Cloud Logging or Cloud Monitoring
           are enabled, in which case their required scopes will be added.
+        elements: str
         required: false
         type: list
       service_account:
@@ -162,6 +163,7 @@ options:
           valid sources or targets for network firewalls and are specified by the
           client during cluster or node pool creation. Each tag within the list must
           comply with RFC1035.
+        elements: str
         required: false
         type: list
       preemptible:
@@ -174,6 +176,7 @@ options:
         description:
         - A list of hardware accelerators to be attached to each node. See U(https://cloud.google.com/compute/docs/gpus)
           for more information about support for GPUs.
+        elements: dict
         required: false
         type: list
         version_added: '2.9'
@@ -207,6 +210,7 @@ options:
         - List of kubernetes taints to be applied to each node.
         - 'For more information, including usage and the valid values, see: U(https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)
           .'
+        elements: dict
         required: false
         type: list
         version_added: '2.9'
@@ -319,6 +323,14 @@ options:
       a /14 block in 10.0.0.0/8.
     required: false
     type: str
+  enable_tpu:
+    description:
+    - "(Optional) Whether to enable Cloud TPU resources in this cluster."
+    - See the official documentation - U(https://cloud.google.com/tpu/docs/kubernetes-engine-setup)
+      .
+    required: false
+    type: bool
+    version_added: '2.9'
   addons_config:
     description:
     - Configurations for the various addons available to run in the cluster.
@@ -377,6 +389,7 @@ options:
     description:
     - The list of Google Compute Engine zones in which the cluster's nodes should
       be located.
+    elements: str
     required: false
     type: list
     aliases:
@@ -510,18 +523,6 @@ options:
         - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
         required: false
         type: str
-  enable_tpu:
-    description:
-    - Enable the ability to use Cloud TPUs in this cluster.
-    required: false
-    type: bool
-    version_added: '2.9'
-  tpu_ipv4_cidr_block:
-    description:
-    - The IP address range of the Cloud TPUs in this cluster, in CIDR notation.
-    required: false
-    type: str
-    version_added: '2.9'
   master_authorized_networks_config:
     description:
     - Configuration for controlling how IPs are allocated in the cluster.
@@ -538,6 +539,7 @@ options:
         description:
         - Define up to 50 external networks that could access Kubernetes master through
           HTTPS.
+        elements: dict
         required: false
         type: list
         suboptions:
@@ -551,6 +553,18 @@ options:
             - Block specified in CIDR notation.
             required: false
             type: str
+  binary_authorization:
+    description:
+    - Configuration for the BinaryAuthorization feature.
+    required: false
+    type: dict
+    version_added: '2.10'
+    suboptions:
+      enabled:
+        description:
+        - If enabled, all container images will be validated by Binary Authorization.
+        required: false
+        type: bool
   location:
     description:
     - The location where the cluster is deployed.
@@ -919,6 +933,19 @@ clusterIpv4Cidr:
     in 10.0.0.0/8.
   returned: success
   type: str
+enableTpu:
+  description:
+  - "(Optional) Whether to enable Cloud TPU resources in this cluster."
+  - See the official documentation - U(https://cloud.google.com/tpu/docs/kubernetes-engine-setup)
+    .
+  returned: success
+  type: bool
+tpuIpv4CidrBlock:
+  description:
+  - The IP address range of the Cloud TPUs in this cluster, in [CIDR](http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)
+    notation (e.g. `1.2.3.4/29`).
+  returned: success
+  type: str
 addonsConfig:
   description:
   - Configurations for the various addons available to run in the cluster.
@@ -1168,16 +1195,6 @@ expireTime:
   - The time the cluster will be automatically deleted in RFC3339 text format.
   returned: success
   type: str
-enableTpu:
-  description:
-  - Enable the ability to use Cloud TPUs in this cluster.
-  returned: success
-  type: bool
-tpuIpv4CidrBlock:
-  description:
-  - The IP address range of the Cloud TPUs in this cluster, in CIDR notation.
-  returned: success
-  type: str
 conditions:
   description:
   - Which conditions caused the current cluster state.
@@ -1222,6 +1239,28 @@ masterAuthorizedNetworksConfig:
           - Block specified in CIDR notation.
           returned: success
           type: str
+nodePools:
+  description:
+  - Node pools belonging to this cluster.
+  returned: success
+  type: complex
+  contains:
+    name:
+      description:
+      - Name of the node pool.
+      returned: success
+      type: str
+binaryAuthorization:
+  description:
+  - Configuration for the BinaryAuthorization feature.
+  returned: success
+  type: complex
+  contains:
+    enabled:
+      description:
+      - If enabled, all container images will be validated by Binary Authorization.
+      returned: success
+      type: bool
 location:
   description:
   - The location where the cluster is deployed.
@@ -1300,6 +1339,7 @@ def main():
                 options=dict(enable_private_nodes=dict(type='bool'), enable_private_endpoint=dict(type='bool'), master_ipv4_cidr_block=dict(type='str')),
             ),
             cluster_ipv4_cidr=dict(type='str'),
+            enable_tpu=dict(type='bool'),
             addons_config=dict(
                 type='dict',
                 options=dict(
@@ -1328,8 +1368,6 @@ def main():
                     tpu_ipv4_cidr_block=dict(type='str'),
                 ),
             ),
-            enable_tpu=dict(type='bool'),
-            tpu_ipv4_cidr_block=dict(type='str'),
             master_authorized_networks_config=dict(
                 type='dict',
                 options=dict(
@@ -1337,6 +1375,7 @@ def main():
                     cidr_blocks=dict(type='list', elements='dict', options=dict(display_name=dict(type='str'), cidr_block=dict(type='str'))),
                 ),
             ),
+            binary_authorization=dict(type='dict', options=dict(enabled=dict(type='bool'))),
             location=dict(required=True, type='str', aliases=['zone']),
             kubectl_path=dict(type='str'),
             kubectl_context=dict(type='str'),
@@ -1403,6 +1442,7 @@ def resource_to_request(module):
         u'network': module.params.get('network'),
         u'privateClusterConfig': ClusterPrivateclusterconfig(module.params.get('private_cluster_config', {}), module).to_request(),
         u'clusterIpv4Cidr': module.params.get('cluster_ipv4_cidr'),
+        u'enableTpu': module.params.get('enable_tpu'),
         u'addonsConfig': ClusterAddonsconfig(module.params.get('addons_config', {}), module).to_request(),
         u'subnetwork': module.params.get('subnetwork'),
         u'locations': module.params.get('locations'),
@@ -1411,11 +1451,10 @@ def resource_to_request(module):
         u'networkPolicy': ClusterNetworkpolicy(module.params.get('network_policy', {}), module).to_request(),
         u'defaultMaxPodsConstraint': ClusterDefaultmaxpodsconstraint(module.params.get('default_max_pods_constraint', {}), module).to_request(),
         u'ipAllocationPolicy': ClusterIpallocationpolicy(module.params.get('ip_allocation_policy', {}), module).to_request(),
-        u'enableTpu': module.params.get('enable_tpu'),
-        u'tpuIpv4CidrBlock': module.params.get('tpu_ipv4_cidr_block'),
         u'masterAuthorizedNetworksConfig': ClusterMasterauthorizednetworksconfig(
             module.params.get('master_authorized_networks_config', {}), module
         ).to_request(),
+        u'binaryAuthorization': ClusterBinaryauthorization(module.params.get('binary_authorization', {}), module).to_request(),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -1492,6 +1531,8 @@ def response_to_hash(module, response):
         u'network': response.get(u'network'),
         u'privateClusterConfig': ClusterPrivateclusterconfig(response.get(u'privateClusterConfig', {}), module).from_response(),
         u'clusterIpv4Cidr': response.get(u'clusterIpv4Cidr'),
+        u'enableTpu': response.get(u'enableTpu'),
+        u'tpuIpv4CidrBlock': response.get(u'tpuIpv4CidrBlock'),
         u'addonsConfig': ClusterAddonsconfig(response.get(u'addonsConfig', {}), module).from_response(),
         u'subnetwork': response.get(u'subnetwork'),
         u'locations': response.get(u'locations'),
@@ -1512,10 +1553,10 @@ def response_to_hash(module, response):
         u'servicesIpv4Cidr': response.get(u'servicesIpv4Cidr'),
         u'currentNodeCount': response.get(u'currentNodeCount'),
         u'expireTime': response.get(u'expireTime'),
-        u'enableTpu': response.get(u'enableTpu'),
-        u'tpuIpv4CidrBlock': response.get(u'tpuIpv4CidrBlock'),
         u'conditions': ClusterConditionsArray(response.get(u'conditions', []), module).from_response(),
         u'masterAuthorizedNetworksConfig': ClusterMasterauthorizednetworksconfig(response.get(u'masterAuthorizedNetworksConfig', {}), module).from_response(),
+        u'nodePools': ClusterNodepoolsArray(response.get(u'nodePools', []), module).from_response(),
+        u'binaryAuthorization': ClusterBinaryauthorization(response.get(u'binaryAuthorization', {}), module).from_response(),
     }
 
 
@@ -2049,6 +2090,48 @@ class ClusterCidrblocksArray(object):
 
     def _response_from_item(self, item):
         return remove_nones_from_dict({u'displayName': item.get(u'displayName'), u'cidrBlock': item.get(u'cidrBlock')})
+
+
+class ClusterNodepoolsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'name': item.get('name')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'name': item.get(u'name')})
+
+
+class ClusterBinaryauthorization(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'enabled': self.request.get('enabled')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'enabled': self.request.get(u'enabled')})
 
 
 if __name__ == '__main__':

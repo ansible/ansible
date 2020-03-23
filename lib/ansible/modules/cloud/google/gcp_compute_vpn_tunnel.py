@@ -106,6 +106,7 @@ options:
       gateway. The value should be a CIDR formatted string, for example `192.168.0.0/16`.
       The ranges should be disjoint.
     - Only IPv4 is supported.
+    elements: str
     required: false
     type: list
   remote_traffic_selector:
@@ -114,6 +115,7 @@ options:
       gateway. The value should be a CIDR formatted string, for example `192.168.0.0/16`.
       The ranges should be disjoint.
     - Only IPv4 is supported.
+    elements: str
     required: false
     type: list
   region:

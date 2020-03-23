@@ -129,7 +129,7 @@ name:
   - The resource name for the KeyRing.
   returned: success
   type: str
-creationTime:
+createTime:
   description:
   - The time that this resource was created on the server.
   - This is in RFC3339 text format.
@@ -282,7 +282,7 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {u'name': response.get(u'name'), u'creationTime': response.get(u'creationTime')}
+    return {u'name': response.get(u'name'), u'createTime': response.get(u'createTime')}
 
 
 def decode_response(response, module):

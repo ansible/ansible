@@ -179,7 +179,7 @@ name:
   - The resource name for the CryptoKey.
   returned: success
   type: str
-creationTime:
+createTime:
   description:
   - The time that this resource was created on the server.
   - This is in RFC3339 text format.
@@ -223,6 +223,11 @@ versionTemplate:
       - The protection level to use when creating a version based on this template.
       returned: success
       type: str
+nextRotationTime:
+  description:
+  - The time when KMS will create a new version of this Crypto Key.
+  returned: success
+  type: str
 keyRing:
   description:
   - The KeyRing that this key belongs to.
@@ -394,11 +399,12 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'name': module.params.get('name'),
-        u'creationTime': response.get(u'creationTime'),
+        u'createTime': response.get(u'createTime'),
         u'labels': response.get(u'labels'),
         u'purpose': module.params.get('purpose'),
         u'rotationPeriod': response.get(u'rotationPeriod'),
         u'versionTemplate': CryptoKeyVersiontemplate(response.get(u'versionTemplate', {}), module).from_response(),
+        u'nextRotationTime': response.get(u'nextRotationTime'),
     }
 
 

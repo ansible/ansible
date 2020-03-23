@@ -91,6 +91,7 @@ options:
         - Specifies parameters that will be used for generating initial DnsKeys for
           this ManagedZone. If you provide a spec for keySigning or zoneSigning, you
           must also provide one for the other.
+        elements: dict
         required: false
         type: list
         suboptions:
@@ -112,7 +113,7 @@ options:
               key (ZSK). Key signing keys have the Secure Entry Point flag set and,
               when active, will only be used to sign resource record sets of type
               DNSKEY. Zone signing keys do not have the Secure Entry Point flag set
-              and will be used to sign all other types of resource record sets. .
+              and will be used to sign all other types of resource record sets.
             - 'Some valid choices include: "keySigning", "zoneSigning"'
             required: false
             type: str
@@ -162,6 +163,7 @@ options:
       networks:
         description:
         - The list of VPC networks that can see this zone.
+        elements: dict
         required: true
         type: list
         suboptions:
@@ -294,7 +296,7 @@ dnssecConfig:
             (ZSK). Key signing keys have the Secure Entry Point flag set and, when
             active, will only be used to sign resource record sets of type DNSKEY.
             Zone signing keys do not have the Secure Entry Point flag set and will
-            be used to sign all other types of resource record sets. .
+            be used to sign all other types of resource record sets.
           returned: success
           type: str
         kind:

@@ -117,7 +117,7 @@ resources:
       - The resource name for the KeyRing.
       returned: success
       type: str
-    creationTime:
+    createTime:
       description:
       - The time that this resource was created on the server.
       - This is in RFC3339 text format.

@@ -110,6 +110,7 @@ options:
           metric type has a label for the HTTP response code, response_code, so you
           can look at latencies for successful responses or just for responses that
           failed.
+        elements: dict
         required: false
         type: list
         suboptions:
@@ -223,6 +224,7 @@ options:
           bounds:
             description:
             - The values must be monotonically increasing.
+            elements: str
             required: true
             type: list
   project:
@@ -385,6 +387,13 @@ metricDescriptor:
         Use sentence case without an ending period, for example "Request count". This
         field is optional but it is recommended to be set for any metrics associated
         with user-visible concepts, such as Quota.
+      returned: success
+      type: str
+    type:
+      description:
+      - The metric type, including its DNS name prefix. The type is not URL-encoded.
+      - All user-defined metric types have the DNS name `custom.googleapis.com` or
+        `external.googleapis.com`.
       returned: success
       type: str
 labelExtractors:

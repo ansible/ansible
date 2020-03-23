@@ -86,6 +86,7 @@ options:
           communicating with gcr.io (the Google Container Registry).
         - If unspecified, no scopes are added, unless Cloud Logging or Cloud Monitoring
           are enabled, in which case their required scopes will be added.
+        elements: str
         required: false
         type: list
       service_account:
@@ -142,6 +143,7 @@ options:
           valid sources or targets for network firewalls and are specified by the
           client during cluster or node pool creation. Each tag within the list must
           comply with RFC1035.
+        elements: str
         required: false
         type: list
       preemptible:
@@ -153,6 +155,7 @@ options:
       accelerators:
         description:
         - A list of hardware accelerators to be attached to each node.
+        elements: dict
         required: false
         type: list
         version_added: '2.9'
@@ -184,6 +187,7 @@ options:
       taints:
         description:
         - List of kubernetes taints to be applied to each node.
+        elements: dict
         required: false
         type: list
         version_added: '2.9'
@@ -282,6 +286,7 @@ options:
   conditions:
     description:
     - Which conditions caused the current node pool state.
+    elements: dict
     required: false
     type: list
     version_added: '2.9'

@@ -67,6 +67,7 @@ options:
   included_permissions:
     description:
     - Names of permissions this role grants when bound in an IAM policy.
+    elements: str
     required: false
     type: list
   stage:
