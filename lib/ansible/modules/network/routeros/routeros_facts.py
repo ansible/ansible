@@ -263,39 +263,31 @@ class Interfaces(FactsBase):
 
         data = self.responses[1]
         if data:
-            data = self.parse_addresses(data)
-            self.populate_ipv4_interfaces(data)
+            data = self.parse_detail(data)
+            self.populate_addresses(data, 'ipv4')
 
         data = self.responses[2]
         if data:
-            data = self.parse_addresses(data)
-            self.populate_ipv6_interfaces(data)
+            data = self.parse_detail(data)
+            self.populate_addresses(data, 'ipv6')
 
         data = self.responses[3]
         if data:
-            self.facts['neighbors'] = self.parse_neighbors(data)
+            self.facts['neighbors'] = list(self.parse_detail(data))
 
     def populate_interfaces(self, data):
         for key, value in iteritems(data):
             self.facts['interfaces'][key] = value
 
-    def populate_ipv4_interfaces(self, data):
-        for key, value in iteritems(data):
-            if 'ipv4' not in self.facts['interfaces'][key]:
-                self.facts['interfaces'][key]['ipv4'] = list()
+    def populate_addresses(self, data, family):
+        for value in data:
+            key = value['interface']
+            if family not in self.facts['interfaces'][key]:
+                self.facts['interfaces'][key][family] = list()
             addr, subnet = value['address'].split("/")
-            ipv4 = dict(address=addr.strip(), subnet=subnet.strip())
-            self.add_ip_address(addr.strip(), 'ipv4')
-            self.facts['interfaces'][key]['ipv4'].append(ipv4)
-
-    def populate_ipv6_interfaces(self, data):
-        for key, value in iteritems(data):
-            if 'ipv6' not in self.facts['interfaces'][key]:
-                self.facts['interfaces'][key]['ipv6'] = list()
-            addr, subnet = value['address'].split("/")
-            ipv6 = dict(address=addr.strip(), subnet=subnet.strip())
-            self.add_ip_address(addr.strip(), 'ipv6')
-            self.facts['interfaces'][key]['ipv6'].append(ipv6)
+            ip = dict(address=addr.strip(), subnet=subnet.strip())
+            self.add_ip_address(addr.strip(), family)
+            self.facts['interfaces'][key][family].append(ip)
 
     def add_ip_address(self, address, family):
         if family == 'ipv4':
@@ -318,41 +310,19 @@ class Interfaces(FactsBase):
         facts = dict()
         data = self.preprocess(data)
         for line in data:
-            name = self.parse_name(line)
-            facts[name] = dict()
-            for (key, value) in re.findall(self.DETAIL_RE, line):
-                facts[name][key] = value
+            parsed = dict(re.findall(self.DETAIL_RE, line))
+            if "name" not in parsed:
+                continue
+            facts[parsed["name"]] = dict(re.findall(self.DETAIL_RE, line))
         return facts
 
-    def parse_addresses(self, data):
-        facts = dict()
+    def parse_detail(self, data):
         data = self.preprocess(data)
         for line in data:
-            name = self.parse_interface(line)
-            facts[name] = dict()
-            for (key, value) in re.findall(self.DETAIL_RE, line):
-                facts[name][key] = value
-        return facts
-
-    def parse_neighbors(self, data):
-        facts = dict()
-        data = self.preprocess(data)
-        for line in data:
-            name = self.parse_interface(line)
-            facts[name] = dict()
-            for (key, value) in re.findall(self.DETAIL_RE, line):
-                facts[name][key] = value
-        return facts
-
-    def parse_name(self, data):
-        match = re.search(r'name=\"([\w\d\-]+)\"', data, re.M)
-        if match:
-            return match.group(1)
-
-    def parse_interface(self, data):
-        match = re.search(r'interface=([\w\d\-]+)', data, re.M)
-        if match:
-            return match.group(1)
+            parsed = dict(re.findall(self.DETAIL_RE, line))
+            if "interface" not in parsed:
+                continue
+            yield parsed
 
 
 FACT_SUBSETS = dict(
