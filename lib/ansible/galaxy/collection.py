@@ -18,7 +18,7 @@ import yaml
 
 from collections import namedtuple
 from contextlib import contextmanager
-from distutils.version import LooseVersion, StrictVersion
+from distutils.version import LooseVersion
 from hashlib import sha256
 from io import BytesIO
 from yaml.error import YAMLError
@@ -38,6 +38,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
+from ansible.utils.version import SemanticVersion
 from ansible.module_utils.urls import open_url
 
 urlparse = six.moves.urllib.parse.urlparse
@@ -56,7 +57,7 @@ class CollectionRequirement:
     _FILE_MAPPING = [(b'MANIFEST.json', 'manifest_file'), (b'FILES.json', 'files_file')]
 
     def __init__(self, namespace, name, b_path, api, versions, requirement, force, parent=None, metadata=None,
-                 files=None, skip=False):
+                 files=None, skip=False, allow_pre_releases=False):
         """
         Represents a collection requirement, the versions that are available to be installed as well as any
         dependencies the collection has.
@@ -75,15 +76,17 @@ class CollectionRequirement:
             collection artifact.
         :param skip: Whether to skip installing the collection. Should be set if the collection is already installed
             and force is not set.
+        :param allow_pre_releases: Whether to skip pre-release versions of collections.
         """
         self.namespace = namespace
         self.name = name
         self.b_path = b_path
         self.api = api
-        self.versions = set(versions)
+        self._versions = set(versions)
         self.force = force
         self.skip = skip
         self.required_by = []
+        self.allow_pre_releases = allow_pre_releases
 
         self._metadata = metadata
         self._files = files
@@ -102,9 +105,23 @@ class CollectionRequirement:
         return self._metadata
 
     @property
+    def versions(self):
+        if self.allow_pre_releases:
+            return self._versions
+        return set(v for v in self._versions if v == '*' or not SemanticVersion(v).is_prerelease)
+
+    @versions.setter
+    def versions(self, value):
+        self._versions = set(value)
+
+    @property
+    def pre_releases(self):
+        return set(v for v in self._versions if SemanticVersion(v).is_prerelease)
+
+    @property
     def latest_version(self):
         try:
-            return max([v for v in self.versions if v != '*'], key=LooseVersion)
+            return max([v for v in self.versions if v != '*'], key=SemanticVersion)
         except ValueError:  # ValueError: max() arg is an empty sequence
             return '*'
 
@@ -144,10 +161,18 @@ class CollectionRequirement:
                 for p, r in self.required_by
             )
 
-            versions = ", ".join(sorted(self.versions, key=LooseVersion))
+            versions = ", ".join(sorted(self.versions, key=SemanticVersion))
+            if not self.versions and self.pre_releases:
+                pre_release_msg = (
+                    '\nThis collection only contains pre-releases. Utilize `--pre` to install pre-releases, or '
+                    'explicitly provide the pre-release version.'
+                )
+            else:
+                pre_release_msg = ''
+
             raise AnsibleError(
-                "%s from source '%s'. Available versions before last requirement added: %s\nRequirements from:\n%s"
-                % (msg, collection_source, versions, req_by)
+                "%s from source '%s'. Available versions before last requirement added: %s\nRequirements from:\n%s%s"
+                % (msg, collection_source, versions, req_by, pre_release_msg)
             )
 
         self.versions = new_versions
@@ -298,7 +323,7 @@ class CollectionRequirement:
             elif requirement == '*' or version == '*':
                 continue
 
-            if not op(LooseVersion(version), LooseVersion(requirement)):
+            if not op(SemanticVersion(version), SemanticVersion.from_loose_version(LooseVersion(requirement))):
                 break
         else:
             return True
@@ -336,8 +361,13 @@ class CollectionRequirement:
         version = meta['version']
         meta = CollectionVersionMetadata(namespace, name, version, None, None, meta['dependencies'])
 
+        if SemanticVersion(version).is_prerelease:
+            allow_pre_release = True
+        else:
+            allow_pre_release = False
+
         return CollectionRequirement(namespace, name, b_path, None, [version], version, force, parent=parent,
-                                     metadata=meta, files=files)
+                                     metadata=meta, files=files, allow_pre_releases=allow_pre_release)
 
     @staticmethod
     def from_path(b_path, force, parent=None):
@@ -354,13 +384,19 @@ class CollectionRequirement:
                     raise AnsibleError("Collection file at '%s' does not contain a valid json string."
                                        % to_native(b_file_path))
 
+        allow_pre_release = False
         if 'manifest_file' in info:
             manifest = info['manifest_file']['collection_info']
             namespace = manifest['namespace']
             name = manifest['name']
             version = to_text(manifest['version'], errors='surrogate_or_strict')
 
-            if not hasattr(LooseVersion(version), 'version'):
+            try:
+                _v = SemanticVersion()
+                _v.parse(version)
+                if _v.is_prerelease:
+                    allow_pre_release = True
+            except ValueError:
                 display.warning("Collection at '%s' does not have a valid version set, falling back to '*'. Found "
                                 "version: '%s'" % (to_text(b_path), version))
                 version = '*'
@@ -380,10 +416,10 @@ class CollectionRequirement:
         files = info.get('files_file', {}).get('files', {})
 
         return CollectionRequirement(namespace, name, b_path, None, [version], version, force, parent=parent,
-                                     metadata=meta, files=files, skip=True)
+                                     metadata=meta, files=files, skip=True, allow_pre_releases=allow_pre_release)
 
     @staticmethod
-    def from_name(collection, apis, requirement, force, parent=None):
+    def from_name(collection, apis, requirement, force, parent=None, allow_pre_release=False):
         namespace, name = collection.split('.', 1)
         galaxy_meta = None
 
@@ -391,6 +427,9 @@ class CollectionRequirement:
             try:
                 if not (requirement == '*' or requirement.startswith('<') or requirement.startswith('>') or
                         requirement.startswith('!=')):
+                    # Exact requirement
+                    allow_pre_release = True
+
                     if requirement.startswith('='):
                         requirement = requirement.lstrip('=')
 
@@ -399,11 +438,7 @@ class CollectionRequirement:
                     galaxy_meta = resp
                     versions = [resp.version]
                 else:
-                    resp = api.get_collection_versions(namespace, name)
-
-                    # Galaxy supports semver but ansible-galaxy does not. We ignore any versions that don't match
-                    # StrictVersion (x.y.z) and only support pre-releases if an explicit version was set (done above).
-                    versions = [v for v in resp if StrictVersion.version_re.match(v)]
+                    versions = api.get_collection_versions(namespace, name)
             except GalaxyError as err:
                 if err.http_code == 404:
                     display.vvv("Collection '%s' is not available from server %s %s"
@@ -417,7 +452,7 @@ class CollectionRequirement:
             raise AnsibleError("Failed to find collection %s:%s" % (collection, requirement))
 
         req = CollectionRequirement(namespace, name, None, api, versions, requirement, force, parent=parent,
-                                    metadata=galaxy_meta)
+                                    metadata=galaxy_meta, allow_pre_releases=allow_pre_release)
         return req
 
 
@@ -493,7 +528,8 @@ def publish_collection(collection_path, api, wait, timeout):
                         % (api.name, api.api_server, import_uri))
 
 
-def install_collections(collections, output_path, apis, validate_certs, ignore_errors, no_deps, force, force_deps):
+def install_collections(collections, output_path, apis, validate_certs, ignore_errors, no_deps, force, force_deps,
+                        allow_pre_release=False):
     """
     Install Ansible collections to the path specified.
 
@@ -512,7 +548,8 @@ def install_collections(collections, output_path, apis, validate_certs, ignore_e
         display.display("Process install dependency map")
         with _display_progress():
             dependency_map = _build_dependency_map(collections, existing_collections, b_temp_path, apis,
-                                                   validate_certs, force, force_deps, no_deps)
+                                                   validate_certs, force, force_deps, no_deps,
+                                                   allow_pre_release=allow_pre_release)
 
         display.display("Starting collection install process")
         with _display_progress():
@@ -557,7 +594,7 @@ def validate_collection_path(collection_path):
     return collection_path
 
 
-def verify_collections(collections, search_paths, apis, validate_certs, ignore_errors):
+def verify_collections(collections, search_paths, apis, validate_certs, ignore_errors, allow_pre_release=False):
 
     with _display_progress():
         with _tempdir() as b_temp_path:
@@ -585,7 +622,8 @@ def verify_collections(collections, search_paths, apis, validate_certs, ignore_e
 
                     # Download collection on a galaxy server for comparison
                     try:
-                        remote_collection = CollectionRequirement.from_name(collection_name, apis, collection_version, False, parent=None)
+                        remote_collection = CollectionRequirement.from_name(collection_name, apis, collection_version, False, parent=None,
+                                                                            allow_pre_release=allow_pre_release)
                     except AnsibleError as e:
                         if e.message == 'Failed to find collection %s:%s' % (collection[0], collection[1]):
                             raise AnsibleError('Failed to find remote collection %s:%s on any of the galaxy servers' % (collection[0], collection[1]))
@@ -921,13 +959,13 @@ def find_existing_collections(path):
 
 
 def _build_dependency_map(collections, existing_collections, b_temp_path, apis, validate_certs, force, force_deps,
-                          no_deps):
+                          no_deps, allow_pre_release=False):
     dependency_map = {}
 
     # First build the dependency map on the actual requirements
     for name, version, source in collections:
         _get_collection_info(dependency_map, existing_collections, name, version, source, b_temp_path, apis,
-                             validate_certs, (force or force_deps))
+                             validate_certs, (force or force_deps), allow_pre_release=allow_pre_release)
 
     checked_parents = set([to_text(c) for c in dependency_map.values() if c.skip])
     while len(dependency_map) != len(checked_parents):
@@ -943,7 +981,7 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, apis, 
                     for dep_name, dep_requirement in parent_info.dependencies.items():
                         _get_collection_info(dependency_map, existing_collections, dep_name, dep_requirement,
                                              parent_info.api, b_temp_path, apis, validate_certs, force_deps,
-                                             parent=parent)
+                                             parent=parent, allow_pre_release=allow_pre_release)
 
                     checked_parents.add(parent)
 
@@ -963,7 +1001,7 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, apis, 
 
 
 def _get_collection_info(dep_map, existing_collections, collection, requirement, source, b_temp_path, apis,
-                         validate_certs, force, parent=None):
+                         validate_certs, force, parent=None, allow_pre_release=False):
     dep_msg = ""
     if parent:
         dep_msg = " - as dependency of %s" % parent
@@ -999,7 +1037,8 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
             collection_info.add_requirement(parent, requirement)
         else:
             apis = [source] if source else apis
-            collection_info = CollectionRequirement.from_name(collection, apis, requirement, force, parent=parent)
+            collection_info = CollectionRequirement.from_name(collection, apis, requirement, force, parent=parent,
+                                                              allow_pre_release=allow_pre_release)
 
     existing = [c for c in existing_collections if to_text(c) == to_text(collection_info)]
     if existing and not collection_info.force:
