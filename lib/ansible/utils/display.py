@@ -152,14 +152,14 @@ class Display(with_metaclass(Singleton, object)):
 
         nocolor = msg
 
+        if color:
+            msg = stringc(msg, color)
+
         if not log_only:
             if not msg.endswith(u'\n') and newline:
                 msg2 = msg + u'\n'
             else:
                 msg2 = msg
-
-            if color:
-                msg2 = stringc(msg2, color)
 
             msg2 = to_bytes(msg2, encoding=self._output_encoding(stderr=stderr))
             if sys.version_info >= (3,):
@@ -266,7 +266,7 @@ class Display(with_metaclass(Singleton, object)):
         if not formatted:
             new_msg = "[WARNING]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
-            new_msg = "\n".join(wrapped) + "\n"
+            new_msg = "\n".join(wrapped)
         else:
             new_msg = "\n[WARNING]: \n%s" % msg
 
