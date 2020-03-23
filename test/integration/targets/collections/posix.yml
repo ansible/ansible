@@ -95,6 +95,25 @@
       - lookup('testns.testcoll.mylookup2') == 'mylookup2_from_user_dir'
       - lookup('testns.testcoll.lookup_subdir.my_subdir_lookup') == 'subdir_lookup_from_user_dir'
 
+  - debug:
+      msg: "{{ 'foo'|testns.testbroken.broken }}"
+    register: result
+    ignore_errors: true
+
+  - assert:
+      that:
+        - |
+          'This is a broken filter plugin.' in result.msg
+
+  - debug:
+      msg: "{{ 'foo'|missing.collection.filter }}"
+    register: result
+    ignore_errors: true
+
+  - assert:
+      that:
+        - result is failed
+
 # ensure that the synthetic ansible.builtin collection limits to builtin plugins, that ansible.legacy loads overrides
 # from legacy plugin dirs, and that a same-named plugin loaded from a real collection is not masked by the others
 - hosts: testhost
