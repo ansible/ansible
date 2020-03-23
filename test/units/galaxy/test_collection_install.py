@@ -12,6 +12,7 @@ import os
 import pytest
 import re
 import shutil
+import stat
 import tarfile
 import yaml
 
@@ -138,6 +139,12 @@ def collection_artifact(request, tmp_path_factory):
             galaxy_obj.seek(0)
             galaxy_obj.write(to_bytes(yaml.safe_dump(existing_yaml)))
             galaxy_obj.truncate()
+
+    # Create a file with +x in the collection so we can test the permissions
+    execute_path = os.path.join(collection_path, 'runme.sh')
+    with open(execute_path, mode='wb') as fd:
+        fd.write(b"echo hi")
+    os.chmod(execute_path, os.stat(execute_path).st_mode | stat.S_IEXEC)
 
     call_galaxy_cli(['build', collection_path, '--output-path', test_dir])
 
@@ -634,7 +641,12 @@ def test_install_collection(collection_artifact, monkeypatch):
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles']
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
+                            b'runme.sh']
+
+    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'plugins')).st_mode) == 0o0755
+    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'README.md')).st_mode) == 0o0644
+    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'runme.sh')).st_mode) == 0o0755
 
     assert mock_display.call_count == 1
     assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
@@ -668,7 +680,8 @@ def test_install_collection_with_download(galaxy_server, collection_artifact, mo
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles']
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
+                            b'runme.sh']
 
     assert mock_display.call_count == 1
     assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
@@ -696,7 +709,8 @@ def test_install_collections_from_tar(collection_artifact, monkeypatch):
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles']
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
+                            b'runme.sh']
 
     with open(os.path.join(collection_path, b'MANIFEST.json'), 'rb') as manifest_obj:
         actual_manifest = json.loads(to_text(manifest_obj.read()))
@@ -728,7 +742,7 @@ def test_install_collections_existing_without_force(collection_artifact, monkeyp
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'README.md', b'docs', b'galaxy.yml', b'playbooks', b'plugins', b'roles']
+    assert actual_files == [b'README.md', b'docs', b'galaxy.yml', b'playbooks', b'plugins', b'roles', b'runme.sh']
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
@@ -759,7 +773,8 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles']
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
+                            b'runme.sh']
 
     with open(os.path.join(collection_path, b'MANIFEST.json'), 'rb') as manifest_obj:
         actual_manifest = json.loads(to_text(manifest_obj.read()))
