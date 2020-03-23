@@ -121,6 +121,7 @@ options:
       that this ForwardingRule references.
     - metadataFilters only applies to Loadbalancers that have their loadBalancingScheme
       set to INTERNAL_SELF_MANAGED.
+    elements: dict
     required: false
     type: list
     version_added: '2.10'
@@ -140,6 +141,7 @@ options:
         - The list of label value pairs that must match labels in the provided metadata
           based on filterMatchCriteria This list must not be empty and can have at
           the most 64 entries.
+        elements: dict
         required: true
         type: list
         suboptions:

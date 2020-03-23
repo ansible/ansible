@@ -81,6 +81,7 @@ options:
     description:
     - A list of features to enable on the guest operating system.
     - Applicable only for bootable images.
+    elements: dict
     required: false
     type: list
     suboptions:
@@ -114,6 +115,7 @@ options:
   licenses:
     description:
     - Any applicable license URI.
+    elements: str
     required: false
     type: list
   name:

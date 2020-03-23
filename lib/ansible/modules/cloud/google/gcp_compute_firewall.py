@@ -59,6 +59,7 @@ options:
     description:
     - The list of ALLOW rules specified by this firewall. Each rule specifies a protocol
       and port-range tuple that describes a permitted connection.
+    elements: dict
     required: false
     type: list
     suboptions:
@@ -77,12 +78,14 @@ options:
           or a range. If not specified, this rule applies to connections through any
           port.
         - 'Example inputs include: ["22"], ["80","443"], and ["12345-12349"].'
+        elements: str
         required: false
         type: list
   denied:
     description:
     - The list of DENY rules specified by this firewall. Each rule specifies a protocol
       and port-range tuple that describes a denied connection.
+    elements: dict
     required: false
     type: list
     version_added: '2.8'
@@ -102,6 +105,7 @@ options:
           or a range. If not specified, this rule applies to connections through any
           port.
         - 'Example inputs include: ["22"], ["80","443"], and ["12345-12349"].'
+        elements: str
         required: false
         type: list
   description:
@@ -115,6 +119,7 @@ options:
     - If destination ranges are specified, the firewall will apply only to traffic
       that has destination IP address in these ranges. These ranges must be expressed
       in CIDR format. Only IPv4 is supported.
+    elements: str
     required: false
     type: list
     version_added: '2.8'
@@ -197,6 +202,7 @@ options:
       sourceRanges OR the source IP that belongs to a tag listed in the sourceTags
       property. The connection does not need to match both properties for the firewall
       to apply. Only IPv4 is supported.
+    elements: str
     required: false
     type: list
   source_service_accounts:
@@ -210,6 +216,7 @@ options:
       OR the source IP belongs to an instance with service account listed in sourceServiceAccount.
       The connection does not need to match both properties for the firewall to apply.
       sourceServiceAccounts cannot be used at the same time as sourceTags or targetTags.
+    elements: str
     required: false
     type: list
     version_added: '2.8'
@@ -223,6 +230,7 @@ options:
       has source IP address within sourceRanges OR the source IP that belongs to a
       tag listed in the sourceTags property. The connection does not need to match
       both properties for the firewall to apply.
+    elements: str
     required: false
     type: list
   target_service_accounts:
@@ -232,6 +240,7 @@ options:
     - targetServiceAccounts cannot be used at the same time as targetTags or sourceTags.
       If neither targetServiceAccounts nor targetTags are specified, the firewall
       rule applies to all instances on the specified network.
+    elements: str
     required: false
     type: list
     version_added: '2.8'
@@ -241,6 +250,7 @@ options:
       that may make network connections as specified in allowed[].
     - If no targetTags are specified, the firewall rule applies to all instances on
       the specified network.
+    elements: str
     required: false
     type: list
   project:
@@ -533,6 +543,7 @@ def main():
             target_tags=dict(type='list', elements='str'),
         ),
         mutually_exclusive=[
+            ['allowed', 'denied'],
             ['destination_ranges', 'source_ranges', 'source_tags'],
             ['destination_ranges', 'source_ranges'],
             ['source_service_accounts', 'source_tags', 'target_tags'],
@@ -800,10 +811,10 @@ class FirewallLogconfig(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'enableLogging': self.request.get('enable_logging')})
+        return remove_nones_from_dict({u'enable': self.request.get('enable_logging')})
 
     def from_response(self):
-        return remove_nones_from_dict({u'enableLogging': self.request.get(u'enableLogging')})
+        return remove_nones_from_dict({u'enable': self.request.get(u'enable')})
 
 
 if __name__ == '__main__':

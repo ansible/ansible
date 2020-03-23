@@ -89,6 +89,7 @@ options:
     description:
     - Named ports configured for the Instance Groups complementary to this Instance
       Group Manager.
+    elements: dict
     required: false
     type: list
     suboptions:
@@ -108,6 +109,7 @@ options:
     - TargetPool resources to which instances in the instanceGroup field are added.
       The target pools automatically apply to all of the instances in the managed
       instance group.
+    elements: dict
     required: false
     type: list
   target_size:

@@ -71,6 +71,7 @@ options:
       port number. Named ports can also contain multiple ports.
     - 'For example: [{name: "http", port: 80},{name: "http", port: 8080}] Named ports
       apply to all instances in this instance group.'
+    elements: dict
     required: false
     type: list
     suboptions:
@@ -122,6 +123,7 @@ options:
     - All instances not in this list will be removed from the InstanceGroup and will
       not be deleted.
     - Only the full identifier of the instance will be returned.
+    elements: dict
     required: false
     type: list
     version_added: '2.8'
