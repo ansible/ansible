@@ -165,7 +165,7 @@ def test_build_requirement_from_path(collection_artifact):
     assert actual.dependencies == {}
 
 
-@pytest.mark.parametrize('version', ['1.1.1', 1.1, 1])
+@pytest.mark.parametrize('version', ['1.1.1', '1.1.0', '1.0.0'])
 def test_build_requirement_from_path_with_manifest(version, collection_artifact):
     manifest_path = os.path.join(collection_artifact[0], b'MANIFEST.json')
     manifest_value = json.dumps({

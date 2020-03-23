@@ -73,6 +73,26 @@
     - '"Installing ''namespace1.name1:1.1.0-beta.1'' to" in install_prerelease.stdout'
     - (install_prerelease_actual.content | b64decode | from_json).collection_info.version == '1.1.0-beta.1'
 
+- name: Remove beta
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
+    state: absent
+
+- name: install pre-release version with --pre to custom dir - {{ test_name }}
+  command: ansible-galaxy collection install --pre 'namespace1.name1' -s '{{ test_server }}' -p '{{ galaxy_dir }}/ansible_collections'
+  register: install_prerelease
+
+- name: get result of install pre-release version with --pre to custom dir - {{ test_name }}
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1/MANIFEST.json'
+  register: install_prerelease_actual
+
+- name: assert install pre-release version with --pre to custom dir - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''namespace1.name1:1.1.0-beta.1'' to" in install_prerelease.stdout'
+    - (install_prerelease_actual.content | b64decode | from_json).collection_info.version == '1.1.0-beta.1'
+
 - name: install multiple collections with dependencies - {{ test_name }}
   command: ansible-galaxy collection install parent_dep.parent_collection namespace2.name -s {{ test_name }}
   args:
