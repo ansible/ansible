@@ -104,6 +104,7 @@ options:
     - An array of configurations for secondary IP ranges for VM instances contained
       in this subnetwork. The primary IP of such VM must belong to the primary ipCidrRange
       of the subnetwork. The alias IPs may belong to either primary or secondary ranges.
+    elements: dict
     required: false
     type: list
     version_added: '2.8'

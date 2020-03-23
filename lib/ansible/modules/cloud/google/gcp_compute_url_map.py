@@ -84,6 +84,7 @@ options:
         description:
         - Headers to add to a matching request prior to forwarding the request to
           the backendService.
+        elements: dict
         required: false
         type: list
         suboptions:
@@ -108,11 +109,13 @@ options:
         description:
         - A list of header names for headers that need to be removed from the request
           prior to forwarding the request to the backendService.
+        elements: str
         required: false
         type: list
       response_headers_to_add:
         description:
         - Headers to add the response prior to sending the response back to the client.
+        elements: dict
         required: false
         type: list
         suboptions:
@@ -137,11 +140,13 @@ options:
         description:
         - A list of header names for headers that need to be removed from the response
           prior to sending the response back to the client.
+        elements: str
         required: false
         type: list
   host_rules:
     description:
     - The list of HostRules to use against the URL.
+    elements: dict
     required: false
     type: list
     suboptions:
@@ -156,6 +161,7 @@ options:
         - The list of host patterns to match. They must be valid hostnames, except
           * will match any string of ([a-z0-9-.]*). In that case, * must be the first
           character and must be followed in the pattern by either - or .
+        elements: str
         required: true
         type: list
       path_matcher:
@@ -177,6 +183,7 @@ options:
   path_matchers:
     description:
     - The list of named PathMatchers to use against the URL.
+    elements: dict
     required: false
     type: list
     suboptions:
@@ -223,6 +230,7 @@ options:
             description:
             - Headers to add to a matching request prior to forwarding the request
               to the backendService.
+            elements: dict
             required: false
             type: list
             suboptions:
@@ -247,12 +255,14 @@ options:
             description:
             - A list of header names for headers that need to be removed from the
               request prior to forwarding the request to the backendService.
+            elements: str
             required: false
             type: list
           response_headers_to_add:
             description:
             - Headers to add the response prior to sending the response back to the
               client.
+            elements: dict
             required: false
             type: list
             suboptions:
@@ -277,6 +287,7 @@ options:
             description:
             - A list of header names for headers that need to be removed from the
               response prior to sending the response back to the client.
+            elements: str
             required: false
             type: list
       name:
@@ -293,6 +304,7 @@ options:
           match before /a/b/* irrespective of the order in which those paths appear
           in this list. Within a given pathMatcher, only one of pathRules or routeRules
           must be set.'
+        elements: dict
         required: false
         type: list
         suboptions:
@@ -319,6 +331,7 @@ options:
               only place a * is allowed is at the end following a /. The string fed
               to the path matcher does not include any text after the first ? or #,
               and those chars are not allowed here.'
+            elements: str
             required: true
             type: list
           route_action:
@@ -353,11 +366,13 @@ options:
                   allow_headers:
                     description:
                     - Specifies the content for the Access-Control-Allow-Headers header.
+                    elements: str
                     required: false
                     type: list
                   allow_methods:
                     description:
                     - Specifies the content for the Access-Control-Allow-Methods header.
+                    elements: str
                     required: false
                     type: list
                   allow_origin_regexes:
@@ -365,6 +380,7 @@ options:
                     - Specifies the regualar expression patterns that match allowed
                       origins. For regular expression grammar please see en.cppreference.com/w/cpp/regex/ecmascript
                       An origin is allowed if it matches either allow_origins or allow_origin_regex.
+                    elements: str
                     required: false
                     type: list
                   allow_origins:
@@ -372,6 +388,7 @@ options:
                     - Specifies the list of origins that will be allowed to do CORS
                       requests. An origin is allowed if it matches either allow_origins
                       or allow_origin_regex.
+                    elements: str
                     required: false
                     type: list
                   disabled:
@@ -383,6 +400,7 @@ options:
                     description:
                     - Specifies the content for the Access-Control-Expose-Headers
                       header.
+                    elements: str
                     required: false
                     type: list
                   max_age:
@@ -537,6 +555,7 @@ options:
                       set to resource-exhausted - unavailable: Loadbalancer will retry
                       if the gRPC status code in the response header is set to unavailable
                       ."
+                    elements: str
                     required: false
                     type: list
               timeout:
@@ -593,6 +612,7 @@ options:
                   and before forwarding the request to the backend service, advanced
                   routing actions like Url rewrites and header transformations are
                   applied depending on additional settings specified in this HttpRouteAction.
+                elements: dict
                 required: false
                 type: list
                 suboptions:
@@ -622,6 +642,7 @@ options:
                         description:
                         - Headers to add to a matching request prior to forwarding
                           the request to the backendService.
+                        elements: dict
                         required: false
                         type: list
                         suboptions:
@@ -648,12 +669,14 @@ options:
                         - A list of header names for headers that need to be removed
                           from the request prior to forwarding the request to the
                           backendService.
+                        elements: str
                         required: false
                         type: list
                       response_headers_to_add:
                         description:
                         - Headers to add the response prior to sending the response
                           back to the client.
+                        elements: dict
                         required: false
                         type: list
                         suboptions:
@@ -680,6 +703,7 @@ options:
                         - A list of header names for headers that need to be removed
                           from the response prior to sending the response back to
                           the client.
+                        elements: str
                         required: false
                         type: list
                   weight:
@@ -765,6 +789,7 @@ options:
           its specified routing action to take effect. Within a given pathMatcher,
           only one of pathRules or routeRules must be set. routeRules are not supported
           in UrlMaps intended for External load balancers.'
+        elements: dict
         required: false
         type: list
         version_added: '2.10'
@@ -817,6 +842,7 @@ options:
                 description:
                 - Headers to add to a matching request prior to forwarding the request
                   to the backendService.
+                elements: dict
                 required: false
                 type: list
                 suboptions:
@@ -841,12 +867,14 @@ options:
                 description:
                 - A list of header names for headers that need to be removed from
                   the request prior to forwarding the request to the backendService.
+                elements: str
                 required: false
                 type: list
               response_headers_to_add:
                 description:
                 - Headers to add the response prior to sending the response back to
                   the client.
+                elements: dict
                 required: false
                 type: list
                 suboptions:
@@ -871,11 +899,13 @@ options:
                 description:
                 - A list of header names for headers that need to be removed from
                   the response prior to sending the response back to the client.
+                elements: str
                 required: false
                 type: list
           match_rules:
             description:
             - The rules for determining a match.
+            elements: dict
             required: false
             type: list
             suboptions:
@@ -892,6 +922,7 @@ options:
                 description:
                 - Specifies a list of header match criteria, all of which must match
                   corresponding headers in the request.
+                elements: dict
                 required: false
                 type: list
                 suboptions:
@@ -997,6 +1028,7 @@ options:
                   those specified in ForwardingRule that refers to this UrlMap. metadataFilters
                   only applies to Loadbalancers that have their loadBalancingScheme
                   set to INTERNAL_SELF_MANAGED.
+                elements: dict
                 required: false
                 type: list
                 suboptions:
@@ -1005,6 +1037,7 @@ options:
                     - The list of label value pairs that must match labels in the
                       provided metadata based on filterMatchCriteria This list must
                       not be empty and can have at the most 64 entries.
+                    elements: dict
                     required: true
                     type: list
                     suboptions:
@@ -1043,6 +1076,7 @@ options:
                 description:
                 - Specifies a list of query parameter match criteria, all of which
                   must match corresponding query parameters in the request.
+                elements: dict
                 required: false
                 type: list
                 suboptions:
@@ -1117,11 +1151,13 @@ options:
                   allow_headers:
                     description:
                     - Specifies the content for the Access-Control-Allow-Headers header.
+                    elements: str
                     required: false
                     type: list
                   allow_methods:
                     description:
                     - Specifies the content for the Access-Control-Allow-Methods header.
+                    elements: str
                     required: false
                     type: list
                   allow_origin_regexes:
@@ -1129,6 +1165,7 @@ options:
                     - Specifies the regualar expression patterns that match allowed
                       origins. For regular expression grammar please see en.cppreference.com/w/cpp/regex/ecmascript
                       An origin is allowed if it matches either allow_origins or allow_origin_regex.
+                    elements: str
                     required: false
                     type: list
                   allow_origins:
@@ -1136,6 +1173,7 @@ options:
                     - Specifies the list of origins that will be allowed to do CORS
                       requests. An origin is allowed if it matches either allow_origins
                       or allow_origin_regex.
+                    elements: str
                     required: false
                     type: list
                   disabled:
@@ -1150,6 +1188,7 @@ options:
                     description:
                     - Specifies the content for the Access-Control-Expose-Headers
                       header.
+                    elements: str
                     required: false
                     type: list
                   max_age:
@@ -1307,6 +1346,7 @@ options:
                       set to resource-exhausted - unavailable: Loadbalancer will retry
                       if the gRPC status code in the response header is set to unavailable
                       ."
+                    elements: str
                     required: false
                     type: list
               timeout:
@@ -1363,6 +1403,7 @@ options:
                   and before forwarding the request to the backend service, advanced
                   routing actions like Url rewrites and header transformations are
                   applied depending on additional settings specified in this HttpRouteAction.
+                elements: dict
                 required: false
                 type: list
                 suboptions:
@@ -1392,6 +1433,7 @@ options:
                         description:
                         - Headers to add to a matching request prior to forwarding
                           the request to the backendService.
+                        elements: dict
                         required: false
                         type: list
                         suboptions:
@@ -1418,12 +1460,14 @@ options:
                         - A list of header names for headers that need to be removed
                           from the request prior to forwarding the request to the
                           backendService.
+                        elements: str
                         required: false
                         type: list
                       response_headers_to_add:
                         description:
                         - Headers to add the response prior to sending the response
                           back to the client.
+                        elements: dict
                         required: false
                         type: list
                         suboptions:
@@ -1450,6 +1494,7 @@ options:
                         - A list of header names for headers that need to be removed
                           from the response prior to sending the response back to
                           the client.
+                        elements: str
                         required: false
                         type: list
                   weight:
@@ -1530,6 +1575,7 @@ options:
     - The list of expected URL mapping tests. Request to update this UrlMap will succeed
       only if all of the test cases pass. You can specify a maximum of 100 tests per
       UrlMap.
+    elements: dict
     required: false
     type: list
     suboptions:

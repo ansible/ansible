@@ -86,6 +86,7 @@ options:
     - A list of SslCertificate resources that are used to authenticate connections
       between users and the load balancer. Currently, exactly one SSL certificate
       must be specified.
+    elements: dict
     required: true
     type: list
   ssl_policy:

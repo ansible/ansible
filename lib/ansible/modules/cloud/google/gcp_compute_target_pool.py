@@ -105,6 +105,7 @@ options:
     description:
     - A list of virtual machine instances serving this pool.
     - They must live in zones contained in the same region as this pool.
+    elements: dict
     required: false
     type: list
   name:

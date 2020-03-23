@@ -86,6 +86,7 @@ options:
     - A list of features enabled when the selected profile is CUSTOM. The method returns
       the set of features that can be specified in this list. This field must be empty
       if the profile is not CUSTOM.
+    elements: str
     required: false
     type: list
   project:
