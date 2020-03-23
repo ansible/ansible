@@ -319,6 +319,7 @@ def delegate_docker(args, exclude, require, integration_targets):
             docker_put(args, test_id, local_source_fd.name, '/root/ansible.tgz')
             docker_exec(args, test_id, ['mkdir', '/root/ansible'])
             docker_exec(args, test_id, ['tar', 'oxzf', '/root/ansible.tgz', '-C', '/root/ansible'])
+            docker_exec(args, test_id, ['/bin/bash', '-c', 'ls -laR /root/ansible'])
 
             # docker images are only expected to have a single python version available
             if isinstance(args, UnitsConfig) and not args.python:
