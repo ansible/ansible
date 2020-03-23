@@ -457,6 +457,10 @@ Ansible, select one of these three installation options:
 * Manually install the service, following the `install instructions <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_
   from Microsoft.
 
+* Install the `openssh <https://chocolatey.org/packages/openssh>`_ package using Chocolatey::
+
+    choco install --package-parameters=/SSHServerFeature openssh
+
 * Use ``win_chocolatey`` to install the service::
 
     - name: install the Win32-OpenSSH service
