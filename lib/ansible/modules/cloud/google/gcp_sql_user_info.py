@@ -162,7 +162,7 @@ def main():
 
 def collection(module):
     res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name')}
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/users".format(**res)
+    return "https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/users".format(**res)
 
 
 def fetch_list(module, link):

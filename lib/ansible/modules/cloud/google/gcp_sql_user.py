@@ -297,12 +297,12 @@ def self_link(module):
         'name': module.params['name'],
         'host': module.params['host'],
     }
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/users?name={name}&host={host}".format(**res)
+    return "https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/users?name={name}&host={host}".format(**res)
 
 
 def collection(module):
     res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name')}
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/users".format(**res)
+    return "https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/users".format(**res)
 
 
 def return_if_object(module, response, kind, allow_not_found=False):
@@ -356,7 +356,7 @@ def response_to_hash(module, response):
 def async_op_url(module, extra_data=None):
     if extra_data is None:
         extra_data = {}
-    url = "https://www.googleapis.com/sql/v1beta4/projects/{project}/operations/{op_id}"
+    url = "https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/operations/{op_id}"
     combined = extra_data.copy()
     combined.update(module.params)
     return url.format(**combined)

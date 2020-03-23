@@ -56,6 +56,7 @@ options:
   acl:
     description:
     - Access controls on the bucket.
+    elements: dict
     required: false
     type: list
     suboptions:
@@ -111,6 +112,7 @@ options:
   cors:
     description:
     - The bucket's Cross-Origin Resource Sharing (CORS) configuration.
+    elements: dict
     required: false
     type: list
     suboptions:
@@ -125,23 +127,34 @@ options:
         - 'The list of HTTP methods on which to include CORS response headers, (GET,
           OPTIONS, POST, etc) Note: "*" is permitted in the list of methods, and means
           "any method".'
+        elements: str
         required: false
         type: list
       origin:
         description:
         - The list of Origins eligible to receive CORS response headers.
         - 'Note: "*" is permitted in the list of origins, and means "any Origin".'
+        elements: str
         required: false
         type: list
       response_header:
         description:
         - The list of HTTP headers other than the simple response headers to give
           permission for the user-agent to share across domains.
+        elements: str
         required: false
         type: list
+  default_event_based_hold:
+    description:
+    - Whether or not to automatically apply an eventBasedHold to new objects added
+      to the bucket.
+    required: false
+    type: bool
+    version_added: '2.10'
   default_object_acl:
     description:
     - Default access controls to apply to new objects when no ACL is provided.
+    elements: dict
     required: false
     type: list
     version_added: '2.7'
@@ -187,6 +200,7 @@ options:
         description:
         - A lifecycle management rule, which is made of an action to take and the
           condition(s) under which the action will be taken.
+        elements: dict
         required: false
         type: list
         suboptions:
@@ -239,6 +253,7 @@ options:
                 - Objects having any of the storage classes specified by this condition
                   will be matched. Values include MULTI_REGIONAL, REGIONAL, NEARLINE,
                   COLDLINE, STANDARD, and DURABLE_REDUCED_AVAILABILITY.
+                elements: str
                 required: false
                 type: list
               num_newer_versions:
@@ -500,6 +515,12 @@ cors:
         for the user-agent to share across domains.
       returned: success
       type: list
+defaultEventBasedHold:
+  description:
+  - Whether or not to automatically apply an eventBasedHold to new objects added to
+    the bucket.
+  returned: success
+  type: bool
 defaultObjectAcl:
   description:
   - Default access controls to apply to new objects when no ACL is provided.
@@ -699,7 +720,7 @@ projectNumber:
   description:
   - The project number of the project the bucket belongs to.
   returned: success
-  type: int
+  type: str
 storageClass:
   description:
   - The bucket's default storage class, used whenever no storageClass is specified
@@ -814,6 +835,7 @@ def main():
                     response_header=dict(type='list', elements='str'),
                 ),
             ),
+            default_event_based_hold=dict(type='bool'),
             default_object_acl=dict(
                 type='list',
                 elements='dict',
@@ -912,6 +934,7 @@ def resource_to_request(module):
         u'predefinedDefaultObjectAcl': module.params.get('predefined_default_object_acl'),
         u'acl': BucketAclArray(module.params.get('acl', []), module).to_request(),
         u'cors': BucketCorsArray(module.params.get('cors', []), module).to_request(),
+        u'defaultEventBasedHold': module.params.get('default_event_based_hold'),
         u'defaultObjectAcl': BucketDefaultobjectaclArray(module.params.get('default_object_acl', []), module).to_request(),
         u'lifecycle': BucketLifecycle(module.params.get('lifecycle', {}), module).to_request(),
         u'location': module.params.get('location'),
@@ -989,6 +1012,7 @@ def response_to_hash(module, response):
     return {
         u'acl': BucketAclArray(response.get(u'acl', []), module).from_response(),
         u'cors': BucketCorsArray(response.get(u'cors', []), module).from_response(),
+        u'defaultEventBasedHold': response.get(u'defaultEventBasedHold'),
         u'defaultObjectAcl': BucketDefaultobjectaclArray(module.params.get('default_object_acl', []), module).to_request(),
         u'id': response.get(u'id'),
         u'lifecycle': BucketLifecycle(response.get(u'lifecycle', {}), module).from_response(),

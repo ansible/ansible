@@ -208,6 +208,7 @@ options:
       replica_names:
         description:
         - The replicas of the instance.
+        elements: str
         required: false
         type: list
       service_account_email_address:
@@ -225,6 +226,7 @@ options:
       database_flags:
         description:
         - The database flags passed to the instance at startup.
+        elements: dict
         required: false
         type: list
         version_added: '2.9'
@@ -260,6 +262,7 @@ options:
             - The list of external networks that are allowed to connect to the instance
               using the IP. In CIDR notation, also known as 'slash' notation (e.g.
               192.168.100.0/24).
+            elements: dict
             required: false
             type: list
             suboptions:
@@ -684,6 +687,18 @@ settings:
         this value.
       returned: success
       type: int
+gceZone:
+  description:
+  - The Compute Engine zone that the instance is currently serving from. This value
+    could be different from the zone that was specified when the instance was created
+    if the instance has failed over to its secondary zone.
+  returned: success
+  type: str
+state:
+  description:
+  - The current serving state of the database instance.
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -837,11 +852,11 @@ def fetch_resource(module, link, kind, allow_not_found=True):
 
 
 def self_link(module):
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{name}".format(**module.params)
+    return "https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/instances/{name}".format(**module.params)
 
 
 def collection(module):
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances".format(**module.params)
+    return "https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/instances".format(**module.params)
 
 
 def return_if_object(module, response, kind, allow_not_found=False):
@@ -903,13 +918,15 @@ def response_to_hash(module, response):
         u'region': response.get(u'region'),
         u'replicaConfiguration': InstanceReplicaconfiguration(response.get(u'replicaConfiguration', {}), module).from_response(),
         u'settings': InstanceSettings(response.get(u'settings', {}), module).from_response(),
+        u'gceZone': response.get(u'gceZone'),
+        u'state': response.get(u'state'),
     }
 
 
 def async_op_url(module, extra_data=None):
     if extra_data is None:
         extra_data = {}
-    url = "https://www.googleapis.com/sql/v1beta4/projects/{project}/operations/{op_id}"
+    url = "https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/operations/{op_id}"
     combined = extra_data.copy()
     combined.update(module.params)
     return url.format(**combined)

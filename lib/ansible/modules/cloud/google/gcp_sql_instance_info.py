@@ -414,6 +414,18 @@ resources:
             try to update this value.
           returned: success
           type: int
+    gceZone:
+      description:
+      - The Compute Engine zone that the instance is currently serving from. This
+        value could be different from the zone that was specified when the instance
+        was created if the instance has failed over to its secondary zone.
+      returned: success
+      type: str
+    state:
+      description:
+      - The current serving state of the database instance.
+      returned: success
+      type: str
 '''
 
 ################################################################################
@@ -438,7 +450,7 @@ def main():
 
 
 def collection(module):
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances".format(**module.params)
+    return "https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/instances".format(**module.params)
 
 
 def fetch_list(module, link):

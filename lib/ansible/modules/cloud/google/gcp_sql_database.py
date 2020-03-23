@@ -265,11 +265,11 @@ def fetch_resource(module, link, kind, allow_not_found=True):
 
 
 def self_link(module):
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases/{name}".format(**module.params)
+    return "https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases/{name}".format(**module.params)
 
 
 def collection(module):
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases".format(**module.params)
+    return "https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases".format(**module.params)
 
 
 def return_if_object(module, response, kind, allow_not_found=False):
@@ -323,7 +323,7 @@ def response_to_hash(module, response):
 def async_op_url(module, extra_data=None):
     if extra_data is None:
         extra_data = {}
-    url = "https://www.googleapis.com/sql/v1beta4/projects/{project}/operations/{op_id}"
+    url = "https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/operations/{op_id}"
     combined = extra_data.copy()
     combined.update(module.params)
     return url.format(**combined)
