@@ -20,6 +20,7 @@
     schedule: "*/4 * * * *"
     description: test app engine job
     time_zone: Europe/London
+    attempt_deadline: 320s
     app_engine_http_target:
       http_method: POST
       app_engine_routing:
@@ -39,6 +40,7 @@
     schedule: "*/4 * * * *"
     description: test app engine job
     time_zone: Europe/London
+    attempt_deadline: 320s
     app_engine_http_target:
       http_method: POST
       app_engine_routing:
@@ -76,6 +78,7 @@
     schedule: "*/4 * * * *"
     description: test app engine job
     time_zone: Europe/London
+    attempt_deadline: 320s
     app_engine_http_target:
       http_method: POST
       app_engine_routing:
@@ -100,6 +103,7 @@
     schedule: "*/4 * * * *"
     description: test app engine job
     time_zone: Europe/London
+    attempt_deadline: 320s
     app_engine_http_target:
       http_method: POST
       app_engine_routing:
@@ -137,6 +141,7 @@
     schedule: "*/4 * * * *"
     description: test app engine job
     time_zone: Europe/London
+    attempt_deadline: 320s
     app_engine_http_target:
       http_method: POST
       app_engine_routing:

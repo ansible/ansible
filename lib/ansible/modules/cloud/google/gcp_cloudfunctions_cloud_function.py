@@ -117,7 +117,7 @@ options:
         description:
         - The URL pointing to the hosted repository where the function is defined
           .
-        required: false
+        required: true
         type: str
   https_trigger:
     description:
@@ -385,7 +385,7 @@ def main():
             environment_variables=dict(type='dict'),
             source_archive_url=dict(type='str'),
             source_upload_url=dict(type='str'),
-            source_repository=dict(type='dict', options=dict(url=dict(type='str'))),
+            source_repository=dict(type='dict', options=dict(url=dict(required=True, type='str'))),
             https_trigger=dict(type='dict', options=dict()),
             event_trigger=dict(
                 type='dict', options=dict(event_type=dict(required=True, type='str'), resource=dict(required=True, type='str'), service=dict(type='str'))

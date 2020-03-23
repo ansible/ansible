@@ -200,8 +200,7 @@ resources:
               type: str
         customMetricUtilizations:
           description:
-          - Defines the CPU utilization policy that allows the autoscaler to scale
-            based on the average CPU utilization of a managed instance group.
+          - Configuration parameters of autoscaling based on a custom metric.
           returned: success
           type: complex
           contains:

@@ -67,14 +67,13 @@ options:
       signed_url_cache_max_age_sec:
         description:
         - Maximum number of seconds the response to a signed URL request will be considered
-          fresh. Defaults to 1hr (3600s). After this time period, the response will
-          be revalidated before being served.
+          fresh. After this time period, the response will be revalidated before being
+          served.
         - 'When serving responses to signed URL requests, Cloud CDN will internally
           behave as though all responses from this backend had a "Cache-Control: public,
           max-age=[TTL]" header, regardless of any existing Cache-Control header.
           The actual headers served in responses will not be altered.'
-        required: false
-        default: '3600'
+        required: true
         type: int
   description:
     description:
@@ -186,8 +185,8 @@ cdnPolicy:
     signedUrlCacheMaxAgeSec:
       description:
       - Maximum number of seconds the response to a signed URL request will be considered
-        fresh. Defaults to 1hr (3600s). After this time period, the response will
-        be revalidated before being served.
+        fresh. After this time period, the response will be revalidated before being
+        served.
       - 'When serving responses to signed URL requests, Cloud CDN will internally
         behave as though all responses from this backend had a "Cache-Control: public,
         max-age=[TTL]" header, regardless of any existing Cache-Control header. The
@@ -247,7 +246,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             bucket_name=dict(required=True, type='str'),
-            cdn_policy=dict(type='dict', options=dict(signed_url_cache_max_age_sec=dict(default=3600, type='int'))),
+            cdn_policy=dict(type='dict', options=dict(signed_url_cache_max_age_sec=dict(required=True, type='int'))),
             description=dict(type='str'),
             enable_cdn=dict(type='bool'),
             name=dict(required=True, type='str'),

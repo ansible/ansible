@@ -83,24 +83,26 @@ options:
     type: str
   ignored_files:
     description:
-    - ignoredFiles and includedFiles are file glob matches using http://godoc/pkg/path/filepath#Match
+    - ignoredFiles and includedFiles are file glob matches using U(https://golang.org/pkg/path/filepath/#Match)
       extended with support for `**`.
     - If ignoredFiles and changed files are both empty, then they are not used to
       determine whether or not to trigger a build.
     - If ignoredFiles is not empty, then we ignore any files that match any of the
       ignored_file globs. If the change has no files that are outside of the ignoredFiles
       globs, then we do not trigger a build.
+    elements: str
     required: false
     type: list
   included_files:
     description:
-    - ignoredFiles and includedFiles are file glob matches using http://godoc/pkg/path/filepath#Match
+    - ignoredFiles and includedFiles are file glob matches using U(https://golang.org/pkg/path/filepath/#Match)
       extended with support for `**`.
     - If any of the files altered in the commit pass the ignoredFiles filter and includedFiles
       is empty, then as far as this filter is concerned, we should trigger the build.
     - If any of the files altered in the commit pass the ignoredFiles filter and includedFiles
       is not empty, then we make sure that at least one of those files matches a includedFiles
       glob. If not, then we do not trigger a build.
+    elements: str
     required: false
     type: list
   trigger_template:
@@ -161,6 +163,7 @@ options:
       tags:
         description:
         - Tags for annotation of a Build. These are not docker tags.
+        elements: str
         required: false
         type: list
       images:
@@ -171,12 +174,27 @@ options:
         - The digests of the pushed images will be stored in the Build resource's
           results field.
         - If any of the images fail to be pushed, the build status is marked FAILURE.
+        elements: str
         required: false
         type: list
+      timeout:
+        description:
+        - Amount of time that this build should be allowed to run, to second granularity.
+        - If this amount of time elapses, work on the build will cease and the build
+          status will be TIMEOUT.
+        - This timeout must be equal to or greater than the sum of the timeouts for
+          build steps within the build.
+        - The expected format is the number of seconds followed by s.
+        - Default time is ten minutes (600s).
+        required: false
+        default: 600s
+        type: str
+        version_added: '2.10'
       steps:
         description:
         - The operations to be performed on the workspace.
-        required: false
+        elements: dict
+        required: true
         type: list
         suboptions:
           name:
@@ -194,7 +212,7 @@ options:
             - If you built an image in a previous build step, it will be stored in
               the host's Docker daemon's cache and is available to use as the name
               for a later build step.
-            required: false
+            required: true
             type: str
           args:
             description:
@@ -203,6 +221,7 @@ options:
               args are used as arguments to that entrypoint. If the image does not
               define an entrypoint, the first element in args is used as the entrypoint,
               and the remainder will be used as arguments.
+            elements: str
             required: false
             type: list
           env:
@@ -211,6 +230,7 @@ options:
               step.
             - The elements are of the form "KEY=VALUE" for the environment variable
               "KEY" being given the value "VALUE".
+            elements: str
             required: false
             type: list
           id:
@@ -243,6 +263,7 @@ options:
             - A list of environment variables which are encrypted using a Cloud Key
               Management Service crypto key. These values must be specified in the
               build's `Secret`.
+            elements: str
             required: false
             type: list
           timeout:
@@ -265,6 +286,7 @@ options:
               are discarded.
             - Using a named volume in only one step is not valid as it is indicative
               of a build request with an incorrect configuration.
+            elements: dict
             required: false
             type: list
             suboptions:
@@ -274,14 +296,14 @@ options:
                 - Volume names must be unique per build step and must be valid names
                   for Docker volumes. Each named volume must be used by at least two
                   build steps.
-                required: false
+                required: true
                 type: str
               path:
                 description:
                 - Path at which to mount the volume.
                 - Paths must be absolute and cannot conflict with other volume paths
                   on the same build step or with certain reserved volume paths.
-                required: false
+                required: true
                 type: str
           wait_for:
             description:
@@ -290,6 +312,7 @@ options:
               have completed successfully. If `wait_for` is empty, this build step
               will start when all previous build steps in the `Build.Steps` list have
               completed successfully.
+            elements: str
             required: false
             type: list
   project:
@@ -410,7 +433,7 @@ filename:
   type: str
 ignoredFiles:
   description:
-  - ignoredFiles and includedFiles are file glob matches using http://godoc/pkg/path/filepath#Match
+  - ignoredFiles and includedFiles are file glob matches using U(https://golang.org/pkg/path/filepath/#Match)
     extended with support for `**`.
   - If ignoredFiles and changed files are both empty, then they are not used to determine
     whether or not to trigger a build.
@@ -421,7 +444,7 @@ ignoredFiles:
   type: list
 includedFiles:
   description:
-  - ignoredFiles and includedFiles are file glob matches using http://godoc/pkg/path/filepath#Match
+  - ignoredFiles and includedFiles are file glob matches using U(https://golang.org/pkg/path/filepath/#Match)
     extended with support for `**`.
   - If any of the files altered in the commit pass the ignoredFiles filter and includedFiles
     is empty, then as far as this filter is concerned, we should trigger the build.
@@ -497,6 +520,17 @@ build:
       - If any of the images fail to be pushed, the build status is marked FAILURE.
       returned: success
       type: list
+    timeout:
+      description:
+      - Amount of time that this build should be allowed to run, to second granularity.
+      - If this amount of time elapses, work on the build will cease and the build
+        status will be TIMEOUT.
+      - This timeout must be equal to or greater than the sum of the timeouts for
+        build steps within the build.
+      - The expected format is the number of seconds followed by s.
+      - Default time is ten minutes (600s).
+      returned: success
+      type: str
     steps:
       description:
       - The operations to be performed on the workspace.
@@ -656,11 +690,13 @@ def main():
                 options=dict(
                     tags=dict(type='list', elements='str'),
                     images=dict(type='list', elements='str'),
+                    timeout=dict(default='600s', type='str'),
                     steps=dict(
+                        required=True,
                         type='list',
                         elements='dict',
                         options=dict(
-                            name=dict(type='str'),
+                            name=dict(required=True, type='str'),
                             args=dict(type='list', elements='str'),
                             env=dict(type='list', elements='str'),
                             id=dict(type='str'),
@@ -669,14 +705,15 @@ def main():
                             secret_env=dict(type='list', elements='str'),
                             timeout=dict(type='str'),
                             timing=dict(type='str'),
-                            volumes=dict(type='list', elements='dict', options=dict(name=dict(type='str'), path=dict(type='str'))),
+                            volumes=dict(
+                                type='list', elements='dict', options=dict(name=dict(required=True, type='str'), path=dict(required=True, type='str'))
+                            ),
                             wait_for=dict(type='list', elements='str'),
                         ),
                     ),
                 ),
             ),
-        ),
-        mutually_exclusive=[['build', 'filename']],
+        )
     )
 
     if not module.params['scopes']:
@@ -861,6 +898,7 @@ class TriggerBuild(object):
             {
                 u'tags': self.request.get('tags'),
                 u'images': self.request.get('images'),
+                u'timeout': self.request.get('timeout'),
                 u'steps': TriggerStepsArray(self.request.get('steps', []), self.module).to_request(),
             }
         )
@@ -870,6 +908,7 @@ class TriggerBuild(object):
             {
                 u'tags': self.request.get(u'tags'),
                 u'images': self.request.get(u'images'),
+                u'timeout': self.request.get(u'timeout'),
                 u'steps': TriggerStepsArray(self.request.get(u'steps', []), self.module).from_response(),
             }
         )

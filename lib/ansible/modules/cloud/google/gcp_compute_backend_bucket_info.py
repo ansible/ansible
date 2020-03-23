@@ -126,8 +126,8 @@ resources:
         signedUrlCacheMaxAgeSec:
           description:
           - Maximum number of seconds the response to a signed URL request will be
-            considered fresh. Defaults to 1hr (3600s). After this time period, the
-            response will be revalidated before being served.
+            considered fresh. After this time period, the response will be revalidated
+            before being served.
           - 'When serving responses to signed URL requests, Cloud CDN will internally
             behave as though all responses from this backend had a "Cache-Control:
             public, max-age=[TTL]" header, regardless of any existing Cache-Control

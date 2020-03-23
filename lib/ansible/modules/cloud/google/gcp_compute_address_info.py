@@ -184,6 +184,14 @@ resources:
       - The URLs of the resources that are using this address.
       returned: success
       type: list
+    status:
+      description:
+      - The status of the address, which can be one of RESERVING, RESERVED, or IN_USE.
+      - An address that is RESERVING is currently in the process of being reserved.
+      - A RESERVED address is currently reserved and available to use. An IN_USE address
+        is currently being used by another resource and is not available.
+      returned: success
+      type: str
     region:
       description:
       - URL of the region where the regional address resides.

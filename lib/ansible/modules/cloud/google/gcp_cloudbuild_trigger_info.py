@@ -143,7 +143,7 @@ resources:
       type: str
     ignoredFiles:
       description:
-      - ignoredFiles and includedFiles are file glob matches using http://godoc/pkg/path/filepath#Match
+      - ignoredFiles and includedFiles are file glob matches using U(https://golang.org/pkg/path/filepath/#Match)
         extended with support for `**`.
       - If ignoredFiles and changed files are both empty, then they are not used to
         determine whether or not to trigger a build.
@@ -154,7 +154,7 @@ resources:
       type: list
     includedFiles:
       description:
-      - ignoredFiles and includedFiles are file glob matches using http://godoc/pkg/path/filepath#Match
+      - ignoredFiles and includedFiles are file glob matches using U(https://golang.org/pkg/path/filepath/#Match)
         extended with support for `**`.
       - If any of the files altered in the commit pass the ignoredFiles filter and
         includedFiles is empty, then as far as this filter is concerned, we should
@@ -234,6 +234,17 @@ resources:
           - If any of the images fail to be pushed, the build status is marked FAILURE.
           returned: success
           type: list
+        timeout:
+          description:
+          - Amount of time that this build should be allowed to run, to second granularity.
+          - If this amount of time elapses, work on the build will cease and the build
+            status will be TIMEOUT.
+          - This timeout must be equal to or greater than the sum of the timeouts
+            for build steps within the build.
+          - The expected format is the number of seconds followed by s.
+          - Default time is ten minutes (600s).
+          returned: success
+          type: str
         steps:
           description:
           - The operations to be performed on the workspace.
