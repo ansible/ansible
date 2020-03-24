@@ -9,6 +9,7 @@ import json
 import operator
 import os
 import shutil
+import stat
 import sys
 import tarfile
 import tempfile
@@ -925,7 +926,8 @@ def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, fi
                 b_src_path = os.path.join(b_collection_path, to_bytes(filename, errors='surrogate_or_strict'))
 
                 def reset_stat(tarinfo):
-                    tarinfo.mode = 0o0755 if tarinfo.isdir() else 0o0644
+                    existing_is_exec = tarinfo.mode & stat.S_IXUSR
+                    tarinfo.mode = 0o0755 if existing_is_exec or tarinfo.isdir() else 0o0644
                     tarinfo.uid = tarinfo.gid = 0
                     tarinfo.uname = tarinfo.gname = ''
                     return tarinfo
@@ -1085,9 +1087,17 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
         if not os.path.exists(b_parent_dir):
             # Seems like Galaxy does not validate if all file entries have a corresponding dir ftype entry. This check
             # makes sure we create the parent directory even if it wasn't set in the metadata.
-            os.makedirs(b_parent_dir)
+            os.makedirs(b_parent_dir, mode=0o0755)
 
         shutil.move(to_bytes(tmpfile_obj.name, errors='surrogate_or_strict'), b_dest_filepath)
+
+        # Default to rw-r--r-- and only add execute if the tar file has execute.
+        tar_member = tar.getmember(to_native(filename, errors='surrogate_or_strict'))
+        new_mode = 0o644
+        if stat.S_IMODE(tar_member.mode) & stat.S_IXUSR:
+            new_mode |= 0o0111
+
+        os.chmod(b_dest_filepath, new_mode)
 
 
 def _get_tar_file_member(tar, filename):
