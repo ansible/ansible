@@ -10,9 +10,9 @@ from ast import literal_eval
 from itertools import islice, chain
 import types
 
-from jinja2._compat import text_type
-
 from jinja2.runtime import StrictUndefined
+
+from ansible.module_utils._text import to_text
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 
@@ -46,7 +46,7 @@ def ansible_native_concat(nodes):
             # (see Jinja2 source of StrictUndefined to get up to date info)
             # Otherwise the undefined error would be raised on the next access which might not be properly handled.
             # See https://github.com/ansible/ansible/issues/52158
-            # We do that only here because it is taken care of by text_type() in the else block below already.
+            # We do that only here because it is taken care of by to_text() in the else block below already.
             str(out)
 
         # short circuit literal_eval when possible
@@ -57,7 +57,7 @@ def ansible_native_concat(nodes):
             nodes = chain(head, nodes)
         # Stringifying the nodes is important as it takes care of
         # StrictUndefined by side-effect - by raising an exception.
-        out = u''.join([text_type(v) for v in nodes])
+        out = u''.join([to_text(v) for v in nodes])
 
     try:
         return literal_eval(out)
