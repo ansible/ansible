@@ -39,7 +39,7 @@ fi
 # run test playbooks
 ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v "${TEST_PLAYBOOK}" "$@"
 
-ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v test_invocation.yml "$@"
+ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v invocation_tests.yml "$@"
 
 # test adjacent with --playbook-dir
 export ANSIBLE_COLLECTIONS_PATHS=''
