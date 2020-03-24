@@ -25,6 +25,7 @@ from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import (
     build_collection,
     CollectionRequirement,
+    download_collections,
     find_existing_collections,
     install_collections,
     publish_collection,
@@ -162,6 +163,7 @@ class GalaxyCLI(CLI):
         collection = type_parser.add_parser('collection', help='Manage an Ansible Galaxy collection.')
         collection_parser = collection.add_subparsers(metavar='COLLECTION_ACTION', dest='action')
         collection_parser.required = True
+        self.add_download_options(collection_parser, parents=[common])
         self.add_init_options(collection_parser, parents=[common, force])
         self.add_build_options(collection_parser, parents=[common, force])
         self.add_publish_options(collection_parser, parents=[common])
@@ -183,6 +185,25 @@ class GalaxyCLI(CLI):
         self.add_login_options(role_parser, parents=[common])
         self.add_info_options(role_parser, parents=[common, roles_path, offline])
         self.add_install_options(role_parser, parents=[common, force, roles_path])
+
+    def add_download_options(self, parser, parents=None):
+        download_parser = parser.add_parser('download', parents=parents,
+                                            help='Download collections and their dependencies as a tarball for an '
+                                                 'offline install.')
+        download_parser.set_defaults(func=self.execute_download)
+
+        download_parser.add_argument('args', help='Collection(s)', metavar='collection', nargs='*')
+
+        download_parser.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
+                                     help="Don't download collection(s) listed as dependencies.")
+
+        download_parser.add_argument('-p', '--download-path', dest='download_path',
+                                     default='./collections',
+                                     help='The directory to download the collections to.')
+        download_parser.add_argument('-r', '--requirements-file', dest='requirements',
+                                     help='A file containing a list of collections to be downloaded.')
+        download_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
+                                     help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
 
     def add_init_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -713,6 +734,28 @@ class GalaxyCLI(CLI):
         for collection_path in context.CLIARGS['args']:
             collection_path = GalaxyCLI._resolve_path(collection_path)
             build_collection(collection_path, output_path, force)
+
+    def execute_download(self):
+        collections = context.CLIARGS['args']
+        no_deps = context.CLIARGS['no_deps']
+        download_path = context.CLIARGS['download_path']
+        ignore_certs = context.CLIARGS['ignore_certs']
+
+        requirements_file = context.CLIARGS['requirements']
+        if requirements_file:
+            requirements_file = GalaxyCLI._resolve_path(requirements_file)
+
+        requirements = self._require_one_of_collections_requirements(collections, requirements_file)
+
+        download_path = GalaxyCLI._resolve_path(download_path)
+        b_download_path = to_bytes(download_path, errors='surrogate_or_strict')
+        if not os.path.exists(b_download_path):
+            os.makedirs(b_download_path)
+
+        download_collections(requirements, download_path, self.api_servers, (not ignore_certs), no_deps,
+                             context.CLIARGS['allow_pre_release'])
+
+        return 0
 
     def execute_init(self):
         """
