@@ -16,7 +16,6 @@ from ansible.module_utils.common._collections_compat import MutableMapping, Muta
 from ansible.plugins.loader import connection_loader
 from ansible.utils.display import Display
 
-
 display = Display()
 
 
@@ -172,10 +171,9 @@ def namespace_facts(facts):
     ''' return all facts inside 'ansible_facts' w/o an ansible_ prefix '''
     deprefixed = {}
     for k in facts:
-        if k in ('ansible_local',):
-            # exceptions to 'deprefixing'
-            deprefixed[k] = module_response_deepcopy(facts[k])
+        if k.startswith('ansible_') and k not in ('ansible_local',):
+            deprefixed[k[8:]] = module_response_deepcopy(facts[k])
         else:
-            deprefixed[k.replace('ansible_', '', 1)] = module_response_deepcopy(facts[k])
+            deprefixed[k] = module_response_deepcopy(facts[k])
 
     return {'ansible_facts': deprefixed}
