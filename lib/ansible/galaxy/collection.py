@@ -1051,7 +1051,9 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
             os.makedirs(b_parent_dir, mode=0o0755)
 
         shutil.move(to_bytes(tmpfile_obj.name, errors='surrogate_or_strict'), b_dest_filepath)
-        os.chmod(b_dest_filepath, tar.getmember(filename).mode)
+
+        tar_member = tar.getmember(to_native(filename, errors='surrogate_or_strict'))
+        os.chmod(b_dest_filepath, tar_member.mode)
 
 
 def _get_tar_file_member(tar, filename):
