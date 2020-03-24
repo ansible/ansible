@@ -420,7 +420,7 @@ Anyway, here's the trick:
 Notice how we're pulling out the hostname of the first machine of the webservers group.  If you are doing this in a template, you
 could use the Jinja2 '#set' directive to simplify this, or in a playbook, you could also use set_fact::
 
-    - set_fact: headnode={{ groups[['webservers'][0]] }}
+    - set_fact: headnode={{ groups['webservers'][0] }}
 
     - debug: msg={{ hostvars[headnode].ansible_eth0.ipv4.address }}
 
