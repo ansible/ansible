@@ -1052,8 +1052,13 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
 
         shutil.move(to_bytes(tmpfile_obj.name, errors='surrogate_or_strict'), b_dest_filepath)
 
+        # Default to rw-r--r-- and only add execute if the tar file has execute.
         tar_member = tar.getmember(to_native(filename, errors='surrogate_or_strict'))
-        os.chmod(b_dest_filepath, tar_member.mode)
+        new_mode = 0o644
+        if stat.S_IMODE(tar_member.mode) & stat.S_IXUSR:
+            new_mode |= 0o0111
+
+        os.chmod(b_dest_filepath, new_mode)
 
 
 def _get_tar_file_member(tar, filename):

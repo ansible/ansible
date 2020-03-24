@@ -584,7 +584,9 @@ def collection_artifact(collection_skeleton, tmp_path_factory):
     execute_path = os.path.join(collection_skeleton, 'runme.sh')
     with open(execute_path, mode='wb') as fd:
         fd.write(b"echo hi")
-    os.chmod(execute_path, os.stat(execute_path).st_mode | stat.S_IEXEC)
+
+    # S_ISUID should not be present on extraction.
+    os.chmod(execute_path, os.stat(execute_path).st_mode | stat.S_ISUID | stat.S_IEXEC)
 
     # Because we call GalaxyCLI in collection_skeleton we need to reset the singleton back to None so it uses the new
     # args, we reset the original args once it is done.
