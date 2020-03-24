@@ -396,7 +396,7 @@ Also see dynamic_variables_.
 How do I access a group variable?
 +++++++++++++++++++++++++++++++++
 
-Technically, you don't, Ansible does not really use groups directly. Groups are label for host selection and a way to bulk assign variables, they are not a first class entity, Ansible only cares about Hosts and Tasks.
+Technically, you don't, Ansible does not really use groups directly. Groups are labels for host selection and a way to bulk assign variables, they are not a first class entity, Ansible only cares about Hosts and Tasks.
 
 That said, you could just access the variable by selecting a host that is part of that group, see first_host_in_a_group_ below for an example.
 
@@ -596,14 +596,14 @@ If you have a task that you don't want to show the results or command given to i
 
 This can be used to keep verbose output but hide sensitive information from others who would otherwise like to be able to see the output.
 
-The no_log attribute can also apply to an entire play::
+The ``no_log`` attribute can also apply to an entire play::
 
     - hosts: all
       no_log: True
 
 Though this will make the play somewhat difficult to debug.  It's recommended that this
 be applied to single tasks only, once a playbook is completed. Note that the use of the
-no_log attribute does not prevent data from being shown when debugging Ansible itself via
+``no_log`` attribute does not prevent data from being shown when debugging Ansible itself via
 the :envvar:`ANSIBLE_DEBUG` environment variable.
 
 
