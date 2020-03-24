@@ -8494,18 +8494,62 @@ plugin_routing:
     vyos:
       redirect: vyos.vyos.vyos
   filter:
-    gcp_kms_filters:
-      redirect: community.general.gcp_kms_filters
+    gcp_kms_encrypt:
+      redirect: community.general.gcp_kms_encrypt
+    gcp_kms_decrypt:
+      redirect: community.general.gcp_kms_decrypt
     json_query:
       redirect: community.general.json_query
     random_mac:
       redirect: community.general.random_mac
-    k8s:
-      redirect: community.kubernetes.k8s
+    k8s_config_resource_name:
+      redirect: community.kubernetes.k8s_config_resource_name
+    cidr_merge:
+      redirect: ansible.netcommon.cidr_merge
     ipaddr:
       redirect: ansible.netcommon.ipaddr
-    network:
-      redirect: ansible.netcommon.network
+    ipmath:
+      redirect: ansible.netcommon.ipmath
+    ipwrap:
+      redirect: ansible.netcommon.ipwrap
+    ip4_hex:
+      redirect: ansible.netcommon.ip4_hex
+    ipv4:
+      redirect: ansible.netcommon.ipv4
+    ipv6:
+      redirect: ansible.netcommon.ipv6
+    ipsubnet:
+      redirect: ansible.netcommon.ipsubnet
+    next_nth_usable:
+      redirect: ansible.netcommon.next_nth_usable
+    network_in_network:
+      redirect: ansible.netcommon.network_in_network
+    network_in_usable:
+      redirect: ansible.netcommon.network_in_usable
+    reduce_on_network:
+      redirect: ansible.netcommon.reduce_on_network
+    nthhost:
+      redirect: ansible.netcommon.nthhost
+    previous_nth_usable:
+      redirect: ansible.netcommon.previous_nth_usable
+    slaac:
+      redirect: ansible.netcommon.slaac
+    hwaddr:
+      redirect: ansible.netcommon.hwaddr
+    parse_cli:
+      redirect: ansible.netcommon.parse_cli
+    parse_cli_textsfm:
+      redirect: ansible.netcommon.parse_cli_textsfm
+    parse_xml:
+      redirect: ansible.netcommon.parse_xml
+    type5_pw:
+      redirect: ansible.netcommon.type5_pw
+    hash_salt:
+      redirect: ansible.netcommon.hash_salt
+    comp_type5:
+      redirect: ansible.netcommon.comp_type5
+    vlan_parser:
+      redirect: ansible.netcommon.vlan_parser
   httpapi:
     exos:
       redirect: community.general.exos
