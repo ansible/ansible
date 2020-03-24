@@ -11,6 +11,3 @@
     that:
     - urldecoded_string == urlencoded_string|urldecode
     - urlencoded_string == urldecoded_string|urlencode
-
-# NOTE: See also the filter_urls_jinja26 test where we force jinja 2.6 and
-#       test some of the fallback functionality in urls.py

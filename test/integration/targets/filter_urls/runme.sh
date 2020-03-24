@@ -2,6 +2,10 @@
 
 set -eux
 
+export ANSIBLE_ROLES_PATH=../
+
+ansible-playbook -i ../../inventory runme.yml "$@"
+
 source virtualenv.sh
 
 # This has to be done outside of requirements.txt but is necessary for
@@ -10,7 +14,4 @@ pip install 'setuptools<45'
 
 pip install -U -r requirements.txt
 
-ANSIBLE_ROLES_PATH=../
-export ANSIBLE_ROLES_PATH
-
-ansible-playbook -i ../../inventory main.yml -v "$@"
+ansible-playbook -i ../../inventory jinja26.yml -v "$@"
