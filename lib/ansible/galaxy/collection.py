@@ -888,7 +888,7 @@ def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, fi
                 b_src_path = os.path.join(b_collection_path, to_bytes(filename, errors='surrogate_or_strict'))
 
                 def reset_stat(tarinfo):
-                    existing_is_exec = tarinfo.mode & stat.S_IEXEC
+                    existing_is_exec = tarinfo.mode & stat.S_IXUSR
                     tarinfo.mode = 0o0755 if existing_is_exec or tarinfo.isdir() else 0o0644
                     tarinfo.uid = tarinfo.gid = 0
                     tarinfo.uname = tarinfo.gname = ''
