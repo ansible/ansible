@@ -202,6 +202,8 @@ class GalaxyCLI(CLI):
                                      help='The directory to download the collections to.')
         download_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                      help='A file containing a list of collections to be downloaded.')
+        download_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
+                                     help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
 
     def add_init_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -750,7 +752,8 @@ class GalaxyCLI(CLI):
         if not os.path.exists(b_download_path):
             os.makedirs(b_download_path)
 
-        download_collections(requirements, download_path, self.api_servers, (not ignore_certs), no_deps)
+        download_collections(requirements, download_path, self.api_servers, (not ignore_certs), no_deps,
+                             context.CLIARGS['allow_pre_release'])
 
         return 0
 

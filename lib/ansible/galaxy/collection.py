@@ -497,7 +497,7 @@ def build_collection(collection_path, output_path, force):
     _build_collection_tar(b_collection_path, b_collection_output, collection_manifest, file_manifest)
 
 
-def download_collections(collections, output_path, apis, validate_certs, no_deps):
+def download_collections(collections, output_path, apis, validate_certs, no_deps, allow_pre_release):
     """
     Download Ansible collections as their tarball from a Galaxy server to the path specified and creates a requirements
     file of the downloaded requirements to be used for an install.
@@ -507,11 +507,13 @@ def download_collections(collections, output_path, apis, validate_certs, no_deps
     :param apis: A list of GalaxyAPIs to query when search for a collection.
     :param validate_certs: Whether to validate the certificate if downloading a tarball from a non-Galaxy host.
     :param no_deps: Ignore any collection dependencies and only download the base requirements.
+    :param allow_pre_release: Do not ignore pre-release versions when selecting the latest.
     """
     with _tempdir() as b_temp_path:
         display.display("Process install dependency map")
         with _display_progress():
-            dep_map = _build_dependency_map(collections, [], b_temp_path, apis, validate_certs, True, True, no_deps)
+            dep_map = _build_dependency_map(collections, [], b_temp_path, apis, validate_certs, True, True, no_deps,
+                                            allow_pre_release=allow_pre_release)
 
         requirements = []
         display.display("Starting collection download process to '%s'" % output_path)
