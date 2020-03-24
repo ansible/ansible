@@ -6590,113 +6590,113 @@ plugin_routing:
     tower_workflow_template:
       redirect: awx.awx.tower_workflow_template
     ovirt_affinity_group:
-      redirect: ovirt.ovirt.ovirt_affinity_group
+      redirect: ovirt.ovirt_collection.ovirt_affinity_group
     ovirt_affinity_label:
-      redirect: ovirt.ovirt.ovirt_affinity_label
+      redirect: ovirt.ovirt_collection.ovirt_affinity_label
     ovirt_affinity_label_info:
-      redirect: ovirt.ovirt.ovirt_affinity_label_info
+      redirect: ovirt.ovirt_collection.ovirt_affinity_label_info
     ovirt_api_info:
-      redirect: ovirt.ovirt.ovirt_api_info
+      redirect: ovirt.ovirt_collection.ovirt_api_info
     ovirt_auth:
-      redirect: ovirt.ovirt.ovirt_auth
+      redirect: ovirt.ovirt_collection.ovirt_auth
     ovirt_cluster:
-      redirect: ovirt.ovirt.ovirt_cluster
+      redirect: ovirt.ovirt_collection.ovirt_cluster
     ovirt_cluster_info:
-      redirect: ovirt.ovirt.ovirt_cluster_info
+      redirect: ovirt.ovirt_collection.ovirt_cluster_info
     ovirt_datacenter:
-      redirect: ovirt.ovirt.ovirt_datacenter
+      redirect: ovirt.ovirt_collection.ovirt_datacenter
     ovirt_datacenter_info:
-      redirect: ovirt.ovirt.ovirt_datacenter_info
+      redirect: ovirt.ovirt_collection.ovirt_datacenter_info
     ovirt_disk:
-      redirect: ovirt.ovirt.ovirt_disk
+      redirect: ovirt.ovirt_collection.ovirt_disk
     ovirt_disk_info:
-      redirect: ovirt.ovirt.ovirt_disk_info
+      redirect: ovirt.ovirt_collection.ovirt_disk_info
     ovirt_event:
-      redirect: ovirt.ovirt.ovirt_event
+      redirect: ovirt.ovirt_collection.ovirt_event
     ovirt_event_info:
-      redirect: ovirt.ovirt.ovirt_event_info
+      redirect: ovirt.ovirt_collection.ovirt_event_info
     ovirt_external_provider:
-      redirect: ovirt.ovirt.ovirt_external_provider
+      redirect: ovirt.ovirt_collection.ovirt_external_provider
     ovirt_external_provider_info:
-      redirect: ovirt.ovirt.ovirt_external_provider_info
+      redirect: ovirt.ovirt_collection.ovirt_external_provider_info
     ovirt_group:
-      redirect: ovirt.ovirt.ovirt_group
+      redirect: ovirt.ovirt_collection.ovirt_group
     ovirt_group_info:
-      redirect: ovirt.ovirt.ovirt_group_info
+      redirect: ovirt.ovirt_collection.ovirt_group_info
     ovirt_host:
-      redirect: ovirt.ovirt.ovirt_host
+      redirect: ovirt.ovirt_collection.ovirt_host
     ovirt_host_info:
-      redirect: ovirt.ovirt.ovirt_host_info
+      redirect: ovirt.ovirt_collection.ovirt_host_info
     ovirt_host_network:
-      redirect: ovirt.ovirt.ovirt_host_network
+      redirect: ovirt.ovirt_collection.ovirt_host_network
     ovirt_host_pm:
-      redirect: ovirt.ovirt.ovirt_host_pm
+      redirect: ovirt.ovirt_collection.ovirt_host_pm
     ovirt_host_storage_info:
-      redirect: ovirt.ovirt.ovirt_host_storage_info
+      redirect: ovirt.ovirt_collection.ovirt_host_storage_info
     ovirt_instance_type:
-      redirect: ovirt.ovirt.ovirt_instance_type
+      redirect: ovirt.ovirt_collection.ovirt_instance_type
     ovirt_job:
-      redirect: ovirt.ovirt.ovirt_job
+      redirect: ovirt.ovirt_collection.ovirt_job
     ovirt_mac_pool:
-      redirect: ovirt.ovirt.ovirt_mac_pool
+      redirect: ovirt.ovirt_collection.ovirt_mac_pool
     ovirt_network:
-      redirect: ovirt.ovirt.ovirt_network
+      redirect: ovirt.ovirt_collection.ovirt_network
     ovirt_network_info:
-      redirect: ovirt.ovirt.ovirt_network_info
+      redirect: ovirt.ovirt_collection.ovirt_network_info
     ovirt_nic:
-      redirect: ovirt.ovirt.ovirt_nic
+      redirect: ovirt.ovirt_collection.ovirt_nic
     ovirt_nic_info:
-      redirect: ovirt.ovirt.ovirt_nic_info
+      redirect: ovirt.ovirt_collection.ovirt_nic_info
     ovirt_permission:
-      redirect: ovirt.ovirt.ovirt_permission
+      redirect: ovirt.ovirt_collection.ovirt_permission
     ovirt_permission_info:
-      redirect: ovirt.ovirt.ovirt_permission_info
+      redirect: ovirt.ovirt_collection.ovirt_permission_info
     ovirt_quota:
-      redirect: ovirt.ovirt.ovirt_quota
+      redirect: ovirt.ovirt_collection.ovirt_quota
     ovirt_quota_info:
-      redirect: ovirt.ovirt.ovirt_quota_info
+      redirect: ovirt.ovirt_collection.ovirt_quota_info
     ovirt_role:
-      redirect: ovirt.ovirt.ovirt_role
+      redirect: ovirt.ovirt_collection.ovirt_role
     ovirt_scheduling_policy_info:
-      redirect: ovirt.ovirt.ovirt_scheduling_policy_info
+      redirect: ovirt.ovirt_collection.ovirt_scheduling_policy_info
     ovirt_snapshot:
-      redirect: ovirt.ovirt.ovirt_snapshot
+      redirect: ovirt.ovirt_collection.ovirt_snapshot
     ovirt_snapshot_info:
-      redirect: ovirt.ovirt.ovirt_snapshot_info
+      redirect: ovirt.ovirt_collection.ovirt_snapshot_info
     ovirt_storage_connection:
-      redirect: ovirt.ovirt.ovirt_storage_connection
+      redirect: ovirt.ovirt_collection.ovirt_storage_connection
     ovirt_storage_domain:
-      redirect: ovirt.ovirt.ovirt_storage_domain
+      redirect: ovirt.ovirt_collection.ovirt_storage_domain
     ovirt_storage_domain_info:
-      redirect: ovirt.ovirt.ovirt_storage_domain_info
+      redirect: ovirt.ovirt_collection.ovirt_storage_domain_info
     ovirt_storage_template_info:
-      redirect: ovirt.ovirt.ovirt_storage_template_info
+      redirect: ovirt.ovirt_collection.ovirt_storage_template_info
     ovirt_storage_vm_info:
-      redirect: ovirt.ovirt.ovirt_storage_vm_info
+      redirect: ovirt.ovirt_collection.ovirt_storage_vm_info
     ovirt_tag:
-      redirect: ovirt.ovirt.ovirt_tag
+      redirect: ovirt.ovirt_collection.ovirt_tag
     ovirt_tag_info:
-      redirect: ovirt.ovirt.ovirt_tag_info
+      redirect: ovirt.ovirt_collection.ovirt_tag_info
     ovirt_template:
-      redirect: ovirt.ovirt.ovirt_template
+      redirect: ovirt.ovirt_collection.ovirt_template
     ovirt_template_info:
-      redirect: ovirt.ovirt.ovirt_template_info
+      redirect: ovirt.ovirt_collection.ovirt_template_info
     ovirt_user:
-      redirect: ovirt.ovirt.ovirt_user
+      redirect: ovirt.ovirt_collection.ovirt_user
     ovirt_user_info:
-      redirect: ovirt.ovirt.ovirt_user_info
+      redirect: ovirt.ovirt_collection.ovirt_user_info
     ovirt_vm:
-      redirect: ovirt.ovirt.ovirt_vm
+      redirect: ovirt.ovirt_collection.ovirt_vm
     ovirt_vm_info:
-      redirect: ovirt.ovirt.ovirt_vm_info
+      redirect: ovirt.ovirt_collection.ovirt_vm_info
     ovirt_vmpool:
-      redirect: ovirt.ovirt.ovirt_vmpool
+      redirect: ovirt.ovirt_collection.ovirt_vmpool
     ovirt_vmpool_info:
-      redirect: ovirt.ovirt.ovirt_vmpool_info
+      redirect: ovirt.ovirt_collection.ovirt_vmpool_info
     ovirt_vnic_profile:
-      redirect: ovirt.ovirt.ovirt_vnic_profile
+      redirect: ovirt.ovirt_collection.ovirt_vnic_profile
     ovirt_vnic_profile_info:
-      redirect: ovirt.ovirt.ovirt_vnic_profile_info
+      redirect: ovirt.ovirt_collection.ovirt_vnic_profile_info
     dellos10_command:
       redirect: dellemc_networking.os10.dellos10_command
     dellos10_facts:
@@ -7903,7 +7903,7 @@ plugin_routing:
     ansible_tower:
       redirect: awx.awx.ansible_tower
     ovirt:
-      redirect: ovirt.ovirt.ovirt
+      redirect: ovirt.ovirt_collection.ovirt
     dellos10:
       redirect: dellemc_networking.os10.dellos10
     dellos9:
@@ -8474,9 +8474,9 @@ plugin_routing:
     tower:
       redirect: awx.awx.tower
     ovirt:
-      redirect: ovirt.ovirt.ovirt
+      redirect: ovirt.ovirt_collection.ovirt
     ovirt_info:
-      redirect: ovirt.ovirt.ovirt_info
+      redirect: ovirt.ovirt_collection.ovirt_info
     dellos10:
       redirect: dellemc_networking.os10.dellos10
     dellos9:
