@@ -62,48 +62,50 @@ Downloading collections
 
 To download a collection and its dependencies for an offline install, run ``ansible-galaxy collection download``. This
 downloads the collections specified and their dependencies to the specified folder and creates a ``requirements.yml``
-file which can be used to install those collections on a host without access to a Galaxy server. Just like the
-``install`` command, the collections are sourced based on the
+file which can be used to install those collections on a host without access to a Galaxy server. All the collections
+are downloaded by default to the ``./collections`` folder.
+
+Just like the ``install`` command, the collections are sourced based on the
 :ref:`configured galaxy server config <galaxy_server_config>`. Even if a collection to download was specified by a URL
 or path to a tarball, the collection will be redownloaded from the configured Galaxy server.
 
 Collections can be specified as one or multiple collections or with a ``requirements.yml`` file just like
 ``ansible-galaxy collection install``.
 
-To download a single collection and its dependencies
+To download a single collection and its dependencies:
 
 .. code-block:: bash
 
    ansible-galaxy collection download my_namespace.my_collection
 
-To download a single collection at a specific version
+To download a single collection at a specific version:
 
 .. code-block:: bash
 
    ansible-galaxy collection download my_namespace.my_collection:1.0.0
 
-To download multiple collection either specify multiple collections as command line arguments like above or use a
+To download multiple collections either specify multiple collections as command line arguments as shown above or use a
 requirements file in the format documented with :ref:`collection_requirements_file`.
 
 .. code-block:: bash
 
    ansible-galaxy collection download -r requirements.yml
 
-All the collections are downloaded by default to the ``./collections`` folder but ``-p`` or ``--download-path`` can be
-used to specify another path
+All the collections are downloaded by default to the ``./collections`` folder but you can use ``-p`` or
+``--download-path`` to specify another path:
 
 .. code-block:: bash
 
-   ansible-galaxy collection download my_namespace.my_collection -p /tmp/collections
+   ansible-galaxy collection download my_namespace.my_collection -p ~/offline-collections
 
-Once the collection have been downloaded the folder will contain the collections specified, their dependencies, and a
-``requirement.yml`` file. This folder can be used as is by ``ansible-galaxy collection install`` to install them on a
-host without access to a Galaxy or Automation Hub server.
+Once you have downloaded the collections, the folder contains the collections specified, their dependencies, and a
+``requirements.yml`` file. You can use this folder as is with ``ansible-galaxy collection install`` to install the
+collections on a host without access to a Galaxy or Automation Hub server.
 
 .. code-block:: bash
 
-   # This must be run when in the directory that contains the offline collections and requirements.yml file downloaded
-   # by the internet connect host
+   # This must be run from the folder that contains the offline collections and requirements.yml file downloaded
+   # by the internet-connected host
    cd ~/offline-collections
    ansible-galaxy collection install -r requirements.yml
 
