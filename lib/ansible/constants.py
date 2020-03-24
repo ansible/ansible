@@ -112,7 +112,7 @@ MODULE_REQUIRE_ARGS = ('command', 'win_command', 'ansible.windows.win_command', 
                        'ansible.windows.win_shell', 'raw', 'script')
 MODULE_NO_JSON = ('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
                   'ansible.windows.win_shell', 'raw')
-RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python')
+RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python', 'ansible_facts')
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
