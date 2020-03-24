@@ -1706,11 +1706,11 @@ class PyVmomiHelper(PyVmomi):
                     if property_spec.get('operation') == 'remove':
                         # attempt to delete non-existent property
                         continue
-                    
+
                     new_vapp_property_spec.operation = 'add'
 
                     # Configure the values in property_value
-                    property_info = configure_vapp_properties(property_spec)
+                    property_info = set_vapp_properties(property_spec)
 
                     new_vapp_property_spec.info = property_info
                     new_vapp_property_spec.info.key = new_property_index
@@ -1732,7 +1732,7 @@ class PyVmomiHelper(PyVmomi):
                 new_vapp_property_spec.operation = 'add'
 
                 # Configure the values in property_value
-                property_info = configure_vapp_properties(property_spec)
+                property_info = set_vapp_properties(property_spec)
 
                 new_vapp_property_spec.info = property_info
                 new_vapp_property_spec.info.key = new_property_index
