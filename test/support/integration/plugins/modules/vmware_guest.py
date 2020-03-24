@@ -1635,7 +1635,7 @@ class PyVmomiHelper(PyVmomi):
                     self.configspec.deviceChange.append(nic)
                 self.change_detected = True
 
-    def set_vapp_properties(self):
+    def set_vapp_properties(self, property_spec):
         # Sets the values in property_info
         property_info = vim.vApp.PropertyInfo()
         property_info.classId = property_spec.get('classId')
@@ -1710,7 +1710,7 @@ class PyVmomiHelper(PyVmomi):
                     new_vapp_property_spec.operation = 'add'
 
                     # Configure the values in property_value
-                    property_info = configure_vapp_properties()
+                    property_info = configure_vapp_properties(property_spec)
 
                     new_vapp_property_spec.info = property_info
                     new_vapp_property_spec.info.key = new_property_index
@@ -1732,7 +1732,7 @@ class PyVmomiHelper(PyVmomi):
                 new_vapp_property_spec.operation = 'add'
 
                 # Configure the values in property_value
-                property_info = configure_vapp_properties()
+                property_info = configure_vapp_properties(property_spec)
 
                 new_vapp_property_spec.info = property_info
                 new_vapp_property_spec.info.key = new_property_index
