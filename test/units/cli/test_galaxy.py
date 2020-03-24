@@ -25,6 +25,7 @@ import json
 import os
 import pytest
 import shutil
+import stat
 import tarfile
 import tempfile
 import yaml
@@ -579,6 +580,14 @@ def collection_artifact(collection_skeleton, tmp_path_factory):
     ''' Creates a collection artifact tarball that is ready to be published and installed '''
     output_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Output'))
 
+    # Create a file with +x in the collection so we can test the permissions
+    execute_path = os.path.join(collection_skeleton, 'runme.sh')
+    with open(execute_path, mode='wb') as fd:
+        fd.write(b"echo hi")
+
+    # S_ISUID should not be present on extraction.
+    os.chmod(execute_path, os.stat(execute_path).st_mode | stat.S_ISUID | stat.S_IEXEC)
+
     # Because we call GalaxyCLI in collection_skeleton we need to reset the singleton back to None so it uses the new
     # args, we reset the original args once it is done.
     orig_cli_args = co.GlobalCLIArgs._Singleton__instance
@@ -644,8 +653,9 @@ def test_collection_build(collection_artifact):
     with tarfile.open(tar_path, mode='r') as tar:
         tar_members = tar.getmembers()
 
-        valid_files = ['MANIFEST.json', 'FILES.json', 'roles', 'docs', 'plugins', 'plugins/README.md', 'README.md']
-        assert len(tar_members) == 7
+        valid_files = ['MANIFEST.json', 'FILES.json', 'roles', 'docs', 'plugins', 'plugins/README.md', 'README.md',
+                       'runme.sh']
+        assert len(tar_members) == len(valid_files)
 
         # Verify the uid and gid is 0 and the correct perms are set
         for member in tar_members:
@@ -655,7 +665,7 @@ def test_collection_build(collection_artifact):
             assert member.gname == ''
             assert member.uid == 0
             assert member.uname == ''
-            if member.isdir():
+            if member.isdir() or member.name == 'runme.sh':
                 assert member.mode == 0o0755
             else:
                 assert member.mode == 0o0644
@@ -700,19 +710,20 @@ def test_collection_build(collection_artifact):
         finally:
             files_file.close()
 
-        assert len(files['files']) == 6
+        assert len(files['files']) == 7
         assert files['format'] == 1
         assert len(files.keys()) == 2
 
-        valid_files_entries = ['.', 'roles', 'docs', 'plugins', 'plugins/README.md', 'README.md']
+        valid_files_entries = ['.', 'roles', 'docs', 'plugins', 'plugins/README.md', 'README.md', 'runme.sh']
         for file_entry in files['files']:
             assert file_entry['name'] in valid_files_entries
             assert file_entry['format'] == 1
 
-            if file_entry['name'] == 'plugins/README.md':
+            if file_entry['name'] in ['plugins/README.md', 'runme.sh']:
                 assert file_entry['ftype'] == 'file'
                 assert file_entry['chksum_type'] == 'sha256'
-                # Can't test the actual checksum as the html link changes based on the version.
+                # Can't test the actual checksum as the html link changes based on the version or the file contents
+                # don't matter
                 assert file_entry['chksum_sha256'] is not None
             elif file_entry['name'] == 'README.md':
                 assert file_entry['ftype'] == 'file'
