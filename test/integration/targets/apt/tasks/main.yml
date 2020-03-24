@@ -18,6 +18,8 @@
 - block:
   - include: 'apt.yml'
 
+  - include: 'url-with-deps.yml'
+
   - include: 'apt-multiarch.yml'
     when:
       - ansible_userspace_architecture != apt_foreign_arch
