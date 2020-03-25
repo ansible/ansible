@@ -203,7 +203,7 @@ def main():
 
                 cleanout = out.lower().replace(name.lower(), '')
 
-                for stopped in ['stop', 'is dead ', 'dead but ', 'could not access pid file', 'inactive']:
+                for stopped in ['stop', 'is dead ', 'dead but ', 'could not access pid file', 'inactive', 'is not running']:
                     if stopped in cleanout:
                         worked = True
                         break
