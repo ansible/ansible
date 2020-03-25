@@ -206,8 +206,6 @@ class WorkerProcess(multiprocessing_context.Process):
                     display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
                 finally:
                     self._clean_up()
-        finally:
-            self._clean_up()
 
         display.debug("WORKER PROCESS EXITING")
 
