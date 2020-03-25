@@ -29,7 +29,7 @@
 
 # `unique` will fall back to a custom implementation if the Jinja2 version is
 # too old to support `jinja2.filters.do_unique`. However, the built-in fallback
-# is quite different by defualt. Namely, it ignores the case-sensitivity
+# is quite different by default. Namely, it ignores the case-sensitivity
 # setting. This means running:
 #    ['a', 'b', 'A', 'B']|unique
 # ... will give a different result for someone running Jinja 2.9 vs 2.10 when
