@@ -331,12 +331,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def extract_tags(self, host):
         return host["tags"]
-    
-    def join_interfaces(self, host,interfaces,ip_addresses):
-        host_interfaces=[]
+
+    def join_interfaces(self, host, interfaces, ip_addresses):
+        host_interfaces = []
         for interface in interfaces:
             if host["id"] == interface["device"]["id"]:
-                addresses = self.join_ip(interface,ip_addresses)
+                addresses = self.join_ip(interface, ip_addresses)
                 if len(addresses) > 0:
                     interface["addresses"] = addresses
                 # gather usefull information
@@ -345,7 +345,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 if interface.get('mode'):
                     pretty_interface["mode"] = interface["mode"]["label"]
                 else:
-                    pretty_interface["mode"] = None 
+                    pretty_interface["mode"] = None
                 pretty_interface["name"] = interface["name"]
                 pretty_interface["tagged_vlans"] = interface["tagged_vlans"]
                 pretty_interface["tags"] = interface["tags"]
@@ -356,15 +356,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         else:
             return
 
-    def join_ip(self,interface,ip_addresses):
-        interface_addresses=[]
+    def join_ip(self, interface, ip_addresses):
+        interface_addresses = []
         for ip_address in ip_addresses:
             if ip_address.get('interface'):
                 if interface["id"] == ip_address["interface"]["id"]:
                     if ip_address.get('address'):
                         interface_addresses.append(ip_address["address"])
         return interface_addresses
-       
 
     def refresh_platforms_lookup(self):
         url = self.api_endpoint + "/api/dcim/platforms/?limit=0"
@@ -405,7 +404,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         url = self.api_endpoint + "/api/dcim/manufacturers/?limit=0"
         manufacturers = self.get_resource_list(api_url=url)
         self.manufacturers_lookup = dict((manufacturer["id"], manufacturer["name"]) for manufacturer in manufacturers)
-    
 
     def refresh_lookups(self):
         lookup_processes = (
@@ -444,6 +442,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def refresh_url(self):
         query_parameters = [("limit", 0)]
+        only_limit = [("limit", 0)]
         if self.query_filters:
             query_parameters.extend(filter(lambda x: x,
                                            map(self.validate_query_parameters, self.query_filters)))
@@ -453,17 +452,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         else:
             self.device_url = self.api_endpoint + "/api/dcim/devices/?" + urlencode(query_parameters) + "&exclude=config_context"
             self.virtual_machines_url = self.api_endpoint + "/api/virtualization/virtual-machines/?" + urlencode(query_parameters) + "&exclude=config_context"
-        self.interfaces_url = self.api_endpoint +"/api/dcim/interfaces/?limit=0"
-        self.ip_addresses_url = self.api_endpoint +"/api/ipam/ip-addresses/?limit=0"
-
+        self.interfaces_url = self.api_endpoint + "/api/dcim/interfaces/?" + urlencode(only_limit)
+        self.ip_addresses_url = self.api_endpoint + "/api/ipam/ip-addresses/?" + urlencode(only_limit)
 
     def fetch_hosts(self):
         return chain(
             self.get_resource_list(self.device_url),
             self.get_resource_list(self.virtual_machines_url),
         )
+
     def fetch_interfaces(self):
         return self.get_resource_list(self.interfaces_url)
+
     def fetch_ip_addresses(self):
         return self.get_resource_list(self.ip_addresses_url)
 
@@ -499,9 +499,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if self.extract_primary_ip6(host):
             self.inventory.set_variable(hostname, "primary_ip6", self.extract_primary_ip6(host=host))
-    def _fill_interfaces_variables(self,host,hostname,interfaces,ip_addresses):
-        if self.join_interfaces(host,interfaces,ip_addresses):
-            self.inventory.set_variable(hostname, "interfaces", self.join_interfaces(host,interfaces,ip_addresses))
+
+    def _fill_interfaces_variables(self, host, hostname, interfaces, ip_addresses):
+        if self.join_interfaces(host, interfaces, ip_addresses):
+            self.inventory.set_variable(hostname, "interfaces", self.join_interfaces(host, interfaces, ip_addresses))
+
     def main(self):
         self.refresh_lookups()
         self.refresh_url()
@@ -515,7 +517,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self.inventory.add_host(host=hostname)
             self._fill_host_variables(host=host, hostname=hostname)
             if self.include_interfaces:
-                self._fill_interfaces_variables(host=host,hostname=hostname,interfaces=interfaces_list,ip_addresses=ip_addresses_list)
+                self._fill_interfaces_variables(host=host, hostname=hostname, interfaces=interfaces_list, ip_addresses=ip_addresses_list)
             strict = self.get_option("strict")
 
             # Composed variables
@@ -532,7 +534,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         super(InventoryModule, self).parse(inventory, loader, path)
         self._read_config_data(path=path)
         self.use_cache = cache
-
         # Netbox access
         token = self.get_option("token")
         # Handle extra "/" from api_endpoint configuration and trim if necessary, see PR#49943
