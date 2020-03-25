@@ -62,7 +62,12 @@ class FilterUserInjector(logging.Filter):
     This is a filter which injects the current user as the 'user' attribute on each record. We need to add this filter
     to all logger handlers so that 3rd party libraries won't print an exception due to user not being defined.
     """
-    username = getpass.getuser()
+
+    try:
+        username = getpass.getuser()
+    except KeyError:
+        # people like to make containser w/o actual valid passwd/shadow and use host uids
+        username = 'uid=%s' % os.getuid()
 
     def filter(self, record):
         record.user = FilterUserInjector.username
