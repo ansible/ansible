@@ -319,7 +319,7 @@ Testing ACI library functions
 =============================
 You can test your ``construct_url()`` and ``payload()`` arguments without accessing APIC hardware by using the following python script:
 
-.. code-block:: guess
+.. code-block:: text
 
     #!/usr/bin/python
     import json
