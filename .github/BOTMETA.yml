@@ -1,4 +1,5 @@
 automerge: false
+notifications: false
 files:
   .github/BOTMETA.yml:
     labels: botmeta
