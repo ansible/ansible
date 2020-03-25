@@ -23,6 +23,7 @@ module: shell
 short_description: Execute shell commands on targets
 description:
      - The C(shell) module takes the command name followed by a list of space-delimited arguments.
+     - Either a free form command or C(cmd) parameter is required, see the examples.
      - It is almost exactly like the M(command) module but runs
        the command through a shell (C(/bin/sh)) on the remote node.
      - For Windows targets, use the M(win_shell) module instead.
@@ -33,8 +34,11 @@ options:
       - The shell module takes a free form command to run, as a string.
       - There is no actual parameter named 'free form'.
       - See the examples on how to use this module.
-    required: yes
     type: str
+  cmd:
+    type: str
+    description:
+      - The command to run followed by optional arguments.
   creates:
     description:
       - A filename, when it already exists, this step will B(not) be run.
@@ -114,6 +118,12 @@ EXAMPLES = r'''
     chdir: somedir/
     creates: somelog.txt
 
+# You can also use the 'cmd' parameter instead of free form format.
+- name: This command will change the working directory to somedir/.
+  shell:
+    cmd: ls -l | grep log
+    chdir: somedir/
+
 - name: Run a command that uses non-posix shell-isms (in this example /bin/sh doesn't handle redirection and wildcards together but bash does)
   shell: cat < /tmp/*txt
   args:
@@ -174,7 +184,7 @@ stdout:
     description: The command standard output
     returned: always
     type: str
-    sample: 'Clustering node rabbit@slave1 with rabbit@master ...'
+    sample: 'Clustering node rabbit@slave1 with rabbit@master …'
 stderr:
     description: The command standard error
     returned: always
@@ -194,5 +204,10 @@ stdout_lines:
     description: The command standard output split in lines
     returned: always
     type: list
-    sample: [u'Clustering node rabbit@slave1 with rabbit@master ...']
+    sample: [u'Clustering node rabbit@slave1 with rabbit@master …']
+stderr_lines:
+    description: The command standard error split in lines
+    returned: always
+    type: list
+    sample: [u'ls cannot access foo: No such file or directory', u'ls …']
 '''

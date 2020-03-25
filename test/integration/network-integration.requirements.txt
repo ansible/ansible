@@ -1,5 +1,1 @@
-pexpect # for _user test
-scp # for Cisco ios
-selectors2 # for ncclient
-ncclient # for Junos
-jxmlease # for Junos
+scp # needed by incidental_ios_file

@@ -78,6 +78,10 @@ Write-AnsibleLog "INFO - Creating temp path for coverage files '$temp_path'" "co
 New-Item -Path $temp_path -ItemType Directory > $null
 $breakpoint_info = [System.Collections.Generic.List`1[PSObject]]@()
 
+# Ensures we create files with UTF-8 encoding and a BOM. This is critical to force the powershell engine to read files
+# as UTF-8 and not as the system's codepage.
+$file_encoding = 'UTF8'
+
 try {
     $scripts = [System.Collections.Generic.List`1[System.Object]]@($script:common_functions)
 
@@ -97,7 +101,7 @@ try {
         $util_path = Join-Path -Path $temp_path -ChildPath "$($util_name).psm1"
 
         Write-AnsibleLog "INFO - Outputting module_util $util_name to temp file '$util_path'" "coverage_wrapper"
-        Set-Content -LiteralPath $util_path -Value $util_code
+        Set-Content -LiteralPath $util_path -Value $util_code -Encoding $file_encoding
 
         $ansible_path = $Payload.coverage.module_util_paths.$util_name
         if ((Compare-WhitelistPattern -Patterns $coverage_whitelist -Path $ansible_path)) {
@@ -125,7 +129,7 @@ try {
     $module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.module_entry))
     $module_path = Join-Path -Path $temp_path -ChildPath "$($module_name).ps1"
     Write-AnsibleLog "INFO - Ouputting module $module_name to temp file '$module_path'" "coverage_wrapper"
-    Set-Content -LiteralPath $module_path -Value $module
+    Set-Content -LiteralPath $module_path -Value $module -Encoding $file_encoding
     $scripts.Add($module_path)
 
     $ansible_path = $Payload.coverage.module_path
@@ -172,7 +176,9 @@ try {
         $code_cov_json = ConvertTo-Json -InputObject $coverage_info -Compress
 
         Write-AnsibleLog "INFO - Outputting coverage json to '$coverage_output_path'" "coverage_wrapper"
-        Set-Content -LiteralPath $coverage_output_path -Value $code_cov_json
+        # Ansible controller expects these files to be UTF-8 without a BOM, use .NET for this.
+        $utf8_no_bom = New-Object -TypeName System.Text.UTF8Encoding -ArgumentList $false
+        [System.IO.File]::WriteAllbytes($coverage_output_path, $utf8_no_bom.GetBytes($code_cov_json))
     }
 } finally {
     try {

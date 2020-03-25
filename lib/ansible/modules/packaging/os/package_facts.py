@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 module: package_facts
@@ -229,8 +229,14 @@ class RPM(LibMgr):
     def is_available(self):
         ''' we expect the python bindings installed, but this gives warning if they are missing and we have rpm cli'''
         we_have_lib = super(RPM, self).is_available()
-        if not we_have_lib and get_bin_path('rpm'):
-            self.warnings.append('Found "rpm" but %s' % (missing_required_lib('rpm')))
+
+        try:
+            get_bin_path('rpm')
+            if not we_have_lib:
+                module.warn('Found "rpm" but %s' % (missing_required_lib('rpm')))
+        except ValueError:
+            pass
+
         return we_have_lib
 
 
@@ -255,8 +261,12 @@ class APT(LibMgr):
         we_have_lib = super(APT, self).is_available()
         if not we_have_lib:
             for exe in ('apt', 'apt-get', 'aptitude'):
-                if get_bin_path(exe):
-                    self.warnings.append('Found "%s" but %s' % (exe, missing_required_lib('apt')))
+                try:
+                    get_bin_path(exe)
+                except ValueError:
+                    continue
+                else:
+                    module.warn('Found "%s" but %s' % (exe, missing_required_lib('apt')))
                     break
         return we_have_lib
 
@@ -381,9 +391,6 @@ def main():
                 if pkgmgr in module.params['manager']:
                     module.warn('Requested package manager %s was not usable by this module: %s' % (pkgmgr, to_text(e)))
                 continue
-
-            for warning in getattr(manager, 'warnings', []):
-                module.warn(warning)
 
         except Exception as e:
             if pkgmgr in module.params['manager']:

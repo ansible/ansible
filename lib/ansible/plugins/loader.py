@@ -18,6 +18,7 @@ from collections import defaultdict
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -31,12 +32,6 @@ try:
     imp = None
 except ImportError:
     import imp
-
-# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
-try:
-    from importlib import import_module
-except ImportError:
-    import_module = __import__
 
 display = Display()
 
@@ -271,19 +266,15 @@ class PluginLoader:
         # PLUGIN_PATHS_CACHE, and MODULE_CACHE.  Since those three dicts key
         # on the class_name and neither regular modules nor powershell modules
         # would have class_names, they would not work as written.
-        reordered_paths = []
-        win_dirs = []
-
-        for path in ret:
-            if path.endswith('windows'):
-                win_dirs.append(path)
-            else:
-                reordered_paths.append(path)
-        reordered_paths.extend(win_dirs)
+        #
+        # The expected sort order is paths in the order in 'ret' with paths ending in '/windows' at the end,
+        # also in the original order they were found in 'ret'.
+        # The .sort() method is guaranteed to be stable, so original order is preserved.
+        ret.sort(key=lambda p: p.endswith('/windows'))
 
         # cache and return the result
-        self._paths = reordered_paths
-        return reordered_paths
+        self._paths = ret
+        return ret
 
     def _load_config_defs(self, name, module, path):
         ''' Reads plugin docs to find configuration setting definitions, to push to config manager for later use '''
@@ -317,6 +308,10 @@ class PluginLoader:
                 display.debug('Added %s to loader search path' % (directory))
 
     def _find_fq_plugin(self, fq_name, extension):
+        """Search builtin paths to find a plugin. No external paths are searched,
+        meaning plugins inside roles inside collections will be ignored.
+        """
+
         plugin_type = AnsibleCollectionRef.legacy_plugin_dir_to_plugin_type(self.subdir)
 
         acr = AnsibleCollectionRef.from_fqcr(fq_name, plugin_type)
@@ -397,10 +392,12 @@ class PluginLoader:
                 try:
                     # HACK: refactor this properly
                     if candidate_name.startswith('ansible.legacy'):
-                        # just pass the raw name to the old lookup function to check in all the usual locations
+                        # 'ansible.legacy' refers to the plugin finding behavior used before collections existed.
+                        # They need to search 'library' and the various '*_plugins' directories in order to find the file.
                         full_name = name
                         p = self._find_plugin_legacy(name.replace('ansible.legacy.', '', 1), ignore_deprecated, check_aliases, suffix)
                     else:
+                        # 'ansible.builtin' should be handled here. This means only internal, or builtin, paths are searched.
                         full_name, p = self._find_fq_plugin(candidate_name, suffix)
                     if p:
                         return full_name, p
@@ -417,6 +414,9 @@ class PluginLoader:
         return name, self._find_plugin_legacy(name, ignore_deprecated, check_aliases, suffix)
 
     def _find_plugin_legacy(self, name, ignore_deprecated=False, check_aliases=False, suffix=None):
+        """Search library and various *_plugins paths in order to find the file.
+        This was behavior prior to the existence of collections.
+        """
 
         if check_aliases:
             name = self.aliases.get(name, name)

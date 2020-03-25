@@ -49,6 +49,7 @@
                 "ec2:DeleteTags",
                 "ec2:DeregisterImage",
                 "ec2:Describe*",
+                "ec2:DetachVolume",
                 "ec2:ImportKeyPair",
                 "ec2:ModifyImageAttribute",
                 "ec2:ModifyInstanceAttribute",
@@ -96,17 +97,16 @@
                 "elasticloadbalancing:*TargetGroup",
                 "elasticloadbalancing:AddTags",
                 "elasticloadbalancing:ConfigureHealthCheck",
-                "elasticloadbalancing:CreateListener",
-                "elasticloadbalancing:CreateRule",
-                "elasticloadbalancing:DeleteListener",
-                "elasticloadbalancing:DeleteRule",
-                "elasticloadbalancing:DescribeInstanceHealth",
-                "elasticloadbalancing:DescribeLoadBalancer*",
-                "elasticloadbalancing:DescribeTags",
-                "elasticloadbalancing:ModifyListener",
-                "elasticloadbalancing:ModifyLoadBalancerAttributes",
-                "elasticloadbalancing:ModifyRule",
-                "elasticloadbalancing:RemoveTags"
+                "elasticloadbalancing:Create*",
+                "elasticloadbalancing:Delete*",
+                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                "elasticloadbalancing:Describe*",
+                "elasticloadbalancing:DisableAvailabilityZonesForLoadBalancer",
+                "elasticloadbalancing:EnableAvailabilityZonesForLoadBalancer",
+                "elasticloadbalancing:Modify*",
+                "elasticloadbalancing:Register*",
+                "elasticloadbalancing:Deregister*",
+                "elasticloadbalancing:Remove*"
             ],
             "Resource": "*"
         },
@@ -235,16 +235,46 @@
             "Action": [
               "states:CreateStateMachine",
               "states:DeleteStateMachine",
+              "states:DescribeExecution",
               "states:DescribeStateMachine",
+              "states:ListExecutions",
               "states:ListStateMachines",
               "states:ListTagsForResource",
+              "states:StartExecution",
+              "states:StopExecution",
               "states:TagResource",
               "states:UntagResource",
               "states:UpdateStateMachine"
             ],
             "Resource": [
-              "arn:aws:states:*"
+              "arn:aws:states:*:*:*"
             ]
-        }
+        },
+        {
+            "Sid": "AllowLightsail",
+            "Effect": "Allow",
+            "Action": [
+              "lightsail:CreateInstances",
+              "lightsail:DeleteInstance",
+              "lightsail:GetInstance",
+              "lightsail:GetInstances",
+              "lightsail:RebootInstance",
+              "lightsail:StartInstance",
+              "lightsail:StopInstance"
+            ],
+            "Resource": "arn:aws:lightsail:*:*:*"
+        },
+        {
+            "Sid": "AllowSQS",
+            "Effect": "Allow",
+            "Action": [
+                "sqs:GetQueueURL",
+                "sqs:CreateQueue",
+                "sqs:GetQueueAttributes",
+                "sqs:DeleteQueue",
+                "sqs:SetQueueAttributes"
+            ],
+            "Resource": "arn:aws:sqs:*:*:*"
+        },
     ]
 }

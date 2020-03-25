@@ -39,6 +39,15 @@ from ansible.plugins.loader import connection_loader, become_loader
 
 class TestConnectionBaseClass(unittest.TestCase):
 
+    def test_plugins_connection_ssh_module(self):
+        play_context = PlayContext()
+        play_context.prompt = (
+            '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
+        )
+        in_stream = StringIO()
+
+        self.assertIsInstance(ssh.Connection(play_context, in_stream), ssh.Connection)
+
     def test_plugins_connection_ssh_basic(self):
         pc = PlayContext()
         new_stdin = StringIO()

@@ -1,0 +1,9 @@
+---
+- name: test Ansible.Basic.cs
+  ansible_basic_tests:
+  register: ansible_basic_test
+
+- name: assert test Ansible.Basic.cs
+  assert:
+    that:
+    - ansible_basic_test.data == "success"

@@ -50,6 +50,11 @@ class StrategyModule(StrategyBase):
     # This strategy manages throttling on its own, so we don't want it done in queue_task
     ALLOW_BASE_THROTTLING = False
 
+    def _filter_notified_failed_hosts(self, iterator, notified_hosts):
+
+        # If --force-handlers is used we may act on hosts that have failed
+        return [host for host in notified_hosts if iterator.is_failed(host)]
+
     def _filter_notified_hosts(self, notified_hosts):
         '''
         Filter notified hosts accordingly to strategy

@@ -8,6 +8,10 @@ def get_bin_path(*args, **kwargs):
     return "/sbin/iptables"
 
 
+def get_iptables_version(iptables_path, module):
+    return "1.8.2"
+
+
 class TestIptables(ModuleTestCase):
 
     def setUp(self):
@@ -15,6 +19,9 @@ class TestIptables(ModuleTestCase):
         self.mock_get_bin_path = patch.object(basic.AnsibleModule, 'get_bin_path', get_bin_path)
         self.mock_get_bin_path.start()
         self.addCleanup(self.mock_get_bin_path.stop)  # ensure that the patching is 'undone'
+        self.mock_get_iptables_version = patch.object(iptables, 'get_iptables_version', get_iptables_version)
+        self.mock_get_iptables_version.start()
+        self.addCleanup(self.mock_get_iptables_version.stop)  # ensure that the patching is 'undone'
 
     def test_without_required_parameters(self):
         """Failure must occurs when all parameters are missing"""
@@ -827,4 +834,42 @@ class TestIptables(ModuleTestCase):
             'iprange',
             '--dst-range',
             '10.0.0.50-10.0.0.100'
+        ])
+
+    def test_insert_rule_with_wait(self):
+        """Test flush without parameters"""
+        set_module_args({
+            'chain': 'OUTPUT',
+            'source': '1.2.3.4/32',
+            'destination': '7.8.9.10/42',
+            'jump': 'ACCEPT',
+            'action': 'insert',
+            'wait': '10'
+        })
+
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t',
+            'filter',
+            '-C',
+            'OUTPUT',
+            '-w',
+            '10',
+            '-s',
+            '1.2.3.4/32',
+            '-d',
+            '7.8.9.10/42',
+            '-j',
+            'ACCEPT'
         ])

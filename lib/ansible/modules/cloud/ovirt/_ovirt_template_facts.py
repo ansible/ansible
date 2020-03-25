@@ -1,1 +1,0 @@
-ovirt_template_info.py

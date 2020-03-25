@@ -1,0 +1,5 @@
+deprecated_features:
+- 'iam_role: The default value of the purge_policies has been deprecated and will change from true to false in Ansible 2.14'
+minor_changes:
+- 'iam_role, iam_user and iam_group: the managed_policy option has been renamed to managed_policies (with an alias added)'
+- 'iam_role, iam_user and iam_group: the purge_policy option has been renamed to purge_policies (with an alias added)'

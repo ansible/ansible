@@ -1,0 +1,4 @@
+minor_changes:
+    - ansible-galaxy - Add a `verify` subcommand to `ansible-galaxy collection`. The collection found on
+      the galaxy server is downloaded to a tempfile to compare the checksums of the files listed in the
+      MANIFEST.json and the FILES.json with the contents of the installed collection.

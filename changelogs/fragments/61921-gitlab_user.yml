@@ -1,0 +1,2 @@
+bugfixes:
+- While deleting gitlab user, name, email and password is no longer required ini gitlab_user module (https://github.com/ansible/ansible/issues/61921).

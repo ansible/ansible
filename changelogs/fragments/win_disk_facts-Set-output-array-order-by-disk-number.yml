@@ -1,0 +1,2 @@
+minor_changes:
+  - "win_disk_facts - Set output array order to be by disk number property - https://github.com/ansible/ansible/issues/63998"

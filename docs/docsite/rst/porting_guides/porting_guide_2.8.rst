@@ -59,7 +59,7 @@ In Ansible 2.7 and older::
 Module option conversion to string
 ----------------------------------
 
-Beginning in version 2.8, Ansible will warn if a module expects a string, but a non-string value is passed and automatically converted to a string. This highlights potential problems where, for example, a ``yes`` or ``true`` (parsed as truish boolean value) would be converted to the string ``'True'``, or where a version number ``1.10`` (parsed as float value) would be converted to ``'1.0'``. Such conversions can result in unexpected behavior depending on context.
+Beginning in version 2.8, Ansible will warn if a module expects a string, but a non-string value is passed and automatically converted to a string. This highlights potential problems where, for example, a ``yes`` or ``true`` (parsed as truish boolean value) would be converted to the string ``'True'``, or where a version number ``1.10`` (parsed as float value) would be converted to ``'1.1'``. Such conversions can result in unexpected behavior depending on context.
 
 This behavior can be changed to be an error or to be ignored by setting the ``ANSIBLE_STRING_CONVERSION_ACTION`` environment variable, or by setting the ``string_conversion_action`` configuration in the ``defaults`` section of ``ansible.cfg``.
 
@@ -389,17 +389,17 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 
 * ``foreman`` use `foreman-ansible-modules <https://github.com/theforeman/foreman-ansible-modules>`_ instead.
 * ``katello`` use `foreman-ansible-modules <https://github.com/theforeman/foreman-ansible-modules>`_ instead.
-* ``github_hooks`` use :ref:`github_webhook <github_webhook_module>` and :ref:`github_webhook_facts <github_webhook_facts_module>` instead.
-* ``digital_ocean`` use :ref:`digital_ocean_droplet <digital_ocean_droplet_module>` instead.
-* ``gce`` use :ref:`gcp_compute_instance <gcp_compute_instance_module>` instead.
-* ``gcspanner`` use :ref:`gcp_spanner_instance <gcp_spanner_instance_module>` and :ref:`gcp_spanner_database <gcp_spanner_database_module>` instead.
-* ``gcdns_record`` use :ref:`gcp_dns_resource_record_set <gcp_dns_resource_record_set_module>` instead.
-* ``gcdns_zone`` use :ref:`gcp_dns_managed_zone <gcp_dns_managed_zone_module>` instead.
-* ``gcp_forwarding_rule`` use :ref:`gcp_compute_global_forwarding_rule <gcp_compute_global_forwarding_rule_module>` or :ref:`gcp_compute_forwarding_rule <gcp_compute_forwarding_rule_module>` instead.
-* ``gcp_healthcheck`` use :ref:`gcp_compute_health_check <gcp_compute_health_check_module>`, :ref:`gcp_compute_http_health_check <gcp_compute_http_health_check_module>`, or :ref:`gcp_compute_https_health_check <gcp_compute_https_health_check_module>` instead.
-* ``gcp_backend_service`` use :ref:`gcp_compute_backend_service <gcp_compute_backend_service_module>` instead.
-* ``gcp_target_proxy`` use :ref:`gcp_compute_target_http_proxy <gcp_compute_target_http_proxy_module>` instead.
-* ``gcp_url_map`` use :ref:`gcp_compute_url_map <gcp_compute_url_map_module>` instead.
+* ``github_hooks`` use :ref:`github_webhook <ansible_2_8:github_webhook_module>` and :ref:`github_webhook_facts <ansible_2_8:github_webhook_facts_module>` instead.
+* ``digital_ocean`` use :ref:`digital_ocean_droplet <ansible_2_8:digital_ocean_droplet_module>` instead.
+* ``gce`` use :ref:`gcp_compute_instance <ansible_2_8:gcp_compute_instance_module>` instead.
+* ``gcspanner`` use :ref:`gcp_spanner_instance <ansible_2_8:gcp_spanner_instance_module>` and :ref:`gcp_spanner_database <ansible_2_8:gcp_spanner_database_module>` instead.
+* ``gcdns_record`` use :ref:`gcp_dns_resource_record_set <ansible_2_8:gcp_dns_resource_record_set_module>` instead.
+* ``gcdns_zone`` use :ref:`gcp_dns_managed_zone <ansible_2_8:gcp_dns_managed_zone_module>` instead.
+* ``gcp_forwarding_rule`` use :ref:`gcp_compute_global_forwarding_rule <ansible_2_8:gcp_compute_global_forwarding_rule_module>` or :ref:`gcp_compute_forwarding_rule <ansible_2_8:gcp_compute_forwarding_rule_module>` instead.
+* ``gcp_healthcheck`` use :ref:`gcp_compute_health_check <ansible_2_8:gcp_compute_health_check_module>`, :ref:`gcp_compute_http_health_check <ansible_2_8:gcp_compute_http_health_check_module>`, or :ref:`gcp_compute_https_health_check <ansible_2_8:gcp_compute_https_health_check_module>` instead.
+* ``gcp_backend_service`` use :ref:`gcp_compute_backend_service <ansible_2_8:gcp_compute_backend_service_module>` instead.
+* ``gcp_target_proxy`` use :ref:`gcp_compute_target_http_proxy <ansible_2_8:gcp_compute_target_http_proxy_module>` instead.
+* ``gcp_url_map`` use :ref:`gcp_compute_url_map <ansible_2_8:gcp_compute_url_map_module>` instead.
 * ``panos`` use the `Palo Alto Networks Ansible Galaxy role <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_ instead.
 
 
@@ -453,7 +453,7 @@ Noteworthy module changes
 * The ``docker_volume`` module has deprecated the returned fact ``docker_container``. The same value is
   available as the returned variable ``volume``. The returned fact will be removed in Ansible 2.12.
 
-* The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
+* The ``docker_service`` module was renamed to :ref:`docker_compose <ansible_2_8:docker_compose_module>`.
 * The renamed ``docker_compose`` module used to return one fact per service, named same as the service. A dictionary
   of these facts is returned as the regular return value ``services``. The returned facts will be removed in
   Ansible 2.12.

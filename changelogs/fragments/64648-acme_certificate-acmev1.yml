@@ -1,0 +1,2 @@
+bugfixes:
+- "acme_certificate - fix misbehavior when ACME v1 is used with ``modify_account`` set to ``false``."

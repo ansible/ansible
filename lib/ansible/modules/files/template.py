@@ -17,6 +17,7 @@ DOCUMENTATION = r'''
 ---
 module: template
 version_added: historical
+short_description: Template a file out to a remote server
 options:
   follow:
     description:
@@ -46,7 +47,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-- name: Template a file to /etc/files.conf
+- name: Template a file to /etc/file.conf
   template:
     src: /mytemplates/foo.j2
     dest: /etc/file.conf
@@ -64,7 +65,7 @@ EXAMPLES = r'''
 
 - name: Copy a version of named.conf that is dependent on the OS. setype obtained by doing ls -Z /etc/named.conf on original file
   template:
-    src: named.conf_{{ ansible_os_family}}.j2
+    src: named.conf_{{ ansible_os_family }}.j2
     dest: /etc/named.conf
     group: named
     setype: named_conf_t

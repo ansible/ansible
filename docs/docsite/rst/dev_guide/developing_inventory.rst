@@ -260,7 +260,7 @@ Now that you've enabled caching, loaded the correct plugin, and retrieved a uniq
                 # This occurs if the cache_key is not in the cache or if the cache_key expired, so the cache needs to be updated
                 cache_needs_update = True
 
-        if cache_needs_updates:
+        if cache_needs_update:
             results = self.get_inventory()
 
             # set the cache

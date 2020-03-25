@@ -166,12 +166,6 @@ class TestHashParams(unittest.TestCase):
 
 class TestRole(unittest.TestCase):
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_tasks(self):
 

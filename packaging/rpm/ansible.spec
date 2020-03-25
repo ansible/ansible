@@ -284,6 +284,7 @@ ln -s /usr/bin/pytest-3 bin/pytest
 %files
 %defattr(-,root,root)
 %{_bindir}/ansible*
+%exclude %{_bindir}/ansible-test
 %config(noreplace) %{_sysconfdir}/ansible/
 %doc README.rst PKG-INFO COPYING changelogs/CHANGELOG*.rst
 %doc %{_mandir}/man1/ansible*

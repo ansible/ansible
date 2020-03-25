@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - redfish_command - fix error when deleting a disabled Redfish account (https://github.com/ansible/ansible/issues/64684)

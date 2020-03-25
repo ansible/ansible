@@ -1,5 +1,10 @@
 
-You can use the ``ansible-galaxy collection install`` command to install a collection on your system.
+
+By default, ``ansible-galaxy collection install`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the
+:file:`ansible.cfg` file under :ref:`galaxy_server`). You do not need any
+further configuration.
+
+See :ref:`Configuring the ansible-galaxy client <galaxy_server_config>` if you are using any other Galaxy server, such as Red Hat Automation Hub.
 
 To install a collection hosted in Galaxy:
 
@@ -26,7 +31,8 @@ You can also keep a collection adjacent to the current playbook, under a ``colle
 
 .. code-block:: text
 
-    play.yml
+    ./
+    ├── play.yml
     ├── collections/
     │   └── ansible_collections/
     │               └── my_namespace/

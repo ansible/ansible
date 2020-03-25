@@ -1,0 +1,2 @@
+bugfixes:
+- "gitlab_user - Fix adding ssh key to new/changed user and adding group membership for new/changed user"

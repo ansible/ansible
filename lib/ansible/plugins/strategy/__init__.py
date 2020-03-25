@@ -325,9 +325,26 @@ class StrategyBase:
 
         # and then queue the new task
         try:
+            # Determine the "rewind point" of the worker list. This means we start
+            # iterating over the list of workers until the end of the list is found.
+            # Normally, that is simply the length of the workers list (as determined
+            # by the forks or serial setting), however a task/block/play may "throttle"
+            # that limit down.
+            rewind_point = len(self._workers)
+            if throttle > 0 and self.ALLOW_BASE_THROTTLING:
+                if task.run_once:
+                    display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
+                else:
+                    if throttle <= rewind_point:
+                        display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
+                        rewind_point = throttle
+
             queued = False
             starting_worker = self._cur_worker
             while True:
+                if self._cur_worker >= rewind_point:
+                    self._cur_worker = 0
+
                 worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     self._queued_task_cache[(host.name, task._uuid)] = {
@@ -346,19 +363,6 @@ class StrategyBase:
 
                 self._cur_worker += 1
 
-                # Determine the "rewind point" of the worker list. This means we start
-                # iterating over the list of workers until the end of the list is found.
-                # Normally, that is simply the length of the workers list (as determined
-                # by the forks or serial setting), however a task/block/play may "throttle"
-                # that limit down.
-                rewind_point = len(self._workers)
-                if throttle > 0 and self.ALLOW_BASE_THROTTLING:
-                    if task.run_once:
-                        display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
-                    else:
-                        if throttle <= rewind_point:
-                            display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
-                            rewind_point = throttle
                 if self._cur_worker >= rewind_point:
                     self._cur_worker = 0
 
@@ -510,7 +514,7 @@ class StrategyBase:
                     if state and iterator.get_active_state(state).run_state == iterator.ITERATING_RESCUE:
                         self._tqm._stats.increment('rescued', original_host.name)
                         self._variable_manager.set_nonpersistent_facts(
-                            original_host,
+                            original_host.name,
                             dict(
                                 ansible_failed_task=original_task.serialize(),
                                 ansible_failed_result=task_result._result,
@@ -911,7 +915,10 @@ class StrategyBase:
         if notified_hosts is None:
             notified_hosts = handler.notified_hosts[:]
 
+        # strategy plugins that filter hosts need access to the iterator to identify failed hosts
+        failed_hosts = self._filter_notified_failed_hosts(iterator, notified_hosts)
         notified_hosts = self._filter_notified_hosts(notified_hosts)
+        notified_hosts += failed_hosts
 
         if len(notified_hosts) > 0:
             saved_name = handler.name
@@ -990,6 +997,9 @@ class StrategyBase:
             if h not in notified_hosts]
         display.debug("done running handlers, result is: %s" % result)
         return result
+
+    def _filter_notified_failed_hosts(self, iterator, notified_hosts):
+        return []
 
     def _filter_notified_hosts(self, notified_hosts):
         '''
@@ -1084,6 +1094,7 @@ class StrategyBase:
         elif meta_action == 'end_host':
             if _evaluate_conditional(target_host):
                 iterator._host_states[target_host.name].run_state = iterator.ITERATING_COMPLETE
+                iterator._play._removed_hosts.append(target_host.name)
                 msg = "ending play for %s" % target_host.name
             else:
                 skipped = True

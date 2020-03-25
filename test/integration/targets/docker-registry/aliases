@@ -1,7 +1,0 @@
-shippable/posix/group3
-skip/osx
-skip/freebsd
-destructive
-docker_image
-docker_image_info
-docker_login

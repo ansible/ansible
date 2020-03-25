@@ -1,0 +1,2 @@
+minor_changes:
+- Windows - add deprecation notice in the Windows setup module when running on Server 2008, 2008 R2, and Windows 7

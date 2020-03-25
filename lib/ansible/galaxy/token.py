@@ -29,6 +29,7 @@ from stat import S_IRUSR, S_IWUSR
 import yaml
 
 from ansible import constants as C
+from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
@@ -76,7 +77,8 @@ class KeycloakToken(object):
         resp = open_url(to_native(self.auth_url),
                         data=payload,
                         validate_certs=self.validate_certs,
-                        method='POST')
+                        method='POST',
+                        http_agent=user_agent())
 
         # TODO: handle auth errors
 
@@ -106,7 +108,7 @@ class GalaxyToken(object):
 
     @property
     def config(self):
-        if not self._config:
+        if self._config is None:
             self._config = self._read()
 
         # Prioritise the token passed into the constructor

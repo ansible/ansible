@@ -1,0 +1,2 @@
+bugfixes:
+  - hostname - Fixed an issue where the hostname on the cloudlinux 6 server could not be set.

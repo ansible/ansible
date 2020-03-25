@@ -1,9 +1,9 @@
 cryptography
 jinja2
-pycodestyle
-pylint ; python_version >= '3.5' # pylint 2.0.0 and later require python 3+
+pycodestyle ; python_version >= '3.5' # only used on python 3.5+
+pylint ; python_version >= '3.5' and python_version < '3.9' # only used on python 3.5+ and does not yet support python 3.9
 pyyaml
-rstcheck ; python_version >= '2.7' # rstcheck requires python 2.7+
+rstcheck ; python_version >= '3.5' # only used on python 3.5+
 virtualenv
-voluptuous ; python_version >= '2.7' # voluptuous 0.11.0 and later require python 2.7+
-yamllint
+voluptuous ; python_version >= '3.5' # only used on python 3.5+
+yamllint ; python_version >= '3.5' # only used on python 3.5+

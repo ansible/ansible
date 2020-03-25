@@ -1,0 +1,89 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: create new VMs with invalid disk mode
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 128
+    disk:
+        - size: 1gb
+          type: eagerzeroedthick
+          datastore: "{{ rw_datastore }}"
+          disk_mode: 'invalid_disk_mode'
+    state: poweredoff
+    folder: "{{ f0 }}"
+  register: test_vm1
+  ignore_errors: True
+
+- debug: var=test_vm1
+
+- name: assert that changes were not made
+  assert:
+    that:
+        - not(test_vm1 is changed)
+
+- name: create new VMs with valid disk mode
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 128
+    disk:
+        - size: 1gb
+          type: eagerzeroedthick
+          datastore: "{{ rw_datastore }}"
+          disk_mode: 'independent_persistent'
+    state: poweredoff
+    folder: "{{ f0 }}"
+  register: test_vm1_2
+
+- debug: var=test_vm1_2
+
+- name: assert that changes were made
+  assert:
+    that:
+        - test_vm1_2 is changed
+
+#TODO: vcsim does not support reconfiguration of disk mode, fails with types.InvalidDeviceSpec
+- when: vcsim is not defined
+  block:
+  - name: create new VMs with valid disk mode again
+    vmware_guest:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: test_vm1
+      guest_id: centos64Guest
+      datacenter: "{{ dc1 }}"
+      hardware:
+        num_cpus: 1
+        memory_mb: 128
+      disk:
+        - size: 1gb
+          type: eagerzeroedthick
+          datastore: "{{ rw_datastore }}"
+          disk_mode: 'independent_persistent'
+      state: poweredoff
+      folder: "{{ f0 }}"
+    register: test_vm1_2
+  - debug: var=test_vm1_2
+  - name: assert that changes were not made
+    assert:
+      that:
+        - not (test_vm1_2 is changed)

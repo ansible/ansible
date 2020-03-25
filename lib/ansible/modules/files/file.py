@@ -291,15 +291,10 @@ def additional_parameter_handling(params):
         raise ParameterError(results={"msg": "recurse option requires state to be 'directory'",
                                       "path": params["path"]})
 
-    # Make sure that src makes sense with the state
+    # Fail if 'src' but no 'state' is specified
     if params['src'] and params['state'] not in ('link', 'hard'):
-        params['src'] = None
-        module.warn("The src option requires state to be 'link' or 'hard'.  This will become an"
-                    " error in Ansible 2.10")
-
-        # In 2.10, switch to this
-        # raise ParameterError(results={"msg": "src option requires state to be 'link' or 'hard'",
-        #                               "path": params["path"]})
+        raise ParameterError(results={'msg': "src option requires state to be 'link' or 'hard'",
+                                      'path': params['path']})
 
 
 def get_state(path):
@@ -712,7 +707,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
     diff = initial_diff(path, 'link', prev_state)
     changed = False
 
-    if prev_state == 'absent':
+    if prev_state in ('hard', 'file', 'directory', 'absent'):
         changed = True
     elif prev_state == 'link':
         b_old_src = os.readlink(b_path)
@@ -720,22 +715,6 @@ def ensure_symlink(path, src, follow, force, timestamps):
             diff['before']['src'] = to_native(b_old_src, errors='strict')
             diff['after']['src'] = src
             changed = True
-    elif prev_state == 'hard':
-        changed = True
-        if not force:
-            raise AnsibleModuleError(results={'msg': 'Cannot link because a hard link exists at destination',
-                                              'dest': path, 'src': src})
-    elif prev_state == 'file':
-        changed = True
-        if not force:
-            raise AnsibleModuleError(results={'msg': 'Cannot link because a file exists at destination',
-                                              'dest': path, 'src': src})
-    elif prev_state == 'directory':
-        changed = True
-        if os.path.exists(b_path):
-            if not force:
-                raise AnsibleModuleError(results={'msg': 'Cannot link because a file exists at destination',
-                                                  'dest': path, 'src': src})
     else:
         raise AnsibleModuleError(results={'msg': 'unexpected position reached', 'dest': path, 'src': src})
 
@@ -886,7 +865,7 @@ def main():
             recurse=dict(type='bool', default=False),
             force=dict(type='bool', default=False),  # Note: Should not be in file_common_args in future
             follow=dict(type='bool', default=True),  # Note: Different default than file_common_args
-            _diff_peek=dict(type='str'),  # Internal use only, for internal checks in the action plugins
+            _diff_peek=dict(type='bool'),  # Internal use only, for internal checks in the action plugins
             src=dict(type='path'),  # Note: Should not be in file_common_args in future
             modification_time=dict(type='str'),
             modification_time_format=dict(type='str', default='%Y%m%d%H%M.%S'),

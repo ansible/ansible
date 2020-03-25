@@ -1,0 +1,3 @@
+shippable/vcenter/incidental
+cloud/vcenter
+needs/target/incidental_vmware_prepare_tests

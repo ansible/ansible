@@ -1,0 +1,2 @@
+minor_changes:
+- "``AnsibleModule.load_file_common_arguments`` now allows to simply override ``path``."

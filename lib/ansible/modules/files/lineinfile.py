@@ -116,7 +116,7 @@ options:
   firstmatch:
     description:
       - Used with C(insertafter) or C(insertbefore).
-      - If set, C(insertafter) and C(insertbefore) find a first line has regular expression matches.
+      - If set, C(insertafter) and C(insertbefore) will work with the first line that matches the given regular expression.
     type: bool
     default: no
     version_added: "2.5"
@@ -188,7 +188,7 @@ EXAMPLES = r'''
 - name: Ensure the JBoss memory settings are exactly as needed
   lineinfile:
     path: /opt/jboss-as/bin/standalone.conf
-    regexp: '^(.*)Xms(\\d+)m(.*)$'
+    regexp: '^(.*)Xms(\d+)m(.*)$'
     line: '\1Xms${xms}m\3'
     backrefs: yes
 
@@ -259,7 +259,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if not create:
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
         b_destpath = os.path.dirname(b_dest)
-        if not os.path.exists(b_destpath) and not module.check_mode:
+        if b_destpath and not os.path.exists(b_destpath) and not module.check_mode:
             try:
                 os.makedirs(b_destpath)
             except Exception as e:
@@ -286,7 +286,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     # index[0] is the line num where regexp has been found
     # index[1] is the line num where insertafter/insertbefore has been found
     index = [-1, -1]
-    m = None
+    match = None
+    exact_line_match = False
     b_line = to_bytes(line, errors='surrogate_or_strict')
 
     # The module's doc says
@@ -303,18 +304,17 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             match_found = bre_m.search(b_cur_line)
             if match_found:
                 index[0] = lineno
-                m = match_found
+                match = match_found
                 if firstmatch:
                     break
 
     # 2. When no match found on the previous step,
     # parse for searching insertafter/insertbefore:
-    if not m:
+    if not match:
         for lineno, b_cur_line in enumerate(b_lines):
-            match_found = b_line == b_cur_line.rstrip(b'\r\n')
-            if match_found:
+            if b_line == b_cur_line.rstrip(b'\r\n'):
                 index[0] = lineno
-                m = match_found
+                exact_line_match = True
 
             elif bre_ins is not None and bre_ins.search(b_cur_line):
                 if insertafter:
@@ -334,8 +334,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     b_linesep = to_bytes(os.linesep, errors='surrogate_or_strict')
     # Exact line or Regexp matched a line in the file
     if index[0] != -1:
-        if backrefs:
-            b_new_line = m.expand(b_line)
+        if backrefs and match:
+            b_new_line = match.expand(b_line)
         else:
             # Don't do backref expansion if not asked.
             b_new_line = b_line
@@ -345,7 +345,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
         # If no regexp was given and no line match is found anywhere in the file,
         # insert the line appropriately if using insertbefore or insertafter
-        if regexp is None and m is None:
+        if regexp is None and match is None and not exact_line_match:
 
             # Insert lines
             if insertafter and insertafter != 'EOF':
@@ -409,8 +409,14 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
     elif insertafter and index[1] != -1:
 
-        # Don't insert the line if it already matches at the index
-        if b_line != b_lines[index[1]].rstrip(b'\n\r'):
+        # Don't insert the line if it already matches at the index.
+        # If the line to insert after is at the end of the file use the appropriate index value.
+        if len(b_lines) == index[1]:
+            if b_lines[index[1] - 1].rstrip(b'\r\n') != b_line:
+                b_lines.append(b_line + b_linesep)
+                msg = 'line added'
+                changed = True
+        elif b_line != b_lines[index[1]].rstrip(b'\n\r'):
             b_lines.insert(index[1], b_line + b_linesep)
             msg = 'line added'
             changed = True

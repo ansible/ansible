@@ -27,7 +27,7 @@ delay: Number of seconds to delay between retries. This setting is only used in 
 delegate_facts: Boolean that allows you to apply facts to a delegated host instead of inventory_hostname.
 delegate_to: Host to execute task instead of the target (inventory_hostname). Connection vars from the delegated host will also be used for the task.
 diff: "Toggle to make tasks return 'diff' information or not."
-environment: A dictionary that gets converted into environment vars to be provided for the task upon execution. This cannot affect Ansible itself nor its configuration, it just sets the variables for the code responsible for executing the task.
+environment: A dictionary that gets converted into environment vars to be provided for the task upon execution. This can ONLY be used with modules. This isn't supported for any other type of plugins nor Ansible itself nor its configuration, it just sets the variables for the code responsible for executing the task.
 fact_path: Set the fact path option for the fact gathering plugin controlled by :term:`gather_facts`.
 failed_when: "Conditional expression that overrides the task's normal 'failed' status."
 force_handlers: Will force notified handler execution for hosts even if they failed during the play. Will not trigger if the play itself fails.
@@ -37,7 +37,7 @@ gather_timeout: Allows you to set the timeout for the fact gathering plugin cont
 handlers: "A section with tasks that are treated as handlers, these won't get executed normally, only when notified after each section of tasks is complete. A handler's `listen` field is not templatable."
 hosts: "A list of groups, hosts or host pattern that translates into a list of hosts that are the play's target."
 ignore_errors: Boolean that allows you to ignore task failures and continue with play. It does not affect connection errors.
-ignore_unreachable: Boolean that allows you to ignore unreachable hosts and continue with play. This does not affect other task errors (see :term:`ignore_errors`) but is useful for groups of volatile/ephemeral hosts.
+ignore_unreachable: Boolean that allows you to ignore task failures due to an unreachable host and continue with the play. This does not affect other task errors (see :term:`ignore_errors`) but is useful for groups of volatile/ephemeral hosts.
 loop: "Takes a list for the task to iterate over, saving each list element into the ``item`` variable (configurable via loop_control)"
 loop_control: |
     Several keys here allow you to modify/set loop behaviour in a task.

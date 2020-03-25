@@ -1,1 +1,2 @@
-astream_name: '@ripgrep:master/default'
+astream_name: '@stratis:1/default'
+astream_name_no_stream: '@stratis/default'

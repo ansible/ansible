@@ -27,6 +27,8 @@ options:
       - A list of package names, like C(foo), or package specifier with version, like C(foo=1.0).
         Name wildcards (fnmatch) like C(apt*) and version wildcards like C(foo=1.0*) are also supported.
     aliases: [ package, pkg ]
+    type: list
+    elements: str
   state:
     description:
       - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies
@@ -201,12 +203,12 @@ EXAMPLES = '''
     state: latest
     install_recommends: no
 
-- name: Upgrade all packages to the latest version
+- name: Update all packages to their latest version
   apt:
     name: "*"
     state: latest
 
-- name: Update all packages to the latest version
+- name: Upgrade the OS (apt-get dist-upgrade)
   apt:
     upgrade: dist
 
@@ -1021,7 +1023,7 @@ def main():
             update_cache_retry_max_delay=dict(type='int', default=12),
             cache_valid_time=dict(type='int', default=0),
             purge=dict(type='bool', default=False),
-            package=dict(type='list', aliases=['pkg', 'name']),
+            package=dict(type='list', elements='str', aliases=['pkg', 'name']),
             deb=dict(type='path'),
             default_release=dict(type='str', aliases=['default-release']),
             install_recommends=dict(type='bool', aliases=['install-recommends']),

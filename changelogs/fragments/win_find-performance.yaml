@@ -1,0 +1,2 @@
+minor_changes:
+- win_find - Improve performance when scanning heavily nested directories and align behaviour to the ``find`` module.

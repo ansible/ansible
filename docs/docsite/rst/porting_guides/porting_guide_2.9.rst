@@ -19,8 +19,19 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
+Inventory
+---------
+
  * ``hash_behaviour`` now affects inventory sources. If you have it set to ``merge``, the data you get from inventory might change and you will have to update playbooks accordingly. If you're using the default setting (``overwrite``), you will see no changes. Inventory was ignoring this setting.
 
+Loops
+-----
+
+Ansible 2.9 handles "unsafe" data more robustly, ensuring that data marked "unsafe" is not templated. In previous versions, Ansible recursively marked all data returned by the direct use of ``lookup()`` as "unsafe", but only marked structured data returned by indirect lookups using ``with_X`` style loops as "unsafe" if the returned elements were strings. Ansible 2.9 treats these two approaches consistently.
+
+As a result, if you use ``with_dict`` to return keys with templatable values, your templates may no longer work as expected in Ansible 2.9.
+
+To allow the old behavior, switch from using ``with_X`` to using ``loop`` with a filter as described at :ref:`migrating_to_loop`.
 
 Command Line
 ============
@@ -63,6 +74,11 @@ Modules
 * The ``win_get_url`` and ``win_uri`` module now sends requests with a default ``User-Agent`` of ``ansible-httpget``. This can be changed by using the ``http_agent`` key.
 * The ``apt`` module now honors ``update_cache=false`` while installing its own dependency and skips the cache update. Explicitly setting ``update_cache=true`` or omitting the param ``update_cache`` will result in a cache update while installing its own dependency.
 
+Renaming from ``_facts`` to ``_info``
+--------------------------------------
+
+Ansible 2.9 renamed a lot of modules from ``<something>_facts`` to ``<something>_info``, because the modules do not return :ref:`Ansible facts <vars_and_facts>`. Ansible facts relate to a specific host. For example, the configuration of a network interface, the operating system on a unix server, and the list of packages installed on a Windows box are all Ansible facts. The renamed modules return values that are not unique to the host. For example, account information or region data for a cloud provider. Renaming these modules should provide more clarity about the types of return values each set of modules offers.
+
 Writing modules
 ---------------
 
@@ -101,15 +117,15 @@ Modules removed
 The following modules no longer exist:
 
 * Apstra's ``aos_*`` modules.  See the new modules at  `https://github.com/apstra <https://github.com/apstra>`_.
-* ec2_ami_find use :ref:`ec2_ami_facts <ec2_ami_facts_module>` instead.
-* kubernetes use :ref:`k8s_raw <k8s_raw_module>` instead.
-* nxos_ip_interface use :ref:`nxos_l3_interface <nxos_l3_interface_module>` instead.
-* nxos_portchannel use :ref:`nxos_linkagg <nxos_linkagg_module>` instead.
-* nxos_switchport use :ref:`nxos_l2_interface <nxos_l2_interface_module>` instead.
-* oc use :ref:`openshift_raw <openshift_raw_module>` instead.
-* panos_nat_policy use :ref:`panos_nat_rule <panos_nat_rule_module>` instead.
-* panos_security_policy use :ref:`panos_security_rule <panos_security_rule_module>` instead.
-* vsphere_guest use :ref:`vmware_guest <vmware_guest_module>` instead.
+* ec2_ami_find use :ref:`ec2_ami_facts <ansible_2_9:ec2_ami_facts_module>` instead.
+* kubernetes use :ref:`k8s <ansible_2_9:k8s_module>` instead.
+* nxos_ip_interface use :ref:`nxos_l3_interface <ansible_2_9:nxos_l3_interface_module>` instead.
+* nxos_portchannel use :ref:`nxos_linkagg <ansible_2_9:nxos_linkagg_module>` instead.
+* nxos_switchport use :ref:`nxos_l2_interface <ansible_2_9:nxos_l2_interface_module>` instead.
+* oc use :ref:`k8s <ansible_2_9:k8s_module>` instead.
+* panos_nat_policy use :ref:`panos_nat_rule <ansible_2_9:panos_nat_rule_module>` instead.
+* panos_security_policy use :ref:`panos_security_rule <ansible_2_9:panos_security_rule_module>` instead.
+* vsphere_guest use :ref:`vmware_guest <ansible_2_9:vmware_guest_module>` instead.
 
 
 Deprecation notices
@@ -362,7 +378,7 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 * The ``azure_rm_appserviceplan_facts`` module was renamed to :ref:`azure_rm_appserviceplan_info <azure_rm_appserviceplan_info_module>`.
 * The ``azure_rm_automationaccount_facts`` module was renamed to :ref:`azure_rm_automationaccount_info <azure_rm_automationaccount_info_module>`.
 * The ``azure_rm_autoscale_facts`` module was renamed to :ref:`azure_rm_autoscale_info <azure_rm_autoscale_info_module>`.
-* The ``azure_rm_availabilityset_facts`` module was renamed to :ref:`azure_rm_availabilityset <azure_rm_availabilityset_info_module>`.
+* The ``azure_rm_availabilityset_facts`` module was renamed to :ref:`azure_rm_availabilityset_info <azure_rm_availabilityset_info_module>`.
 * The ``azure_rm_cdnendpoint_facts`` module was renamed to :ref:`azure_rm_cdnendpoint_info <azure_rm_cdnendpoint_info_module>`.
 * The ``azure_rm_cdnprofile_facts`` module was renamed to :ref:`azure_rm_cdnprofile_info <azure_rm_cdnprofile_info_module>`.
 * The ``azure_rm_containerinstance_facts`` module was renamed to :ref:`azure_rm_containerinstance_info <azure_rm_containerinstance_info_module>`.
@@ -676,10 +692,10 @@ Noteworthy module changes
 -------------------------
 
 * :ref:`vmware_cluster <vmware_cluster_module>` was refactored for easier maintenance/bugfixes. Use the three new, specialized modules to configure clusters. Configure DRS with :ref:`vmware_cluster_drs <vmware_cluster_drs_module>`, HA with :ref:`vmware_cluster_ha <vmware_cluster_ha_module>` and vSAN with :ref:`vmware_cluster_vsan <vmware_cluster_vsan_module>`.
-* `vmware_dvswitch <vmware_dvswitch_module>` accepts `folder` parameter to place dvswitch in user defined folder. This option makes `datacenter` as an optional parameter.
-* `vmware_datastore_cluster <vmware_datastore_cluster_module>` accepts `folder` parameter to place datastore cluster in user defined folder. This option makes `datacenter` as an optional parameter.
-* `mysql_db <mysql_db_module>` returns new `db_list` parameter in addition to `db` parameter. This `db_list` parameter refers to list of database names. `db` parameter will be deprecated in version `2.13`.
-* `snow_record <snow_record_module>` and `snow_record_find <snow_record_find_module>` now takes environment variables for `instance`, `username` and `password` parameters. This change marks these parameters as optional.
+* :ref:`vmware_dvswitch <vmware_dvswitch_module>` accepts ``folder`` parameter to place dvswitch in user defined folder. This option makes ``datacenter`` as an optional parameter.
+* :ref:`vmware_datastore_cluster <vmware_datastore_cluster_module>` accepts ``folder`` parameter to place datastore cluster in user defined folder. This option makes ``datacenter`` as an optional parameter.
+* :ref:`mysql_db <mysql_db_module>` returns new ``db_list`` parameter in addition to ``db`` parameter. This ``db_list`` parameter refers to list of database names. ``db`` parameter will be deprecated in version 2.13.
+* :ref:`snow_record <snow_record_module>` and :ref:`snow_record_find <snow_record_find_module>` now takes environment variables for ``instance``, ``username`` and ``password`` parameters. This change marks these parameters as optional.
 * The deprecated ``force`` option in ``win_firewall_rule`` has been removed.
 * :ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` provider creates authority key identifiers if not explicitly disabled with ``ownca_create_authority_key_identifier: no``. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available.
 * :ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` and ``selfsigned`` providers create subject key identifiers if not explicitly disabled with ``ownca_create_subject_key_identifier: never_create`` resp. ``selfsigned_create_subject_key_identifier: never_create``. If a subject key identifier is provided by the CSR, it is taken; if not, it is created from the public key. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available.
@@ -707,7 +723,12 @@ Networking
 Network resource modules
 ------------------------
 
-Ansible 2.9 introduced the first batch of network resource modules. These modules improve the usability of Ansible network modules. The older modules are deprecated in Ansible 2.9 and will be removed in Ansible 2.13. You should scan the list of deprecated modules above and replace them with the new network resource modules in your playbooks.
+Ansible 2.9 introduced the first batch of network resource modules. Sections of a network device's configuration can be thought of as a resource provided by that device. Network resource modules are intentionally scoped to configure a single resource and you can combine them as building blocks to configure complex network services. The older modules are deprecated in Ansible 2.9 and will be removed in Ansible 2.13. You should scan the list of deprecated modules above and replace them with the new network resource modules in your playbooks. See `Ansible Network Features in 2.9 <https://www.ansible.com/blog/network-features-coming-soon-in-ansible-engine-2.9>`_ for details.
+
+Improved ``gather_facts`` support for network devices
+-----------------------------------------------------
+
+In Ansible 2.9, the ``gather_facts`` keyword now supports gathering network device facts in standardized key/value pairs. You can feed these network facts into further tasks to manage the network device. You can also use the new ``gather_network_resources`` parameter with the network ``*_facts`` modules (such as :ref:`eos_facts <eos_facts_module>`) to return just a subset of the device configuration.  See :ref:`network_gather_facts` for an example.
 
 Top-level connection arguments removed in 2.9
 ---------------------------------------------

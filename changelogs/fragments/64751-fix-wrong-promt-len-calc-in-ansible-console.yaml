@@ -1,0 +1,2 @@
+bugfixes:
+  - fix wrong command line length calculation in ``ansible-console`` when long command inputted

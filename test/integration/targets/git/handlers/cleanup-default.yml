@@ -1,0 +1,6 @@
+# TODO remove everything we'd installed (see git_required_packages), not just git
+# problem is that we should not remove what we hadn't installed
+- name: remove git
+  package:
+    name: git
+    state: absent

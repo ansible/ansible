@@ -137,7 +137,7 @@ To create a new module:
 
         # seed the result dict in the object
         # we primarily care about changed and state
-        # change is if this module effectively modified the target
+        # changed is if this module effectively modified the target
         # state will include any data that you want your module to pass back
         # for consumption, for example, in a subsequent task
         result = dict(
@@ -259,7 +259,7 @@ You can run through Ansible's sanity checks in a container:
 ``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
 
 Note that this example requires Docker to be installed and running. If you'd rather not use a
-container for this, you can choose to use ``--tox`` instead of ``--docker``.
+container for this, you can choose to use ``--venv`` instead of ``--docker``.
 
 Unit tests
 ----------

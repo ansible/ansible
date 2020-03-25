@@ -46,7 +46,7 @@ For development-oriented topics, use the `ansible-devel Google group <https://gr
 
 The modules are hosted on GitHub in a subdirectory of the `Ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ repo.
 
-NOTE: If you have a Red Hat Ansible Automation product subscription, please follow the standard issue reporting process via the `Red Hat Customer Portal <https:///access.redhat.com/>`_.
+NOTE: If you have a Red Hat Ansible Automation product subscription, please follow the standard issue reporting process via the `Red Hat Customer Portal <https://access.redhat.com/>`_.
 
 Support
 =======

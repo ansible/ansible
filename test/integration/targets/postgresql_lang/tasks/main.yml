@@ -1,7 +1,0 @@
-# Initial CI tests of postgresql_lang module
-- import_tasks: postgresql_lang_initial.yml
-  when: ansible_distribution == 'CentOS'
-
-# CI tests of owner param
-- import_tasks: postgresql_lang_add_owner_param.yml
-  when: ansible_distribution == 'CentOS'

@@ -1,0 +1,2 @@
+minor_changes:
+  - Ansible CLI fails with warning if extra_vars parameter is used with filename without @ sign (https://github.com/ansible/ansible/issues/51857).

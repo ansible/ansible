@@ -1,0 +1,2 @@
+bugfixes:
+  - Use Category id to uniquely identify a tag when multiple tags with same name is available (https://github.com/ansible/ansible/issues/59379).

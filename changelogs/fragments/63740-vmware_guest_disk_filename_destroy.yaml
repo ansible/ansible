@@ -1,0 +1,5 @@
+---
+
+minor_changes:
+  - vmware_guest_disk - Add `destroy` option which allows to remove a disk without deleting the VMDK file.
+  - vmware_guest_disk - Add `filename` option which allows to create a disk from an existing VMDK.

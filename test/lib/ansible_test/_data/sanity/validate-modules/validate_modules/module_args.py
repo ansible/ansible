@@ -18,7 +18,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import imp
+import runpy
 import json
 import os
 import subprocess
@@ -26,9 +26,12 @@ import sys
 
 from contextlib import contextmanager
 
+from ansible.executor.powershell.module_manifest import PSModuleDepFinder
+from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 from ansible.module_utils.six import reraise
+from ansible.module_utils._text import to_bytes, to_text
 
-from .utils import CaptureStd, find_executable
+from .utils import CaptureStd, find_executable, get_module_name_from_filename
 
 
 class AnsibleModuleCallError(RuntimeError):
@@ -36,6 +39,10 @@ class AnsibleModuleCallError(RuntimeError):
 
 
 class AnsibleModuleImportError(ImportError):
+    pass
+
+
+class AnsibleModuleNotInitialized(Exception):
     pass
 
 
@@ -89,8 +96,22 @@ def get_ps_argument_spec(filename):
     if not pwsh:
         raise FileNotFoundError('Required program for PowerShell arg spec inspection "pwsh" not found.')
 
+    module_path = os.path.join(os.getcwd(), filename)
+    b_module_path = to_bytes(module_path, errors='surrogate_or_strict')
+    with open(b_module_path, mode='rb') as module_fd:
+        b_module_data = module_fd.read()
+
+    ps_dep_finder = PSModuleDepFinder()
+    ps_dep_finder.scan_module(b_module_data)
+
+    util_manifest = json.dumps({
+        'module_path': to_text(module_path, errors='surrogiate_or_strict'),
+        'ps_utils': dict([(name, info['path']) for name, info in ps_dep_finder.ps_modules.items()])
+    })
+
     script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ps_argspec.ps1')
-    proc = subprocess.Popen([script_path, filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+    proc = subprocess.Popen([script_path, util_manifest], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            shell=False)
     stdout, stderr = proc.communicate()
 
     if proc.returncode != 0:
@@ -104,45 +125,42 @@ def get_ps_argument_spec(filename):
     return kwargs['argument_spec'], (), kwargs
 
 
-def get_py_argument_spec(filename):
-    # Calculate the module's name so that relative imports work correctly
-    name = None
-    try:
-        idx = filename.index('ansible/modules')
-    except ValueError:
-        try:
-            idx = filename.index('ansible_collections/')
-        except ValueError:
-            # We default to ``module`` here instead of ``__main__``
-            # which helps with some import issues in this tool
-            # where modules may import things that conflict
-            name = 'module'
-    if name is None:
-        name = filename[idx:-len('.py')].replace('/', '.')
+def get_py_argument_spec(filename, collection):
+    name = get_module_name_from_filename(filename, collection)
 
     with setup_env(filename) as fake:
         try:
             with CaptureStd():
-                mod = imp.load_source(name, filename)
-                if not fake.called:
-                    mod.main()
+                runpy.run_module(name, run_name='__main__', alter_sys=True)
         except AnsibleModuleCallError:
             pass
-        except Exception as e:
+        except BaseException as e:
+            # we want to catch all exceptions here, including sys.exit
             reraise(AnsibleModuleImportError, AnsibleModuleImportError('%s' % e), sys.exc_info()[2])
+
+        if not fake.called:
+            raise AnsibleModuleNotInitialized()
 
     try:
         try:
             # for ping kwargs == {'argument_spec':{'data':{'type':'str','default':'pong'}}, 'supports_check_mode':True}
-            return fake.kwargs['argument_spec'], fake.args, fake.kwargs
+            argument_spec = fake.kwargs['argument_spec']
+            # If add_file_common_args is truish, add options from FILE_COMMON_ARGUMENTS when not present.
+            # This is the only modification to argument_spec done by AnsibleModule itself, and which is
+            # not caught by setup_env's AnsibleModule replacement
+            if fake.kwargs.get('add_file_common_args'):
+                for k, v in FILE_COMMON_ARGUMENTS.items():
+                    if k not in argument_spec:
+                        argument_spec[k] = v
+            return argument_spec, fake.args, fake.kwargs
         except KeyError:
             return fake.args[0], fake.args, fake.kwargs
     except (TypeError, IndexError):
         return {}, (), {}
 
 
-def get_argument_spec(filename):
+def get_argument_spec(filename, collection):
     if filename.endswith('.py'):
-        return get_py_argument_spec(filename)
+        return get_py_argument_spec(filename, collection)
     else:
         return get_ps_argument_spec(filename)

@@ -1,2 +1,0 @@
-# Initial CI tests of postgresql_tablespace module
-- import_tasks: postgresql_tablespace_initial.yml

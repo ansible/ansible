@@ -242,7 +242,7 @@ class TaskExecutor:
                 setattr(mylookup, '_subdir', subdir + 's')
 
                 # run lookup
-                items = mylookup.run(terms=loop_terms, variables=self._job_vars, wantlist=True)
+                items = wrap_var(mylookup.run(terms=loop_terms, variables=self._job_vars, wantlist=True))
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop_with)
 
@@ -263,11 +263,6 @@ class TaskExecutor:
                 self._job_vars[k] = old_vars[k]
             else:
                 del self._job_vars[k]
-
-        if items:
-            for idx, item in enumerate(items):
-                if item is not None and not isinstance(item, AnsibleUnsafe):
-                    items[idx] = wrap_var(item)
 
         return items
 
@@ -654,6 +649,8 @@ class TaskExecutor:
                 return dict(failed=True, msg=to_text(e))
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_text(e))
+            finally:
+                self._handler.cleanup()
             display.debug("handler run complete")
 
             # preserve no log
@@ -665,7 +662,7 @@ class TaskExecutor:
                 if not isidentifier(self._task.register):
                     raise AnsibleError("Invalid variable name in 'register' specified: '%s'" % self._task.register)
 
-                vars_copy[self._task.register] = wrap_var(result)
+                vars_copy[self._task.register] = result = wrap_var(result)
 
             if self._task.async_val > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
@@ -723,7 +720,7 @@ class TaskExecutor:
             # This gives changed/failed_when access to additional recently modified
             # attributes of result
             if self._task.register:
-                vars_copy[self._task.register] = wrap_var(result)
+                vars_copy[self._task.register] = result = wrap_var(result)
 
             # if we didn't skip this task, use the helpers to evaluate the changed/
             # failed_when properties
@@ -754,7 +751,7 @@ class TaskExecutor:
         # do the final update of the local variables here, for both registered
         # values and any facts which may have been created
         if self._task.register:
-            variables[self._task.register] = wrap_var(result)
+            variables[self._task.register] = result = wrap_var(result)
 
         if 'ansible_facts' in result:
             if self._task.action in ('set_fact', 'include_vars'):
@@ -858,6 +855,7 @@ class TaskExecutor:
             else:
                 return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
         else:
+            async_handler.cleanup(force=True)
             return async_result
 
     def _get_become(self, name):
@@ -931,7 +929,7 @@ class TaskExecutor:
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
 
             options = self._get_persistent_connection_options(connection, variables, templar)
-            socket_path = start_connection(self._play_context, options)
+            socket_path = start_connection(self._play_context, options, self._task._uuid)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
 
@@ -1019,16 +1017,23 @@ class TaskExecutor:
         Returns the correct action plugin to handle the requestion task action
         '''
 
-        module_prefix = self._task.action.split('.')[-1].split('_')[0]
+        module_collection, separator, module_name = self._task.action.rpartition(".")
+        module_prefix = module_name.split('_')[0]
+        if module_collection:
+            # For network modules, which look for one action plugin per platform, look for the
+            # action plugin in the same collection as the module by prefixing the action plugin
+            # with the same collection.
+            network_action = "{0}.{1}".format(module_collection, module_prefix)
+        else:
+            network_action = module_prefix
 
         collections = self._task.collections
 
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
             handler_name = self._task.action
-        # FIXME: is this code path even live anymore? check w/ networking folks; it trips sometimes when it shouldn't
-        elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
-            handler_name = module_prefix
+        elif all((module_prefix in C.NETWORK_GROUP_MODULES, self._shared_loader_obj.action_loader.has_plugin(network_action, collection_list=collections))):
+            handler_name = network_action
         else:
             # FUTURE: once we're comfortable with collections impl, preface this action with ansible.builtin so it can't be hijacked
             handler_name = 'normal'
@@ -1051,7 +1056,7 @@ class TaskExecutor:
         return handler
 
 
-def start_connection(play_context, variables):
+def start_connection(play_context, variables, task_uuid):
     '''
     Starts the persistent connection
     '''
@@ -1083,7 +1088,7 @@ def start_connection(play_context, variables):
     python = sys.executable
     master, slave = pty.openpty()
     p = subprocess.Popen(
-        [python, ansible_connection, to_text(os.getppid())],
+        [python, ansible_connection, to_text(os.getppid()), to_text(task_uuid)],
         stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
     )
     os.close(slave)

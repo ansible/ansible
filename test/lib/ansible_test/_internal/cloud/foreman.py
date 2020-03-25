@@ -49,7 +49,7 @@ class ForemanProvider(CloudProvider):
         """
         super(ForemanProvider, self).__init__(args)
 
-        self.__container_from_env = os.getenv('ANSIBLE_FRMNSIM_CONTAINER')
+        self.__container_from_env = os.environ.get('ANSIBLE_FRMNSIM_CONTAINER')
         """Overrides target container, might be used for development.
 
         Use ANSIBLE_FRMNSIM_CONTAINER=whatever_you_want if you want

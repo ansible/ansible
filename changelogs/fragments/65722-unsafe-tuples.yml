@@ -1,0 +1,3 @@
+bugfixes:
+- unsafe_proxy - Ensure that data within a tuple is marked as unsafe
+  (https://github.com/ansible/ansible/issues/65722)

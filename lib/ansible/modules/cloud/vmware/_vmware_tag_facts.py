@@ -1,1 +1,0 @@
-vmware_tag_info.py

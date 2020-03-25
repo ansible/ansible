@@ -98,12 +98,12 @@ Before you can use eAPI to connect to a switch, you must enable eAPI. To enable 
 .. code-block:: yaml
 
    - name: Enable eAPI
-      eos_eapi:
-          enable_http: yes
-          enable_https: yes
-      become: true
-      become_method: enable
-      when: ansible_network_os == 'eos'
+     eos_eapi:
+       enable_http: yes
+       enable_https: yes
+     become: true
+     become_method: enable
+     when: ansible_network_os == 'eos'
 
 You can find more options for enabling HTTP/HTTPS connections in the :ref:`eos_eapi <eos_eapi_module>` module documentation.
 
@@ -178,3 +178,7 @@ In this example two variables defined in ``group_vars`` get passed to the module
 - the ``proxy_env`` variable gets passed to the ``environment`` option of the module
 
 .. include:: shared_snippets/SSH_warning.txt
+
+.. seealso::
+
+       :ref:`timeout_options`

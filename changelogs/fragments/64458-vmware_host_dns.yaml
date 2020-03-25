@@ -1,0 +1,4 @@
+minor_changes:
+- vmware_host_dns - New module replacing vmware_dns_config with increased functionality.
+deprecated_features:
+- vmware_dns_config - Deprecate in favour of new module vmware_host_dns.

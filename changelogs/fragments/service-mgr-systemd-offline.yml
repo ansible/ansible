@@ -1,0 +1,3 @@
+bugfixes:
+- setup - service_mgr - detect systemd even if it isn't running, such as during
+  a container build

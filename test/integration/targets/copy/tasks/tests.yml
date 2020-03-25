@@ -1467,6 +1467,22 @@
     state: absent
 
 # src is a file, dest is a non-existent directory (2 levels of directories):
+# using remote_src
+# checks that dest is created
+- include: dest_in_non_existent_directories_remote_src.yml
+  with_items:
+    - { src: 'foo.txt', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/foo.txt' }
+
+# src is a file, dest is file in a non-existent directory: checks that a failure occurs
+# using remote_src
+- include: src_file_dest_file_in_non_existent_dir_remote_src.yml
+  with_items:
+    - 'new_sub_dir1/sub_dir2/foo.txt'
+    - 'new_sub_dir1/foo.txt'
+  loop_control:
+    loop_var: 'dest'
+
+# src is a file, dest is a non-existent directory (2 levels of directories):
 # checks that dest is created
 - include: dest_in_non_existent_directories.yml
   with_items:
@@ -1483,7 +1499,6 @@
     - 'new_sub_dir1/foo.txt'
   loop_control:
     loop_var: 'dest'
-
 #
 # Recursive copying on remote host
 #
@@ -1926,6 +1941,62 @@
       - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase4_local_follow_false_remote_dir_src_subdir_file12.stat.checksum"
       - "stat_testcase4_local_follow_false_remote_dir_src_link_file12.stat.exists"
       - "stat_testcase4_local_follow_false_remote_dir_src_link_file12.stat.islnk"
+
+- block:
+  - name: execute - Clone the source directory on remote
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_src'
+  - name: Create a 2nd level subdirectory
+    file:
+      path: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/'
+      state: directory
+  - name: execute - Copy the directory on remote
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/'
+      dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_dest'
+      local_follow: True
+  - name: execute - Create a new file in the subdir
+    copy:
+      dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/file13'
+      content: 'very new file'
+  - name: gather - Stat the testcase5_remote_src_subdirs_src/subdir/subdir2/file13
+    stat:
+      path: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/file13'
+  - name: execute - Copy the directory on remote
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/'
+      dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_dest/'
+    register: testcase5_new
+  - name: execute - Edit a file in the subdir
+    copy:
+      dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/file13'
+      content: 'NOT hello world 12'
+  - name: gather - Stat the testcase5_remote_src_subdirs_src/subdir/subdir2/file13
+    stat:
+      path: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/file13'
+    register: stat_testcase5_remote_src_subdirs_file13_before
+  - name: execute - Copy the directory on remote
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/'
+      dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_dest/'
+    register: testcase5_edited
+  - name: gather - Stat the testcase5_remote_src_subdirs_dest/subdir/subdir2/file13
+    stat:
+      path: '{{ remote_dir }}/testcase5_remote_src_subdirs_dest/subdir/subdir2/file13'
+    register: stat_testcase5_remote_src_subdirs_file13
+  - name: assert - remote_dir_src has copied with local_follow False.
+    assert:
+      that:
+      - testcase5_new is changed
+      - testcase5_edited is changed
+      - "stat_testcase5_remote_src_subdirs_file13.stat.exists"
+      - "stat_testcase5_remote_src_subdirs_file13_before.stat.checksum == stat_testcase5_remote_src_subdirs_file13.stat.checksum"
+
 
 ## test copying the directory on remote with chown
 

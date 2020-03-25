@@ -49,7 +49,7 @@ class NiosProvider(CloudProvider):
         """
         super(NiosProvider, self).__init__(args)
 
-        self.__container_from_env = os.getenv('ANSIBLE_NIOSSIM_CONTAINER')
+        self.__container_from_env = os.environ.get('ANSIBLE_NIOSSIM_CONTAINER')
         """Overrides target container, might be used for development.
 
         Use ANSIBLE_NIOSSIM_CONTAINER=whatever_you_want if you want

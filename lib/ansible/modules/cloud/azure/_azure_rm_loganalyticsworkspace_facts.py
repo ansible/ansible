@@ -1,1 +1,0 @@
-azure_rm_loganalyticsworkspace_info.py

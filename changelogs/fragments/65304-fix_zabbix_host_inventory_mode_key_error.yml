@@ -1,0 +1,2 @@
+bugfixes:
+  - zabbix_host - fixed inventory_mode key error, which occurs with Zabbix 4.4.1 or more (https://github.com/ansible/ansible/issues/65304).

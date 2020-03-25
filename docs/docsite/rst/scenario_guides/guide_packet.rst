@@ -31,7 +31,7 @@ To use the modules and inventory script you'll need a Packet API token. You can 
 
 If you're not comfortable exporting your API token, you can pass it as a parameter to the modules.
 
-On Packet, devices and reserved IP addresses belong to `projects <https://www.packet.net/developers/api/projects/>`_. In order to use the packet_device module, you need to specify the UUID of the project in which you want to create or manage devices. You can find a project's UUID in the Packet portal `here <https://app.packet.net/portal#/projects/list/table/>`_ (it's just under the project table) or via one of the available `CLIs <https://www.packet.net/developers/integrations/>`_.
+On Packet, devices and reserved IP addresses belong to `projects <https://www.packet.com/developers/api/#projects>`_. In order to use the packet_device module, you need to specify the UUID of the project in which you want to create or manage devices. You can find a project's UUID in the Packet portal `here <https://app.packet.net/portal#/projects/list/table/>`_ (it's just under the project table) or via one of the available `CLIs <https://www.packet.net/developers/integrations/>`_.
 
 
 If you want to use a new SSH keypair in this tutorial, you can generate it to ``./id_rsa`` and ``./id_rsa.pub`` as:
@@ -46,7 +46,7 @@ If you want to use an existing keypair, just copy the private and public key ove
 Device Creation
 ===============
 
-The following code block is a simple playbook that creates one `Type 0 <https://www.packet.net/bare-metal/servers/type-0/>`_ server (the 'plan' parameter). You have to supply 'plan' and 'operating_system'. 'location' defaults to 'ewr1' (Parsippany, NJ). You can find all the possible values for the parameters via a `CLI client <https://www.packet.net/developers/integrations/>`_.
+The following code block is a simple playbook that creates one `Type 0 <https://www.packet.com/cloud/servers/t1-small/>`_ server (the 'plan' parameter). You have to supply 'plan' and 'operating_system'. 'location' defaults to 'ewr1' (Parsippany, NJ). You can find all the possible values for the parameters via a `CLI client <https://www.packet.net/developers/integrations/>`_.
 
 .. code-block:: yaml
 
@@ -183,7 +183,7 @@ The following playbook will create an SSH key, 3 Packet servers, and then wait u
 
 As with most Ansible modules, the default states of the Packet modules are idempotent, meaning the resources in your project will remain the same after re-runs of a playbook. Thus, we can keep the ``packet_sshkey`` module call in our playbook. If the public key is already in your Packet account, the call will have no effect.
 
-The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoresOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter.
+The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoreOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter.
 
 The ``packet_device`` module has a ``wait_for_public_IPv`` that is used to specify the version of the IP address to wait for (valid values are ``4`` or ``6`` for IPv4 or IPv6). If specified, Ansible will wait until the GET API call for a device contains an Internet-routeable IP address of the specified version. When referring to an IP address of a created device in subsequent module calls, it's wise to use the ``wait_for_public_IPv`` parameter, or ``state: active`` in the packet_device module call.
 

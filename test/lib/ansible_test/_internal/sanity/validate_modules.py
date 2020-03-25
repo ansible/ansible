@@ -60,13 +60,6 @@ class ValidateModulesTest(SanitySingleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        if data_context().content.is_ansible:
-            ignore_codes = ()
-        else:
-            ignore_codes = ((
-                'E502',  # only ansible content requires __init__.py for module subdirectories
-            ))
-
         env = ansible_environment(args, color=False)
 
         settings = self.load_processor(args)
@@ -121,7 +114,6 @@ class ValidateModulesTest(SanitySingleVersion):
                     message=item['msg'],
                 ))
 
-        errors = [error for error in errors if error.code not in ignore_codes]
         errors = settings.process_errors(errors, paths)
 
         if errors:

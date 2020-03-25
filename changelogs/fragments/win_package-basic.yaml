@@ -1,0 +1,2 @@
+minor_changes:
+- win_package - Move across to ``Ansible.Basic`` for better invocation logging

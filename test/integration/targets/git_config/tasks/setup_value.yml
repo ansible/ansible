@@ -1,8 +1,0 @@
----
-# ------
-# set up : set gitconfig with value
-- name: set up with value
-  copy:
-    src: gitconfig
-    dest: ~/.gitconfig
-...

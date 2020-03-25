@@ -1,1 +1,0 @@
-azure_rm_autoscale_info.py

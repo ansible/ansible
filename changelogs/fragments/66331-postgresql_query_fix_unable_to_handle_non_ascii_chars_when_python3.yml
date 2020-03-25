@@ -1,0 +1,4 @@
+bugfixes:
+- postgresql_query - the module doesn't support non-ASCII characters in SQL files with Python3 (https://github.com/ansible/ansible/issues/65367).
+minor_changes:
+- postgresql_query - add the ``encoding`` parameter (https://github.com/ansible/ansible/issues/65367).

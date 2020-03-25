@@ -1,5 +1,0 @@
----
-super_secret_string: 'Test12345'
-secret_manager_role: "{{ resource_prefix }}-secrets-manager"
-secret_name: "{{ resource_prefix }}-test-secret-string"
-lambda_name: "{{ resource_prefix }}-hello-world"

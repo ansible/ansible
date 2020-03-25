@@ -182,15 +182,9 @@ When creating a new module there are a few things to keep in mind:
 - Use the full cmdlet name instead of aliases, e.g. ``Remove-Item`` over ``rm``
 - Use named parameters with cmdlets, e.g. ``Remove-Item -Path C:\temp`` over ``Remove-Item C:\temp``
 
-A very basic powershell module `win_environment <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/windows/win_environment.ps1>`_ is included below. It demonstrates how to implement check-mode and diff-support, and also shows a warning to the user when a specific condition is met.
+A very basic Powershell module `win_environment <https://github.com/ansible-collections/ansible.windows/blob/master/plugins/modules/win_environment.ps1>`_ incorporates best practices for Powershell modules. It demonstrates how to implement check-mode and diff-support, and also shows a warning to the user when a specific condition is met.
 
-.. .. include:: ../../../../lib/ansible/modules/windows/win_environment.ps1
-..    :code: powershell
-
-.. literalinclude:: ../../../../lib/ansible/modules/windows/win_environment.ps1
-   :language: powershell
-
-A slightly more advanced module is `win_uri <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/windows/win_uri.ps1>`_ which additionally shows how to use different parameter types (bool, str, int, list, dict, path) and a selection of choices for parameters, how to fail a module and how to handle exceptions.
+A slightly more advanced module is `win_uri <https://github.com/ansible-collections/ansible.windows/blob/master/plugins/modules/win_uri.ps1>`_ which additionally shows how to use different parameter types (bool, str, int, list, dict, path) and a selection of choices for parameters, how to fail a module and how to handle exceptions.
 
 As part of the new ``AnsibleModule`` wrapper, the input parameters are defined and validated based on an argument
 spec. The following options can be set at the root level of the argument spec:
@@ -215,6 +209,7 @@ options set:
 - ``aliases``: A list of aliases for the module option
 - ``choices``: A list of valid values for the module option, if ``type=list`` then each list value is validated against the choices and not the list itself
 - ``default``: The default value for the module option if not set
+- ``deprecated_aliases``: A list of hashtables that define aliases that are deprecated and the versions they will be removed in. Each entry must contain the keys ``name`` and ``version``
 - ``elements``: When ``type=list``, this sets the type of each list value, the values are the same as ``type``
 - ``no_log``: Will sanitise the input value before being returned in the ``module_invocation`` return value
 - ``removed_in_version``: States when a deprecated module option is to be removed, a warning is displayed to the end user if set

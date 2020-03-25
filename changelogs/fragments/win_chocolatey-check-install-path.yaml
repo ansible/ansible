@@ -1,0 +1,2 @@
+bugfixes:
+- win_chocolatey - Improve error checking when finding the path of a newly installed Chocolatey app

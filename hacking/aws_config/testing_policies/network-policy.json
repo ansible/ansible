@@ -6,10 +6,22 @@
             "Effect": "Allow",
             "Action": [
                 "route53:CreateHostedZone",
+                "route53:ChangeResourceRecordSets",
                 "route53:DeleteHostedZone",
                 "route53:GetHostedZone",
                 "route53:ListHostedZones",
+                "route53:ListResourceRecordSets",
                 "route53:UpdateHostedZoneComment"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowInternetGatewayManagement",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateInternetGateway",
+                "ec2:DeleteInternetGateway",
+                "ec2:DescribeInternetGateways"
             ],
             "Resource": "*"
         },
@@ -67,6 +79,7 @@
                 "ec2:DisassociateAddress",
                 "ec2:DisassociateRouteTable",
                 "ec2:DisassociateSubnetCidrBlock",
+                "ec2:DisassociateVpcCidrBlock",
                 "ec2:ModifySubnetAttribute",
                 "ec2:ModifyVpcAttribute",
                 "ec2:ReleaseAddress",

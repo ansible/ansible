@@ -88,6 +88,7 @@
 - name: uninstall hello with apt
   apt: pkg=hello state=absent purge=yes
   register: apt_result
+  until: apt_result is success
 
 - name: check hello with dpkg
   shell: dpkg-query -l hello
@@ -283,11 +284,12 @@
 
 - name: Clean up
   apt:
-    name: "{{ item }}"
+    name: "{{ pkgs }}"
     state: absent
-  with_items:
-    - libcaca-dev
-    - libslang2-dev
+  vars:
+    pkgs:
+      - libcaca-dev
+      - libslang2-dev
 
 # https://github.com/ansible/ansible/issues/38995
 - name: build-dep for a package

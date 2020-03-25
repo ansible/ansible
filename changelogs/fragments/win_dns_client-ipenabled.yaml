@@ -1,0 +1,2 @@
+bugfixes:
+- win_dns_client - Only configure network adapters that are IP Enabled - https://github.com/ansible/ansible/issues/58958

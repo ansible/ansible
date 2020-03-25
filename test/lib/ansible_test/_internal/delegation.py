@@ -44,14 +44,12 @@ from .manage_ci import (
 from .util import (
     ApplicationError,
     common_environment,
-    pass_vars,
     display,
     ANSIBLE_BIN_PATH,
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
     tempdir,
-    make_dirs,
 )
 
 from .util_common import (
@@ -139,10 +137,6 @@ def delegate_command(args, exclude, require, integration_targets):
         delegate_venv(args, exclude, require, integration_targets)
         return True
 
-    if args.tox:
-        delegate_tox(args, exclude, require, integration_targets)
-        return True
-
     if args.docker:
         delegate_docker(args, exclude, require, integration_targets)
         return True
@@ -152,71 +146,6 @@ def delegate_command(args, exclude, require, integration_targets):
         return True
 
     return False
-
-
-def delegate_tox(args, exclude, require, integration_targets):
-    """
-    :type args: EnvironmentConfig
-    :type exclude: list[str]
-    :type require: list[str]
-    :type integration_targets: tuple[IntegrationTarget]
-    """
-    if args.python:
-        versions = (args.python_version,)
-
-        if args.python_version not in SUPPORTED_PYTHON_VERSIONS:
-            raise ApplicationError('tox does not support Python version %s' % args.python_version)
-    else:
-        versions = SUPPORTED_PYTHON_VERSIONS
-
-    if args.httptester:
-        needs_httptester = sorted(target.name for target in integration_targets if 'needs/httptester/' in target.aliases)
-
-        if needs_httptester:
-            display.warning('Use --docker or --remote to enable httptester for tests marked "needs/httptester": %s' % ', '.join(needs_httptester))
-
-    options = {
-        '--tox': args.tox_args,
-        '--tox-sitepackages': 0,
-    }
-
-    for version in versions:
-        tox = ['tox', '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'tox.ini'), '-e', 'py' + version.replace('.', '')]
-
-        if args.tox_sitepackages:
-            tox.append('--sitepackages')
-
-        tox.append('--')
-
-        cmd = generate_command(args, None, ANSIBLE_BIN_PATH, data_context().content.root, options, exclude, require)
-
-        if not args.python:
-            cmd += ['--python', version]
-
-        # newer versions of tox do not support older python versions and will silently fall back to a different version
-        # passing this option will allow the delegated ansible-test to verify it is running under the expected python version
-        # tox 3.0.0 dropped official python 2.6 support: https://tox.readthedocs.io/en/latest/changelog.html#v3-0-0-2018-04-02
-        # tox 3.1.3 is the first version to support python 3.8 and later: https://tox.readthedocs.io/en/latest/changelog.html#v3-1-3-2018-08-03
-        # tox 3.1.3 appears to still work with python 2.6, making it a good version to use when supporting all python versions we use
-        # virtualenv 16.0.0 dropped python 2.6 support: https://virtualenv.pypa.io/en/latest/changes/#v16-0-0-2018-05-16
-        cmd += ['--check-python', version]
-
-        if isinstance(args, TestConfig):
-            if args.coverage and not args.coverage_label:
-                cmd += ['--coverage-label', 'tox-%s' % version]
-
-        env = common_environment()
-
-        # temporary solution to permit ansible-test delegated to tox to provision remote resources
-        optional = (
-            'SHIPPABLE',
-            'SHIPPABLE_BUILD_ID',
-            'SHIPPABLE_JOB_NUMBER',
-        )
-
-        env.update(pass_vars(required=[], optional=optional))
-
-        run_command(args, tox + cmd, env=env)
 
 
 def delegate_venv(args,  # type: EnvironmentConfig
@@ -236,14 +165,20 @@ def delegate_venv(args,  # type: EnvironmentConfig
         if needs_httptester:
             display.warning('Use --docker or --remote to enable httptester for tests marked "needs/httptester": %s' % ', '.join(needs_httptester))
 
-    venvs = dict((version, os.path.join(ResultType.TMP.path, 'delegation', 'python%s' % version)) for version in versions)
-    venvs = dict((version, path) for version, path in venvs.items() if create_virtual_environment(args, version, path))
+    if args.venv_system_site_packages:
+        suffix = '-ssp'
+    else:
+        suffix = ''
+
+    venvs = dict((version, os.path.join(ResultType.TMP.path, 'delegation', 'python%s%s' % (version, suffix))) for version in versions)
+    venvs = dict((version, path) for version, path in venvs.items() if create_virtual_environment(args, version, path, args.venv_system_site_packages))
 
     if not venvs:
         raise ApplicationError('No usable virtual environment support found.')
 
     options = {
         '--venv': 0,
+        '--venv-system-site-packages': 0,
     }
 
     with tempdir() as inject_path:
@@ -266,7 +201,7 @@ def delegate_venv(args,  # type: EnvironmentConfig
             os.symlink(ANSIBLE_TEST_ROOT, os.path.join(library_path, 'ansible_test'))
 
             env.update(
-                PATH=inject_path + os.pathsep + env['PATH'],
+                PATH=inject_path + os.path.pathsep + env['PATH'],
                 PYTHONPATH=library_path,
             )
 
@@ -547,7 +482,11 @@ def delegate_remote(args, exclude, require, integration_targets):
                 remote_results_name = os.path.basename(remote_results_root)
                 remote_temp_path = os.path.join('/tmp', remote_results_name)
 
-                manage.ssh('rm -rf {0} && mkdir {0} && cp -a {1}/* {0}/ && chmod -R a+r {0}'.format(remote_temp_path, remote_results_root))
+                # AIX cp and GNU cp provide different options, no way could be found to have a common
+                # pattern and achieve the same goal
+                cp_opts = '-hr' if platform in ['aix', 'ibmi'] else '-a'
+
+                manage.ssh('rm -rf {0} && mkdir {0} && cp {1} {2}/* {0}/ && chmod -R a+r {0}'.format(remote_temp_path, cp_opts, remote_results_root))
                 manage.download(remote_temp_path, local_test_root)
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
@@ -638,6 +577,12 @@ def filter_options(args, argv, options, exclude, require):
             '--base-branch': 1,
         })
 
+    if isinstance(args, IntegrationConfig):
+        options.update({
+            '--no-temp-unicode': 0,
+            '--no-pip-check': 0,
+        })
+
     if isinstance(args, (NetworkIntegrationConfig, WindowsIntegrationConfig)):
         options.update({
             '--inventory': 1,
@@ -684,3 +629,10 @@ def filter_options(args, argv, options, exclude, require):
         yield '--redact'
     else:
         yield '--no-redact'
+
+    if isinstance(args, IntegrationConfig):
+        if args.no_temp_unicode:
+            yield '--no-temp-unicode'
+
+        if not args.pip_check:
+            yield '--no-pip-check'

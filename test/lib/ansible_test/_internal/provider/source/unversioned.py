@@ -10,7 +10,7 @@ from ...constants import (
     TIMEOUT_PATH,
 )
 
-from ...util import (
+from ...encoding import (
     to_bytes,
 )
 
@@ -40,9 +40,6 @@ class UnversionedSource(SourceProvider):
         )
 
         kill_sub_dir = {
-            'test/runner': (
-                '.tox',
-            ),
             'test': (
                 'results',
                 'cache',

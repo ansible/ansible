@@ -10,6 +10,7 @@ Some Ansible Network platforms support multiple connection types, privilege esca
    :maxdepth: 2
    :caption: Platform Options
 
+   platform_ce
    platform_cnos
    platform_dellos6
    platform_dellos9
@@ -62,6 +63,7 @@ Settings by Platform
     Cisco IOS `[†]`_                 ``ios``                  ✓                              ✓
     Cisco IOS XR `[†]`_              ``iosxr``                ✓                              ✓
     Cisco NX-OS `[†]`_               ``nxos``                 ✓                     ✓        ✓
+    Cloudengine OS `[†]`_            ``ce``                   ✓            ✓                 ✓
     Dell OS6                         ``dellos6``              ✓                              ✓
     Dell OS9                         ``dellos9``              ✓                              ✓
     Dell OS10                        ``dellos10``             ✓                              ✓

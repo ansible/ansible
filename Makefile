@@ -223,6 +223,7 @@ install_manpages:
 
 .PHONY: sdist_check
 sdist_check:
+	$(PYTHON) -c 'import setuptools, sys; sys.exit(int(not (tuple(map(int, setuptools.__version__.split("."))) > (39, 2, 0))))'
 	$(PYTHON) packaging/sdist/check-link-behavior.py
 
 .PHONY: sdist

@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test - ``mutually_exclusive``, ``required_if``, ``required_by``, ``required_together`` and ``required_one_of`` in modules are now validated."

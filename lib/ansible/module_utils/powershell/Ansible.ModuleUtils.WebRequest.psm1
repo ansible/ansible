@@ -316,9 +316,9 @@ Function Get-AnsibleWebRequest {
             none { $web_request.AllowAutoRedirect = $false }
             safe {
                 if ($web_request.Method -in @("GET", "HEAD")) {
-                    $web_request.AllowAutoRedirect = $false
-                } else {
                     $web_request.AllowAutoRedirect = $true
+                } else {
+                    $web_request.AllowAutoRedirect = $false
                 }
             }
             all { $web_request.AllowAutoRedirect = $true }
@@ -467,8 +467,58 @@ Function Invoke-WithWebRequest {
     }
 }
 
+Function Merge-WebRequestSpec {
+    <#
+    .SYNOPSIS
+    Merges a modules spec definition with extra options supplied by this module_util. Options from the module take
+    priority over the module util spec.
+
+    .PARAMETER ModuleSpec
+    The root $spec of a module option definition to merge with.
+
+    .EXAMPLE
+    $spec = @{
+        options = @{
+            name = @{ type = "str" }
+        }
+        supports_check_mode = $true
+    }
+    $spec = Merge-WebRequestSpec -ModuleSpec $spec
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [System.Collections.IDictionary]
+        $ModuleSpec,
+
+        [System.Collections.IDictionary]
+        $SpecToMerge = @{ options = $ansible_web_request_options }
+    )
+
+    foreach ($option_kvp in $SpecToMerge.GetEnumerator()) {
+        $k = $option_kvp.Key
+        $v = $option_kvp.Value
+
+        if ($ModuleSpec.Contains($k)) {
+            if ($v -is [System.Collections.IDictionary]) {
+                $ModuleSpec[$k] = Merge-WebRequestSpec -ModuleSpec $ModuleSpec[$k] -SpecToMerge $v
+            } elseif ($v -is [Array] -or $v -is [System.Collections.IList]) {
+                $sourceList = [System.Collections.Generic.List[Object]]$ModuleSpec[$k]
+                foreach ($entry in $v) {
+                    $sourceList.Add($entry)
+                }
+
+                $ModuleSpec[$k] = $sourceList
+            }
+        } else {
+            $ModuleSpec[$k] = $v
+        }
+    }
+
+    $ModuleSpec
+}
+
 $ansible_web_request_options = @{
-    url = @{ type="str"; required=$true }
     method = @{ type="str" }
     follow_redirects = @{ type="str"; choices=@("all","none","safe"); default="safe" }
     headers = @{ type="dict" }
@@ -481,8 +531,8 @@ $ansible_web_request_options = @{
     client_cert = @{ type="str" }
     client_cert_password = @{ type="str"; no_log=$true }
     force_basic_auth = @{ type="bool"; default=$false }
-    url_username = @{ type="str"; aliases=@("user", "username") }  # user was used in win_uri
-    url_password = @{ type="str"; aliases=@("password"); no_log=$true }
+    url_username = @{ type="str" }
+    url_password = @{ type="str"; no_log=$true }
     use_default_credential = @{ type="bool"; default=$false }
 
     # Proxy options
@@ -494,7 +544,7 @@ $ansible_web_request_options = @{
 }
 
 $export_members = @{
-    Function = "Get-AnsibleWebRequest", "Invoke-WithWebRequest"
+    Function = "Get-AnsibleWebRequest", "Invoke-WithWebRequest", "Merge-WebRequestSpec"
     Variable = "ansible_web_request_options"
 }
 Export-ModuleMember @export_members

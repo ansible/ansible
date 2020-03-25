@@ -1,0 +1,2 @@
+minor_changes:
+  - docker_container.py - update a containers restart_policy without restarting the container (https://github.com/ansible/ansible/issues/65993)

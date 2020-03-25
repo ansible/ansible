@@ -1,0 +1,73 @@
+- name: test with_first_found
+  #shell: echo {{ item }}
+  set_fact: "first_found={{ item }}"
+  with_first_found:
+    - "{{ role_path + '/files/does_not_exist' }}"
+    - "{{ role_path + '/files/foo1' }}"
+    - "{{ role_path + '/files/bar1' }}"
+
+- name: set expected
+  set_fact: first_expected="{{ role_path + '/files/foo1' }}"
+
+- name: set unexpected
+  set_fact: first_unexpected="{{ role_path + '/files/bar1' }}"
+
+- name: verify with_first_found results
+  assert:
+    that:
+        - "first_found == first_expected"
+        - "first_found != first_unexpected"
+
+- name: test q(first_found) with no files produces empty list
+  set_fact:
+    first_found_var: "{{ q('first_found', params, errors='ignore') }}"
+  vars:
+    params:
+      files: "not_a_file.yaml"
+
+- name: verify q(first_found) result
+  assert:
+    that:
+      - "first_found_var == []"
+
+- name: test lookup(first_found) with no files produces empty string
+  set_fact:
+    first_found_var: "{{ lookup('first_found', params, errors='ignore') }}"
+  vars:
+    params:
+      files: "not_a_file.yaml"
+
+- name: verify lookup(first_found) result
+  assert:
+    that:
+      - "first_found_var == ''"
+
+# NOTE: skip: True deprecated e17a2b502d6601be53c60d7ba1c627df419460c9, remove 2.12
+- name: test first_found with no matches and skip=True does nothing
+  set_fact: "this_not_set={{ item }}"
+  vars:
+    params:
+      files:
+        - not/a/file.yaml
+        - another/non/file.yaml
+      skip: True
+  loop: "{{ q('first_found', params) }}"
+
+- name: verify skip
+  assert:
+    that:
+      - "this_not_set is not defined"
+
+- name: test first_found with no matches and errors='ignore' skips in a loop
+  set_fact: "this_not_set={{ item }}"
+  vars:
+    params:
+      files:
+        - not/a/file.yaml
+        - another/non/file.yaml
+  loop: "{{ query('first_found', params, errors='ignore') }}"
+
+- name: verify errors=ignore
+  assert:
+    that:
+      - "this_not_set is not defined"

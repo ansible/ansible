@@ -38,18 +38,19 @@ from fnmatch import fnmatch
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.loader import fragment_loader
+from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
-from .module_args import AnsibleModuleImportError, get_argument_spec
+from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
 
 from .schema import ansible_module_kwargs_schema, doc_schema, metadata_1_1_schema, return_schema
 
 from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml
 from voluptuous.humanize import humanize_error
 
-from ansible.module_utils.six import PY3, with_metaclass
-from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
+from ansible.module_utils.six import PY3, with_metaclass, string_types
 
 if PY3:
     # Because there is no ast.TryExcept in Python 3 ast module
@@ -517,13 +518,7 @@ class ModuleValidator(Validator):
                                 name.name == 'basic'):
                             found_basic = True
 
-        if not linenos:
-            self.reporter.error(
-                path=self.object_path,
-                code='missing-module-utils-import',
-                msg='Did not find a module_utils import'
-            )
-        elif not found_basic:
+        if not found_basic:
             self.reporter.warning(
                 path=self.object_path,
                 code='missing-module-utils-basic-import',
@@ -751,7 +746,7 @@ class ModuleValidator(Validator):
             if len(module_list) > 1:
                 self.reporter.error(
                     path=self.object_path,
-                    code='multiple-c#-utils-per-requires',
+                    code='multiple-csharp-utils-per-requires',
                     msg='Ansible C# util requirements do not support multiple utils per statement: "%s"' % req_stmt.group(0)
                 )
                 continue
@@ -769,7 +764,7 @@ class ModuleValidator(Validator):
         if not found_requires and REPLACER_WINDOWS not in self.text:
             self.reporter.error(
                 path=self.object_path,
-                code='missing-module-utils-import-c#-requirements',
+                code='missing-module-utils-import-csharp-requirements',
                 msg='No Ansible.ModuleUtils or C# Ansible util requirements/imports found'
             )
 
@@ -1133,7 +1128,14 @@ class ModuleValidator(Validator):
 
     def _validate_ansible_module_call(self, docs):
         try:
-            spec, args, kwargs = get_argument_spec(self.path)
+            spec, args, kwargs = get_argument_spec(self.path, self.collection)
+        except AnsibleModuleNotInitialized:
+            self.reporter.error(
+                path=self.object_path,
+                code='ansible-module-not-initialized',
+                msg="Execution of the module did not result in initialization of AnsibleModule",
+            )
+            return
         except AnsibleModuleImportError as e:
             self.reporter.error(
                 path=self.object_path,
@@ -1146,11 +1148,204 @@ class ModuleValidator(Validator):
             )
             return
 
-        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema, 'AnsibleModule', 'invalid-ansiblemodule-schema')
+        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema(), 'AnsibleModule', 'invalid-ansiblemodule-schema')
 
         self._validate_argument_spec(docs, spec, kwargs)
 
-    def _validate_argument_spec(self, docs, spec, kwargs, context=None):
+    def _validate_list_of_module_args(self, name, terms, spec, context):
+        if terms is None:
+            return
+        if not isinstance(terms, (list, tuple)):
+            # This is already reported by schema checking
+            return
+        for check in terms:
+            if not isinstance(check, (list, tuple)):
+                # This is already reported by schema checking
+                continue
+            bad_term = False
+            for term in check:
+                if not isinstance(term, string_types):
+                    msg = name
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " must contain strings in the lists or tuples; found value %r" % (term, )
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=name + '-type',
+                        msg=msg,
+                    )
+                    bad_term = True
+            if bad_term:
+                continue
+            if len(set(check)) != len(check):
+                msg = name
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " has repeated terms"
+                self.reporter.error(
+                    path=self.object_path,
+                    code=name + '-collision',
+                    msg=msg,
+                )
+            if not set(check) <= set(spec):
+                msg = name
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " contains terms which are not part of argument_spec: %s" % ", ".join(sorted(set(check).difference(set(spec))))
+                self.reporter.error(
+                    path=self.object_path,
+                    code=name + '-unknown',
+                    msg=msg,
+                )
+
+    def _validate_required_if(self, terms, spec, context, module):
+        if terms is None:
+            return
+        if not isinstance(terms, (list, tuple)):
+            # This is already reported by schema checking
+            return
+        for check in terms:
+            if not isinstance(check, (list, tuple)) or len(check) not in [3, 4]:
+                # This is already reported by schema checking
+                continue
+            if len(check) == 4 and not isinstance(check[3], bool):
+                msg = "required_if"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " must have forth value omitted or of type bool; got %r" % (check[3], )
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_if-is_one_of-type',
+                    msg=msg,
+                )
+            requirements = check[2]
+            if not isinstance(requirements, (list, tuple)):
+                msg = "required_if"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " must have third value (requirements) being a list or tuple; got type %r" % (requirements, )
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_if-requirements-type',
+                    msg=msg,
+                )
+                continue
+            bad_term = False
+            for term in requirements:
+                if not isinstance(term, string_types):
+                    msg = "required_if"
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " must have only strings in third value (requirements); got %r" % (term, )
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='required_if-requirements-type',
+                        msg=msg,
+                    )
+                    bad_term = True
+            if bad_term:
+                continue
+            if len(set(requirements)) != len(requirements):
+                msg = "required_if"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " has repeated terms in requirements"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_if-requirements-collision',
+                    msg=msg,
+                )
+            if not set(requirements) <= set(spec):
+                msg = "required_if"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " contains terms in requirements which are not part of argument_spec: %s" % ", ".join(sorted(set(requirements).difference(set(spec))))
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_if-requirements-unknown',
+                    msg=msg,
+                )
+            key = check[0]
+            if key not in spec:
+                msg = "required_if"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " must have its key %s in argument_spec" % key
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_if-unknown-key',
+                    msg=msg,
+                )
+                continue
+            if key in requirements:
+                msg = "required_if"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " contains its key %s in requirements" % key
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_if-key-in-requirements',
+                    msg=msg,
+                )
+            value = check[1]
+            if value is not None:
+                _type = spec[key].get('type', 'str')
+                if callable(_type):
+                    _type_checker = _type
+                else:
+                    _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
+                try:
+                    with CaptureStd():
+                        dummy = _type_checker(value)
+                except (Exception, SystemExit):
+                    msg = "required_if"
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " has value %r which does not fit to %s's parameter type %r" % (value, key, _type)
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='required_if-value-type',
+                        msg=msg,
+                    )
+
+    def _validate_required_by(self, terms, spec, context):
+        if terms is None:
+            return
+        if not isinstance(terms, Mapping):
+            # This is already reported by schema checking
+            return
+        for key, value in terms.items():
+            if isinstance(value, string_types):
+                value = [value]
+            if not isinstance(value, (list, tuple)):
+                # This is already reported by schema checking
+                continue
+            for term in value:
+                if not isinstance(term, string_types):
+                    # This is already reported by schema checking
+                    continue
+            if len(set(value)) != len(value) or key in value:
+                msg = "required_by"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " has repeated terms"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_by-collision',
+                    msg=msg,
+                )
+            if not set(value) <= set(spec) or key not in spec:
+                msg = "required_by"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " contains terms which are not part of argument_spec: %s" % ", ".join(sorted(set(value).difference(set(spec))))
+                self.reporter.error(
+                    path=self.object_path,
+                    code='required_by-unknown',
+                    msg=msg,
+                )
+
+    def _validate_argument_spec(self, docs, spec, kwargs, context=None, last_context_spec=None):
         if not self.analyze_arg_spec:
             return
 
@@ -1159,6 +1354,9 @@ class ModuleValidator(Validator):
 
         if context is None:
             context = []
+
+        if last_context_spec is None:
+            last_context_spec = kwargs
 
         try:
             if not context:
@@ -1170,10 +1368,47 @@ class ModuleValidator(Validator):
         # Use this to access type checkers later
         module = NoArgsAnsibleModule({})
 
+        self._validate_list_of_module_args('mutually_exclusive', last_context_spec.get('mutually_exclusive'), spec, context)
+        self._validate_list_of_module_args('required_together', last_context_spec.get('required_together'), spec, context)
+        self._validate_list_of_module_args('required_one_of', last_context_spec.get('required_one_of'), spec, context)
+        self._validate_required_if(last_context_spec.get('required_if'), spec, context, module)
+        self._validate_required_by(last_context_spec.get('required_by'), spec, context)
+
         provider_args = set()
         args_from_argspec = set()
         deprecated_args_from_argspec = set()
+        doc_options = docs.get('options', {})
+        if doc_options is None:
+            doc_options = {}
         for arg, data in spec.items():
+            restricted_argument_names = ('message', 'syslog_facility')
+            if arg.lower() in restricted_argument_names:
+                msg = "Argument '%s' in argument_spec " % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += "must not be one of %s as it is used " \
+                       "internally by Ansible Core Engine" % (",".join(restricted_argument_names))
+                self.reporter.error(
+                    path=self.object_path,
+                    code='invalid-argument-name',
+                    msg=msg,
+                )
+                continue
+            if 'aliases' in data:
+                for al in data['aliases']:
+                    if al.lower() in restricted_argument_names:
+                        msg = "Argument alias '%s' in argument_spec " % al
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += "must not be one of %s as it is used " \
+                               "internally by Ansible Core Engine" % (",".join(restricted_argument_names))
+                        self.reporter.error(
+                            path=self.object_path,
+                            code='invalid-argument-name',
+                            msg=msg,
+                        )
+                        continue
+
             if not isinstance(data, dict):
                 msg = "Argument '%s' in argument_spec" % arg
                 if context:
@@ -1185,12 +1420,40 @@ class ModuleValidator(Validator):
                     msg=msg,
                 )
                 continue
+            aliases = data.get('aliases', [])
+            if arg in aliases:
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " is specified as its own alias"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='parameter-alias-self',
+                    msg=msg
+                )
+            if len(aliases) > len(set(aliases)):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " has at least one alias specified multiple times in aliases"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='parameter-alias-repeated',
+                    msg=msg
+                )
+            if not context and arg == 'state':
+                bad_states = set(['list', 'info', 'get']) & set(data.get('choices', set()))
+                for bad_state in bad_states:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='parameter-state-invalid-choice',
+                        msg="Argument 'state' includes the value '%s' as a choice" % bad_state)
             if not data.get('removed_in_version', None):
                 args_from_argspec.add(arg)
-                args_from_argspec.update(data.get('aliases', []))
+                args_from_argspec.update(aliases)
             else:
                 deprecated_args_from_argspec.add(arg)
-                deprecated_args_from_argspec.update(data.get('aliases', []))
+                deprecated_args_from_argspec.update(aliases)
             if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
                 if data.get('options') is not None and not isinstance(data.get('options'), Mapping):
                     self.reporter.error(
@@ -1228,6 +1491,16 @@ class ModuleValidator(Validator):
                 _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
 
             _elements = data.get('elements')
+            if (_type == 'list') and not _elements:
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines type as list but elements is not defined"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='parameter-list-no-elements',
+                    msg=msg
+                )
             if _elements:
                 if not callable(_elements):
                     module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_elements)
@@ -1261,9 +1534,31 @@ class ModuleValidator(Validator):
             elif data.get('default') is None and _type == 'bool' and 'options' not in data:
                 arg_default = False
 
+            doc_options_args = []
+            for alias in sorted(set([arg] + list(aliases))):
+                if alias in doc_options:
+                    doc_options_args.append(alias)
+            if len(doc_options_args) == 0:
+                # Undocumented arguments will be handled later (search for undocumented-parameter)
+                doc_options_arg = {}
+            else:
+                doc_options_arg = doc_options[doc_options_args[0]]
+                if len(doc_options_args) > 1:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " with aliases %s is documented multiple times, namely as %s" % (
+                        ", ".join([("'%s'" % alias) for alias in aliases]),
+                        ", ".join([("'%s'" % alias) for alias in doc_options_args])
+                    )
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='parameter-documented-multiple-times',
+                        msg=msg
+                    )
+
             try:
                 doc_default = None
-                doc_options_arg = (docs.get('options', {}) or {}).get(arg, {})
                 if 'default' in doc_options_arg and not is_empty(doc_options_arg['default']):
                     with CaptureStd():
                         doc_default = _type_checker(doc_options_arg['default'])
@@ -1292,7 +1587,7 @@ class ModuleValidator(Validator):
                     msg=msg
                 )
 
-            doc_type = docs.get('options', {}).get(arg, {}).get('type')
+            doc_type = doc_options_arg.get('type')
             if 'type' in data and data['type'] is not None:
                 if doc_type is None:
                     if not arg.startswith('_'):  # hidden parameter, for example _raw_params
@@ -1330,7 +1625,7 @@ class ModuleValidator(Validator):
                     msg = "Argument '%s' in argument_spec" % arg
                     if context:
                         msg += " found in %s" % " -> ".join(context)
-                    msg += "implies type as 'str' but documentation defines as %r" % doc_type
+                    msg += " implies type as 'str' but documentation defines as %r" % doc_type
                     self.reporter.error(
                         path=self.object_path,
                         code='implied-parameter-type-mismatch',
@@ -1339,7 +1634,7 @@ class ModuleValidator(Validator):
 
             doc_choices = []
             try:
-                for choice in docs.get('options', {}).get(arg, {}).get('choices', []):
+                for choice in doc_options_arg.get('choices', []):
                     try:
                         with CaptureStd():
                             doc_choices.append(_type_checker(choice))
@@ -1388,8 +1683,55 @@ class ModuleValidator(Validator):
                     msg=msg
                 )
 
+            doc_required = doc_options_arg.get('required', False)
+            data_required = data.get('required', False)
+            if (doc_required or data_required) and not (doc_required and data_required):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                if doc_required:
+                    msg += " is not required, but is documented as being required"
+                else:
+                    msg += " is required, but is not documented as being required"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='doc-required-mismatch',
+                    msg=msg
+                )
+
+            doc_elements = doc_options_arg.get('elements', None)
+            doc_type = doc_options_arg.get('type', 'str')
+            data_elements = data.get('elements', None)
+            if (doc_elements and not doc_type == 'list'):
+                msg = "Argument '%s " % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines parameter elements as %s but it is valid only when value of parameter type is list" % doc_elements
+                self.reporter.error(
+                    path=self.object_path,
+                    code='doc-elements-invalid',
+                    msg=msg
+                )
+            if (doc_elements or data_elements) and not (doc_elements == data_elements):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                if data_elements:
+                    msg += " specifies elements as %s," % data_elements
+                else:
+                    msg += " does not specify elements,"
+                if doc_elements:
+                    msg += "but elements is documented as being %s" % doc_elements
+                else:
+                    msg += "but elements is not documented"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='doc-elements-mismatch',
+                    msg=msg
+                )
+
             spec_suboptions = data.get('options')
-            doc_suboptions = docs.get('options', {}).get(arg, {}).get('suboptions', {})
+            doc_suboptions = doc_options_arg.get('suboptions', {})
             if spec_suboptions:
                 if not doc_suboptions:
                     msg = "Argument '%s' in argument_spec" % arg
@@ -1401,7 +1743,8 @@ class ModuleValidator(Validator):
                         code='missing-suboption-docs',
                         msg=msg
                     )
-                self._validate_argument_spec({'options': doc_suboptions}, spec_suboptions, kwargs, context=context + [arg])
+                self._validate_argument_spec({'options': doc_suboptions}, spec_suboptions, kwargs,
+                                             context=context + [arg], last_context_spec=data)
 
         for arg in args_from_argspec:
             if not str(arg).isidentifier():
@@ -1416,23 +1759,14 @@ class ModuleValidator(Validator):
                 )
 
         if docs:
-            file_common_arguments = set()
-            for arg, data in FILE_COMMON_ARGUMENTS.items():
-                file_common_arguments.add(arg)
-                file_common_arguments.update(data.get('aliases', []))
-
             args_from_docs = set()
-            for arg, data in docs.get('options', {}).items():
+            for arg, data in doc_options.items():
                 args_from_docs.add(arg)
                 args_from_docs.update(data.get('aliases', []))
 
             args_missing_from_docs = args_from_argspec.difference(args_from_docs)
             docs_missing_from_args = args_from_docs.difference(args_from_argspec | deprecated_args_from_argspec)
             for arg in args_missing_from_docs:
-                # args_from_argspec contains undocumented argument
-                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
-                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
-                    continue
                 if arg in provider_args:
                     # Provider args are being removed from network module top level
                     # So they are likely not documented on purpose
@@ -1447,10 +1781,6 @@ class ModuleValidator(Validator):
                     msg=msg
                 )
             for arg in docs_missing_from_args:
-                # args_from_docs contains argument not in the argument_spec
-                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
-                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
-                    continue
                 msg = "Argument '%s'" % arg
                 if context:
                     msg += " found in %s" % " -> ".join(context)
@@ -1698,6 +2028,42 @@ class PythonPackageValidator(Validator):
             )
 
 
+def setup_collection_loader():
+    def get_source(self, fullname):
+        mod = sys.modules.get(fullname)
+        if not mod:
+            mod = self.load_module(fullname)
+
+        with open(to_bytes(mod.__file__), 'rb') as mod_file:
+            source = mod_file.read()
+
+        return source
+
+    def get_code(self, fullname):
+        return compile(source=self.get_source(fullname), filename=self.get_filename(fullname), mode='exec', flags=0, dont_inherit=True)
+
+    def is_package(self, fullname):
+        return self.get_filename(fullname).endswith('__init__.py')
+
+    def get_filename(self, fullname):
+        mod = sys.modules.get(fullname) or self.load_module(fullname)
+
+        return mod.__file__
+
+    # monkeypatch collection loader to work with runpy
+    # remove this (and the associated code above) once implemented natively in the collection loader
+    AnsibleCollectionLoader.get_source = get_source
+    AnsibleCollectionLoader.get_code = get_code
+    AnsibleCollectionLoader.is_package = is_package
+    AnsibleCollectionLoader.get_filename = get_filename
+
+    collection_loader = AnsibleCollectionLoader()
+
+    # allow importing code from collections when testing a collection
+    # noinspection PyCallingNonCallable
+    sys.meta_path.insert(0, collection_loader)
+
+
 def re_compile(value):
     """
     Argparse expects things to raise TypeError, re.compile raises an re.error
@@ -1744,6 +2110,9 @@ def run():
     git_cache = GitCache(args.base_branch)
 
     check_dirs = set()
+
+    if args.collection:
+        setup_collection_loader()
 
     for module in args.modules:
         if os.path.isfile(module):

@@ -31,22 +31,24 @@ class SshPubKeyFactCollector(BaseFactCollector):
 
     def collect(self, module=None, collected_facts=None):
         ssh_pub_key_facts = {}
-        keytypes = ('dsa', 'rsa', 'ecdsa', 'ed25519')
+        algos = ('dsa', 'rsa', 'ecdsa', 'ed25519')
 
         # list of directories to check for ssh keys
         # used in the order listed here, the first one with keys is used
         keydirs = ['/etc/ssh', '/etc/openssh', '/etc']
 
         for keydir in keydirs:
-            for type_ in keytypes:
-                factname = 'ssh_host_key_%s_public' % type_
+            for algo in algos:
+                factname = 'ssh_host_key_%s_public' % algo
                 if factname in ssh_pub_key_facts:
                     # a previous keydir was already successful, stop looking
                     # for keys
                     return ssh_pub_key_facts
-                key_filename = '%s/ssh_host_%s_key.pub' % (keydir, type_)
+                key_filename = '%s/ssh_host_%s_key.pub' % (keydir, algo)
                 keydata = get_file_content(key_filename)
                 if keydata is not None:
-                    ssh_pub_key_facts[factname] = keydata.split()[1]
+                    (keytype, key) = keydata.split()[0:2]
+                    ssh_pub_key_facts[factname] = key
+                    ssh_pub_key_facts[factname + '_keytype'] = keytype
 
         return ssh_pub_key_facts

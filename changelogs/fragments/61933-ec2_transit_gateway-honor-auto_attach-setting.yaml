@@ -1,0 +1,2 @@
+bugfixes:
+  - ec2_transit_gateway - fixed issue where auto_attach set to yes was not being honored (https://github.com/ansible/ansible/issues/61907)

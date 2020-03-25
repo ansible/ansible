@@ -13,7 +13,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -141,7 +141,7 @@ options:
     type: str
     version_added: "2.1"
 requirements:
-  - cron
+  - cron (or cronie on CentOS)
 author:
     - Dane Summers (@dsummersl)
     - Mike Grozak (@rhaido)
@@ -212,7 +212,7 @@ import re
 import sys
 import tempfile
 
-from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import shlex_quote
 
 
@@ -642,12 +642,15 @@ def main():
 
     # --- user input validation ---
 
+    if env and not name:
+        module.fail_json(msg="You must specify 'name' while working with environment variables (env=yes)")
+
     if (special_time or reboot) and \
        (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
         module.fail_json(msg="You must specify time and date fields or special time.")
 
     # cannot support special_time on solaris
-    if (special_time or reboot) and get_platform() == 'SunOS':
+    if (special_time or reboot) and platform.system() == 'SunOS':
         module.fail_json(msg="Solaris does not support special_time=... or @reboot")
 
     if cron_file and do_install:
@@ -668,7 +671,7 @@ def main():
         (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
         crontab.write(backup_file)
 
-    if crontab.cron_file and not name and not do_install:
+    if crontab.cron_file and not do_install:
         if module._diff:
             diff['after'] = ''
             diff['after_header'] = '/dev/null'

@@ -1,5 +1,0 @@
----
-- name: remove dummy network adapter device
-  win_device:
-    name: '{{ network_device_name_raw.name }}'
-    state: absent

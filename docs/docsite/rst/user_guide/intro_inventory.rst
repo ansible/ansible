@@ -5,7 +5,7 @@
 How to build your inventory
 ***************************
 
-Ansible works against multiple managed nodes or "hosts" in your infrastructure at the same time, using a list or group of lists know as inventory. Once your inventory is defined, you use :ref:`patterns <intro_patterns>` to select the hosts or groups you want Ansible to run against.
+Ansible works against multiple managed nodes or "hosts" in your infrastructure at the same time, using a list or group of lists known as inventory. Once your inventory is defined, you use :ref:`patterns <intro_patterns>` to select the hosts or groups you want Ansible to run against.
 
 The default location for inventory is a file called ``/etc/ansible/hosts``. You can specify a different inventory file at the command line using the ``-i <path>`` option. You can also use multiple inventory files at the same time, and/or pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :ref:`intro_dynamic_inventory`.
 Introduced in version 2.4, Ansible has :ref:`inventory_plugins` to make this flexible and customizable.
@@ -19,7 +19,7 @@ Inventory basics: formats, hosts, and groups
 ============================================
 
 The inventory file can be in one of many formats, depending on the inventory plugins you have.
-The most common formats are INI and YAML. A basic INI ``etc/ansible/hosts`` might look like this:
+The most common formats are INI and YAML. A basic INI ``/etc/ansible/hosts`` might look like this:
 
 .. code-block:: text
 
@@ -660,6 +660,8 @@ For a full list with available plugins and examples, see :ref:`connection_plugin
 
 Inventory setup examples
 ========================
+
+See also :ref:`sample_setup`, which shows inventory along with playbooks and other Ansible artifacts.
 
 .. _inventory_setup-per_environment:
 

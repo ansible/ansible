@@ -1285,14 +1285,7 @@ class Request:
             else:
                 request.add_header(header, headers[header])
 
-        urlopen_args = [request, None]
-        if sys.version_info >= (2, 6, 0):
-            # urlopen in python prior to 2.6.0 did not
-            # have a timeout parameter
-            urlopen_args.append(timeout)
-
-        r = urllib_request.urlopen(*urlopen_args)
-        return r
+        return urllib_request.urlopen(request, None, timeout)
 
     def get(self, url, **kwargs):
         r"""Sends a GET request. Returns :class:`HTTPResponse` object.
@@ -1442,7 +1435,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
 
     :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
-        The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
+        The **info** contains the 'status' and other meta data. When a HttpError (status >= 400)
         occurred then ``info['body']`` contains the error response data::
 
     Example::

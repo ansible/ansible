@@ -16,7 +16,6 @@ from ansible.module_utils.common._collections_compat import MutableMapping, Muta
 from ansible.plugins.loader import connection_loader
 from ansible.utils.display import Display
 
-
 display = Display()
 
 
@@ -133,15 +132,12 @@ def clean_facts(facts):
 
     # next we remove any connection plugin specific vars
     for conn_path in connection_loader.all(path_only=True):
-        try:
-            conn_name = os.path.splitext(os.path.basename(conn_path))[0]
-            re_key = re.compile('^ansible_%s_' % conn_name)
-            for fact_key in fact_keys:
-                # most lightweight VM or container tech creates devices with this pattern, this avoids filtering them out
-                if (re_key.match(fact_key) and not fact_key.endswith(('_bridge', '_gwbridge'))) or re_key.startswith('ansible_become_'):
-                    remove_keys.add(fact_key)
-        except AttributeError:
-            pass
+        conn_name = os.path.splitext(os.path.basename(conn_path))[0]
+        re_key = re.compile('^ansible_%s_' % conn_name)
+        for fact_key in fact_keys:
+            # most lightweight VM or container tech creates devices with this pattern, this avoids filtering them out
+            if (re_key.match(fact_key) and not fact_key.endswith(('_bridge', '_gwbridge'))) or fact_key.startswith('ansible_become_'):
+                remove_keys.add(fact_key)
 
     # remove some KNOWN keys
     for hard in C.RESTRICTED_RESULT_KEYS + C.INTERNAL_RESULT_KEYS:
@@ -172,10 +168,9 @@ def namespace_facts(facts):
     ''' return all facts inside 'ansible_facts' w/o an ansible_ prefix '''
     deprefixed = {}
     for k in facts:
-        if k in ('ansible_local',):
-            # exceptions to 'deprefixing'
-            deprefixed[k] = module_response_deepcopy(facts[k])
+        if k.startswith('ansible_') and k not in ('ansible_local',):
+            deprefixed[k[8:]] = module_response_deepcopy(facts[k])
         else:
-            deprefixed[k.replace('ansible_', '', 1)] = module_response_deepcopy(facts[k])
+            deprefixed[k] = module_response_deepcopy(facts[k])
 
     return {'ansible_facts': deprefixed}

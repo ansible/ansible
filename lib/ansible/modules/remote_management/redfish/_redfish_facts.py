@@ -1,1 +1,0 @@
-redfish_info.py
