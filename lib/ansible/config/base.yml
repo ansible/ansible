@@ -592,7 +592,7 @@ DEFAULT_FACT_PATH:
   env: [{name: ANSIBLE_FACT_PATH}]
   ini:
   - {key: fact_path, section: defaults}
-  type: path
+  type: string
   yaml: {key: facts.gathering.fact_path}
 DEFAULT_FILTER_PLUGIN_PATH:
   name: Jinja2 Filter Plugins Path
