@@ -487,3 +487,6 @@ ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vaul
 
 EXPECTED_ERROR='Vault format unhexlify error: Odd-length string'
 ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-group-vars-tasks.yml 2>&1 | grep "${EXPECTED_ERROR}"
+
+# Ensure we don't leave unencrypted temp files dangling
+ansible-playbook -v "$@" --vault-password-file vault-password test_dangling_temp.yml
