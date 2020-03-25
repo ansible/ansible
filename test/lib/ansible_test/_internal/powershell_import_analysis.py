@@ -49,7 +49,7 @@ def get_powershell_module_utils_name(path):  # type: (str) -> str
     base_path = data_context().content.module_utils_powershell_path
 
     if data_context().content.collection:
-        prefix = 'ansible_collections.' + data_context().content.collection.prefix + '.plugins.module_utils.'
+        prefix = 'ansible_collections.' + data_context().content.collection.prefix + 'plugins.module_utils.'
     else:
         prefix = ''
 
@@ -77,7 +77,7 @@ def extract_powershell_module_utils_imports(path, module_utils):
 
     code = read_text_file(path)
 
-    if '# POWERSHELL_COMMON' in code:
+    if data_context().content.is_ansible and '# POWERSHELL_COMMON' in code:
         imports.add('Ansible.ModuleUtils.Legacy')
 
     lines = code.splitlines()
@@ -94,7 +94,8 @@ def extract_powershell_module_utils_imports(path, module_utils):
 
         if import_name in module_utils:
             imports.add(import_name)
-        else:
+        elif data_context().content.is_ansible or \
+                import_name.startswith('ansible_collections.%s' % data_context().content.prefix):
             display.warning('%s:%d Invalid module_utils import: %s' % (path, line_number, import_name))
 
     return imports

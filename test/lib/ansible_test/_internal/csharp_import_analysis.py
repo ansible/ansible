@@ -92,10 +92,11 @@ def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):
                 continue
 
             import_name = match.group(1)
-            if import_name not in module_utils:
-                display.warning('%s:%d Invalid module_utils import: %s' % (path, line_number, import_name))
-                continue
 
-            imports.add(import_name)
+            if import_name in module_utils:
+                imports.add(import_name)
+            elif data_context().content.is_ansible or \
+                    import_name.startswith('ansible_collections.%s' % data_context().content.prefix):
+                display.warning('%s:%d Invalid module_utils import: %s' % (path, line_number, import_name))
 
     return imports
