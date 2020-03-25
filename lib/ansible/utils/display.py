@@ -66,7 +66,7 @@ class FilterUserInjector(logging.Filter):
     try:
         username = getpass.getuser()
     except KeyError:
-        # people like to make containser w/o actual valid passwd/shadow and use host uids
+        # people like to make containers w/o actual valid passwd/shadow and use host uids
         username = 'uid=%s' % os.getuid()
 
     def filter(self, record):
