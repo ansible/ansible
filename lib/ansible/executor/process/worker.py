@@ -67,6 +67,10 @@ class WorkerProcess(multiprocessing_context.Process):
         self._variable_manager = variable_manager
         self._shared_loader_obj = shared_loader_obj
 
+        # NOTE: this works due to fork, if switching to threads this should change to per thread storage of temp files
+        # clear var to ensure we only delete files for this child
+        self._loader._tempfiles = set()
+
     def _save_stdin(self):
         self._new_stdin = os.devnull
         try:
@@ -200,6 +204,8 @@ class WorkerProcess(multiprocessing_context.Process):
                 except Exception:
                     display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
                     display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
+                finally:
+                    self._clean_up()
 
         display.debug("WORKER PROCESS EXITING")
 
@@ -210,3 +216,8 @@ class WorkerProcess(multiprocessing_context.Process):
         # ps.print_stats()
         # with open('worker_%06d.stats' % os.getpid(), 'w') as f:
         #     f.write(s.getvalue())
+
+    def _clean_up(self):
+        # NOTE: see note in init about forks
+        # ensure we cleanup all temp files for this worker
+        self._loader.cleanup_all_tmp_files()

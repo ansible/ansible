@@ -51,8 +51,16 @@ class DataLoader:
     '''
 
     def __init__(self):
+
         self._basedir = '.'
+
+        # NOTE: not effective with forks as the main copy does not get updated.
+        # avoids rereading files
         self._FILE_CACHE = dict()
+
+        # NOTE: not thread safe, also issues with forks not returning data to main proc
+        #       so they need to be cleaned independantly. See WorkerProcess for example.
+        # used to keep track of temp files for cleaning
         self._tempfiles = set()
 
         # initialize the vault stuff with an empty password
@@ -322,7 +330,7 @@ class DataLoader:
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
-        fd, content_tempfile = tempfile.mkstemp()
+        fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         f = os.fdopen(fd, 'wb')
         content = to_bytes(content)
         try:
@@ -385,6 +393,10 @@ class DataLoader:
             self._tempfiles.remove(file_path)
 
     def cleanup_all_tmp_files(self):
+        """
+        Removes all temporary files that DataLoader has created
+        NOTE: not thread safe, forks also need special handling see __init__ for details.
+        """
         for f in self._tempfiles:
             try:
                 self.cleanup_tmp_file(f)
