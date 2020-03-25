@@ -257,7 +257,7 @@ static_setup_params = dict(
         'install_scripts': InstallScriptsCommand,
         'sdist': SDistCommand,
     },
-    name='ansible',
+    name='ansible-base',
     version=__version__,
     description='Radically simple IT automation',
     author=__author__,
