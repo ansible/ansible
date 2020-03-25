@@ -31,6 +31,7 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.loader import cache_loader
+from ansible.utils.collection_loader import resource_from_fqcr
 from ansible.utils.display import Display
 from ansible.vars.fact_cache import FactCache as RealFactCache
 
@@ -63,6 +64,7 @@ class BaseCacheModule(AnsiblePlugin):
         if not hasattr(self, '_load_name'):
             display.deprecated('Rather than importing custom CacheModules directly, use ansible.plugins.loader.cache_loader', version='2.14')
             self._load_name = self.__module__.split('.')[-1]
+            self._load_name = resource_from_fqcr(self.__module__)
         super(BaseCacheModule, self).__init__()
         self.set_options(var_options=args, direct=kwargs)
 
@@ -108,7 +110,7 @@ class BaseFileCacheModule(BaseCacheModule):
         except KeyError:
             self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
             self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
-        self.plugin_name = self.__module__.split('.')[-1]
+        self.plugin_name = resource_from_fqcr(self.__module__)
         self._cache = {}
         self.validate_cache_connection()
 
