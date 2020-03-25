@@ -5,9 +5,10 @@ Getting Started
 ***************
 
 Now that you have read the :ref:`installation guide<installation_guide>` and installed Ansible on a control node, you are ready to learn how Ansible works. A basic Ansible command or playbook:
-  * selects machines to execute against from inventory
-  * connects to those machines (or network devices, or other managed nodes), usually over SSH
-  * copies one or more modules to the remote machines and starts execution there
+
+* selects machines to execute against from inventory
+* connects to those machines (or network devices, or other managed nodes), usually over SSH
+* copies one or more modules to the remote machines and starts execution there
 
 Ansible can do much more, but you should understand the most common use case before exploring all the powerful configuration, deployment, and orchestration features of Ansible. This page illustrates the basic process with a simple inventory and an ad-hoc command. Once you understand how Ansible works, you can read more details about :ref:`ad-hoc commands<intro_adhoc>`, organize your infrastructure with :ref:`inventory<intro_inventory>`, and harness the full power of Ansible with :ref:`playbooks<playbooks_intro>`.
 
@@ -47,10 +48,11 @@ Confirm that you can connect using SSH to all the nodes in your inventory using 
 Beyond the basics
 -----------------
 You can override the default remote user name in several ways, including:
-  * passing the ``-u`` parameter at the command line
-  * setting user information in your inventory file
-  * setting user information in your configuration file
-  * setting environment variables
+
+* passing the ``-u`` parameter at the command line
+* setting user information in your inventory file
+* setting user information in your configuration file
+* setting environment variables
 
 See :ref:`general_precedence_rules` for details on the (sometimes unintuitive) precedence of each method of passing user information. You can read more about connections in :ref:`connections`.
 
