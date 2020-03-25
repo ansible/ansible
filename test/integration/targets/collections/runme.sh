@@ -36,8 +36,12 @@ else
   ansible-playbook -i "${INVENTORY_PATH}" collection_root_user/ansible_collections/testns/testcoll/playbooks/default_collection_playbook.yml
 fi
 
-# run test playbook
+# run test playbooks
 ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v "${TEST_PLAYBOOK}" "$@"
+
+if [[ ${INVENTORY_PATH} != *.winrm ]]; then
+	ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v invocation_tests.yml "$@"
+fi
 
 # test adjacent with --playbook-dir
 export ANSIBLE_COLLECTIONS_PATHS=''
