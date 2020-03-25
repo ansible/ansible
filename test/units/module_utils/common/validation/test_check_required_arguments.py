@@ -65,7 +65,7 @@ def test_check_required_arguments_missing_multiple(arguments_terms_multiple):
     params = {
         'apples': 'woohoo',
     }
-    expected = "missing required arguments: foo, bar"
+    expected = "missing required arguments: bar, foo"
 
     with pytest.raises(TypeError) as e:
         check_required_arguments(arguments_terms_multiple, params)
