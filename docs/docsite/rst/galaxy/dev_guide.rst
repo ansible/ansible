@@ -60,7 +60,7 @@ Force
 -----
 
 If a directory matching the name of the role already exists in the current working directory, the init command will result in an error. To ignore the error
-use the *--force* option. Force will create the above subdirectories and files, replacing anything that matches.
+use the ``--force`` option. Force will create the above subdirectories and files, replacing anything that matches.
 
 Container enabled
 -----------------
@@ -120,7 +120,7 @@ When you choose to use your username and password, your password is not sent to 
 It then sends the token to Galaxy, which in turn verifies that your identity and returns a Galaxy access token. After authentication completes the GitHub token is
 destroyed.
 
-If you do not wish to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the *--github-token* option to pass a personal access token that you create.
+If you do not wish to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the ``--github-token`` option to pass a personal access token that you create.
 
 
 Import a role
@@ -154,17 +154,17 @@ By default the command will wait for Galaxy to complete the import process, disp
 Branch
 ^^^^^^
 
-Use the *--branch* option to import a specific branch. If not specified, the default branch for the repo will be used.
+Use the ``--branch`` option to import a specific branch. If not specified, the default branch for the repo will be used.
 
 Role name
 ^^^^^^^^^
 
-By default the name given to the role will be derived from the GitHub repository name. However, you can use the *--role-name* option to override this and set the name.
+By default the name given to the role will be derived from the GitHub repository name. However, you can use the ``--role-name`` option to override this and set the name.
 
 No wait
 ^^^^^^^
 
-If the *--no-wait* option is present, the command will not wait for results. Results of the most recent import for any of your roles is available on the Galaxy web site by visiting *My Imports*.
+If the ``--no-wait`` option is present, the command will not wait for results. Results of the most recent import for any of your roles is available on the Galaxy web site by visiting *My Imports*.
 
 Delete a role
 -------------
@@ -210,7 +210,7 @@ To instruct Travis to notify Galaxy when a build completes, add the following to
 List Travis integrations
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Use the *--list* option to display your Travis integrations:
+Use the ``--list`` option to display your Travis integrations:
 
 .. code-block:: bash
 
@@ -226,13 +226,13 @@ Use the *--list* option to display your Travis integrations:
 Remove Travis integrations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Use the *--remove* option to disable and remove a Travis integration:
+Use the ``--remove`` option to disable and remove a Travis integration:
 
   .. code-block:: bash
 
     $ ansible-galaxy setup --remove ID
 
-Provide the ID of the integration to be disabled. You can find the ID by using the *--list* option.
+Provide the ID of the integration to be disabled. You can find the ID by using the ``--list`` option.
 
 
 .. seealso::
