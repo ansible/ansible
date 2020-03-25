@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import, division, print_function
@@ -114,8 +114,14 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-to_do:
-    lorem ipsum
+output:
+    description: list of git cli commands stdout
+    type: list
+    changed: true
+    sample: [
+        "[master 99830f4] Remove [ test.txt, tax.txt ]\n 4 files changed, 26 insertions(+), 31 deletions(-)\n delete mode 100644 tax.txt\n delete mode 100644 test.txt\n",
+        "To https://gitlab.com/networkAutomation/git_test_module.git\n   372db19..99830f4  master -> master\n"
+    ]
 '''
 import os
 import subprocess
@@ -156,52 +162,72 @@ def git_push(module):
     token = module.params.get('token')
     branch = module.params.get('branch')
     push_option = module.params.get('push_option')
-    https = module.params.get('https')
-    ssh = module.params.get('ssh')
-    # accept_hostkey = module.params.get('accept_hostkey')
+    mode = module.params.get('mode')
 
-    if not ssh and not https:
-        if url.startswith('git@'):
-            ssh = True
-            https = False
+    def https(folder_path,user,token,url,branch,push_option):
         if url.startswith('https://'):
-            ssh = False
-            https = True
-
-    if https:
-        ssh = False
-        cmd = 'git -C {folder_path} https://{user}:{token}@{url} HEAD:{branch}'.format(
-            folder_path=folder_path,
-            option=push_option,
-            user=user,
-            token=token,
-            url=url[8:],
-            branch=branch
-        )
-
+            remote_add = 'git -C {folder_path} remote set-url origin https://{user}:{token}@{url}'.format(
+                folder_path=folder_path,
+                url=url[8:],
+                user=user,
+                token=token,
+                branch=branch,
+            )
+            cmd = 'git -C {folder_path} push origin {branch}'.format(
+                folder_path=folder_path,
+                branch=branch,
+            )
+        
         if push_option:
-            index = cmd.find(folder_path)
-            commands.append(cmd[:index] + '--push-option={option}'.format(option=push_option) + cmd[index:])
+            index = cmd.find('origin')
+            return [remote_add, cmd[:index] + '--push-option={option} '.format(option=push_option) + cmd[index:]]
+        
         if not push_option:
+            return [remote_add, cmd]
+
+    if mode == 'https':
+        for cmd in https(folder_path,user,token,url,branch,push_option):
             commands.append(cmd)
 
-    if ssh:
-        cmd = 'git -C {folder_path} {url} HEAD:{branch}'.format(
+
+    if mode == 'ssh':
+        if 'https' in url:
+            module.fail_json(msg='SSH mode selected but HTTPS URL provided')
+
+        remote_add = 'git -C {folder_path} remote set-url origin {url}'.format(
+                        folder_path=folder_path,
+                        url=url,
+                        user=user,
+                    )
+        cmd = 'git -C {folder_path} push origin {branch}'.format(
             folder_path=folder_path,
-            option=push_option,
-            user=user,
-            token=token,
-            url=url,
             branch=branch
         )
+        commands.append(remote_add)
 
         if push_option:
-            index = cmd.find(folder_path)
-            commands.append(cmd[:index] + '--push-option={option}'.format(option=push_option) + cmd[index:])
+            index = cmd.find('origin')
+            commands.append(cmd[:index] + '--push-option={option} '.format(option=push_option) + cmd[index:])
+
         if not push_option:
             commands.append(cmd)
 
     return commands
+
+
+def send_commands(cmd):
+
+    send_commands = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+        shell=True
+        )
+    send_commands.wait()
+    output, error = send_commands.communicate()
+
+    return output, error
 
 
 def main():
@@ -210,13 +236,11 @@ def main():
         folder_path=dict(required=True),
         user=dict(),
         token=dict(),
-        comment=dict(),
+        comment=dict(required=True),
         add=dict(type="list", default=[ "." ]),
         branch=dict(required=True),
-        push=dict(type="bool", default=True),
-        commit=dict(type="bool", default=True),
         push_option=dict(),
-        mode=dict(choices=["ssh","https"], default="ssh", required=True),
+        mode=dict(choices=["ssh","https"]),
         url=dict(),
         accept_hostkey=dict(type='bool', default=False)
     )
@@ -224,9 +248,8 @@ def main():
 
     mutually_exclusive = [("ssh", "https")]
     required_if = [
-        ("commit", True, ["comment", "add"]),
         ("mode", "https", ["user", "token"]),
-        ("push", True, ["branch"]),
+        ("mode", "ssh", ["accept_hostkey"]),
         ]
 
 
@@ -236,42 +259,48 @@ def main():
         required_if=required_if,
     )
 
+    result = dict(
+        changed=False, 
+        # warnings=list()
+        )
+    
+    git_commands = git_commit(module) + git_push(module)
+        
+    result_output = list()
 
-    folder_path = module.params.get('folder_path')
-    url = module.params.get('url')
+    for cmd in git_commands:
+        output, error = send_commands(cmd)
 
-    if folder_path and not url:
-        if os.path.isdir("{0}/.git".format(folder_path)):
-            git_path = "{0}/.git".format(folder_path)
-        else:
-            module.fail_json(msg='".git/" folder not found in {0}.'.format(folder_path))
-   
-        if os.path.isfile('{0}/config'.format(git_path)):       
-            with open('{0}/config'.format(git_path)) as config:
-                content = config.readlines()
-            for line in content:
-                if 'url =' in line:
-                    url = line.split()[2]
-                    updated_url = {'url': url}
-                    module.params.update(updated_url)
-        else:
-            module.fail_json(msg='"config" file not found in {0}.'.format(git_path))
+        if output:
+            # no changes added by 'git commit'
+            if 'no changes added to commit' in output:
+                module.fail_json(msg=output)
+            # if 'git add .' and nothing to commit
+            elif 'nothing to commit, working tree clean' in output:
+                module.fail_json(msg=output)
+            else:
+                result_output.append(output)
 
+        if error:
+            if 'error:' in error:
+                module.fail_json(msg=error)
+            # file not found by 'git add'
+            elif 'did not match any files' in error:
+                module.fail_json(msg=error)
+            # don't error out for 'Everything up-to-date'
+            elif 'Everything up-to-date':
+                result_output.append(error)
+                result.update(changed=False)
+            else:
+                module.fail_json(msg=error)
+                result.update(changed=False)
 
-    result = dict(changed=False, warnings=list())
-
-
-    if module.params.get('commit'):
-        result['git_commit'] = git_commit(module)
-
-    if module.params.get('push'):
-        result['git_push'] = git_push(module)
-
+    if result_output:
+        result.update(output=result_output)
+        result.update(changed=True)
 
     module.exit_json(**result)
-    # if module.params['accept_hostkey']:
-    #     if ssh_opts is not None:
-    #         if "-o StrictHostKeyChecking=no" not in ssh_opts:
-    #             ssh_opts += " -o StrictHostKeyChecking=no"
-    #     else:
-    #         ssh_opts = "-o StrictHostKeyChecking=no"1
+
+
+if __name__ == "__main__":
+    main()
