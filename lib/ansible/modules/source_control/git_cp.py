@@ -66,11 +66,6 @@ options:
     url:
         description:
             - git repo URL. If not provided, the module will use the same mode used by "git clone"
-    accept_hostkey:
-        description:
-            - Accept ssh fingerprint. if True, ensure that "-o StrictHostKeyChecking=no" is
-              present as an ssh option.
-        type: bool
 requirements:
     - git>=2.19.0 (the command line tool)
 
