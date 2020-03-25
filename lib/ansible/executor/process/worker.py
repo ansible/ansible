@@ -90,6 +90,10 @@ class WorkerProcess(multiprocessing.Process):
             # set to /dev/null
             self._new_stdin = os.devnull
 
+        # NOTE: this works due to fork, if switching to threads this should change to per thread storage of temp files
+        # clear var to ensure we only delete files for this child
+        self._loader._tempfiles = set()
+
     def run(self):
         '''
         Called when the process is started.  Pushes the result onto the
@@ -159,6 +163,8 @@ class WorkerProcess(multiprocessing.Process):
                 except:
                     display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
                     display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
+                finally:
+                    self._clean_up()
 
         display.debug("WORKER PROCESS EXITING")
 
@@ -169,3 +175,8 @@ class WorkerProcess(multiprocessing.Process):
         # ps.print_stats()
         # with open('worker_%06d.stats' % os.getpid(), 'w') as f:
         #     f.write(s.getvalue())
+
+    def _clean_up(self):
+        # NOTE: see note in init about forks
+        # ensure we cleanup all temp files for this worker
+        self._loader.cleanup_all_tmp_files()

@@ -850,7 +850,7 @@ class VaultEditor:
 
         # Create a tempfile
         root, ext = os.path.splitext(os.path.realpath(filename))
-        fd, tmp_path = tempfile.mkstemp(suffix=ext)
+        fd, tmp_path = tempfile.mkstemp(suffix=ext, dir=C.DEFAULT_LOCAL_TMP)
         os.close(fd)
 
         cmd = self._editor_shell_command(tmp_path)
