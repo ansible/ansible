@@ -59,7 +59,6 @@ class BaseCacheModule(AnsiblePlugin):
     _display = display
 
     def __init__(self, *args, **kwargs):
-        self._load_name = self.__module__.split('.')[-1]
         super(BaseCacheModule, self).__init__()
         self.set_options(var_options=args, direct=kwargs)
 

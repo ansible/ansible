@@ -568,6 +568,8 @@ class PluginLoader:
 
         self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
 
+        self._update_object(obj, name, path)
+
         if not class_only:
             try:
                 obj = obj(*args, **kwargs)
@@ -578,7 +580,6 @@ class PluginLoader:
                     return None
                 raise
 
-        self._update_object(obj, name, path)
         return obj
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
@@ -695,13 +696,14 @@ class PluginLoader:
 
             self._display_plugin_load(self.class_name, basename, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
 
+            self._update_object(obj, basename, path)
+
             if not class_only:
                 try:
                     obj = obj(*args, **kwargs)
                 except TypeError as e:
                     display.warning("Skipping plugin (%s) as it seems to be incomplete: %s" % (path, to_text(e)))
 
-            self._update_object(obj, basename, path)
             yield obj
 
 
