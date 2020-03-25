@@ -507,3 +507,7 @@ ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vaul
 
 # Run playbook with vault file with unicode in filename (https://github.com/ansible/ansible/issues/50316)
 ansible-playbook -i ../../inventory -v "$@" --vault-password-file vault-password test_utf8_value_in_filename.yml
+
+# Ensure we don't leave unencrypted temp files dangling
+ansible-playbook -v "$@" --vault-password-file vault-password test_dangling_temp.yml
+
