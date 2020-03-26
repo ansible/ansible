@@ -3,6 +3,9 @@
 # Copyright: (c) 2020, Ori Hoch
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -15,7 +18,7 @@ module: kamatera_compute
 
 short_description: Create, start, stop, restart or terminate Kamatera servers
 
-version_added: "2.9"
+version_added: "2.10"
 
 description:
     - "Create, start, stop, restart or terminate Kamatera servers."
