@@ -1,3 +1,8 @@
+- git:
+    repo: "https://Federico87:ZwM9RMWz4cEGwiynxtcw@gitlab.com/networkAutomation/git_test_module.git"
+    dest: "{{ playbook_dir }}"
+    clone: yes
+
 - file:
     path: '{{ item }}'
     state: touch
