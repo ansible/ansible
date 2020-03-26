@@ -62,7 +62,6 @@ def assemble_files_to_ship(complete_file_list):
         'examples/plugin_filters.yml',
         'hacking/env-setup',
         'hacking/env-setup.fish',
-        'CODING_GUIDELINES.md',
         'MANIFEST',
     ))
 
