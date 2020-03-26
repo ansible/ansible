@@ -465,34 +465,6 @@ class DnfModule(YumDnf):
         # print '%s, %s, %s vs %s, %s, %s = %s' % (e1, v1, r1, e2, v2, r2, rc)
         return rc
 
-    def fetch_rpm_from_url(self, spec):
-        # FIXME: Remove this once this PR is merged:
-        #   https://github.com/ansible/ansible/pull/19172
-
-        # download package so that we can query it
-        package_name, dummy = os.path.splitext(str(spec.rsplit('/', 1)[1]))
-        package_file = tempfile.NamedTemporaryFile(dir=self.module.tmpdir, prefix=package_name, suffix='.rpm', delete=False)
-        self.module.add_cleanup_file(package_file.name)
-        try:
-            rsp, info = fetch_url(self.module, spec)
-            if not rsp:
-                self.module.fail_json(
-                    msg="Failure downloading %s, %s" % (spec, info['msg']),
-                    results=[],
-                )
-            data = rsp.read(BUFSIZE)
-            while data:
-                package_file.write(data)
-                data = rsp.read(BUFSIZE)
-            package_file.close()
-        except Exception as e:
-            self.module.fail_json(
-                msg="Failure downloading %s, %s" % (spec, to_native(e)),
-                results=[],
-            )
-
-        return package_file.name
-
     def _ensure_dnf(self):
         if not HAS_DNF:
             if PY2:
