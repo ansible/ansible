@@ -66,26 +66,31 @@ class AnsibleDeprecatedChecker(BaseChecker):
     msgs = MSGS
 
     options = (
+        ('is-collection', {
+            'default': False,
+            'type': 'yn',
+            'metavar': '<y_or_n>',
+            'help': 'Whether this is a collection or not.',
+        }),
         ('collection-version', {
             'default': None,
             'type': 'string',
             'metavar': '<version>',
-            'help': 'The collection\'s version number used to check deprecations. '
-                    'If not specified, will assume that this is not a collection.',
+            'help': 'The collection\'s version number used to check deprecations.',
         }),
     )
 
     def __init__(self, *args, **kwargs):
-        super(AnsibleDeprecatedChecker, self).__init__(*args, **kwargs)
         self.collection_version = None
         self.is_collection = False
-        self.version_to_check = ANSIBLE_VERSION
+        super(AnsibleDeprecatedChecker, self).__init__(*args, **kwargs)
 
     def set_option(self, optname, value, action=None, optdict=None):
+        super(AnsibleDeprecatedChecker, self).set_option(optname, value, action, optdict)
         if optname == 'collection-version' and value is not None:
-            self.collection_version = LooseVersion(value)
-            self.is_collection = True
-            self.version_to_check = self.collection_version
+            self.collection_version = LooseVersion(self.config.collection_version)
+        if optname == 'is-collection':
+            self.is_collection = self.config.is_collection
 
     @check_messages(*(MSGS.keys()))
     def visit_call(self, node):
@@ -111,11 +116,12 @@ class AnsibleDeprecatedChecker(BaseChecker):
                         return
 
                 try:
-                    if self.version_to_check >= LooseVersion(str(version)):
-                        msg = 'ansible-deprecated-version'
-                        if self.is_collection:
-                            msg = 'ansible-deprecated-collection-version'
-                        self.add_message(msg, node=node, args=(version,))
+                    loose_version = LooseVersion(str(version))
+                    if self.is_collection and self.collection_version is not None:
+                        if self.collection_version >= loose_version:
+                            self.add_message('ansible-deprecated-collection-version', node=node, args=(version,))
+                    if not self.is_collection and ANSIBLE_VERSION >= loose_version:
+                        self.add_message('ansible-deprecated-version', node=node, args=(version,))
                 except ValueError:
                     self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
         except AttributeError:

@@ -74,9 +74,6 @@ class ValidateModulesTest(SanitySingleVersion):
             '--arg-spec',
         ] + paths
 
-        if args.validate_deprecation:
-            cmd.extend(['--validate-deprecation'])
-
         if data_context().content.collection:
             cmd.extend(['--collection', data_context().content.collection.directory])
             metadata = load_collection_metadata(args, python_version, data_context().content.collection)

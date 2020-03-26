@@ -241,8 +241,8 @@ class ModuleValidator(Validator):
 
     WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
-    def __init__(self, path, analyze_arg_spec=False, validate_deprecation=False, collection=None,
-                 collection_version=None, base_branch=None, git_cache=None, reporter=None, routing=None):
+    def __init__(self, path, analyze_arg_spec=False, collection=None, collection_version=None,
+                 base_branch=None, git_cache=None, reporter=None, routing=None):
         super(ModuleValidator, self).__init__(reporter=reporter or Reporter())
 
         self.path = path
@@ -250,7 +250,6 @@ class ModuleValidator(Validator):
         self.name = os.path.splitext(self.basename)[0]
 
         self.analyze_arg_spec = analyze_arg_spec
-        self.validate_deprecation = validate_deprecation
 
         self.collection = collection
         self.routing = routing
@@ -1460,7 +1459,7 @@ class ModuleValidator(Validator):
                 )
                 continue
 
-            if self.validate_deprecation and (not self.collection or self.collection_version is not None):
+            if not self.collection or self.collection_version is not None:
                 if self.collection:
                     compare_version = self.collection_version
                     version_of_what = "this collection (%s)" % self.collection_version_str
@@ -2178,10 +2177,6 @@ def run():
                              'validating files within a collection. Ensure '
                              'that ANSIBLE_COLLECTIONS_PATHS is set so the '
                              'contents of the collection can be located')
-    parser.add_argument('--validate-deprecation', action='store_true',
-                        help='Compare deprecation versions to current Ansible '
-                             'version, or for collections, --collection-version '
-                             'if specified')
     parser.add_argument('--collection-version',
                         help='The collection\'s version number used to check '
                              'deprecations')
@@ -2217,8 +2212,8 @@ def run():
             if ModuleValidator.is_blacklisted(path):
                 continue
             with ModuleValidator(path, collection=args.collection, collection_version=args.collection_version,
-                                 analyze_arg_spec=args.arg_spec, validate_deprecation=args.validate_deprecation,
-                                 base_branch=args.base_branch, git_cache=git_cache, reporter=reporter, routing=routing) as mv1:
+                                 analyze_arg_spec=args.arg_spec, base_branch=args.base_branch,
+                                 git_cache=git_cache, reporter=reporter, routing=routing) as mv1:
                 mv1.validate()
                 check_dirs.add(os.path.dirname(path))
 
