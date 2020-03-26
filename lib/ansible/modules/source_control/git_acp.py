@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: git_cp
+module: git_acp
 author:
     - "Federico Olivieri (@Federico87)"
 version_added: "2.10"
@@ -75,7 +75,7 @@ requirements:
 EXAMPLES = '''
 
 # Commit and push changes via https.
-- git_cp:
+- git_acp:
     folder_path: /Users/federicoolivieri/git/git_test_module
     user: Federico87
     token: m1Ap!T0k3n!!!
@@ -88,7 +88,7 @@ EXAMPLES = '''
     url: https://gitlab.com/networkAutomation/git_test_module
 
 # Push changes via ssh using some defaults.
-- git_cp:
+- git_acp:
     folder_path: /Users/federicoolivieri/git/git_test_module
     comment: My amazing backup
     branch: master
@@ -97,7 +97,7 @@ EXAMPLES = '''
     url: git@gitlab.com/networkAutomation/git_test_module
 
 # Commit and push changes using only defaults.
-- git_cp:
+- git_acp:
     folder_path: /Users/federicoolivieri/git/git_test_module
     comment: My amazing backup
     branch: master
