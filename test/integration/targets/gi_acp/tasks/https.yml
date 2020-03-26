@@ -1,6 +1,10 @@
+- file: 
+    path: "{{ playbook_dir }}/test_directory" 
+    state: directory
+
 - git:
     repo: "https://Federico87:ZwM9RMWz4cEGwiynxtcw@gitlab.com/networkAutomation/git_test_module.git"
-    dest: "{{ playbook_dir }}"
+    dest: "{{ playbook_dir }}/test_directory"
     clone: yes
 
 - file:
@@ -15,7 +19,7 @@
 - name: HTTPS +add +mode -push_option
   register: result
   git_acp:
-    folder_path: "{{ playbook_dir }}"
+    folder_path: "{{ playbook_dir }}/test_directory"
     user: Federico87
     token: ZwM9RMWz4cEGwiynxtcw
     comment: Add [ test.txt, tax.txt ]
@@ -42,7 +46,7 @@
 - name: HTTPS -add +mode +push_option
   register: result
   git_acp:
-    folder_path: "{{ playbook_dir }}"
+    folder_path: "{{ playbook_dir }}/test_directory"
     user: Federico87
     token: ZwM9RMWz4cEGwiynxtcw
     comment: Remove [ test.txt, tax.txt ]
@@ -60,7 +64,7 @@
 - name: HTTPS add not existing file
   register: result
   git_acp:
-    folder_path: "{{ playbook_dir }}"
+    folder_path: "{{ playbook_dir }}/test_directory"
     user: Federico87
     token: ZwM9RMWz4cEGwiynxtcw
     comment: I am going to break
@@ -79,7 +83,7 @@
 - name: HTTPS commit nothing
   register: result
   git_acp:
-    folder_path: "{{ playbook_dir }}"
+    folder_path: "{{ playbook_dir }}/test_directory"
     user: Federico87
     token: ZwM9RMWz4cEGwiynxtcw
     comment: I am going to break
