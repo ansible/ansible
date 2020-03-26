@@ -18,7 +18,8 @@ short_description: Get Kamatera compute options
 version_added: "2.9"
 
 description:
-    - "Get Kamatera compute options which can be used to create resources on the Kamatera cloud"
+    - "Get Kamatera compute options which can be used to create resources on the Kamatera cloud."
+    - "Get an API client ID and secret from the Kamatera console at https://console.kamatera.com/"
 
 options:
     api_client_id:
@@ -26,16 +27,28 @@ options:
             - The Kamatera API Client ID, get it from the Kamatera console
             - Can be set via environment variable KAMATERA_API_CLIENT_ID
         required: true
+        type: str
     api_secret:
         description:
             - The Kamatera API Secret, get it from the Kamatera console
             - Can be set via environment variable KAMATERA_API_SECRET
         required: true
+        type: str
+    api_url:
+        description:
+            - The Kamatera API URL (should not be changed from the default)
+        default: 'https://cloudcli.cloudwm.com'
+        type: str
     datacenter:
         description:
             - If not provided - will list available datacenters
             - If provided - will return the options for this datacenter
         type: 'str'
+    wait_timeout_seconds:
+        description:
+            - How long to wait for each operation
+        type: 'int'
+        default: 600
 
 author:
     - Ori Hoch (@OriHoch)
@@ -44,7 +57,7 @@ author:
 EXAMPLES = '''
 - name: Get capabilities
   hosts: localhost
-  vars: 
+  vars:
     api_client_id: <Your Kamatera API Client ID>
     api_secret: <Your Kamatera API secret>
   tasks:

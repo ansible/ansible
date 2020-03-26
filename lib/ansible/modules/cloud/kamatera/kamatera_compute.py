@@ -18,7 +18,8 @@ short_description: Create, start, stop, restart or terminate Kamatera servers
 version_added: "2.9"
 
 description:
-    - "Create, start, stop, restart or terminate Kamatera servers"
+    - "Create, start, stop, restart or terminate Kamatera servers."
+    - "Get an API client ID and secret from the Kamatera console at https://console.kamatera.com/"
 
 options:
     api_client_id:
@@ -26,11 +27,18 @@ options:
             - The Kamatera API Client ID, get it from the Kamatera console
             - Can be set via environment variable KAMATERA_API_CLIENT_ID
         required: true
+        type: str
     api_secret:
         description:
             - The Kamatera API Secret, get it from the Kamatera console
             - Can be set via environment variable KAMATERA_API_SECRET
         required: true
+        type: str
+    api_url:
+        description:
+            - The Kamatera API URL (should not be changed from the default)
+        default: 'https://cloudcli.cloudwm.com'
+        type: str
     server_name:
         description:
             - A server name to operate on or to create
@@ -39,6 +47,7 @@ options:
         description:
             - A list of server names to create or operate on
         type: list
+        elements: str
     server_name_regex:
         description:
             - A regular expression to match server names to operate on
@@ -48,6 +57,7 @@ options:
             - Desried state of the server/s
         default: 'running'
         choices: ['present', 'running', 'stopped', 'restarted', 'absent']
+        type: str
     datacenter:
         description:
             - Datacenter ID to create the server in
@@ -83,6 +93,7 @@ options:
             - Additional disk sizes in GB (up to 3 additional disks)
         default: []
         type: 'list'
+        elements: int
     password:
         description:
             - Password to set for root access
@@ -96,10 +107,11 @@ options:
         description:
             - List of network interfaces (up to 4 interfaces)
             - By default, a single public interface is added
-            - For example, to add a private LAN, create it in the Kamatera Console and set the following:
-            - [{'name': 'wan', 'ip': 'auto'}, {'name': 'my-lan-id', 'ip': 'auto'}]
+            - 'For example, to add a private LAN, create it in the Kamatera Console and set the following:'
+            - "[{'name': 'wan', 'ip': 'auto'}, {'name': 'my-lan-id', 'ip': 'auto'}]"
         default: [{'name': 'wan', 'ip': 'auto'}]
         type: 'list'
+        elements: dict
     daily_backup:
         description:
             - Whether to enable daily backups on the server
@@ -115,6 +127,7 @@ options:
             - Which billing cycle to use (hourly or monthly)
         default: 'hourly'
         choices: ['hourly', 'monthly']
+        type: str
     monthly_traffic_package:
         description:
             - ID of traffic package to use if monthly billing cycle is selected
@@ -142,7 +155,7 @@ author:
 EXAMPLES = '''
 - name: Provisioning and operations example
   hosts: localhost
-  vars: 
+  vars:
     api_client_id: <Your Kamatera API Client ID>
     api_secret: <Your Kamatera API secret>
     server_name: my-test-server
@@ -185,7 +198,7 @@ EXAMPLES = '''
 
 RETURN = '''
 command_ids:
-    description: Kamatera Command IDs which started to achieve desired state 
+    description: Kamatera Command IDs which started to achieve desired state
     type: list
     returned: always
 server_names:
@@ -402,7 +415,7 @@ def main():
             api_secret=dict(required=True, fallback=(env_fallback, ['KAMATERA_API_SECRET']), no_log=True),
             api_url=dict(fallback=(env_fallback, ['KAMATERA_API_URL']), default='https://cloudcli.cloudwm.com'),
             server_name=dict(type='str'),
-            server_names=dict(type='list', default=[]),
+            server_names=dict(type='list', default=[], elements='str'),
             server_name_regex=dict(type='str'),
             state=dict(default='running', choices=['present', 'running', 'stopped', 'restarted', 'absent']),
             datacenter=dict(type='str', default='EU'),
@@ -411,10 +424,10 @@ def main():
             cpu_cores=dict(type='int', default=2),
             ram_mb=dict(type='int', default=2048),
             disk_size_gb=dict(type='int', default=20),
-            extra_disk_sizes_gb=dict(type='list', default=[]),
+            extra_disk_sizes_gb=dict(type='list', default=[], elements='int'),
             password=dict(type='str', no_log=True),
             ssh_pub_key=dict(type='str'),
-            networks=dict(type='list', default=[{'name': 'wan', 'ip': 'auto'}]),
+            networks=dict(type='list', default=[{'name': 'wan', 'ip': 'auto'}], elements='dict'),
             daily_backup=dict(type='bool', default=False),
             managed=dict(type='bool', default=False),
             billing_cycle=dict(default='hourly', choices=['monthly', 'hourly']),
