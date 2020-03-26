@@ -1,0 +1,2 @@
+bugfixes:
+- Removed a function in lib/ansible/modules/packaging/os/dnf.py meant to be removed once PR 19172 was merged.
