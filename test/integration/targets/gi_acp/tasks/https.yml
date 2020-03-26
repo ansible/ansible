@@ -7,6 +7,21 @@
     dest: "{{ playbook_dir }}/test_directory"
     clone: yes
 
+- git_config:
+    name: user.email
+    scope: global
+    value: github@test.com
+
+- git_config:
+    name: user.email
+    scope: global
+    value: github@test.com
+
+- git_config:
+    name: user.name
+    scope: global
+    value: lvrfrc87_github
+
 - file:
     path: '{{ item }}'
     state: touch
