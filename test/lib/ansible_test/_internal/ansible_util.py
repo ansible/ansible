@@ -40,6 +40,7 @@ from .data import (
 )
 
 CHECK_YAML_VERSIONS = {}
+LOAD_COLLECTION_METADATA = {}
 
 
 def ansible_environment(args, color=True, ansible_config=None):
@@ -215,5 +216,34 @@ def check_pyyaml(args, version):
         display.warning('PyYAML is not installed for interpreter: %s' % python)
     elif not cloader:
         display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python)
+
+    return result
+
+
+def load_collection_metadata(args, version, collection):
+    """
+    :type args: EnvironmentConfig
+    :type version: str
+    :type collection: CollectionDetail
+    """
+    directory = os.path.join(collection.root, collection.directory)
+    try:
+        return LOAD_COLLECTION_METADATA[(version, directory)]
+    except KeyError:
+        pass
+
+    python = find_python(version)
+    stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'collection_metadata.py'), directory],
+                                 capture=True, always=True)
+
+    LOAD_COLLECTION_METADATA[(version, directory)] = result = json.loads(stdout)
+    display.warning(result)
+
+    if result.get('no-pyyaml'):
+        display.warning('PyYAML is not installed for interpreter: %s' % python)
+
+    warnings = result.get('warnings', [])
+    for warning in warnings:
+        display.warning(warning)
 
     return result

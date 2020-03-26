@@ -243,10 +243,6 @@ class SanityConfig(TestConfig):
         self.allow_disabled = args.allow_disabled  # type: bool
         self.validate_deprecation = args.validate_deprecation  # type: bool
 
-        self.collection_version = None
-        if data_context().content.collection:
-            self.collection_version = data_context().content.collection.version
-
         if args.base_branch:
             self.base_branch = args.base_branch  # str
         elif is_shippable():

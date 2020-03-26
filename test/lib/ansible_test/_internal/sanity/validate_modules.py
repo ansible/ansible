@@ -31,6 +31,7 @@ from ..util_common import (
 
 from ..ansible_util import (
     ansible_environment,
+    load_collection_metadata,
 )
 
 from ..config import (
@@ -78,8 +79,9 @@ class ValidateModulesTest(SanitySingleVersion):
 
         if data_context().content.collection:
             cmd.extend(['--collection', data_context().content.collection.directory])
-            if data_context().content.collection.version is not None:
-                cmd.extend(['--collection-version', data_context().content.collection.version])
+            metadata = load_collection_metadata(args, python_version, data_context().content.collection)
+            if metadata.get('version'):
+                cmd.extend(['--collection-version', metadata.get('version')])
         else:
             if args.base_branch:
                 cmd.extend([
