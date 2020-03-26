@@ -1,0 +1,2 @@
+minor_changes:
+  - Prevent losing useful error information by including both the loop and the conditional error messages (https://github.com/ansible/ansible/issues/66529)
