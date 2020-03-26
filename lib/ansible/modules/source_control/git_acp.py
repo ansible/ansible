@@ -8,11 +8,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
-
-
 DOCUMENTATION = '''
 ---
 module: git_acp
@@ -113,6 +108,11 @@ output:
         "To https://gitlab.com/networkAutomation/git_test_module.git\n   372db19..99830f4  master -> master\n"
     ]
 '''
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 import os
 
 from ansible.module_utils.basic import AnsibleModule
@@ -215,14 +215,12 @@ def main():
         url=dict(),
     )
 
-    mutually_exclusive = [("ssh", "https")]
     required_if = [
         ("mode", "https", ["user", "token"]),
     ]
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive=mutually_exclusive,
         required_if=required_if,
     )
 
