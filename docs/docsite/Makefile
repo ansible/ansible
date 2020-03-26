@@ -48,6 +48,7 @@ singlehtmldocs: generate_rst
 
 linkcheckdocs: generate_rst
 		CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx linkcheck
+		
 webdocs: docs
 
 #TODO: leaving htmlout removal for those having older versions, should eventually be removed also
