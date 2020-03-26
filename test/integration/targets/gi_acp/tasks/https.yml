@@ -1,0 +1,90 @@
+- file:
+    path: '{{ item }}'
+    state: touch
+  loop:
+    - test.txt
+    - tax.txt
+  tags:
+    - https
+
+- name: HTTPS +add +mode -push_option
+  register: result
+  git_acp:
+    folder_path: "{{ playbook_dir }}"
+    user: Federico87
+    token: ZwM9RMWz4cEGwiynxtcw
+    comment: Add [ test.txt, tax.txt ]
+    add: [ test.txt, tax.txt ]
+    branch: master
+    mode: https
+    url: https://gitlab.com/networkAutomation/git_test_module.git
+  tags:
+    - https
+
+- assert: { that: "result.changed == true" }
+  tags:
+    - https
+
+- file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - test.txt
+    - tax.txt
+  tags:
+    - https
+
+- name: HTTPS -add +mode +push_option
+  register: result
+  git_acp:
+    folder_path: "{{ playbook_dir }}"
+    user: Federico87
+    token: ZwM9RMWz4cEGwiynxtcw
+    comment: Remove [ test.txt, tax.txt ]
+    branch: master
+    push_option: ci.skip
+    mode: https
+    url: https://gitlab.com/networkAutomation/git_test_module.git
+  tags:
+    - https
+
+- assert: { that: "result.changed == true" }
+  tags:
+    - https
+
+- name: HTTPS add not existing file
+  register: result
+  git_acp:
+    folder_path: "{{ playbook_dir }}"
+    user: Federico87
+    token: ZwM9RMWz4cEGwiynxtcw
+    comment: I am going to break
+    add: invisible_man.txt
+    branch: master
+    mode: https
+    url: https://gitlab.com/networkAutomation/git_test_module.git
+  ignore_errors: yes
+  tags:
+    - https
+
+- assert: { that: "result.changed == false" }
+  tags:
+    - https
+
+- name: HTTPS commit nothing
+  register: result
+  git_acp:
+    folder_path: "{{ playbook_dir }}"
+    user: Federico87
+    token: ZwM9RMWz4cEGwiynxtcw
+    comment: I am going to break
+    branch: master
+    mode: https
+    url: https://gitlab.com/networkAutomation/git_test_module.git
+  ignore_errors: yes
+  tags:
+    - https
+
+- assert: { that: "result.changed == false" }
+  tags:
+    - https
