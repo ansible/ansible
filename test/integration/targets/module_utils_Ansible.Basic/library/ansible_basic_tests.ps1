@@ -796,8 +796,8 @@ test_no_log - Invoked with:
     "Removed at date" = {
         $spec = @{
             options = @{
-                removed1 = @{removed_at_date = new DateTime(2020, 3, 10)}
-                removed2 = @{removed_at_date = new DateTime(2020, 3, 11)}
+                removed1 = @{removed_at_date = [DateTime]"2020-03-10"}
+                removed2 = @{removed_at_date = [DateTime]"2020-03-11"}
             }
         }
         Set-Variable -Name complex_args -Scope Global -Value @{
@@ -844,12 +844,12 @@ test_no_log - Invoked with:
                     options = @{
                         option1 = @{ type = "str"; aliases = "alias1"; deprecated_aliases = @(@{name = "alias1"; version = "2.10"}) }
                         option2 = @{ type = "str"; aliases = "alias2"; deprecated_aliases = @(@{name = "alias2"; version = "2.11"}) }
-                        option3 = @{ type = "str"; aliases = "alias3"; deprecated_aliases = @(@{name = "alias3"; date = new DateTime(2020, 3, 11)}) }
-                        option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = new DateTime(2020, 3, 9)}) }
+                        option3 = @{ type = "str"; aliases = "alias3"; deprecated_aliases = @(@{name = "alias3"; date = [DateTime]"2020-03-11"}) }
+                        option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = [DateTime]"2020-03-09"}) }
                     }
                 }
-                option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = new DateTime(2020, 3, 10)}) }
-                option5 = @{ type = "str"; aliases = "alias5"; deprecated_aliases = @(@{name = "alias5"; date = new DateTime(2020, 3, 12)}) }
+                option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = [DateTime]"2020-03-10"}) }
+                option5 = @{ type = "str"; aliases = "alias5"; deprecated_aliases = @(@{name = "alias5"; date = [DateTime]"2020-03-12"}) }
             }
         }
 
@@ -1173,7 +1173,7 @@ test_no_log - Invoked with:
 
     "Deprecate and warn with date" = {
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        $m.Deprecate("message", new DateTime(2020, 1, 2))
+        $m.Deprecate("message", [DateTime]"2020-01-02")
         $actual_deprecate_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
         $m.Warn("warning")
         $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
@@ -1822,7 +1822,7 @@ test_no_log - Invoked with:
                     deprecated_aliases = @(
                         @{
                             name = "alias_name"
-                            date = new DateTime(2020, 3, 10)
+                            date = [DateTime]"2020-03-10"
                             version = "2.11"
                         }
                     )
@@ -1841,6 +1841,40 @@ test_no_log - Invoked with:
         $failed | Assert-Equals -Expected $true
 
         $expected_msg = "internal error: Only one of version or date is allowed in a deprecated_aliases entry"
+
+        $actual.Keys.Count | Assert-Equals -Expected 3
+        $actual.failed | Assert-Equals -Expected $true
+        $actual.msg | Assert-Equals -Expected $expected_msg
+        ("exception" -cin $actual.Keys) | Assert-Equals -Expected $true
+    }
+
+    "Invalid deprecated aliases entry - wrong date type" = {
+        $spec = @{
+            options = @{
+                option_key = @{
+                    type = "str"
+                    aliases = ,"alias_name"
+                    deprecated_aliases = @(
+                        @{
+                            name = "alias_name"
+                            date = "2020-03-10"
+                        }
+                    )
+                }
+            }
+        }
+
+        $failed = $false
+        try {
+            $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 1"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected_msg = "internal error: A deprecated_aliases date must be a DateTime object"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
         $actual.failed | Assert-Equals -Expected $true
