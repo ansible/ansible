@@ -5,7 +5,7 @@ plugin_routing:
     podman:
       redirect: containers.podman.podman
     aws_ssm:
-      redirect: community.amazon.aws_ssm
+      redirect: community.aws.aws_ssm
     chroot:
       redirect: community.general.chroot
     docker:
@@ -58,427 +58,427 @@ plugin_routing:
     frr_bgp:
       redirect: frr.frr.frr_bgp
     aws_acm_facts:
-      redirect: community.amazon.aws_acm_facts
+      redirect: community.aws.aws_acm_facts
     aws_kms_facts:
-      redirect: community.amazon.aws_kms_facts
+      redirect: community.aws.aws_kms_facts
     aws_region_facts:
-      redirect: community.amazon.aws_region_facts
+      redirect: community.aws.aws_region_facts
     aws_s3_bucket_facts:
-      redirect: community.amazon.aws_s3_bucket_facts
+      redirect: community.aws.aws_s3_bucket_facts
     aws_sgw_facts:
-      redirect: community.amazon.aws_sgw_facts
+      redirect: community.aws.aws_sgw_facts
     aws_waf_facts:
-      redirect: community.amazon.aws_waf_facts
+      redirect: community.aws.aws_waf_facts
     cloudfront_facts:
-      redirect: community.amazon.cloudfront_facts
+      redirect: community.aws.cloudfront_facts
     cloudwatchlogs_log_group_facts:
-      redirect: community.amazon.cloudwatchlogs_log_group_facts
+      redirect: community.aws.cloudwatchlogs_log_group_facts
     ec2_asg_facts:
-      redirect: community.amazon.ec2_asg_facts
+      redirect: community.aws.ec2_asg_facts
     ec2_customer_gateway_facts:
-      redirect: community.amazon.ec2_customer_gateway_facts
+      redirect: community.aws.ec2_customer_gateway_facts
     ec2_instance_facts:
-      redirect: community.amazon.ec2_instance_facts
+      redirect: community.aws.ec2_instance_facts
     ec2_eip_facts:
-      redirect: community.amazon.ec2_eip_facts
+      redirect: community.aws.ec2_eip_facts
     ec2_elb_facts:
-      redirect: community.amazon.ec2_elb_facts
+      redirect: community.aws.ec2_elb_facts
     ec2_lc_facts:
-      redirect: community.amazon.ec2_lc_facts
+      redirect: community.aws.ec2_lc_facts
     ec2_placement_group_facts:
-      redirect: community.amazon.ec2_placement_group_facts
+      redirect: community.aws.ec2_placement_group_facts
     ec2_vpc_endpoint_facts:
-      redirect: community.amazon.ec2_vpc_endpoint_facts
+      redirect: community.aws.ec2_vpc_endpoint_facts
     ec2_vpc_igw_facts:
-      redirect: community.amazon.ec2_vpc_igw_facts
+      redirect: community.aws.ec2_vpc_igw_facts
     ec2_vpc_nacl_facts:
-      redirect: community.amazon.ec2_vpc_nacl_facts
+      redirect: community.aws.ec2_vpc_nacl_facts
     ec2_vpc_nat_gateway_facts:
-      redirect: community.amazon.ec2_vpc_nat_gateway_facts
+      redirect: community.aws.ec2_vpc_nat_gateway_facts
     ec2_vpc_peering_facts:
-      redirect: community.amazon.ec2_vpc_peering_facts
+      redirect: community.aws.ec2_vpc_peering_facts
     ec2_vpc_route_table_facts:
-      redirect: community.amazon.ec2_vpc_route_table_facts
+      redirect: community.aws.ec2_vpc_route_table_facts
     ec2_vpc_vgw_facts:
-      redirect: community.amazon.ec2_vpc_vgw_facts
+      redirect: community.aws.ec2_vpc_vgw_facts
     ec2_vpc_vpn_facts:
-      redirect: community.amazon.ec2_vpc_vpn_facts
+      redirect: community.aws.ec2_vpc_vpn_facts
     ecs_service_facts:
-      redirect: community.amazon.ecs_service_facts
+      redirect: community.aws.ecs_service_facts
     ecs_taskdefinition_facts:
-      redirect: community.amazon.ecs_taskdefinition_facts
+      redirect: community.aws.ecs_taskdefinition_facts
     efs_facts:
-      redirect: community.amazon.efs_facts
+      redirect: community.aws.efs_facts
     elasticache_facts:
-      redirect: community.amazon.elasticache_facts
+      redirect: community.aws.elasticache_facts
     elb_application_lb_facts:
-      redirect: community.amazon.elb_application_lb_facts
+      redirect: community.aws.elb_application_lb_facts
     elb_classic_lb_facts:
-      redirect: community.amazon.elb_classic_lb_facts
+      redirect: community.aws.elb_classic_lb_facts
     elb_target_facts:
-      redirect: community.amazon.elb_target_facts
+      redirect: community.aws.elb_target_facts
     elb_target_group_facts:
-      redirect: community.amazon.elb_target_group_facts
+      redirect: community.aws.elb_target_group_facts
     iam_cert_facts:
-      redirect: community.amazon.iam_cert_facts
+      redirect: community.aws.iam_cert_facts
     iam_mfa_device_facts:
-      redirect: community.amazon.iam_mfa_device_facts
+      redirect: community.aws.iam_mfa_device_facts
     iam_role_facts:
-      redirect: community.amazon.iam_role_facts
+      redirect: community.aws.iam_role_facts
     iam_server_certificate_facts:
-      redirect: community.amazon.iam_server_certificate_facts
+      redirect: community.aws.iam_server_certificate_facts
     lambda_facts:
-      redirect: community.amazon.lambda_facts
+      redirect: community.aws.lambda_facts
     rds_instance_facts:
-      redirect: community.amazon.rds_instance_facts
+      redirect: community.aws.rds_instance_facts
     rds_snapshot_facts:
-      redirect: community.amazon.rds_snapshot_facts
+      redirect: community.aws.rds_snapshot_facts
     redshift_facts:
-      redirect: community.amazon.redshift_facts
+      redirect: community.aws.redshift_facts
     route53_facts:
-      redirect: community.amazon.route53_facts
+      redirect: community.aws.route53_facts
     aws_acm:
-      redirect: community.amazon.aws_acm
+      redirect: community.aws.aws_acm
     aws_acm_info:
-      redirect: community.amazon.aws_acm_info
+      redirect: community.aws.aws_acm_info
     aws_api_gateway:
-      redirect: community.amazon.aws_api_gateway
+      redirect: community.aws.aws_api_gateway
     aws_application_scaling_policy:
-      redirect: community.amazon.aws_application_scaling_policy
+      redirect: community.aws.aws_application_scaling_policy
     aws_batch_compute_environment:
-      redirect: community.amazon.aws_batch_compute_environment
+      redirect: community.aws.aws_batch_compute_environment
     aws_batch_job_definition:
-      redirect: community.amazon.aws_batch_job_definition
+      redirect: community.aws.aws_batch_job_definition
     aws_batch_job_queue:
-      redirect: community.amazon.aws_batch_job_queue
+      redirect: community.aws.aws_batch_job_queue
     aws_codebuild:
-      redirect: community.amazon.aws_codebuild
+      redirect: community.aws.aws_codebuild
     aws_codecommit:
-      redirect: community.amazon.aws_codecommit
+      redirect: community.aws.aws_codecommit
     aws_codepipeline:
-      redirect: community.amazon.aws_codepipeline
+      redirect: community.aws.aws_codepipeline
     aws_config_aggregation_authorization:
-      redirect: community.amazon.aws_config_aggregation_authorization
+      redirect: community.aws.aws_config_aggregation_authorization
     aws_config_aggregator:
-      redirect: community.amazon.aws_config_aggregator
+      redirect: community.aws.aws_config_aggregator
     aws_config_delivery_channel:
-      redirect: community.amazon.aws_config_delivery_channel
+      redirect: community.aws.aws_config_delivery_channel
     aws_config_recorder:
-      redirect: community.amazon.aws_config_recorder
+      redirect: community.aws.aws_config_recorder
     aws_config_rule:
-      redirect: community.amazon.aws_config_rule
+      redirect: community.aws.aws_config_rule
     aws_direct_connect_connection:
-      redirect: community.amazon.aws_direct_connect_connection
+      redirect: community.aws.aws_direct_connect_connection
     aws_direct_connect_gateway:
-      redirect: community.amazon.aws_direct_connect_gateway
+      redirect: community.aws.aws_direct_connect_gateway
     aws_direct_connect_link_aggregation_group:
-      redirect: community.amazon.aws_direct_connect_link_aggregation_group
+      redirect: community.aws.aws_direct_connect_link_aggregation_group
     aws_direct_connect_virtual_interface:
-      redirect: community.amazon.aws_direct_connect_virtual_interface
+      redirect: community.aws.aws_direct_connect_virtual_interface
     aws_eks_cluster:
-      redirect: community.amazon.aws_eks_cluster
+      redirect: community.aws.aws_eks_cluster
     aws_elasticbeanstalk_app:
-      redirect: community.amazon.aws_elasticbeanstalk_app
+      redirect: community.aws.aws_elasticbeanstalk_app
     aws_glue_connection:
-      redirect: community.amazon.aws_glue_connection
+      redirect: community.aws.aws_glue_connection
     aws_glue_job:
-      redirect: community.amazon.aws_glue_job
+      redirect: community.aws.aws_glue_job
     aws_inspector_target:
-      redirect: community.amazon.aws_inspector_target
+      redirect: community.aws.aws_inspector_target
     aws_kms:
-      redirect: community.amazon.aws_kms
+      redirect: community.aws.aws_kms
     aws_kms_info:
-      redirect: community.amazon.aws_kms_info
+      redirect: community.aws.aws_kms_info
     aws_region_info:
-      redirect: community.amazon.aws_region_info
+      redirect: community.aws.aws_region_info
     aws_s3_bucket_info:
-      redirect: community.amazon.aws_s3_bucket_info
+      redirect: community.aws.aws_s3_bucket_info
     aws_s3_cors:
-      redirect: community.amazon.aws_s3_cors
+      redirect: community.aws.aws_s3_cors
     aws_secret:
-      redirect: community.amazon.aws_secret
+      redirect: community.aws.aws_secret
     aws_ses_identity:
-      redirect: community.amazon.aws_ses_identity
+      redirect: community.aws.aws_ses_identity
     aws_ses_identity_policy:
-      redirect: community.amazon.aws_ses_identity_policy
+      redirect: community.aws.aws_ses_identity_policy
     aws_ses_rule_set:
-      redirect: community.amazon.aws_ses_rule_set
+      redirect: community.aws.aws_ses_rule_set
     aws_sgw_info:
-      redirect: community.amazon.aws_sgw_info
+      redirect: community.aws.aws_sgw_info
     aws_ssm_parameter_store:
-      redirect: community.amazon.aws_ssm_parameter_store
+      redirect: community.aws.aws_ssm_parameter_store
     aws_step_functions_state_machine:
-      redirect: community.amazon.aws_step_functions_state_machine
+      redirect: community.aws.aws_step_functions_state_machine
     aws_step_functions_state_machine_execution:
-      redirect: community.amazon.aws_step_functions_state_machine_execution
+      redirect: community.aws.aws_step_functions_state_machine_execution
     aws_waf_condition:
-      redirect: community.amazon.aws_waf_condition
+      redirect: community.aws.aws_waf_condition
     aws_waf_info:
-      redirect: community.amazon.aws_waf_info
+      redirect: community.aws.aws_waf_info
     aws_waf_rule:
-      redirect: community.amazon.aws_waf_rule
+      redirect: community.aws.aws_waf_rule
     aws_waf_web_acl:
-      redirect: community.amazon.aws_waf_web_acl
+      redirect: community.aws.aws_waf_web_acl
     cloudformation_stack_set:
-      redirect: community.amazon.cloudformation_stack_set
+      redirect: community.aws.cloudformation_stack_set
     cloudformation_exports_info:
-      redirect: community.amazon.cloudformation_exports_info
+      redirect: community.aws.cloudformation_exports_info
     cloudfront_distribution:
-      redirect: community.amazon.cloudfront_distribution
+      redirect: community.aws.cloudfront_distribution
     cloudfront_info:
-      redirect: community.amazon.cloudfront_info
+      redirect: community.aws.cloudfront_info
     cloudfront_invalidation:
-      redirect: community.amazon.cloudfront_invalidation
+      redirect: community.aws.cloudfront_invalidation
     cloudfront_origin_access_identity:
-      redirect: community.amazon.cloudfront_origin_access_identity
+      redirect: community.aws.cloudfront_origin_access_identity
     cloudtrail:
-      redirect: community.amazon.cloudtrail
+      redirect: community.aws.cloudtrail
     cloudwatchevent_rule:
-      redirect: community.amazon.cloudwatchevent_rule
+      redirect: community.aws.cloudwatchevent_rule
     cloudwatchlogs_log_group:
-      redirect: community.amazon.cloudwatchlogs_log_group
+      redirect: community.aws.cloudwatchlogs_log_group
     cloudwatchlogs_log_group_info:
-      redirect: community.amazon.cloudwatchlogs_log_group_info
+      redirect: community.aws.cloudwatchlogs_log_group_info
     cloudwatchlogs_log_group_metric_filter:
-      redirect: community.amazon.cloudwatchlogs_log_group_metric_filter
+      redirect: community.aws.cloudwatchlogs_log_group_metric_filter
     data_pipeline:
-      redirect: community.amazon.data_pipeline
+      redirect: community.aws.data_pipeline
     dms_endpoint:
-      redirect: community.amazon.dms_endpoint
+      redirect: community.aws.dms_endpoint
     dms_replication_subnet_group:
-      redirect: community.amazon.dms_replication_subnet_group
+      redirect: community.aws.dms_replication_subnet_group
     dynamodb_table:
-      redirect: community.amazon.dynamodb_table
+      redirect: community.aws.dynamodb_table
     dynamodb_ttl:
-      redirect: community.amazon.dynamodb_ttl
+      redirect: community.aws.dynamodb_ttl
     ec2_ami_copy:
-      redirect: community.amazon.ec2_ami_copy
+      redirect: community.aws.ec2_ami_copy
     ec2_asg:
-      redirect: community.amazon.ec2_asg
+      redirect: community.aws.ec2_asg
     ec2_asg_info:
-      redirect: community.amazon.ec2_asg_info
+      redirect: community.aws.ec2_asg_info
     ec2_asg_lifecycle_hook:
-      redirect: community.amazon.ec2_asg_lifecycle_hook
+      redirect: community.aws.ec2_asg_lifecycle_hook
     ec2_customer_gateway:
-      redirect: community.amazon.ec2_customer_gateway
+      redirect: community.aws.ec2_customer_gateway
     ec2_customer_gateway_info:
-      redirect: community.amazon.ec2_customer_gateway_info
+      redirect: community.aws.ec2_customer_gateway_info
     ec2_eip:
-      redirect: community.amazon.ec2_eip
+      redirect: community.aws.ec2_eip
     ec2_eip_info:
-      redirect: community.amazon.ec2_eip_info
+      redirect: community.aws.ec2_eip_info
     ec2_elb:
-      redirect: community.amazon.ec2_elb
+      redirect: community.aws.ec2_elb
     ec2_elb_info:
-      redirect: community.amazon.ec2_elb_info
+      redirect: community.aws.ec2_elb_info
     ec2_instance:
-      redirect: community.amazon.ec2_instance
+      redirect: community.aws.ec2_instance
     ec2_instance_info:
-      redirect: community.amazon.ec2_instance_info
+      redirect: community.aws.ec2_instance_info
     ec2_launch_template:
-      redirect: community.amazon.ec2_launch_template
+      redirect: community.aws.ec2_launch_template
     ec2_lc:
-      redirect: community.amazon.ec2_lc
+      redirect: community.aws.ec2_lc
     ec2_lc_find:
-      redirect: community.amazon.ec2_lc_find
+      redirect: community.aws.ec2_lc_find
     ec2_lc_info:
-      redirect: community.amazon.ec2_lc_info
+      redirect: community.aws.ec2_lc_info
     ec2_metric_alarm:
-      redirect: community.amazon.ec2_metric_alarm
+      redirect: community.aws.ec2_metric_alarm
     ec2_placement_group:
-      redirect: community.amazon.ec2_placement_group
+      redirect: community.aws.ec2_placement_group
     ec2_placement_group_info:
-      redirect: community.amazon.ec2_placement_group_info
+      redirect: community.aws.ec2_placement_group_info
     ec2_scaling_policy:
-      redirect: community.amazon.ec2_scaling_policy
+      redirect: community.aws.ec2_scaling_policy
     ec2_snapshot_copy:
-      redirect: community.amazon.ec2_snapshot_copy
+      redirect: community.aws.ec2_snapshot_copy
     ec2_transit_gateway:
-      redirect: community.amazon.ec2_transit_gateway
+      redirect: community.aws.ec2_transit_gateway
     ec2_transit_gateway_info:
-      redirect: community.amazon.ec2_transit_gateway_info
+      redirect: community.aws.ec2_transit_gateway_info
     ec2_vpc_egress_igw:
-      redirect: community.amazon.ec2_vpc_egress_igw
+      redirect: community.aws.ec2_vpc_egress_igw
     ec2_vpc_endpoint:
-      redirect: community.amazon.ec2_vpc_endpoint
+      redirect: community.aws.ec2_vpc_endpoint
     ec2_vpc_endpoint_info:
-      redirect: community.amazon.ec2_vpc_endpoint_info
+      redirect: community.aws.ec2_vpc_endpoint_info
     ec2_vpc_igw:
-      redirect: community.amazon.ec2_vpc_igw
+      redirect: community.aws.ec2_vpc_igw
     ec2_vpc_igw_info:
-      redirect: community.amazon.ec2_vpc_igw_info
+      redirect: community.aws.ec2_vpc_igw_info
     ec2_vpc_nacl:
-      redirect: community.amazon.ec2_vpc_nacl
+      redirect: community.aws.ec2_vpc_nacl
     ec2_vpc_nacl_info:
-      redirect: community.amazon.ec2_vpc_nacl_info
+      redirect: community.aws.ec2_vpc_nacl_info
     ec2_vpc_nat_gateway:
-      redirect: community.amazon.ec2_vpc_nat_gateway
+      redirect: community.aws.ec2_vpc_nat_gateway
     ec2_vpc_nat_gateway_info:
-      redirect: community.amazon.ec2_vpc_nat_gateway_info
+      redirect: community.aws.ec2_vpc_nat_gateway_info
     ec2_vpc_peer:
-      redirect: community.amazon.ec2_vpc_peer
+      redirect: community.aws.ec2_vpc_peer
     ec2_vpc_peering_info:
-      redirect: community.amazon.ec2_vpc_peering_info
+      redirect: community.aws.ec2_vpc_peering_info
     ec2_vpc_route_table:
-      redirect: community.amazon.ec2_vpc_route_table
+      redirect: community.aws.ec2_vpc_route_table
     ec2_vpc_route_table_info:
-      redirect: community.amazon.ec2_vpc_route_table_info
+      redirect: community.aws.ec2_vpc_route_table_info
     ec2_vpc_vgw:
-      redirect: community.amazon.ec2_vpc_vgw
+      redirect: community.aws.ec2_vpc_vgw
     ec2_vpc_vgw_info:
-      redirect: community.amazon.ec2_vpc_vgw_info
+      redirect: community.aws.ec2_vpc_vgw_info
     ec2_vpc_vpn:
-      redirect: community.amazon.ec2_vpc_vpn
+      redirect: community.aws.ec2_vpc_vpn
     ec2_vpc_vpn_info:
-      redirect: community.amazon.ec2_vpc_vpn_info
+      redirect: community.aws.ec2_vpc_vpn_info
     ec2_win_password:
-      redirect: community.amazon.ec2_win_password
+      redirect: community.aws.ec2_win_password
     ecs_attribute:
-      redirect: community.amazon.ecs_attribute
+      redirect: community.aws.ecs_attribute
     ecs_cluster:
-      redirect: community.amazon.ecs_cluster
+      redirect: community.aws.ecs_cluster
     ecs_ecr:
-      redirect: community.amazon.ecs_ecr
+      redirect: community.aws.ecs_ecr
     ecs_service:
-      redirect: community.amazon.ecs_service
+      redirect: community.aws.ecs_service
     ecs_service_info:
-      redirect: community.amazon.ecs_service_info
+      redirect: community.aws.ecs_service_info
     ecs_tag:
-      redirect: community.amazon.ecs_tag
+      redirect: community.aws.ecs_tag
     ecs_task:
-      redirect: community.amazon.ecs_task
+      redirect: community.aws.ecs_task
     ecs_taskdefinition:
-      redirect: community.amazon.ecs_taskdefinition
+      redirect: community.aws.ecs_taskdefinition
     ecs_taskdefinition_info:
-      redirect: community.amazon.ecs_taskdefinition_info
+      redirect: community.aws.ecs_taskdefinition_info
     efs:
-      redirect: community.amazon.efs
+      redirect: community.aws.efs
     efs_info:
-      redirect: community.amazon.efs_info
+      redirect: community.aws.efs_info
     elasticache:
-      redirect: community.amazon.elasticache
+      redirect: community.aws.elasticache
     elasticache_info:
-      redirect: community.amazon.elasticache_info
+      redirect: community.aws.elasticache_info
     elasticache_parameter_group:
-      redirect: community.amazon.elasticache_parameter_group
+      redirect: community.aws.elasticache_parameter_group
     elasticache_snapshot:
-      redirect: community.amazon.elasticache_snapshot
+      redirect: community.aws.elasticache_snapshot
     elasticache_subnet_group:
-      redirect: community.amazon.elasticache_subnet_group
+      redirect: community.aws.elasticache_subnet_group
     elb_application_lb:
-      redirect: community.amazon.elb_application_lb
+      redirect: community.aws.elb_application_lb
     elb_application_lb_info:
-      redirect: community.amazon.elb_application_lb_info
+      redirect: community.aws.elb_application_lb_info
     elb_classic_lb:
-      redirect: community.amazon.elb_classic_lb
+      redirect: community.aws.elb_classic_lb
     elb_classic_lb_info:
-      redirect: community.amazon.elb_classic_lb_info
+      redirect: community.aws.elb_classic_lb_info
     elb_instance:
-      redirect: community.amazon.elb_instance
+      redirect: community.aws.elb_instance
     elb_network_lb:
-      redirect: community.amazon.elb_network_lb
+      redirect: community.aws.elb_network_lb
     elb_target:
-      redirect: community.amazon.elb_target
+      redirect: community.aws.elb_target
     elb_target_group:
-      redirect: community.amazon.elb_target_group
+      redirect: community.aws.elb_target_group
     elb_target_group_info:
-      redirect: community.amazon.elb_target_group_info
+      redirect: community.aws.elb_target_group_info
     elb_target_info:
-      redirect: community.amazon.elb_target_info
+      redirect: community.aws.elb_target_info
     execute_lambda:
-      redirect: community.amazon.execute_lambda
+      redirect: community.aws.execute_lambda
     iam:
-      redirect: community.amazon.iam
+      redirect: community.aws.iam
     iam_cert:
-      redirect: community.amazon.iam_cert
+      redirect: community.aws.iam_cert
     iam_group:
-      redirect: community.amazon.iam_group
+      redirect: community.aws.iam_group
     iam_managed_policy:
-      redirect: community.amazon.iam_managed_policy
+      redirect: community.aws.iam_managed_policy
     iam_mfa_device_info:
-      redirect: community.amazon.iam_mfa_device_info
+      redirect: community.aws.iam_mfa_device_info
     iam_password_policy:
-      redirect: community.amazon.iam_password_policy
+      redirect: community.aws.iam_password_policy
     iam_policy:
-      redirect: community.amazon.iam_policy
+      redirect: community.aws.iam_policy
     iam_policy_info:
-      redirect: community.amazon.iam_policy_info
+      redirect: community.aws.iam_policy_info
     iam_role:
-      redirect: community.amazon.iam_role
+      redirect: community.aws.iam_role
     iam_role_info:
-      redirect: community.amazon.iam_role_info
+      redirect: community.aws.iam_role_info
     iam_saml_federation:
-      redirect: community.amazon.iam_saml_federation
+      redirect: community.aws.iam_saml_federation
     iam_server_certificate_info:
-      redirect: community.amazon.iam_server_certificate_info
+      redirect: community.aws.iam_server_certificate_info
     iam_user:
-      redirect: community.amazon.iam_user
+      redirect: community.aws.iam_user
     iam_user_info:
-      redirect: community.amazon.iam_user_info
+      redirect: community.aws.iam_user_info
     kinesis_stream:
-      redirect: community.amazon.kinesis_stream
+      redirect: community.aws.kinesis_stream
     lambda:
-      redirect: community.amazon.lambda
+      redirect: community.aws.lambda
     lambda_alias:
-      redirect: community.amazon.lambda_alias
+      redirect: community.aws.lambda_alias
     lambda_event:
-      redirect: community.amazon.lambda_event
+      redirect: community.aws.lambda_event
     lambda_info:
-      redirect: community.amazon.lambda_info
+      redirect: community.aws.lambda_info
     lambda_policy:
-      redirect: community.amazon.lambda_policy
+      redirect: community.aws.lambda_policy
     lightsail:
-      redirect: community.amazon.lightsail
+      redirect: community.aws.lightsail
     rds:
-      redirect: community.amazon.rds
+      redirect: community.aws.rds
     rds_instance:
-      redirect: community.amazon.rds_instance
+      redirect: community.aws.rds_instance
     rds_instance_info:
-      redirect: community.amazon.rds_instance_info
+      redirect: community.aws.rds_instance_info
     rds_param_group:
-      redirect: community.amazon.rds_param_group
+      redirect: community.aws.rds_param_group
     rds_snapshot:
-      redirect: community.amazon.rds_snapshot
+      redirect: community.aws.rds_snapshot
     rds_snapshot_info:
-      redirect: community.amazon.rds_snapshot_info
+      redirect: community.aws.rds_snapshot_info
     rds_subnet_group:
-      redirect: community.amazon.rds_subnet_group
+      redirect: community.aws.rds_subnet_group
     redshift:
-      redirect: community.amazon.redshift
+      redirect: community.aws.redshift
     redshift_cross_region_snapshots:
-      redirect: community.amazon.redshift_cross_region_snapshots
+      redirect: community.aws.redshift_cross_region_snapshots
     redshift_info:
-      redirect: community.amazon.redshift_info
+      redirect: community.aws.redshift_info
     redshift_subnet_group:
-      redirect: community.amazon.redshift_subnet_group
+      redirect: community.aws.redshift_subnet_group
     route53:
-      redirect: community.amazon.route53
+      redirect: community.aws.route53
     route53_health_check:
-      redirect: community.amazon.route53_health_check
+      redirect: community.aws.route53_health_check
     route53_info:
-      redirect: community.amazon.route53_info
+      redirect: community.aws.route53_info
     route53_zone:
-      redirect: community.amazon.route53_zone
+      redirect: community.aws.route53_zone
     s3_bucket_notification:
-      redirect: community.amazon.s3_bucket_notification
+      redirect: community.aws.s3_bucket_notification
     s3_lifecycle:
-      redirect: community.amazon.s3_lifecycle
+      redirect: community.aws.s3_lifecycle
     s3_logging:
-      redirect: community.amazon.s3_logging
+      redirect: community.aws.s3_logging
     s3_sync:
-      redirect: community.amazon.s3_sync
+      redirect: community.aws.s3_sync
     s3_website:
-      redirect: community.amazon.s3_website
+      redirect: community.aws.s3_website
     sns:
-      redirect: community.amazon.sns
+      redirect: community.aws.sns
     sns_topic:
-      redirect: community.amazon.sns_topic
+      redirect: community.aws.sns_topic
     sqs_queue:
-      redirect: community.amazon.sqs_queue
+      redirect: community.aws.sqs_queue
     sts_assume_role:
-      redirect: community.amazon.sts_assume_role
+      redirect: community.aws.sts_assume_role
     sts_session_token:
-      redirect: community.amazon.sts_session_token
+      redirect: community.aws.sts_session_token
     ali_instance_facts:
       redirect: community.general.ali_instance_facts
     ali_instance:
@@ -3954,83 +3954,83 @@ plugin_routing:
     snow_record_find:
       redirect: servicenow.servicenow.snow_record_find
     aws_az_facts:
-      redirect: ansible.amazon.aws_az_facts
+      redirect: amazon.aws.aws_az_facts
     aws_caller_facts:
-      redirect: ansible.amazon.aws_caller_facts
+      redirect: amazon.aws.aws_caller_facts
     cloudformation_facts:
-      redirect: ansible.amazon.cloudformation_facts
+      redirect: amazon.aws.cloudformation_facts
     ec2_ami_facts:
-      redirect: ansible.amazon.ec2_ami_facts
+      redirect: amazon.aws.ec2_ami_facts
     ec2_eni_facts:
-      redirect: ansible.amazon.ec2_eni_facts
+      redirect: amazon.aws.ec2_eni_facts
     ec2_group_facts:
-      redirect: ansible.amazon.ec2_group_facts
+      redirect: amazon.aws.ec2_group_facts
     ec2_snapshot_facts:
-      redirect: ansible.amazon.ec2_snapshot_facts
+      redirect: amazon.aws.ec2_snapshot_facts
     ec2_vol_facts:
-      redirect: ansible.amazon.ec2_vol_facts
+      redirect: amazon.aws.ec2_vol_facts
     ec2_vpc_dhcp_option_facts:
-      redirect: ansible.amazon.ec2_vpc_dhcp_option_facts
+      redirect: amazon.aws.ec2_vpc_dhcp_option_facts
     ec2_vpc_net_facts:
-      redirect: ansible.amazon.ec2_vpc_net_facts
+      redirect: amazon.aws.ec2_vpc_net_facts
     ec2_vpc_subnet_facts:
-      redirect: ansible.amazon.ec2_vpc_subnet_facts
+      redirect: amazon.aws.ec2_vpc_subnet_facts
     aws_az_info:
-      redirect: ansible.amazon.aws_az_info
+      redirect: amazon.aws.aws_az_info
     aws_caller_info:
-      redirect: ansible.amazon.aws_caller_info
+      redirect: amazon.aws.aws_caller_info
     aws_s3:
-      redirect: ansible.amazon.aws_s3
+      redirect: amazon.aws.aws_s3
     cloudformation:
-      redirect: ansible.amazon.cloudformation
+      redirect: amazon.aws.cloudformation
     cloudformation_info:
-      redirect: ansible.amazon.cloudformation_info
+      redirect: amazon.aws.cloudformation_info
     ec2:
-      redirect: ansible.amazon.ec2
+      redirect: amazon.aws.ec2
     ec2_ami:
-      redirect: ansible.amazon.ec2_ami
+      redirect: amazon.aws.ec2_ami
     ec2_ami_info:
-      redirect: ansible.amazon.ec2_ami_info
+      redirect: amazon.aws.ec2_ami_info
     ec2_elb_lb:
-      redirect: ansible.amazon.ec2_elb_lb
+      redirect: amazon.aws.ec2_elb_lb
     ec2_eni:
-      redirect: ansible.amazon.ec2_eni
+      redirect: amazon.aws.ec2_eni
     ec2_eni_info:
-      redirect: ansible.amazon.ec2_eni_info
+      redirect: amazon.aws.ec2_eni_info
     ec2_group:
-      redirect: ansible.amazon.ec2_group
+      redirect: amazon.aws.ec2_group
     ec2_group_info:
-      redirect: ansible.amazon.ec2_group_info
+      redirect: amazon.aws.ec2_group_info
     ec2_key:
-      redirect: ansible.amazon.ec2_key
+      redirect: amazon.aws.ec2_key
     ec2_metadata_facts:
-      redirect: ansible.amazon.ec2_metadata_facts
+      redirect: amazon.aws.ec2_metadata_facts
     ec2_snapshot:
-      redirect: ansible.amazon.ec2_snapshot
+      redirect: amazon.aws.ec2_snapshot
     ec2_snapshot_info:
-      redirect: ansible.amazon.ec2_snapshot_info
+      redirect: amazon.aws.ec2_snapshot_info
     ec2_tag:
-      redirect: ansible.amazon.ec2_tag
+      redirect: amazon.aws.ec2_tag
     ec2_tag_info:
-      redirect: ansible.amazon.ec2_tag_info
+      redirect: amazon.aws.ec2_tag_info
     ec2_vol:
-      redirect: ansible.amazon.ec2_vol
+      redirect: amazon.aws.ec2_vol
     ec2_vol_info:
-      redirect: ansible.amazon.ec2_vol_info
+      redirect: amazon.aws.ec2_vol_info
     ec2_vpc_dhcp_option:
-      redirect: ansible.amazon.ec2_vpc_dhcp_option
+      redirect: amazon.aws.ec2_vpc_dhcp_option
     ec2_vpc_dhcp_option_info:
-      redirect: ansible.amazon.ec2_vpc_dhcp_option_info
+      redirect: amazon.aws.ec2_vpc_dhcp_option_info
     ec2_vpc_net:
-      redirect: ansible.amazon.ec2_vpc_net
+      redirect: amazon.aws.ec2_vpc_net
     ec2_vpc_net_info:
-      redirect: ansible.amazon.ec2_vpc_net_info
+      redirect: amazon.aws.ec2_vpc_net_info
     ec2_vpc_subnet:
-      redirect: ansible.amazon.ec2_vpc_subnet
+      redirect: amazon.aws.ec2_vpc_subnet
     ec2_vpc_subnet_info:
-      redirect: ansible.amazon.ec2_vpc_subnet_info
+      redirect: amazon.aws.ec2_vpc_subnet_info
     s3_bucket:
-      redirect: ansible.amazon.s3_bucket
+      redirect: amazon.aws.s3_bucket
     telnet:
       redirect: ansible.netcommon.telnet
     cli_command:
@@ -7683,7 +7683,7 @@ plugin_routing:
     legacy:
       redirect: community.general.legacy
     urls:
-      redirect: ansible.amazon.urls
+      redirect: amazon.aws.urls
     fortianalyzer:
       redirect: community.general.fortianalyzer
     configuration:
@@ -7787,31 +7787,31 @@ plugin_routing:
     service_now:
       redirect: servicenow.servicenow.service_now
     acm:
-      redirect: ansible.amazon.acm
+      redirect: amazon.aws.acm
     batch:
-      redirect: ansible.amazon.batch
+      redirect: amazon.aws.batch
     cloudfront_facts:
-      redirect: ansible.amazon.cloudfront_facts
+      redirect: amazon.aws.cloudfront_facts
     core:
-      redirect: ansible.amazon.core
+      redirect: amazon.aws.core
     direct_connect:
-      redirect: ansible.amazon.direct_connect
+      redirect: amazon.aws.direct_connect
     elb_utils:
-      redirect: ansible.amazon.elb_utils
+      redirect: amazon.aws.elb_utils
     elbv2:
-      redirect: ansible.amazon.elbv2
+      redirect: amazon.aws.elbv2
     iam:
-      redirect: ansible.amazon.iam
+      redirect: amazon.aws.iam
     rds:
-      redirect: ansible.amazon.rds
+      redirect: amazon.aws.rds
     s3:
-      redirect: ansible.amazon.s3
+      redirect: amazon.aws.s3
     waf:
-      redirect: ansible.amazon.waf
+      redirect: amazon.aws.waf
     waiters:
-      redirect: ansible.amazon.waiters
+      redirect: amazon.aws.waiters
     ec2:
-      redirect: ansible.amazon.ec2
+      redirect: amazon.aws.ec2
     ipaddress:
       redirect: f5networks.f5_modules.ipaddress
     network:
@@ -8078,7 +8078,7 @@ plugin_routing:
     voss:
       redirect: community.general.voss
     aws_s3:
-      redirect: ansible.amazon.aws_s3
+      redirect: amazon.aws.aws_s3
     cli_command:
       redirect: ansible.netcommon.cli_command
     cli_config:
@@ -8249,7 +8249,7 @@ plugin_routing:
     grafana_annotations:
       redirect: community.grafana.grafana_annotations
     aws_resource_actions:
-      redirect: ansible.amazon.aws_resource_actions
+      redirect: amazon.aws.aws_resource_actions
     cgroup_perf_recap:
       redirect: ansible.posix.cgroup_perf_recap
     debug:
@@ -8422,13 +8422,13 @@ plugin_routing:
     service_now:
       redirect: servicenow.servicenow.service_now
     aws:
-      redirect: ansible.amazon.aws
+      redirect: amazon.aws.aws
     aws_credentials:
-      redirect: ansible.amazon.aws_credentials
+      redirect: amazon.aws.aws_credentials
     aws_region:
-      redirect: ansible.amazon.aws_region
+      redirect: amazon.aws.aws_region
     ec2:
-      redirect: ansible.amazon.ec2
+      redirect: amazon.aws.ec2
     netconf:
       redirect: ansible.netcommon.netconf
     network_agnostic:
@@ -8605,9 +8605,9 @@ plugin_routing:
     vmware_vm_inventory:
       redirect: community.vmware.vmware_vm_inventory
     aws_ec2:
-      redirect: ansible.amazon.aws_ec2
+      redirect: amazon.aws.aws_ec2
     aws_rds:
-      redirect: ansible.amazon.aws_rds
+      redirect: amazon.aws.aws_rds
     foreman:
       redirect: theforeman.foreman.foreman
     netbox:
@@ -8690,13 +8690,13 @@ plugin_routing:
     laps_password:
       redirect: community.windows.laps_password
     aws_account_attribute:
-      redirect: ansible.amazon.aws_account_attribute
+      redirect: amazon.aws.aws_account_attribute
     aws_secret:
-      redirect: ansible.amazon.aws_secret
+      redirect: amazon.aws.aws_secret
     aws_service_ip_ranges:
-      redirect: ansible.amazon.aws_service_ip_ranges
+      redirect: amazon.aws.aws_service_ip_ranges
     aws_ssm:
-      redirect: ansible.amazon.aws_ssm
+      redirect: amazon.aws.aws_ssm
     skydive:
       redirect: skydive.skydive.skydive
     cpm_metering:
