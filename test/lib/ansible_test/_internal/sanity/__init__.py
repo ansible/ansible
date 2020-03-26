@@ -470,6 +470,11 @@ class SanityIgnoreProcessor:
         filtered = []
 
         for message in messages:
+            if message.code in self.test.optional_error_codes:
+                # Ignore optional errors?
+                if not self.args.enable_optional_errors:
+                    continue
+
             path_entry = self.ignore_entries.get(message.path)
 
             if path_entry:
@@ -610,6 +615,7 @@ class SanityTest(ABC):
     def __init__(self, name):
         self.name = name
         self.enabled = True
+        self.optional_error_codes = set()
 
     @property
     def error_code(self):  # type: () -> t.Optional[str]
