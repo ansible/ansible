@@ -117,44 +117,63 @@ class role_installer():
         parse_role = lambda role_name : RoleRequirement.role_yaml_parse(role_name.strip())
         self.roles_left = [GalaxyRole(galaxy.galaxy, galaxy.api, **parse_role(rname)) for rname in self.role]
 
+    def add_dep(self, dep_role):
+        if dep_role not in self.roles_left:
+            display.display('- adding dependency: %s' % to_text(dep_role))
+            self.roles_left.append(dep_role)
+        else:
+            display.display('- dependency %s already pending installation.' % dep_role.name)
+    
+    def change_dep_version(self, dep_role):
+        if self.force_deps:
+            display.display('- changing dependant role %s from %s to %s' %
+                            (dep_role.name, dep_role.install_info['version'], dep_role.version or "unspecified"))
+            dep_role.remove()
+            self.roles_left.append(dep_role)
+        else:
+            display.warning('- dependency %s (%s) from role %s differs from already installed version (%s), skipping' %
+                            (to_text(dep_role), dep_role.version, role.name, dep_role.install_info['version']))
+    
+    def handle_dep_install(self, dep_role):
+        if dep_role.install_info is None:
+            self.add_dep(dep_role)
+        elif dep_role.install_info['version'] != dep_role.version:
+            self.change_dep_version(dep_role)
+        elif self.force_deps:
+            self.roles_left.append(dep_role)
+        else:
+            display.display('- dependency %s is already installed, skipping.' % dep_role.name)
+
     def install_deps(self, role, galaxy):
         if not role.metadata:
             display.warning("Meta file %s is empty. Skipping dependencies." % role.path)
-        else:
-            role_dependencies = role.metadata.get('dependencies') or []
-            for dep in role_dependencies:
-                display.debug('Installing dep %s' % dep)
-                dep_req = RoleRequirement()
-                dep_info = dep_req.role_yaml_parse(dep)
-                dep_role = GalaxyRole(galaxy.galaxy, galaxy.api, **dep_info)
+            return
 
-                on_galaxy_web = '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None
-                if on_galaxy_web: continue
+        role_dependencies = role.metadata.get('dependencies') or []
+        for dep in role_dependencies:
+            display.debug('Installing dep %s' % dep)
+            dep_info = RoleRequirement().role_yaml_parse(dep)
+            dep_role = GalaxyRole(galaxy.galaxy, galaxy.api, **dep_info)
 
-                if dep_role.install_info is None:
-                    if dep_role not in self.roles_left:
-                        display.display('- adding dependency: %s' % to_text(dep_role))
-                        self.roles_left.append(dep_role)
-                    else:
-                        display.display('- dependency %s already pending installation.' % dep_role.name)
-                    continue
+            on_galaxy_web = '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None
+            if on_galaxy_web: continue
 
-                if dep_role.install_info['version'] != dep_role.version:
-                    if self.force_deps:
-                        display.display('- changing dependant role %s from %s to %s' %
-                                        (dep_role.name, dep_role.install_info['version'], dep_role.version or "unspecified"))
-                        dep_role.remove()
-                        self.roles_left.append(dep_role)
-                    else:
-                        display.warning('- dependency %s (%s) from role %s differs from already installed version (%s), skipping' %
-                                        (to_text(dep_role), dep_role.version, role.name, dep_role.install_info['version']))
-                    continue
+            self.handle_dep_install(dep_role)
 
-                if self.force_deps:
-                    self.roles_left.append(dep_role)
-                else:
-                    display.display('- dependency %s is already installed, skipping.' % dep_role.name)
+    def get_role_data(self, role):
+        if self.force:
+            display.display('- changing role %s from %s to %s' %
+                            (role.name, role.install_info['version'], role.version or "unspecified"))
+            role.remove()
+        elif role.install_info['version'] != role.version:
+            display.warning('- %s (%s) is already installed - use --force to change version to %s' %
+                                (role.name, role.install_info['version'], role.version or "unspecified"))
+            return True
+        elif not self.force:
+            display.display('- %s is already installed, skipping.' % str(role))
+            return True
 
+        return False
 
     def process_role(self, role, galaxy):
         if self.role_file and context.CLIARGS['args'] and role.name not in context.CLIARGS['args']:
@@ -163,22 +182,8 @@ class role_installer():
 
         display.vvv('Processing role %s ' % role.name)
 
-        # query the galaxy API for the role data
-
-        if role.install_info is not None:
-            if role.install_info['version'] != role.version or self.force:
-                if self.force:
-                    display.display('- changing role %s from %s to %s' %
-                                    (role.name, role.install_info['version'], role.version or "unspecified"))
-                    role.remove()
-                else:
-                    display.warning('- %s (%s) is already installed - use --force to change version to %s' %
-                                    (role.name, role.install_info['version'], role.version or "unspecified"))
-                    return
-            else:
-                if not self.force:
-                    display.display('- %s is already installed, skipping.' % str(role))
-                    return
+        if role.install_info is not None and self.get_role_data(role):
+            return
 
         try:
             installed = role.install()
