@@ -83,7 +83,7 @@ namespace Ansible.Basic
             { "no_log", new List<object>() { false, typeof(bool) } },
             { "options", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "removed_in_version", new List<object>() { null, typeof(string) } },
-            { "removed_at_date", new List<object>() { null, typeof(string) } },
+            { "removed_at_date", new List<object>() { null, typeof(DateTime) } },
             { "required", new List<object>() { false, typeof(bool) } },
             { "required_by", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "required_if", new List<object>() { typeof(List<List<object>>), null } },
@@ -243,18 +243,17 @@ namespace Ansible.Basic
                 LogEvent(String.Format("[DEBUG] {0}", message));
         }
 
-        public void Deprecate(string message, string version = null, string date = null)
+        public void Deprecate(string message, string version)
         {
-            if (date != null)
-            {
-                deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "date", date } });
-                LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, date));
-            }
-            else
-            {
-                deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "version", version } });
-                LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
-            }
+            deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "version", version } });
+            LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
+        }
+
+        public void Deprecate(string message, DateTime date)
+        {
+            string isoDate = date.ToString("yyyy-MM-dd");
+            deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "date", isoDate } });
+            LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, isoDate));
         }
 
         public void ExitJson()
@@ -724,12 +723,12 @@ namespace Ansible.Basic
                         if (depInfo.ContainsKey("version"))
                         {
                             string depVersion = (string)depInfo["version"];
-                            Deprecate(FormatOptionsContext(msg, " - "), version: depVersion);
+                            Deprecate(FormatOptionsContext(msg, " - "), depVersion);
                         }
                         if (depInfo.ContainsKey("date"))
                         {
-                            string depDate = (string)depInfo["date"];
-                            Deprecate(FormatOptionsContext(msg, " - "), date: depDate);
+                            DateTime depDate = (DateTime)depInfo["date"];
+                            Deprecate(FormatOptionsContext(msg, " - "), depDate);
                         }
                     }
                 }
@@ -755,11 +754,11 @@ namespace Ansible.Basic
 
                 object removedInVersion = v["removed_in_version"];
                 if (removedInVersion != null && parameters.Contains(k))
-                    Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k), removedInVersion.ToString(), null);
+                    Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k), removedInVersion.ToString());
 
                 object removedAtDate = v["removed_at_date"];
                 if (removedAtDate != null && parameters.Contains(k))
-                    Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k), null, removedAtDate.ToString());
+                    Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k), removedAtDate);
             }
         }
 

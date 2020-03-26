@@ -796,8 +796,8 @@ test_no_log - Invoked with:
     "Removed at date" = {
         $spec = @{
             options = @{
-                removed1 = @{removed_at_date = "2020-03-10"}
-                removed2 = @{removed_at_date = "2020-03-11"}
+                removed1 = @{removed_at_date = new DateTime(2020, 3, 10)}
+                removed2 = @{removed_at_date = new DateTime(2020, 3, 11)}
             }
         }
         Set-Variable -Name complex_args -Scope Global -Value @{
@@ -844,12 +844,12 @@ test_no_log - Invoked with:
                     options = @{
                         option1 = @{ type = "str"; aliases = "alias1"; deprecated_aliases = @(@{name = "alias1"; version = "2.10"}) }
                         option2 = @{ type = "str"; aliases = "alias2"; deprecated_aliases = @(@{name = "alias2"; version = "2.11"}) }
-                        option3 = @{ type = "str"; aliases = "alias3"; deprecated_aliases = @(@{name = "alias3"; date = "2020-03-11"}) }
-                        option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = "2020-03-09"}) }
+                        option3 = @{ type = "str"; aliases = "alias3"; deprecated_aliases = @(@{name = "alias3"; date = new DateTime(2020, 3, 11)}) }
+                        option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = new DateTime(2020, 3, 9)}) }
                     }
                 }
-                option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = "2020-03-10"}) }
-                option5 = @{ type = "str"; aliases = "alias5"; deprecated_aliases = @(@{name = "alias5"; date = "2020-03-12"}) }
+                option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = new DateTime(2020, 3, 10)}) }
+                option5 = @{ type = "str"; aliases = "alias5"; deprecated_aliases = @(@{name = "alias5"; date = new DateTime(2020, 3, 12)}) }
             }
         }
 
@@ -1139,7 +1139,7 @@ test_no_log - Invoked with:
         $actual_event | Assert-Equals -Expected "undefined win module - [DEBUG] debug message"
     }
 
-    "Deprecate and warn" = {
+    "Deprecate and warn with version" = {
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
         $m.Deprecate("message", "2.8")
         $actual_deprecate_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
@@ -1167,6 +1167,38 @@ test_no_log - Invoked with:
             }
             warnings = @("warning")
             deprecations = @(@{msg = "message"; version = "2.8"})
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
+    "Deprecate and warn with date" = {
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+        $m.Deprecate("message", new DateTime(2020, 1, 2))
+        $actual_deprecate_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        $m.Warn("warning")
+        $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
+
+        $actual_deprecate_event.Message | Assert-Equals -Expected "undefined win module - [DEPRECATION WARNING] message 2020-01-02"
+        $actual_warn_event.EntryType | Assert-Equals -Expected "Warning"
+        $actual_warn_event.Message | Assert-Equals -Expected "undefined win module - [WARNING] warning"
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            invocation = @{
+                module_args = @{}
+            }
+            warnings = @("warning")
+            deprecations = @(@{msg = "message"; date = "2020-01-02"})
         }
         $actual | Assert-DictionaryEquals -Expected $expected
     }
@@ -1790,7 +1822,7 @@ test_no_log - Invoked with:
                     deprecated_aliases = @(
                         @{
                             name = "alias_name"
-                            date = "2020-03-10"
+                            date = new DateTime(2020, 3, 10)
                             version = "2.11"
                         }
                     )
