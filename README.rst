@@ -58,6 +58,14 @@ Get Involved
 *  For a list of email lists, IRC channels and Working Groups, see the
    `Communication page <https://docs.ansible.com/ansible/latest/community/communication.html>`_
 
+Coding Guidelines
+=================
+
+We document our Coding Guidelines in the `Developer Guide <https://docs.ansible.com/ansible/devel/dev_guide/>`_. We particularly suggest you review:
+
+* `Contributing your module to Ansible <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_checklist.html>`_
+* `Conventions, tips and pitfalls <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_best_practices.html>`_
+
 Branch Info
 ===========
 
