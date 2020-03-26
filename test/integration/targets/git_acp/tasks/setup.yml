@@ -1,0 +1,33 @@
+- name: SETUP | update git to the latest
+  package:
+    name: git
+    state: latest
+    
+- name: SETUP | check git version
+  shell: git --version | grep 'git version' | sed 's/git version //'
+  register: git_version
+
+- name: SETUP | edit git version variable
+  set_fact:
+    git_int: "{{  git_version | replace('.', '') }}"
+  
+- name: SETUP | end play if git is not >=2.19
+  meta: end_play
+  when: git_int.stdout | int < 2100
+
+- name: SETUP | create test directory
+  file: 
+    path: "{{ playbook_dir }}/test_directory" 
+    state: directory
+
+- name: SETUP | clone repo into test directory
+  git:
+    repo: "https://Federico87:ZwM9RMWz4cEGwiynxtcw@gitlab.com/networkAutomation/git_test_module.git"
+    dest: "{{ playbook_dir }}/test_directory"
+    clone: yes
+
+- name: SETUP | set git global user.email if not already set
+  shell: git config --global user.email || git config --global user.email "noreply@example.com"
+
+- name: SETUP | set git global user.name if not already set
+  shell: git config --global user.name  || git config --global user.name  "Ansible Test Runner"
