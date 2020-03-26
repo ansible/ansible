@@ -37,7 +37,7 @@ Such as::
 Testing strings
 ===============
 
-To match strings against a substring or a regular expression, use the ``match``, ``search`` or ``regex`` filters::
+To match strings against a substring or a regular expression, use the ``match``, ``search`` or ``regex`` tests::
 
     vars:
       url: "http://example.com/users/foo/resources/bar"
