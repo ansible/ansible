@@ -237,7 +237,6 @@ def load_collection_metadata(args, version, collection):
                                  capture=True, always=True)
 
     LOAD_COLLECTION_METADATA[(version, directory)] = result = json.loads(stdout)
-    display.warning(result)
 
     if result.get('no-pyyaml'):
         display.warning('PyYAML is not installed for interpreter: %s' % python)
