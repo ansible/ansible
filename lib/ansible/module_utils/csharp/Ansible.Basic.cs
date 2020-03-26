@@ -715,6 +715,11 @@ namespace Ansible.Basic
                         string msg = "Only one of version or date is allowed in a deprecated_aliases entry";
                         throw new ArgumentException(FormatOptionsContext(msg, " - "));
                     }
+                    if (depInfo.ContainsKey("date") && depInfo["date"].GetType() != typeof(DateTime))
+                    {
+                        string msg = "A deprecated_aliases date must be a DateTime object";
+                        throw new ArgumentException(FormatOptionsContext(msg, " - "));
+                    }
                     string aliasName = (string)depInfo["name"];
 
                     if (parameters.Contains(aliasName))
@@ -758,7 +763,7 @@ namespace Ansible.Basic
 
                 object removedAtDate = v["removed_at_date"];
                 if (removedAtDate != null && parameters.Contains(k))
-                    Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k), removedAtDate);
+                    Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k), (DateTime)removedAtDate);
             }
         }
 
