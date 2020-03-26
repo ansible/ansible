@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# (c) 2016, Cumulus Networks <ce-ceng@cumulusnetworks.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -14,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: git_cp
 author:
-    - "Federico Olivieri"
+    - "Federico Olivieri (@Federico87)"
 version_added: "2.10"
 short_description: Perform git commiit and/or git push perations.
 description:
@@ -24,57 +27,49 @@ options:
         description:
             - full folder path where .git/ is located.
         required: true
+        type: str
     user:
         description:
             - git username for https operations.
+        type: str
     token:
         description:
             - git API token for https operations.
+        type: str
     comment:
         description:
             - git commit comment. Same as "git commit -m".
+        type: str
+        required: true
     add:
         description:
-            - list of files to be staged. Same as "git add ." 
-              Asterisx values not accepted. i.e. "./*" or "*". 
+            - list of files to be staged. Same as "git add ."
+              Asterisx values not accepted. i.e. "./*" or "*".
         type: list
-        default: "."
+        default: ["."]
+        elements: str
     branch:
         description:
             - git branch where perform git push.
-        required: true
-    push:
-        description:
-            - perform git push action. Same as "git push HEAD/branch".
-        type: bool
-        default: True
-    commit:
-        description:
-            - git commit staged changes. Same as "git commit -m".
-        type: bool
-        default: True
+        required: True
+        type: str
     push_option:
         description:
             - git push options. Same as "git --push-option=option".
+        type: str
     mode:
         description:
-            - git operations are performend eithr over ssh channel or https. 
+            - git operations are performend eithr over ssh channel or https.
               Same as "git@git..." or "https://user:token@git..."
-        choices: [ 'ssh', 'https' ]
+        choices: ['ssh', 'https']
         default: ssh
-        required: True
+        type: str
     url:
         description:
-            - git repo URL. If not provided, the module will use the same mode used by "git clone"
+            - git repo URL. If not provided, the module will use the same mode used by "git clone".
+        type: str
 requirements:
     - git>=2.19.0 (the command line tool)
-
-notes:
-    - "If the task seems to be hanging, first verify remote host is in known_hosts.
-      SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt,
-      one solution is to use the option accept_hostkey. Another solution is to
-      add the remote host public key in C(/etc/ssh/ssh_known_hosts) before calling
-      the git module, with the following command: ssh-keyscan -H remote_host.com >> /etc/ssh/ssh_known_hosts."
 '''
 
 EXAMPLES = '''
@@ -90,7 +85,7 @@ EXAMPLES = '''
     push: true
     commit: true
     mode: https
-    url: https://gitlab.com/networkAutomation/git_test_module           
+    url: https://gitlab.com/networkAutomation/git_test_module
 
 # Push changes via ssh using some defaults.
 - git_cp:
@@ -112,14 +107,13 @@ RETURN = '''
 output:
     description: list of git cli commands stdout
     type: list
-    changed: true
+    returned: always
     sample: [
-        "[master 99830f4] Remove [ test.txt, tax.txt ]\n 4 files changed, 26 insertions(+), 31 deletions(-)\n delete mode 100644 tax.txt\n delete mode 100644 test.txt\n",
+        "[master 99830f4] Remove [ test.txt, tax.txt ]\n 4 files changed, 26 insertions(+)...",
         "To https://gitlab.com/networkAutomation/git_test_module.git\n   372db19..99830f4  master -> master\n"
     ]
 '''
 import os
-import subprocess
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -131,18 +125,18 @@ def git_commit(module):
     add = module.params.get('add')
     folder_path = module.params.get('folder_path')
     comment = module.params.get('comment')
-    
+
     if add:
         commands.append('git -C {0} add {1}'.format(
-            folder_path, 
+            folder_path,
             ' '.join(add)
-            ))
+        ))
 
     if comment:
         commands.append('git -C {0} commit -m "{1}"'.format(
             folder_path,
             comment
-            ))
+        ))
 
     return commands
 
@@ -159,41 +153,38 @@ def git_push(module):
     push_option = module.params.get('push_option')
     mode = module.params.get('mode')
 
-    def https(folder_path,user,token,url,branch,push_option):
+    def https(folder_path, user, token, url, branch, push_option):
         if url.startswith('https://'):
             remote_add = 'git -C {folder_path} remote set-url origin https://{user}:{token}@{url}'.format(
                 folder_path=folder_path,
                 url=url[8:],
                 user=user,
                 token=token,
-                branch=branch,
             )
             cmd = 'git -C {folder_path} push origin {branch}'.format(
                 folder_path=folder_path,
                 branch=branch,
             )
-        
+
         if push_option:
             index = cmd.find('origin')
             return [remote_add, cmd[:index] + '--push-option={option} '.format(option=push_option) + cmd[index:]]
-        
+
         if not push_option:
             return [remote_add, cmd]
 
     if mode == 'https':
-        for cmd in https(folder_path,user,token,url,branch,push_option):
+        for cmd in https(folder_path, user, token, url, branch, push_option):
             commands.append(cmd)
-
 
     if mode == 'ssh':
         if 'https' in url:
             module.fail_json(msg='SSH mode selected but HTTPS URL provided')
 
         remote_add = 'git -C {folder_path} remote set-url origin {url}'.format(
-                        folder_path=folder_path,
-                        url=url,
-                        user=user,
-                    )
+            folder_path=folder_path,
+            url=url,
+        )
         cmd = 'git -C {folder_path} push origin {branch}'.format(
             folder_path=folder_path,
             branch=branch
@@ -210,21 +201,6 @@ def git_push(module):
     return commands
 
 
-def send_commands(cmd):
-
-    send_commands = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-        shell=True
-        )
-    send_commands.wait()
-    output, error = send_commands.communicate()
-
-    return output, error
-
-
 def main():
 
     argument_spec = dict(
@@ -232,21 +208,17 @@ def main():
         user=dict(),
         token=dict(),
         comment=dict(required=True),
-        add=dict(type="list", default=[ "." ]),
+        add=dict(type="list", elements='str', default=["."]),
         branch=dict(required=True),
         push_option=dict(),
-        mode=dict(choices=["ssh","https"]),
+        mode=dict(choices=["ssh", "https"], default='ssh'),
         url=dict(),
-        accept_hostkey=dict(type='bool', default=False)
     )
-
 
     mutually_exclusive = [("ssh", "https")]
     required_if = [
         ("mode", "https", ["user", "token"]),
-        ("mode", "ssh", ["accept_hostkey"]),
-        ]
-
+    ]
 
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -254,23 +226,18 @@ def main():
         required_if=required_if,
     )
 
-    result = dict(
-        changed=False, 
-        # warnings=list()
-        )
-    
+    result = dict(changed=False)
+
     git_commands = git_commit(module) + git_push(module)
-        
+
     result_output = list()
 
     for cmd in git_commands:
-        output, error = send_commands(cmd)
+        _rc, output, error = module.run_command(cmd, check_rc=False)
 
         if output:
-            # no changes added by 'git commit'
             if 'no changes added to commit' in output:
                 module.fail_json(msg=output)
-            # if 'git add .' and nothing to commit
             elif 'nothing to commit, working tree clean' in output:
                 module.fail_json(msg=output)
             else:
@@ -279,16 +246,10 @@ def main():
         if error:
             if 'error:' in error:
                 module.fail_json(msg=error)
-            # file not found by 'git add'
-            elif 'did not match any files' in error:
+            elif 'fatal:' in error:
                 module.fail_json(msg=error)
-            # don't error out for 'Everything up-to-date'
-            elif 'Everything up-to-date':
-                result_output.append(error)
-                result.update(changed=False)
             else:
-                module.fail_json(msg=error)
-                result.update(changed=False)
+                result_output.append(error)
 
     if result_output:
         result.update(output=result_output)
