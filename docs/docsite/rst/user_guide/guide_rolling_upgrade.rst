@@ -257,7 +257,7 @@ The ``pre_tasks`` keyword just lets you list tasks to run before the roles are c
 
 The ``delegate_to`` and ``loop`` arguments, used together, cause Ansible to loop over each monitoring server and load balancer, and perform that operation (delegate that operation) on the monitoring or load balancing server, "on behalf" of the webserver. In programming terms, the outer loop is the list of web servers, and the inner loop is the list of monitoring servers.
 
-Note that the HAProxy step looks a little complicated.  We're using HAProxy in this example because it's freely available, though if you have (for instance) an F5 or Netscaler in your infrastructure (or maybe you have an AWS Elastic IP setup?), you can use modules included in core Ansible to communicate with them instead.  You might also wish to use other monitoring modules instead of nagios, but this just shows the main goal of the 'pre tasks' section -- take the server out of monitoring, and take it out of rotation.
+Note that the HAProxy step looks a little complicated.  We're using HAProxy in this example because it's freely available, though if you have (for instance) an F5 or Netscaler in your infrastructure (or maybe you have an AWS Elastic IP setup?), you can use Ansible modules  to communicate with them instead.  You might also wish to use other monitoring modules instead of nagios, but this just shows the main goal of the 'pre tasks' section -- take the server out of monitoring, and take it out of rotation.
 
 The next step simply re-applies the proper roles to the web servers. This will cause any configuration management declarations in ``web`` and ``base-apache`` roles to be applied to the web servers, including an update of the web application code itself. We don't have to do it this way--we could instead just purely update the web application, but this is a good example of how roles can be used to reuse tasks:
 
@@ -293,9 +293,9 @@ Again, if you were using a Netscaler or F5 or Elastic Load Balancer, you would j
 Managing other load balancers
 =============================
 
-In this example, we use the simple HAProxy load balancer to front-end the web servers. It's easy to configure and easy to manage. As we have mentioned, Ansible has built-in support for a variety of other load balancers like Citrix NetScaler, F5 BigIP, Amazon Elastic Load Balancers, and more. See the :ref:`working_with_modules` documentation for more information.
+In this example, we use the simple HAProxy load balancer to front-end the web servers. It's easy to configure and easy to manage. As we have mentioned, Ansible has support for a variety of other load balancers like Citrix NetScaler, F5 BigIP, Amazon Elastic Load Balancers, and more. See the :ref:`working_with_modules` documentation for more information.
 
-For other load balancers, you may need to send shell commands to them (like we do for HAProxy above), or call an API, if your load balancer exposes one. For the load balancers for which Ansible has modules, you may want to run them as a ``local_action`` if they contact an API. You can read more about local actions in the :ref:`playbooks_delegation` section.  Should you develop anything interesting for some hardware where there is not a core module, it might make for a good module for core inclusion!
+For other load balancers, you may need to send shell commands to them (like we do for HAProxy above), or call an API, if your load balancer exposes one. For the load balancers for which Ansible has modules, you may want to run them as a ``local_action`` if they contact an API. You can read more about local actions in the :ref:`playbooks_delegation` section.  Should you develop anything interesting for some hardware where there is not a module, it might make for a good contribution!
 
 .. _lamp_end_to_end:
 
