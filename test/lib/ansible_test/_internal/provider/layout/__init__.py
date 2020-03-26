@@ -10,7 +10,6 @@ from ... import types as t
 
 from ...util import (
     ANSIBLE_SOURCE_ROOT,
-    ApplicationError,
 )
 
 from .. import (
