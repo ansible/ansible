@@ -172,17 +172,27 @@ class CollectionDetail:
         self.directory = os.path.join('ansible_collections', namespace, name)
         self.version = None
 
-        try:
-            import yaml
-        except ImportError:
-            raise ApplicationError('Need PyYAML to load galaxy.yml. Please make sure that PyYAML has been installed.')
-        try:
-            with open(os.path.join(self.root, self.directory, 'galaxy.yml')) as galaxy_file:
-                galaxy = yaml.safe_load(galaxy_file)
-        except IOError as exc:
-            raise ApplicationError('Error while reading galaxy.yml: {0}'.format(exc))
-
-        self.version = galaxy.get('version')
+        fn = os.path.join(self.root, self.directory, 'galaxy.yml')
+        if os.path.exists(fn):
+            try:
+                import yaml
+            except ImportError:
+                raise ApplicationError('Need PyYAML to load galaxy.yml. Please make sure that PyYAML has been installed.')
+            try:
+                with open(fn) as galaxy_file:
+                    galaxy = yaml.safe_load(galaxy_file)
+                    self.version = galaxy.get('version')
+            except IOError as exc:
+                raise ApplicationError('Error while reading galaxy.yml: {0}'.format(exc))
+        fn = os.path.join(self.root, self.directory, 'MANIFEST.json')
+        if os.path.exists(fn):
+            try:
+                with open(fn) as manifest_file:
+                    import json
+                    manifest = json.load(manifest_file)
+                    self.version = manifest.get('collection_info', {}).get('version')
+            except IOError as exc:
+                raise ApplicationError('Error while reading MANIFEST.json: {0}'.format(exc))
 
 
 class LayoutProvider(PathProvider):
