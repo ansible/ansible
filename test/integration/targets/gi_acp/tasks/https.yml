@@ -7,15 +7,21 @@
     dest: "{{ playbook_dir }}/test_directory"
     clone: yes
 
-- git_config:
-    name: user.email
-    scope: global
-    value: github@test.com
+# - git_config:
+#     name: user.email
+#     scope: global
+#     value: github@test.com
 
-- git_config:
-    name: user.name
-    scope: global
-    value: lvrfrc87
+# - git_config:
+#     name: user.name
+#     scope: global
+#     value: lvrfrc87
+
+- name: SETUP | set git global user.email if not already set
+  shell: git config --global user.email || git config --global user.email "noreply@example.com"
+
+- name: SETUP | set git global user.name if not already set
+  shell: git config --global user.name  || git config --global user.name  "Ansible Test Runner"
 
 - file:
     path: '{{ item }}'
