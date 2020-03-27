@@ -1,11 +1,20 @@
-- file:
+- name: set first random file name.
+  delegate_to: 127.0.0.1
+  set_fact:
+    first_file_name: "{{ lookup('pipe','date +%s%N') }}.txt"
+
+- name: set second random file name.
+  delegate_to: 127.0.0.1
+  set_fact:
+    second_file_name: "{{ lookup('pipe','date +%s%N') }}.txt"
+
+- name: touch file1 and file2
+  file:
     path: "{{ playbook_dir }}/test_directory/{{ item }}"
     state: touch
   loop:
-    - test.txt
-    - tax.txt
-  tags:
-    - https
+    - "{{ first_file_name }}"
+    - "{{ second_file_name }}"
 
 - name: HTTPS +add +mode -push_option
   register: result
@@ -13,26 +22,21 @@
     folder_path: "{{ playbook_dir }}/test_directory"
     user: Federico87
     token: ZwM9RMWz4cEGwiynxtcw
-    comment: Add [ test.txt, tax.txt ]
-    add: [ test.txt, tax.txt ]
+    comment: Add file1 and file2
+    add: [ "{{ first_file_name }}", "{{ second_file_name }}" ]
     branch: master
     mode: https
     url: https://gitlab.com/networkAutomation/git_test_module.git
-  tags:
-    - https
 
 - assert: { that: "result.changed == true" }
-  tags:
-    - https
 
-- file:
+- name: rm file1 and file2
+  file:
     path: "{{ playbook_dir }}/test_directory/{{ item }}"
     state: absent
   loop:
-    - test.txt
-    - tax.txt
-  tags:
-    - https
+    - "{{ first_file_name }}"
+    - "{{ second_file_name }}"
 
 - name: HTTPS -add +mode +push_option
   register: result
@@ -40,15 +44,10 @@
     folder_path: "{{ playbook_dir }}/test_directory"
     user: Federico87
     token: ZwM9RMWz4cEGwiynxtcw
-    comment: Remove [ test.txt, tax.txt ]
+    comment: Remove file1 and file2
     branch: master
     push_option: ci.skip
     mode: https
     url: https://gitlab.com/networkAutomation/git_test_module.git
-  tags:
-    - https
 
 - assert: { that: "result.changed == true" }
-  tags:
-    - https
-
