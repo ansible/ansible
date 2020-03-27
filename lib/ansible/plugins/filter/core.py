@@ -82,6 +82,7 @@ def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
     '''Make verbose, human readable JSON'''
     return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), *args, **kw)
 
+
 def to_bool(a):
     ''' return a bool for the arg '''
     if a is None or isinstance(a, bool):
