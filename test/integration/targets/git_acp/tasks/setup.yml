@@ -2,7 +2,8 @@
   package:
     name: git
     state: latest
-    
+  when: ansible_distribution != "MacOSX"
+
 - name: SETUP | check git version
   shell: git --version | grep 'git version' | sed 's/git version //'
   register: git_version
@@ -10,7 +11,7 @@
 - name: SETUP | edit git version variable
   set_fact:
     git_int: "{{  git_version | replace('.', '') }}"
-  
+
 - name: SETUP | end play if git is not >=2.19
   meta: end_play
   when: git_int.stdout | int < 2100
@@ -19,6 +20,15 @@
   file: 
     path: "{{ playbook_dir }}/test_directory" 
     state: directory
+
+- name: SETUP | generate rundom number
+  set_fact:
+    random: "{{ 60 | random }}"
+    run_once: yes
+
+- name: SETUP | Wait random seconds to avoid git conflict
+  pause:
+    seconds: "{{ random | int }}"
 
 - name: SETUP | clone repo into test directory
   git:
