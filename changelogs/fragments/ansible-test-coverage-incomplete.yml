@@ -1,0 +1,3 @@
+bugfixes:
+    - ansible-test now correctly collects code coverage on the last task in a play.
+      This should resolve issues with missing code coverage, empty coverage files and corrupted coverage files resulting from early worker termination.
