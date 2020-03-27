@@ -19,7 +19,7 @@ from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail
-from ansible.executor.module_common import modify_module
+from ansible.executor.module_common import ModuleParams
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.json_utils import _filter_non_json_lines
@@ -208,12 +208,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for dummy in (1, 2):
             try:
-                (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
+                fixed_module = ModuleParams(module_name, module_path, module_args, self._templar,
                                                                             task_vars=task_vars,
                                                                             module_compression=self._play_context.module_compression,
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
                                                                             **become_kwargs)
+                (module_data, module_style, module_shebang) = fixed_module.modify_module()
                 break
             except InterpreterDiscoveryRequiredError as idre:
                 self._discovered_interpreter = AnsibleUnsafeText(discover_interpreter(

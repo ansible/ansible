@@ -151,13 +151,9 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
 
     modname = os.path.basename(modfile)
     modname = os.path.splitext(modname)[0]
-    (module_data, module_style, shebang) = module_common.modify_module(
-        modname,
-        modfile,
-        complex_args,
-        Templar(loader=loader),
-        task_vars=task_vars
-    )
+
+    fixed_module = module_common.ModuleParams(modname, modfile, complex_args, Templar(loader=loader), task_vars=task_vars)
+    (module_data, module_style, shebang) = fixed_module.modify_module()
 
     if module_style == 'new' and '_ANSIBALLZ_WRAPPER = True' in to_native(module_data):
         module_style = 'ansiballz'
