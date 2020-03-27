@@ -777,24 +777,7 @@ class ModuleParams:
             else:
                 rlimit = ''
 
-            coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG')
-
-            if coverage_config:
-                coverage_output = os.environ['_ANSIBLE_COVERAGE_OUTPUT']
-
-                if coverage_output:
-                    # Enable code coverage analysis of the module.
-                    # This feature is for internal testing and may change without notice.
-                    coverage = ANSIBALLZ_COVERAGE_TEMPLATE % dict(
-                        coverage_config=coverage_config,
-                        coverage_output=coverage_output,
-                    )
-                else:
-                    # Verify coverage is available without importing it.
-                    # This will detect when a module would fail with coverage enabled with minimal overhead.
-                    coverage = ANSIBALLZ_COVERAGE_CHECK_TEMPLATE
-            else:
-                coverage = ''
+            coverage = self._configure_coverage()
 
             now = datetime.datetime.utcnow()
             output.write(to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
@@ -851,7 +834,28 @@ class ModuleParams:
 
         return (b_module_data, module_style, shebang)
 
+    def _configure_coverage(self):
+        '''
+        Handles configuring code coverage for the module being modified.
+        '''
+        coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG')
+        if coverage_config:
+            coverage_output = os.environ['_ANSIBLE_COVERAGE_OUTPUT']
 
+            if coverage_output:
+                # Enable code coverage analysis of the module.
+                # This feature is for internal testing and may change without notice.
+                coverage = ANSIBALLZ_COVERAGE_TEMPLATE % dict(
+                    coverage_config=coverage_config,
+                    coverage_output=coverage_output,
+                )
+            else:
+                # Verify coverage is available without importing it.
+                # This will detect when a module would fail with coverage enabled with minimal overhead.
+                coverage = ANSIBALLZ_COVERAGE_CHECK_TEMPLATE
+        else:
+            coverage = ''
+        return coverage
 
     @staticmethod
     def _is_binary(b_module_data):
@@ -893,7 +897,9 @@ class ModuleParams:
 
     @staticmethod
     def _add_module_to_zip(zf, remote_module_fqn, b_module_data):
-        """Add a module from ansible or from an ansible collection into the module zip"""
+        """
+        Add a module from ansible or from an ansible collection into the module zip
+        """
         module_path_parts = remote_module_fqn.split('.')
 
         # Write the module
@@ -922,7 +928,9 @@ class ModuleParams:
     def _cache_module(self, b_module_data, cached_module_filename, compression_method, lookup_path,
                       py_module_names,
                       remote_module_fqn):
-        ''' Handles caching modules and returns zip file.'''
+        '''
+        Handles caching modules and returns zip file.
+        '''
 
         zipdata = None
         # Optimization -- don't lock if the module has already been cached
@@ -931,16 +939,7 @@ class ModuleParams:
             with open(cached_module_filename, 'rb') as module_data:
                 zipdata = module_data.read()
         else:
-            if self.module_name in action_write_locks.action_write_locks:
-                display.debug('ANSIBALLZ: Using lock for %s' % self.module_name)
-                lock = action_write_locks.action_write_locks[self.module_name]
-            else:
-                # If the action plugin directly invokes the module (instead of
-                # going through a strategy) then we don't have a cross-process
-                # Lock specifically for this module.  Use the "unexpected
-                # module" lock instead
-                display.debug('ANSIBALLZ: Using generic lock for %s' % self.module_name)
-                lock = action_write_locks.action_write_locks[None]
+            lock = self._acquire_cache_lock()
 
             display.debug('ANSIBALLZ: Acquiring lock')
             with lock:
@@ -1023,8 +1022,26 @@ class ModuleParams:
         zipdata = to_text(zipdata, errors='surrogate_or_strict')
         return zipdata
 
+    def _acquire_cache_lock(self):
+        '''
+        Handles logic for acquiring a certain write lock
+        '''
+        if self.module_name in action_write_locks.action_write_locks:
+            display.debug('ANSIBALLZ: Using lock for %s' % self.module_name)
+            lock = action_write_locks.action_write_locks[self.module_name]
+        else:
+            # If the action plugin directly invokes the module (instead of
+            # going through a strategy) then we don't have a cross-process
+            # Lock specifically for this module.  Use the "unexpected
+            # module" lock instead
+            display.debug('ANSIBALLZ: Using generic lock for %s' % self.module_name)
+            lock = action_write_locks.action_write_locks[None]
+        return lock
+
     def _get_pymod_params(self):
-        '''Returns various parameters for use in modify_module'''
+        '''
+        Returns various parameters for use in modify_module
+        '''
         params = dict(ANSIBLE_MODULE_ARGS=self.module_args, )
         try:
             python_repred_params = repr(json.dumps(params))
@@ -1051,7 +1068,9 @@ class ModuleParams:
         return cached_module_filename, compression_method, lookup_path, python_repred_params, remote_module_fqn
 
     def _get_module_style(self,b_module_data):
-        '''Given module data, retuns module styling information'''
+        '''
+        Given module data, returns module styling information
+        '''
         module_substyle = module_style = 'old'
         # module_style is something important to calling code (ActionBase).  It
         # determines how arguments are formatted (json vs k=v) and whether
