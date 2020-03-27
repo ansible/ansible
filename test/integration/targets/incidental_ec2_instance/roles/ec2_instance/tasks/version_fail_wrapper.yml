@@ -16,7 +16,7 @@
     name:
       - 'botocore<1.10.16'
       - boto3
-      - coverage
+      - coverage<5
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
     virtualenv_site_packages: no
