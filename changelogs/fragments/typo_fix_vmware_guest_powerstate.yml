@@ -1,2 +1,0 @@
-bugfixes:
-- Fixed typo in vmware_guest_powerstate module (https://github.com/ansible/ansible/issues/65161).

@@ -1,2 +1,0 @@
-minor_changes:
-  - aws_kms_info - Adds the ``enable_key_rotation`` info to the return value.
