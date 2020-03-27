@@ -33,7 +33,10 @@
     releases.  Do not use this unless you are willing to port your module code.
 """
 import codecs
+from functools import partial
 
+from ansible.module_utils.common._collections_compat import Mapping, Set
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import PY3, text_type, binary_type
 
 
@@ -276,3 +279,68 @@ if PY3:
     to_native = to_text
 else:
     to_native = to_bytes
+
+
+def _wrap_dict(to_func, obj, **kwargs):
+    return dict(
+        (_wrap_to_string(to_func, k, **kwargs), _wrap_to_string(to_func, item, **kwargs))
+        for k, item in obj.items()
+    )
+
+
+def _wrap_sequence(to_func, obj, **kwargs):
+    obj_type = type(obj)
+    return obj_type(_wrap_to_string(to_func, item, **kwargs) for item in obj)
+
+
+def _wrap_set(to_func, obj, **kwargs):
+    return set(_wrap_to_string(to_func, item, **kwargs) for item in obj)
+
+
+def _wrap_to_string(to_func, obj, **kwargs):
+    r"""Ensure objects in a nested data structure are forced to
+    be a text/byte/native string depedending on given fuction:
+
+        :func:`ansible.module_utils._text.to_text` or
+        :func:`ansible.module_utils._text.to_bytes` or
+        :func:`ansible.module_utils._text.to_native`.
+
+    This is a private function and should not be used outside of the three
+    partial functions: wrap_to_text, wrap_to_bytes, wrap_to_native; which
+    are defined below in this file.
+
+    :arg to_func: The wrapping function to use to transform the object.
+    :arg obj: An object to make sure is wrapped by `to_func` function.
+    :kwarg \*\*kwargs: Optional arguments that function passed in ``to_func`` takes.
+
+    :returns: This returns given `obj` object and its nested objects wrapped in
+        `to_func` function.
+
+    .. version_added:: 2.10
+    """
+    if obj is None:
+        return obj
+
+    if isinstance(obj, (text_type, binary_type)):
+        obj = to_func(obj, **kwargs)
+    elif isinstance(obj, Mapping):
+        obj = _wrap_dict(to_func, obj, **kwargs)
+    elif isinstance(obj, Set):
+        obj = _wrap_set(to_func, obj, **kwargs)
+    elif is_sequence(obj):
+        obj = _wrap_sequence(to_func, obj, **kwargs)
+
+    return obj
+
+
+wrap_to_text = partial(_wrap_to_string, to_text)
+wrap_to_text.__doc__ = ("Ensure strings in a nested data structure are forced "
+                        "to be text strings.")
+
+wrap_to_bytes = partial(_wrap_to_string, to_bytes)
+wrap_to_bytes.__doc__ = ("Ensure strings in a nested data structure are forced "
+                         "to be byte strings.")
+
+wrap_to_native = partial(_wrap_to_string, to_native)
+wrap_to_native.__doc__ = ("Ensure strings in a nested data structure are forced "
+                          "to be native strings.")

@@ -11,11 +11,12 @@ import itertools
 
 import pytest
 
-from ansible.module_utils.six import PY3
+from ansible.module_utils.six import PY3, text_type, binary_type
 
 # Internal API while this is still being developed.  Eventually move to
 # module_utils.common.text
 from ansible.module_utils._text import to_text, to_bytes, to_native
+from ansible.module_utils._text import wrap_to_text, wrap_to_bytes, wrap_to_native
 from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 
 
@@ -62,3 +63,87 @@ def test_to_text_unsafe():
 def test_to_bytes_unsafe():
     assert isinstance(to_bytes(AnsibleUnsafeText(u'foo')), AnsibleUnsafeBytes)
     assert to_bytes(AnsibleUnsafeText(u'foo')) == AnsibleUnsafeBytes(b'foo')
+
+
+def test_dict_wrap_to_text():
+    res = wrap_to_text({b'key': b'value'})
+    assert all(isinstance(k, text_type) and isinstance(v, text_type) for k, v in res.items())
+
+
+def test_list_wrap_to_text():
+    res = wrap_to_text([b'value'])
+    assert all(isinstance(i, text_type) for i in res)
+
+
+def test_tuple_wrap_to_text():
+    res = wrap_to_text((b'value',))
+    assert all(isinstance(i, text_type) for i in res)
+
+
+def test_dict_wrap_to_bytes():
+    res = wrap_to_bytes({u'key': u'value'})
+    assert all(isinstance(k, binary_type) and isinstance(v, binary_type) for k, v in res.items())
+
+
+def test_list_wrap_to_bytes():
+    res = wrap_to_bytes([u'value'])
+    assert all(isinstance(i, binary_type) for i in res)
+
+
+def test_tuple_wrap_to_bytes():
+    res = wrap_to_bytes((u'value',))
+    assert all(isinstance(i, binary_type) for i in res)
+
+
+def test_dict_wrap_to_native():
+    if PY3:
+        in_data = {b'key': b'value'}
+    else:
+        in_data = {u'key': u'value'}
+
+    res = wrap_to_native(in_data)
+
+    if PY3:
+        assert all(isinstance(k, text_type) and isinstance(v, text_type) for k, v in res.items())
+    else:
+        assert all(isinstance(k, binary_type) and isinstance(v, binary_type) for k, v in res.items())
+
+
+def test_list_wrap_to_native():
+    if PY3:
+        in_data = [b'value']
+    else:
+        in_data = [u'value']
+
+    res = wrap_to_native(in_data)
+
+    if PY3:
+        assert all(isinstance(i, text_type) for i in res)
+    else:
+        assert all(isinstance(i, binary_type) for i in res)
+
+
+def test_tuple_wrap_to_native():
+    if PY3:
+        in_data = (b'value',)
+    else:
+        in_data = (u'value',)
+
+    res = wrap_to_native(in_data)
+
+    if PY3:
+        assert all(isinstance(i, text_type) for i in res)
+    else:
+        assert all(isinstance(i, binary_type) for i in res)
+
+
+def test_None_wrap_to():
+    assert wrap_to_text(None) is None
+    assert wrap_to_bytes(None) is None
+    assert wrap_to_native(None) is None
+
+
+def test_not_nested_wrap_to():
+    assert isinstance(wrap_to_text(True), bool)
+    assert isinstance(wrap_to_bytes(True), bool)
+    assert isinstance(wrap_to_native(True), bool)

@@ -1,0 +1,8 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    original_dict: "{{ lookup('template', 'template.json.j2') }}"
+    copy_dict: {}
+  tasks:
+    - set_fact:
+        copy_dict: "{{ copy_dict | combine(original_dict) }}"
