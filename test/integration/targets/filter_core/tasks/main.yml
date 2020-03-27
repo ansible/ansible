@@ -408,10 +408,11 @@
   assert:
     that:
       - "'what in the WORLD is up?'|password_hash|length == 106"
+      # This throws a vastly different error on py2 vs py3, so we just check
+      # that it's a failure, not a substring of the exception.
       - password_hash_1 is failed
-      - "'not supported between' in password_hash_1.msg"
       - password_hash_2 is failed
-      - "'passlib does not support' in password_hash_2.msg"
+      - "'not support' in password_hash_2.msg"
 
 - name: Verify to_uuid throws on weird namespace
   set_fact:
@@ -432,16 +433,20 @@
   ignore_errors: yes
   register: mandatory_1
 
-- name: Verify mandatory throws on undefined variable
+- name: Verify mandatory throws on undefined variable with custom message
   set_fact:
     foo: '{{hey|mandatory("You did not give me a variable. I am a sad wolf.")}}'
   ignore_errors: yes
   register: mandatory_2
 
+- name: Set a variable
+  set_fact:
+    mandatory_demo: 123
+
 - name: Verify mandatory
   assert:
     that:
-      - '{{mandatory_1|mandatory}} == mandatory_1'
+      - '{{mandatory_demo|mandatory}} == 123'
       - mandatory_1 is failed
       - "mandatory_1.msg == \"Mandatory variable 'hey'  not defined.\""
       - mandatory_2 is failed
