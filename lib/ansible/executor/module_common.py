@@ -919,9 +919,11 @@ class ModuleParams:
             # so no need to fill the __init__.py with namespace code
             zf.writestr(package_path, b'')
 
-    def _cache_module(self,b_module_data, cached_module_filename, compression_method, lookup_path,
+    def _cache_module(self, b_module_data, cached_module_filename, compression_method, lookup_path,
                       py_module_names,
                       remote_module_fqn):
+        ''' Handles caching modules and returns zip file.'''
+
         zipdata = None
         # Optimization -- don't lock if the module has already been cached
         if os.path.exists(cached_module_filename):
@@ -1022,6 +1024,7 @@ class ModuleParams:
         return zipdata
 
     def _get_pymod_params(self):
+        '''Returns various parameters for use in modify_module'''
         params = dict(ANSIBLE_MODULE_ARGS=self.module_args, )
         try:
             python_repred_params = repr(json.dumps(params))
@@ -1048,6 +1051,7 @@ class ModuleParams:
         return cached_module_filename, compression_method, lookup_path, python_repred_params, remote_module_fqn
 
     def _get_module_style(self,b_module_data):
+        '''Given module data, retuns module styling information'''
         module_substyle = module_style = 'old'
         # module_style is something important to calling code (ActionBase).  It
         # determines how arguments are formatted (json vs k=v) and whether
