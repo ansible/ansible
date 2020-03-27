@@ -518,7 +518,7 @@
   assert:
     that:
       - '{"foo": "bar", "banana": "fruit"}|dict2items == [{"key": "foo", "value": "bar"}, {"key": "banana", "value": "fruit"}]'
-      -  dict2items_fail is failed
+      - dict2items_fail is failed
       - '"dict2items requires a dictionary" in dict2items_fail.msg'
 
 - name: Verify items2dict throws on non-Mapping
@@ -531,7 +531,7 @@
   assert:
     that:
       - '[{"key": "foo", "value": "bar"}, {"key": "banana", "value": "fruit"}]|items2dict == {"foo": "bar", "banana": "fruit"}'
-      -  items2dict_fail is failed
+      - items2dict_fail is failed
       - '"items2dict requires a list" in items2dict_fail.msg'
 
 - name: Verify path_join throws on non-string and non-sequence
