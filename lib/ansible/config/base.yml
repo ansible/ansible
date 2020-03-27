@@ -1840,12 +1840,12 @@ WORKER_SHUTDOWN_POLL_COUNT:
   version_added: '2.10'
 WORKER_SHUTDOWN_POLL_DELAY:
   name: Worker Shutdown Poll Delay
-  default: 1
+  default: 0.1
   description:
     - The number of seconds to sleep between polling loops when checking Task Queue Manager worker processes to verify they have exited cleanly.
     - This is for internal use only.
   env: [{name: ANSIBLE_WORKER_SHUTDOWN_POLL_DELAY}]
-  type: integer
+  type: float
   version_added: '2.10'
 USE_PERSISTENT_CONNECTIONS:
   name: Persistence
