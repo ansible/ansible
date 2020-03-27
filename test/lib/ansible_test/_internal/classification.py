@@ -288,12 +288,6 @@ class PathMapper:
         :type path: str
         :rtype: list[str]
         """
-        if path == 'lib/ansible/module_utils/__init__.py':
-            return []
-
-        if path == 'plugins/module_utils/__init__.py':
-            return []
-
         if not self.python_module_utils_imports:
             display.info('Analyzing python module_utils imports...')
             before = time.time()

@@ -113,6 +113,11 @@ def get_python_module_utils_imports(compile_targets):
 
     for module_util in sorted(imports):
         if not imports[module_util]:
+            package_path = get_import_path(module_util, package=True)
+
+            if os.path.exists(package_path) and not os.path.getsize(package_path):
+                continue  # ignore empty __init__.py files
+
             display.warning('No imports found which use the "%s" module_util.' % module_util)
 
     return imports
@@ -123,14 +128,17 @@ def get_python_module_utils_name(path):  # type: (str) -> str
     base_path = data_context().content.module_utils_path
 
     if data_context().content.collection:
-        prefix = 'ansible_collections.' + data_context().content.collection.prefix + 'plugins.module_utils.'
+        prefix = 'ansible_collections.' + data_context().content.collection.prefix + 'plugins.module_utils'
     else:
-        prefix = 'ansible.module_utils.'
+        prefix = 'ansible.module_utils'
 
     if path.endswith('/__init__.py'):
         path = os.path.dirname(path)
 
-    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.sep, '.')
+    if path == base_path:
+        name = prefix
+    else:
+        name = prefix + '.' + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.path.sep, '.')
 
     return name
 
@@ -145,9 +153,6 @@ def enumerate_module_utils():
         ext = os.path.splitext(path)[1]
 
         if ext != '.py':
-            continue
-
-        if os.path.getsize(path) == 0:
             continue
 
         module_utils.append(get_python_module_utils_name(path))
@@ -186,7 +191,9 @@ def get_import_path(name, package=False):  # type: (str, bool) -> str
 
     if name.startswith('ansible.module_utils.'):
         path = os.path.join('lib', filename)
-    elif data_context().content.collection and name.startswith('ansible_collections.%s.plugins.module_utils.' % data_context().content.collection.full_name):
+    elif data_context().content.collection and (
+            name.startswith('ansible_collections.%s.plugins.module_utils.' % data_context().content.collection.full_name) or
+            name == 'ansible_collections.%s.plugins.module_utils' % data_context().content.collection.full_name):
         path = '/'.join(filename.split('/')[3:])
     else:
         raise Exception('Unexpected import name: %s' % name)

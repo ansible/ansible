@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-test no longer tracebacks during change analysis due to processing an empty python file
