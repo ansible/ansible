@@ -1,0 +1,17 @@
+module ansible-podman 1.0;
+
+require {
+        type container_t;
+        type cgroup_t;
+        type fusefs_t;
+        class dir { add_name create remove_name rmdir write };
+        class file { create relabelto write };
+        class bpf map_create;
+}
+
+
+allow container_t cgroup_t:dir { add_name create remove_name rmdir write };
+
+allow container_t cgroup_t:file { create write };
+allow container_t fusefs_t:file relabelto;
+allow container_t self:bpf map_create;
