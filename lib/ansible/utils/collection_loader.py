@@ -6,20 +6,16 @@ __metaclass__ = type
 
 import os
 import os.path
+import pkgutil
 import re
 import sys
 
 from types import ModuleType
-from collections import defaultdict
 
-from ansible import constants as C
-from ansible.utils.display import Display
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.utils.singleton import Singleton
-
-display = Display()
 
 _SYNTHETIC_PACKAGES = {
     # these provide fallback package definitions when there are no on-disk paths
@@ -31,8 +27,6 @@ _SYNTHETIC_PACKAGES = {
     'ansible_collections.ansible.builtin.plugins.module_utils': dict(type='map', map='ansible.module_utils', graft=True),
     'ansible_collections.ansible.builtin.plugins.modules': dict(type='flatmap', flatmap='ansible.modules', graft=True),
 }
-
-FLAG_FILES = frozenset(['MANIFEST.json', 'galaxy.yml'])
 
 
 # FIXME: exception handling/error logging
@@ -594,60 +588,3 @@ def get_collection_name_from_path(path):
 
 def set_collection_playbook_paths(b_playbook_paths):
     AnsibleCollectionLoader().set_playbook_paths(b_playbook_paths)
-
-
-def is_collection_path(path):
-
-    if os.path.isdir(path):
-        for flag in FLAG_FILES:
-            if os.path.exists(os.path.join(path, flag)):
-                return True
-
-    return False
-
-
-def list_valid_collection_paths(search_paths=None, warn=False):
-
-    found_paths = []
-    if search_paths is None:
-        search_paths = C.COLLECTIONS_PATHS
-
-    for path in search_paths:
-
-        if not os.path.exists(path):
-            # warn for missing, but not if default
-            if warn:
-                display.warning("The configured collection path {0} does not exist.".format(path))
-            continue
-
-        if not os.path.isdir(path):
-            if warn:
-                display.warning("The configured collection path {0}, exists, but it is not a directory.".format(path))
-            continue
-
-        found_paths.append(path)
-
-    return found_paths
-
-
-def list_collection_dirs(search_paths=None, namespace=None):
-
-    collections = defaultdict(list)
-    paths = list_valid_collection_paths(search_paths)
-    for path in paths:
-
-        if os.path.isdir(path):
-            coll_root = os.path.join(path, 'ansible_collections')
-
-            if os.path.exists(coll_root) and os.path.isdir(coll_root):
-                for namespace in os.listdir(coll_root):
-                    namespace_dir = os.path.join(coll_root, namespace)
-
-                    if os.path.isdir(namespace_dir):
-                        for collection in os.listdir(namespace_dir):
-                            coll_dir = os.path.join(namespace_dir, collection)
-
-                            if is_collection_path(coll_dir):
-                                collections[namespace].append(os.path.join(namespace_dir, collection))
-
-    return collections
