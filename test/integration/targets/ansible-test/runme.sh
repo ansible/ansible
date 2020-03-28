@@ -13,7 +13,7 @@ cp -a ansible_collections "${tmp_dir}"
 cd "${tmp_dir}/ansible_collections/ns/col"
 
 # common args for all tests
-common=(--venv --python "${ANSIBLE_TEST_PYTHON_VERSION}" --color --truncate 0 -v)
+common=(--venv --python "${ANSIBLE_TEST_PYTHON_VERSION}" --color --truncate 0 "${@}")
 
 # prime the venv to work around issue with PyYAML detection in ansible-test
 ansible-test sanity "${common[@]}" --test ignores
