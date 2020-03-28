@@ -26,7 +26,7 @@ from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
-from ansible.utils.collection_loader import set_collection_playbook_paths
+from ansible.utils.collection_loader import set_collection_playbook_paths, list_collection_dirs, get_collection_name_from_path
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
 display = Display()
@@ -34,6 +34,17 @@ display = Display()
 
 def jdump(text):
     display.display(json.dumps(text, sort_keys=True, indent=4))
+
+
+def add_collection_plugins(plugin_list, plugin_type):
+
+    colldirs = list_collection_dirs()
+    for ns in colldirs.keys():
+        for path in colldirs[ns]:
+
+            collname = get_collection_name_from_path(path)
+            ptype = C.COLLECTION_PTYPE_COMPAT.get(plugin_type, plugin_type)
+            plugin_list.update(DocCLI.find_plugins(os.path.join(path, 'plugins', ptype), plugin_type, collname))
 
 
 class RemovedPlugin(Exception):
@@ -125,6 +136,8 @@ class DocCLI(CLI):
             for path in paths:
                 self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
 
+            add_collection_plugins(self.plugin_list, plugin_type)
+
             plugins = self._get_plugin_list_filenames(loader)
             if do_json:
                 jdump(plugins)
@@ -145,6 +158,8 @@ class DocCLI(CLI):
             paths = loader._get_paths()
             for path in paths:
                 self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
+
+            add_collection_plugins(self.plugin_list, plugin_type)
 
             descs = self._get_plugin_list_descriptions(loader)
             if do_json:
@@ -349,7 +364,7 @@ class DocCLI(CLI):
         return text
 
     @staticmethod
-    def find_plugins(path, ptype):
+    def find_plugins(path, ptype, collection=None):
 
         display.vvvv("Searching %s for plugins" % path)
 
@@ -386,6 +401,10 @@ class DocCLI(CLI):
             plugin = plugin.lstrip('_')  # remove underscore from deprecated plugins
 
             if plugin not in BLACKLIST.get(bkey, ()):
+
+                if collection:
+                    plugin = '%s.%s' % (collection, plugin)
+
                 plugin_list.add(plugin)
                 display.vvvv("Added %s" % plugin)
 
