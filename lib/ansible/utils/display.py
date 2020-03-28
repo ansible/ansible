@@ -158,13 +158,18 @@ class Display(with_metaclass(Singleton, object)):
         nocolor = msg
 
         if not log_only:
-            if not msg.endswith(u'\n') and newline:
-                msg2 = msg + u'\n'
+
+            has_newline = msg.endswith(u'\n')
+            if has_newline:
+                msg2 = msg[:-1]
             else:
                 msg2 = msg
 
             if color:
                 msg2 = stringc(msg2, color)
+
+            if has_newline or newline:
+                msg2 = msg2 + u'\n'
 
             msg2 = to_bytes(msg2, encoding=self._output_encoding(stderr=stderr))
             if sys.version_info >= (3,):
