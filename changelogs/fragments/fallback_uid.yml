@@ -1,0 +1,2 @@
+bugfixes:
+    - 'for those running uids for invalid users (containers), fallback to uid=<uid> when logging fixes #68007'
