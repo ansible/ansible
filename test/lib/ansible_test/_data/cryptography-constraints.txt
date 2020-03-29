@@ -1,0 +1,1 @@
+idna < 2.8 ; python_version < '2.7' # idna 2.8+ requires python 2.7+
