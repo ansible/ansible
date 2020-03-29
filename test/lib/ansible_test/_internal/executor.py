@@ -72,6 +72,7 @@ from .util import (
     tempdir,
     open_zipfile,
     SUPPORTED_PYTHON_VERSIONS,
+    str_to_version,
 )
 
 from .util_common import (
@@ -188,6 +189,40 @@ def create_shell_command(command):
     return cmd
 
 
+def get_setuptools_version(args, python):  # type: (EnvironmentConfig, str) -> t.Tuple[int]
+    """Return the setuptools version for the given python."""
+    try:
+        return str_to_version(raw_command([python, '-c', 'import setuptools; print(setuptools.__version__)'], capture=True)[0])
+    except SubprocessError:
+        if args.explain:
+            return tuple()  # ignore errors in explain mode in case setuptools is not aleady installed
+
+        raise
+
+
+def get_cryptography_requirement(args, python_version):  # type: (EnvironmentConfig, str) -> str
+    """
+    Return the correct cryptography requirement for the given python version.
+    The version of cryptograpy installed depends on the python version and setuptools version.
+    """
+    python = find_python(python_version)
+    setuptools_version = get_setuptools_version(args, python)
+
+    if setuptools_version >= (18, 5):
+        if python_version == '2.6':
+            # cryptography 2.2+ requires python 2.7+
+            # see https://github.com/pyca/cryptography/blob/master/CHANGELOG.rst#22---2018-03-19
+            cryptography = 'cryptography < 2.2'
+        else:
+            cryptography = 'cryptography'
+    else:
+        # cryptography 2.1+ requires setuptools 18.5+
+        # see https://github.com/pyca/cryptography/blob/62287ae18383447585606b9d0765c0f1b8a9777c/setup.py#L26
+        cryptography = 'cryptography < 2.1'
+
+    return cryptography
+
+
 def install_command_requirements(args, python_version=None):
     """
     :type args: EnvironmentConfig
@@ -221,6 +256,22 @@ def install_command_requirements(args, python_version=None):
         python_version = args.python_version
 
     pip = generate_pip_command(find_python(python_version))
+
+    # make sure basic ansible-test requirements are met, including making sure that pip is recent enough to support constraints
+    # virtualenvs created by older distributions may include very old pip versions, such as those created in the centos6 test container (pip 6.0.8)
+    run_command(args, generate_pip_install(pip, 'ansible-test', use_constraints=False))
+
+    # make sure setuptools is available before trying to install cryptography
+    # the installed version of setuptools affects the version of cryptography to install
+    run_command(args, generate_pip_install(pip, 'setuptools', packages=['setuptools']))
+
+    # install the latest cryptography version that the current requirements can support
+    # use a custom constraints file to avoid the normal constraints file overriding the chosen version of cryptography
+    # if not installed here later install commands may try to install an unsupported version due to the presence of older setuptools
+    # this is done instead of upgrading setuptools to allow tests to function with older distribution provided versions of setuptools
+    run_command(args, generate_pip_install(pip, 'cryptography',
+                                           packages=[get_cryptography_requirement(args, python_version)],
+                                           constraints=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'cryptography-constraints.txt')))
 
     commands = [generate_pip_install(pip, args.command, packages=packages)]
 
@@ -333,14 +384,16 @@ License: GPLv3+
     write_text_file(pkg_info_path, pkg_info.lstrip(), create_directories=True)
 
 
-def generate_pip_install(pip, command, packages=None):
+def generate_pip_install(pip, command, packages=None, constraints=None, use_constraints=True):
     """
     :type pip: list[str]
     :type command: str
     :type packages: list[str] | None
+    :type constraints: str | None
+    :type use_constraints: bool
     :rtype: list[str] | None
     """
-    constraints = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
+    constraints = constraints or os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
     requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % command)
 
     options = []
@@ -375,7 +428,10 @@ def generate_pip_install(pip, command, packages=None):
     if not options:
         return None
 
-    return pip + ['install', '--disable-pip-version-check', '-c', constraints] + options
+    if use_constraints:
+        options.extend(['-c', constraints])
+
+    return pip + ['install', '--disable-pip-version-check'] + options
 
 
 def command_shell(args):
