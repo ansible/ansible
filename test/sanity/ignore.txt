@@ -256,6 +256,9 @@ test/integration/targets/ansible-runner/files/adhoc_example1.py future-import-bo
 test/integration/targets/ansible-runner/files/adhoc_example1.py metaclass-boilerplate
 test/integration/targets/ansible-runner/files/playbook_example1.py future-import-boilerplate
 test/integration/targets/ansible-runner/files/playbook_example1.py metaclass-boilerplate
+test/integration/targets/ansible-test/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
 test/integration/targets/async/library/async_test.py future-import-boilerplate
 test/integration/targets/async/library/async_test.py metaclass-boilerplate
 test/integration/targets/async_fail/library/async_test.py future-import-boilerplate
