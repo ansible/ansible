@@ -121,8 +121,8 @@ EXAMPLES = '''
       resource_name: myVmss
       api_version: "2017-12-01"
       body: { body }
-  
-  - name: Create Disk Encryption Sets
+      
+    - name: Create Disk Encryption Sets
     azure_rm_resource:
       resource_group: "{{ resource_group }}"
       provider: compute
