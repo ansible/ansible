@@ -1,2 +1,0 @@
-minor_changes:
-  - zabbix_action - allow str values for ``esc_period`` options (https://github.com/ansible/ansible/pull/66841).
