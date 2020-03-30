@@ -1,2 +1,0 @@
-bugfixes:
-- postgresql_subscription - fix typo in module.warn method name (https://github.com/ansible/ansible/pull/64583).

@@ -1,2 +1,0 @@
-bugfixes:
-- terraform module - fixes usage for providers not supporting workspaces
