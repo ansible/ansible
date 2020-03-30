@@ -71,7 +71,11 @@ coverage.xml
 venv
 Vagrantfile
 .vagrant
-ansible.egg-info/
+# Backwards compatibility with `stable-2.9` and earlier branches.
+# Also used in the `devel` branch during early Ansible 2.10 development.
+/lib/ansible.egg-info/
+# First used in the `devel` branch during Ansible 2.10 development.
+/lib/ansible_base.egg-info/
 /shippable/
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template

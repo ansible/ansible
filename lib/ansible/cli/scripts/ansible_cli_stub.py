@@ -22,7 +22,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-__requires__ = ['ansible']
+__requires__ = ['ansible_base']
 
 
 import errno
