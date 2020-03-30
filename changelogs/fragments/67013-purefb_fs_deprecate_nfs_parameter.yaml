@@ -1,2 +1,0 @@
-removed_features:
- - purefb_fs - ``nfs`` parameter deprecated. Use ``nfsv3`` instead (https://github.com/ansible/ansible/pull/67026)
