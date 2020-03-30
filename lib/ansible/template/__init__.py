@@ -72,12 +72,15 @@ NON_TEMPLATED_TYPES = (bool, Number)
 JINJA2_OVERRIDE = '#jinja2:'
 
 from jinja2 import __version__ as j2_version
+from jinja2 import Environment
+from jinja2.utils import concat as j2_concat
+
 
 USE_JINJA2_NATIVE = False
 if C.DEFAULT_JINJA2_NATIVE:
     try:
-        from jinja2.nativetypes import NativeEnvironment as Environment
-        from ansible.template.native_helpers import ansible_native_concat as j2_concat
+        from jinja2.nativetypes import NativeEnvironment
+        from ansible.template.native_helpers import ansible_native_concat
         from ansible.template.native_helpers import NativeJinjaText
         USE_JINJA2_NATIVE = True
     except ImportError:
@@ -87,9 +90,6 @@ if C.DEFAULT_JINJA2_NATIVE:
             'jinja2_native requires Jinja 2.10 and above. '
             'Version detected: %s. Falling back to default.' % j2_version
         )
-else:
-    from jinja2 import Environment
-    from jinja2.utils import concat as j2_concat
 
 
 JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin', 'comment_begin', 'raw_begin'))
@@ -544,6 +544,9 @@ class AnsibleEnvironment(Environment):
     '''
     Our custom environment, which simply allows us to override the class-level
     values for the Template and Context classes used by jinja2 internally.
+
+    NOTE: Any changes to this class must be reflected in
+          :class:`AnsibleNativeEnvironment` as well.
     '''
     context_class = AnsibleContext
     template_class = AnsibleJ2Template
@@ -553,6 +556,25 @@ class AnsibleEnvironment(Environment):
 
         self.filters = JinjaPluginIntercept(self.filters, filter_loader)
         self.tests = JinjaPluginIntercept(self.tests, test_loader)
+
+
+if USE_JINJA2_NATIVE:
+    class AnsibleNativeEnvironment(NativeEnvironment):
+        '''
+        Our custom environment, which simply allows us to override the class-level
+        values for the Template and Context classes used by jinja2 internally.
+
+        NOTE: Any changes to this class must be reflected in
+              :class:`AnsibleEnvironment` as well.
+        '''
+        context_class = AnsibleContext
+        template_class = AnsibleJ2Template
+
+        def __init__(self, *args, **kwargs):
+            super(AnsibleNativeEnvironment, self).__init__(*args, **kwargs)
+
+            self.filters = JinjaPluginIntercept(self.filters, filter_loader)
+            self.tests = JinjaPluginIntercept(self.tests, test_loader)
 
 
 class Templar:
@@ -589,7 +611,9 @@ class Templar:
         self._fail_on_filter_errors = True
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-        self.environment = AnsibleEnvironment(
+        environment_class = AnsibleNativeEnvironment if USE_JINJA2_NATIVE else AnsibleEnvironment
+
+        self.environment = environment_class(
             trim_blocks=True,
             undefined=AnsibleUndefined,
             extensions=self._get_extensions(),
@@ -609,16 +633,43 @@ class Templar:
         # the current rendering context under which the templar class is working
         self.cur_context = None
 
+        # FIXME these regular expressions should be re-compiled each time variable_start_string and variable_end_string are changed
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
-
-        self._clean_regex = re.compile(r'(?:%s|%s|%s|%s)' % (
-            self.environment.variable_start_string,
-            self.environment.block_start_string,
-            self.environment.block_end_string,
-            self.environment.variable_end_string
-        ))
         self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
                                          ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
+
+    def copy_with_new_env(self, environment_class=AnsibleEnvironment, **kwargs):
+        r"""Creates a new copy of Templar with a new environment. The new environment is based on
+        given environment class and kwargs.
+
+        :kwarg environment_class: Environment class used for creating a new environment.
+        :kwarg \*\*kwargs: Optional arguments for the new environment that override existing
+            environment attributes.
+
+        :returns: Copy of Templar with updated environment.
+        """
+        new_env = object.__new__(environment_class)
+        new_env.__dict__.update(self.environment.__dict__)
+
+        new_templar = object.__new__(Templar)
+        new_templar.__dict__.update(self.__dict__)
+        new_templar.environment = new_env
+
+        mapping = {
+            'available_variables': new_templar,
+            'searchpath': new_env.loader,
+        }
+
+        for key, value in kwargs.items():
+            obj = mapping.get(key, new_env)
+            try:
+                if value is not None:
+                    setattr(obj, key, value)
+            except AttributeError:
+                # Ignore invalid attrs, lstrip_blocks was added in jinja2==2.7
+                pass
+
+        return new_templar
 
     def _get_filters(self):
         '''
@@ -709,6 +760,7 @@ class Templar:
         Use a keyword that maps to the attr you are setting. Applies to ``self.environment`` by default, to
         set context on another object, it must be in ``mapping``.
         """
+        # NOTE remove in favor of copy_with_new_env?
         mapping = {
             'available_variables': self,
             'searchpath': self.environment.loader,
@@ -1051,7 +1103,10 @@ class Templar:
             rf = t.root_render_func(new_context)
 
             try:
-                res = j2_concat(rf)
+                if USE_JINJA2_NATIVE:
+                    res = ansible_native_concat(rf)
+                else:
+                    res = j2_concat(rf)
                 if getattr(new_context, 'unsafe', False):
                     res = wrap_var(res)
             except TypeError as te:
