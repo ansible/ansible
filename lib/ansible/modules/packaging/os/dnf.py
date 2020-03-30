@@ -286,7 +286,6 @@ EXAMPLES = '''
 import os
 import re
 import sys
-import tempfile
 
 try:
     import dnf
