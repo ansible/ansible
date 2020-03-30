@@ -1,0 +1,7 @@
+---
+minor_changes:
+- Added serarch function with support for Jira JQL
+- Added update function which can update Jira Selects etc.
+
+bugfixes:
+- Priting full error message from jira server
