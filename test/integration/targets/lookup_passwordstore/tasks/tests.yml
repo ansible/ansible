@@ -47,3 +47,16 @@
   assert:
     that:
       - readpass == newpass
+
+- name: Create a password with equal sign
+  set_fact:
+    newpass: "{{ lookup('passwordstore', 'test-pass-equal userpass=SimpleSample= create=yes') }}"
+
+- name: Fetch a password with equal sign
+  set_fact:
+    readpass: "{{ lookup('passwordstore', 'test-pass-equal') }}"
+
+- name: Verify password
+  assert:
+    that:
+      - readpass == newpass

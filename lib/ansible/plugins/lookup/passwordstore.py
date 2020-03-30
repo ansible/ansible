@@ -156,7 +156,7 @@ class LookupModule(LookupBase):
             # next parse the optional parameters in keyvalue pairs
             try:
                 for param in params[1:]:
-                    name, value = param.split('=')
+                    name, value = param.split('=', 1)
                     if name not in self.paramvals:
                         raise AnsibleAssertionError('%s not in paramvals' % name)
                     self.paramvals[name] = value
