@@ -169,7 +169,7 @@ clean:
 	@echo "Cleaning up distutils stuff"
 	rm -rf build
 	rm -rf dist
-	rm -rf lib/ansible.egg-info/
+	rm -rf lib/ansible*.egg-info/
 	@echo "Cleaning up byte compiled python stuff"
 	find . -type f -regex ".*\.py[co]$$" -delete
 	find . -type d -name "__pycache__" -delete
