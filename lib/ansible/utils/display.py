@@ -300,7 +300,7 @@ class Display(with_metaclass(Singleton, object)):
                 self.warning("somebody cleverly deleted cowsay or something during the PB run.  heh.")
 
         msg = msg.strip()
-        star_len = self.columns - len(msg)
+        star_len = self.columns - len(msg) - len([s for s in msg if '\u4e00' <= s <= '\u9fff'])
         if star_len <= 3:
             star_len = 3
         stars = u"*" * star_len
