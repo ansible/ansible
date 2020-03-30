@@ -19,7 +19,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 module: jira
-version_added: "1.6"
 short_description: create and modify issues in a JIRA instance
 description:
   - Create and modify issues in a JIRA instance.
@@ -89,19 +88,16 @@ options:
 
   linktype:
     required: false
-    version_added: 2.3
     description:
      - Set type of link, when action 'link' selected.
 
   inwardissue:
     required: false
-    version_added: 2.3
     description:
      - Set issue from which link will be created.
 
   outwardissue:
     required: false
-    version_added: 2.3
     description:
      - Set issue to which link will be created.
 
@@ -120,14 +116,12 @@ options:
 
   timeout:
     required: false
-    version_added: 2.3
     description:
       - Set timeout, in seconds, on requests to JIRA API.
     default: 10
 
   validate_certs:
     required: false
-    version_added: 2.5
     description:
       - Require valid SSL certificates (set to `false` if you'd like to use self-signed certificates)
     default: true
