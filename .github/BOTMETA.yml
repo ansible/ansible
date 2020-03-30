@@ -4307,6 +4307,8 @@ files:
     support: core
   lib/ansible/release.py:
     notified: mattclay nitzmahone
+  lib/ansible/utils/collection_loader.py:
+    notified: mattclay nitzmahone
   lib/ansible/cli/scripts/ansible_connection_cli_stub.py:
     keywords:
     - persistent connection
