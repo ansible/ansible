@@ -1,2 +1,0 @@
-bugfixes:
-  - vmware_guest - Exclude dvswitch_name from triggering guest os customization.

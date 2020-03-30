@@ -1,2 +1,0 @@
-bugfixes:
-  - nsupdate - Do not try fixing non-existing TXT values (https://github.com/ansible/ansible/issues/63364)

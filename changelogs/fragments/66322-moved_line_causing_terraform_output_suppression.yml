@@ -1,3 +1,0 @@
----
-bugfixes:
-  - terraform - reset out and err before plan creation (https://github.com/ansible/ansible/issues/64369)

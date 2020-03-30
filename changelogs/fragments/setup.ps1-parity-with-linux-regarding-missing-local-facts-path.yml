@@ -1,2 +1,0 @@
-minor_changes:
-- "setup.ps1 - parity with linux regarding missing local facts path (https://github.com/ansible/ansible/issues/57974)"

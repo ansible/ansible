@@ -1,3 +1,0 @@
-bugfixes:
-- foreman inventory plugin - Populate host variable information using the "foreman_facts" key
-  rather than the internal "ansible_facts" key. (https://github.com/ansible/ansible/issues/65111)

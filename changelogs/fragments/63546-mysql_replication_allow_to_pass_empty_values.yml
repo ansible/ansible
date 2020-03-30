@@ -1,2 +1,0 @@
-bugfixes:
-- mysql_replication - allow to pass empty values to parameters (https://github.com/ansible/ansible/issues/23976).

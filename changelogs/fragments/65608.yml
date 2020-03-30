@@ -1,2 +1,0 @@
-bugfixes:
-  - azure_storageblob - use os.access to check for read rights.

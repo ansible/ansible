@@ -1,3 +1,0 @@
-bugfixes:
-- purefa_info - Fix missing API version check when calling I(admins) or I(all) as the subset
-- _purefa_facts - Fix missing API version check when calling I(admins) or I(all) as the subset

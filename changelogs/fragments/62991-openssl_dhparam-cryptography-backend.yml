@@ -1,2 +1,0 @@
-minor_changes:
-- "openssl_dhparam - now supports a ``cryptography``-based backend. Auto-detection can be overwritten with the ``select_crypto_backend`` option."

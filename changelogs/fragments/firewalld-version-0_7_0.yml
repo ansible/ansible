@@ -1,2 +1,0 @@
-bugfixes:
-  - firewalld - enable the firewalld module to function offline with firewalld version 0.7.0 and newer (https://github.com/ansible/ansible/issues/63254)

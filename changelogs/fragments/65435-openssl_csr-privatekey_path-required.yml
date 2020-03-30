@@ -1,2 +1,0 @@
-bugfixes:
-- "openssl_csr - the module will now enforce that ``privatekey_path`` is specified when ``state=present``."

@@ -1,2 +1,0 @@
-minor_changes:
-  - zabbix_host_info - ``host_name`` based search results now include host groups.

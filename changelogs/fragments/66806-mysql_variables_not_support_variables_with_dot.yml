@@ -1,2 +1,0 @@
-bugfixes:
-- mysql_variable - fix the module doesn't support variables name with dot (https://github.com/ansible/ansible/issues/54239).

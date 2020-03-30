@@ -1,3 +1,0 @@
----
-bugfixes:
-- route53 - improve handling of octal encoded characters

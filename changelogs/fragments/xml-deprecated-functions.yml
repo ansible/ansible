@@ -1,2 +1,0 @@
-bugfixes:
-    - Fix the ``xml`` module to use ``list(elem)`` instead of ``elem.getchildren()`` since it is being removed in Python 3.9

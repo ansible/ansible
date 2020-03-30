@@ -1,2 +1,0 @@
-bugfixes:
-- postgresql_lang - use query params with cursor.execute (https://github.com/ansible/ansible/pull/65093).

@@ -1,2 +1,0 @@
-minor_changes:
-- mysql_db - add ``skip_lock_tables`` option (https://github.com/ansible/ansible/pull/66688).

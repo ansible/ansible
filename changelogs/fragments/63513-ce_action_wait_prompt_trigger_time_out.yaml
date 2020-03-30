@@ -1,2 +1,0 @@
-bugfixes:
-  - action/ce - fix a bug, some new version os will not discard uncommitted configure with a return directly.(https://github.com/ansible/ansible/pull/63513).

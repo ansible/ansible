@@ -1,2 +1,0 @@
-minor_changes:
-- mysql_info - add ``exclude_fields`` parameter (https://github.com/ansible/ansible/issues/63319).

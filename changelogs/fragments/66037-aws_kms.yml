@@ -1,2 +1,0 @@
-minor_changes:
- - 'aws_kms: code refactor, some error messages updated'

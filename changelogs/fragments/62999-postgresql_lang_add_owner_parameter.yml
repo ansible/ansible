@@ -1,2 +1,0 @@
-minor_changes:
-- postgresql_lang - add ``owner`` parameter (https://github.com/ansible/ansible/pull/62999).

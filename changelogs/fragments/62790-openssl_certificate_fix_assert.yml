@@ -1,2 +1,0 @@
-bugfixes:
-- "openssl_certificate - fix ``assertonly`` provider certificate verification, causing 'private key mismatch' and 'subject mismatch' errors."

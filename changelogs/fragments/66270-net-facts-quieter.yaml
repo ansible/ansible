@@ -1,2 +1,0 @@
-bugfixes:
-- Do not emit warnings about changing network facts defaults when not using the defaults.

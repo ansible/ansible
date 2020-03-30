@@ -1,2 +1,0 @@
-bugfixes:
-- return correct datastore cluster placement recommendations during when adding disk using the vmware_guest_disk module

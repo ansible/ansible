@@ -1,2 +1,0 @@
-minor_changes:
-- postgresql_db - add support for .pgc file format for dump and restores.

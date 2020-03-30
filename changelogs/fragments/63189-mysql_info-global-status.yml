@@ -1,2 +1,0 @@
-minor_changes:
-- mysql_info - add ``global_status`` filter parameter option and return (https://github.com/ansible/ansible/pull/63189).

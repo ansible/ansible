@@ -1,3 +1,0 @@
----
-bugfixes:
-- redfish_facts - fix KeyError exceptions in GetLogs (https://github.com/ansible/ansible/issues/59797)

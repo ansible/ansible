@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_login - make sure that ``~/.docker/config.json`` is created with permissions ``0600``."
