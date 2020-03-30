@@ -72,6 +72,7 @@ venv
 Vagrantfile
 .vagrant
 ansible.egg-info/
+ansible_base.egg-info/
 /shippable/
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template
