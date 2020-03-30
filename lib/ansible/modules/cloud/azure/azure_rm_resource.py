@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION ='''
+DOCUMENTATION = '''
 ---
 module: azure_rm_resource
 version_added: "2.6"
@@ -121,7 +121,7 @@ EXAMPLES = '''
       resource_name: myVmss
       api_version: "2017-12-01"
       body: { body }
-   
+  
   - name: Create Disk Encryption Sets
     azure_rm_resource:
       resource_group: "{{ resource_group }}"
