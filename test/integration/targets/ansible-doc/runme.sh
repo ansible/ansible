@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -eux
-#ansible-playbook test.yml -i inventory "$@"
+ansible-playbook test.yml -i inventory "$@"
 
 for ptype in cache inventory lookup vars
 do
