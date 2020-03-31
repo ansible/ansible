@@ -8,7 +8,7 @@ do
 	# each plugin type adds 1 from collection
 	pre=$(ansible-doc -l -t ${ptype}|wc -l)
 	post=$(ansible-doc -l -t ${ptype} --playbook-dir ./|wc -l)
-	[[ $pre == $(( $post - 1 )) ]]
+	[[ $pre == $((post - 1)) ]]
 
 	# ensure we ONLY list from the collection
 	justcol=$(ansible-doc -l -t ${ptype} --playbook-dir ./ testns.testcol|wc -l)
