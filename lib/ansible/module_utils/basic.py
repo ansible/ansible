@@ -2446,11 +2446,7 @@ class AnsibleModule(object):
         shell = False
         if use_unsafe_shell:
 
-            # stringify args for unsafe/direct shell usage
-            if isinstance(args, list):
-                args = b" ".join([to_bytes(shlex_quote(x), errors='surrogate_or_strict') for x in args])
-            else:
-                args = to_bytes(args, errors='surrogate_or_strict')
+            args = self.strfy_for_unsafe_run(args)
 
             # not set explicitly, check if set by controller
             if executable:
@@ -2462,14 +2458,7 @@ class AnsibleModule(object):
                 shell = True
         else:
             # ensure args are a list
-            if isinstance(args, (binary_type, text_type)):
-                # On python2.6 and below, shlex has problems with text type
-                # On python3, shlex needs a text type.
-                if PY2:
-                    args = to_bytes(args, errors='surrogate_or_strict')
-                elif PY3:
-                    args = to_text(args, errors='surrogateescape')
-                args = shlex.split(args)
+            args = self.strfy_for_safe_run(args)
 
             # expand ``~`` in paths, and all environment vars
             if expand_user_and_vars:
@@ -2590,6 +2579,22 @@ class AnsibleModule(object):
                     to_native(stderr, encoding=encoding, errors=errors))
 
         return (rc, stdout, stderr)
+
+    def strfy_for_unsafe_run(self, command_arguments):
+        if isinstance(command_arguments, list):
+            return b" ".join([to_bytes(shlex_quote(x), errors='surrogate_or_strict') for x in command_arguments])
+        else:
+            return to_bytes(command_arguments, errors='surrogate_or_strict')
+
+    def strfy_for_safe_run(self, command_arguments):
+        if isinstance(command_arguments, (binary_type, text_type)):
+            # On python2.6 and below, shlex has problems with text type
+            # On python3, shlex needs a text type.
+            if PY2:
+                return to_bytes(command_arguments, errors='surrogate_or_strict')
+            elif PY3:
+                return to_text(command_arguments, errors='surrogateescape')
+            return command_arguments
 
     def try_parse_regex_to_bytes(self, prompt_regex):
         if isinstance(prompt_regex, text_type):
