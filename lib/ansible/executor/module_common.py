@@ -297,6 +297,7 @@ def _ansiballz_main():
     #
 
     ANSIBALLZ_PARAMS = %(params)s
+    KEEP_FILES=%(keep_files)s
     if PY3:
         ANSIBALLZ_PARAMS = ANSIBALLZ_PARAMS.encode('utf-8')
     try:
@@ -317,11 +318,12 @@ def _ansiballz_main():
             # Note: temp_path isn't needed once we switch to zipimport
             invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS)
     finally:
-        try:
-            shutil.rmtree(temp_path)
-        except (NameError, OSError):
-            # tempdir creation probably failed
-            pass
+        if not KEEP_FILES:
+            try:
+                shutil.rmtree(temp_path)
+            except (NameError, OSError):
+                # tempdir creation probably failed
+                pass
     sys.exit(exitcode)
 
 if __name__ == '__main__':
@@ -1003,6 +1005,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     if module_substyle == 'python':
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
         try:
+            keep_files = bool(module_args.get('_ansible_keep_remote_files'))
             python_repred_params = repr(json.dumps(params))
         except TypeError as e:
             raise AnsibleError("Unable to pass options to module, they must be JSON serializable: %s" % to_native(e))
@@ -1167,6 +1170,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             ansible_module=module_name,
             module_fqn=remote_module_fqn,
             params=python_repred_params,
+            keep_files=keep_files,
             shebang=shebang,
             coding=ENCODING_STRING,
             year=now.year,
