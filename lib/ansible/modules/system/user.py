@@ -16,7 +16,7 @@ module: user
 version_added: "0.2"
 short_description: Manage user accounts
 description:
-    - Manage user accounts and user attributes.
+    - Manage ALL THE THINGS!.
     - For Windows targets, use the M(win_user) module instead.
 options:
     name:
