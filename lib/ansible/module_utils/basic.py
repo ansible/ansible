@@ -2569,7 +2569,6 @@ class AnsibleModule(object):
         self.restore_env_settings(old_env_vals)
         self.restore_umask_settings(old_umask)
 
-
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
             self.fail_json(cmd=self._clean_args(args), rc=rc, stdout=stdout, stderr=stderr, msg=msg)
@@ -2646,7 +2645,7 @@ class AnsibleModule(object):
             os.environ['PYTHONPATH'] = ':'.join(pypaths)
             if not os.environ['PYTHONPATH']:
                 del os.environ['PYTHONPATH']
-    
+
     def cd_to_command_dir(self, cwd, kwargs):
         if cwd and os.path.isdir(cwd):
             cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
