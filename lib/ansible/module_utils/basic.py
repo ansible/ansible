@@ -2597,7 +2597,6 @@ class AnsibleModule(object):
                 return to_bytes(command_arguments, errors='surrogate_or_strict')
             elif PY3:
                 return to_text(command_arguments, errors='surrogateescape')
-            return command_arguments
 
     def try_parse_regex_to_bytes(self, prompt_regex):
         if isinstance(prompt_regex, text_type):
