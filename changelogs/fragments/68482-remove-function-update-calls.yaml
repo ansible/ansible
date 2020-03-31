@@ -1,2 +1,3 @@
 bugfixes:
-- Removed lib/ansible/modules/packaging/os/dnf.py meant to be removed once PR 19172 was merged and updated function calls.
+- Removed deprecated function from lib/ansible/modules/packaging/os/dnf.py meant to be removed once PR 19172 was merged.
+- Updated function calls to most current function and removed unneeded imports.
