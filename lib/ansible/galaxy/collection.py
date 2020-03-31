@@ -930,7 +930,7 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
         if not os.path.exists(b_parent_dir):
             # Seems like Galaxy does not validate if all file entries have a corresponding dir ftype entry. This check
             # makes sure we create the parent directory even if it wasn't set in the metadata.
-            os.makedirs(b_parent_dir)
+            os.makedirs(b_parent_dir, mode=0o0755)
 
         shutil.move(to_bytes(tmpfile_obj.name, errors='surrogate_or_strict'), b_dest_filepath)
 
