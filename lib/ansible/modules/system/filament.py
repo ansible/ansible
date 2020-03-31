@@ -9,8 +9,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
-module: filament 
-version_added: 2.10
+module: filament
+version_added: '2.10'
 short_description: Test module
 description:
     - Just a test module.
@@ -19,5 +19,7 @@ author: "David Shrewsbury (@Shrews)"
 
 EXAMPLES = '''
 '''
+
+RETURN = ''' # '''
 
 hello = "world"
