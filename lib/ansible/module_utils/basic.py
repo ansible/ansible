@@ -2471,8 +2471,15 @@ class AnsibleModule(object):
 
         prompt_re = None
         if prompt_regex:
-            regex_bytes = self.try_parse_regex_to_bytes(prompt_regex)
-            prompt_re = self.compile_re_multiline(regex_bytes)
+            if isinstance(prompt_regex, text_type):
+                if PY3:
+                    prompt_regex = to_bytes(prompt_regex, errors='surrogateescape')
+                elif PY2:
+                    prompt_regex = to_bytes(prompt_regex, errors='surrogate_or_strict')
+            try:
+                prompt_re = re.compile(prompt_regex, re.MULTILINE)
+            except re.error:
+                self.fail_json(msg="invalid prompt regular expression given to run_command")
 
         rc = 0
         msg = None
