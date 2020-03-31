@@ -2542,15 +2542,7 @@ class AnsibleModule(object):
         # store the pwd
         prev_dir = os.getcwd()
 
-        # make sure we're in the right working directory
-        if cwd and os.path.isdir(cwd):
-            cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
-            kwargs['cwd'] = cwd
-            try:
-                os.chdir(cwd)
-            except (OSError, IOError) as e:
-                self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, to_native(e)),
-                               exception=traceback.format_exc())
+        self.cd_to_command_dir(cwd, kwargs)
 
         old_umask = None
         if umask:
@@ -2629,6 +2621,16 @@ class AnsibleModule(object):
                     to_native(stderr, encoding=encoding, errors=errors))
 
         return (rc, stdout, stderr)
+    
+    def cd_to_command_dir(self, cwd, kwargs):
+        if cwd and os.path.isdir(cwd):
+            cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
+            kwargs['cwd'] = cwd
+            try:
+                os.chdir(cwd)
+            except (OSError, IOError) as e:
+                self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, to_native(e)),
+                               exception=traceback.format_exc())
 
     def restore_env_settings(self, old_env_vals):
         for key, val in old_env_vals.items():
