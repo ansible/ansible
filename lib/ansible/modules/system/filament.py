@@ -22,4 +22,4 @@ EXAMPLES = '''
 
 RETURN = ''' # '''
 
-hello = "world"
+foo = "world"
