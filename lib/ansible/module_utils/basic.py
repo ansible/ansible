@@ -2589,13 +2589,12 @@ class AnsibleModule(object):
             return to_bytes(command_arguments, errors='surrogate_or_strict')
 
     def strfy_for_safe_run(self, command_arguments):
-        if isinstance(command_arguments, (binary_type, text_type)):
-            # On python2.6 and below, shlex has problems with text type
-            # On python3, shlex needs a text type.
-            if PY2:
-                return to_bytes(command_arguments, errors='surrogate_or_strict')
-            elif PY3:
-                return to_text(command_arguments, errors='surrogateescape')
+        # On python2.6 and below, shlex has problems with text type
+        # On python3, shlex needs a text type.
+        if PY2:
+            return to_bytes(command_arguments, errors='surrogate_or_strict')
+        elif PY3:
+            return to_text(command_arguments, errors='surrogateescape')
 
     def try_parse_regex_to_bytes(self, prompt_regex):
         if isinstance(prompt_regex, text_type):
