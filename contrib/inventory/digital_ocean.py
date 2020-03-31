@@ -553,7 +553,11 @@ class DigitalOceanInventory(object):
                     'default' in self.projects and project['is_default']
                 ):
                     for resource in project['resources']:
-                        resources_in_project.add(int(resource['urn'].split(':')[-1]))
+                        _, type, id = resource['urn'].split(':')
+                        try:
+                            resources_in_project.add(int(id))
+                        except ValueError:
+                            resources_in_project.add(id)
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
