@@ -2493,34 +2493,10 @@ class AnsibleModule(object):
         msg = None
         st_in = None
 
-        # Manipulate the environ we'll send to the new process
-        old_env_vals = {}
-        # We can set this from both an attribute and per call
-        for key, val in self.run_command_environ_update.items():
-            old_env_vals[key] = os.environ.get(key, None)
-            os.environ[key] = val
-        if environ_update:
-            for key, val in environ_update.items():
-                old_env_vals[key] = os.environ.get(key, None)
-                os.environ[key] = val
-        if path_prefix:
-            old_env_vals['PATH'] = os.environ['PATH']
-            os.environ['PATH'] = "%s:%s" % (path_prefix, os.environ['PATH'])
+        old_env_vals = self.get_to_be_updated_env_vals(environ_update, path_prefix)
+        self.update_env_vals(environ_update, path_prefix)
 
-        # If using test-module.py and explode, the remote lib path will resemble:
-        #   /tmp/test_module_scratch/debug_dir/ansible/module_utils/basic.py
-        # If using ansible or ansible-playbook with a remote system:
-        #   /tmp/ansible_vmweLQ/ansible_modlib.zip/ansible/module_utils/basic.py
-
-        # Clean out python paths set by ansiballz
-        if 'PYTHONPATH' in os.environ:
-            pypaths = os.environ['PYTHONPATH'].split(':')
-            pypaths = [x for x in pypaths
-                       if not x.endswith('/ansible_modlib.zip') and
-                       not x.endswith('/debug_dir')]
-            os.environ['PYTHONPATH'] = ':'.join(pypaths)
-            if not os.environ['PYTHONPATH']:
-                del os.environ['PYTHONPATH']
+        self.clean_python_paths()
 
         if data:
             st_in = subprocess.PIPE
@@ -2621,6 +2597,42 @@ class AnsibleModule(object):
                     to_native(stderr, encoding=encoding, errors=errors))
 
         return (rc, stdout, stderr)
+
+    def get_to_be_updated_env_vals(self, environ_update, path_prefix):
+        old_env_vals = {}
+        for key, val in self.run_command_environ_update.items():
+            old_env_vals[key] = os.environ.get(key, None)
+        if environ_update:
+            for key, val in environ_update.items():
+                old_env_vals[key] = os.environ.get(key, None)
+        if path_prefix:
+            old_env_vals['PATH'] = os.environ['PATH']
+        return old_env_vals
+
+    def update_env_vals(self, environ_update, path_prefix):
+        # Manipulate the environ we'll send to the new process
+        # We can set this from both an attribute and per call
+        for key, val in self.run_command_environ_update.items():
+            os.environ[key] = val
+        if environ_update:
+            for key, val in environ_update.items():
+                os.environ[key] = val
+        if path_prefix:
+            os.environ['PATH'] = "%s:%s" % (path_prefix, os.environ['PATH'])
+
+    def clean_python_paths(self):
+        # If using ansible or ansible-playbook with a remote system:
+        #   /tmp/ansible_vmweLQ/ansible_modlib.zip/ansible/module_utils/basic.py
+        # If using test-module.py and explode, the remote lib path will resemble:
+        #   /tmp/test_module_scratch/debug_dir/ansible/module_utils/basic.py
+        if 'PYTHONPATH' in os.environ:
+            pypaths = os.environ['PYTHONPATH'].split(':')
+            pypaths = [x for x in pypaths
+                       if not x.endswith('/ansible_modlib.zip') and
+                       not x.endswith('/debug_dir')]
+            os.environ['PYTHONPATH'] = ':'.join(pypaths)
+            if not os.environ['PYTHONPATH']:
+                del os.environ['PYTHONPATH']
     
     def cd_to_command_dir(self, cwd, kwargs):
         if cwd and os.path.isdir(cwd):
