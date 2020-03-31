@@ -2613,9 +2613,15 @@ class AnsibleModule(object):
             self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(traceback.format_exc())))
             self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=self._clean_args(args))
 
-        self.restore_env_settings(old_env_vals)
-        self.restore_umask_settings(old_umask)
+        # Restore env settings
+        for key, val in old_env_vals.items():
+            if val is None:
+                del os.environ[key]
+            else:
+                os.environ[key] = val
 
+        if old_umask:
+            os.umask(old_umask)
 
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
@@ -2629,17 +2635,6 @@ class AnsibleModule(object):
                     to_native(stderr, encoding=encoding, errors=errors))
 
         return (rc, stdout, stderr)
-
-    def restore_env_settings(self, old_env_vals):
-        for key, val in old_env_vals.items():
-            if val is None:
-                del os.environ[key]
-            else:
-                os.environ[key] = val
-
-    def restore_umask_settings(self, old_umask):
-        if old_umask:
-            os.umask(old_umask)
 
     def append_to_file(self, filename, str):
         filename = os.path.expandvars(os.path.expanduser(filename))
