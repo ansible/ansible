@@ -10,13 +10,13 @@
   ignore_errors: yes
   register: lookup_config_2
 
-- name: Verify lookup_config errors with on_missing=skip
+- name: Verify lookup_config does not error with on_missing=skip
   set_fact:
     lookup3: '{{lookup("config", "THIS_DOES_NOT_EXIST", on_missing="skip")}}'
   register: lookup_config_3
 
 # TODO: Is there a decent way to check that the warning is actually triggered?
-- name: Verify lookup_config errors with on_missing=warn (warning expected)
+- name: Verify lookup_config does not error with on_missing=warn (warning expected)
   set_fact:
     lookup4: '{{lookup("config", "THIS_DOES_NOT_EXIST", on_missing="warn")}}'
   register: lookup_config_4
