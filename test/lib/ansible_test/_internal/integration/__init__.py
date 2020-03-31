@@ -170,12 +170,7 @@ def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, s
         Add the inventory file to the payload file list.
         This will preserve the file during delegation even if it is ignored or is outside the content and install roots.
         """
-        if data_context().content.collection:
-            working_path = data_context().content.collection.directory
-        else:
-            working_path = ''
-
-        inventory_path = os.path.join(working_path, get_inventory_relative_path(args))
+        inventory_path = get_inventory_relative_path(args)
         inventory_tuple = inventory_path_src, inventory_path
 
         if os.path.isfile(inventory_path_src) and inventory_tuple not in files:

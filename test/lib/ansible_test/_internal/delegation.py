@@ -117,8 +117,10 @@ def delegate(args, exclude, require, integration_targets):
     :rtype: bool
     """
     if isinstance(args, TestConfig):
-        with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=data_context().content.root) as metadata_fd:
-            args.metadata_path = os.path.basename(metadata_fd.name)
+        make_dirs(ResultType.TMP.path)
+
+        with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=ResultType.TMP.path) as metadata_fd:
+            args.metadata_path = os.path.join(ResultType.TMP.relative_path, os.path.basename(metadata_fd.name))
             args.metadata.to_file(args.metadata_path)
 
             try:
@@ -244,16 +246,17 @@ def delegate_docker(args, exclude, require, integration_targets):
 
     python_interpreter = get_python_interpreter(args, get_docker_completion(), args.docker_raw)
 
-    install_root = '/root/ansible'
+    pwd = '/root'
+    ansible_root = os.path.join(pwd, 'ansible')
 
     if data_context().content.collection:
-        content_root = os.path.join(install_root, data_context().content.collection.directory)
+        content_root = os.path.join(pwd, data_context().content.collection.directory)
     else:
-        content_root = install_root
+        content_root = ansible_root
 
     remote_results_root = os.path.join(content_root, data_context().content.results_path)
 
-    cmd = generate_command(args, python_interpreter, os.path.join(install_root, 'bin'), content_root, options, exclude, require)
+    cmd = generate_command(args, python_interpreter, os.path.join(ansible_root, 'bin'), content_root, options, exclude, require)
 
     if isinstance(args, TestConfig):
         if args.coverage and not args.coverage_label:
@@ -321,9 +324,8 @@ def delegate_docker(args, exclude, require, integration_targets):
             # write temporary files to /root since /tmp isn't ready immediately on container start
             docker_put(args, test_id, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'docker.sh'), '/root/docker.sh')
             docker_exec(args, test_id, ['/bin/bash', '/root/docker.sh'])
-            docker_put(args, test_id, local_source_fd.name, '/root/ansible.tgz')
-            docker_exec(args, test_id, ['mkdir', '/root/ansible'])
-            docker_exec(args, test_id, ['tar', 'oxzf', '/root/ansible.tgz', '-C', '/root/ansible'])
+            docker_put(args, test_id, local_source_fd.name, '/root/test.tgz')
+            docker_exec(args, test_id, ['tar', 'oxzf', '/root/test.tgz', '-C', '/root'])
 
             # docker images are only expected to have a single python version available
             if isinstance(args, UnitsConfig) and not args.python:
@@ -440,14 +442,14 @@ def delegate_remote(args, exclude, require, integration_targets):
 
             python_interpreter = get_python_interpreter(args, get_remote_completion(), args.remote)
 
-            install_root = os.path.join(pwd, 'ansible')
+            ansible_root = os.path.join(pwd, 'ansible')
 
             if data_context().content.collection:
-                content_root = os.path.join(install_root, data_context().content.collection.directory)
+                content_root = os.path.join(pwd, data_context().content.collection.directory)
             else:
-                content_root = install_root
+                content_root = ansible_root
 
-            cmd = generate_command(args, python_interpreter, os.path.join(install_root, 'bin'), content_root, options, exclude, require)
+            cmd = generate_command(args, python_interpreter, os.path.join(ansible_root, 'bin'), content_root, options, exclude, require)
 
             if httptester_id:
                 cmd += ['--inject-httptester']
