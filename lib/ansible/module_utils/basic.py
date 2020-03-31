@@ -2600,10 +2600,9 @@ class AnsibleModule(object):
 
     def compile_re_multiline(self, prompt_regex):
         try:
-            prompt_re = re.compile(prompt_regex, re.MULTILINE)
+            return re.compile(prompt_regex, re.MULTILINE)
         except re.error:
             self.fail_json(msg="invalid prompt regular expression given to run_command")
-        return prompt_re
 
     def get_to_be_updated_env_vals(self, environ_update, path_prefix):
         old_env_vals = {}
