@@ -2479,15 +2479,8 @@ class AnsibleModule(object):
 
         prompt_re = None
         if prompt_regex:
-            if isinstance(prompt_regex, text_type):
-                if PY3:
-                    prompt_regex = to_bytes(prompt_regex, errors='surrogateescape')
-                elif PY2:
-                    prompt_regex = to_bytes(prompt_regex, errors='surrogate_or_strict')
-            try:
-                prompt_re = re.compile(prompt_regex, re.MULTILINE)
-            except re.error:
-                self.fail_json(msg="invalid prompt regular expression given to run_command")
+            regex_bytes = self.try_parse_regex_to_bytes(prompt_regex)
+            prompt_re = self.compile_re_multiline(regex_bytes)
 
         rc = 0
         msg = None
@@ -2597,6 +2590,20 @@ class AnsibleModule(object):
                     to_native(stderr, encoding=encoding, errors=errors))
 
         return (rc, stdout, stderr)
+
+    def try_parse_regex_to_bytes(self, prompt_regex):
+        if isinstance(prompt_regex, text_type):
+            if PY3:
+                return to_bytes(prompt_regex, errors='surrogateescape')
+            elif PY2:
+                return to_bytes(prompt_regex, errors='surrogate_or_strict')
+
+    def compile_re_multiline(self, prompt_regex):
+        try:
+            prompt_re = re.compile(prompt_regex, re.MULTILINE)
+        except re.error:
+            self.fail_json(msg="invalid prompt regular expression given to run_command")
+        return prompt_re
 
     def get_to_be_updated_env_vals(self, environ_update, path_prefix):
         old_env_vals = {}
