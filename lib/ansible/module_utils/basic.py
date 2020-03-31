@@ -2458,11 +2458,14 @@ class AnsibleModule(object):
                 shell = True
         else:
             # ensure args are a list
-            args = self.strfy_for_safe_run(args)
+            if isinstance(args, (binary_type, text_type)):
+                args = self.strfy_for_safe_run(args)
+                args = shlex.split(args)
 
             # expand ``~`` in paths, and all environment vars
             if expand_user_and_vars:
-                args = [to_bytes(os.path.expanduser(os.path.expandvars(x)), errors='surrogate_or_strict') for x in args if x is not None]
+                args = [to_bytes(os.path.expanduser(os.path.expandvars(x)), errors='surrogate_or_strict') for x in args
+                        if x is not None]
             else:
                 args = [to_bytes(x, errors='surrogate_or_strict') for x in args if x is not None]
 
