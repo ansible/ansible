@@ -3658,15 +3658,15 @@ plugin_routing:
     win_certificate_info:
       redirect: community.windows.win_certificate_info
     win_chocolatey:
-      redirect: community.windows.win_chocolatey
+      redirect: chocolatey.chocolatey.win_chocolatey
     win_chocolatey_config:
-      redirect: community.windows.win_chocolatey_config
+      redirect: chocolatey.chocolatey.win_chocolatey_config
     win_chocolatey_facts:
-      redirect: community.windows.win_chocolatey_facts
+      redirect: chocolatey.chocolatey.win_chocolatey_facts
     win_chocolatey_feature:
-      redirect: community.windows.win_chocolatey_feature
+      redirect: chocolatey.chocolatey.win_chocolatey_feature
     win_chocolatey_source:
-      redirect: community.windows.win_chocolatey_source
+      redirect: chocolatey.chocolatey.win_chocolatey_source
     win_computer_description:
       redirect: community.windows.win_computer_description
     win_credential:
