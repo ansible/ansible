@@ -22,8 +22,4 @@ EXAMPLES = '''
 
 RETURN = ''' # '''
 
-import q
-
 myvar = "world"
-
-q(foo)
