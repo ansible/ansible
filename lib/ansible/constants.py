@@ -97,6 +97,7 @@ BECOME_METHODS = _DeprecatedSequenceConstant(
 # CONSTANTS ### yes, actual ones
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
 BOOL_TRUE = BOOLEANS_TRUE
+COLLECTION_PTYPE_COMPAT = {'module': 'modules'}
 DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_REMOTE_PASS = None

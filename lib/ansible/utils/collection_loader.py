@@ -6,7 +6,6 @@ __metaclass__ = type
 
 import os
 import os.path
-import pkgutil
 import re
 import sys
 
@@ -509,7 +508,6 @@ def get_collection_role_path(role_name, collection_list=None):
 
     if acr:
         # looks like a valid qualified collection ref; skip the collection_list
-        role = acr.resource
         collection_list = [acr.collection]
         subdirs = acr.subdirs
         resource = acr.resource
