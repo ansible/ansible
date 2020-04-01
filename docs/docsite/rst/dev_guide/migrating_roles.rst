@@ -34,22 +34,22 @@ Standalone role structure
 - defaults - default variables for the standalone role. See :ref:`Using variables <playbooks-variables>`.
 - files - contains files that can be deployed with this standalone role.
 - handlers - contains handlers, which may be used by this role or outside this role.
-- library - contains custom Ansible Modules encapsulated within this standalone role.
+- library - contains custom modules encapsulated within this standalone role.
 - tasks - contains the main list of tasks executed by the standalone role.
 - vars - other variables for the standalone role. See :ref:`Using variables <playbooks-variables>`.
 - templates - contains templates which can be deployed with this standalone role.
 - meta - defines some metadata for this standalone role such as dependencies and Ansible Galaxy information.
 
-- \*_plugins - optionally any plugin type can be encapsulated inside a standalone role by placing a directory named PLUGINTYPE_plugins (such as ``filters_plugin``)
+- :file:`*_plugins` - optionally any plugin type can be encapsulated inside a standalone role by placing a directory named PLUGINTYPE_plugins (such as ``filters_plugin``)
 
 .. _roles_in_collections:
 
-Roles within an Ansible collection
-==================================
+Roles within a collection
+==========================
 
-Ansible Collections can contain roles, modules, plugins, and playbooks. See :ref:`developing_collections` for details.
+Collections can contain roles, modules, plugins, and playbooks. See :ref:`developing_collections` for details.
 
-The collection directory structure includes a ``roles/`` directory:
+The collection directory structure includes a :file:`roles/` directory:
 
 .. code-block:: language
 
@@ -74,47 +74,49 @@ The collection directory structure includes a ``roles/`` directory:
       │   └── tasks/
       └── tests/
 
-A collection can contain one or more roles in the :file:`roles/`` directory and these are almost identical to standalone roles with the following exceptions:
+A collection can contain one or more roles in the :file:`roles/` directory and these are almost identical to standalone roles with the following exceptions:
 
-- Roles inside collections cannot contain a :file:`library/` directory with custom modules. Keep modules in the :file:`plugins/modules/`` directory of the collection. You can reference these collection modules in any of the roles contained within a collection, or externally using the fully qualified collection name (FQCN).
-   - Modules inside a collection need FQCN paths for their Python imports. See :ref:`migrating_plugins_collection`.
-- standalone roles can optionally encapsulate any plugin in a ``PLUGINTYPE_plugins/`` directory (such as ``filters_plugin/``), however these plugins will go into their respective ``plugins/PLUGINTYPE/`` directory (such as ``plugins/filter/``) in an Ansible collection. You reference these plugins with their FQCN.
-  - NOTE: In standalone roles, some of the plugin directories referenced their plugin types in the plural sense; this is not the case in Collections. The specific plugin directories as expected as covered in the Creating a Collection section of this document.
+- Roles inside collections cannot contain a :file:`library/` directory with custom modules. Keep modules in the :file:`plugins/modules/` directory of the collection. You can reference these collection modules in any of the roles contained within a collection, or externally using the fully qualified collection name (:abbr:`FQCN (Fully Qualified Collection Name)`).
+- Modules inside a collection need :abbr:`FQCN (Fully Qualified Collection Name)` paths for their Python imports. See :ref:`migrating_plugins_collection`.
+- Standalone roles can optionally encapsulate any plugin in a :file:`PLUGINTYPE_plugins/` directory (such as :file:`filters_plugin/`). For roles in a collection, these plugins go into their respective :file:`plugins/PLUGINTYPE/` directory (such as :file:`plugins/filter/`) in an collection. You reference these plugins with their :abbr:`FQCN (Fully Qualified Collection Name)`.
+
+.. note::
+
+	 In standalone roles, some of the plugin directories referenced their plugin types in the plural sense; this is not the case in collections. The specific plugin directories as expected as covered in the Creating a Collection section of this document.
 
 Migrating a role to a collection
 ================================
 
-In order to migrate from a standalone role to a Collection, we need to create a Collection. Fortunately, just as with standalone roles the ability to initialize a Collection is provided by the ``ansible-galaxy`` command-line utility.
+In order to migrate from a standalone role to a collection, we need to create a collection with the ``ansible-galaxy collection`` CLI command. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
 
-We will create a Collection using both the namespace and the name in dot notation:
-```
-    ansible-galaxy collection init namespace.name
-```
-This will create the directory structure that’s listed at the top of this section of the document and the ``namespace/name/plugins/`` directory contains a ``README.md`` file, which is a markdown format document that explains the various types of Ansible Plugins that can be contained within the optionally created subdirectories.
+.. code-block:: bash
+
+  ansible-galaxy collection init mynamespace.mycollection
+
+This creates the collection directory structure and the :file:`mynamespace/mycollection/plugins/` directory contains a :file:`README.md` file that explains the various types of plugins that the collection can contain within optionally created subdirectories.
 
 Migrating a standalone role without plugins or modules
 ------------------------------------------------------
 
-In the instance of a standalone role that does not contain any custom modules or plugins, the only thing that is necessary is to copy the entire standalone role directory into the ``roles/`` subdirectory of the Collection. At this point the Role may be used as referenced by FQCN.
+If you have a standalone role that does not contain any custom modules or plugins, copy the entire standalone role directory into the :file:`roles/` subdirectory of the collection. You can then reference the role with the :abbr:`FQCN (Fully Qualified Collection Name)`.
 
-Example:
-```
-$ mkdir namespace/name/roles/my_legacy_role/
-$ cp -r /path/to/legacy/role/namespace/\* name/roles/my_legacy_role/
-```
-At this point we can utilize it in a playbook like the following:
+.. code-block:: bash
 
-```
----
-- name: example role by FQCN
-  hosts: some_host_pattern
-  tasks:
-    - name: import FQCN Role from a Collection
-      import_role:
-        name: namespace.name.my_legacy_role
-```
+  $ cp -r /path/to/standalone/role/mynamespace/my_role/\* mynamespace/mycollection/roles/my_role/
 
-Something to note from this example is that the type of Content from inside a Collection is inferred contextually. More information can be found in the [Ansible Collection User Guide](https://docs.ansible.com/ansible/latest/user_guide/collections_using.html).
+The following example shows this role within a collection used in a playbook:
+
+.. code-block:: yaml
+
+  ---
+  - name: example role by FQCN
+    hosts: some_host_pattern
+    tasks:
+      - name: import FQCN role from a collection
+        import_role:
+          name: mynamespace.mycollection.my_role
+
+Note in this example that the type of content from inside a collection is inferred contextually. See :ref:`collections_using_playbook` for more details.
 
 
 .. _migrating_plugins_collection:
@@ -122,80 +124,80 @@ Something to note from this example is that the type of Content from inside a Co
 Migrating plugins and modules
 -----------------------------
 
-Plugins, and Modules which are also plugins, written in Python need some consideration when using Collections. We will cover those situations here.
+Migrating plugins and modules from a standalone role to a collection requires a few more steps.
 
 Custom module_utils
 ^^^^^^^^^^^^^^^^^^^
 
-In the event you have a module that is written in Python and is using a custom module_utils, it was previously addressable in the top level ``ansible.module_utils`` Python namespace. However, that is no longer the case as the top level Python namespace will no longer merge the Ansible internal Python namespace with external content in the future and merging external content from Collections into the Ansible internal Python namespace is not supported. There is an example of this in the [Ansible Developing Collections Guide](https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html#module-utils), but we will also cover an example in this document.
+If you have a module that uses a custom module_utils, it was previously addressable in the top level ``ansible.module_utils`` Python namespace. This is no longer the case as the top level Python namespace will no longer merge the Ansible internal Python namespace with external content in the future and merging external content from collections into the Ansible internal Python namespace is not supported. This is explained below but see :ref:`collection_module_utils` for more details.
 
-When coding with ``module_utils`` in a collection, the Python import statement needs to take into account the _FQCN_ along with the ``ansible_collections`` convention. The resulting Python import will look like the following example:
-```
-from ansible_collections.{namespace}.{name}.plugins.module_utils.{util} import {something}
-```
+When coding with ``module_utils`` in a collection, the Python import statement needs to take into account the :abbr:`FQCN (Fully Qualified Collection Name)` along with the ``ansible_collections`` convention. The resulting Python import will look like the following example:
 
-The following example code snippets show a Python and a PowerShell module using both default Ansible module_utils and those provided by a collection. In this example the namespace is ansible_example, the collection is community. In the Python example the module_util in question is called helper such that the FQCN is ``ansible_example.community.plugins.module_utils.helper``:
+.. code-block:: python
 
-```python
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text
-from ansible.module_utils.six.moves.urllib.parse import urlencode
-from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible_collections.ansible_example.community.plugins.module_utils.helper import HelperRequest
+  from ansible_collections.{namespace}.{collectionname}.plugins.module_utils.{util} import {something}
 
-argspec = dict(
-	name=dict(required=True, type='str'),
-	state=dict(choices=['present', 'absent'], required=True),
-)
+The following example code snippets show a Python and a PowerShell module using both default Ansible ``module_utils`` and those provided by a collection. In this example the namespace is ``ansible_example``, the collection is ``community``. In the Python example the ``module_util`` in question is called ``helper`` such that the :abbr:`FQCN (Fully Qualified Collection Name)` is ``ansible_example.community.plugins.module_utils.helper``:
 
-module = AnsibleModule(
-	argument_spec=argspec,
-	supports_check_mode=True
-)
+.. code-block:: python
 
+  from ansible.module_utils.basic import AnsibleModule
+  from ansible.module_utils._text import to_text
+  from ansible.module_utils.six.moves.urllib.parse import urlencode
+  from ansible.module_utils.six.moves.urllib.error import HTTPError
+  from ansible_collections.ansible_example.community.plugins.module_utils.helper import HelperRequest
 
-_request = HelperRequest(
-	module,
-	headers={"Content-Type": "application/json"},
-      data=data
-)
-```
+  argspec = dict(
+	  name=dict(required=True, type='str'),
+	  state=dict(choices=['present', 'absent'], required=True),
+  )
 
-In the PowerShell example the module_utils in question is called hyperv such that the FQCN is ``ansible_example.community.plugins.module_utils.hyperv``:
+  module = AnsibleModule(
+	  argument_spec=argspec,
+	  supports_check_mode=True
+  )
 
-```
-#!powershell
-#AnsibleRequires -CSharpUtil Ansible.Basic
-#AnsibleRequires -PowerShell ansible_collections.ansible_example.community.plugins.module_utils.hyperv
+  _request = HelperRequest(
+  	module,
+	  headers={"Content-Type": "application/json"},
+       data=data
+ )
 
-$spec = @{
-	name = @{ required = $true; type = "str" }
-	state = @{ required = $true; choices = @("present", "absent") }
-}
-$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+In the PowerShell example the ``module_utils`` in question is called ``hyperv`` such that the :abbr:`FQCN (Fully Qualified Collection Name)` is ``ansible_example.community.plugins.module_utils.hyperv``:
 
-Invoke-HyperVFunction -Name $module.Params.name
+.. code-block:: powershell
 
-$module.ExitJson()
-```
+  #!powershell
+  #AnsibleRequires -CSharpUtil Ansible.Basic
+  #AnsibleRequires -PowerShell ansible_collections.ansible_example.community.plugins.module_utils.hyperv
+
+  $spec = @{
+	  name = @{ required = $true; type = "str" }
+  	state = @{ required = $true; choices = @("present", "absent") }
+  }
+  $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+  Invoke-HyperVFunction -Name $module.Params.name
+
+  $module.ExitJson()
 
 Importing from __init__.py
-----------------------------------
+---------------------------
 
-Because of the way that the CPython interpreter does imports, combined with the way the Ansible plugin loader works, if your custom embedded Module or Plugin requires importing something from an ``__init__.py`` file that will also become part of your Collection, either by originating as content inside a standalone role or otherwise, it requires using the file name in the python import statement. The following example is for an ``__init__.py`` file that is part of a Callback Plugin found inside a Collection named ``namespace.name``.
+Because of the way that the CPython interpreter does imports, combined with the way the Ansible plugin loader works, if your custom embedded module or plugin requires importing something from an :file:`__init__.py` file that will also become part of your collection, either by originating as content inside a standalone role or otherwise, it requires using the file name in the Python import statement. The following example is for an :file:`__init__.py` file that is part of a callback plugin found inside a collection named ``namespace.name``.
 
-```python
-from ansible_collections.namespace.name.plugins.callback.__init__ import CustomBaseClass
-```
+.. code-block:: python
 
-Deliver Downstream Compatibility (RPMs)
+  from ansible_collections.namespace.name.plugins.callback.__init__ import CustomBaseClass
+
+Delivering downstream compatibility (RPMs)
 ========================================
 
-In the event the content of a standalone role is part of a Support Lifecycle of a product, or there is some other requirement for a standalone role to continue co-existing with its Collection Role counterpart, hopefully as part of a transition period, there are ways to allow Collection Role content be delivered downstream in methods such as RPM packaging that will function like they did as standalone roles. There is a real-world example of “porting” RHEL System Roles to a Collection and providing existing backwards compatibility via downstream RPM [here](https://github.com/maxamillion/collection-rhel-system-roles), but we will walk through a fictional example in this section of the document.
-- **NOTE:** This requires Ansible 2.9.0 or newer.
+In the event the content of a standalone role is part of a support lifecycle of a product, or there is some other requirement for a standalone role to continue co-existing with its collection role counterpart, hopefully as part of a transition period, there are ways to allow the collection role content be delivered downstream in methods such as RPM packaging that will function like they did as standalone roles. There is a real-world example of this “porting”  with the RHEL system roles to a `RHEL system roles collection <https://github.com/maxamillion/collection-rhel-system-roles>`_ and providing existing backwards compatibility with the downstream RPM
 
+This section walks through an example of this and requires Ansible 2.9.0 or later.
 
-In this example we will have a standalone role called ``my-legacy-role.webapp`` to emulate a standalone role that contains dashes in the name (which is not valid in Collections), this standalone role will contain a custom module in the ``library/`` directory called manage_webserver.
+In this example we will have a standalone role called ``my-standalon-role.webapp`` to emulate a standalone role that contains dashes in the name (which is not valid in collections). This standalone role contains a custom module in the ``library/`` directory called ``manage_webserver``.
 
 ```
 mylegacy-role.webapp
