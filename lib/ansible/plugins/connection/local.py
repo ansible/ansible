@@ -132,7 +132,7 @@ class Connection(ConnectionBase):
 
     def _ensure_abs(self, path):
         if not os.path.isabs(path) and self.cwd is not None:
-            path = os.path.normpath(os.path.join(self.cwd, path))
+            path = os.path.normpath(os.path.join(self.cwd, to_bytes(path, errors='surrogate_or_strict')))
         return path
 
     def put_file(self, in_path, out_path):
