@@ -17729,25 +17729,25 @@ files:
   lib/ansible/modules/windows/win_certificate_info.py:
     migrated_to: community.windows
   lib/ansible/modules/windows/win_chocolatey.ps1:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey.py:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_config.ps1:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_config.py:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_facts.ps1:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_facts.py:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_feature.ps1:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_feature.py:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_source.ps1:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_source.py:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_computer_description.ps1:
     migrated_to: community.windows
   lib/ansible/modules/windows/win_computer_description.py:
