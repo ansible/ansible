@@ -364,6 +364,16 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
+COMMON_REMOTE_GROUP:
+  name: Enables changing the group ownership of temporary files and directories
+  default: null
+  description:
+    - Checked when Ansible needs to execute a module as a different user.
+    - If setfacl and chown both fail and do not let the different user access the module's files, they will be chgrp'd to this group.
+    - In order for this to work, the remote_user and become_user must share a common group and this setting must be set to that group.
+  env: [{name: ANSIBLE_COMMON_REMOTE_GROUP}]
+  ini:
+  - {key: common_default_group, section: defaults}
 CONDITIONAL_BARE_VARS:
   name: Allow bare variable evaluation in conditionals
   default: True
