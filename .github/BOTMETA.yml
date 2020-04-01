@@ -4008,6 +4008,10 @@ files:
     migrated_to: f5networks.f5_modules
   $plugins/doc_fragments/tower.py:
     migrated_to: awx.awx
+  $plugins/doc_fragments/url_windows.py:
+    labels: windows
+    maintainers: $team_windows_core
+    support: core
   $plugins/filter/:
     support: community
   $plugins/filter/__init__.py:
@@ -19611,8 +19615,6 @@ files:
   lib/ansible/plugins/action/win_template.py:
     migrated_to: ansible.windows
   lib/ansible/plugins/action/win_updates.py:
-    migrated_to: ansible.windows
-  lib/ansible/plugins/doc_fragments/url_windows.py:
     migrated_to: ansible.windows
   test/integration/targets/win_setup/aliases:
     migrated_to: ansible.windows
