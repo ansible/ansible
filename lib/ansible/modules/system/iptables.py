@@ -282,6 +282,14 @@ options:
       - Specifies the destination IP range to match in the iprange module.
     type: str
     version_added: "2.8"
+  src_type:
+    description:
+      - Matches if the source address is of given type (e. g. UNSPEC, LOCAL).
+    type: str
+  dst_type:
+    description:
+      - Matches if the destination address is of given type (e. g. UNSPEC, LOCAL).
+    type: str
   limit:
     description:
       - Specifies the maximum average number of matches to allow per second.
@@ -571,6 +579,9 @@ def construct_rule(params):
     if 'iprange' in params['match']:
         append_param(rule, params['src_range'], '--src-range', False)
         append_param(rule, params['dst_range'], '--dst-range', False)
+    if 'addrtype' in params['match']:
+        append_param(rule, params['src_type'], '--src-type', False)
+        append_param(rule, params['dst_type'], '--dst-type', False)
     elif params['src_range'] or params['dst_range']:
         append_match(rule, params['src_range'] or params['dst_range'], 'iprange')
         append_param(rule, params['src_range'], '--src-range', False)
@@ -699,6 +710,8 @@ def main():
             ctstate=dict(type='list', default=[]),
             src_range=dict(type='str'),
             dst_range=dict(type='str'),
+            src_type=dict(type='str'),
+            dst_type=dict(type='str'),
             limit=dict(type='str'),
             limit_burst=dict(type='str'),
             uid_owner=dict(type='str'),
