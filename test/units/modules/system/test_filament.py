@@ -2,6 +2,7 @@ import unittest
 
 from ansible.modules.system.filament import do_add
 
+
 class TestFilament(unittest.TestCase):
 
     def test_do_add(self):
