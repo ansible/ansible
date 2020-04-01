@@ -1,3 +1,0 @@
-minor_changes:
-- 'aws_acm: Add the module to group/aws for module_defaults.'
-- 'aws_acm: Update automatic retries to stabilize the integration tests.'
