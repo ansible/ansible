@@ -272,9 +272,9 @@ Function Get-AnsibleWebRequest {
         } else {
             $proxy.Credentials = $null
         }
-
-        $web_request.Proxy = $proxy
     }
+
+    $web_request.Proxy = $proxy
 
     # Some parameters only apply when dealing with a HttpWebRequest
     if ($web_request -is [System.Net.HttpWebRequest]) {

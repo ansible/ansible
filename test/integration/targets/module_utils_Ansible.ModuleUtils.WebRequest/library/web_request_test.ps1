@@ -436,6 +436,25 @@ $tests = [Ordered]@{
         } | ConvertFrom-Json
         $actual.headers.'User-Agent' | Assert-Equals -Expected 'actual-agent'
     }
+
+    'Web request with default proxy' = {
+        $params = @{
+            Uri = "https://$httpbin_host/get"
+        }
+        $r = Get-AnsibleWebRequest @params
+
+        $null -ne $r.Proxy | Assert-Equals -Expected $true
+    }
+
+    'Web request with no proxy' = {
+        $params = @{
+            Uri = "https://$httpbin_host/get"
+            UseProxy = $false
+        }
+        $r = Get-AnsibleWebRequest @params
+
+        $null -eq $r.Proxy | Assert-Equals -Expected $true
+    }
 }
 
 # setup and teardown should favour native tools to create and delete the service and not the util we are testing.
