@@ -46,6 +46,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.filament_utils import foobar
 
 
 def do_add(num1, num2):

@@ -8,3 +8,14 @@
   assert:
     that:
       - "x['result'] == 10"
+
+- name: test filament action plugin
+  filament:
+      num1: 4
+      num2: 100
+  register: y
+
+- name: verify numbers larger than 10 are reduced to 9
+  assert:
+    that:
+      - "y['result'] == 13"
