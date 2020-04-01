@@ -2,6 +2,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+
+DOCUMENTATION="""
+    module: fakemodule
+    short_desciptoin: fake module
+    description:
+        - this is a fake module
+    options:
+        _notreal:
+            description:  really not a real option
+    author:
+        - me
+"""
+
 import json
 
 
