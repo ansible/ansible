@@ -1,3 +1,6 @@
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import unittest
 
 from ansible.modules.system.filament import do_add
