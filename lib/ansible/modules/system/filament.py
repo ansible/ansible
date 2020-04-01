@@ -18,20 +18,48 @@ short_description: Test module
 description:
     - Just a test module.
 author: "David Shrewsbury (@Shrews)"
+options:
+    num1:
+        description: First number for adding
+        type: int
+        required: true
+    num2:
+        description: Second number for adding
+        type: int
+        required: true
 '''
 
 EXAMPLES = '''
+    - name: Add numbers
+      filament:
+          num1: 6
+          num2: 4
+      register: result
 '''
 
-RETURN = ''' # '''
+RETURN = '''
+    result:
+        description: The addition result value
+        type: int
+        returned: on success
+        sample: 10
+'''
 
 from ansible.module_utils.basic import AnsibleModule
 
 
+def do_add(num1, num2):
+    return num1 + num2
+
+
 def run_module():
-    module = AnsibleModule(argument_spec={})
+    module_args = dict(
+        num1=dict(type='int', required=True),
+        num2=dict(type='int', required=True)
+    )
+    module = AnsibleModule(argument_spec=module_args)
     result = dict(changed=True)
-    result['myvar'] = 'world'
+    result['result'] = do_add(module.params['num1'], module.params['num2'])
     module.exit_json(**result)
 
 

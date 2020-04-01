@@ -1,8 +1,10 @@
 - name: call filament
   filament:
+    num1: 4
+    num2: 6
   register: x
 
 - name: verify that the file was marked as changed
   assert:
     that:
-      - "x['myvar'] == 'world'"
+      - "x['result'] == 10"
