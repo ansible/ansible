@@ -8433,8 +8433,6 @@ plugin_routing:
       redirect: ansible.netcommon.netconf
     network_agnostic:
       redirect: ansible.netcommon.network_agnostic
-    url_windows:
-      redirect: ansible.windows.url_windows
     fortios:
       redirect: fortinet.fortios.fortios
     netapp:

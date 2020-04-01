@@ -518,6 +518,7 @@ Function Merge-WebRequestSpec {
     $ModuleSpec
 }
 
+# See lib/ansible/plugins/doc_fragments/url_windows.py
 $ansible_web_request_options = @{
     method = @{ type="str" }
     follow_redirects = @{ type="str"; choices=@("all","none","safe"); default="safe" }
