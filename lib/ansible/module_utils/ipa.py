@@ -156,7 +156,7 @@ class IPAClient(object):
                 charset = response_charset
             else:
                 charset = 'latin-1'
-        resp = json.loads(to_text(resp.read(), encoding=charset), encoding=charset)
+        resp = json.loads(to_text(resp.read(), encoding=charset))
         err = resp.get('error')
         if err is not None:
             self._fail('response %s' % method, err)
