@@ -112,10 +112,12 @@ class ActionModule(ActionBase):
 
         # Is 'prompt' a key in 'args'?
         if 'prompt' in self._task.args:
-            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), self._task.args['prompt'], echo_prompt)
+            prompt = "[%s]\n%s%s:" % (self._task.get_name(
+            ).strip(), self._task.args['prompt'], echo_prompt)
         else:
             # If no custom prompt is specified, set a default prompt
-            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), 'Press enter to continue, Ctrl+C to interrupt', echo_prompt)
+            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(
+            ), 'Press enter to continue, Ctrl+C to interrupt', echo_prompt)
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
         if 'minutes' in self._task.args or 'seconds' in self._task.args:
@@ -130,7 +132,8 @@ class ActionModule(ActionBase):
 
             except ValueError as e:
                 result['failed'] = True
-                result['msg'] = u"non-integer value given for prompt duration:\n%s" % to_text(e)
+                result['msg'] = u"non-integer value given for prompt duration:\n%s" % to_text(
+                    e)
                 return result
 
         ########################################################################
@@ -152,8 +155,10 @@ class ActionModule(ActionBase):
                 signal.alarm(seconds)
 
                 # show the timer and control prompts
-                display.display("Pausing for %d seconds%s" % (seconds, echo_prompt))
-                display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
+                display.display("Pausing for %d seconds%s" %
+                                (seconds, echo_prompt))
+                display.display(
+                    "(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
 
                 # show the prompt specified in the task
                 if 'prompt' in self._task.args:
@@ -191,7 +196,8 @@ class ActionModule(ActionBase):
 
                     # get backspace sequences
                     try:
-                        backspace = termios.tcgetattr(stdin_fd)[6][termios.VERASE]
+                        backspace = termios.tcgetattr(
+                            stdin_fd)[6][termios.VERASE]
                     except Exception:
                         backspace = [b'\x7f', b'\x08']
 
@@ -207,7 +213,8 @@ class ActionModule(ActionBase):
                     if not seconds and echo:
                         new_settings = termios.tcgetattr(stdin_fd)
                         new_settings[3] = new_settings[3] | termios.ECHO
-                        termios.tcsetattr(stdin_fd, termios.TCSANOW, new_settings)
+                        termios.tcsetattr(
+                            stdin_fd, termios.TCSANOW, new_settings)
 
                     # flush the buffer to make sure no previous key presses
                     # are read in below
@@ -226,7 +233,8 @@ class ActionModule(ActionBase):
 
                     if not seconds:
                         if stdin_fd is None or not isatty(stdin_fd):
-                            display.warning("Not waiting for response to prompt as stdin is not interactive")
+                            display.warning(
+                                "Not waiting for response to prompt as stdin is not interactive")
                             break
 
                         # read key presses and act accordingly
@@ -245,7 +253,8 @@ class ActionModule(ActionBase):
 
                 except KeyboardInterrupt:
                     signal.alarm(0)
-                    display.display("Press 'C' to continue the play or 'A' to abort \r"),
+                    display.display(
+                        "Press 'C' to continue the play or 'A' to abort \r"),
                     if self._c_or_a(stdin):
                         clear_line(stdout)
                         break
@@ -274,7 +283,8 @@ class ActionModule(ActionBase):
                 duration = round(duration, 2)
             result['stdout'] = "Paused for %s %s" % (duration, duration_unit)
 
-        result['user_input'] = to_text(result['user_input'], errors='surrogate_or_strict')
+        result['user_input'] = to_text(
+            result['user_input'], errors='surrogate_or_strict')
         return result
 
     def _c_or_a(self, stdin):

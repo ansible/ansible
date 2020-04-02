@@ -50,21 +50,25 @@ class ActionModule(ActionBase):
             try:
                 what(connect_timeout)
                 if what_desc:
-                    display.debug("wait_for_connection: %s success" % what_desc)
+                    display.debug(
+                        "wait_for_connection: %s success" % what_desc)
                 return
             except Exception as e:
                 error = e  # PY3 compatibility to store exception for use outside of this block
                 if what_desc:
-                    display.debug("wait_for_connection: %s fail (expected), retrying in %d seconds..." % (what_desc, sleep))
+                    display.debug("wait_for_connection: %s fail (expected), retrying in %d seconds..." % (
+                        what_desc, sleep))
                 time.sleep(sleep)
 
-        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, error))
+        raise TimedOutException(
+            "timed out waiting for %s: %s" % (what_desc, error))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
             task_vars = dict()
 
-        connect_timeout = int(self._task.args.get('connect_timeout', self.DEFAULT_CONNECT_TIMEOUT))
+        connect_timeout = int(self._task.args.get(
+            'connect_timeout', self.DEFAULT_CONNECT_TIMEOUT))
         delay = int(self._task.args.get('delay', self.DEFAULT_DELAY))
         sleep = int(self._task.args.get('sleep', self.DEFAULT_SLEEP))
         timeout = int(self._task.args.get('timeout', self.DEFAULT_TIMEOUT))
@@ -81,14 +85,16 @@ class ActionModule(ActionBase):
             display.vvv("wait_for_connection: attempting ping module test")
             # re-run interpreter discovery if we ran it in the first iteration
             if self._discovered_interpreter_key:
-                task_vars['ansible_facts'].pop(self._discovered_interpreter_key, None)
+                task_vars['ansible_facts'].pop(
+                    self._discovered_interpreter_key, None)
             # call connection reset between runs if it's there
             try:
                 self._connection.reset()
             except AttributeError:
                 pass
 
-            ping_result = self._execute_module(module_name='ping', module_args=dict(), task_vars=task_vars)
+            ping_result = self._execute_module(
+                module_name='ping', module_args=dict(), task_vars=task_vars)
 
             # Test module output
             if ping_result['ping'] != 'pong':
@@ -102,10 +108,12 @@ class ActionModule(ActionBase):
         try:
             # If the connection has a transport_test method, use it first
             if hasattr(self._connection, 'transport_test'):
-                self.do_until_success_or_timeout(self._connection.transport_test, timeout, connect_timeout, what_desc="connection port up", sleep=sleep)
+                self.do_until_success_or_timeout(
+                    self._connection.transport_test, timeout, connect_timeout, what_desc="connection port up", sleep=sleep)
 
             # Use the ping module test to determine end-to-end connectivity
-            self.do_until_success_or_timeout(ping_module_test, timeout, connect_timeout, what_desc="ping module test", sleep=sleep)
+            self.do_until_success_or_timeout(
+                ping_module_test, timeout, connect_timeout, what_desc="ping module test", sleep=sleep)
 
         except TimedOutException as e:
             result['failed'] = True

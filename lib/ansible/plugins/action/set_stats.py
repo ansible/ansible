@@ -43,7 +43,8 @@ class ActionModule(ActionBase):
             data = self._task.args.get('data', {})
 
             if not isinstance(data, dict):
-                data = self._templar.template(data, convert_bare=False, fail_on_undefined=True)
+                data = self._templar.template(
+                    data, convert_bare=False, fail_on_undefined=True)
 
             if not isinstance(data, dict):
                 result['failed'] = True
@@ -55,7 +56,8 @@ class ActionModule(ActionBase):
                 val = self._task.args.get(opt, None)
                 if val is not None:
                     if not isinstance(val, bool):
-                        stats[opt] = boolean(self._templar.template(val), strict=False)
+                        stats[opt] = boolean(
+                            self._templar.template(val), strict=False)
                     else:
                         stats[opt] = val
 

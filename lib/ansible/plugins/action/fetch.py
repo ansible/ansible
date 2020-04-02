@@ -51,8 +51,10 @@ class ActionModule(ActionBase):
             source = self._task.args.get('src', None)
             dest = self._task.args.get('dest', None)
             flat = boolean(self._task.args.get('flat'), strict=False)
-            fail_on_missing = boolean(self._task.args.get('fail_on_missing', True), strict=False)
-            validate_checksum = boolean(self._task.args.get('validate_checksum', True), strict=False)
+            fail_on_missing = boolean(self._task.args.get(
+                'fail_on_missing', True), strict=False)
+            validate_checksum = boolean(self._task.args.get(
+                'validate_checksum', True), strict=False)
 
             # validate source and dest are strings FIXME: use basic.py and module specs
             if not isinstance(source, string_types):
@@ -75,12 +77,14 @@ class ActionModule(ActionBase):
             if not self._connection.become:
                 # calculate checksum for the remote file, don't bother if using become as slurp will be used
                 # Force remote_checksum to follow symlinks because fetch always follows symlinks
-                remote_checksum = self._remote_checksum(source, all_vars=task_vars, follow=True)
+                remote_checksum = self._remote_checksum(
+                    source, all_vars=task_vars, follow=True)
 
             # use slurp if permissions are lacking or privilege escalation is needed
             remote_data = None
             if remote_checksum in ('1', '2', None):
-                slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars)
+                slurpres = self._execute_module(
+                    module_name='slurp', module_args=dict(src=source), task_vars=task_vars)
                 if slurpres.get('failed'):
                     if not fail_on_missing and (slurpres.get('msg').startswith('file not found') or remote_checksum == '1'):
                         result['msg'] = "the remote file does not exist, not transferring, ignored"
@@ -129,7 +133,8 @@ class ActionModule(ActionBase):
                     target_name = task_vars['inventory_hostname']
                 else:
                     target_name = self._play_context.remote_addr
-                dest = "%s/%s/%s" % (self._loader.path_dwim(dest), target_name, source_local)
+                dest = "%s/%s/%s" % (self._loader.path_dwim(dest),
+                                     target_name, source_local)
 
             dest = dest.replace("//", "/")
 
@@ -172,7 +177,8 @@ class ActionModule(ActionBase):
                     self._connection.fetch_file(source, dest)
                 else:
                     try:
-                        f = open(to_bytes(dest, errors='surrogate_or_strict'), 'wb')
+                        f = open(
+                            to_bytes(dest, errors='surrogate_or_strict'), 'wb')
                         f.write(remote_data)
                         f.close()
                     except (IOError, OSError) as e:
@@ -198,7 +204,8 @@ class ActionModule(ActionBase):
                     local_md5 = md5(dest)
                 except ValueError:
                     local_md5 = None
-                result.update(dict(changed=False, md5sum=local_md5, file=source, dest=dest, checksum=local_checksum))
+                result.update(dict(changed=False, md5sum=local_md5,
+                                   file=source, dest=dest, checksum=local_checksum))
 
         finally:
             self._remove_tmp_path(self._connection._shell.tmpdir)

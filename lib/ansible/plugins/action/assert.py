@@ -28,7 +28,8 @@ class ActionModule(ActionBase):
     ''' Fail with custom message '''
 
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('fail_msg', 'msg', 'quiet', 'success_msg', 'that'))
+    _VALID_ARGS = frozenset(
+        ('fail_msg', 'msg', 'quiet', 'success_msg', 'that'))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
@@ -48,18 +49,22 @@ class ActionModule(ActionBase):
             fail_msg = 'Assertion failed'
         elif isinstance(fail_msg, list):
             if not all(isinstance(x, string_types) for x in fail_msg):
-                raise AnsibleError('Type of one of the elements in fail_msg or msg list is not string type')
+                raise AnsibleError(
+                    'Type of one of the elements in fail_msg or msg list is not string type')
         elif not isinstance(fail_msg, (string_types, list)):
-            raise AnsibleError('Incorrect type for fail_msg or msg, expected a string or list and got %s' % type(fail_msg))
+            raise AnsibleError(
+                'Incorrect type for fail_msg or msg, expected a string or list and got %s' % type(fail_msg))
 
         success_msg = self._task.args.get('success_msg')
         if success_msg is None:
             success_msg = 'All assertions passed'
         elif isinstance(success_msg, list):
             if not all(isinstance(x, string_types) for x in success_msg):
-                raise AnsibleError('Type of one of the elements in success_msg list is not string type')
+                raise AnsibleError(
+                    'Type of one of the elements in success_msg list is not string type')
         elif not isinstance(success_msg, (string_types, list)):
-            raise AnsibleError('Incorrect type for success_msg, expected a string or list and got %s' % type(success_msg))
+            raise AnsibleError(
+                'Incorrect type for success_msg, expected a string or list and got %s' % type(success_msg))
 
         quiet = boolean(self._task.args.get('quiet', False), strict=False)
 
@@ -79,7 +84,8 @@ class ActionModule(ActionBase):
 
         for that in thats:
             cond.when = [that]
-            test_result = cond.evaluate_conditional(templar=self._templar, all_vars=task_vars)
+            test_result = cond.evaluate_conditional(
+                templar=self._templar, all_vars=task_vars)
             if not test_result:
                 result['failed'] = True
                 result['evaluated_to'] = test_result

@@ -45,17 +45,21 @@ class ActionModule(ActionBase):
         if module == 'auto':
             try:
                 if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
-                    module = self._templar.template("{{hostvars['%s']['ansible_facts']['service_mgr']}}" % self._task.delegate_to)
+                    module = self._templar.template(
+                        "{{hostvars['%s']['ansible_facts']['service_mgr']}}" % self._task.delegate_to)
                 else:
-                    module = self._templar.template('{{ansible_facts.service_mgr}}')
+                    module = self._templar.template(
+                        '{{ansible_facts.service_mgr}}')
             except Exception:
                 pass  # could not get it from template!
 
         try:
             if module == 'auto':
-                facts = self._execute_module(module_name='setup', module_args=dict(gather_subset='!all', filter='ansible_service_mgr'), task_vars=task_vars)
+                facts = self._execute_module(module_name='setup', module_args=dict(
+                    gather_subset='!all', filter='ansible_service_mgr'), task_vars=task_vars)
                 self._display.debug("Facts %s" % facts)
-                module = facts.get('ansible_facts', {}).get('ansible_service_mgr', 'auto')
+                module = facts.get('ansible_facts', {}).get(
+                    'ansible_service_mgr', 'auto')
 
             if not module or module == 'auto' or module not in self._shared_loader_obj.module_loader:
                 module = 'service'
@@ -70,15 +74,19 @@ class ActionModule(ActionBase):
                     for unused in self.UNUSED_PARAMS[module]:
                         if unused in new_module_args:
                             del new_module_args[unused]
-                            self._display.warning('Ignoring "%s" as it is not used in "%s"' % (unused, module))
+                            self._display.warning(
+                                'Ignoring "%s" as it is not used in "%s"' % (unused, module))
 
                 # get defaults for specific module
-                new_module_args = get_action_args_with_defaults(module, new_module_args, self._task.module_defaults, self._templar)
+                new_module_args = get_action_args_with_defaults(
+                    module, new_module_args, self._task.module_defaults, self._templar)
 
                 self._display.vvvv("Running %s" % module)
-                result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
+                result.update(self._execute_module(
+                    module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
             else:
-                raise AnsibleActionFail('Could not detect which service manager to use. Try gathering facts or setting the "use" option.')
+                raise AnsibleActionFail(
+                    'Could not detect which service manager to use. Try gathering facts or setting the "use" option.')
 
         except AnsibleAction as e:
             result.update(e.result)

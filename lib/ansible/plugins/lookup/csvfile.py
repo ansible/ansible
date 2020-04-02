@@ -2,6 +2,13 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.module_utils.common._collections_compat import MutableSequence
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.six import PY2
+from ansible.plugins.lookup import LookupBase
+from ansible.errors import AnsibleError, AnsibleAssertionError
+import csv
+import codecs
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -58,20 +65,12 @@ RETURN = """
       - value(s) stored in file column
 """
 
-import codecs
-import csv
-
-from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.six import PY2
-from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.common._collections_compat import MutableSequence
-
 
 class CSVRecoder:
     """
     Iterator that reads an encoded stream and reencodes the input to UTF-8
     """
+
     def __init__(self, f, encoding='utf-8'):
         self.reader = codecs.getreader(encoding)(f)
 
@@ -114,7 +113,8 @@ class LookupModule(LookupBase):
 
         try:
             f = open(filename, 'rb')
-            creader = CSVReader(f, delimiter=to_native(delimiter), encoding=encoding)
+            creader = CSVReader(f, delimiter=to_native(
+                delimiter), encoding=encoding)
 
             for row in creader:
                 if len(row) and row[0] == key:
@@ -145,7 +145,8 @@ class LookupModule(LookupBase):
                 for param in params[1:]:
                     name, value = param.split('=')
                     if name not in paramvals:
-                        raise AnsibleAssertionError('%s not in paramvals' % name)
+                        raise AnsibleAssertionError(
+                            '%s not in paramvals' % name)
                     paramvals[name] = value
             except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)
@@ -153,8 +154,10 @@ class LookupModule(LookupBase):
             if paramvals['delimiter'] == 'TAB':
                 paramvals['delimiter'] = "\t"
 
-            lookupfile = self.find_file_in_search_path(variables, 'files', paramvals['file'])
-            var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'])
+            lookupfile = self.find_file_in_search_path(
+                variables, 'files', paramvals['file'])
+            var = self.read_csv(
+                lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'])
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:

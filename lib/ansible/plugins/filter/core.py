@@ -63,13 +63,15 @@ UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
     default_flow_style = kw.pop('default_flow_style', None)
-    transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kw)
+    transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True,
+                            default_flow_style=default_flow_style, **kw)
     return to_text(transformed)
 
 
 def to_nice_yaml(a, indent=4, *args, **kw):
     '''Make verbose, human readable yaml'''
-    transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=indent, allow_unicode=True, default_flow_style=False, **kw)
+    transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=indent,
+                            allow_unicode=True, default_flow_style=False, **kw)
     return to_text(transformed)
 
 
@@ -104,7 +106,8 @@ def strftime(string_format, second=None):
         try:
             second = int(second)
         except Exception:
-            raise AnsibleFilterError('Invalid value for epoch value (%s)' % second)
+            raise AnsibleFilterError(
+                'Invalid value for epoch value (%s)' % second)
     return time.strftime(string_format, time.localtime(second))
 
 
@@ -121,7 +124,8 @@ def fileglob(pathname):
 def regex_replace(value='', pattern='', replacement='', ignorecase=False, multiline=False):
     ''' Perform a `re.sub` returning a string '''
 
-    value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
+    value = to_text(value, errors='surrogate_or_strict',
+                    nonstring='simplerepr')
 
     flags = 0
     if ignorecase:
@@ -196,7 +200,8 @@ def regex_escape(string, re_type='python'):
     # but different from PCRE.  It's possible that re.escape would work here.
     # https://remram44.github.io/regex-cheatsheet/regex.html#programs
     elif re_type == 'posix_extended':
-        raise AnsibleFilterError('Regex type (%s) not yet implemented' % re_type)
+        raise AnsibleFilterError(
+            'Regex type (%s) not yet implemented' % re_type)
     else:
         raise AnsibleFilterError('Invalid regex type (%s)' % re_type)
 
@@ -227,10 +232,12 @@ def rand(environment, end, start=None, step=None, seed=None):
         return r.randrange(start, end, step)
     elif hasattr(end, '__iter__'):
         if start or step:
-            raise AnsibleFilterError('start and step can only be used with integer values')
+            raise AnsibleFilterError(
+                'start and step can only be used with integer values')
         return r.choice(end)
     else:
-        raise AnsibleFilterError('random can only be used on sequences and integers')
+        raise AnsibleFilterError(
+            'random can only be used on sequences and integers')
 
 
 def randomize_list(mylist, seed=None):
@@ -269,7 +276,8 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
     try:
         return passlib_or_crypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds)
     except AnsibleError as e:
-        reraise(AnsibleFilterError, AnsibleFilterError(to_native(e), orig_exc=e), sys.exc_info()[2])
+        reraise(AnsibleFilterError, AnsibleFilterError(
+            to_native(e), orig_exc=e), sys.exc_info()[2])
 
 
 def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
@@ -278,7 +286,8 @@ def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
         try:
             uuid_namespace = uuid.UUID(namespace)
         except (AttributeError, ValueError) as e:
-            raise AnsibleFilterError("Invalid value '%s' for 'namespace': %s" % (to_native(namespace), to_native(e)))
+            raise AnsibleFilterError("Invalid value '%s' for 'namespace': %s" % (
+                to_native(namespace), to_native(e)))
     # uuid.uuid5() requires bytes on Python 2 and bytes or text or Python 3
     return to_text(uuid.uuid5(uuid_namespace, to_native(string, errors='surrogate_or_strict')))
 
@@ -296,7 +305,8 @@ def mandatory(a, msg=None):
         if msg is not None:
             raise AnsibleFilterError(to_native(msg))
         else:
-            raise AnsibleFilterError("Mandatory variable %s not defined." % name)
+            raise AnsibleFilterError(
+                "Mandatory variable %s not defined." % name)
 
     return a
 
@@ -305,7 +315,8 @@ def combine(*terms, **kwargs):
     recursive = kwargs.pop('recursive', False)
     list_merge = kwargs.pop('list_merge', 'replace')
     if kwargs:
-        raise AnsibleFilterError("'recursive' and 'list_merge' are the only valid keyword arguments")
+        raise AnsibleFilterError(
+            "'recursive' and 'list_merge' are the only valid keyword arguments")
 
     # allow the user to do `[dict1, dict2, ...] | combine`
     dictionaries = flatten(terms, levels=1)
@@ -496,7 +507,8 @@ def subelements(obj, subelements, skip_missing=False):
     elif isinstance(obj, list):
         element_list = obj[:]
     else:
-        raise AnsibleFilterError('obj must be a list of dicts or a nested dict')
+        raise AnsibleFilterError(
+            'obj must be a list of dicts or a nested dict')
 
     if isinstance(subelements, list):
         subelement_list = subelements[:]
@@ -516,11 +528,14 @@ def subelements(obj, subelements, skip_missing=False):
                 if skip_missing:
                     values = []
                     break
-                raise AnsibleFilterError("could not find %r key in iterated item %r" % (subelement, values))
+                raise AnsibleFilterError(
+                    "could not find %r key in iterated item %r" % (subelement, values))
             except TypeError:
-                raise AnsibleFilterError("the key %s should point to a dictionary, got '%s'" % (subelement, values))
+                raise AnsibleFilterError(
+                    "the key %s should point to a dictionary, got '%s'" % (subelement, values))
         if not isinstance(values, list):
-            raise AnsibleFilterError("the key %r should point to a list, got %r" % (subelement, values))
+            raise AnsibleFilterError(
+                "the key %r should point to a list, got %r" % (subelement, values))
 
         for value in values:
             results.append((element, value))
@@ -533,7 +548,8 @@ def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
 
     if not isinstance(mydict, Mapping):
-        raise AnsibleFilterError("dict2items requires a dictionary, got %s instead." % type(mydict))
+        raise AnsibleFilterError(
+            "dict2items requires a dictionary, got %s instead." % type(mydict))
 
     ret = []
     for key in mydict:
@@ -546,7 +562,8 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
         effectively as the reverse of dict2items '''
 
     if not is_sequence(mylist):
-        raise AnsibleFilterError("items2dict requires a list, got %s instead." % type(mylist))
+        raise AnsibleFilterError(
+            "items2dict requires a list, got %s instead." % type(mylist))
 
     return dict((item[key_name], item[value_name]) for item in mylist)
 
@@ -559,7 +576,8 @@ def path_join(paths):
     elif is_sequence(paths):
         return os.path.join(*paths)
     else:
-        raise AnsibleFilterError("|path_join expects string or sequence, got %s instead." % type(paths))
+        raise AnsibleFilterError(
+            "|path_join expects string or sequence, got %s instead." % type(paths))
 
 
 class FilterModule(object):

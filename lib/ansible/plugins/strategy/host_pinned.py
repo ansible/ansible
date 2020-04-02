@@ -16,6 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils.display import Display
+from ansible.plugins.strategy.free import StrategyModule as FreeStrategyModule
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -32,8 +34,6 @@ DOCUMENTATION = '''
     author: Ansible Core Team
 '''
 
-from ansible.plugins.strategy.free import StrategyModule as FreeStrategyModule
-from ansible.utils.display import Display
 
 display = Display()
 

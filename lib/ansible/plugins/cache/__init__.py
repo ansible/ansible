@@ -44,6 +44,7 @@ class FactCache(RealFactCache):
     plugins, not the cache plugin itself.  Subclassing it wouldn't yield a usable Cache Plugin and
     there was no facility to use it as anything else.
     """
+
     def __init__(self, *args, **kwargs):
         display.deprecated('ansible.plugins.cache.FactCache has been moved to'
                            ' ansible.vars.fact_cache.FactCache.  If you are looking for the class'
@@ -61,7 +62,8 @@ class BaseCacheModule(AnsiblePlugin):
     def __init__(self, *args, **kwargs):
         # Third party code is not using cache_loader to load plugin - fall back to previous behavior
         if not hasattr(self, '_load_name'):
-            display.deprecated('Rather than importing custom CacheModules directly, use ansible.plugins.loader.cache_loader', version='2.14')
+            display.deprecated(
+                'Rather than importing custom CacheModules directly, use ansible.plugins.loader.cache_loader', version='2.14')
             self._load_name = self.__module__.split('.')[-1]
         super(BaseCacheModule, self).__init__()
         self.set_options(var_options=args, direct=kwargs)
@@ -99,14 +101,17 @@ class BaseFileCacheModule(BaseCacheModule):
     """
     A caching module backed by file based storage.
     """
+
     def __init__(self, *args, **kwargs):
 
         try:
             super(BaseFileCacheModule, self).__init__(*args, **kwargs)
-            self._cache_dir = self._get_cache_connection(self.get_option('_uri'))
+            self._cache_dir = self._get_cache_connection(
+                self.get_option('_uri'))
             self._timeout = float(self.get_option('_timeout'))
         except KeyError:
-            self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
+            self._cache_dir = self._get_cache_connection(
+                C.CACHE_PLUGIN_CONNECTION)
             self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self.plugin_name = self.__module__.split('.')[-1]
         self._cache = {}
@@ -128,7 +133,8 @@ class BaseFileCacheModule(BaseCacheModule):
             try:
                 os.makedirs(self._cache_dir)
             except (OSError, IOError) as e:
-                raise AnsibleError("error in '%s' cache plugin while trying to create cache dir %s : %s" % (self.plugin_name, self._cache_dir, to_bytes(e)))
+                raise AnsibleError("error in '%s' cache plugin while trying to create cache dir %s : %s" % (
+                    self.plugin_name, self._cache_dir, to_bytes(e)))
         else:
             for x in (os.R_OK, os.W_OK, os.X_OK):
                 if not os.access(self._cache_dir, x):
@@ -156,10 +162,12 @@ class BaseFileCacheModule(BaseCacheModule):
                 raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data. "
                                    "It has been removed, so you can re-run your command now." % cachefile)
             except (OSError, IOError) as e:
-                display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+                display.warning("error in '%s' cache plugin while trying to read %s : %s" % (
+                    self.plugin_name, cachefile, to_bytes(e)))
                 raise KeyError
             except Exception as e:
-                raise AnsibleError("Error while decoding the cache file %s: %s" % (cachefile, to_bytes(e)))
+                raise AnsibleError(
+                    "Error while decoding the cache file %s: %s" % (cachefile, to_bytes(e)))
 
         return self._cache.get(key)
 
@@ -171,7 +179,8 @@ class BaseFileCacheModule(BaseCacheModule):
         try:
             self._dump(value, cachefile)
         except (OSError, IOError) as e:
-            display.warning("error in '%s' cache plugin while trying to write to %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+            display.warning("error in '%s' cache plugin while trying to write to %s : %s" % (
+                self.plugin_name, cachefile, to_bytes(e)))
 
     def has_expired(self, key):
 
@@ -185,7 +194,8 @@ class BaseFileCacheModule(BaseCacheModule):
             if e.errno == errno.ENOENT:
                 return False
             else:
-                display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+                display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (
+                    self.plugin_name, cachefile, to_bytes(e)))
                 return False
 
         if time.time() - st.st_mtime <= self._timeout:
@@ -217,7 +227,8 @@ class BaseFileCacheModule(BaseCacheModule):
             if e.errno == errno.ENOENT:
                 return False
             else:
-                display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+                display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (
+                    self.plugin_name, cachefile, to_bytes(e)))
 
     def delete(self, key):
         try:
@@ -274,13 +285,15 @@ class CachePluginAdjudicator(MutableMapping):
     """
     Intermediary between a cache dictionary and a CacheModule
     """
+
     def __init__(self, plugin_name='memory', **kwargs):
         self._cache = {}
         self._retrieved = {}
 
         self._plugin = cache_loader.get(plugin_name, **kwargs)
         if not self._plugin:
-            raise AnsibleError('Unable to load the cache plugin (%s).' % plugin_name)
+            raise AnsibleError(
+                'Unable to load the cache plugin (%s).' % plugin_name)
 
         self._plugin_name = plugin_name
 
@@ -290,7 +303,8 @@ class CachePluginAdjudicator(MutableMapping):
 
     def set_cache(self):
         for top_level_cache_key in self._cache.keys():
-            self._plugin.set(top_level_cache_key, self._cache[top_level_cache_key])
+            self._plugin.set(top_level_cache_key,
+                             self._cache[top_level_cache_key])
         self._retrieved = copy.deepcopy(self._cache)
 
     def load_whole_cache(self):

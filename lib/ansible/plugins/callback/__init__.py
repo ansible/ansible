@@ -50,7 +50,8 @@ global_display = Display()
 __all__ = ["CallbackBase"]
 
 
-_DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
+_DEBUG_ALLOWED_KEYS = frozenset(
+    ('msg', 'exception', 'warnings', 'deprecations'))
 
 
 class CallbackBase(AnsiblePlugin):
@@ -71,7 +72,8 @@ class CallbackBase(AnsiblePlugin):
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
             ctype = getattr(self, 'CALLBACK_TYPE', 'old')
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
-            self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, sys.modules[self.__module__].__file__))
+            self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (
+                name, ctype, version, sys.modules[self.__module__].__file__))
 
         self.disabled = False
 
@@ -79,7 +81,8 @@ class CallbackBase(AnsiblePlugin):
         if options is not None:
             self.set_options(options)
 
-        self._hide_in_debug = ('changed', 'failed', 'skipped', 'invocation', 'skip_reason')
+        self._hide_in_debug = ('changed', 'failed',
+                               'skipped', 'invocation', 'skip_reason')
 
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
@@ -96,7 +99,8 @@ class CallbackBase(AnsiblePlugin):
         '''
 
         # load from config
-        self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
+        self._plugin_options = C.config.get_plugin_options(get_plugin_class(
+            self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
     def _run_is_verbose(self, result, verbosity=0):
         return ((self._display.verbosity > verbosity or result._result.get('_ansible_verbose_always', False) is True)
@@ -123,7 +127,8 @@ class CallbackBase(AnsiblePlugin):
             del abridged_result['exception']
 
         try:
-            jsonified_results = json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+            jsonified_results = json.dumps(
+                abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
         except TypeError:
             # Python3 bug: throws an exception when keys are non-homogenous types:
             # https://bugs.python.org/issue25457
@@ -172,13 +177,16 @@ class CallbackBase(AnsiblePlugin):
         ret = []
         for diff in difflist:
             if 'dst_binary' in diff:
-                ret.append(u"diff skipped: destination file appears to be binary\n")
+                ret.append(
+                    u"diff skipped: destination file appears to be binary\n")
             if 'src_binary' in diff:
                 ret.append(u"diff skipped: source file appears to be binary\n")
             if 'dst_larger' in diff:
-                ret.append(u"diff skipped: destination file size is greater than %d\n" % diff['dst_larger'])
+                ret.append(
+                    u"diff skipped: destination file size is greater than %d\n" % diff['dst_larger'])
             if 'src_larger' in diff:
-                ret.append(u"diff skipped: source file size is greater than %d\n" % diff['src_larger'])
+                ret.append(
+                    u"diff skipped: source file size is greater than %d\n" % diff['src_larger'])
             if 'before' in diff and 'after' in diff:
                 # format complex structures into 'files'
                 for x in ['before', 'after']:
@@ -214,7 +222,8 @@ class CallbackBase(AnsiblePlugin):
                     difflines[0] = difflines[0].replace(u' \n', u'\n')
                     difflines[1] = difflines[1].replace(u' \n', u'\n')
                     # it also treats empty files differently
-                    difflines[2] = difflines[2].replace(u'-1,0', u'-0,0').replace(u'+1,0', u'+0,0')
+                    difflines[2] = difflines[2].replace(
+                        u'-1,0', u'-0,0').replace(u'+1,0', u'+0,0')
                 has_diff = False
                 for line in difflines:
                     has_diff = True
@@ -242,7 +251,8 @@ class CallbackBase(AnsiblePlugin):
     def _get_item(self, result):
         ''' here for backwards compat, really should have always been named: _get_item_label'''
         cback = getattr(self, 'NAME', os.path.basename(__file__))
-        self._display.deprecated("The %s callback plugin should be updated to use the _get_item_label method instead" % cback, version="2.11")
+        self._display.deprecated(
+            "The %s callback plugin should be updated to use the _get_item_label method instead" % cback, version="2.11")
         return self._get_item_label(result)
 
     def _process_items(self, result):
@@ -345,7 +355,8 @@ class CallbackBase(AnsiblePlugin):
     def v2_runner_on_skipped(self, result):
         if C.DISPLAY_SKIPPED_HOSTS:
             host = result._host.get_name()
-            self.runner_on_skipped(host, self._get_item_label(getattr(result._result, 'results', {})))
+            self.runner_on_skipped(host, self._get_item_label(
+                getattr(result._result, 'results', {})))
 
     def v2_runner_on_unreachable(self, result):
         host = result._host.get_name()
@@ -394,7 +405,8 @@ class CallbackBase(AnsiblePlugin):
         pass  # no v1 correspondence
 
     def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
-        self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
+        self.playbook_on_vars_prompt(
+            varname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
 
     # FIXME: not called
     def v2_playbook_on_import_for_host(self, result, imported_file):

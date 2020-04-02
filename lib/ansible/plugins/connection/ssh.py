@@ -5,6 +5,32 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils.path import unfrackpath, makedirs_safe
+from ansible.utils.display import Display
+from ansible.plugins.shell.powershell import _parse_clixml
+from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.six.moves import shlex_quote
+from ansible.module_utils.six import PY3, text_type, binary_type
+from ansible.compat import selectors
+from ansible.errors import AnsibleOptionsError
+from ansible.errors import (
+    AnsibleAuthenticationFailure,
+    AnsibleConnectionFailure,
+    AnsibleError,
+    AnsibleFileNotFound,
+)
+from ansible import constants as C
+from functools import wraps
+import time
+import subprocess
+import re
+import pty
+import os
+import hashlib
+import fcntl
+import errno
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -271,33 +297,6 @@ DOCUMENTATION = '''
             version_added: '2.7'
 '''
 
-import errno
-import fcntl
-import hashlib
-import os
-import pty
-import re
-import subprocess
-import time
-
-from functools import wraps
-from ansible import constants as C
-from ansible.errors import (
-    AnsibleAuthenticationFailure,
-    AnsibleConnectionFailure,
-    AnsibleError,
-    AnsibleFileNotFound,
-)
-from ansible.errors import AnsibleOptionsError
-from ansible.compat import selectors
-from ansible.module_utils.six import PY3, text_type, binary_type
-from ansible.module_utils.six.moves import shlex_quote
-from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
-from ansible.plugins.connection import ConnectionBase, BUFSIZE
-from ansible.plugins.shell.powershell import _parse_clixml
-from ansible.utils.display import Display
-from ansible.utils.path import unfrackpath, makedirs_safe
 
 display = Display()
 
@@ -321,13 +320,15 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
     if command == b'sshpass':
         # Error 5 is invalid/incorrect password. Raise an exception to prevent retries from locking the account.
         if return_tuple[0] == 5:
-            msg = 'Invalid/incorrect username/password. Skipping remaining {0} retries to prevent account lockout:'.format(remaining_retries)
+            msg = 'Invalid/incorrect username/password. Skipping remaining {0} retries to prevent account lockout:'.format(
+                remaining_retries)
             if remaining_retries <= 0:
                 msg = 'Invalid/incorrect password:'
             if no_log:
                 msg = '{0} <error censored due to no log>'.format(msg)
             else:
-                msg = '{0} {1}'.format(msg, to_native(return_tuple[2]).rstrip())
+                msg = '{0} {1}'.format(
+                    msg, to_native(return_tuple[2]).rstrip())
             raise AnsibleAuthenticationFailure(msg)
 
         # sshpass returns codes are 1-6. We handle 5 previously, so this catches other scenarios.
@@ -337,7 +338,8 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
             if no_log:
                 msg = '{0} <error censored due to no log>'.format(msg)
             else:
-                msg = '{0} {1}'.format(msg, to_native(return_tuple[2]).rstrip())
+                msg = '{0} {1}'.format(
+                    msg, to_native(return_tuple[2]).rstrip())
 
     if return_tuple[0] == 255:
         SSH_ERROR = True
@@ -351,7 +353,8 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
             if no_log:
                 msg = '{0} <error censored due to no log>'.format(msg)
             else:
-                msg = '{0} {1}'.format(msg, to_native(return_tuple[2]).rstrip())
+                msg = '{0} {1}'.format(
+                    msg, to_native(return_tuple[2]).rstrip())
             raise AnsibleConnectionFailure(msg)
 
     # For other errors, no exception is raised so the connection is retried and we only log the messages
@@ -385,13 +388,15 @@ def _ssh_retry(func):
             if attempt != 0 and self._play_context.password and isinstance(cmd, list):
                 # If this is a retry, the fd/pipe for sshpass is closed, and we need a new one
                 self.sshpass_pipe = os.pipe()
-                cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')
+                cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0],
+                                          nonstring='simplerepr', errors='surrogate_or_strict')
 
             try:
                 try:
                     return_tuple = func(self, *args, **kwargs)
                     if self._play_context.no_log:
-                        display.vvv(u'rc=%s, stdout and stderr censored due to no log' % return_tuple[0], host=self.host)
+                        display.vvv(
+                            u'rc=%s, stdout and stderr censored due to no log' % return_tuple[0], host=self.host)
                     else:
                         display.vvv(return_tuple, host=self.host)
                     # 0 = success
@@ -403,12 +408,15 @@ def _ssh_retry(func):
                     if self._play_context.password and isinstance(cmd, list):
                         # This is a retry, so the fd/pipe for sshpass is closed, and we need a new one
                         self.sshpass_pipe = os.pipe()
-                        cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')
-                    display.vvv(u"RETRYING BECAUSE OF CONTROLPERSIST BROKEN PIPE")
+                        cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0],
+                                                  nonstring='simplerepr', errors='surrogate_or_strict')
+                    display.vvv(
+                        u"RETRYING BECAUSE OF CONTROLPERSIST BROKEN PIPE")
                     return_tuple = func(self, *args, **kwargs)
 
                 remaining_retries = remaining_tries - attempt - 1
-                _handle_error(remaining_retries, cmd[0], return_tuple, self._play_context.no_log, self.host)
+                _handle_error(
+                    remaining_retries, cmd[0], return_tuple, self._play_context.no_log, self.host)
 
                 break
 
@@ -427,7 +435,8 @@ def _ssh_retry(func):
                         pause = 30
 
                     if isinstance(e, AnsibleConnectionFailure):
-                        msg = u"ssh_retry: attempt: %d, ssh return code is 255. cmd (%s), pausing for %d seconds" % (attempt + 1, cmd_summary, pause)
+                        msg = u"ssh_retry: attempt: %d, ssh return code is 255. cmd (%s), pausing for %d seconds" % (
+                            attempt + 1, cmd_summary, pause)
                     else:
                         msg = (u"ssh_retry: attempt: %d, caught exception(%s) from cmd (%s), "
                                u"pausing for %d seconds" % (attempt + 1, to_text(e), cmd_summary, pause))
@@ -496,7 +505,8 @@ class Connection(ConnectionBase):
 
         if SSHPASS_AVAILABLE is None:
             try:
-                p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(
+                    ["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 p.communicate()
                 SSHPASS_AVAILABLE = True
             except OSError:
@@ -537,7 +547,8 @@ class Connection(ConnectionBase):
             were added.  It will be displayed with a high enough verbosity.
         .. note:: This function does its work via side-effect.  The b_command list has the new arguments appended.
         """
-        display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self._play_context.remote_addr)
+        display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a)
+                                                                 for a in b_args)), host=self._play_context.remote_addr)
         b_command += b_args
 
     def _build_command(self, binary, *other_args):
@@ -557,13 +568,16 @@ class Connection(ConnectionBase):
 
         if self._play_context.password:
             if not self._sshpass_available():
-                raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
+                raise AnsibleError(
+                    "to use the 'ssh' connection type with passwords, you must install the sshpass program")
 
             self.sshpass_pipe = os.pipe()
-            b_command += [b'sshpass', b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')]
+            b_command += [b'sshpass', b'-d' + to_bytes(
+                self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')]
 
         if binary == 'ssh':
-            b_command += [to_bytes(self._play_context.ssh_executable, errors='surrogate_or_strict')]
+            b_command += [to_bytes(self._play_context.ssh_executable,
+                                   errors='surrogate_or_strict')]
         else:
             b_command += [to_bytes(binary, errors='surrogate_or_strict')]
 
@@ -578,7 +592,8 @@ class Connection(ConnectionBase):
         if binary == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
             if self._play_context.password:
                 b_args = [b'-o', b'BatchMode=no']
-                self._add_args(b_command, b_args, u'disable batch mode for sshpass')
+                self._add_args(b_command, b_args,
+                               u'disable batch mode for sshpass')
             b_command += [b'-b', b'-']
 
         if self._play_context.verbosity > 3:
@@ -599,16 +614,21 @@ class Connection(ConnectionBase):
 
         if not C.HOST_KEY_CHECKING:
             b_args = (b"-o", b"StrictHostKeyChecking=no")
-            self._add_args(b_command, b_args, u"ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled")
+            self._add_args(
+                b_command, b_args, u"ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled")
 
         if self._play_context.port is not None:
-            b_args = (b"-o", b"Port=" + to_bytes(self._play_context.port, nonstring='simplerepr', errors='surrogate_or_strict'))
-            self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
+            b_args = (b"-o", b"Port=" + to_bytes(self._play_context.port,
+                                                 nonstring='simplerepr', errors='surrogate_or_strict'))
+            self._add_args(b_command, b_args,
+                           u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
         key = self._play_context.private_key_file
         if key:
-            b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
-            self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
+            b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key),
+                                                          errors='surrogate_or_strict') + b'"')
+            self._add_args(
+                b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
 
         if not self._play_context.password:
             self._add_args(
@@ -624,13 +644,15 @@ class Connection(ConnectionBase):
         if user:
             self._add_args(
                 b_command,
-                (b"-o", b'User="%s"' % to_bytes(self._play_context.remote_user, errors='surrogate_or_strict')),
+                (b"-o", b'User="%s"' % to_bytes(self._play_context.remote_user,
+                                                errors='surrogate_or_strict')),
                 u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set"
             )
 
         self._add_args(
             b_command,
-            (b"-o", b"ConnectTimeout=" + to_bytes(self._play_context.timeout, errors='surrogate_or_strict', nonstring='simplerepr')),
+            (b"-o", b"ConnectTimeout=" + to_bytes(self._play_context.timeout,
+                                                  errors='surrogate_or_strict', nonstring='simplerepr')),
             u"ANSIBLE_TIMEOUT/timeout set"
         )
 
@@ -640,7 +662,8 @@ class Connection(ConnectionBase):
         for opt in (u'ssh_common_args', u'{0}_extra_args'.format(binary)):
             attr = getattr(self._play_context, opt, None)
             if attr is not None:
-                b_args = [to_bytes(a, errors='surrogate_or_strict') for a in self._split_ssh_args(attr)]
+                b_args = [to_bytes(a, errors='surrogate_or_strict')
+                          for a in self._split_ssh_args(attr)]
                 self._add_args(b_command, b_args, u"PlayContext set %s" % opt)
 
         # Check if ControlPersist is enabled and add a ControlPath if one hasn't
@@ -658,7 +681,8 @@ class Connection(ConnectionBase):
                 # The directory must exist and be writable.
                 makedirs_safe(b_cpdir, 0o700)
                 if not os.access(b_cpdir, os.W_OK):
-                    raise AnsibleError("Cannot write to ControlPath %s" % to_native(cpdir))
+                    raise AnsibleError(
+                        "Cannot write to ControlPath %s" % to_native(cpdir))
 
                 if not self.control_path:
                     self.control_path = self._create_control_path(
@@ -666,8 +690,10 @@ class Connection(ConnectionBase):
                         self.port,
                         self.user
                     )
-                b_args = (b"-o", b"ControlPath=" + to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
-                self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
+                b_args = (b"-o", b"ControlPath=" + to_bytes(self.control_path %
+                                                            dict(directory=cpdir), errors='surrogate_or_strict'))
+                self._add_args(b_command, b_args,
+                               u"found only ControlPersist; added ControlPath")
 
         # Finally, we add any caller-supplied extras.
         if other_args:
@@ -728,18 +754,22 @@ class Connection(ConnectionBase):
 
             # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
             if self.become.expect_prompt() and self.become.check_password_prompt(b_line):
-                display.debug(u"become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                display.debug(u"become_prompt: (source=%s, state=%s): '%s'" % (
+                    source, state, display_line))
                 self._flags['become_prompt'] = True
                 suppress_output = True
             elif self.become.success and self.become.check_success(b_line):
-                display.debug(u"become_success: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                display.debug(u"become_success: (source=%s, state=%s): '%s'" % (
+                    source, state, display_line))
                 self._flags['become_success'] = True
                 suppress_output = True
             elif sudoable and self.become.check_incorrect_password(b_line):
-                display.debug(u"become_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                display.debug(u"become_error: (source=%s, state=%s): '%s'" % (
+                    source, state, display_line))
                 self._flags['become_error'] = True
             elif sudoable and self.become.check_missing_password(b_line):
-                display.debug(u"become_nopasswd_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                display.debug(u"become_nopasswd_error: (source=%s, state=%s): '%s'" % (
+                    source, state, display_line))
                 self._flags['become_nopasswd_error'] = True
 
             if not suppress_output:
@@ -784,9 +814,11 @@ class Connection(ConnectionBase):
                 master, slave = pty.openpty()
                 if PY3 and self._play_context.password:
                     # pylint: disable=unexpected-keyword-arg
-                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
+                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
                 else:
-                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    p = subprocess.Popen(
+                        cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 stdin = os.fdopen(master, 'wb', 0)
                 os.close(slave)
             except (OSError, IOError):
@@ -795,9 +827,11 @@ class Connection(ConnectionBase):
         if not p:
             if PY3 and self._play_context.password:
                 # pylint: disable=unexpected-keyword-arg
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
             else:
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(
+                    cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdin = p.stdin
 
         # If we are using SSH password authentication, write the password into
@@ -806,7 +840,8 @@ class Connection(ConnectionBase):
         if self._play_context.password:
             os.close(self.sshpass_pipe[0])
             try:
-                os.write(self.sshpass_pipe[1], to_bytes(self._play_context.password) + b'\n')
+                os.write(self.sshpass_pipe[1], to_bytes(
+                    self._play_context.password) + b'\n')
             except OSError as e:
                 # Ignore broken pipe errors if the sshpass process has exited.
                 if e.errno != errno.EPIPE or p.poll() is None:
@@ -836,12 +871,14 @@ class Connection(ConnectionBase):
                 # We're requesting escalation with a password, so we have to
                 # wait for a password prompt.
                 state = states.index('awaiting_prompt')
-                display.debug(u'Initial state: %s: %s' % (states[state], to_text(prompt)))
+                display.debug(u'Initial state: %s: %s' %
+                              (states[state], to_text(prompt)))
             elif self.become and self.become.success:
                 # We're requesting escalation without a password, so we have to
                 # detect success/failure before sending any initial data.
                 state = states.index('awaiting_escalation')
-                display.debug(u'Initial state: %s: %s' % (states[state], to_text(self.become.success)))
+                display.debug(u'Initial state: %s: %s' %
+                              (states[state], to_text(self.become.success)))
 
         # We store accumulated stdout and stderr output from the process here,
         # but strip any privilege escalation prompt/confirmation lines first.
@@ -862,7 +899,8 @@ class Connection(ConnectionBase):
         # timeout usually fails
         timeout = 2 + self._play_context.timeout
         for fd in (p.stdout, p.stderr):
-            fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+            fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(
+                fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
         # TODO: bcoca would like to use SelectSelector() when open
         # filehandles is low, then switch to more efficient ones when higher.
@@ -892,7 +930,8 @@ class Connection(ConnectionBase):
                         if poll is not None:
                             break
                         self._terminate_process(p)
-                        raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
+                        raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (
+                            timeout, to_native(b_stdout)))
 
                 # Read whatever output is available on stdout and stderr, and stop
                 # listening to the pipe if it's been closed.
@@ -912,14 +951,16 @@ class Connection(ConnectionBase):
                             # not going to arrive until the persisted connection closes.
                             timeout = 1
                         b_tmp_stdout += b_chunk
-                        display.debug(u"stdout chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
+                        display.debug(u"stdout chunk (state=%s):\n>>>%s<<<\n" % (
+                            state, to_text(b_chunk)))
                     elif key.fileobj == p.stderr:
                         b_chunk = p.stderr.read()
                         if b_chunk == b'':
                             # stderr has been closed, stop watching it
                             selector.unregister(p.stderr)
                         b_tmp_stderr += b_chunk
-                        display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
+                        display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (
+                            state, to_text(b_chunk)))
 
                 # We examine the output line-by-line until we have negotiated any
                 # privilege escalation prompt and subsequent success/error message.
@@ -927,12 +968,14 @@ class Connection(ConnectionBase):
 
                 if state < states.index('ready_to_send'):
                     if b_tmp_stdout:
-                        b_output, b_unprocessed = self._examine_output('stdout', states[state], b_tmp_stdout, sudoable)
+                        b_output, b_unprocessed = self._examine_output(
+                            'stdout', states[state], b_tmp_stdout, sudoable)
                         b_stdout += b_output
                         b_tmp_stdout = b_unprocessed
 
                     if b_tmp_stderr:
-                        b_output, b_unprocessed = self._examine_output('stderr', states[state], b_tmp_stderr, sudoable)
+                        b_output, b_unprocessed = self._examine_output(
+                            'stderr', states[state], b_tmp_stderr, sudoable)
                         b_stderr += b_output
                         b_tmp_stderr = b_unprocessed
                 else:
@@ -946,9 +989,12 @@ class Connection(ConnectionBase):
 
                 if states[state] == 'awaiting_prompt':
                     if self._flags['become_prompt']:
-                        display.debug(u'Sending become_password in response to prompt')
-                        become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
-                        stdin.write(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
+                        display.debug(
+                            u'Sending become_password in response to prompt')
+                        become_pass = self.become.get_option(
+                            'become_pass', playcontext=self._play_context)
+                        stdin.write(
+                            to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
                         # On python3 stdin is a BufferedWriter, and we don't have a guarantee
                         # that the write will happen without a flush
                         stdin.flush()
@@ -969,19 +1015,22 @@ class Connection(ConnectionBase):
                         display.vvv(u'Escalation failed')
                         self._terminate_process(p)
                         self._flags['become_error'] = False
-                        raise AnsibleError('Incorrect %s password' % self.become.name)
+                        raise AnsibleError(
+                            'Incorrect %s password' % self.become.name)
                     elif self._flags['become_nopasswd_error']:
                         display.vvv(u'Escalation requires password')
                         self._terminate_process(p)
                         self._flags['become_nopasswd_error'] = False
-                        raise AnsibleError('Missing %s password' % self.become.name)
+                        raise AnsibleError(
+                            'Missing %s password' % self.become.name)
                     elif self._flags['become_prompt']:
                         # This shouldn't happen, because we should see the "Sorry,
                         # try again" message first.
                         display.vvv(u'Escalation prompt repeated')
                         self._terminate_process(p)
                         self._flags['become_prompt'] = False
-                        raise AnsibleError('Incorrect %s password' % self.become.name)
+                        raise AnsibleError(
+                            'Incorrect %s password' % self.become.name)
 
                 # Once we're sure that the privilege escalation prompt, if any, has
                 # been dealt with, we can send any initial data and start waiting
@@ -1038,7 +1087,8 @@ class Connection(ConnectionBase):
 
             additional = to_native(b_stderr)
             if controlpersist_broken_pipe:
-                raise AnsibleControlPersistBrokenPipeError('Data could not be sent because of ControlPersist broken pipe: %s' % additional)
+                raise AnsibleControlPersistBrokenPipeError(
+                    'Data could not be sent because of ControlPersist broken pipe: %s' % additional)
 
             elif in_data and checkrc:
                 raise AnsibleConnectionFailure('Data could not be sent to remote host "%s". Make sure this host can be reached over ssh: %s'
@@ -1071,7 +1121,8 @@ class Connection(ConnectionBase):
         ssh_transfer_method = self._play_context.ssh_transfer_method
         if ssh_transfer_method is not None:
             if not (ssh_transfer_method in ('smart', 'sftp', 'scp', 'piped')):
-                raise AnsibleOptionsError('transfer_method needs to be one of [smart|sftp|scp|piped]')
+                raise AnsibleOptionsError(
+                    'transfer_method needs to be one of [smart|sftp|scp|piped]')
             if ssh_transfer_method == 'smart':
                 methods = smart_methods
             else:
@@ -1084,7 +1135,8 @@ class Connection(ConnectionBase):
                 if scp_if_ssh in BOOLEANS:
                     scp_if_ssh = boolean(scp_if_ssh, strict=False)
                 elif scp_if_ssh != 'smart':
-                    raise AnsibleOptionsError('scp_if_ssh needs to be one of [smart|True|False]')
+                    raise AnsibleOptionsError(
+                        'scp_if_ssh needs to be one of [smart|True|False]')
             if scp_if_ssh == 'smart':
                 methods = smart_methods
             elif scp_if_ssh is True:
@@ -1095,24 +1147,31 @@ class Connection(ConnectionBase):
         for method in methods:
             returncode = stdout = stderr = None
             if method == 'sftp':
-                cmd = self._build_command(self.get_option('sftp_executable'), to_bytes(host))
-                in_data = u"{0} {1} {2}\n".format(sftp_action, shlex_quote(in_path), shlex_quote(out_path))
+                cmd = self._build_command(self.get_option(
+                    'sftp_executable'), to_bytes(host))
+                in_data = u"{0} {1} {2}\n".format(
+                    sftp_action, shlex_quote(in_path), shlex_quote(out_path))
                 in_data = to_bytes(in_data, nonstring='passthru')
-                (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
+                (returncode, stdout, stderr) = self._bare_run(
+                    cmd, in_data, checkrc=False)
             elif method == 'scp':
                 scp = self.get_option('scp_executable')
 
                 if sftp_action == 'get':
-                    cmd = self._build_command(scp, u'{0}:{1}'.format(host, self._shell.quote(in_path)), out_path)
+                    cmd = self._build_command(scp, u'{0}:{1}'.format(
+                        host, self._shell.quote(in_path)), out_path)
                 else:
-                    cmd = self._build_command(scp, in_path, u'{0}:{1}'.format(host, self._shell.quote(out_path)))
+                    cmd = self._build_command(scp, in_path, u'{0}:{1}'.format(
+                        host, self._shell.quote(out_path)))
                 in_data = None
-                (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
+                (returncode, stdout, stderr) = self._bare_run(
+                    cmd, in_data, checkrc=False)
             elif method == 'piped':
                 if sftp_action == 'get':
                     # we pass sudoable=False to disable pty allocation, which
                     # would end up mixing stdout/stderr and screwing with newlines
-                    (returncode, stdout, stderr) = self.exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), sudoable=False)
+                    (returncode, stdout, stderr) = self.exec_command(
+                        'dd if=%s bs=%s' % (in_path, BUFSIZE), sudoable=False)
                     with open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb+') as out_file:
                         out_file.write(stdout)
                 else:
@@ -1122,7 +1181,8 @@ class Connection(ConnectionBase):
                         count = ' count=0'
                     else:
                         count = ''
-                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s%s' % (out_path, BUFSIZE, count), in_data=in_data, sudoable=False)
+                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s%s' % (
+                        out_path, BUFSIZE, count), in_data=in_data, sudoable=False)
 
             # Check the return code and rollover to next method if failed
             if returncode == 0:
@@ -1130,12 +1190,14 @@ class Connection(ConnectionBase):
             else:
                 # If not in smart mode, the data will be printed by the raise below
                 if len(methods) > 1:
-                    display.warning(u'%s transfer mechanism failed on %s. Use ANSIBLE_DEBUG=1 to see detailed information' % (method, host))
+                    display.warning(
+                        u'%s transfer mechanism failed on %s. Use ANSIBLE_DEBUG=1 to see detailed information' % (method, host))
                     display.debug(u'%s' % to_text(stdout))
                     display.debug(u'%s' % to_text(stderr))
 
         if returncode == 255:
-            raise AnsibleConnectionFailure("Failed to connect to the host via %s: %s" % (method, to_native(stderr)))
+            raise AnsibleConnectionFailure(
+                "Failed to connect to the host via %s: %s" % (method, to_native(stderr)))
         else:
             raise AnsibleError("failed to transfer file to %s %s:\n%s\n%s" %
                                (to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
@@ -1156,9 +1218,11 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd, in_data=None, sudoable=True):
         ''' run a command on the remote host '''
 
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        super(Connection, self).exec_command(
+            cmd, in_data=in_data, sudoable=sudoable)
 
-        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
+        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(
+            self._play_context.remote_user), host=self._play_context.remote_addr)
 
         if getattr(self._shell, "_IS_WINDOWS", False):
             # Become method 'runas' is done in the wrapper that is executed,
@@ -1168,8 +1232,10 @@ class Connection(ConnectionBase):
 
             # Make sure our first command is to set the console encoding to
             # utf-8, this must be done via chcp to get utf-8 (65001)
-            cmd_parts = ["chcp.com", "65001", self._shell._SHELL_REDIRECT_ALLNULL, self._shell._SHELL_AND]
-            cmd_parts.extend(self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False))
+            cmd_parts = ["chcp.com", "65001",
+                         self._shell._SHELL_REDIRECT_ALLNULL, self._shell._SHELL_AND]
+            cmd_parts.extend(self._shell._encode_script(
+                cmd, as_list=True, strict_mode=False, preserve_rc=False))
             cmd = ' '.join(cmd_parts)
 
         # we can only use tty when we are not pipelining the modules. piping
@@ -1189,7 +1255,8 @@ class Connection(ConnectionBase):
             args = (ssh_executable, self.host, cmd)
 
         cmd = self._build_command(*args)
-        (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
+        (returncode, stdout, stderr) = self._run(
+            cmd, in_data, sudoable=sudoable)
 
         # When running on Windows, stderr may contain CLIXML encoded output
         if getattr(self._shell, "_IS_WINDOWS", False) and stderr.startswith(b"#< CLIXML"):
@@ -1202,9 +1269,11 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self.host)
+        display.vvv(u"PUT {0} TO {1}".format(
+            in_path, out_path), host=self.host)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
-            raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_native(in_path)))
+            raise AnsibleFileNotFound(
+                "file or module does not exist: {0}".format(to_native(in_path)))
 
         if getattr(self._shell, "_IS_WINDOWS", False):
             out_path = self._escape_win_path(out_path)
@@ -1216,7 +1285,8 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
+        display.vvv(u"FETCH {0} TO {1}".format(
+            in_path, out_path), host=self.host)
 
         # need to add / if path is rooted
         if getattr(self._shell, "_IS_WINDOWS", False):
@@ -1226,7 +1296,8 @@ class Connection(ConnectionBase):
 
     def reset(self):
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
-        cmd = self._build_command(self._play_context.ssh_executable, '-O', 'stop', self.host)
+        cmd = self._build_command(
+            self._play_context.ssh_executable, '-O', 'stop', self.host)
         controlpersist, controlpath = self._persistence_controls(cmd)
         cp_arg = [a for a in cmd if a.startswith(b"ControlPath=")]
 
@@ -1242,11 +1313,13 @@ class Connection(ConnectionBase):
 
         if run_reset:
             display.vvv(u'sending stop: %s' % to_text(cmd))
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             status_code = p.wait()
             if status_code != 0:
-                display.warning(u"Failed to reset connection:%s" % to_text(stderr))
+                display.warning(u"Failed to reset connection:%s" %
+                                to_text(stderr))
 
         self.close()
 

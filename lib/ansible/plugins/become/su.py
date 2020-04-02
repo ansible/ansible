@@ -2,6 +2,10 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.become import BecomeBase
+from ansible.module_utils.six.moves import shlex_quote
+from ansible.module_utils._text import to_bytes
+import re
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -81,12 +85,6 @@ DOCUMENTATION = """
               - name: ANSIBLE_SU_PROMPT_L10N
 """
 
-import re
-
-from ansible.module_utils._text import to_bytes
-from ansible.module_utils.six.moves import shlex_quote
-from ansible.plugins.become import BecomeBase
-
 
 class BecomeModule(BecomeBase):
 
@@ -133,11 +131,14 @@ class BecomeModule(BecomeBase):
     def check_password_prompt(self, b_output):
         ''' checks if the expected password prompt exists in b_output '''
 
-        prompts = self.get_option('prompt_l10n') or self.SU_PROMPT_LOCALIZATIONS
-        b_password_string = b"|".join((br'(\w+\'s )?' + to_bytes(p)) for p in prompts)
+        prompts = self.get_option(
+            'prompt_l10n') or self.SU_PROMPT_LOCALIZATIONS
+        b_password_string = b"|".join(
+            (br'(\w+\'s )?' + to_bytes(p)) for p in prompts)
         # Colon or unicode fullwidth colon
         b_password_string = b_password_string + to_bytes(u' ?(:|：) ?')
-        b_su_prompt_localizations_re = re.compile(b_password_string, flags=re.IGNORECASE)
+        b_su_prompt_localizations_re = re.compile(
+            b_password_string, flags=re.IGNORECASE)
         return bool(b_su_prompt_localizations_re.match(b_output))
 
     def build_become_command(self, cmd, shell):

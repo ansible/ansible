@@ -2,6 +2,10 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_native
+from ansible.errors import AnsibleError
+import random
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -31,11 +35,6 @@ RETURN = """
     description:
       - random item
 """
-import random
-
-from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
-from ansible.plugins.lookup import LookupBase
 
 
 class LookupModule(LookupBase):
@@ -47,6 +46,7 @@ class LookupModule(LookupBase):
             try:
                 ret = [random.choice(terms)]
             except Exception as e:
-                raise AnsibleError("Unable to choose random term: %s" % to_native(e))
+                raise AnsibleError(
+                    "Unable to choose random term: %s" % to_native(e))
 
         return ret

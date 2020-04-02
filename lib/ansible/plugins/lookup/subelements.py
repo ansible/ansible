@@ -2,6 +2,11 @@
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils.listify import listify_lookup_plugin_terms
+from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import string_types
+from ansible.errors import AnsibleError
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -82,12 +87,6 @@ _list:
   description: list of subelements extracted
 """
 
-from ansible.errors import AnsibleError
-from ansible.module_utils.six import string_types
-from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.plugins.lookup import LookupBase
-from ansible.utils.listify import listify_lookup_plugin_terms
-
 
 FLAGS = ('skip_missing',)
 
@@ -100,7 +99,8 @@ class LookupModule(LookupBase):
             raise AnsibleError(
                 "subelements lookup expects a list of two or three items, " + msg)
 
-        terms[0] = listify_lookup_plugin_terms(terms[0], templar=self._templar, loader=self._loader)
+        terms[0] = listify_lookup_plugin_terms(
+            terms[0], templar=self._templar, loader=self._loader)
 
         # check lookup terms - check number of terms
         if not isinstance(terms, list) or not 2 <= len(terms) <= 3:
@@ -108,7 +108,8 @@ class LookupModule(LookupBase):
 
         # first term should be a list (or dict), second a string holding the subkey
         if not isinstance(terms[0], (list, dict)) or not isinstance(terms[1], string_types):
-            _raise_terms_error("first a dict or a list, second a string pointing to the subkey")
+            _raise_terms_error(
+                "first a dict or a list, second a string pointing to the subkey")
         subelements = terms[1].split(".")
 
         if isinstance(terms[0], dict):  # convert to list:
@@ -126,18 +127,21 @@ class LookupModule(LookupBase):
         if len(terms) == 3:
             flags = terms[2]
         if not isinstance(flags, dict) and not all([isinstance(key, string_types) and key in FLAGS for key in flags]):
-            _raise_terms_error("the optional third item must be a dict with flags %s" % FLAGS)
+            _raise_terms_error(
+                "the optional third item must be a dict with flags %s" % FLAGS)
 
         # build_items
         ret = []
         for item0 in elementlist:
             if not isinstance(item0, dict):
-                raise AnsibleError("subelements lookup expects a dictionary, got '%s'" % item0)
+                raise AnsibleError(
+                    "subelements lookup expects a dictionary, got '%s'" % item0)
             if item0.get('skipped', False) is not False:
                 # this particular item is to be skipped
                 continue
 
-            skip_missing = boolean(flags.get('skip_missing', False), strict=False)
+            skip_missing = boolean(
+                flags.get('skip_missing', False), strict=False)
             subvalue = item0
             lastsubkey = False
             sublist = []
@@ -148,18 +152,21 @@ class LookupModule(LookupBase):
                     if skip_missing:
                         continue
                     else:
-                        raise AnsibleError("could not find '%s' key in iterated item '%s'" % (subkey, subvalue))
+                        raise AnsibleError(
+                            "could not find '%s' key in iterated item '%s'" % (subkey, subvalue))
                 if not lastsubkey:
                     if not isinstance(subvalue[subkey], dict):
                         if skip_missing:
                             continue
                         else:
-                            raise AnsibleError("the key %s should point to a dictionary, got '%s'" % (subkey, subvalue[subkey]))
+                            raise AnsibleError("the key %s should point to a dictionary, got '%s'" % (
+                                subkey, subvalue[subkey]))
                     else:
                         subvalue = subvalue[subkey]
                 else:  # lastsubkey
                     if not isinstance(subvalue[subkey], list):
-                        raise AnsibleError("the key %s should point to a list, got '%s'" % (subkey, subvalue[subkey]))
+                        raise AnsibleError("the key %s should point to a list, got '%s'" % (
+                            subkey, subvalue[subkey]))
                     else:
                         sublist = subvalue.pop(subkey, [])
             for item1 in sublist:

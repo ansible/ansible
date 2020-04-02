@@ -4,6 +4,8 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+from ansible import constants as C
+from ansible.plugins.callback import CallbackBase
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -14,9 +16,6 @@ DOCUMENTATION = '''
     description:
         - This is the default output callback used by the ansible command (ad-hoc)
 '''
-
-from ansible.plugins.callback import CallbackBase
-from ansible import constants as C
 
 
 class CallbackModule(CallbackBase):
@@ -46,9 +45,11 @@ class CallbackModule(CallbackBase):
         self._handle_warnings(result._result)
 
         if result._task.action in C.MODULE_NO_JSON and 'module_stderr' not in result._result:
-            self._display.display(self._command_generic_msg(result._host.get_name(), result._result, "FAILED"), color=C.COLOR_ERROR)
+            self._display.display(self._command_generic_msg(
+                result._host.get_name(), result._result, "FAILED"), color=C.COLOR_ERROR)
         else:
-            self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_ERROR)
+            self._display.display("%s | FAILED! => %s" % (result._host.get_name(
+            ), self._dump_results(result._result, indent=4)), color=C.COLOR_ERROR)
 
     def v2_runner_on_ok(self, result):
         self._clean_results(result._result, result._task.action)
@@ -63,15 +64,19 @@ class CallbackModule(CallbackBase):
             state = 'SUCCESS'
 
         if result._task.action in C.MODULE_NO_JSON and 'ansible_job_id' not in result._result:
-            self._display.display(self._command_generic_msg(result._host.get_name(), result._result, state), color=color)
+            self._display.display(self._command_generic_msg(
+                result._host.get_name(), result._result, state), color=color)
         else:
-            self._display.display("%s | %s => %s" % (result._host.get_name(), state, self._dump_results(result._result, indent=4)), color=color)
+            self._display.display("%s | %s => %s" % (result._host.get_name(
+            ), state, self._dump_results(result._result, indent=4)), color=color)
 
     def v2_runner_on_skipped(self, result):
-        self._display.display("%s | SKIPPED" % (result._host.get_name()), color=C.COLOR_SKIP)
+        self._display.display("%s | SKIPPED" % (
+            result._host.get_name()), color=C.COLOR_SKIP)
 
     def v2_runner_on_unreachable(self, result):
-        self._display.display("%s | UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_UNREACHABLE)
+        self._display.display("%s | UNREACHABLE! => %s" % (result._host.get_name(
+        ), self._dump_results(result._result, indent=4)), color=C.COLOR_UNREACHABLE)
 
     def v2_on_file_diff(self, result):
         if 'diff' in result._result and result._result['diff']:

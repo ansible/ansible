@@ -2,6 +2,14 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.common._collections_compat import MutableSequence
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six.moves import configparser
+from ansible.errors import AnsibleError, AnsibleAssertionError
+from io import StringIO
+import re
+import os
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -57,15 +65,6 @@ _raw:
   description:
     - value(s) of the key(s) in the ini file
 """
-import os
-import re
-from io import StringIO
-
-from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.module_utils.six.moves import configparser
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.common._collections_compat import MutableSequence
-from ansible.plugins.lookup import LookupBase
 
 
 def _parse_params(term):

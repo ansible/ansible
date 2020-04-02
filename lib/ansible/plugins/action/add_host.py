@@ -44,7 +44,8 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         # Parse out any hostname:port patterns
-        new_name = self._task.args.get('name', self._task.args.get('hostname', self._task.args.get('host', None)))
+        new_name = self._task.args.get('name', self._task.args.get(
+            'hostname', self._task.args.get('host', None)))
 
         if new_name is None:
             result['failed'] = True
@@ -63,7 +64,8 @@ class ActionModule(ActionBase):
         if port:
             self._task.args['ansible_ssh_port'] = port
 
-        groups = self._task.args.get('groupname', self._task.args.get('groups', self._task.args.get('group', '')))
+        groups = self._task.args.get('groupname', self._task.args.get(
+            'groups', self._task.args.get('group', '')))
         # add it to the group if that was specified
         new_groups = []
         if groups:
@@ -72,7 +74,8 @@ class ActionModule(ActionBase):
             elif isinstance(groups, string_types):
                 group_list = groups.split(",")
             else:
-                raise AnsibleError("Groups must be specified as a list.", obj=self._task)
+                raise AnsibleError(
+                    "Groups must be specified as a list.", obj=self._task)
 
             for group_name in group_list:
                 if group_name not in new_groups:
@@ -86,5 +89,6 @@ class ActionModule(ActionBase):
                 host_vars[k] = self._task.args[k]
 
         result['changed'] = True
-        result['add_host'] = dict(host_name=name, groups=new_groups, host_vars=host_vars)
+        result['add_host'] = dict(
+            host_name=name, groups=new_groups, host_vars=host_vars)
         return result

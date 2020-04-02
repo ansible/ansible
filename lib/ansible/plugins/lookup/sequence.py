@@ -2,6 +2,11 @@
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.lookup import LookupBase
+from ansible.parsing.splitter import parse_kv
+from ansible.module_utils.six.moves import xrange
+from ansible.errors import AnsibleError
+from re import compile as re_compile, IGNORECASE
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -68,13 +73,6 @@ RETURN = """
       - A list containing generated sequence of items
     type: list
 """
-
-from re import compile as re_compile, IGNORECASE
-
-from ansible.errors import AnsibleError
-from ansible.module_utils.six.moves import xrange
-from ansible.parsing.splitter import parse_kv
-from ansible.plugins.lookup import LookupBase
 
 
 # shortcut format
@@ -200,7 +198,8 @@ class LookupModule(LookupBase):
         if self.count is None and self.end is None:
             raise AnsibleError("must specify count or end in with_sequence")
         elif self.count is not None and self.end is not None:
-            raise AnsibleError("can't specify both count and end in with_sequence")
+            raise AnsibleError(
+                "can't specify both count and end in with_sequence")
         elif self.count is not None:
             # convert count to end
             if self.count != 0:
@@ -245,7 +244,8 @@ class LookupModule(LookupBase):
                 except AnsibleError:
                     raise
                 except Exception as e:
-                    raise AnsibleError("unknown error parsing with_sequence arguments: %r. Error was: %s" % (term, e))
+                    raise AnsibleError(
+                        "unknown error parsing with_sequence arguments: %r. Error was: %s" % (term, e))
 
                 self.sanity_check()
                 if self.stride != 0:

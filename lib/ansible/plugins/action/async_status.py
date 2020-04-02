@@ -37,7 +37,8 @@ class ActionModule(ActionBase):
         else:
             # inject the async directory based on the shell option into the
             # module args
-            async_dir = self.get_shell_option('async_dir', default="~/.ansible_async")
+            async_dir = self.get_shell_option(
+                'async_dir', default="~/.ansible_async")
 
         module_args = dict(jid=jid, mode=mode, _async_dir=async_dir)
         status = self._execute_module(task_vars=task_vars,

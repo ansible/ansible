@@ -2,6 +2,14 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.vars.fact_cache import FactCache
+from ansible.utils.vars import combine_vars
+from ansible.module_utils._text import to_native
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
+from ansible.inventory.helpers import get_group_vars
+from ansible.errors import AnsibleParserError
+from ansible import constants as C
+import os
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -68,16 +76,6 @@ EXAMPLES = r'''
           parent_group: all_ec2_zones
 '''
 
-import os
-
-from ansible import constants as C
-from ansible.errors import AnsibleParserError
-from ansible.inventory.helpers import get_group_vars
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
-from ansible.module_utils._text import to_native
-from ansible.utils.vars import combine_vars
-from ansible.vars.fact_cache import FactCache
-
 
 class InventoryModule(BaseInventoryPlugin, Constructable):
     """ constructs groups and vars using Jinja2 template expressions """
@@ -104,7 +102,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def parse(self, inventory, loader, path, cache=False):
         ''' parses the inventory file '''
 
-        super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
+        super(InventoryModule, self).parse(
+            inventory, loader, path, cache=cache)
 
         self._read_config_data(path)
 
@@ -115,23 +114,29 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             for host in inventory.hosts:
 
                 # get available variables to templar
-                hostvars = combine_vars(get_group_vars(inventory.hosts[host].get_groups()), inventory.hosts[host].get_vars())
+                hostvars = combine_vars(get_group_vars(
+                    inventory.hosts[host].get_groups()), inventory.hosts[host].get_vars())
                 if host in fact_cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, fact_cache[host])
 
                 # create composite vars
-                self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
+                self._set_composite_vars(self.get_option(
+                    'compose'), hostvars, host, strict=strict)
 
                 # refetch host vars in case new ones have been created above
-                hostvars = combine_vars(get_group_vars(inventory.hosts[host].get_groups()), inventory.hosts[host].get_vars())
+                hostvars = combine_vars(get_group_vars(
+                    inventory.hosts[host].get_groups()), inventory.hosts[host].get_vars())
                 if host in self._cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, self._cache[host])
 
                 # constructed groups based on conditionals
-                self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host, strict=strict)
+                self._add_host_to_composed_groups(self.get_option(
+                    'groups'), hostvars, host, strict=strict)
 
                 # constructed groups based variable values
-                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host, strict=strict)
+                self._add_host_to_keyed_groups(self.get_option(
+                    'keyed_groups'), hostvars, host, strict=strict)
 
         except Exception as e:
-            raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)))
+            raise AnsibleParserError(
+                "failed to parse %s: %s " % (to_native(path), to_native(e)))

@@ -2,6 +2,8 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.shell import ShellBase
+from ansible.module_utils.six.moves import shlex_quote
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -14,9 +16,6 @@ description:
 extends_documentation_fragment:
   - shell_common
 '''
-
-from ansible.module_utils.six.moves import shlex_quote
-from ansible.plugins.shell import ShellBase
 
 
 class ShellModule(ShellBase):
@@ -75,5 +74,6 @@ class ShellModule(ShellBase):
         ]
 
         cmd = (" %s " % self._SHELL_OR).join(csums)
-        cmd = "%s; %s %s (echo \'0  \'%s)" % (test, cmd, self._SHELL_OR, shell_escaped_path)
+        cmd = "%s; %s %s (echo \'0  \'%s)" % (
+            test, cmd, self._SHELL_OR, shell_escaped_path)
         return cmd

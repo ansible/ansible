@@ -119,7 +119,8 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
                         r_files['files'].append((real_file, dest_filepath))
                     else:
                         # Mark this file as a symlink to copy
-                        r_files['symlinks'].append((os.readlink(filepath), dest_filepath))
+                        r_files['symlinks'].append(
+                            (os.readlink(filepath), dest_filepath))
                 else:
                     # Just a normal file
                     r_files['files'].append((filepath, dest_filepath))
@@ -135,33 +136,41 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
                         if (dir_stats.st_dev, dir_stats.st_ino) in parent_dirs:
                             # Just insert the symlink if the target directory
                             # exists inside of the copy already
-                            r_files['symlinks'].append((os.readlink(dirpath), dest_dirpath))
+                            r_files['symlinks'].append(
+                                (os.readlink(dirpath), dest_dirpath))
                         else:
                             # Walk the dirpath to find all parent directories.
                             new_parents = set()
-                            parent_dir_list = os.path.dirname(dirpath).split(os.path.sep)
+                            parent_dir_list = os.path.dirname(
+                                dirpath).split(os.path.sep)
                             for parent in range(len(parent_dir_list), 0, -1):
-                                parent_stat = os.stat(u'/'.join(parent_dir_list[:parent]))
+                                parent_stat = os.stat(
+                                    u'/'.join(parent_dir_list[:parent]))
                                 if (parent_stat.st_dev, parent_stat.st_ino) in parent_dirs:
                                     # Reached the point at which the directory
                                     # tree is already known.  Don't add any
                                     # more or we might go to an ancestor that
                                     # isn't being copied.
                                     break
-                                new_parents.add((parent_stat.st_dev, parent_stat.st_ino))
+                                new_parents.add(
+                                    (parent_stat.st_dev, parent_stat.st_ino))
 
                             if (dir_stats.st_dev, dir_stats.st_ino) in new_parents:
                                 # This was a a circular symlink.  So add it as
                                 # a symlink
-                                r_files['symlinks'].append((os.readlink(dirpath), dest_dirpath))
+                                r_files['symlinks'].append(
+                                    (os.readlink(dirpath), dest_dirpath))
                             else:
                                 # Walk the directory pointed to by the symlink
-                                r_files['directories'].append((real_dir, dest_dirpath))
+                                r_files['directories'].append(
+                                    (real_dir, dest_dirpath))
                                 offset = len(real_dir) + 1
-                                _recurse(real_dir, offset, parent_dirs.union(new_parents), rel_base=dest_dirpath)
+                                _recurse(real_dir, offset, parent_dirs.union(
+                                    new_parents), rel_base=dest_dirpath)
                     else:
                         # Add the symlink to the destination
-                        r_files['symlinks'].append((os.readlink(dirpath), dest_dirpath))
+                        r_files['symlinks'].append(
+                            (os.readlink(dirpath), dest_dirpath))
                 else:
                     # Just a normal directory
                     r_files['directories'].append((dirpath, dest_dirpath))
@@ -234,10 +243,12 @@ class ActionModule(ActionBase):
 
         # If the local file does not exist, get_real_file() raises AnsibleFileNotFound
         try:
-            source_full = self._loader.get_real_file(source_full, decrypt=decrypt)
+            source_full = self._loader.get_real_file(
+                source_full, decrypt=decrypt)
         except AnsibleFileNotFound as e:
             result['failed'] = True
-            result['msg'] = "could not find src=%s, %s" % (source_full, to_text(e))
+            result['msg'] = "could not find src=%s, %s" % (
+                source_full, to_text(e))
             return result
 
         # Get the local mode and set if user wanted it preserved
@@ -255,20 +266,23 @@ class ActionModule(ActionBase):
             dest_file = dest
 
         # Attempt to get remote file info
-        dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, checksum=force)
+        dest_status = self._execute_remote_stat(
+            dest_file, all_vars=task_vars, follow=follow, checksum=force)
 
         if dest_status['exists'] and dest_status['isdir']:
             # The dest is a directory.
             if content is not None:
                 # If source was defined as content remove the temporary file and fail out.
-                self._remove_tempfile_if_content_defined(content, content_tempfile)
+                self._remove_tempfile_if_content_defined(
+                    content, content_tempfile)
                 result['failed'] = True
                 result['msg'] = "can not use content with a dir as dest"
                 return result
             else:
                 # Append the relative source location to the destination and get remote stats again
                 dest_file = self._connection._shell.join_path(dest, source_rel)
-                dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, checksum=force)
+                dest_status = self._execute_remote_stat(
+                    dest_file, all_vars=task_vars, follow=follow, checksum=force)
 
         if dest_status['exists'] and not force:
             # remote_file exists so continue to next iteration.
@@ -281,15 +295,18 @@ class ActionModule(ActionBase):
             # The checksums don't match and we will change or error out.
 
             if self._play_context.diff and not raw:
-                result['diff'].append(self._get_diff_data(dest_file, source_full, task_vars))
+                result['diff'].append(self._get_diff_data(
+                    dest_file, source_full, task_vars))
 
             if self._play_context.check_mode:
-                self._remove_tempfile_if_content_defined(content, content_tempfile)
+                self._remove_tempfile_if_content_defined(
+                    content, content_tempfile)
                 result['changed'] = True
                 return result
 
             # Define a remote directory that we will copy the file to.
-            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, 'source')
+            tmp_src = self._connection._shell.join_path(
+                self._connection._shell.tmpdir, 'source')
 
             remote_path = None
 
@@ -308,7 +325,8 @@ class ActionModule(ActionBase):
             # a problem before acting on this idea. (This idea would save a round-trip)
             # fix file permissions when the copy is done as a different user
             if remote_path:
-                self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
+                self._fixup_perms2(
+                    (self._connection._shell.tmpdir, remote_path))
 
             if raw:
                 # Continue to next iteration if raw is defined.
@@ -333,7 +351,8 @@ class ActionModule(ActionBase):
             if lmode:
                 new_module_args['mode'] = lmode
 
-            module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(
+                module_name='copy', module_args=new_module_args, task_vars=task_vars)
 
         else:
             # no need to transfer the file, already correct hash, but still need to call
@@ -348,7 +367,8 @@ class ActionModule(ActionBase):
             # If checksums match, and follow = True, find out if 'dest' is a link. If so,
             # change it to point to the source of the link.
             if follow:
-                dest_status_nofollow = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=False)
+                dest_status_nofollow = self._execute_remote_stat(
+                    dest_file, all_vars=task_vars, follow=False)
                 if dest_status_nofollow['islnk'] and 'lnk_source' in dest_status_nofollow.keys():
                     dest = dest_status_nofollow['lnk_source']
 
@@ -372,7 +392,8 @@ class ActionModule(ActionBase):
                 new_module_args['mode'] = lmode
 
             # Execute the file module.
-            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(
+                module_name='file', module_args=new_module_args, task_vars=task_vars)
 
         if not module_return.get('checksum'):
             module_return['checksum'] = local_checksum
@@ -409,8 +430,10 @@ class ActionModule(ActionBase):
         source = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
         dest = self._task.args.get('dest', None)
-        remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
-        local_follow = boolean(self._task.args.get('local_follow', True), strict=False)
+        remote_src = boolean(self._task.args.get(
+            'remote_src', False), strict=False)
+        local_follow = boolean(self._task.args.get(
+            'local_follow', True), strict=False)
 
         result['failed'] = True
         if not source and content is None:
@@ -436,19 +459,22 @@ class ActionModule(ActionBase):
                 # If content comes to us as a dict it should be decoded json.
                 # We need to encode it back into a string to write it out.
                 if isinstance(content, dict) or isinstance(content, list):
-                    content_tempfile = self._create_content_tempfile(json.dumps(content))
+                    content_tempfile = self._create_content_tempfile(
+                        json.dumps(content))
                 else:
                     content_tempfile = self._create_content_tempfile(content)
                 source = content_tempfile
             except Exception as err:
                 result['failed'] = True
-                result['msg'] = "could not write content temp file: %s" % to_native(err)
+                result['msg'] = "could not write content temp file: %s" % to_native(
+                    err)
                 return self._ensure_invocation(result)
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif remote_src:
-            result.update(self._execute_module(module_name='copy', task_vars=task_vars))
+            result.update(self._execute_module(
+                module_name='copy', task_vars=task_vars))
             return self._ensure_invocation(result)
         else:
             # find_needle returns a path that may not have a trailing slash on
@@ -509,9 +535,11 @@ class ActionModule(ActionBase):
             if source_files['directories']:
                 follow = False
             else:
-                follow = boolean(self._task.args.get('follow', False), strict=False)
+                follow = boolean(self._task.args.get(
+                    'follow', False), strict=False)
 
-            module_return = self._copy_file(source_full, source_rel, content, content_tempfile, dest, task_vars, follow)
+            module_return = self._copy_file(
+                source_full, source_rel, content, content_tempfile, dest, task_vars, follow)
             if module_return is None:
                 continue
 
@@ -539,11 +567,13 @@ class ActionModule(ActionBase):
             new_module_args = _create_remote_file_args(self._task.args)
             new_module_args['path'] = os.path.join(dest, dest_path)
             new_module_args['state'] = 'directory'
-            new_module_args['mode'] = self._task.args.get('directory_mode', None)
+            new_module_args['mode'] = self._task.args.get(
+                'directory_mode', None)
             new_module_args['recurse'] = False
             del new_module_args['src']
 
-            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(
+                module_name='file', module_args=new_module_args, task_vars=task_vars)
 
             if module_return.get('failed'):
                 result.update(module_return)
@@ -564,7 +594,8 @@ class ActionModule(ActionBase):
             if source_files['directories']:
                 new_module_args['follow'] = False
 
-            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(
+                module_name='file', module_args=new_module_args, task_vars=task_vars)
             module_executed = True
 
             if module_return.get('failed'):

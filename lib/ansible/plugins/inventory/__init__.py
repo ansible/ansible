@@ -82,10 +82,12 @@ def expand_hostname_range(line=None):
         # - also add an optional third parameter which contains the step. (Default: 1)
         #   so range can be [01:10:2] -> 01 03 05 07 09
 
-        (head, nrange, tail) = line.replace('[', '|', 1).replace(']', '|', 1).split('|')
+        (head, nrange, tail) = line.replace(
+            '[', '|', 1).replace(']', '|', 1).split('|')
         bounds = nrange.split(":")
         if len(bounds) != 2 and len(bounds) != 3:
-            raise AnsibleError("host range must be begin:end or begin:end:step")
+            raise AnsibleError(
+                "host range must be begin:end or begin:end:step")
         beg = bounds[0]
         end = bounds[1]
         if len(bounds) == 2:
@@ -99,7 +101,8 @@ def expand_hostname_range(line=None):
         if beg[0] == '0' and len(beg) > 1:
             rlen = len(beg)  # range length formatting hint
             if rlen != len(end):
-                raise AnsibleError("host range must specify equal-length begin and end formats")
+                raise AnsibleError(
+                    "host range must specify equal-length begin and end formats")
 
             def fill(x):
                 return str(x).zfill(rlen)  # range sequence
@@ -191,12 +194,14 @@ class BaseInventoryPlugin(AnsiblePlugin):
         if (os.path.exists(b_path) and os.access(b_path, os.R_OK)):
             valid = True
         else:
-            self.display.vvv('Skipping due to inventory source not existing or not being readable by the current user')
+            self.display.vvv(
+                'Skipping due to inventory source not existing or not being readable by the current user')
         return valid
 
     def _populate_host_vars(self, hosts, variables, group=None, port=None):
         if not isinstance(variables, Mapping):
-            raise AnsibleParserError("Invalid data from file, expected dictionary and got:\n\n%s" % to_native(variables))
+            raise AnsibleParserError(
+                "Invalid data from file, expected dictionary and got:\n\n%s" % to_native(variables))
 
         for host in hosts:
             self.inventory.add_host(host, group=group, port=port)
@@ -221,16 +226,21 @@ class BaseInventoryPlugin(AnsiblePlugin):
             raise AnsibleParserError("%s is empty" % (to_native(path)))
         elif config.get('plugin') != self.NAME:
             # this is not my config file
-            raise AnsibleParserError("Incorrect plugin name in file: %s" % config.get('plugin', 'none found'))
+            raise AnsibleParserError(
+                "Incorrect plugin name in file: %s" % config.get('plugin', 'none found'))
         elif not isinstance(config, Mapping):
             # configs are dictionaries
-            raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
+            raise AnsibleParserError(
+                'inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
 
         self.set_options(direct=config)
         if 'cache' in self._options and self.get_option('cache'):
-            cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
-            cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]))
-            self._cache = get_cache_plugin(self.get_option('cache_plugin'), **cache_options)
+            cache_option_keys = [('_uri', 'cache_connection'),
+                                 ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
+            cache_options = dict((opt[0], self.get_option(opt[1]))
+                                 for opt in cache_option_keys if self.get_option(opt[1]))
+            self._cache = get_cache_plugin(
+                self.get_option('cache_plugin'), **cache_options)
 
         return config
 
@@ -300,7 +310,8 @@ class DeprecatedCache(object):
         self.real_cacheable.set_cache_plugin()
 
     def __getattr__(self, name):
-        display.deprecated('InventoryModule should utilize self._cache instead of self.cache', version='2.12')
+        display.deprecated(
+            'InventoryModule should utilize self._cache instead of self.cache', version='2.12')
         return self.real_cacheable._cache.__getattribute__(name)
 
 
@@ -314,8 +325,10 @@ class Cacheable(object):
 
     def load_cache_plugin(self):
         plugin_name = self.get_option('cache_plugin')
-        cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
-        cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]))
+        cache_option_keys = [('_uri', 'cache_connection'),
+                             ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
+        cache_options = dict((opt[0], self.get_option(opt[1]))
+                             for opt in cache_option_keys if self.get_option(opt[1]))
         self._cache = get_cache_plugin(plugin_name, **cache_options)
 
     def get_cache_key(self, path):
@@ -360,7 +373,8 @@ class Constructable(object):
                     composite = self._compose(compose[varname], variables)
                 except Exception as e:
                     if strict:
-                        raise AnsibleError("Could not set %s for host %s: %s" % (varname, host, to_native(e)))
+                        raise AnsibleError("Could not set %s for host %s: %s" % (
+                            varname, host, to_native(e)))
                     continue
                 self.inventory.set_variable(host, varname, composite)
 
@@ -368,16 +382,19 @@ class Constructable(object):
         ''' helper to create complex groups for plugins based on jinja2 conditionals, hosts that meet the conditional are added to group'''
         # process each 'group entry'
         if groups and isinstance(groups, dict):
-            variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
+            variables = combine_vars(
+                variables, self.inventory.get_host(host).get_vars())
             self.templar.available_variables = variables
             for group_name in groups:
-                conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
+                conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[
+                    group_name]
                 group_name = original_safe(group_name, force=True)
                 try:
                     result = boolean(self.templar.template(conditional))
                 except Exception as e:
                     if strict:
-                        raise AnsibleParserError("Could not add host %s to group %s: %s" % (host, group_name, to_native(e)))
+                        raise AnsibleParserError("Could not add host %s to group %s: %s" % (
+                            host, group_name, to_native(e)))
                     continue
 
                 if result:
@@ -392,12 +409,14 @@ class Constructable(object):
             for keyed in keys:
                 if keyed and isinstance(keyed, dict):
 
-                    variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
+                    variables = combine_vars(
+                        variables, self.inventory.get_host(host).get_vars())
                     try:
                         key = self._compose(keyed.get('key'), variables)
                     except Exception as e:
                         if strict:
-                            raise AnsibleParserError("Could not generate group for host %s from %s entry: %s" % (host, keyed.get('key'), to_native(e)))
+                            raise AnsibleParserError("Could not generate group for host %s from %s entry: %s" % (
+                                host, keyed.get('key'), to_native(e)))
                         continue
 
                     if key:
@@ -406,10 +425,12 @@ class Constructable(object):
                         raw_parent_name = keyed.get('parent_group', None)
                         if raw_parent_name:
                             try:
-                                raw_parent_name = self.templar.template(raw_parent_name)
+                                raw_parent_name = self.templar.template(
+                                    raw_parent_name)
                             except AnsibleError as e:
                                 if strict:
-                                    raise AnsibleParserError("Could not generate parent group %s for group %s: %s" % (raw_parent_name, key, to_native(e)))
+                                    raise AnsibleParserError("Could not generate parent group %s for group %s: %s" % (
+                                        raw_parent_name, key, to_native(e)))
                                 continue
 
                         new_raw_group_names = []
@@ -423,22 +444,28 @@ class Constructable(object):
                                 name = '%s%s%s' % (gname, sep, gval)
                                 new_raw_group_names.append(name)
                         else:
-                            raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
+                            raise AnsibleParserError(
+                                "Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
 
                         for bare_name in new_raw_group_names:
-                            gname = self._sanitize_group_name('%s%s%s' % (prefix, sep, bare_name))
+                            gname = self._sanitize_group_name(
+                                '%s%s%s' % (prefix, sep, bare_name))
                             result_gname = self.inventory.add_group(gname)
                             self.inventory.add_host(host, result_gname)
 
                             if raw_parent_name:
-                                parent_name = self._sanitize_group_name(raw_parent_name)
+                                parent_name = self._sanitize_group_name(
+                                    raw_parent_name)
                                 self.inventory.add_group(parent_name)
-                                self.inventory.add_child(parent_name, result_gname)
+                                self.inventory.add_child(
+                                    parent_name, result_gname)
 
                     else:
                         # exclude case of empty list and dictionary, because these are valid constructions
                         # simply no groups need to be constructed, but are still falsy
                         if strict and key not in ([], {}):
-                            raise AnsibleParserError("No key or key resulted empty for %s in host %s, invalid entry" % (keyed.get('key'), host))
+                            raise AnsibleParserError(
+                                "No key or key resulted empty for %s in host %s, invalid entry" % (keyed.get('key'), host))
                 else:
-                    raise AnsibleParserError("Invalid keyed group entry, it must be a dictionary: %s " % keyed)
+                    raise AnsibleParserError(
+                        "Invalid keyed group entry, it must be a dictionary: %s " % keyed)

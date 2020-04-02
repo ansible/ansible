@@ -2,6 +2,19 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils.hashing import secure_hash
+from ansible.utils.display import Display
+from ansible.plugins.shell.powershell import _common_args
+from ansible.plugins.connection import ConnectionBase
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.errors import AnsibleFileNotFound
+from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible import constants as C
+import os
+import logging
+import json
+import base64
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -296,20 +309,6 @@ options:
     default: Microsoft.PowerShell
 """
 
-import base64
-import json
-import logging
-import os
-
-from ansible import constants as C
-from ansible.errors import AnsibleConnectionFailure, AnsibleError
-from ansible.errors import AnsibleFileNotFound
-from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.plugins.connection import ConnectionBase
-from ansible.plugins.shell.powershell import _common_args
-from ansible.utils.display import Display
-from ansible.utils.hashing import secure_hash
 
 HAS_PYPSRP = True
 PYPSRP_IMP_ERR = None
@@ -413,7 +412,8 @@ class Connection(ConnectionBase):
             # starting a new interpreter to save on time
             b_command = base64.b64decode(cmd.split(" ")[-1])
             script = to_text(b_command, 'utf-16-le')
-            in_data = to_text(in_data, errors="surrogate_or_strict", nonstring="passthru")
+            in_data = to_text(
+                in_data, errors="surrogate_or_strict", nonstring="passthru")
 
             if in_data and in_data.startswith(u"#!"):
                 # ANSIBALLZ wrapper, we need to get the interpreter and execute
@@ -582,7 +582,8 @@ if ($bytes_read -gt 0) {
             while True:
                 display.vvvvv("PSRP FETCH %s to %s (offset=%d" %
                               (in_path, out_path, offset), host=self._psrp_host)
-                rc, stdout, stderr = self._exec_psrp_script(read_script % offset, force_stop=True)
+                rc, stdout, stderr = self._exec_psrp_script(
+                    read_script % offset, force_stop=True)
                 if rc != 0:
                     raise AnsibleError("failed to transfer file to '%s': %s"
                                        % (out_path, to_native(stderr)))
@@ -593,7 +594,8 @@ if ($bytes_read -gt 0) {
                     break
                 offset += len(data)
 
-            rc, stdout, stderr = self._exec_psrp_script("$fs.Close()", force_stop=True)
+            rc, stdout, stderr = self._exec_psrp_script(
+                "$fs.Close()", force_stop=True)
             if rc != 0:
                 display.warning("failed to close remote file stream of file "
                                 "'%s': %s" % (in_path, to_native(stderr)))
@@ -636,25 +638,35 @@ if ($bytes_read -gt 0) {
         else:
             self._psrp_cert_validation = True
 
-        self._psrp_connection_timeout = self.get_option('connection_timeout')  # Can be None
-        self._psrp_read_timeout = self.get_option('read_timeout')  # Can be None
+        self._psrp_connection_timeout = self.get_option(
+            'connection_timeout')  # Can be None
+        self._psrp_read_timeout = self.get_option(
+            'read_timeout')  # Can be None
         self._psrp_message_encryption = self.get_option('message_encryption')
         self._psrp_proxy = self.get_option('proxy')
         self._psrp_ignore_proxy = boolean(self.get_option('ignore_proxy'))
-        self._psrp_operation_timeout = int(self.get_option('operation_timeout'))
-        self._psrp_max_envelope_size = int(self.get_option('max_envelope_size'))
+        self._psrp_operation_timeout = int(
+            self.get_option('operation_timeout'))
+        self._psrp_max_envelope_size = int(
+            self.get_option('max_envelope_size'))
         self._psrp_configuration_name = self.get_option('configuration_name')
-        self._psrp_reconnection_retries = int(self.get_option('reconnection_retries'))
-        self._psrp_reconnection_backoff = float(self.get_option('reconnection_backoff'))
+        self._psrp_reconnection_retries = int(
+            self.get_option('reconnection_retries'))
+        self._psrp_reconnection_backoff = float(
+            self.get_option('reconnection_backoff'))
 
         self._psrp_certificate_key_pem = self.get_option('certificate_key_pem')
         self._psrp_certificate_pem = self.get_option('certificate_pem')
-        self._psrp_credssp_auth_mechanism = self.get_option('credssp_auth_mechanism')
-        self._psrp_credssp_disable_tlsv1_2 = self.get_option('credssp_disable_tlsv1_2')
-        self._psrp_credssp_minimum_version = self.get_option('credssp_minimum_version')
+        self._psrp_credssp_auth_mechanism = self.get_option(
+            'credssp_auth_mechanism')
+        self._psrp_credssp_disable_tlsv1_2 = self.get_option(
+            'credssp_disable_tlsv1_2')
+        self._psrp_credssp_minimum_version = self.get_option(
+            'credssp_minimum_version')
         self._psrp_negotiate_send_cbt = self.get_option('negotiate_send_cbt')
         self._psrp_negotiate_delegate = self.get_option('negotiate_delegate')
-        self._psrp_negotiate_hostname_override = self.get_option('negotiate_hostname_override')
+        self._psrp_negotiate_hostname_override = self.get_option(
+            'negotiate_hostname_override')
         self._psrp_negotiate_service = self.get_option('negotiate_service')
 
         supported_args = []
@@ -702,9 +714,11 @@ if ($bytes_read -gt 0) {
             self._psrp_conn_kwargs['reconnection_backoff'] = self._psrp_reconnection_backoff
         else:
             if self._psrp_reconnection_retries is not None:
-                display.warning("ansible_psrp_reconnection_retries is unsupported by the current psrp version installed.")
+                display.warning(
+                    "ansible_psrp_reconnection_retries is unsupported by the current psrp version installed.")
             if self._psrp_reconnection_backoff is not None:
-                display.warning("ansible_psrp_reconnection_backoff is unsupported by the current psrp version installed.")
+                display.warning(
+                    "ansible_psrp_reconnection_backoff is unsupported by the current psrp version installed.")
 
         # add in the extra args that were set
         for arg in extra_args.intersection(supported_args):

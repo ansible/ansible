@@ -2,6 +2,12 @@
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils.display import Display
+from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
+from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
+from ansible.errors import AnsibleError
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -105,12 +111,6 @@ RETURN = """
     description: list of list of lines or content of url(s)
 """
 
-from ansible.errors import AnsibleError
-from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
-from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
-from ansible.plugins.lookup import LookupBase
-from ansible.utils.display import Display
 
 display = Display()
 
@@ -133,20 +133,26 @@ class LookupModule(LookupBase):
                                     force=self.get_option('force'),
                                     timeout=self.get_option('timeout'),
                                     http_agent=self.get_option('http_agent'),
-                                    force_basic_auth=self.get_option('force_basic_auth'),
-                                    follow_redirects=self.get_option('follow_redirects'),
+                                    force_basic_auth=self.get_option(
+                                        'force_basic_auth'),
+                                    follow_redirects=self.get_option(
+                                        'follow_redirects'),
                                     use_gssapi=self.get_option('use_gssapi'),
                                     unix_socket=self.get_option('unix_socket'),
                                     ca_path=self.get_option('ca_path'),
                                     unredirected_headers=self.get_option('unredirected_headers'))
             except HTTPError as e:
-                raise AnsibleError("Received HTTP error for %s : %s" % (term, to_native(e)))
+                raise AnsibleError(
+                    "Received HTTP error for %s : %s" % (term, to_native(e)))
             except URLError as e:
-                raise AnsibleError("Failed lookup url for %s : %s" % (term, to_native(e)))
+                raise AnsibleError(
+                    "Failed lookup url for %s : %s" % (term, to_native(e)))
             except SSLValidationError as e:
-                raise AnsibleError("Error validating the server's certificate for %s: %s" % (term, to_native(e)))
+                raise AnsibleError(
+                    "Error validating the server's certificate for %s: %s" % (term, to_native(e)))
             except ConnectionError as e:
-                raise AnsibleError("Error connecting to %s: %s" % (term, to_native(e)))
+                raise AnsibleError("Error connecting to %s: %s" %
+                                   (term, to_native(e)))
 
             if self.get_option('split_lines'):
                 for line in response.read().splitlines():

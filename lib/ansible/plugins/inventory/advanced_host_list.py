@@ -2,6 +2,10 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.errors import AnsibleError, AnsibleParserError
+import os
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -20,12 +24,6 @@ EXAMPLES = '''
     # still supports w/o ranges also
     # ansible-playbook -i 'localhost,' play.yml
 '''
-
-import os
-
-from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.plugins.inventory import BaseInventoryPlugin
 
 
 class InventoryModule(BaseInventoryPlugin):
@@ -52,12 +50,15 @@ class InventoryModule(BaseInventoryPlugin):
                     try:
                         (hostnames, port) = self._expand_hostpattern(h)
                     except AnsibleError as e:
-                        self.display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_text(e))
+                        self.display.vvv(
+                            "Unable to parse address from hostname, leaving unchanged: %s" % to_text(e))
                         host = [h]
                         port = None
 
                     for host in hostnames:
                         if host not in self.inventory.hosts:
-                            self.inventory.add_host(host, group='ungrouped', port=port)
+                            self.inventory.add_host(
+                                host, group='ungrouped', port=port)
         except Exception as e:
-            raise AnsibleParserError("Invalid data from string, could not parse: %s" % to_native(e))
+            raise AnsibleParserError(
+                "Invalid data from string, could not parse: %s" % to_native(e))

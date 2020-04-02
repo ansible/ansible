@@ -32,7 +32,8 @@ try:
     from ncclient.xml_ import to_xml, to_ele, NCElement
     HAS_NCCLIENT = True
     NCCLIENT_IMP_ERR = None
-except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+# paramiko and gssapi are incompatible and raise AttributeError not ImportError
+except (ImportError, AttributeError) as err:
     HAS_NCCLIENT = False
     NCCLIENT_IMP_ERR = err
 
@@ -46,7 +47,8 @@ def ensure_ncclient(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
         if not HAS_NCCLIENT:
-            raise AnsibleError("%s: %s" % (missing_required_lib('ncclient'), to_native(NCCLIENT_IMP_ERR)))
+            raise AnsibleError("%s: %s" % (missing_required_lib(
+                'ncclient'), to_native(NCCLIENT_IMP_ERR)))
         return func(self, *args, **kwargs)
     return wrapped
 
@@ -209,7 +211,8 @@ class NetconfBase(AnsiblePlugin):
         if rpc_command is None:
             raise ValueError('rpc_command value must be provided')
 
-        resp = self.m.dispatch(fromstring(rpc_command), source=source, filter=filter)
+        resp = self.m.dispatch(fromstring(rpc_command),
+                               source=source, filter=filter)
 
         if isinstance(resp, NCElement):
             # In case xml reply is transformed or namespace is removed in
@@ -269,7 +272,8 @@ class NetconfBase(AnsiblePlugin):
                         and set a token on the ongoing confirmed commit
         :return: Returns xml string containing the RPC response received from remote host
         """
-        resp = self.m.commit(confirmed=confirmed, timeout=timeout, persist=persist)
+        resp = self.m.commit(confirmed=confirmed,
+                             timeout=timeout, persist=persist)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     def get_schema(self, identifier=None, version=None, format=None):

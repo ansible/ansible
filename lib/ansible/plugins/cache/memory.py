@@ -4,6 +4,7 @@
 
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.cache import BaseCacheModule
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -16,8 +17,6 @@ DOCUMENTATION = '''
     version_added: historical
     author: core team (@ansible-core)
 '''
-
-from ansible.plugins.cache import BaseCacheModule
 
 
 class CacheModule(BaseCacheModule):

@@ -72,7 +72,8 @@ class HttpApiBase(AnsiblePlugin):
             if self.connection._auth:
                 # Stored auth appears to be invalid, clear and retry
                 self.connection._auth = None
-                self.login(self.connection.get_option('remote_user'), self.connection.get_option('password'))
+                self.login(self.connection.get_option('remote_user'),
+                           self.connection.get_option('password'))
                 return True
             else:
                 # Unauthorized and there's no token. Return an error

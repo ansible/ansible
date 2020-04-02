@@ -3,6 +3,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.callback import CallbackBase
+from ansible.module_utils._text import to_bytes, to_text
+import re
+import time
+import os
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -77,12 +82,6 @@ DOCUMENTATION = '''
       - junit_xml (python lib)
 '''
 
-import os
-import time
-import re
-
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.plugins.callback import CallbackBase
 
 try:
     from junit_xml import TestSuite, TestCase
@@ -146,13 +145,18 @@ class CallbackModule(CallbackBase):
     def __init__(self):
         super(CallbackModule, self).__init__()
 
-        self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
+        self._output_dir = os.getenv(
+            'JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
         self._task_class = os.getenv('JUNIT_TASK_CLASS', 'False').lower()
         self._task_relative_path = os.getenv('JUNIT_TASK_RELATIVE_PATH', '')
-        self._fail_on_change = os.getenv('JUNIT_FAIL_ON_CHANGE', 'False').lower()
-        self._fail_on_ignore = os.getenv('JUNIT_FAIL_ON_IGNORE', 'False').lower()
-        self._include_setup_tasks_in_report = os.getenv('JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
-        self._hide_task_arguments = os.getenv('JUNIT_HIDE_TASK_ARGUMENTS', 'False').lower()
+        self._fail_on_change = os.getenv(
+            'JUNIT_FAIL_ON_CHANGE', 'False').lower()
+        self._fail_on_ignore = os.getenv(
+            'JUNIT_FAIL_ON_IGNORE', 'False').lower()
+        self._include_setup_tasks_in_report = os.getenv(
+            'JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
+        self._hide_task_arguments = os.getenv(
+            'JUNIT_HIDE_TASK_ARGUMENTS', 'False').lower()
         self._test_case_prefix = os.getenv('JUNIT_TEST_CASE_PREFIX', '')
         self._playbook_path = None
         self._playbook_name = None
@@ -232,7 +236,8 @@ class CallbackModule(CallbackBase):
         duration = host_data.finish - task_data.start
 
         if self._task_relative_path:
-            junit_classname = os.path.relpath(task_data.path, self._task_relative_path)
+            junit_classname = os.path.relpath(
+                task_data.path, self._task_relative_path)
         else:
             junit_classname = task_data.path
 
@@ -290,14 +295,16 @@ class CallbackModule(CallbackBase):
         test_suite = TestSuite(self._playbook_name, test_cases)
         report = TestSuite.to_xml_string([test_suite])
 
-        output_file = os.path.join(self._output_dir, '%s-%s.xml' % (self._playbook_name, time.time()))
+        output_file = os.path.join(
+            self._output_dir, '%s-%s.xml' % (self._playbook_name, time.time()))
 
         with open(output_file, 'wb') as xml:
             xml.write(to_bytes(report, errors='surrogate_or_strict'))
 
     def v2_playbook_on_start(self, playbook):
         self._playbook_path = playbook._file_name
-        self._playbook_name = os.path.splitext(os.path.basename(self._playbook_path))[0]
+        self._playbook_name = os.path.splitext(
+            os.path.basename(self._playbook_path))[0]
 
     def v2_playbook_on_play_start(self, play):
         self._play_name = play.get_name()
@@ -352,9 +359,11 @@ class TaskData:
         if host.uuid in self.host_data:
             if host.status == 'included':
                 # concatenate task include output from multiple items
-                host.result = '%s\n%s' % (self.host_data[host.uuid].result, host.result)
+                host.result = '%s\n%s' % (
+                    self.host_data[host.uuid].result, host.result)
             else:
-                raise Exception('%s: %s: %s: duplicate host callback: %s' % (self.path, self.play, self.name, host.name))
+                raise Exception('%s: %s: %s: duplicate host callback: %s' % (
+                    self.path, self.play, self.name, host.name))
 
         self.host_data[host.uuid] = host
 

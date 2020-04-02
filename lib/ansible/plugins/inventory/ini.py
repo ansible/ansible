@@ -1,6 +1,13 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils.shlex import shlex_split
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.plugins.inventory import BaseFileInventoryPlugin
+from ansible.inventory.group import to_safe_group_name
+import re
+import ast
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -74,16 +81,6 @@ EXAMPLES = '''
             # inventory hostnames are unique
 '''
 
-import ast
-import re
-
-from ansible.inventory.group import to_safe_group_name
-from ansible.plugins.inventory import BaseFileInventoryPlugin
-
-from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.utils.shlex import shlex_split
-
 
 class InventoryModule(BaseFileInventoryPlugin):
     """
@@ -119,7 +116,8 @@ class InventoryModule(BaseFileInventoryPlugin):
             try:
                 # Faster to do to_text once on a long string than many
                 # times on smaller strings
-                data = to_text(b_data, errors='surrogate_or_strict').splitlines()
+                data = to_text(
+                    b_data, errors='surrogate_or_strict').splitlines()
             except UnicodeError:
                 # Handle non-utf8 in comment lines: https://github.com/ansible/ansible/issues/17593
                 data = []
@@ -131,7 +129,8 @@ class InventoryModule(BaseFileInventoryPlugin):
                         data.append(u'')
                     else:
                         # Non-comment lines still have to be valid uf-8
-                        data.append(to_text(line, errors='surrogate_or_strict'))
+                        data.append(
+                            to_text(line, errors='surrogate_or_strict'))
 
             self._parse(path, data)
         except Exception as e:
@@ -177,7 +176,8 @@ class InventoryModule(BaseFileInventoryPlugin):
                 state = state or 'hosts'
                 if state not in ['hosts', 'children', 'vars']:
                     title = ":".join(m.groups())
-                    self._raise_error("Section [%s] has unknown type: %s" % (title, state))
+                    self._raise_error(
+                        "Section [%s] has unknown type: %s" % (title, state))
 
                 # If we haven't seen this group before, we add a new Group.
                 if groupname not in self.inventory.groups:
@@ -190,14 +190,16 @@ class InventoryModule(BaseFileInventoryPlugin):
                     # declarations will take the appropriate action for a pending child group instead of
                     # incorrectly handling it as a var state pending declaration
                     if state == 'vars' and groupname not in pending_declarations:
-                        pending_declarations[groupname] = dict(line=self.lineno, state=state, name=groupname)
+                        pending_declarations[groupname] = dict(
+                            line=self.lineno, state=state, name=groupname)
 
                     self.inventory.add_group(groupname)
 
                 # When we see a declaration that we've been waiting for, we process and delete.
                 if groupname in pending_declarations and state != 'vars':
                     if pending_declarations[groupname]['state'] == 'children':
-                        self._add_pending_children(groupname, pending_declarations)
+                        self._add_pending_children(
+                            groupname, pending_declarations)
                     elif pending_declarations[groupname]['state'] == 'vars':
                         del pending_declarations[groupname]
 
@@ -230,9 +232,11 @@ class InventoryModule(BaseFileInventoryPlugin):
                 child = self._parse_group_name(line)
                 if child not in self.inventory.groups:
                     if child not in pending_declarations:
-                        pending_declarations[child] = dict(line=self.lineno, state=state, name=child, parents=[groupname])
+                        pending_declarations[child] = dict(
+                            line=self.lineno, state=state, name=child, parents=[groupname])
                     else:
-                        pending_declarations[child]['parents'].append(groupname)
+                        pending_declarations[child]['parents'].append(
+                            groupname)
                 else:
                     self.inventory.add_child(groupname, child)
             else:
@@ -244,9 +248,11 @@ class InventoryModule(BaseFileInventoryPlugin):
         for g in pending_declarations:
             decl = pending_declarations[g]
             if decl['state'] == 'vars':
-                raise AnsibleError("%s:%d: Section [%s:vars] not valid for undefined group: %s" % (path, decl['line'], decl['name'], decl['name']))
+                raise AnsibleError("%s:%d: Section [%s:vars] not valid for undefined group: %s" % (
+                    path, decl['line'], decl['name'], decl['name']))
             elif decl['state'] == 'children':
-                raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (path, decl['line'], decl['parents'].pop(), decl['name']))
+                raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (
+                    path, decl['line'], decl['parents'].pop(), decl['name']))
 
     def _add_pending_children(self, group, pending):
         for parent in pending[group]['parents']:
@@ -303,7 +309,8 @@ class InventoryModule(BaseFileInventoryPlugin):
         try:
             tokens = shlex_split(line, comments=True)
         except ValueError as e:
-            self._raise_error("Error parsing host definition '%s': %s" % (line, e))
+            self._raise_error(
+                "Error parsing host definition '%s': %s" % (line, e))
 
         (hostnames, port) = self._expand_hostpattern(tokens[0])
 
@@ -311,7 +318,8 @@ class InventoryModule(BaseFileInventoryPlugin):
         variables = {}
         for t in tokens[1:]:
             if '=' not in t:
-                self._raise_error("Expected key=value host variable assignment, got: %s" % (t))
+                self._raise_error(
+                    "Expected key=value host variable assignment, got: %s" % (t))
             (k, v) = t.split('=', 1)
             variables[k] = self._parse_value(v)
 
@@ -323,7 +331,8 @@ class InventoryModule(BaseFileInventoryPlugin):
         '''
         # specification?
 
-        hostnames, port = super(InventoryModule, self)._expand_hostpattern(hostpattern)
+        hostnames, port = super(
+            InventoryModule, self)._expand_hostpattern(hostpattern)
 
         if hostpattern.strip().endswith(':') and port is None:
             raise AnsibleParserError("Invalid host pattern '%s' supplied, ending in ':' is not allowed, this character is reserved to provide a port." %
@@ -331,7 +340,8 @@ class InventoryModule(BaseFileInventoryPlugin):
         for pattern in hostnames:
             # some YAML parsing prevention checks
             if pattern.strip() == '---':
-                raise AnsibleParserError("Invalid host pattern '%s' supplied, '---' is normally a sign this is a YAML file." % hostpattern)
+                raise AnsibleParserError(
+                    "Invalid host pattern '%s' supplied, '---' is normally a sign this is a YAML file." % hostpattern)
 
         return (hostnames, port)
 

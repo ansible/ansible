@@ -2,6 +2,9 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.module_utils.common._collections_compat import Mapping
+from ansible.plugins.lookup import LookupBase
+from ansible.errors import AnsibleError
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -52,10 +55,6 @@ RETURN = """
       - list of composed dictonaries with key and value
     type: list
 """
-
-from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.common._collections_compat import Mapping
 
 
 class LookupModule(LookupBase):

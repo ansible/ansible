@@ -2,6 +2,7 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.become import BecomeBase
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -70,8 +71,6 @@ DOCUMENTATION = """
 """
 
 
-from ansible.plugins.become import BecomeBase
-
 
 class BecomeModule(BecomeBase):
 
@@ -79,7 +78,8 @@ class BecomeModule(BecomeBase):
 
     # messages for detecting prompted password issues
     fail = ('Sorry, try again.',)
-    missing = ('Sorry, a password is required to run sudo', 'sudo: a password is required')
+    missing = ('Sorry, a password is required to run sudo',
+               'sudo: a password is required')
 
     def build_become_command(self, cmd, shell):
         super(BecomeModule, self).build_become_command(cmd, shell)

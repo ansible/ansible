@@ -2,6 +2,7 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.become import BecomeBase
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -57,8 +58,6 @@ DOCUMENTATION = """
         - This plugin ignores the 'become_exe' setting as it uses an API and not an executable.
         - The Secondary Logon service (seclogon) must be running to use runas
 """
-
-from ansible.plugins.become import BecomeBase
 
 
 class BecomeModule(BecomeBase):

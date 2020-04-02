@@ -2,6 +2,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.errors import AnsibleParserError
+from ansible import constants as C
+from itertools import product
+import os
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -73,14 +78,6 @@ EXAMPLES = '''
             - api
 '''
 
-import os
-
-from itertools import product
-
-from ansible import constants as C
-from ansible.errors import AnsibleParserError
-from ansible.plugins.inventory import BaseInventoryPlugin
-
 
 class InventoryModule(BaseInventoryPlugin):
     """ constructs groups and vars using Jinja2 template expressions """
@@ -111,19 +108,22 @@ class InventoryModule(BaseInventoryPlugin):
             try:
                 groupname = self.template(parent['name'], template_vars)
             except (AttributeError, ValueError):
-                raise AnsibleParserError("Element %s has a parent with no name element" % child['name'])
+                raise AnsibleParserError(
+                    "Element %s has a parent with no name element" % child['name'])
             if groupname not in inventory.groups:
                 inventory.add_group(groupname)
             group = inventory.groups[groupname]
             for (k, v) in parent.get('vars', {}).items():
                 group.set_variable(k, self.template(v, template_vars))
             inventory.add_child(groupname, child)
-            self.add_parents(inventory, groupname, parent.get('parents', []), template_vars)
+            self.add_parents(inventory, groupname, parent.get(
+                'parents', []), template_vars)
 
     def parse(self, inventory, loader, path, cache=False):
         ''' parses the inventory file '''
 
-        super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
+        super(InventoryModule, self).parse(
+            inventory, loader, path, cache=cache)
 
         config = self._read_config_data(path)
 
@@ -134,4 +134,5 @@ class InventoryModule(BaseInventoryPlugin):
                 template_vars[key] = item[i]
             host = self.template(config['hosts']['name'], template_vars)
             inventory.add_host(host)
-            self.add_parents(inventory, host, config['hosts'].get('parents', []), template_vars)
+            self.add_parents(inventory, host, config['hosts'].get(
+                'parents', []), template_vars)

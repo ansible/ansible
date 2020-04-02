@@ -4,6 +4,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils.helpers import deduplicate_list
+from ansible.plugins.lookup import LookupBase
+from ansible.inventory.manager import split_host_pattern, order_patterns
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -33,10 +36,6 @@ RETURN = """
     description: list of hostnames that matched the host pattern in inventory
     type: list
 """
-
-from ansible.inventory.manager import split_host_pattern, order_patterns
-from ansible.plugins.lookup import LookupBase
-from ansible.utils.helpers import deduplicate_list
 
 
 class LookupModule(LookupBase):

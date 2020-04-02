@@ -55,7 +55,8 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
     def get_option(self, option, hostvars=None):
         if option not in self._options:
             try:
-                option_value = C.config.get_config_value(option, plugin_type=get_plugin_class(self), plugin_name=self._load_name, variables=hostvars)
+                option_value = C.config.get_config_value(option, plugin_type=get_plugin_class(
+                    self), plugin_name=self._load_name, variables=hostvars)
             except AnsibleError as e:
                 raise KeyError(to_native(e))
             self.set_option(option, option_value)
@@ -72,7 +73,8 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
         :arg var_options: Dict with either 'connection variables'
         :arg direct: Dict with 'direct assignment'
         '''
-        self._options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
+        self._options = C.config.get_plugin_options(get_plugin_class(
+            self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
         # allow extras/wildcards from vars that are not directly consumed in configuration
         # this is needed to support things like winrm that can have extended protocol options we don't directly handle

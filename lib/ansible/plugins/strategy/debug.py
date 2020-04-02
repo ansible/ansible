@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.strategy.linear import StrategyModule as LinearStrategyModule
+import sys
+import pprint
+import cmd
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -23,12 +27,6 @@ DOCUMENTATION = '''
     version_added: "2.1"
     author: Kishin Yagami
 '''
-
-import cmd
-import pprint
-import sys
-
-from ansible.plugins.strategy.linear import StrategyModule as LinearStrategyModule
 
 
 class StrategyModule(LinearStrategyModule):

@@ -46,7 +46,8 @@ class ShellBase(AnsiblePlugin):
         # Normalize the tmp directory strings. We don't use expanduser/expandvars because those
         # can vary between remote user and become user.  Therefore the safest practice will be for
         # this to always be specified as full paths)
-        normalized_paths = [d.rstrip('/') for d in self.get_option('system_tmpdirs')]
+        normalized_paths = [d.rstrip('/')
+                            for d in self.get_option('system_tmpdirs')]
 
         # Make sure all system_tmpdirs are absolute otherwise they'd be relative to the login dir
         # which is almost certainly going to fail in a cornercase.
@@ -58,7 +59,8 @@ class ShellBase(AnsiblePlugin):
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
 
-        super(ShellBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+        super(ShellBase, self).set_options(
+            task_keys=task_keys, var_options=var_options, direct=direct)
 
         # set env if needed, deal with environment's 'dual nature' list of dicts or dict
         env = self.get_option('environment')
@@ -125,7 +127,8 @@ class ShellBase(AnsiblePlugin):
 
     def mkdtemp(self, basefile=None, system=False, mode=0o700, tmpdir=None):
         if not basefile:
-            basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
+            basefile = 'ansible-tmp-%s-%s' % (time.time(),
+                                              random.randint(0, 2**48))
 
         # When system is specified we have to create this in a directory where
         # other users can read and access the tmp directory.
@@ -151,14 +154,17 @@ class ShellBase(AnsiblePlugin):
 
         basetmp = self.join_path(basetmpdir, basefile)
 
-        cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
-        cmd += ' %s echo %s=%s echo %s %s' % (self._SHELL_AND, basefile, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
+        cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT,
+                                          basetmp, self._SHELL_SUB_RIGHT)
+        cmd += ' %s echo %s=%s echo %s %s' % (
+            self._SHELL_AND, basefile, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
 
         # change the umask in a subshell to achieve the desired mode
         # also for directories created with `mkdir -p`
         if mode:
             tmp_umask = 0o777 & ~mode
-            cmd = '%s umask %o %s %s %s' % (self._SHELL_GROUP_LEFT, tmp_umask, self._SHELL_AND, cmd, self._SHELL_GROUP_RIGHT)
+            cmd = '%s umask %o %s %s %s' % (
+                self._SHELL_GROUP_LEFT, tmp_umask, self._SHELL_AND, cmd, self._SHELL_GROUP_RIGHT)
 
         return cmd
 

@@ -56,7 +56,8 @@ def unique(environment, a, case_sensitive=False, attribute=None):
     error = e = None
     try:
         if HAS_UNIQUE:
-            c = do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute)
+            c = do_unique(environment, a,
+                          case_sensitive=case_sensitive, attribute=attribute)
             if isinstance(a, Hashable):
                 c = set(c)
             else:
@@ -67,7 +68,8 @@ def unique(environment, a, case_sensitive=False, attribute=None):
     except Exception as e:
         error = e
         _do_fail(e)
-        display.warning('Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
+        display.warning(
+            'Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
 
     if not HAS_UNIQUE or error:
 
@@ -140,14 +142,16 @@ def logarithm(x, base=math.e):
         else:
             return math.log(x, base)
     except TypeError as e:
-        raise AnsibleFilterError('log() can only be used on numbers: %s' % to_native(e))
+        raise AnsibleFilterError(
+            'log() can only be used on numbers: %s' % to_native(e))
 
 
 def power(x, y):
     try:
         return math.pow(x, y)
     except TypeError as e:
-        raise AnsibleFilterError('pow() can only be used on numbers: %s' % to_native(e))
+        raise AnsibleFilterError(
+            'pow() can only be used on numbers: %s' % to_native(e))
 
 
 def inversepower(x, base=2):
@@ -157,7 +161,8 @@ def inversepower(x, base=2):
         else:
             return math.pow(x, 1.0 / float(base))
     except (ValueError, TypeError) as e:
-        raise AnsibleFilterError('root() can only be used on numbers: %s' % to_native(e))
+        raise AnsibleFilterError(
+            'root() can only be used on numbers: %s' % to_native(e))
 
 
 def human_readable(size, isbits=False, unit=None):
@@ -165,7 +170,8 @@ def human_readable(size, isbits=False, unit=None):
     try:
         return formatters.bytes_to_human(size, isbits, unit)
     except Exception:
-        raise AnsibleFilterError("human_readable() can't interpret following string: %s" % size)
+        raise AnsibleFilterError(
+            "human_readable() can't interpret following string: %s" % size)
 
 
 def human_to_bytes(size, default_unit=None, isbits=False):
@@ -173,7 +179,8 @@ def human_to_bytes(size, default_unit=None, isbits=False):
     try:
         return formatters.human_to_bytes(size, default_unit, isbits)
     except Exception:
-        raise AnsibleFilterError("human_to_bytes() can't interpret following string: %s" % size)
+        raise AnsibleFilterError(
+            "human_to_bytes() can't interpret following string: %s" % size)
 
 
 def rekey_on_member(data, key, duplicates='error'):
@@ -186,7 +193,8 @@ def rekey_on_member(data, key, duplicates='error'):
     value would be duplicated or to overwrite previous entries if that's the case.
     """
     if duplicates not in ('error', 'overwrite'):
-        raise AnsibleFilterError("duplicates parameter to rekey_on_member has unknown value: {0}".format(duplicates))
+        raise AnsibleFilterError(
+            "duplicates parameter to rekey_on_member has unknown value: {0}".format(duplicates))
 
     new_obj = {}
 
@@ -212,7 +220,8 @@ def rekey_on_member(data, key, duplicates='error'):
         # minimum contain {key: key_elem}
         if new_obj.get(key_elem, None):
             if duplicates == 'error':
-                raise AnsibleFilterError("Key {0} is not unique, cannot correctly turn into dict".format(key_elem))
+                raise AnsibleFilterError(
+                    "Key {0} is not unique, cannot correctly turn into dict".format(key_elem))
             elif duplicates == 'overwrite':
                 new_obj[key_elem] = item
         else:

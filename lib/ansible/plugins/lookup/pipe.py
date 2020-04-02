@@ -2,6 +2,9 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.lookup import LookupBase
+from ansible.errors import AnsibleError
+import subprocess
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -35,11 +38,6 @@ RETURN = """
       - stdout from command
 """
 
-import subprocess
-
-from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
-
 
 class LookupModule(LookupBase):
 
@@ -58,10 +56,12 @@ class LookupModule(LookupBase):
             '''
             term = str(term)
 
-            p = subprocess.Popen(term, cwd=self._loader.get_basedir(), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            p = subprocess.Popen(term, cwd=self._loader.get_basedir(
+            ), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             (stdout, stderr) = p.communicate()
             if p.returncode == 0:
                 ret.append(stdout.decode("utf-8").rstrip())
             else:
-                raise AnsibleError("lookup_plugin.pipe(%s) returned %d" % (term, p.returncode))
+                raise AnsibleError(
+                    "lookup_plugin.pipe(%s) returned %d" % (term, p.returncode))
         return ret

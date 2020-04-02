@@ -3,6 +3,9 @@
 
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils import helpers
+from ansible.module_utils.six.moves.urllib.parse import urlsplit
+from ansible.errors import AnsibleFilterError
 __metaclass__ = type
 
 
@@ -13,20 +16,18 @@ ANSIBLE_METADATA = {
 }
 
 
-from ansible.errors import AnsibleFilterError
-from ansible.module_utils.six.moves.urllib.parse import urlsplit
-from ansible.utils import helpers
-
 
 def split_url(value, query='', alias='urlsplit'):
 
-    results = helpers.object_to_dict(urlsplit(value), exclude=['count', 'index', 'geturl', 'encode'])
+    results = helpers.object_to_dict(urlsplit(value), exclude=[
+                                     'count', 'index', 'geturl', 'encode'])
 
     # If a query is supplied, make sure it's valid then return the results.
     # If no option is supplied, return the entire dictionary.
     if query:
         if query not in results:
-            raise AnsibleFilterError(alias + ': unknown URL component: %s' % query)
+            raise AnsibleFilterError(
+                alias + ': unknown URL component: %s' % query)
         return results[query]
     else:
         return results

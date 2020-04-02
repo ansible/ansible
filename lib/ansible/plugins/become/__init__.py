@@ -47,7 +47,8 @@ class BecomeBase(AnsiblePlugin):
         try:
             return super(BecomeBase, self).get_option(option, hostvars=hostvars)
         except KeyError:
-            pc_fallback = ['become_user', 'become_pass', 'become_flags', 'become_exe']
+            pc_fallback = ['become_user', 'become_pass',
+                           'become_flags', 'become_exe']
             if option not in pc_fallback:
                 raise
 
@@ -64,10 +65,12 @@ class BecomeBase(AnsiblePlugin):
             return cmd
 
         try:
-            cmd = shlex_quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
+            cmd = shlex_quote('%s %s %s %s' % (
+                shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
         except AttributeError:
             # TODO: This should probably become some more robust functionlity used to detect incompat
-            raise AnsibleError('The %s shell family is incompatible with the %s become plugin' % (shell.SHELL_FAMILY, self.name))
+            raise AnsibleError('The %s shell family is incompatible with the %s become plugin' % (
+                shell.SHELL_FAMILY, self.name))
         exe = getattr(shell, 'executable', None)
         if exe and not noexe:
             cmd = '%s -c %s' % (exe, cmd)

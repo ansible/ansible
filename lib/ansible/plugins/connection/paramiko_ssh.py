@@ -2,6 +2,29 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.utils.path import makedirs_safe
+from ansible.utils.display import Display
+from ansible.plugins.connection import ConnectionBase
+from ansible.module_utils.six.moves import input
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.compat.paramiko import PARAMIKO_IMPORT_ERR, paramiko
+from ansible.errors import (
+    AnsibleAuthenticationFailure,
+    AnsibleConnectionFailure,
+    AnsibleError,
+    AnsibleFileNotFound,
+)
+from binascii import hexlify
+from distutils.version import LooseVersion
+from termios import tcflush, TCIFLUSH
+import re
+import sys
+import fcntl
+import traceback
+import tempfile
+import socket
+import os
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -129,31 +152,6 @@ DOCUMENTATION = """
 #timeout=self._play_context.timeout,
 """
 
-import os
-import socket
-import tempfile
-import traceback
-import fcntl
-import sys
-import re
-
-from termios import tcflush, TCIFLUSH
-from distutils.version import LooseVersion
-from binascii import hexlify
-
-from ansible.errors import (
-    AnsibleAuthenticationFailure,
-    AnsibleConnectionFailure,
-    AnsibleError,
-    AnsibleFileNotFound,
-)
-from ansible.module_utils.compat.paramiko import PARAMIKO_IMPORT_ERR, paramiko
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import input
-from ansible.plugins.connection import ConnectionBase
-from ansible.utils.display import Display
-from ansible.utils.path import makedirs_safe
-from ansible.module_utils._text import to_bytes, to_native, to_text
 
 display = Display()
 
@@ -193,7 +191,8 @@ class MyAddPolicy(object):
             if self.connection.get_option('use_persistent_connections') or self.connection.force_persistence:
                 # don't print the prompt string since the user cannot respond
                 # to the question anyway
-                raise AnsibleError(AUTHENTICITY_MSG[1:92] % (hostname, ktype, fingerprint))
+                raise AnsibleError(AUTHENTICITY_MSG[1:92] % (
+                    hostname, ktype, fingerprint))
 
             self.connection.connection_lock()
 
@@ -240,7 +239,8 @@ class Connection(ConnectionBase):
         if cache_key in SSH_CONNECTION_CACHE:
             self.ssh = SSH_CONNECTION_CACHE[cache_key]
         else:
-            self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
+            self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached(
+            )
         return self
 
     def _set_log_channel(self, name):
@@ -284,7 +284,8 @@ class Connection(ConnectionBase):
                 proxy_command = proxy_command.replace(find, str(replace))
             try:
                 sock_kwarg = {'sock': paramiko.ProxyCommand(proxy_command)}
-                display.vvv("CONFIGURE PROXY COMMAND FOR CONNECTION: %s" % proxy_command, host=self._play_context.remote_addr)
+                display.vvv("CONFIGURE PROXY COMMAND FOR CONNECTION: %s" %
+                            proxy_command, host=self._play_context.remote_addr)
             except AttributeError:
                 display.warning('Paramiko ProxyCommand support unavailable. '
                                 'Please upgrade to Paramiko 1.9.0 or newer. '
@@ -296,7 +297,8 @@ class Connection(ConnectionBase):
         ''' activates the connection object '''
 
         if paramiko is None:
-            raise AnsibleError("paramiko is not installed: %s" % to_native(PARAMIKO_IMPORT_ERR))
+            raise AnsibleError("paramiko is not installed: %s" %
+                               to_native(PARAMIKO_IMPORT_ERR))
 
         port = self._play_context.port or 22
         display.vvv("ESTABLISH PARAMIKO SSH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
@@ -332,7 +334,8 @@ class Connection(ConnectionBase):
         try:
             key_filename = None
             if self._play_context.private_key_file:
-                key_filename = os.path.expanduser(self._play_context.private_key_file)
+                key_filename = os.path.expanduser(
+                    self._play_context.private_key_file)
 
             # paramiko 2.2 introduced auth_timeout parameter
             if LooseVersion(paramiko.__version__) >= LooseVersion('2.2.0'):
@@ -350,14 +353,16 @@ class Connection(ConnectionBase):
                 **ssh_connect_kwargs
             )
         except paramiko.ssh_exception.BadHostKeyException as e:
-            raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
+            raise AnsibleConnectionFailure(
+                'host key mismatch for %s' % e.hostname)
         except paramiko.ssh_exception.AuthenticationException as e:
             msg = 'Failed to authenticate: {0}'.format(to_text(e))
             raise AnsibleAuthenticationFailure(msg)
         except Exception as e:
             msg = to_text(e)
             if u"PID check failed" in msg:
-                raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
+                raise AnsibleError(
+                    "paramiko version issue, please upgrade paramiko on the machine running ansible")
             elif u"Private key file is encrypted" in msg:
                 msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
                     self._play_context.remote_user, self._play_context.remote_addr, port, msg)
@@ -370,10 +375,12 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd, in_data=None, sudoable=True):
         ''' run a command on the remote host '''
 
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        super(Connection, self).exec_command(
+            cmd, in_data=in_data, sudoable=sudoable)
 
         if in_data:
-            raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
+            raise AnsibleError(
+                "Internal Error: this module does not support optimized module pipelining")
 
         bufsize = 4096
 
@@ -391,7 +398,8 @@ class Connection(ConnectionBase):
         # we give it one by default (pty=True in ansible.cfg), and we try
         # to initialise from the calling environment when sudoable is enabled
         if self.get_option('pty') and sudoable:
-            chan.get_pty(term=os.getenv('TERM', 'vt100'), width=int(os.getenv('COLUMNS', 0)), height=int(os.getenv('LINES', 0)))
+            chan.get_pty(term=os.getenv('TERM', 'vt100'), width=int(
+                os.getenv('COLUMNS', 0)), height=int(os.getenv('LINES', 0)))
 
         display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
 
@@ -415,7 +423,8 @@ class Connection(ConnectionBase):
                         if b'unknown user' in become_output:
                             n_become_user = to_native(self.become.get_option('become_user',
                                                                              playcontext=self._play_context))
-                            raise AnsibleError('user %s does not exist' % n_become_user)
+                            raise AnsibleError(
+                                'user %s does not exist' % n_become_user)
                         else:
                             break
                             # raise AnsibleError('ssh connection closed waiting for password prompt')
@@ -433,15 +442,19 @@ class Connection(ConnectionBase):
 
                 if passprompt:
                     if self.become:
-                        become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
-                        chan.sendall(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
+                        become_pass = self.become.get_option(
+                            'become_pass', playcontext=self._play_context)
+                        chan.sendall(
+                            to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
                     else:
-                        raise AnsibleError("A password is required but none was supplied")
+                        raise AnsibleError(
+                            "A password is required but none was supplied")
                 else:
                     no_prompt_out += become_output
                     no_prompt_err += become_output
         except socket.timeout:
-            raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + become_output)
+            raise AnsibleError(
+                'ssh timed out waiting for privilege escalation.\n' + become_output)
 
         stdout = b''.join(chan.makefile('rb', bufsize))
         stderr = b''.join(chan.makefile_stderr('rb', bufsize))
@@ -453,10 +466,12 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv("PUT %s TO %s" % (in_path, out_path),
+                    host=self._play_context.remote_addr)
 
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
-            raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise AnsibleFileNotFound(
+                "file or module does not exist: %s" % in_path)
 
         try:
             self.sftp = self.ssh.open_sftp()
@@ -464,17 +479,20 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to open a SFTP connection (%s)" % e)
 
         try:
-            self.sftp.put(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
+            self.sftp.put(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(
+                out_path, errors='surrogate_or_strict'))
         except IOError:
             raise AnsibleError("failed to transfer file to %s" % out_path)
 
     def _connect_sftp(self):
 
-        cache_key = "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
+        cache_key = "%s__%s__" % (
+            self._play_context.remote_addr, self._play_context.remote_user)
         if cache_key in SFTP_CONNECTION_CACHE:
             return SFTP_CONNECTION_CACHE[cache_key]
         else:
-            result = SFTP_CONNECTION_CACHE[cache_key] = self._connect().ssh.open_sftp()
+            result = SFTP_CONNECTION_CACHE[cache_key] = self._connect(
+            ).ssh.open_sftp()
             return result
 
     def fetch_file(self, in_path, out_path):
@@ -482,15 +500,18 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv("FETCH %s TO %s" % (in_path, out_path),
+                    host=self._play_context.remote_addr)
 
         try:
             self.sftp = self._connect_sftp()
         except Exception as e:
-            raise AnsibleError("failed to open a SFTP connection (%s)" % to_native(e))
+            raise AnsibleError(
+                "failed to open a SFTP connection (%s)" % to_native(e))
 
         try:
-            self.sftp.get(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
+            self.sftp.get(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(
+                out_path, errors='surrogate_or_strict'))
         except IOError:
             raise AnsibleError("failed to transfer file from %s" % in_path)
 
@@ -498,7 +519,8 @@ class Connection(ConnectionBase):
 
         for hostname, keys in iteritems(self.ssh._host_keys):
             for keytype, key in iteritems(keys):
-                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                added_this_time = getattr(
+                    key, '_added_by_ansible_this_time', False)
                 if added_this_time:
                     return True
         return False
@@ -522,16 +544,20 @@ class Connection(ConnectionBase):
                 for keytype, key in iteritems(keys):
 
                     # was f.write
-                    added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                    added_this_time = getattr(
+                        key, '_added_by_ansible_this_time', False)
                     if not added_this_time:
-                        f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+                        f.write("%s %s %s\n" %
+                                (hostname, keytype, key.get_base64()))
 
             for hostname, keys in iteritems(self.ssh._host_keys):
 
                 for keytype, key in iteritems(keys):
-                    added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                    added_this_time = getattr(
+                        key, '_added_by_ansible_this_time', False)
                     if added_this_time:
-                        f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+                        f.write("%s %s %s\n" %
+                                (hostname, keytype, key.get_base64()))
 
     def reset(self):
         self.close()
@@ -585,7 +611,8 @@ class Connection(ConnectionBase):
                 # rather than rewriting the file. We set delete=False because
                 # the file will be moved into place rather than cleaned up.
 
-                tmp_keyfile = tempfile.NamedTemporaryFile(dir=key_dir, delete=False)
+                tmp_keyfile = tempfile.NamedTemporaryFile(
+                    dir=key_dir, delete=False)
                 os.chmod(tmp_keyfile.name, mode & 0o7777)
                 os.chown(tmp_keyfile.name, uid, gid)
 

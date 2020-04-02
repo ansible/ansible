@@ -1,6 +1,10 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.six import string_types
+from ansible.errors import AnsibleError
+from ansible import constants as C
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -55,11 +59,6 @@ _raw:
     - value(s) of the key(s) in the config
 """
 
-from ansible import constants as C
-from ansible.errors import AnsibleError
-from ansible.module_utils.six import string_types
-from ansible.plugins.lookup import LookupBase
-
 
 class LookupModule(LookupBase):
 
@@ -67,12 +66,14 @@ class LookupModule(LookupBase):
 
         missing = kwargs.get('on_missing', 'error').lower()
         if not isinstance(missing, string_types) or missing not in ['error', 'warn', 'skip']:
-            raise AnsibleError('"on_missing" must be a string and one of "error", "warn" or "skip", not %s' % missing)
+            raise AnsibleError(
+                '"on_missing" must be a string and one of "error", "warn" or "skip", not %s' % missing)
 
         ret = []
         for term in terms:
             if not isinstance(term, string_types):
-                raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+                raise AnsibleError(
+                    'Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
             try:
                 result = getattr(C, term)
                 if callable(result):
@@ -82,5 +83,6 @@ class LookupModule(LookupBase):
                 if missing == 'error':
                     raise AnsibleError('Unable to find setting %s' % term)
                 elif missing == 'warn':
-                    self._display.warning('Skipping, did not find setting %s' % term)
+                    self._display.warning(
+                        'Skipping, did not find setting %s' % term)
         return ret

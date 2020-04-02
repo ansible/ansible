@@ -3,6 +3,9 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+from ansible.errors import AnsibleError
+from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.common._collections_compat import Sequence
 
 __metaclass__ = type
 
@@ -28,10 +31,6 @@ RETURN = """
   _list:
     description: basically the same as you fed in
 """
-
-from ansible.module_utils.common._collections_compat import Sequence
-from ansible.plugins.lookup import LookupBase
-from ansible.errors import AnsibleError
 
 
 class LookupModule(LookupBase):

@@ -2,6 +2,10 @@
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils.listify import listify_lookup_plugin_terms
+from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.six.moves import zip_longest
+from ansible.errors import AnsibleError
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -33,10 +37,6 @@ RETURN = """
   _list:
     description: synchronized list
 """
-from ansible.errors import AnsibleError
-from ansible.module_utils.six.moves import zip_longest
-from ansible.plugins.lookup import LookupBase
-from ansible.utils.listify import listify_lookup_plugin_terms
 
 
 class LookupModule(LookupBase):
@@ -50,7 +50,8 @@ class LookupModule(LookupBase):
     def _lookup_variables(self, terms):
         results = []
         for x in terms:
-            intermediate = listify_lookup_plugin_terms(x, templar=self._templar, loader=self._loader)
+            intermediate = listify_lookup_plugin_terms(
+                x, templar=self._templar, loader=self._loader)
             results.append(intermediate)
         return results
 
@@ -60,6 +61,7 @@ class LookupModule(LookupBase):
 
         my_list = terms[:]
         if len(my_list) == 0:
-            raise AnsibleError("with_together requires at least one element in each list")
+            raise AnsibleError(
+                "with_together requires at least one element in each list")
 
         return [self._flatten(x) for x in zip_longest(*my_list, fillvalue=None)]

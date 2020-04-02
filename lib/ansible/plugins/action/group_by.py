@@ -47,5 +47,6 @@ class ActionModule(ActionBase):
 
         result['changed'] = False
         result['add_group'] = group_name.replace(' ', '-')
-        result['parent_groups'] = [name.replace(' ', '-') for name in parent_groups]
+        result['parent_groups'] = [name.replace(
+            ' ', '-') for name in parent_groups]
         return result

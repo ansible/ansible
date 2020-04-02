@@ -104,7 +104,8 @@ class ActionModule(ActionBase):
                 raise AnsibleActionFail("src and dest are required")
 
             if boolean(remote_src, strict=False):
-                result.update(self._execute_module(module_name='assemble', task_vars=task_vars))
+                result.update(self._execute_module(
+                    module_name='assemble', task_vars=task_vars))
                 raise _AnsibleActionDone()
             else:
                 try:
@@ -113,18 +114,21 @@ class ActionModule(ActionBase):
                     raise AnsibleActionFail(to_native(e))
 
             if not os.path.isdir(src):
-                raise AnsibleActionFail(u"Source (%s) is not a directory" % src)
+                raise AnsibleActionFail(
+                    u"Source (%s) is not a directory" % src)
 
             _re = None
             if regexp is not None:
                 _re = re.compile(regexp)
 
             # Does all work assembling the file
-            path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden, decrypt)
+            path = self._assemble_from_fragments(
+                src, delimiter, _re, ignore_hidden, decrypt)
 
             path_checksum = checksum_s(path)
             dest = self._remote_expand_user(dest)
-            dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow)
+            dest_stat = self._execute_remote_stat(
+                dest, all_vars=task_vars, follow=follow)
 
             diff = {}
 
@@ -142,20 +146,24 @@ class ActionModule(ActionBase):
                 if self._play_context.diff:
                     diff = self._get_diff_data(dest, path, task_vars)
 
-                remote_path = self._connection._shell.join_path(self._connection._shell.tmpdir, 'src')
+                remote_path = self._connection._shell.join_path(
+                    self._connection._shell.tmpdir, 'src')
                 xfered = self._transfer_file(path, remote_path)
 
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
+                self._fixup_perms2(
+                    (self._connection._shell.tmpdir, remote_path))
 
                 new_module_args.update(dict(src=xfered,))
 
-                res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
+                res = self._execute_module(
+                    module_name='copy', module_args=new_module_args, task_vars=task_vars)
                 if diff:
                     res['diff'] = diff
                 result.update(res)
             else:
-                result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars))
+                result.update(self._execute_module(
+                    module_name='file', module_args=new_module_args, task_vars=task_vars))
 
         except AnsibleAction as e:
             result.update(e.result)

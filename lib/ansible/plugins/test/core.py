@@ -35,7 +35,8 @@ display = Display()
 def failed(result):
     ''' Test if task result yields failed '''
     if not isinstance(result, MutableMapping):
-        raise errors.AnsibleFilterError("The 'failed' test expects a dictionary")
+        raise errors.AnsibleFilterError(
+            "The 'failed' test expects a dictionary")
     return result.get('failed', False)
 
 
@@ -47,7 +48,8 @@ def success(result):
 def unreachable(result):
     ''' Test if task result yields unreachable '''
     if not isinstance(result, MutableMapping):
-        raise errors.AnsibleFilterError("The 'unreachable' test expects a dictionary")
+        raise errors.AnsibleFilterError(
+            "The 'unreachable' test expects a dictionary")
     return result.get('unreachable', False)
 
 
@@ -59,7 +61,8 @@ def reachable(result):
 def changed(result):
     ''' Test if task result yields changed '''
     if not isinstance(result, MutableMapping):
-        raise errors.AnsibleFilterError("The 'changed' test expects a dictionary")
+        raise errors.AnsibleFilterError(
+            "The 'changed' test expects a dictionary")
     if 'changed' not in result:
         changed = False
         if (
@@ -79,35 +82,40 @@ def changed(result):
 def skipped(result):
     ''' Test if task result yields skipped '''
     if not isinstance(result, MutableMapping):
-        raise errors.AnsibleFilterError("The 'skipped' test expects a dictionary")
+        raise errors.AnsibleFilterError(
+            "The 'skipped' test expects a dictionary")
     return result.get('skipped', False)
 
 
 def started(result):
     ''' Test if async task has started '''
     if not isinstance(result, MutableMapping):
-        raise errors.AnsibleFilterError("The 'started' test expects a dictionary")
+        raise errors.AnsibleFilterError(
+            "The 'started' test expects a dictionary")
     if 'started' in result:
         # For async tasks, return status
         # NOTE: The value of started is 0 or 1, not False or True :-/
         return result.get('started', 0) == 1
     else:
         # For non-async tasks, warn user, but return as if started
-        display.warning("The 'started' test expects an async task, but a non-async task was tested")
+        display.warning(
+            "The 'started' test expects an async task, but a non-async task was tested")
         return True
 
 
 def finished(result):
     ''' Test if async task has finished '''
     if not isinstance(result, MutableMapping):
-        raise errors.AnsibleFilterError("The 'finished' test expects a dictionary")
+        raise errors.AnsibleFilterError(
+            "The 'finished' test expects a dictionary")
     if 'finished' in result:
         # For async tasks, return status
         # NOTE: The value of finished is 0 or 1, not False or True :-/
         return result.get('finished', 0) == 1
     else:
         # For non-async tasks, warn user, but return as if finished
-        display.warning("The 'finished' test expects an async task, but a non-async task was tested")
+        display.warning(
+            "The 'finished' test expects an async task, but a non-async task was tested")
         return True
 
 

@@ -4,6 +4,17 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils.path import makedirs_safe
+from ansible.utils.encrypt import do_encrypt, random_password, random_salt
+from ansible.plugins.lookup import LookupBase
+from ansible.parsing.splitter import parse_kv
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.errors import AnsibleError, AnsibleAssertionError
+import hashlib
+import shutil
+import time
+import string
+import os
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -92,19 +103,6 @@ _raw:
     - a password
 """
 
-import os
-import string
-import time
-import shutil
-import hashlib
-
-from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.parsing.splitter import parse_kv
-from ansible.plugins.lookup import LookupBase
-from ansible.utils.encrypt import do_encrypt, random_password, random_salt
-from ansible.utils.path import makedirs_safe
-
 
 DEFAULT_LENGTH = 20
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
@@ -133,14 +131,16 @@ def _parse_parameters(term):
             if not term.startswith(relpath):
                 # Likely, the user had a non parameter following a parameter.
                 # Reject this as a user typo
-                raise AnsibleError('Unrecognized value after key=value parameters given to password lookup')
+                raise AnsibleError(
+                    'Unrecognized value after key=value parameters given to password lookup')
         # No _raw_params means we already found the complete path when
         # we split it initially
 
     # Check for invalid parameters.  Probably a user typo
     invalid_params = frozenset(params.keys()).difference(VALID_PARAMS)
     if invalid_params:
-        raise AnsibleError('Unrecognized parameter(s) given to password lookup: %s' % ', '.join(invalid_params))
+        raise AnsibleError(
+            'Unrecognized parameter(s) given to password lookup: %s' % ', '.join(invalid_params))
 
     # Set defaults
     params['length'] = int(params.get('length', DEFAULT_LENGTH))
@@ -151,7 +151,8 @@ def _parse_parameters(term):
         tmp_chars = []
         if u',,' in params['chars']:
             tmp_chars.append(u',')
-        tmp_chars.extend(c for c in params['chars'].replace(u',,', u',').split(u',') if c)
+        tmp_chars.extend(c for c in params['chars'].replace(
+            u',,', u',').split(u',') if c)
         params['chars'] = tmp_chars
     else:
         # Default chars for password
@@ -204,7 +205,7 @@ def _gen_candidate_chars(characters):
         # getattr from string expands things like "ascii_letters" and "digits"
         # into a set of characters.
         chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
-                     errors='strict'))
+                             errors='strict'))
     chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
     return chars
 
@@ -248,7 +249,8 @@ def _format_content(password, salt, encrypt=None):
 
     # At this point, the calling code should have assured us that there is a salt value.
     if not salt:
-        raise AnsibleAssertionError('_format_content was called with encryption requested but no salt value')
+        raise AnsibleAssertionError(
+            '_format_content was called with encryption requested but no salt value')
 
     return u'%s salt=%s' % (password, salt)
 
@@ -267,7 +269,8 @@ def _get_lock(b_path):
     """Get the lock for writing password file."""
     first_process = False
     b_pathdir = os.path.dirname(b_path)
-    lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.sha1(b_path).hexdigest())
+    lockfile_name = to_bytes("%s.ansible_lockfile" %
+                             hashlib.sha1(b_path).hexdigest())
     lockfile = os.path.join(b_pathdir, lockfile_name)
     if not os.path.exists(lockfile) and b_path != to_bytes('/dev/null'):
         try:
@@ -325,7 +328,8 @@ class LookupModule(LookupBase):
                 salt = random_salt()
 
             if changed and b_path != to_bytes('/dev/null'):
-                content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])
+                content = _format_content(
+                    plaintext_password, salt, encrypt=params['encrypt'])
                 _write_password_file(b_path, content)
 
             if first_process:
@@ -333,7 +337,8 @@ class LookupModule(LookupBase):
                 _release_lock(lockfile)
 
             if params['encrypt']:
-                password = do_encrypt(plaintext_password, params['encrypt'], salt=salt)
+                password = do_encrypt(plaintext_password,
+                                      params['encrypt'], salt=salt)
                 ret.append(password)
             else:
                 ret.append(plaintext_password)

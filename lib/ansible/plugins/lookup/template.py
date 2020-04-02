@@ -3,6 +3,13 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils.display import Display
+from ansible.template import generate_ansible_template_vars
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.plugins.lookup import LookupBase
+from ansible.errors import AnsibleError
+import os
+from copy import deepcopy
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -45,14 +52,6 @@ _raw:
    description: file(s) content after templating
 """
 
-from copy import deepcopy
-import os
-
-from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.template import generate_ansible_template_vars
-from ansible.utils.display import Display
 
 display = Display()
 
@@ -71,11 +70,14 @@ class LookupModule(LookupBase):
         for term in terms:
             display.debug("File lookup term: %s" % term)
 
-            lookupfile = self.find_file_in_search_path(variables, 'templates', term)
+            lookupfile = self.find_file_in_search_path(
+                variables, 'templates', term)
             display.vvvv("File lookup using %s as file" % lookupfile)
             if lookupfile:
-                b_template_data, show_data = self._loader._get_file_contents(lookupfile)
-                template_data = to_text(b_template_data, errors='surrogate_or_strict')
+                b_template_data, show_data = self._loader._get_file_contents(
+                    lookupfile)
+                template_data = to_text(
+                    b_template_data, errors='surrogate_or_strict')
 
                 # set jinja2 internal search path for includes
                 searchpath = variables.get('ansible_search_path', [])
@@ -107,6 +109,7 @@ class LookupModule(LookupBase):
 
                 ret.append(res)
             else:
-                raise AnsibleError("the template file %s could not be found for the lookup" % term)
+                raise AnsibleError(
+                    "the template file %s could not be found for the lookup" % term)
 
         return ret

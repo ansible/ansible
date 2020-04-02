@@ -2,6 +2,15 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils.display import Display
+from ansible.plugins.inventory import BaseFileInventoryPlugin
+from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
+from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.errors import AnsibleFileNotFound, AnsibleParserError
+from functools import partial
+import os
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -90,17 +99,6 @@ example3: |
     host4 = {}
 '''
 
-import os
-
-from functools import partial
-
-from ansible.errors import AnsibleFileNotFound, AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
-from ansible.module_utils.six import string_types, text_type
-from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
-from ansible.plugins.inventory import BaseFileInventoryPlugin
-from ansible.utils.display import Display
 
 try:
     import toml
@@ -160,7 +158,8 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _parse_group(self, group, group_data):
         if not isinstance(group_data, (MutableMapping, type(None))):
-            self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
+            self.display.warning(
+                "Skipping '%s' as this is not a valid group definition" % group)
             return
 
         group = self.inventory.add_group(group)
@@ -204,11 +203,13 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _load_file(self, file_name):
         if not file_name or not isinstance(file_name, string_types):
-            raise AnsibleParserError("Invalid filename: '%s'" % to_native(file_name))
+            raise AnsibleParserError(
+                "Invalid filename: '%s'" % to_native(file_name))
 
         b_file_name = to_bytes(self.loader.path_dwim(file_name))
         if not self.loader.path_exists(b_file_name):
-            raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
+            raise AnsibleFileNotFound(
+                "Unable to retrieve file contents", file_name=file_name)
 
         try:
             (b_data, private) = self.loader._get_file_contents(file_name)
@@ -220,12 +221,14 @@ class InventoryModule(BaseFileInventoryPlugin):
             )
         except (IOError, OSError) as e:
             raise AnsibleParserError(
-                "An error occurred while trying to read the file '%s': %s" % (file_name, to_native(e)),
+                "An error occurred while trying to read the file '%s': %s" % (
+                    file_name, to_native(e)),
                 orig_exc=e
             )
         except Exception as e:
             raise AnsibleParserError(
-                "An unexpected error occurred while parsing the file '%s': %s" % (file_name, to_native(e)),
+                "An unexpected error occurred while parsing the file '%s': %s" % (
+                    file_name, to_native(e)),
                 orig_exc=e
             )
 
@@ -249,7 +252,8 @@ class InventoryModule(BaseFileInventoryPlugin):
         if not data:
             raise AnsibleParserError('Parsed empty TOML file')
         elif data.get('plugin'):
-            raise AnsibleParserError('Plugin configuration TOML file, not TOML inventory')
+            raise AnsibleParserError(
+                'Plugin configuration TOML file, not TOML inventory')
 
         for group_name in data:
             self._parse_group(group_name, data[group_name])

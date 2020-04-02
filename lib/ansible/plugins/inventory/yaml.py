@@ -2,6 +2,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.inventory import BaseFileInventoryPlugin
+from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.six import string_types
+from ansible.errors import AnsibleError, AnsibleParserError
+import os
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -65,13 +71,6 @@ all: # keys must be unique, i.e. only one 'hosts' per group
                 group_last_var: value
 '''
 
-import os
-
-from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import MutableMapping
-from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 NoneType = type(None)
 
@@ -107,9 +106,11 @@ class InventoryModule(BaseFileInventoryPlugin):
         if not data:
             raise AnsibleParserError('Parsed empty YAML file')
         elif not isinstance(data, MutableMapping):
-            raise AnsibleParserError('YAML inventory has invalid structure, it should be a dictionary, got: %s' % type(data))
+            raise AnsibleParserError(
+                'YAML inventory has invalid structure, it should be a dictionary, got: %s' % type(data))
         elif data.get('plugin'):
-            raise AnsibleParserError('Plugin configuration YAML file, not YAML inventory')
+            raise AnsibleParserError(
+                'Plugin configuration YAML file, not YAML inventory')
 
         # We expect top level keys to correspond to groups, iterate over them
         # to get host, vars and subgroups (which we iterate over recursivelly)
@@ -117,7 +118,8 @@ class InventoryModule(BaseFileInventoryPlugin):
             for group_name in data:
                 self._parse_group(group_name, data[group_name])
         else:
-            raise AnsibleParserError("Invalid data from file, expected dictionary and got:\n\n%s" % to_native(data))
+            raise AnsibleParserError(
+                "Invalid data from file, expected dictionary and got:\n\n%s" % to_native(data))
 
     def _parse_group(self, group, group_data):
 
@@ -126,7 +128,8 @@ class InventoryModule(BaseFileInventoryPlugin):
             try:
                 group = self.inventory.add_group(group)
             except AnsibleError as e:
-                raise AnsibleParserError("Unable to add group %s: %s" % (group, to_text(e)))
+                raise AnsibleParserError(
+                    "Unable to add group %s: %s" % (group, to_text(e)))
 
             if group_data is not None:
                 # make sure they are dicts
@@ -143,28 +146,35 @@ class InventoryModule(BaseFileInventoryPlugin):
                 for key in group_data:
 
                     if not isinstance(group_data[key], (MutableMapping, NoneType)):
-                        self.display.warning('Skipping key (%s) in group (%s) as it is not a mapping, it is a %s' % (key, group, type(group_data[key])))
+                        self.display.warning('Skipping key (%s) in group (%s) as it is not a mapping, it is a %s' % (
+                            key, group, type(group_data[key])))
                         continue
 
                     if isinstance(group_data[key], NoneType):
-                        self.display.vvv('Skipping empty key (%s) in group (%s)' % (key, group))
+                        self.display.vvv(
+                            'Skipping empty key (%s) in group (%s)' % (key, group))
                     elif key == 'vars':
                         for var in group_data[key]:
-                            self.inventory.set_variable(group, var, group_data[key][var])
+                            self.inventory.set_variable(
+                                group, var, group_data[key][var])
                     elif key == 'children':
                         for subgroup in group_data[key]:
-                            subgroup = self._parse_group(subgroup, group_data[key][subgroup])
+                            subgroup = self._parse_group(
+                                subgroup, group_data[key][subgroup])
                             self.inventory.add_child(group, subgroup)
 
                     elif key == 'hosts':
                         for host_pattern in group_data[key]:
                             hosts, port = self._parse_host(host_pattern)
-                            self._populate_host_vars(hosts, group_data[key][host_pattern] or {}, group, port)
+                            self._populate_host_vars(
+                                hosts, group_data[key][host_pattern] or {}, group, port)
                     else:
-                        self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
+                        self.display.warning(
+                            'Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
 
         else:
-            self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
+            self.display.warning(
+                "Skipping '%s' as this is not a valid group definition" % group)
 
         return group
 

@@ -84,8 +84,10 @@ class ConnectionBase(AnsiblePlugin):
 
         # we always must have shell
         if not self._shell:
-            shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
-            self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
+            shell_type = play_context.shell if play_context.shell else getattr(
+                self, '_shell_type', None)
+            self._shell = get_shell_plugin(
+                shell_type=shell_type, executable=self._play_context.executable)
 
         self.become = None
 
@@ -217,14 +219,17 @@ class ConnectionBase(AnsiblePlugin):
 
     def connection_lock(self):
         f = self._play_context.connection_lockfd
-        display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+        display.vvvv('CONNECTION: pid %d waiting for lock on %d' %
+                     (os.getpid(), f), host=self._play_context.remote_addr)
         fcntl.lockf(f, fcntl.LOCK_EX)
-        display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+        display.vvvv('CONNECTION: pid %d acquired lock on %d' %
+                     (os.getpid(), f), host=self._play_context.remote_addr)
 
     def connection_unlock(self):
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
-        display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+        display.vvvv('CONNECTION: pid %d released lock on %d' %
+                     (os.getpid(), f), host=self._play_context.remote_addr)
 
     def reset(self):
         display.warning("Reset is not implemented for this connection")
@@ -273,7 +278,8 @@ class NetworkConnectionBase(ConnectionBase):
     _remote_is_local = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
-        super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
+        super(NetworkConnectionBase, self).__init__(
+            play_context, new_stdin, *args, **kwargs)
         self._messages = []
         self._conn_closed = False
 
@@ -299,7 +305,8 @@ class NetworkConnectionBase(ConnectionBase):
                     method = getattr(plugin, name, None)
                     if method is not None:
                         return method
-            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
+            raise AttributeError("'%s' object has no attribute '%s'" % (
+                self.__class__.__name__, name))
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         return self._local.exec_command(cmd, in_data, sudoable)
@@ -331,7 +338,8 @@ class NetworkConnectionBase(ConnectionBase):
         Reset the connection
         '''
         if self._socket_path:
-            self.queue_message('vvvv', 'resetting persistent connection for socket_path %s' % self._socket_path)
+            self.queue_message(
+                'vvvv', 'resetting persistent connection for socket_path %s' % self._socket_path)
             self.close()
         self.queue_message('vvvv', 'reset call on connection instance')
 
@@ -341,17 +349,20 @@ class NetworkConnectionBase(ConnectionBase):
             self._connected = False
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
-        super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+        super(NetworkConnectionBase, self).set_options(
+            task_keys=task_keys, var_options=var_options, direct=direct)
         if self.get_option('persistent_log_messages'):
             warning = "Persistent connection logging is enabled for %s. This will log ALL interactions" % self._play_context.remote_addr
             logpath = getattr(C, 'DEFAULT_LOG_PATH')
             if logpath is not None:
                 warning += " to %s" % logpath
-            self.queue_message('warning', "%s and WILL NOT redact sensitive configuration like passwords. USE WITH CAUTION!" % warning)
+            self.queue_message(
+                'warning', "%s and WILL NOT redact sensitive configuration like passwords. USE WITH CAUTION!" % warning)
 
         if self._sub_plugin.get('obj') and self._sub_plugin.get('type') != 'external':
             try:
-                self._sub_plugin['obj'].set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+                self._sub_plugin['obj'].set_options(
+                    task_keys=task_keys, var_options=var_options, direct=direct)
             except AttributeError:
                 pass
 

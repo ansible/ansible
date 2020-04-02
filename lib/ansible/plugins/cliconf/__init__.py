@@ -75,7 +75,8 @@ class CliconfBase(AnsiblePlugin):
             conn.edit_config(['hostname test', 'netconf ssh'])
     """
 
-    __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging']
+    __rpc__ = ['get_config', 'edit_config', 'get_capabilities',
+               'get', 'enable_response_logging', 'disable_response_logging']
 
     def __init__(self, connection):
         super(CliconfBase, self).__init__()
@@ -85,7 +86,8 @@ class CliconfBase(AnsiblePlugin):
 
     def _alarm_handler(self, signum, frame):
         """Alarm handler raised in case of command timeout """
-        self._connection.queue_message('log', 'closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout)
+        self._connection.queue_message(
+            'log', 'closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout)
         self.close()
 
     def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False, check_all=False):
@@ -343,7 +345,8 @@ class CliconfBase(AnsiblePlugin):
         ssh = self._connection.paramiko_conn._connect_uncached()
         if proto == 'scp':
             if not HAS_SCP:
-                raise AnsibleError("Required library scp is not installed.  Please install it using `pip install scp`")
+                raise AnsibleError(
+                    "Required library scp is not installed.  Please install it using `pip install scp`")
             with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
                 out = scp.put(source, destination)
         elif proto == 'sftp':
@@ -364,7 +367,8 @@ class CliconfBase(AnsiblePlugin):
         ssh = self._connection.paramiko_conn._connect_uncached()
         if proto == 'scp':
             if not HAS_SCP:
-                raise AnsibleError("Required library scp is not installed.  Please install it using `pip install scp`")
+                raise AnsibleError(
+                    "Required library scp is not installed.  Please install it using `pip install scp`")
             try:
                 with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
                     scp.get(source, destination)
@@ -434,7 +438,8 @@ class CliconfBase(AnsiblePlugin):
     def check_edit_config_capability(self, operations, candidate=None, commit=True, replace=None, comment=None):
 
         if not candidate and not replace:
-            raise ValueError("must provide a candidate or replace to load configuration")
+            raise ValueError(
+                "must provide a candidate or replace to load configuration")
 
         if commit not in (True, False):
             raise ValueError("'commit' must be a bool, got %s" % commit)
@@ -470,7 +475,8 @@ class CliconfBase(AnsiblePlugin):
         while True:
             out = to_text(out, errors='surrogate_then_replace').strip()
             if config_context and out.endswith(config_context):
-                self._connection.queue_message('vvvv', 'wrong context, sending exit to device')
+                self._connection.queue_message(
+                    'vvvv', 'wrong context, sending exit to device')
                 self.send_command(exit_command)
                 out = self._connection.get_prompt()
             else:

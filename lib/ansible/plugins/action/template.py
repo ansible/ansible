@@ -41,14 +41,18 @@ class ActionModule(ActionBase):
             if s_type in self._task.args:
                 value = ensure_type(self._task.args[s_type], 'string')
                 if value is not None and not isinstance(value, string_types):
-                    raise AnsibleActionFail("%s is expected to be a string, but got %s instead" % (s_type, type(value)))
+                    raise AnsibleActionFail(
+                        "%s is expected to be a string, but got %s instead" % (s_type, type(value)))
                 self._task.args[s_type] = value
 
         # booleans
         try:
-            follow = boolean(self._task.args.get('follow', False), strict=False)
-            trim_blocks = boolean(self._task.args.get('trim_blocks', True), strict=False)
-            lstrip_blocks = boolean(self._task.args.get('lstrip_blocks', False), strict=False)
+            follow = boolean(self._task.args.get(
+                'follow', False), strict=False)
+            trim_blocks = boolean(self._task.args.get(
+                'trim_blocks', True), strict=False)
+            lstrip_blocks = boolean(self._task.args.get(
+                'lstrip_blocks', False), strict=False)
         except TypeError as e:
             raise AnsibleActionFail(to_native(e))
 
@@ -56,40 +60,48 @@ class ActionModule(ActionBase):
         source = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
         state = self._task.args.get('state', None)
-        newline_sequence = self._task.args.get('newline_sequence', self.DEFAULT_NEWLINE_SEQUENCE)
-        variable_start_string = self._task.args.get('variable_start_string', None)
+        newline_sequence = self._task.args.get(
+            'newline_sequence', self.DEFAULT_NEWLINE_SEQUENCE)
+        variable_start_string = self._task.args.get(
+            'variable_start_string', None)
         variable_end_string = self._task.args.get('variable_end_string', None)
         block_start_string = self._task.args.get('block_start_string', None)
         block_end_string = self._task.args.get('block_end_string', None)
-        output_encoding = self._task.args.get('output_encoding', 'utf-8') or 'utf-8'
+        output_encoding = self._task.args.get(
+            'output_encoding', 'utf-8') or 'utf-8'
 
         # Option `lstrip_blocks' was added in Jinja2 version 2.7.
         if lstrip_blocks:
             try:
                 import jinja2.defaults
             except ImportError:
-                raise AnsibleError('Unable to import Jinja2 defaults for determining Jinja2 features.')
+                raise AnsibleError(
+                    'Unable to import Jinja2 defaults for determining Jinja2 features.')
 
             try:
                 jinja2.defaults.LSTRIP_BLOCKS
             except AttributeError:
-                raise AnsibleError("Option `lstrip_blocks' is only available in Jinja2 versions >=2.7")
+                raise AnsibleError(
+                    "Option `lstrip_blocks' is only available in Jinja2 versions >=2.7")
 
         wrong_sequences = ["\\n", "\\r", "\\r\\n"]
         allowed_sequences = ["\n", "\r", "\r\n"]
 
         # We need to convert unescaped sequences to proper escaped sequences for Jinja2
         if newline_sequence in wrong_sequences:
-            newline_sequence = allowed_sequences[wrong_sequences.index(newline_sequence)]
+            newline_sequence = allowed_sequences[wrong_sequences.index(
+                newline_sequence)]
 
         try:
             # logical validation
             if state is not None:
-                raise AnsibleActionFail("'state' cannot be specified on a template")
+                raise AnsibleActionFail(
+                    "'state' cannot be specified on a template")
             elif source is None or dest is None:
                 raise AnsibleActionFail("src and dest are required")
             elif newline_sequence not in allowed_sequences:
-                raise AnsibleActionFail("newline_sequence needs to be one of: \n, \r or \r\n")
+                raise AnsibleActionFail(
+                    "newline_sequence needs to be one of: \n, \r or \r\n")
             else:
                 try:
                     source = self._find_needle('templates', source)
@@ -104,20 +116,24 @@ class ActionModule(ActionBase):
             try:
                 tmp_source = self._loader.get_real_file(source)
             except AnsibleFileNotFound as e:
-                raise AnsibleActionFail("could not find src=%s, %s" % (source, to_text(e)))
+                raise AnsibleActionFail(
+                    "could not find src=%s, %s" % (source, to_text(e)))
             b_tmp_source = to_bytes(tmp_source, errors='surrogate_or_strict')
 
             # template the source data locally & get ready to transfer
             try:
                 with open(b_tmp_source, 'rb') as f:
                     try:
-                        template_data = to_text(f.read(), errors='surrogate_or_strict')
+                        template_data = to_text(
+                            f.read(), errors='surrogate_or_strict')
                     except UnicodeError:
-                        raise AnsibleActionFail("Template source files must be utf-8 encoded")
+                        raise AnsibleActionFail(
+                            "Template source files must be utf-8 encoded")
 
                 # set jinja2 internal search path for includes
                 searchpath = task_vars.get('ansible_search_path', [])
-                searchpath.extend([self._loader._basedir, os.path.dirname(source)])
+                searchpath.extend(
+                    [self._loader._basedir, os.path.dirname(source)])
 
                 # We want to search into the 'templates' subdir of each search path in
                 # addition to our original search paths.
@@ -136,11 +152,13 @@ class ActionModule(ActionBase):
                                                          variable_start_string=variable_start_string, variable_end_string=variable_end_string,
                                                          trim_blocks=trim_blocks, lstrip_blocks=lstrip_blocks,
                                                          available_variables=temp_vars):
-                    resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
+                    resultant = self._templar.do_template(
+                        template_data, preserve_trailing_newlines=True, escape_backslashes=False)
             except AnsibleAction:
                 raise
             except Exception as e:
-                raise AnsibleActionFail("%s: %s" % (type(e).__name__, to_text(e)))
+                raise AnsibleActionFail("%s: %s" %
+                                        (type(e).__name__, to_text(e)))
             finally:
                 self._loader.cleanup_tmp_file(b_tmp_source)
 
@@ -157,9 +175,11 @@ class ActionModule(ActionBase):
             local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
 
             try:
-                result_file = os.path.join(local_tempdir, os.path.basename(source))
+                result_file = os.path.join(
+                    local_tempdir, os.path.basename(source))
                 with open(to_bytes(result_file, errors='surrogate_or_strict'), 'wb') as f:
-                    f.write(to_bytes(resultant, encoding=output_encoding, errors='surrogate_or_strict'))
+                    f.write(to_bytes(resultant, encoding=output_encoding,
+                                     errors='surrogate_or_strict'))
 
                 new_task.args.update(
                     dict(
@@ -177,7 +197,8 @@ class ActionModule(ActionBase):
                                                                         shared_loader_obj=self._shared_loader_obj)
                 result.update(copy_action.run(task_vars=task_vars))
             finally:
-                shutil.rmtree(to_bytes(local_tempdir, errors='surrogate_or_strict'))
+                shutil.rmtree(
+                    to_bytes(local_tempdir, errors='surrogate_or_strict'))
 
         except AnsibleAction as e:
             result.update(e.result)

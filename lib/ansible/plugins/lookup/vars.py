@@ -1,6 +1,9 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.six import string_types
+from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -57,10 +60,6 @@ _value:
     - value of the variables requested.
 """
 
-from ansible.errors import AnsibleError, AnsibleUndefinedVariable
-from ansible.module_utils.six import string_types
-from ansible.plugins.lookup import LookupBase
-
 
 class LookupModule(LookupBase):
 
@@ -75,7 +74,8 @@ class LookupModule(LookupBase):
         ret = []
         for term in terms:
             if not isinstance(term, string_types):
-                raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+                raise AnsibleError(
+                    'Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
 
             try:
                 try:
@@ -84,9 +84,11 @@ class LookupModule(LookupBase):
                     try:
                         value = myvars['hostvars'][myvars['inventory_hostname']][term]
                     except KeyError:
-                        raise AnsibleUndefinedVariable('No variable found with this name: %s' % term)
+                        raise AnsibleUndefinedVariable(
+                            'No variable found with this name: %s' % term)
 
-                ret.append(self._templar.template(value, fail_on_undefined=True))
+                ret.append(self._templar.template(
+                    value, fail_on_undefined=True))
             except AnsibleUndefinedVariable:
                 if default is not None:
                     ret.append(default)

@@ -3,6 +3,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.utils.color import colorize, hostcolor
+from ansible.plugins.callback import CallbackBase
+from ansible.playbook.task_include import TaskInclude
+from ansible import context
+from ansible import constants as C
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -36,12 +41,6 @@ DOCUMENTATION = '''
 # NOTE: check_mode_markers functionality is also implemented in the following derived plugins:
 #       debug.py, yaml.py, dense.py. Maybe their documentation needs updating, too.
 
-
-from ansible import constants as C
-from ansible import context
-from ansible.playbook.task_include import TaskInclude
-from ansible.plugins.callback import CallbackBase
-from ansible.utils.color import colorize, hostcolor
 
 
 # These values use ansible.constants for historical reasons, mostly to allow
@@ -81,7 +80,8 @@ class CallbackModule(CallbackBase):
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
 
-        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+        super(CallbackModule, self).set_options(
+            task_keys=task_keys, var_options=var_options, direct=direct)
 
         # for backwards compat with plugins subclassing default, fallback to constants
         for option, constant in COMPAT_OPTIONS:
@@ -99,7 +99,8 @@ class CallbackModule(CallbackBase):
         if self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
-        self._handle_exception(result._result, use_stderr=self.display_failed_stderr)
+        self._handle_exception(
+            result._result, use_stderr=self.display_failed_stderr)
         self._handle_warnings(result._result)
 
         if result._task.loop and 'results' in result._result:
@@ -128,7 +129,8 @@ class CallbackModule(CallbackBase):
                 self._print_task_banner(result._task)
 
             if delegated_vars:
-                msg = "changed: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+                msg = "changed: [%s -> %s]" % (result._host.get_name(),
+                                               delegated_vars['ansible_host'])
             else:
                 msg = "changed: [%s]" % result._host.get_name()
             color = C.COLOR_CHANGED
@@ -140,7 +142,8 @@ class CallbackModule(CallbackBase):
                 self._print_task_banner(result._task)
 
             if delegated_vars:
-                msg = "ok: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+                msg = "ok: [%s -> %s]" % (result._host.get_name(),
+                                          delegated_vars['ansible_host'])
             else:
                 msg = "ok: [%s]" % result._host.get_name()
             color = C.COLOR_OK
@@ -179,10 +182,13 @@ class CallbackModule(CallbackBase):
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if delegated_vars:
-            msg = "fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result))
+            msg = "fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.get_name(
+            ), delegated_vars['ansible_host'], self._dump_results(result._result))
         else:
-            msg = "fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result))
-        self._display.display(msg, color=C.COLOR_UNREACHABLE, stderr=self.display_failed_stderr)
+            msg = "fatal: [%s]: UNREACHABLE! => %s" % (
+                result._host.get_name(), self._dump_results(result._result))
+        self._display.display(msg, color=C.COLOR_UNREACHABLE,
+                              stderr=self.display_failed_stderr)
 
     def v2_playbook_on_no_hosts_matched(self):
         self._display.display("skipping: no hosts matched", color=C.COLOR_SKIP)
@@ -238,11 +244,13 @@ class CallbackModule(CallbackBase):
             checkmsg = " [CHECK MODE]"
         else:
             checkmsg = ""
-        self._display.banner(u"%s [%s%s]%s" % (prefix, task_name, args, checkmsg))
+        self._display.banner(u"%s [%s%s]%s" %
+                             (prefix, task_name, args, checkmsg))
         if self._display.verbosity >= 2:
             path = task.get_path()
             if path:
-                self._display.display(u"task path: %s" % path, color=C.COLOR_DEBUG)
+                self._display.display(u"task path: %s" %
+                                      path, color=C.COLOR_DEBUG)
 
         self._last_task_banner = task._uuid
 
@@ -254,7 +262,8 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_start(self, host, task):
         if self.get_option('show_per_host_start'):
-            self._display.display(" [started %s on %s]" % (task, host), color=C.COLOR_OK)
+            self._display.display(" [started %s on %s]" %
+                                  (task, host), color=C.COLOR_OK)
 
     def v2_playbook_on_play_start(self, play):
         name = play.get_name().strip()
@@ -309,7 +318,8 @@ class CallbackModule(CallbackBase):
             color = C.COLOR_OK
 
         if delegated_vars:
-            msg += ": [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+            msg += ": [%s -> %s]" % (result._host.get_name(),
+                                     delegated_vars['ansible_host'])
         else:
             msg += ": [%s]" % result._host.get_name()
 
@@ -330,12 +340,14 @@ class CallbackModule(CallbackBase):
 
         msg = "failed: "
         if delegated_vars:
-            msg += "[%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+            msg += "[%s -> %s]" % (result._host.get_name(),
+                                   delegated_vars['ansible_host'])
         else:
             msg += "[%s]" % (result._host.get_name())
 
         self._handle_warnings(result._result)
-        self._display.display(msg + " (item=%s) => %s" % (self._get_item_label(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
+        self._display.display(msg + " (item=%s) => %s" % (self._get_item_label(
+            result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
     def v2_runner_item_on_skipped(self, result):
         if self.display_skipped_hosts:
@@ -343,13 +355,15 @@ class CallbackModule(CallbackBase):
                 self._print_task_banner(result._task)
 
             self._clean_results(result._result, result._task.action)
-            msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item_label(result._result))
+            msg = "skipping: [%s] => (item=%s) " % (
+                result._host.get_name(), self._get_item_label(result._result))
             if self._run_is_verbose(result):
                 msg += " => %s" % self._dump_results(result._result)
             self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_include(self, included_file):
-        msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
+        msg = 'included: %s for %s' % (included_file._filename, ", ".join(
+            [h.name for h in included_file._hosts]))
         if 'item' in included_file._args:
             msg += " => (item=%s)" % (self._get_item_label(included_file._args),)
         self._display.display(msg, color=C.COLOR_SKIP)
@@ -366,7 +380,8 @@ class CallbackModule(CallbackBase):
                     hostcolor(h, t),
                     colorize(u'ok', t['ok'], C.COLOR_OK),
                     colorize(u'changed', t['changed'], C.COLOR_CHANGED),
-                    colorize(u'unreachable', t['unreachable'], C.COLOR_UNREACHABLE),
+                    colorize(u'unreachable',
+                             t['unreachable'], C.COLOR_UNREACHABLE),
                     colorize(u'failed', t['failures'], C.COLOR_ERROR),
                     colorize(u'skipped', t['skipped'], C.COLOR_SKIP),
                     colorize(u'rescued', t['rescued'], C.COLOR_OK),
@@ -399,12 +414,14 @@ class CallbackModule(CallbackBase):
             for k in sorted(stats.custom.keys()):
                 if k == '_run':
                     continue
-                self._display.display('\t%s: %s' % (k, self._dump_results(stats.custom[k], indent=1).replace('\n', '')))
+                self._display.display('\t%s: %s' % (k, self._dump_results(
+                    stats.custom[k], indent=1).replace('\n', '')))
 
             # print per run custom stats
             if '_run' in stats.custom:
                 self._display.display("", screen_only=True)
-                self._display.display('\tRUN: %s' % self._dump_results(stats.custom['_run'], indent=1).replace('\n', ''))
+                self._display.display('\tRUN: %s' % self._dump_results(
+                    stats.custom['_run'], indent=1).replace('\n', ''))
             self._display.display("", screen_only=True)
 
         if context.CLIARGS['check'] and self.check_mode_markers:
@@ -413,7 +430,8 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_start(self, playbook):
         if self._display.verbosity > 1:
             from os.path import basename
-            self._display.banner("PLAYBOOK: %s" % basename(playbook._file_name))
+            self._display.banner("PLAYBOOK: %s" %
+                                 basename(playbook._file_name))
 
         # show CLI arguments
         if self._display.verbosity > 3:
@@ -424,18 +442,21 @@ class CallbackModule(CallbackBase):
             for argument in (a for a in context.CLIARGS if a != 'args'):
                 val = context.CLIARGS[argument]
                 if val:
-                    self._display.display('%s: %s' % (argument, val), color=C.COLOR_VERBOSE, screen_only=True)
+                    self._display.display('%s: %s' % (
+                        argument, val), color=C.COLOR_VERBOSE, screen_only=True)
 
         if context.CLIARGS['check'] and self.check_mode_markers:
             self._display.banner("DRY RUN")
 
     def v2_runner_retry(self, result):
         task_name = result.task_name or result._task
-        msg = "FAILED - RETRYING: %s (%d retries left)." % (task_name, result._result['retries'] - result._result['attempts'])
+        msg = "FAILED - RETRYING: %s (%d retries left)." % (
+            task_name, result._result['retries'] - result._result['attempts'])
         if self._run_is_verbose(result, verbosity=2):
             msg += "Result was: %s" % self._dump_results(result._result)
         self._display.display(msg, color=C.COLOR_DEBUG)
 
     def v2_playbook_on_notify(self, handler, host):
         if self._display.verbosity > 1:
-            self._display.display("NOTIFIED HANDLER %s for %s" % (handler.get_name(), host), color=C.COLOR_VERBOSE, screen_only=True)
+            self._display.display("NOTIFIED HANDLER %s for %s" % (
+                handler.get_name(), host), color=C.COLOR_VERBOSE, screen_only=True)

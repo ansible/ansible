@@ -2,6 +2,12 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import string_types
+from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
+from jinja2.exceptions import UndefinedError
+import os
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -100,14 +106,6 @@ RETURN = """
     description:
       - path to file found
 """
-import os
-
-from jinja2.exceptions import UndefinedError
-
-from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
-from ansible.module_utils.six import string_types
-from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.plugins.lookup import LookupBase
 
 
 class LookupModule(LookupBase):
@@ -165,7 +163,8 @@ class LookupModule(LookupBase):
             # get subdir if set by task executor, default to files otherwise
             subdir = getattr(self, '_subdir', 'files')
             path = None
-            path = self.find_file_in_search_path(variables, subdir, fn, ignore_missing=True)
+            path = self.find_file_in_search_path(
+                variables, subdir, fn, ignore_missing=True)
             if path is not None:
                 return [path]
         if skip:
