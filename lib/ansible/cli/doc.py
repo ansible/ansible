@@ -235,7 +235,7 @@ class DocCLI(CLI):
                 # Some changes to how json docs are formatted
                 for plugin, doc_data in plugin_docs.items():
                     try:
-                        doc_data['return'] = yaml.load(doc_data['return'])
+                        doc_data['return'] = yaml.safe_load(doc_data['return'])
                     except Exception:
                         pass
 

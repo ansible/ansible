@@ -9,6 +9,7 @@ import os
 from collections import defaultdict
 
 from ansible.collections import is_collection_path
+from ansible.module_utils._text import to_bytes
 from ansible.utils.collection_loader import AnsibleCollectionLoader, get_collection_name_from_path
 from ansible.utils.display import Display
 
@@ -86,4 +87,4 @@ def list_collection_dirs(search_paths=None, coll_filter=None):
                                 if is_collection_path(coll_dir):
                                     cpath = os.path.join(namespace_dir, collection)
                                     collections[ns][collection] = cpath
-                                    yield cpath
+                                    yield to_bytes(cpath)
