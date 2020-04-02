@@ -34,6 +34,7 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from distutils.version import StrictVersion
 from fnmatch import fnmatch
+import yaml
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
@@ -237,7 +238,7 @@ class ModuleValidator(Validator):
 
     WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
-    def __init__(self, path, analyze_arg_spec=False, collection=None, base_branch=None, git_cache=None, reporter=None):
+    def __init__(self, path, analyze_arg_spec=False, collection=None, base_branch=None, git_cache=None, reporter=None, routing=None):
         super(ModuleValidator, self).__init__(reporter=reporter or Reporter())
 
         self.path = path
@@ -265,6 +266,18 @@ class ModuleValidator(Validator):
             self.base_module = self._get_base_file()
         else:
             self.base_module = None
+
+        if self.collection:
+            routing_file = 'meta/routing.yml'
+            # Load meta/routing.yml if it exists, as it may contain deprecation information
+            if os.path.isfile(routing_file):
+                try:
+                    with open(routing_file) as f:
+                        self.routing = yaml.safe_load(f)
+                except yaml.error.MarkedYAMLError as ex:
+                    print('%s:%d:%d: YAML load failed: %s' % (routing_file, ex.context_mark.line + 1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
+                except Exception as ex:  # pylint: disable=broad-except
+                    print('%s:%d:%d: YAML load failed: %s' % (routing_file, 0, 0, re.sub(r'\s+', ' ', str(ex))))
 
     def __enter__(self):
         return self
@@ -882,6 +895,7 @@ class ModuleValidator(Validator):
         deprecated = False
         removed = False
         doc_deprecated = None  # doc legally might not exist
+        routing_says_deprecated = False
 
         if self.object_name.startswith('_') and not os.path.islink(self.object_path):
             filename_deprecated_or_removed = True
@@ -923,6 +937,12 @@ class ModuleValidator(Validator):
                         code='missing-metadata-status',
                         msg='ANSIBLE_METADATA.status must be exactly one of "deprecated" or "removed"'
                     )
+        else:
+            # We are testing a collection
+            if self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {}):
+                # meta/routing.yml says this is deprecated
+                routing_says_deprecated = True
+                deprecated = True
 
         if not removed:
             if not bool(doc_info['DOCUMENTATION']['value']):
@@ -995,7 +1015,8 @@ class ModuleValidator(Validator):
                             doc,
                             doc_schema(
                                 os.readlink(self.object_path).split('.')[0],
-                                version_added=not bool(self.collection)
+                                version_added=not bool(self.collection),
+                                deprecated_module=deprecated
                             ),
                             'DOCUMENTATION',
                             'invalid-documentation',
@@ -1006,7 +1027,8 @@ class ModuleValidator(Validator):
                             doc,
                             doc_schema(
                                 self.object_name.split('.')[0],
-                                version_added=not bool(self.collection)
+                                version_added=not bool(self.collection),
+                                deprecated_module=deprecated
                             ),
                             'DOCUMENTATION',
                             'invalid-documentation',
@@ -1070,23 +1092,43 @@ class ModuleValidator(Validator):
                     )
 
         # Check for mismatched deprecation
-        mismatched_deprecation = True
-        if not (filename_deprecated_or_removed or removed or deprecated or doc_deprecated):
-            mismatched_deprecation = False
-        else:
-            if (filename_deprecated_or_removed and deprecated and doc_deprecated):
+        if not self.collection:
+            mismatched_deprecation = True
+            if not (filename_deprecated_or_removed or removed or deprecated or doc_deprecated):
                 mismatched_deprecation = False
-            if (filename_deprecated_or_removed and removed and not (documentation_exists or examples_exist or returns_exist)):
-                mismatched_deprecation = False
+            else:
+                if (filename_deprecated_or_removed and deprecated and doc_deprecated):
+                    mismatched_deprecation = False
+                if (filename_deprecated_or_removed and removed and not (documentation_exists or examples_exist or returns_exist)):
+                    mismatched_deprecation = False
 
-        if mismatched_deprecation:
-            self.reporter.error(
-                path=self.object_path,
-                code='deprecation-mismatch',
-                msg='Module deprecation/removed must agree in Metadata, by prepending filename with'
-                    ' "_", and setting DOCUMENTATION.deprecated for deprecation or by removing all'
-                    ' documentation for removed'
-            )
+            if mismatched_deprecation:
+                if not self.collection:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='deprecation-mismatch',
+                        msg='Module deprecation/removed must agree in Metadata, by prepending filename with'
+                            ' "_", and setting DOCUMENTATION.deprecated for deprecation or by removing all'
+                            ' documentation for removed'
+                    )
+        else:
+            # We are testing a collection
+            if self.object_name.startswith('_'):
+                self.reporter.error(
+                        path=self.object_path,
+                        code='collections-no-underscore-on-deprecation',
+                        msg='Deprecated content in collections MUST NOT start with "_", update meta/routing.yml instead',
+                        )
+            
+            if not (doc_deprecated == routing_says_deprecated):
+                # DOCUMENTATION.deprecated and meta/routing.yml disagree
+                self.reporter.error(
+                    path=self.object_path,
+                    code='deprecation-mismatch',
+                    msg='"meta/routing.yml" and DOCUMENTATION.deprecation do not agree.'
+                )
+
+            # In the future we should error if ANSIBLE_METADATA exists in a collection
 
         return doc_info, doc
 
