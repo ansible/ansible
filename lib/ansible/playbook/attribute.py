@@ -43,7 +43,6 @@ class Attribute:
         prepend=False,
         static=False,
     ):
-
         """
         :class:`Attribute` specifies constraints for attributes of objects which
         derive from playbook data.  The attributes of the object are basically
@@ -92,7 +91,8 @@ class Attribute:
         self.static = static
 
         if default is not None and self.isa in _CONTAINERS and not callable(default):
-            raise TypeError('defaults for FieldAttribute may not be mutable, please provide a callable instead')
+            raise TypeError(
+                'defaults for FieldAttribute may not be mutable, please provide a callable instead')
 
     def __eq__(self, other):
         return other.priority == self.priority

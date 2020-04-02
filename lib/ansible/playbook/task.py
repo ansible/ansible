@@ -78,7 +78,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     _delegate_facts = FieldAttribute(isa='bool')
     _failed_when = FieldAttribute(isa='list', default=list)
     _loop = FieldAttribute()
-    _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
+    _loop_control = FieldAttribute(
+        isa='class', class_type=LoopControl, inherit=False)
     _notify = FieldAttribute(isa='list')
     _poll = FieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
     _register = FieldAttribute(isa='string', static=True)
@@ -108,7 +109,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
             path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
         elif hasattr(self._parent._play, '_ds') and hasattr(self._parent._play._ds, '_data_source') and hasattr(self._parent._play._ds, '_line_number'):
-            path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
+            path = "%s:%s" % (self._parent._play._ds._data_source,
+                              self._parent._play._ds._line_number)
         return path
 
     def get_name(self):
@@ -155,9 +157,11 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
         loop_name = k.replace("with_", "")
         if new_ds.get('loop') is not None or new_ds.get('loop_with') is not None:
-            raise AnsibleError("duplicate loop in task: %s" % loop_name, obj=ds)
+            raise AnsibleError("duplicate loop in task: %s" %
+                               loop_name, obj=ds)
         if v is None:
-            raise AnsibleError("you must specify a value when using %s" % k, obj=ds)
+            raise AnsibleError(
+                "you must specify a value when using %s" % k, obj=ds)
         new_ds['loop_with'] = loop_name
         new_ds['loop'] = v
         # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead", version="2.10")
@@ -169,7 +173,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         '''
 
         if not isinstance(ds, dict):
-            raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
+            raise AnsibleAssertionError(
+                'ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure suitable for the
@@ -206,7 +211,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         # use the args parsing class to determine the action, args,
         # and the delegate_to value from the various possible forms
         # supported as legacy
-        args_parser = ModuleArgsParser(task_ds=ds, collection_list=collections_list)
+        args_parser = ModuleArgsParser(
+            task_ds=ds, collection_list=collections_list)
         try:
             (action, args, delegate_to) = args_parser.parse()
         except AnsibleParserError as e:
@@ -330,7 +336,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                         if isinstance(isdict, dict):
                             env.update(isdict)
                         else:
-                            display.warning("could not parse environment value, skipping: %s" % value)
+                            display.warning(
+                                "could not parse environment value, skipping: %s" % value)
 
             elif isinstance(value, dict):
                 # should not really happen
@@ -477,7 +484,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                         parent_value = _parent._attributes.get(attr, Sentinel)
 
                     if extend:
-                        value = self._extend_value(value, parent_value, prepend)
+                        value = self._extend_value(
+                            value, parent_value, prepend)
                     else:
                         value = parent_value
         except KeyError:

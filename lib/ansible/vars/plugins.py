@@ -33,9 +33,11 @@ def get_plugin_vars(loader, plugin, path, entities):
                     data.update(plugin.get_group_vars(entity.name))
         except AttributeError:
             if hasattr(plugin, 'run'):
-                raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
+                raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (
+                    plugin._load_name, plugin._original_path))
             else:
-                raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
+                raise AnsibleError("Invalid vars plugin %s from %s" % (
+                    plugin._load_name, plugin._original_path))
     return data
 
 
@@ -58,11 +60,13 @@ def get_vars_from_path(loader, path, entities, stage):
             # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
             continue
 
-        has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
+        has_stage = hasattr(
+            plugin, 'get_option') and plugin.has_option('stage')
 
         # if a plugin-specific setting has not been provided, use the global setting
         # older/non shipped plugins that don't support the plugin-specific setting should also use the global setting
-        use_global = (has_stage and plugin.get_option('stage') is None) or not has_stage
+        use_global = (has_stage and plugin.get_option(
+            'stage') is None) or not has_stage
 
         if use_global:
             if C.RUN_VARS_PLUGINS == 'demand' and stage == 'inventory':
@@ -72,7 +76,8 @@ def get_vars_from_path(loader, path, entities, stage):
         elif has_stage and plugin.get_option('stage') not in ('all', stage):
             continue
 
-        data = combine_vars(data, get_plugin_vars(loader, plugin, path, entities))
+        data = combine_vars(data, get_plugin_vars(
+            loader, plugin, path, entities))
 
     return data
 
@@ -90,6 +95,7 @@ def get_vars_from_inventory_sources(loader, sources, entities, stage):
             # always pass the directory of the inventory source file
             path = os.path.dirname(path)
 
-        data = combine_vars(data, get_vars_from_path(loader, path, entities, stage))
+        data = combine_vars(data, get_vars_from_path(
+            loader, path, entities, stage))
 
     return data

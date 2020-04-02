@@ -56,7 +56,8 @@ class GalaxyLogin(object):
                         " to identify you.", screen_only=True)
         display.display("This information will " + stringc("not be sent to Galaxy", 'bright cyan') +
                         ", only to " + stringc("api.github.com.", "yellow"), screen_only=True)
-        display.display("The password will not be displayed." + u'\n\n', screen_only=True)
+        display.display("The password will not be displayed." +
+                        u'\n\n', screen_only=True)
         display.display("Use " + stringc("--github-token", 'yellow') +
                         " if you do not want to enter your password." + u'\n\n', screen_only=True)
 
@@ -66,12 +67,14 @@ class GalaxyLogin(object):
             pass
 
         try:
-            self.github_password = getpass.getpass("Password for %s: " % self.github_username)
+            self.github_password = getpass.getpass(
+                "Password for %s: " % self.github_username)
         except Exception:
             pass
 
         if not self.github_username or not self.github_password:
-            raise AnsibleError("Invalid GitHub credentials. Username and password are required.")
+            raise AnsibleError(
+                "Invalid GitHub credentials. Username and password are required.")
 
     def remove_github_token(self):
         '''
@@ -102,7 +105,8 @@ class GalaxyLogin(object):
         Create a personal authorization token with a note of 'ansible-galaxy login'
         '''
         self.remove_github_token()
-        args = json.dumps({"scopes": ["public_repo"], "note": "ansible-galaxy login"})
+        args = json.dumps(
+            {"scopes": ["public_repo"], "note": "ansible-galaxy login"})
         try:
             data = json.load(open_url(self.GITHUB_AUTH, url_username=self.github_username,
                                       url_password=self.github_password, force_basic_auth=True, data=args,

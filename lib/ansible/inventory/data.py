@@ -135,11 +135,13 @@ class InventoryData(object):
 
             # special case for implicit hosts
             if host.implicit:
-                host.vars = combine_vars(self.groups['all'].get_vars(), host.vars)
+                host.vars = combine_vars(
+                    self.groups['all'].get_vars(), host.vars)
 
         # warn if overloading identifier as both group and host
         for conflict in group_names.intersection(host_names):
-            display.warning("Found both group and host with same name: %s" % conflict)
+            display.warning(
+                "Found both group and host with same name: %s" % conflict)
 
         self._groups_dict_cache = {}
 
@@ -160,7 +162,8 @@ class InventoryData(object):
 
         if group:
             if not isinstance(group, string_types):
-                raise AnsibleError("Invalid group name supplied, expected a string but got %s for %s" % (type(group), group))
+                raise AnsibleError(
+                    "Invalid group name supplied, expected a string but got %s for %s" % (type(group), group))
             if group not in self.groups:
                 g = Group(group)
                 if g.name not in self.groups:
@@ -171,7 +174,8 @@ class InventoryData(object):
             else:
                 display.debug("group %s already in inventory" % group)
         else:
-            raise AnsibleError("Invalid empty/false group name provided: %s" % group)
+            raise AnsibleError(
+                "Invalid empty/false group name provided: %s" % group)
 
         return group
 
@@ -191,7 +195,8 @@ class InventoryData(object):
 
         if host:
             if not isinstance(host, string_types):
-                raise AnsibleError("Invalid host name supplied, expected a string but got %s for %s" % (type(host), host))
+                raise AnsibleError(
+                    "Invalid host name supplied, expected a string but got %s for %s" % (type(host), host))
 
             # TODO: add to_safe_host_name
             g = None
@@ -199,14 +204,17 @@ class InventoryData(object):
                 if group in self.groups:
                     g = self.groups[group]
                 else:
-                    raise AnsibleError("Could not find group %s in inventory" % group)
+                    raise AnsibleError(
+                        "Could not find group %s in inventory" % group)
 
             if host not in self.hosts:
                 h = Host(host, port)
                 self.hosts[host] = h
                 if self.current_source:  # set to 'first source' in which host was encountered
-                    self.set_variable(host, 'inventory_file', self.current_source)
-                    self.set_variable(host, 'inventory_dir', basedir(self.current_source))
+                    self.set_variable(host, 'inventory_file',
+                                      self.current_source)
+                    self.set_variable(host, 'inventory_dir',
+                                      basedir(self.current_source))
                 else:
                     self.set_variable(host, 'inventory_file', None)
                     self.set_variable(host, 'inventory_dir', None)
@@ -218,7 +226,8 @@ class InventoryData(object):
                         self.localhost = self.hosts[host]
                         display.vvvv("Set default localhost to %s" % h)
                     else:
-                        display.warning("A duplicate localhost-like entry was found (%s). First found localhost was %s" % (h, self.localhost.name))
+                        display.warning(
+                            "A duplicate localhost-like entry was found (%s). First found localhost was %s" % (h, self.localhost.name))
             else:
                 h = self.hosts[host]
 
@@ -248,7 +257,8 @@ class InventoryData(object):
         elif entity in self.hosts:
             inv_object = self.hosts[entity]
         else:
-            raise AnsibleError("Could not identify group or host named %s" % entity)
+            raise AnsibleError(
+                "Could not identify group or host named %s" % entity)
 
         inv_object.set_variable(varname, value)
         display.debug('set %s for %s' % (varname, entity))
@@ -275,6 +285,7 @@ class InventoryData(object):
         """
         if not self._groups_dict_cache:
             for (group_name, group) in iteritems(self.groups):
-                self._groups_dict_cache[group_name] = [h.name for h in group.get_hosts()]
+                self._groups_dict_cache[group_name] = [
+                    h.name for h in group.get_hosts()]
 
         return self._groups_dict_cache

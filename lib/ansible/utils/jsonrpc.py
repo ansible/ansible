@@ -53,7 +53,8 @@ class JsonRpcServer(object):
                 response = json.dumps(error)
             except Exception as exc:
                 display.vvv(traceback.format_exc())
-                error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))
+                error = self.internal_error(data=to_text(
+                    exc, errors='surrogate_then_replace'))
                 response = json.dumps(error)
             else:
                 if isinstance(result, dict) and 'jsonrpc' in result:
@@ -65,7 +66,8 @@ class JsonRpcServer(object):
                     response = json.dumps(response)
                 except Exception as exc:
                     display.vvv(traceback.format_exc())
-                    error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))
+                    error = self.internal_error(data=to_text(
+                        exc, errors='surrogate_then_replace'))
                     response = json.dumps(error)
 
         delattr(self, '_identifier')

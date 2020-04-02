@@ -101,7 +101,8 @@ class GalaxyToken(object):
     token_type = 'Token'
 
     def __init__(self, token=None):
-        self.b_file = to_bytes(C.GALAXY_TOKEN_PATH, errors='surrogate_or_strict')
+        self.b_file = to_bytes(C.GALAXY_TOKEN_PATH,
+                               errors='surrogate_or_strict')
         # Done so the config file is only opened when set/get/save is called
         self._config = None
         self._token = token
@@ -163,7 +164,8 @@ class BasicAuthToken(object):
     def _encode_token(username, password):
         token = "%s:%s" % (to_text(username, errors='surrogate_or_strict'),
                            to_text(password, errors='surrogate_or_strict', nonstring='passthru') or '')
-        b64_val = base64.b64encode(to_bytes(token, encoding='utf-8', errors='surrogate_or_strict'))
+        b64_val = base64.b64encode(
+            to_bytes(token, encoding='utf-8', errors='surrogate_or_strict'))
         return to_text(b64_val)
 
     def get(self):

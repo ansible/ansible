@@ -36,7 +36,8 @@ def merge_fragment(target, source):
             elif isinstance(target[key], MutableSequence):
                 value = sorted(frozenset(value + target[key]))
             else:
-                raise Exception("Attempt to extend a documentation fragement, invalid type for %s" % key)
+                raise Exception(
+                    "Attempt to extend a documentation fragement, invalid type for %s" % key)
         target[key] = value
 
 
@@ -76,9 +77,11 @@ def add_fragments(doc, filename, fragment_loader):
                 unknown_fragments.append(fragment_slug)
                 continue
             else:
-                fragment_yaml = '{}'  # TODO: this is still an error later since we require 'options' below...
+                # TODO: this is still an error later since we require 'options' below...
+                fragment_yaml = '{}'
 
-        fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
+        fragment = AnsibleLoader(
+            fragment_yaml, file_name=filename).get_single_data()
 
         if 'notes' in fragment:
             notes = fragment.pop('notes')
@@ -95,14 +98,16 @@ def add_fragments(doc, filename, fragment_loader):
                 doc['seealso'].extend(seealso)
 
         if 'options' not in fragment:
-            raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
+            raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (
+                fragment_name, filename))
 
         # ensure options themselves are directly merged
         if 'options' in doc:
             try:
                 merge_fragment(doc['options'], fragment.pop('options'))
             except Exception as e:
-                raise AnsibleError("%s options (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
+                raise AnsibleError("%s options (%s) of unknown type: %s" % (
+                    to_native(e), fragment_name, filename))
         else:
             doc['options'] = fragment.pop('options')
 
@@ -110,10 +115,12 @@ def add_fragments(doc, filename, fragment_loader):
         try:
             merge_fragment(doc, fragment)
         except Exception as e:
-            raise AnsibleError("%s (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
+            raise AnsibleError("%s (%s) of unknown type: %s" %
+                               (to_native(e), fragment_name, filename))
 
     if unknown_fragments:
-        raise AnsibleError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
+        raise AnsibleError('unknown doc_fragment(s) in file {0}: {1}'.format(
+            filename, to_native(', '.join(unknown_fragments))))
 
 
 def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False):
@@ -121,7 +128,8 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False)
     DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the doc_fragments plugins.
     """
 
-    data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
+    data = read_docstring(filename, verbose=verbose,
+                          ignore_errors=ignore_errors)
 
     # add fragments to documentation
     if data.get('doc', False):

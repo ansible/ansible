@@ -52,13 +52,15 @@ class TaskInclude(Task):
     _static = FieldAttribute(isa='bool', default=None)
 
     def __init__(self, block=None, role=None, task_include=None):
-        super(TaskInclude, self).__init__(block=block, role=role, task_include=task_include)
+        super(TaskInclude, self).__init__(
+            block=block, role=role, task_include=task_include)
         self.statically_loaded = False
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         ti = TaskInclude(block=block, role=role, task_include=task_include)
-        task = ti.load_data(data, variable_manager=variable_manager, loader=loader)
+        task = ti.load_data(
+            data, variable_manager=variable_manager, loader=loader)
 
         # Validate options
         my_arg_names = frozenset(task.args.keys())
@@ -66,18 +68,22 @@ class TaskInclude(Task):
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(TaskInclude.VALID_ARGS)
         if bad_opts and task.action in ('include_tasks', 'import_tasks'):
-            raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))), obj=data)
+            raise AnsibleParserError('Invalid options for %s: %s' % (
+                task.action, ','.join(list(bad_opts))), obj=data)
 
         if not task.args.get('_raw_params'):
             task.args['_raw_params'] = task.args.pop('file', None)
             if not task.args['_raw_params']:
-                raise AnsibleParserError('No file specified for %s' % task.action)
+                raise AnsibleParserError(
+                    'No file specified for %s' % task.action)
 
         apply_attrs = task.args.get('apply', {})
         if apply_attrs and task.action != 'include_tasks':
-            raise AnsibleParserError('Invalid options for %s: apply' % task.action, obj=data)
+            raise AnsibleParserError(
+                'Invalid options for %s: apply' % task.action, obj=data)
         elif not isinstance(apply_attrs, dict):
-            raise AnsibleParserError('Expected a dict for apply but got %s instead' % type(apply_attrs), obj=data)
+            raise AnsibleParserError(
+                'Expected a dict for apply but got %s instead' % type(apply_attrs), obj=data)
 
         return task
 
@@ -89,14 +95,16 @@ class TaskInclude(Task):
             # This check doesn't handle ``include`` as we have no idea at this point if it is static or not
             if ds[k] is not Sentinel and ds['action'] in ('include_tasks', 'include_role'):
                 if C.INVALID_TASK_ATTRIBUTE_FAILED:
-                    raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (k, self.__class__.__name__), obj=ds)
+                    raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (
+                        k, self.__class__.__name__), obj=ds)
                 else:
                     display.warning("Ignoring invalid attribute: %s" % k)
 
         return ds
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
-        new_me = super(TaskInclude, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
+        new_me = super(TaskInclude, self).copy(
+            exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
         new_me.statically_loaded = self.statically_loaded
         return new_me
 

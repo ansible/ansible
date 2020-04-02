@@ -101,7 +101,8 @@ def remove_internal_keys(data):
     '''
     for key in list(data.keys()):
         if (key.startswith('_ansible_') and key != '_ansible_parsed') or key in C.INTERNAL_RESULT_KEYS:
-            display.warning("Removed unexpected internal key in module return: %s = %s" % (key, data[key]))
+            display.warning(
+                "Removed unexpected internal key in module return: %s = %s" % (key, data[key]))
             del data[key]
 
     # remove bad/empty internal keys
@@ -125,7 +126,8 @@ def clean_facts(facts):
     # keys we want to remove from facts
     # NOTE: these will eventually disappear in favor of others below
     for magic_var in C.MAGIC_VARIABLE_MAPPING:
-        remove_keys.update(fact_keys.intersection(C.MAGIC_VARIABLE_MAPPING[magic_var]))
+        remove_keys.update(fact_keys.intersection(
+            C.MAGIC_VARIABLE_MAPPING[magic_var]))
 
     # remove common connection vars
     remove_keys.update(fact_keys.intersection(C.COMMON_CONNECTION_VARS))
@@ -158,7 +160,8 @@ def clean_facts(facts):
                     r_val = '%s ... %s' % (r_val[:13], r_val[-6:])
             except Exception:
                 r_val = ' <failed to convert value to a string> '
-            display.warning("Removed restricted key from module data: %s = %s" % (r_key, r_val))
+            display.warning(
+                "Removed restricted key from module data: %s = %s" % (r_key, r_val))
             del data[r_key]
 
     return strip_internal_keys(data)

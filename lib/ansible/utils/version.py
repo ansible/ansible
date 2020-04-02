@@ -45,6 +45,7 @@ class _Alpha:
     Largely this exists to make comparing an integer and a string on py3
     so that it works like py2.
     """
+
     def __init__(self, specifier):
         self.specifier = specifier
 
@@ -88,6 +89,7 @@ class _Numeric:
     Largely this exists to make comparing an integer and a string on py3
     so that it works like py2.
     """
+
     def __init__(self, specifier):
         self.specifier = int(specifier)
 
@@ -199,9 +201,11 @@ class SemanticVersion(Version):
         self.patch = int(patch)
 
         if prerelease:
-            self.prerelease = tuple(_Numeric(x) if x.isdigit() else _Alpha(x) for x in prerelease.split('.'))
+            self.prerelease = tuple(_Numeric(x) if x.isdigit(
+            ) else _Alpha(x) for x in prerelease.split('.'))
         if buildmetadata:
-            self.buildmetadata = tuple(_Numeric(x) if x.isdigit() else _Alpha(x) for x in buildmetadata.split('.'))
+            self.buildmetadata = tuple(_Numeric(x) if x.isdigit(
+            ) else _Alpha(x) for x in buildmetadata.split('.'))
 
     @property
     def core(self):

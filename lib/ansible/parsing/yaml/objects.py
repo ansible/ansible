@@ -78,7 +78,8 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
     @classmethod
     def from_plaintext(cls, seq, vault, secret):
         if not vault:
-            raise vault.AnsibleVaultError('Error creating AnsibleVaultEncryptedUnicode, invalid vault (%s) provided' % vault)
+            raise vault.AnsibleVaultError(
+                'Error creating AnsibleVaultEncryptedUnicode, invalid vault (%s) provided' % vault)
 
         ciphertext = vault.encrypt(seq, secret)
         avu = cls(ciphertext)

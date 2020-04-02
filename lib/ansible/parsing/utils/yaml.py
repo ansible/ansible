@@ -34,11 +34,13 @@ def _handle_error(yaml_exc, file_name, show_content):
     err_obj = None
     if hasattr(yaml_exc, 'problem_mark'):
         err_obj = AnsibleBaseYAMLObject()
-        err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
+        err_obj.ansible_pos = (
+            file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
 
     err_msg = getattr(yaml_exc, 'problem', '')
 
-    raise AnsibleParserError(YAML_SYNTAX_ERROR % to_native(err_msg), obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
+    raise AnsibleParserError(YAML_SYNTAX_ERROR % to_native(
+        err_msg), obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
 
 
 def _safe_load(stream, file_name=None, vault_secrets=None):
@@ -71,7 +73,8 @@ def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None)
     except Exception:
         # must not be JSON, let the rest try
         try:
-            new_data = _safe_load(data, file_name=file_name, vault_secrets=vault_secrets)
+            new_data = _safe_load(data, file_name=file_name,
+                                  vault_secrets=vault_secrets)
         except YAMLError as yaml_exc:
             _handle_error(yaml_exc, file_name, show_content)
 

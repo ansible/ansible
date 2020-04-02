@@ -46,9 +46,11 @@ display = Display()
 
 IGNORED_ALWAYS = [br"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
 IGNORED_PATTERNS = [to_bytes(x) for x in C.INVENTORY_IGNORE_PATTERNS]
-IGNORED_EXTS = [b'%s$' % to_bytes(re.escape(x)) for x in C.INVENTORY_IGNORE_EXTS]
+IGNORED_EXTS = [b'%s$' % to_bytes(re.escape(x))
+                for x in C.INVENTORY_IGNORE_EXTS]
 
-IGNORED = re.compile(b'|'.join(IGNORED_ALWAYS + IGNORED_PATTERNS + IGNORED_EXTS))
+IGNORED = re.compile(
+    b'|'.join(IGNORED_ALWAYS + IGNORED_PATTERNS + IGNORED_EXTS))
 
 PATTERN_WITH_SUBSCRIPT = re.compile(
     r'''^
@@ -202,10 +204,12 @@ class InventoryManager(object):
             if plugin:
                 plugins.append(plugin)
             else:
-                display.warning('Failed to load inventory plugin, skipping %s' % name)
+                display.warning(
+                    'Failed to load inventory plugin, skipping %s' % name)
 
         if not plugins:
-            raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
+            raise AnsibleError(
+                "No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
 
         return plugins
 
@@ -228,14 +232,18 @@ class InventoryManager(object):
             self._inventory.reconcile_inventory()
         else:
             if C.INVENTORY_UNPARSED_IS_FAILED:
-                raise AnsibleError("No inventory was parsed, please check your configuration and options.")
+                raise AnsibleError(
+                    "No inventory was parsed, please check your configuration and options.")
             else:
-                display.warning("No inventory was parsed, only implicit localhost is available")
+                display.warning(
+                    "No inventory was parsed, only implicit localhost is available")
 
         for group in self.groups.values():
-            group.vars = combine_vars(group.vars, get_vars_from_inventory_sources(self._loader, self._sources, [group], 'inventory'))
+            group.vars = combine_vars(group.vars, get_vars_from_inventory_sources(
+                self._loader, self._sources, [group], 'inventory'))
         for host in self.hosts.values():
-            host.vars = combine_vars(host.vars, get_vars_from_inventory_sources(self._loader, self._sources, [host], 'inventory'))
+            host.vars = combine_vars(host.vars, get_vars_from_inventory_sources(
+                self._loader, self._sources, [host], 'inventory'))
 
     def parse_source(self, source, cache=False):
         ''' Generate or update inventory for the source provided '''
@@ -248,7 +256,8 @@ class InventoryManager(object):
 
         # process directories as a collection of inventories
         if os.path.isdir(b_source):
-            display.debug(u'Searching for inventory files in directory: %s' % source)
+            display.debug(
+                u'Searching for inventory files in directory: %s' % source)
             for i in sorted(os.listdir(b_source)):
 
                 display.debug(u'Considering %s' % i)
@@ -257,7 +266,8 @@ class InventoryManager(object):
                     continue
 
                 # recursively deal with directory entries
-                fullpath = to_text(os.path.join(b_source, i), errors='surrogate_or_strict')
+                fullpath = to_text(os.path.join(b_source, i),
+                                   errors='surrogate_or_strict')
                 parsed_this_one = self.parse_source(fullpath, cache=cache)
                 display.debug(u'parsed %s as %s' % (fullpath, parsed_this_one))
                 if not parsed:
@@ -272,8 +282,10 @@ class InventoryManager(object):
             failures = []
             for plugin in self._fetch_inventory_plugins():
 
-                plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
-                display.debug(u'Attempting to use plugin %s (%s)' % (plugin_name, plugin._original_path))
+                plugin_name = to_text(
+                    getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
+                display.debug(u'Attempting to use plugin %s (%s)' %
+                              (plugin_name, plugin._original_path))
 
                 # initialize and figure out if plugin wants to attempt parsing this file
                 try:
@@ -284,38 +296,48 @@ class InventoryManager(object):
                 if plugin_wants:
                     try:
                         # FIXME in case plugin fails 1/2 way we have partial inventory
-                        plugin.parse(self._inventory, self._loader, source, cache=cache)
+                        plugin.parse(self._inventory, self._loader,
+                                     source, cache=cache)
                         try:
                             plugin.update_cache_if_changed()
                         except AttributeError:
                             # some plugins might not implement caching
                             pass
                         parsed = True
-                        display.vvv('Parsed %s inventory source with %s plugin' % (source, plugin_name))
+                        display.vvv('Parsed %s inventory source with %s plugin' % (
+                            source, plugin_name))
                         break
                     except AnsibleParserError as e:
-                        display.debug('%s was not parsable by %s' % (source, plugin_name))
+                        display.debug('%s was not parsable by %s' %
+                                      (source, plugin_name))
                         tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
-                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e, 'tb': tb})
+                        failures.append(
+                            {'src': source, 'plugin': plugin_name, 'exc': e, 'tb': tb})
                     except Exception as e:
-                        display.debug('%s failed while attempting to parse %s' % (plugin_name, source))
+                        display.debug('%s failed while attempting to parse %s' % (
+                            plugin_name, source))
                         tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
-                        failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
+                        failures.append(
+                            {'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
                 else:
-                    display.vvv("%s declined parsing %s as it did not pass its verify_file() method" % (plugin_name, source))
+                    display.vvv("%s declined parsing %s as it did not pass its verify_file() method" % (
+                        plugin_name, source))
             else:
                 if not parsed and failures:
                     # only if no plugin processed files should we show errors.
                     for fail in failures:
-                        display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
+                        display.warning(u'\n* Failed to parse %s with %s plugin: %s' %
+                                        (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
                         if 'tb' in fail:
                             display.vvv(to_text(fail['tb']))
                     if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
-                        raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
+                        raise AnsibleError(
+                            u'Completely failed to parse inventory source %s' % (source))
         if not parsed:
             if source != '/etc/ansible/hosts' or os.path.exists(source):
                 # only warn if NOT using the default and if using it, only if the file is present
-                display.warning("Unable to parse %s as an inventory source" % source)
+                display.warning(
+                    "Unable to parse %s as an inventory source" % source)
 
         # clear up, jic
         self._inventory.current_source = None
@@ -386,18 +408,21 @@ class InventoryManager(object):
                 # mainly useful for hostvars[host] access
                 if not ignore_limits and self._subset:
                     # exclude hosts not in a subset, if defined
-                    subset_uuids = set(s._uuid for s in self._evaluate_patterns(self._subset))
+                    subset_uuids = set(
+                        s._uuid for s in self._evaluate_patterns(self._subset))
                     hosts[:] = [h for h in hosts if h._uuid in subset_uuids]
 
                 if not ignore_restrictions and self._restriction:
                     # exclude hosts mentioned in any restriction (ex: failed hosts)
                     hosts[:] = [h for h in hosts if h.name in self._restriction]
 
-                self._hosts_patterns_cache[pattern_hash] = deduplicate_list(hosts)
+                self._hosts_patterns_cache[pattern_hash] = deduplicate_list(
+                    hosts)
 
             # sort hosts list if needed (should only happen when called from strategy)
             if order in ['sorted', 'reverse_sorted']:
-                hosts[:] = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
+                hosts[:] = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter(
+                    'name'), reverse=(order == 'reverse_sorted'))
             elif order == 'reverse_inventory':
                 hosts[:] = self._hosts_patterns_cache[pattern_hash][::-1]
             else:
@@ -405,7 +430,8 @@ class InventoryManager(object):
                 if order == 'shuffle':
                     shuffle(hosts)
                 elif order not in [None, 'inventory']:
-                    raise AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
+                    raise AnsibleOptionsError(
+                        "Invalid 'order' specified for inventory hosts: %s" % order)
 
         return hosts
 
@@ -432,7 +458,8 @@ class InventoryManager(object):
                     hosts = [h for h in hosts if h in that]
                 else:
                     existing_hosts = set(y.name for y in hosts)
-                    hosts.extend([h for h in that if h.name not in existing_hosts])
+                    hosts.extend(
+                        [h for h in that if h.name not in existing_hosts])
         return hosts
 
     def _match_one_pattern(self, pattern):
@@ -482,7 +509,8 @@ class InventoryManager(object):
             try:
                 hosts = self._apply_subscript(hosts, slice)
             except IndexError:
-                raise AnsibleError("No hosts matched the subscripted pattern '%s'" % pattern)
+                raise AnsibleError(
+                    "No hosts matched the subscripted pattern '%s'" % pattern)
             self._pattern_cache[pattern] = hosts
 
         return self._pattern_cache[pattern]
@@ -516,7 +544,8 @@ class InventoryManager(object):
                     end = -1
                 subscript = (int(start), int(end))
                 if sep == '-':
-                    display.warning("Use [x:y] inclusive subscripts instead of [x-y] which has been removed")
+                    display.warning(
+                        "Use [x:y] inclusive subscripts instead of [x-y] which has been removed")
 
         return (pattern, subscript)
 
@@ -624,9 +653,11 @@ class InventoryManager(object):
                 if x[0] == "@":
                     b_limit_file = to_bytes(x[1:])
                     if not os.path.exists(b_limit_file):
-                        raise AnsibleError(u'Unable to find limit file %s' % b_limit_file)
+                        raise AnsibleError(
+                            u'Unable to find limit file %s' % b_limit_file)
                     with open(b_limit_file) as fd:
-                        results.extend([to_text(l.strip()) for l in fd.read().split("\n")])
+                        results.extend([to_text(l.strip())
+                                        for l in fd.read().split("\n")])
                 else:
                     results.append(to_text(x))
             self._subset = results

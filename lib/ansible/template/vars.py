@@ -73,12 +73,14 @@ class AnsibleJ2Vars(Mapping):
 
     def __iter__(self):
         keys = set()
-        keys.update(self._templar.available_variables, self._locals, self._globals, *self._extras)
+        keys.update(self._templar.available_variables,
+                    self._locals, self._globals, *self._extras)
         return iter(keys)
 
     def __len__(self):
         keys = set()
-        keys.update(self._templar.available_variables, self._locals, self._globals, *self._extras)
+        keys.update(self._templar.available_variables,
+                    self._locals, self._globals, *self._extras)
         return len(keys)
 
     def __getitem__(self, varname):

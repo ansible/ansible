@@ -34,7 +34,8 @@ from ansible.utils.display import Display
 
 display = Display()
 
-DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
+DEFINED_REGEX = re.compile(
+    r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 VALID_VAR_REGEX = re.compile("^[_A-Za-z][_a-zA-Z0-9]*$")
 
@@ -54,7 +55,8 @@ class Conditional:
         # is used as a mix-in with a playbook base class
         if not hasattr(self, '_loader'):
             if loader is None:
-                raise AnsibleError("a loader must be specified when using Conditional() directly")
+                raise AnsibleError(
+                    "a loader must be specified when using Conditional() directly")
             else:
                 self._loader = loader
         super(Conditional, self).__init__()
@@ -131,7 +133,8 @@ class Conditional:
         try:
             # if the conditional is "unsafe", disable lookups
             disable_lookups = hasattr(conditional, '__UNSAFE__')
-            conditional = templar.template(conditional, disable_lookups=disable_lookups)
+            conditional = templar.template(
+                conditional, disable_lookups=disable_lookups)
             if bare_vars_warning and not isinstance(conditional, bool):
                 display.deprecated('evaluating %r as a bare variable, this behaviour will go away and you might need to add |bool'
                                    ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle' % original, "2.12")
@@ -182,23 +185,27 @@ class Conditional:
                 cnv = CleansingNodeVisitor()
                 cnv.visit(parsed)
             except Exception as e:
-                raise AnsibleError("Invalid conditional detected: %s" % to_native(e))
+                raise AnsibleError(
+                    "Invalid conditional detected: %s" % to_native(e))
 
             # and finally we generate and template the presented string and look at the resulting string
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
-            val = templar.template(presented, disable_lookups=disable_lookups).strip()
+            val = templar.template(
+                presented, disable_lookups=disable_lookups).strip()
             if val == "True":
                 return True
             elif val == "False":
                 return False
             else:
-                raise AnsibleError("unable to evaluate conditional: %s" % original)
+                raise AnsibleError(
+                    "unable to evaluate conditional: %s" % original)
         except (AnsibleUndefinedVariable, UndefinedError) as e:
             # the templating failed, meaning most likely a variable was undefined. If we happened
             # to be looking for an undefined variable, return True, otherwise fail
             try:
                 # first we extract the variable name from the error message
-                var_name = re.compile(r"'(hostvars\[.+\]|[\w_]+)' is undefined").search(str(e)).groups()[0]
+                var_name = re.compile(
+                    r"'(hostvars\[.+\]|[\w_]+)' is undefined").search(str(e)).groups()[0]
                 # next we extract all defined/undefined tests from the conditional string
                 def_undef = self.extract_defined_undefined(conditional)
                 # then we loop through these, comparing the error variable name against
@@ -220,4 +227,5 @@ class Conditional:
                 # trigger the AnsibleUndefinedVariable exception again below
                 raise
             except Exception:
-                raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))
+                raise AnsibleUndefinedVariable(
+                    "error while evaluating conditional (%s): %s" % (original, e))

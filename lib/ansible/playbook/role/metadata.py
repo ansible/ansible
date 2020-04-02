@@ -54,9 +54,11 @@ class RoleMetadata(Base, CollectionSearch):
         '''
 
         if not isinstance(data, dict):
-            raise AnsibleParserError("the 'meta/main.yml' for role %s is not a dictionary" % owner.get_name())
+            raise AnsibleParserError(
+                "the 'meta/main.yml' for role %s is not a dictionary" % owner.get_name())
 
-        m = RoleMetadata(owner=owner).load_data(data, variable_manager=variable_manager, loader=loader)
+        m = RoleMetadata(owner=owner).load_data(
+            data, variable_manager=variable_manager, loader=loader)
         return m
 
     def _load_dependencies(self, attr, ds):
@@ -68,7 +70,8 @@ class RoleMetadata(Base, CollectionSearch):
         roles = []
         if ds:
             if not isinstance(ds, list):
-                raise AnsibleParserError("Expected role dependencies to be a list.", obj=self._ds)
+                raise AnsibleParserError(
+                    "Expected role dependencies to be a list.", obj=self._ds)
 
             for role_def in ds:
                 if isinstance(role_def, string_types) or 'role' in role_def or 'name' in role_def:
@@ -81,7 +84,8 @@ class RoleMetadata(Base, CollectionSearch):
                         role_def['name'] = def_parsed['name']
                     roles.append(role_def)
                 except AnsibleError as exc:
-                    raise AnsibleParserError(to_native(exc), obj=role_def, orig_exc=exc)
+                    raise AnsibleParserError(
+                        to_native(exc), obj=role_def, orig_exc=exc)
 
         current_role_path = None
         collection_search_list = None
@@ -95,7 +99,8 @@ class RoleMetadata(Base, CollectionSearch):
             # if the calling role is a collection role, ensure that its containing collection is searched first
             owner_collection = self._owner._role_collection
             if owner_collection:
-                collection_search_list = [c for c in collection_search_list if c != owner_collection]
+                collection_search_list = [
+                    c for c in collection_search_list if c != owner_collection]
                 collection_search_list.insert(0, owner_collection)
             # ensure fallback role search works
             if 'ansible.legacy' not in collection_search_list:
@@ -106,7 +111,8 @@ class RoleMetadata(Base, CollectionSearch):
                                       variable_manager=self._variable_manager, loader=self._loader,
                                       collection_search_list=collection_search_list)
         except AssertionError as e:
-            raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds, orig_exc=e)
+            raise AnsibleParserError(
+                "A malformed list of role dependencies was encountered.", obj=self._ds, orig_exc=e)
 
     def _load_galaxy_info(self, attr, ds):
         '''

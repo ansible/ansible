@@ -44,14 +44,16 @@ def unfrackpath(path, follow=True, basedir=None):
         '$HOME/../../var/mail' becomes '/var/spool/mail'
     '''
 
-    b_basedir = to_bytes(basedir, errors='surrogate_or_strict', nonstring='passthru')
+    b_basedir = to_bytes(
+        basedir, errors='surrogate_or_strict', nonstring='passthru')
 
     if b_basedir is None:
         b_basedir = to_bytes(os.getcwd(), errors='surrogate_or_strict')
     elif os.path.isfile(b_basedir):
         b_basedir = os.path.dirname(b_basedir)
 
-    b_final_path = os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))
+    b_final_path = os.path.expanduser(os.path.expandvars(
+        to_bytes(path, errors='surrogate_or_strict')))
 
     if not os.path.isabs(b_final_path):
         b_final_path = os.path.join(b_basedir, b_final_path)
@@ -87,7 +89,8 @@ def makedirs_safe(path, mode=None):
                 os.makedirs(b_rpath)
         except OSError as e:
             if e.errno != EEXIST:
-                raise AnsibleError("Unable to create local directories(%s): %s" % (to_native(rpath), to_native(e)))
+                raise AnsibleError("Unable to create local directories(%s): %s" % (
+                    to_native(rpath), to_native(e)))
 
 
 def basedir(source):
@@ -129,6 +132,7 @@ def cleanup_tmp_file(path, warn=False):
                     # Importing here to avoid circular import
                     from ansible.utils.display import Display
                     display = Display()
-                    display.display(u'Unable to remove temporary file {0}'.format(to_text(e)))
+                    display.display(
+                        u'Unable to remove temporary file {0}'.format(to_text(e)))
     except Exception:
         pass

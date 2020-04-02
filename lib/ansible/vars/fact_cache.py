@@ -23,7 +23,8 @@ class FactCache(MutableMapping):
 
         self._plugin = cache_loader.get(C.CACHE_PLUGIN)
         if not self._plugin:
-            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (C.CACHE_PLUGIN))
+            raise AnsibleError(
+                'Unable to load the facts cache plugin (%s).' % (C.CACHE_PLUGIN))
 
         super(FactCache, self).__init__(*args, **kwargs)
 
@@ -106,6 +107,7 @@ class FactCache(MutableMapping):
             host_facts = args[0]
 
         else:
-            raise TypeError('update expected at most 1 argument, got {0}'.format(len(args)))
+            raise TypeError(
+                'update expected at most 1 argument, got {0}'.format(len(args)))
 
         super(FactCache, self).update(host_facts)

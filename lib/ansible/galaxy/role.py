@@ -45,9 +45,11 @@ display = Display()
 class GalaxyRole(object):
 
     SUPPORTED_SCMS = set(['git', 'hg'])
-    META_MAIN = (os.path.join('meta', 'main.yml'), os.path.join('meta', 'main.yaml'))
+    META_MAIN = (os.path.join('meta', 'main.yml'),
+                 os.path.join('meta', 'main.yaml'))
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
-    ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
+    ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta',
+                 'tasks', 'templates', 'vars', 'tests')
 
     def __init__(self, galaxy, api, name, src=None, version=None, scm=None, path=None):
 
@@ -112,7 +114,8 @@ class GalaxyRole(object):
                         f = open(meta_path, 'r')
                         self._metadata = yaml.safe_load(f)
                     except Exception:
-                        display.vvvvv("Unable to load metadata for %s" % self.name)
+                        display.vvvvv(
+                            "Unable to load metadata for %s" % self.name)
                         return False
                     finally:
                         f.close()
@@ -132,7 +135,8 @@ class GalaxyRole(object):
                     f = open(info_path, 'r')
                     self._install_info = yaml.safe_load(f)
                 except Exception:
-                    display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
+                    display.vvvvv(
+                        "Unable to load Galaxy install info for %s" % self.name)
                     return False
                 finally:
                     f.close()
@@ -183,14 +187,16 @@ class GalaxyRole(object):
 
             # first grab the file and save it to a temp location
             if "github_user" in role_data and "github_repo" in role_data:
-                archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], self.version)
+                archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (
+                    role_data["github_user"], role_data["github_repo"], self.version)
             else:
                 archive_url = self.src
 
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent())
+                url_file = open_url(
+                    archive_url, validate_certs=self._validate_certs, http_agent=user_agent())
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:
@@ -207,7 +213,8 @@ class GalaxyRole(object):
 
         if self.scm:
             # create tar file from scm url
-            tmp_file = RoleRequirement.scm_archive_role(keep_scm_meta=context.CLIARGS['keep_scm_meta'], **self.spec)
+            tmp_file = RoleRequirement.scm_archive_role(
+                keep_scm_meta=context.CLIARGS['keep_scm_meta'], **self.spec)
         elif self.src:
             if os.path.isfile(self.src):
                 tmp_file = self.src
@@ -217,28 +224,32 @@ class GalaxyRole(object):
             else:
                 role_data = self.api.lookup_role_by_name(self.src)
                 if not role_data:
-                    raise AnsibleError("- sorry, %s was not found on %s." % (self.src, self.api.api_server))
+                    raise AnsibleError(
+                        "- sorry, %s was not found on %s." % (self.src, self.api.api_server))
 
                 if role_data.get('role_type') == 'APP':
                     # Container Role
                     display.warning("%s is a Container App role, and should only be installed using Ansible "
                                     "Container" % self.name)
 
-                role_versions = self.api.fetch_role_related('versions', role_data['id'])
+                role_versions = self.api.fetch_role_related(
+                    'versions', role_data['id'])
                 if not self.version:
                     # convert the version names to LooseVersion objects
                     # and sort them to get the latest version. If there
                     # are no versions in the list, we'll grab the head
                     # of the master branch
                     if len(role_versions) > 0:
-                        loose_versions = [LooseVersion(a.get('name', None)) for a in role_versions]
+                        loose_versions = [LooseVersion(
+                            a.get('name', None)) for a in role_versions]
                         try:
                             loose_versions.sort()
                         except TypeError:
                             raise AnsibleError(
                                 'Unable to compare role versions (%s) to determine the most recent version due to incompatible version formats. '
                                 'Please contact the role author to resolve versioning conflicts, or specify an explicit role version to '
-                                'install.' % ', '.join([v.vstring for v in loose_versions])
+                                'install.' % ', '.join(
+                                    [v.vstring for v in loose_versions])
                             )
                         self.version = to_text(loose_versions[-1])
                     elif role_data.get('github_branch', None):
@@ -266,7 +277,8 @@ class GalaxyRole(object):
             display.debug("installing from %s" % tmp_file)
 
             if not tarfile.is_tarfile(tmp_file):
-                raise AnsibleError("the downloaded file does not appear to be a valid tar archive.")
+                raise AnsibleError(
+                    "the downloaded file does not appear to be a valid tar archive.")
             else:
                 role_tar_file = tarfile.open(tmp_file, "r")
                 # verify the role's meta file
@@ -279,7 +291,8 @@ class GalaxyRole(object):
                             # Look for parent of meta/main.yml
                             # Due to possibility of sub roles each containing meta/main.yml
                             # look for shortest length parent
-                            meta_parent_dir = os.path.dirname(os.path.dirname(member.name))
+                            meta_parent_dir = os.path.dirname(
+                                os.path.dirname(member.name))
                             if not meta_file:
                                 archive_parent_dir = meta_parent_dir
                                 meta_file = member
@@ -288,25 +301,31 @@ class GalaxyRole(object):
                                     archive_parent_dir = meta_parent_dir
                                     meta_file = member
                 if not meta_file:
-                    raise AnsibleError("this role does not appear to have a meta/main.yml file.")
+                    raise AnsibleError(
+                        "this role does not appear to have a meta/main.yml file.")
                 else:
                     try:
-                        self._metadata = yaml.safe_load(role_tar_file.extractfile(meta_file))
+                        self._metadata = yaml.safe_load(
+                            role_tar_file.extractfile(meta_file))
                     except Exception:
-                        raise AnsibleError("this role does not appear to have a valid meta/main.yml file.")
+                        raise AnsibleError(
+                            "this role does not appear to have a valid meta/main.yml file.")
 
                 # we strip off any higher-level directories for all of the files contained within
                 # the tar file here. The default is 'github_repo-target'. Gerrit instances, on the other
                 # hand, does not have a parent directory at all.
                 installed = False
                 while not installed:
-                    display.display("- extracting %s to %s" % (self.name, self.path))
+                    display.display("- extracting %s to %s" %
+                                    (self.name, self.path))
                     try:
                         if os.path.exists(self.path):
                             if not os.path.isdir(self.path):
-                                raise AnsibleError("the specified roles path exists and is not a directory.")
+                                raise AnsibleError(
+                                    "the specified roles path exists and is not a directory.")
                             elif not context.CLIARGS.get("force", False):
-                                raise AnsibleError("the specified role %s appears to already exist. Use --force to replace it." % self.name)
+                                raise AnsibleError(
+                                    "the specified role %s appears to already exist. Use --force to replace it." % self.name)
                             else:
                                 # using --force, remove the old path
                                 if not self.remove():
@@ -321,7 +340,8 @@ class GalaxyRole(object):
                             # bits that might be in the file for security purposes
                             # and drop any containing directory, as mentioned above
                             if member.isreg() or member.issym():
-                                parts = member.name.replace(archive_parent_dir, "", 1).split(os.sep)
+                                parts = member.name.replace(
+                                    archive_parent_dir, "", 1).split(os.sep)
                                 final_parts = []
                                 for part in parts:
                                     if part != '..' and '~' not in part and '$' not in part:
@@ -340,7 +360,8 @@ class GalaxyRole(object):
                                 self.path = self.paths[current + 1]
                                 error = False
                         if error:
-                            raise AnsibleError("Could not update files in %s: %s" % (self.path, to_native(e)))
+                            raise AnsibleError(
+                                "Could not update files in %s: %s" % (self.path, to_native(e)))
 
                 # return the parsed yaml metadata
                 display.display("- %s was installed successfully" % str(self))
@@ -348,7 +369,8 @@ class GalaxyRole(object):
                     try:
                         os.unlink(tmp_file)
                     except (OSError, IOError) as e:
-                        display.warning(u"Unable to remove tmp file (%s): %s" % (tmp_file, to_text(e)))
+                        display.warning(
+                            u"Unable to remove tmp file (%s): %s" % (tmp_file, to_text(e)))
                 return True
 
         return False

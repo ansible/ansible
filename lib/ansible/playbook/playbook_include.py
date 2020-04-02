@@ -54,7 +54,8 @@ class PlaybookInclude(Base, Conditional, Taggable):
         # first, we use the original parent method to correctly load the object
         # via the load_data/preprocess_data system we normally use for other
         # playbook objects
-        new_obj = super(PlaybookInclude, self).load_data(ds, variable_manager, loader)
+        new_obj = super(PlaybookInclude, self).load_data(
+            ds, variable_manager, loader)
 
         all_vars = self.vars.copy()
         if variable_manager:
@@ -69,7 +70,8 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if not os.path.isabs(file_name):
             file_name = os.path.join(basedir, file_name)
 
-        pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager, vars=self.vars.copy())
+        pb._load_playbook_data(
+            file_name=file_name, variable_manager=variable_manager, vars=self.vars.copy())
 
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set
@@ -94,7 +96,8 @@ class PlaybookInclude(Base, Conditional, Taggable):
             # those attached to each block (if any)
             if new_obj.when:
                 for task_block in (entry.pre_tasks + entry.roles + entry.tasks + entry.post_tasks):
-                    task_block._attributes['when'] = new_obj.when[:] + task_block.when[:]
+                    task_block._attributes['when'] = new_obj.when[:] + \
+                        task_block.when[:]
 
         return pb
 
@@ -105,7 +108,8 @@ class PlaybookInclude(Base, Conditional, Taggable):
         '''
 
         if not isinstance(ds, dict):
-            raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
+            raise AnsibleAssertionError(
+                'ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure
@@ -121,9 +125,11 @@ class PlaybookInclude(Base, Conditional, Taggable):
                 # formatted and do not conflict with k=v parameters
                 if k == 'vars':
                     if 'vars' in new_ds:
-                        raise AnsibleParserError("import_playbook parameters cannot be mixed with 'vars' entries for import statements", obj=ds)
+                        raise AnsibleParserError(
+                            "import_playbook parameters cannot be mixed with 'vars' entries for import statements", obj=ds)
                     elif not isinstance(v, dict):
-                        raise AnsibleParserError("vars for import_playbook statements must be specified as a dictionary", obj=ds)
+                        raise AnsibleParserError(
+                            "vars for import_playbook statements must be specified as a dictionary", obj=ds)
                 new_ds[k] = v
 
         return super(PlaybookInclude, self).preprocess_data(new_ds)
@@ -134,15 +140,18 @@ class PlaybookInclude(Base, Conditional, Taggable):
         '''
 
         if v is None:
-            raise AnsibleParserError("playbook import parameter is missing", obj=ds)
+            raise AnsibleParserError(
+                "playbook import parameter is missing", obj=ds)
         elif not isinstance(v, string_types):
-            raise AnsibleParserError("playbook import parameter must be a string indicating a file path, got %s instead" % type(v), obj=ds)
+            raise AnsibleParserError(
+                "playbook import parameter must be a string indicating a file path, got %s instead" % type(v), obj=ds)
 
         # The import_playbook line must include at least one item, which is the filename
         # to import. Anything after that should be regarded as a parameter to the import
         items = split_args(v)
         if len(items) == 0:
-            raise AnsibleParserError("import_playbook statements must specify the file name to import", obj=ds)
+            raise AnsibleParserError(
+                "import_playbook statements must specify the file name to import", obj=ds)
         else:
             new_ds['import_playbook'] = items[0]
             if len(items) > 1:
@@ -152,5 +161,6 @@ class PlaybookInclude(Base, Conditional, Taggable):
                 if 'tags' in params:
                     new_ds['tags'] = params.pop('tags')
                 if 'vars' in new_ds:
-                    raise AnsibleParserError("import_playbook parameters cannot be mixed with 'vars' entries for import statements", obj=ds)
+                    raise AnsibleParserError(
+                        "import_playbook parameters cannot be mixed with 'vars' entries for import statements", obj=ds)
                 new_ds['vars'] = params

@@ -61,10 +61,12 @@ def parse_kv(args, check_raw=False):
         try:
             vargs = split_args(args)
         except IndexError as e:
-            raise AnsibleParserError("Unable to parse argument string", orig_exc=e)
+            raise AnsibleParserError(
+                "Unable to parse argument string", orig_exc=e)
         except ValueError as ve:
             if 'no closing quotation' in str(ve).lower():
-                raise AnsibleParserError("error parsing argument string, try quoting the entire line.", orig_exc=ve)
+                raise AnsibleParserError(
+                    "error parsing argument string, try quoting the entire line.", orig_exc=ve)
             else:
                 raise
 
@@ -260,7 +262,8 @@ def split_args(args):
                 appended = True
 
             prev_comment_depth = comment_depth
-            comment_depth = _count_jinja2_blocks(token, comment_depth, "{#", "#}")
+            comment_depth = _count_jinja2_blocks(
+                token, comment_depth, "{#", "#}")
             if comment_depth != prev_comment_depth and not appended:
                 params.append(token)
                 appended = True
@@ -282,6 +285,7 @@ def split_args(args):
     # If we're done and things are not at zero depth or we're still inside quotes,
     # raise an error to indicate that the args were unbalanced
     if print_depth or block_depth or comment_depth or inside_quotes:
-        raise AnsibleParserError(u"failed at splitting arguments, either an unbalanced jinja2 block or quotes: {0}".format(args))
+        raise AnsibleParserError(
+            u"failed at splitting arguments, either an unbalanced jinja2 block or quotes: {0}".format(args))
 
     return params

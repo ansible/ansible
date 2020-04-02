@@ -41,7 +41,8 @@ def run_cmd(cmd, live=False, readsize=10):
     # passed byte strtings)
     cmdargs = [to_bytes(a, errors='surrogate_or_strict') for a in cmdargs]
 
-    p = subprocess.Popen(cmdargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(cmdargs, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
 
     stdout = b''
     stderr = b''

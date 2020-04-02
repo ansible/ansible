@@ -27,6 +27,7 @@ class _TextEnviron(MutableMapping):
 
     Mimics the behaviour of os.environ on Python3
     """
+
     def __init__(self, env=None, encoding=None):
         if env is None:
             env = os.environ

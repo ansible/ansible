@@ -166,7 +166,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             #  for the in-flight in role cache as a sentinel that we're already trying to load
             #  that role?)
             # see https://github.com/ansible/ansible/issues/61527
-            r = Role(play=play, from_files=from_files, from_include=from_include)
+            r = Role(play=play, from_files=from_files,
+                     from_include=from_include)
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.role not in play.ROLE_CACHE:
@@ -203,22 +204,27 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 self._attributes[attr_name] = role_include._attributes[attr_name]
 
         # vars and default vars are regular dictionaries
-        self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
+        self._role_vars = self._load_role_yaml(
+            'vars', main=self._from_files.get('vars'), allow_dir=True)
         if self._role_vars is None:
             self._role_vars = dict()
         elif not isinstance(self._role_vars, dict):
-            raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
+            raise AnsibleParserError(
+                "The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
-        self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'), allow_dir=True)
+        self._default_vars = self._load_role_yaml(
+            'defaults', main=self._from_files.get('defaults'), allow_dir=True)
         if self._default_vars is None:
             self._default_vars = dict()
         elif not isinstance(self._default_vars, dict):
-            raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
+            raise AnsibleParserError(
+                "The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
         # load the role's other files, if they exist
         metadata = self._load_role_yaml('meta')
         if metadata:
-            self._metadata = RoleMetadata.load(metadata, owner=self, variable_manager=self._variable_manager, loader=self._loader)
+            self._metadata = RoleMetadata.load(
+                metadata, owner=self, variable_manager=self._variable_manager, loader=self._loader)
             self._dependencies = self._load_dependencies()
         else:
             self._metadata = RoleMetadata()
@@ -240,7 +246,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         # collections can be specified in metadata for legacy or collection-hosted roles
         if self._metadata.collections:
-            self.collections.extend((c for c in self._metadata.collections if c not in self.collections))
+            self.collections.extend(
+                (c for c in self._metadata.collections if c not in self.collections))
 
         # if any collections were specified, ensure that core or legacy synthetic collections are always included
         if self.collections:
@@ -249,15 +256,18 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             if 'ansible.builtin' not in self.collections and 'ansible.legacy' not in self.collections:
                 self.collections.append(default_append_collection)
 
-        task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
+        task_data = self._load_role_yaml(
+            'tasks', main=self._from_files.get('tasks'))
         if task_data:
             try:
-                self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
+                self._task_blocks = load_list_of_blocks(
+                    task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
             except AssertionError as e:
                 raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
                                          obj=task_data, orig_exc=e)
 
-        handler_data = self._load_role_yaml('handlers', main=self._from_files.get('handlers'))
+        handler_data = self._load_role_yaml(
+            'handlers', main=self._from_files.get('handlers'))
         if handler_data:
             try:
                 self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader,
@@ -280,7 +290,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             else:
                 _main = main
                 extensions.insert(0, '')
-            found_files = self._loader.find_vars_files(file_path, _main, extensions, allow_dir)
+            found_files = self._loader.find_vars_files(
+                file_path, _main, extensions, allow_dir)
             if found_files:
                 data = {}
                 for found in found_files:
@@ -291,7 +302,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                         data = new_data
                 return data
             elif main is not None:
-                raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir, main))
+                raise AnsibleParserError(
+                    "Could not find specified file in role: %s/%s" % (subdir, main))
         return None
 
     def _load_dependencies(self):
@@ -340,7 +352,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         if dep_chain:
             for parent in dep_chain:
-                inherited_vars = combine_vars(inherited_vars, parent._role_vars)
+                inherited_vars = combine_vars(
+                    inherited_vars, parent._role_vars)
         return inherited_vars
 
     def get_role_params(self, dep_chain=None):
@@ -359,12 +372,14 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         all_vars = self.get_inherited_vars(dep_chain)
 
         for dep in self.get_all_dependencies():
-            all_vars = combine_vars(all_vars, dep.get_vars(include_params=include_params))
+            all_vars = combine_vars(all_vars, dep.get_vars(
+                include_params=include_params))
 
         all_vars = combine_vars(all_vars, self.vars)
         all_vars = combine_vars(all_vars, self._role_vars)
         if include_params:
-            all_vars = combine_vars(all_vars, self.get_role_params(dep_chain=dep_chain))
+            all_vars = combine_vars(
+                all_vars, self.get_role_params(dep_chain=dep_chain))
 
         return all_vars
 
@@ -406,7 +421,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         new_dep_chain = dep_chain + [self]
 
         for dep in self.get_direct_dependencies():
-            dep_blocks = dep.get_handler_blocks(play=play, dep_chain=new_dep_chain)
+            dep_blocks = dep.get_handler_blocks(
+                play=play, dep_chain=new_dep_chain)
             block_list.extend(dep_blocks)
 
         for task_block in self._handler_blocks:

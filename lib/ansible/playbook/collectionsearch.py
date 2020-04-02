@@ -32,7 +32,8 @@ def _ensure_default_collection(collection_list=None):
 class CollectionSearch:
 
     # this needs to be populated before we can resolve tasks/roles/etc
-    _collections = FieldAttribute(isa='list', listof=string_types, priority=100, default=_ensure_default_collection)
+    _collections = FieldAttribute(
+        isa='list', listof=string_types, priority=100, default=_ensure_default_collection)
 
     def _load_collections(self, attr, ds):
         # this will only be called if someone specified a value; call the shared value

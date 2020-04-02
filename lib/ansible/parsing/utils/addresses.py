@@ -211,6 +211,7 @@ def parse_address(address, allow_ranges=False):
     # If the caller is prepared to handle them, all is well.
     # Otherwise we treat it as a parse failure.
     if not allow_ranges and '[' in host:
-        raise AnsibleParserError("Detected range in host but was asked to ignore ranges")
+        raise AnsibleParserError(
+            "Detected range in host but was asked to ignore ranges")
 
     return (host, port)

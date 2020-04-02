@@ -84,10 +84,12 @@ if getattr(C, 'DEFAULT_LOG_PATH'):
 
         logger = logging.getLogger('ansible')
         for handler in logging.root.handlers:
-            handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
+            handler.addFilter(FilterBlackList(
+                getattr(C, 'DEFAULT_LOG_FILTER', [])))
             handler.addFilter(FilterUserInjector())
     else:
-        print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
+        print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" %
+              path, file=sys.stderr)
 
 # map color to log levels
 color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
@@ -127,11 +129,13 @@ class Display(with_metaclass(Singleton, object)):
 
         if self.b_cowsay:
             try:
-                cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                cmd = subprocess.Popen(
+                    [self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
                 self.cows_available = set([to_text(c) for c in out.split()])
                 if C.ANSIBLE_COW_WHITELIST and any(C.ANSIBLE_COW_WHITELIST):
-                    self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
+                    self.cows_available = set(
+                        C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
             except Exception:
                 # could not execute cowsay for some reason
                 self.b_cowsay = False
@@ -171,12 +175,14 @@ class Display(with_metaclass(Singleton, object)):
             if has_newline or newline:
                 msg2 = msg2 + u'\n'
 
-            msg2 = to_bytes(msg2, encoding=self._output_encoding(stderr=stderr))
+            msg2 = to_bytes(
+                msg2, encoding=self._output_encoding(stderr=stderr))
             if sys.version_info >= (3,):
                 # Convert back to text string on python3
                 # We first convert to a byte string so that we get rid of
                 # characters that are invalid in the user's locale
-                msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
+                msg2 = to_text(msg2, self._output_encoding(
+                    stderr=stderr), errors='replace')
 
             # Note: After Display() class is refactored need to update the log capture
             # code in 'bin/ansible-connection' (and other relevant places).
@@ -211,7 +217,8 @@ class Display(with_metaclass(Singleton, object)):
                     lvl = color_to_log_level[color]
                 except KeyError:
                     # this should not happen, but JIC
-                    raise AnsibleAssertionError('Invalid color supplied to display: %s' % color)
+                    raise AnsibleAssertionError(
+                        'Invalid color supplied to display: %s' % color)
             # actually log
             logger.log(lvl, msg2)
 
@@ -236,9 +243,11 @@ class Display(with_metaclass(Singleton, object)):
     def debug(self, msg, host=None):
         if C.DEFAULT_DEBUG:
             if host is None:
-                self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
+                self.display("%6d %0.5f: %s" % (
+                    os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
             else:
-                self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
+                self.display("%6d %0.5f [%s]: %s" % (
+                    os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
 
     def verbose(self, msg, host=None, caplevel=2):
 
@@ -247,7 +256,8 @@ class Display(with_metaclass(Singleton, object)):
             if host is None:
                 self.display(msg, color=C.COLOR_VERBOSE, stderr=to_stderr)
             else:
-                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
+                self.display("<%s> %s" % (host, msg),
+                             color=C.COLOR_VERBOSE, stderr=to_stderr)
 
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
@@ -257,12 +267,15 @@ class Display(with_metaclass(Singleton, object)):
 
         if not removed:
             if version:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
+                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (
+                    msg, version)
             else:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
+                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (
+                    msg)
             new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
         else:
-            raise AnsibleError("[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
+            raise AnsibleError(
+                "[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
 
         wrapped = textwrap.wrap(new_msg, self.columns, drop_whitespace=False)
         new_msg = "\n".join(wrapped) + "\n"
@@ -297,7 +310,8 @@ class Display(with_metaclass(Singleton, object)):
                 self.banner_cowsay(msg)
                 return
             except OSError:
-                self.warning("somebody cleverly deleted cowsay or something during the PB run.  heh.")
+                self.warning(
+                    "somebody cleverly deleted cowsay or something during the PB run.  heh.")
 
         msg = msg.strip()
         star_len = self.columns - len(msg)
@@ -319,7 +333,8 @@ class Display(with_metaclass(Singleton, object)):
             runcmd.append(b'-f')
             runcmd.append(to_bytes(thecow))
         runcmd.append(to_bytes(msg))
-        cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(
+            runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
         self.display(u"%s\n" % to_text(out), color=color)
 
@@ -402,7 +417,8 @@ class Display(with_metaclass(Singleton, object)):
 
     def _set_column_width(self):
         if os.isatty(0):
-            tty_size = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
+            tty_size = unpack('HHHH', fcntl.ioctl(
+                0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
         else:
             tty_size = 0
         self.columns = max(79, tty_size - 1)
