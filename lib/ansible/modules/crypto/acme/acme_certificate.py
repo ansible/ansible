@@ -236,7 +236,15 @@ EXAMPLES = r'''
 # - copy:
 #     dest: /var/www/html/{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource'] }}
 #     content: "{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource_value'] }}"
-#     when: sample_com_challenge is changed
+#     when: sample_com_challenge is changed and 'sample.com' in sample_com_challenge['challenge_data']
+#
+# Alternative way:
+#
+# - copy:
+#     dest: /var/www/{{ item.key }}/{{ item.value['http-01']['resource'] }}
+#     content: "{{ item.value['http-01']['resource_value'] }}"
+#   loop: "{{ sample_com_challenge.challenge_data | dictsort }}"
+#   when: sample_com_challenge is changed
 
 - name: Let the challenge be validated and retrieve the cert and intermediate certificate
   acme_certificate:
@@ -273,7 +281,7 @@ EXAMPLES = r'''
 #     wait: yes
 #     # Note: route53 requires TXT entries to be enclosed in quotes
 #     value: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].resource_value | regex_replace('^(.*)$', '\"\\1\"') }}"
-#   when: sample_com_challenge is changed
+#   when: sample_com_challenge is changed and 'sample.com' in sample_com_challenge.challenge_data
 #
 # Alternative way:
 #
