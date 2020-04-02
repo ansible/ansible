@@ -238,7 +238,7 @@ class ModuleValidator(Validator):
 
     WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
-    def __init__(self, path, analyze_arg_spec=False, collection=None, base_branch=None, git_cache=None, reporter=None, routing=None):
+    def __init__(self, path, analyze_arg_spec=False, collection=None, base_branch=None, git_cache=None, reporter=None):
         super(ModuleValidator, self).__init__(reporter=reporter or Reporter())
 
         self.path = path
@@ -253,6 +253,8 @@ class ModuleValidator(Validator):
         self.git_cache = git_cache or GitCache()
 
         self._python_module_override = False
+
+        self.routing = None
 
         with open(path) as f:
             self.text = f.read()
