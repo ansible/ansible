@@ -57,6 +57,8 @@ plugin_routing:
       redirect: frr.frr.frr_facts
     frr_bgp:
       redirect: frr.frr.frr_bgp
+    apt_repo:
+      redirect: community.general.apt_repo
     aws_acm_facts:
       redirect: community.aws.aws_acm_facts
     aws_kms_facts:
