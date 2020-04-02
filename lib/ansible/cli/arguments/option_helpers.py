@@ -178,6 +178,7 @@ def version(prog=None):
         cpath = C.DEFAULT_MODULE_PATH
     result = result + "\n  configured module search path = %s" % cpath
     result = result + "\n  ansible python module location = %s" % ':'.join(ansible.__path__)
+    result = result + "\n  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS)
     result = result + "\n  executable location = %s" % sys.argv[0]
     result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
     return result
