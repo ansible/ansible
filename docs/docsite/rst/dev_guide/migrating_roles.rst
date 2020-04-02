@@ -31,12 +31,12 @@ Standalone role structure
     └── vars
 
 
-- defaults - default variables for the standalone role. See :ref:`Using variables <playbooks-variables>`.
+- defaults - default variables for the standalone role. See :ref:`Using variables <playbooks_variables>`.
 - files - contains files that can be deployed with this standalone role.
 - handlers - contains handlers, which may be used by this role or outside this role.
 - library - contains custom modules encapsulated within this standalone role.
 - tasks - contains the main list of tasks executed by the standalone role.
-- vars - other variables for the standalone role. See :ref:`Using variables <playbooks-variables>`.
+- vars - other variables for the standalone role. See :ref:`Using variables <playbooks_variables>`.
 - templates - contains templates which can be deployed with this standalone role.
 - meta - defines some metadata for this standalone role such as dependencies and Ansible Galaxy information.
 
@@ -51,7 +51,7 @@ Collections can contain roles, modules, plugins, and playbooks. See :ref:`develo
 
 The collection directory structure includes a :file:`roles/` directory:
 
-.. code-block:: language
+.. code-block:: bash
 
     namespace/
     └── name/
@@ -102,6 +102,7 @@ If you have a standalone role that does not contain any custom modules or plugin
 
 .. code-block:: bash
 
+  $ mkdir mynamespace/mycollection/roles/my_role/
   $ cp -r /path/to/standalone/role/mynamespace/my_role/\* mynamespace/mycollection/roles/my_role/
 
 The following example shows this role within a collection used in a playbook:
@@ -190,125 +191,134 @@ Because of the way that the CPython interpreter does imports, combined with the 
 
   from ansible_collections.namespace.name.plugins.callback.__init__ import CustomBaseClass
 
-Delivering downstream compatibility (RPMs)
-========================================
+Example: migrating a standalone role with modules to a collection
+=================================================================
+
+In this example we have a standalone role called ``my-standalone-role.webapp`` to emulate a standalone role that contains dashes in the name (which is not valid in collections). This standalone role contains a custom module in the ``library/`` directory called ``manage_webserver``.
+
+.. code-block:: bash
+
+  mylegacy-role.webapp
+  ├── defaults
+  ├── files
+  ├── handlers
+  ├── library
+  ├── meta
+  ├── tasks
+  ├── templates
+  ├── tests
+  └── vars
+
+1. Create a new collection, for example,``acme.webserve``:
+
+.. code-block:: bash
+
+  $ ansible-galaxy collection init acme.webserver
+  - Collection acme.webserver was created successfully
+  $ tree acme -d 1
+  acme
+  └── webserver
+	 ├── docs
+	  ├── plugins
+	   └── roles
+
+2. Create the ``webapp`` role inside the collection and copy all contents from the standalone role:
+
+.. code-block:: bash
+
+  $ mkdir acme/webserver/roles/webapp
+  $ cp mylegacy-role.webapp/* acme/webserver/roles/webapp/
+
+3. Move the ``manage_webserver`` module to its new home in ``acme/webserver/plugins/modules/``:
+
+.. code-block:: bash
+
+  $ cp mylegacy-role.webapp/library/manage_webserver.py acme/webserver/plugins/modules/manage.py
+
+
+Note that the original source file of ``manage_webserver.py`` and the destination file of ``manage.py`` differ in name. This is optional but the :abbr:`FQCN (Fully Qualified Collection Name)` provides the ``webserver`` context as ``acme.webserver.manage``.
+
+4. Change all tasks files in the role ( ``my-standalone-role.webapp/tasks/main.yml``) and any use of the ``manage_webserver`` module to ``acme.webserver.manage`` in the tasks list.
+
+.. note::
+
+  The renaming that takes place here is not a requirement but illustrates content referenced by :abbr:`FQCN (Fully Qualified Collection Name)` can offer context and in turn can make module and plugin names shorter. If you anticipate use of these modules independent of the role, keep the original naming conventions. Users can add the  :ref:`collections keyword <collections_using_playbook>` in their playbooks. Typically roles are an abstraction layer and users won't use components of the role independently.
+
+
+Downstream RPM
+==============
 
 In the event the content of a standalone role is part of a support lifecycle of a product, or there is some other requirement for a standalone role to continue co-existing with its collection role counterpart, hopefully as part of a transition period, there are ways to allow the collection role content be delivered downstream in methods such as RPM packaging that will function like they did as standalone roles. There is a real-world example of this “porting”  with the RHEL system roles to a `RHEL system roles collection <https://github.com/maxamillion/collection-rhel-system-roles>`_ and providing existing backwards compatibility with the downstream RPM
 
 This section walks through an example of this and requires Ansible 2.9.0 or later.
 
-In this example we will have a standalone role called ``my-standalon-role.webapp`` to emulate a standalone role that contains dashes in the name (which is not valid in collections). This standalone role contains a custom module in the ``library/`` directory called ``manage_webserver``.
+Now that we have a functional collection what we will need to do is provide it and its roles as parallel content in a downstream distribution mechanism. This example creates an RPM.
 
-```
-mylegacy-role.webapp
-├── defaults
-├── files
-├── handlers
-├── library
-├── meta
-├── tasks
-├── templates
-├── tests
-└── vars
-```
+In order to deliver a role as both a standalone role and a collection role:
 
-The first thing we need to do is create a new Collection, for the sake of example we will use the namespace acme and the name webserver which produces the combination of ``acme.webserve``:r
+#. Place the collection in  :file:`/usr/share/ansible/collections/ansible_collections/`.
+#. Copy the contents of the role inside the collection into a directory named after the standalone role and and place the role in  :file:`/usr/share/ansible/roles/`.
 
-```
-$ ansible-galaxy collection init acme.webserver
-- Collection acme.webserver was created successfully
-$ tree acme -d 1
-acme
-└── webserver
-	├── docs
-	├── plugins
-	└── roles
-```
-Next, we need to create our webapp Role inside the Collection by simply copying over all contents from the standalone role.
-
-```
-$ mkdir acme/webserver/roles/webapp
-$ cp mylegacy-role.webapp/* acme/webserver/roles/webapp/
-```
-
-At this point we need to move the manage_webserver module to its new home in ``acme/webserver/plugins/modules/``:
-
-```
-$ cp mylegacy-role.webapp/library/manage_webserver.py acme/webserver/plugins/modules/manage.py
-```
-
-You will note that the original source file of ``manage_webserver.py`` and the destination file of ``manage.py`` differ in name. This is optional but I’ve chosen here to change the name of the module since I no longer have to contextualize the module with webserver being in the name, instead because the FQCN provides proper namespacing it can be used as ``acme.webserver.manage``. Next we will need to go through all Tasks files in the Role (in our example there is only one: ``mylegacy-role.webapp/tasks/main.yml``) and change any use of the ``manage_webserver`` module to ``acme.webserver.manage`` in the Tasks list.
-- **NOTE:** The renaming that takes place here is not a requirement but simply an illustration of what Content referenced by FQCN can offer in terms of context and in turn can make module and plugin names shorter. Something else to keep in mind is that if there is a need to offer these modules independently of the Role to users, the old naming conventions can be maintained but users will have to add the [collections keyword to their Plays](https://docs.ansible.com/ansible/latest/user_guide/collections_using.html#using-collections-in-a-playbook). Typically Roles are meant to be used as the abstraction layer and users aren’t digging in and using components of the Role independently so this is likely not a concern.
-
-Now that we have a functional Collection what we will need to do is provide it and its roles as parallel Content in a downstream distribution mechanism. I will illustrate how to do this as an RPM.
-
-Downstream RPM
----------------
-
-In order to deliver a Role as both a standalone role and a Collection Role, only a few things need to be done and are outlined here:
-
-- The Collection be placed in ``/usr/share/ansible/collections/ansible_collections/``
-- The contents of the Role inside the Collection be copied into a directory named after the standalone role and be placed in ``/usr/share/ansible/roles/``
-- All previously bundled modules and plugins that are used in the standalone role are now referenced by FQCN so that even though they are no longer embedded, they can be found from the Collection Contents
-  - This is an example of how the content inside an Ansible Collection is a unique entity and doesn’t have to be bound to a Role or otherwise. We could have made two separate Collections: one for the modules and plugins and another for the standalone role to migrate to; and as long as the Role used the modules and plugins as FQCN entities it would work just as it always has.
+All previously bundled modules and plugins used in the standalone role are now referenced by :abbr:`FQCN (Fully Qualified Collection Name)` so even though they are no longer embedded, they can be found from the collection contents.This is an example of how the content inside collection is a unique entity and does not have to be bound to a role or otherwise. You could alternately create two separate collections: one for the modules and plugins and another for the standalone role to migrate to. The role must use the  the modules and plugins as :abbr:`FQCN (Fully Qualified Collection Name)`.
 
 Here is an example RPM spec file to accomplish this using the example content from above:
-```
-Name: acme-ansible-content
-Summary: Ansible Collection for deploying and configuring ACME webapp
-Version: 1.0.0
-Release: 1%{?dist}
-License: GPLv3+
-Source0: amce-webserver-1.0.0.tar.gz
 
-Url: https://github.com/acme/webserver-ansible-collection
-BuildArch: noarch
+.. code-block:: text
 
-%global roleprefix mylegacy-role.
-%global collection_namespace acme
-%global collection_name webserver
+  Name: acme-ansible-content
+  Summary: Ansible Collection for deploying and configuring ACME webapp
+  Version: 1.0.0
+  Release: 1%{?dist}
+  License: GPLv3+
+  Source0: amce-webserver-1.0.0.tar.gz
 
-%global collection_dir %{_datadir}/ansible/collections/ansible_collections/%{collection_namespace}/%{collection_name}
+  Url: https://github.com/acme/webserver-ansible-collection
+  BuildArch: noarch
 
-%description
-Ansible Collection and standalone role (for legacy compatibility and migration) to deploy, configure, and manage the ACME webapp software.
+  %global roleprefix mylegacy-role.
+  %global collection_namespace acme
+  %global collection_name webserver
 
-%prep
-%setup -qc
+  %global collection_dir %{_datadir}/ansible/collections/ansible_collections/%{collection_namespace}/%{collection_name}
 
-%build
+  %description
+  Ansible Collection and standalone role (for legacy compatibility and migration) to deploy, configure, and manage the ACME webapp software.
 
-%install
+  %prep
+  %setup -qc
 
-mkdir -p %{buildroot}/%{collection_dir}
-cp -r ./* %{buildroot}/%{collection_dir}/
+  %build
 
-mkdir -p %{buildroot}/%{_datadir}/ansible/roles
-for role in %{buildroot}/%{collection_dir}/roles/*
-do
-	cp -pR ${role} %{buildroot}/%{_datadir}/ansible/roles/%{roleprefix}$(basename ${role})
+  %install
 
-	mkdir -p %{buildroot}/%{_pkgdocdir}/$(basename ${role})
-	for docfile in README.md COPYING LICENSE
-	do
-    	if [ -f ${role}/${docfile} ]
-    	then
-        	cp -p ${role}/${docfile} %{buildroot}/%{_pkgdocdir}/$(basename ${role})/${docfile}
-    	fi
-	done
-done
+  mkdir -p %{buildroot}/%{collection_dir}
+  cp -r ./* %{buildroot}/%{collection_dir}/
+
+  mkdir -p %{buildroot}/%{_datadir}/ansible/roles
+  for role in %{buildroot}/%{collection_dir}/roles/*
+    do
+	   cp -pR ${role} %{buildroot}/%{_datadir}/ansible/roles/%{roleprefix}$(basename ${role})
+
+	   mkdir -p %{buildroot}/%{_pkgdocdir}/$(basename ${role})
+	   for docfile in README.md COPYING LICENSE
+	    do
+      	if [ -f ${role}/${docfile} ]
+    	    then
+          	cp -p ${role}/${docfile} %{buildroot}/%{_pkgdocdir}/$(basename ${role})/${docfile}
+      	fi
+	   done
+  done
 
 
-%files
-%dir %{_datadir}/ansible
-%dir %{_datadir}/ansible/roles
-%dir %{_datadir}/ansible/collections
-%dir %{_datadir}/ansible/collections/ansible_collections
-%{_datadir}/ansible/roles/
-%doc %{_pkgdocdir}/*/README.md
-%doc %{_datadir}/ansible/roles/%{roleprefix}*/README.md
-%{collection_dir}
-%doc %{collection_dir}/roles/*/README.md
-%license %{_pkgdocdir}/*/COPYING
-%license %{_pkgdocdir}/*/LICENSE
-```
+  %files
+  %dir %{_datadir}/ansible
+  %dir %{_datadir}/ansible/roles
+  %dir %{_datadir}/ansible/collections
+  %dir %{_datadir}/ansible/collections/ansible_collections
+  %{_datadir}/ansible/roles/
+  %doc %{_pkgdocdir}/*/README.md
+  %doc %{_datadir}/ansible/roles/%{roleprefix}*/README.md
+  %{collection_dir}
+  %doc %{collection_dir}/roles/*/README.md
+  %license %{_pkgdocdir}/*/COPYING
+  %license %{_pkgdocdir}/*/LICENSE
