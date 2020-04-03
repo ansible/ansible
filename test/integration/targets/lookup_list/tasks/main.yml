@@ -2,7 +2,7 @@
   set_fact: "{{ item if item is string else item[0] }}={{ item }}"
   with_list:
     - a
-    - [b,c]
+    - [b, c]
     - d
 
 - name: Verify lookup_list
