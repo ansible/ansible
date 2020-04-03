@@ -1,4 +1,9 @@
 ---
+####################################################################
+# NOTE! Any destructive changes you make here... Undo them in
+# cleanup_become_unprivileged so that they don't affect other tests.
+####################################################################
+
 - name: Create groups for unprivileged users
   group:
     name: "{{ item }}"
