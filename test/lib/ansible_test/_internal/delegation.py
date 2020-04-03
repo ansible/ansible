@@ -265,6 +265,8 @@ def delegate_docker(args, exclude, require, integration_targets):
     if isinstance(args, ShellConfig) or (isinstance(args, IntegrationConfig) and args.debug_strategy):
         cmd_options.append('-it')
 
+    success = False
+
     with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
         try:
             create_payload(args, local_source_fd.name)
@@ -352,6 +354,9 @@ def delegate_docker(args, exclude, require, integration_targets):
 
             try:
                 docker_exec(args, test_id, cmd, options=cmd_options)
+                # docker_exec will throw SubprocessError if not successful
+                # If we make it here, all the prep work earlier and the docker_exec line above were all successful.
+                success = True
             finally:
                 local_test_root = os.path.dirname(os.path.join(data_context().content.root, data_context().content.results_path))
 
@@ -368,7 +373,8 @@ def delegate_docker(args, exclude, require, integration_targets):
                 docker_rm(args, httptester_id)
 
             if test_id:
-                docker_rm(args, test_id)
+                if args.docker_terminate == 'always' or (args.docker_terminate == 'success' and success):
+                    docker_rm(args, test_id)
 
 
 def delegate_remote(args, exclude, require, integration_targets):

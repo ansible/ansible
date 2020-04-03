@@ -1031,6 +1031,12 @@ def add_extra_docker_options(parser, integration=True):
                         default=None,
                         help='set seccomp confinement for the test container: %(choices)s')
 
+    docker.add_argument('--docker-terminate',
+                        metavar='WHEN',
+                        help='terminate docker container: %(choices)s (default: %(default)s)',
+                        choices=['never', 'always', 'success'],
+                        default='always')
+
     if not integration:
         return
 
