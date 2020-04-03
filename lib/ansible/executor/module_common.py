@@ -38,6 +38,7 @@ from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredE
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.module_utils.compat.importlib import import_module
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.plugins.loader import module_utils_loader
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
@@ -1013,6 +1014,10 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
     if module_substyle == 'python':
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
+        # Get str instead of AnsibleVaultEncryptedUnicode befor json.dumps
+        for k, v in params['ANSIBLE_MODULE_ARGS'].items():
+            if isinstance(v, AnsibleVaultEncryptedUnicode):
+                params['ANSIBLE_MODULE_ARGS'][k] = str(v)
         try:
             python_repred_params = repr(json.dumps(params))
         except TypeError as e:
