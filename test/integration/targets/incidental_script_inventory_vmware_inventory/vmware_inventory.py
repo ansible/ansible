@@ -426,12 +426,9 @@ class VMWareInventory(object):
 
         return instance_tuples
 
-    def instances_to_inventory(self, instances):
-        ''' Convert a list of vm objects into a json compliant inventory '''
+    def create_inventory(self, inventory, instances):
         self.debugl('re-indexing instances based on ini settings')
-        inventory = VMWareInventory._empty_inventory()
-        inventory['all'] = {}
-        inventory['all']['hosts'] = []
+        
         for idx, instance in enumerate(instances):
             # make a unique id for this object to avoid vmware's
             # numerous uuid's which aren't all unique.
@@ -443,6 +440,8 @@ class VMWareInventory(object):
             inventory['_meta']['hostvars'][thisid] = idata.copy()
             inventory['_meta']['hostvars'][thisid]['ansible_uuid'] = thisid
 
+
+    def map_hosts_and_users(self, inventory):
         # Make a map of the uuid to the alias the user wants
         name_mapping = self.create_template_mapping(
             inventory,
@@ -480,6 +479,9 @@ class VMWareInventory(object):
             inventory['all']['hosts'].remove(k)
             inventory['_meta']['hostvars'].pop(k, None)
 
+
+    def apply_host_filters(self, inventory):
+
         self.debugl('pre-filtered hosts:')
         for i in inventory['all']['hosts']:
             self.debugl('  * %s' % i)
@@ -499,6 +501,7 @@ class VMWareInventory(object):
         for i in inventory['all']['hosts']:
             self.debugl('  * %s' % i)
 
+    def create_groups(self, inventory):
         # Create groups
         for gbp in self.groupby_patterns:
             groupby_map = self.create_template_mapping(inventory, gbp)
@@ -534,6 +537,16 @@ class VMWareInventory(object):
                                 inventory[tag]['hosts'] = []
                             if k not in inventory[tag]['hosts']:
                                 inventory[tag]['hosts'].append(k)
+
+
+    def instances_to_inventory(self, instances):
+        inventory = VMWareInventory._empty_inventory()
+        inventory['all'] = {}
+        inventory['all']['hosts'] = []
+        
+        self.create_inventory(inventory, instances)
+        self.map_hosts_and_users(inventory)
+        self.create_groups(inventory)
 
         return inventory
 
