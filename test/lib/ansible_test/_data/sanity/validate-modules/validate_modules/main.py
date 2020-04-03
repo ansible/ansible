@@ -254,7 +254,7 @@ class ModuleValidator(Validator):
 
         self._python_module_override = False
 
-        self.routing = None
+        self.routing = {}
 
         with open(path) as f:
             self.text = f.read()
@@ -941,7 +941,7 @@ class ModuleValidator(Validator):
                     )
         else:
             # We are testing a collection
-            if self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {}):
+            if self.routing and self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {}):
                 # meta/routing.yml says this is deprecated
                 routing_says_deprecated = True
                 deprecated = True
@@ -1121,7 +1121,7 @@ class ModuleValidator(Validator):
                         code='collections-no-underscore-on-deprecation',
                         msg='Deprecated content in collections MUST NOT start with "_", update meta/routing.yml instead',
                         )
-            
+
             if not (doc_deprecated == routing_says_deprecated):
                 # DOCUMENTATION.deprecated and meta/routing.yml disagree
                 self.reporter.error(

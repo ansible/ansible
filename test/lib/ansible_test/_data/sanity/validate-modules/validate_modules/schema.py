@@ -276,8 +276,11 @@ def author(value):
             raise Invalid("Invalid author")
 
 
-def doc_schema(module_name, version_added=True, deprecated_module = False):
+def doc_schema(module_name, version_added=True, deprecated_module=False):
 
+    if module_name.startswith('_'):
+        module_name = module_name[1:]
+        deprecated_module = True
     doc_schema_dict = {
         Required('module'): module_name,
         Required('short_description'): Any(*string_types),
