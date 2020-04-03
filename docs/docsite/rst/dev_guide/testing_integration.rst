@@ -66,6 +66,8 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
    To protect your system from any potential changes caused by integration tests, and to ensure a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for options.
 
+   Don't use the ``default`` docker image (used for sanity and unit tests only), always pass an image name explicitly.
+
 .. note:: Avoiding pulling new Docker images
 
    Use the ``--docker-no-pull`` option to avoid pulling the latest container image. This is required when using custom local images that are not available for download.
