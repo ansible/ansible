@@ -21,7 +21,7 @@ Comparing standalone roles to collection roles
 
 .. code-block:: bash
   :emphasize-lines: 5,7
-  
+
     role/
     ├── defaults
     ├── files
@@ -35,7 +35,7 @@ Comparing standalone roles to collection roles
     └── vars
 
 
-The collection directory structure includes a :file:`roles/` directory:
+The highlighted directories above will change when you migrate to a collection-based role. The collection directory structure includes a :file:`roles/` directory:
 
 .. code-block:: bash
 
