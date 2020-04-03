@@ -579,6 +579,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     if group:
                         res = self._remote_chgrp(remote_paths, group)
                         if res['rc'] == 0:
+                            # If ALLOW_WORLD_READABLE_TMPFILES is set, we should warn the user
+                            # that something might go weirdly here.
+                            if C.ALLOW_WORLD_READABLE_TMPFILES:
+                                display.warning('Both common_remote_group and allow_world_readable_tmpfiles are set. chgrp was successful, but there is no '
+                                                'guarantee that Ansible will be able to read the files after this operation, particularly if '
+                                                'common_remote_group was set to a group of which the unprivileged become user is not a member. In this '
+                                                'situation, allow_world_readable_tmpfiles is a no-op. See the "Risks of becoming an unprivileged user" section '
+                                                'of the "Understanding privilege escalation: become" user guide documentation for more information')
                             if execute:
                                 group_mode = 'g+rwx'
                             else:
