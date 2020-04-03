@@ -464,18 +464,22 @@ def main():
             (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
             masked = out.strip() == "masked"
 
+            if module.params['masked']:
+                mask_action = 'mask'
+            else:
+                mask_action = 'unmask'
+
             if masked != module.params['masked']:
                 result['changed'] = True
-                if module.params['masked']:
-                    action = 'mask'
-                else:
-                    action = 'unmask'
 
-                if not module.check_mode:
-                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                # Run masked_action when enabled param is not provided or service is supposed to be enabled
+                if not module.check_mode and (module.params['enabled'] is None or module.params['enabled']):
+                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, mask_action, unit))
                     if rc != 0:
                         # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
                         fail_if_missing(module, found, unit, msg='host')
+                    else:
+                        masked = module.params['masked']
 
         # Enable/disable service startup at boot if requested
         if module.params['enabled'] is not None:
@@ -499,6 +503,7 @@ def main():
                 if module.params['scope'] == 'system' and \
                         is_initd and \
                         not out.strip().endswith('disabled') and \
+                        not out.strip().endswith('masked') and \
                         sysv_is_enabled(unit):
                     enabled = True
 
@@ -512,8 +517,20 @@ def main():
                     (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                     if rc != 0:
                         module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
-
                 result['enabled'] = not enabled
+
+            # Mask units after they are disabled
+            if not module.params['enabled'] and module.params['masked'] is not None:
+                if not module.check_mode and masked != module.params['masked']:
+                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, mask_action, unit))
+                    if rc != 0:
+                        # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
+                        fail_if_missing(module, found, unit, msg='host')
+                    else:
+                        masked = module.params['masked']
+
+        if module.params['masked'] is not None:
+            result['masked'] = masked
 
         # set service state if requested
         if module.params['state'] is not None:

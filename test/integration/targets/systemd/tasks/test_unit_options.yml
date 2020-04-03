@@ -1,0 +1,140 @@
+---
+- name: Start, enable, and unmask
+  systemd:
+    name: "{{ ssh_service }}"
+    state: started
+    enabled: yes
+    masked: no
+
+- name: Mask
+  systemd:
+    name: "{{ ssh_service }}"
+    masked: yes
+  register: mask_test_changed_1
+
+- name: Mask again (should not change)
+  systemd:
+    name: "{{ ssh_service }}"
+    masked: yes
+  register: mask_test_not_changed_1
+
+- name: Unmask
+  systemd:
+    name: "{{ ssh_service }}"
+    masked: no
+  register: mask_test_changed_2
+
+- name: Unmask again (should not change)
+  systemd:
+    name: "{{ ssh_service }}"
+    masked: no
+  register: mask_test_not_changed_2
+
+- name: Stop service
+  systemd:
+    name: "{{ ssh_service }}"
+    state: stopped
+
+- name: disable and mask
+  systemd:
+    name: "{{ ssh_service }}"
+    enabled: no
+    masked: yes
+  register: mask_test_changed_3
+
+- name: stop disable and mask (should not change)
+  systemd:
+    name: "{{ ssh_service }}"
+    enabled: no
+    masked: yes
+    state: stopped
+  register: mask_test_not_changed_3
+
+- name: start enable and unmask
+  systemd:
+    name: "{{ ssh_service }}"
+    enabled: yes
+    masked: no
+    state: started
+  register: mask_test_changed_4
+
+- name: start enable and unmask again (should not change)
+  systemd:
+    name: "{{ ssh_service }}"
+    enabled: yes
+    masked: no
+    state: started
+  register: mask_test_not_changed_4
+
+- name: stop service to prepare for failure checks
+  systemd:
+    name: "{{ ssh_service }}"
+    state: stopped
+
+- name: EXPECTED FAILURE (Masked + Started when service is stopped)
+  systemd:
+    name: "{{ ssh_service }}"
+    masked: yes
+    state: started
+  ignore_errors: yes
+  register: mask_test_failed_1
+
+- name: EXPECTED FAILURE (Masked + Enabled)
+  systemd:
+    name: "{{ ssh_service }}"
+    masked: yes
+    enabled: yes
+  ignore_errors: yes
+  register: mask_test_failed_2
+
+- name: EXPECTED FAILURE (Masked + Restarted)
+  systemd:
+    name: "{{ ssh_service }}"
+    masked: yes
+    state: restarted
+  ignore_errors: yes
+  register: mask_test_failed_3
+
+- name: EXPECTED FAILURE (Masked + Reloaded)
+  systemd:
+    name: "{{ ssh_service }}"
+    masked: yes
+    state: reloaded
+  ignore_errors: yes
+  register: mask_test_failed_4
+
+- name: Mask service
+  systemd:
+    name: "{{ ssh_service }}"
+    masked: yes
+
+- name: EXPECTED FAILURE (Enable when currently masked)
+  systemd:
+    name: "{{ ssh_service }}"
+    enabled: yes
+  ignore_errors: yes
+  register: mask_test_failed_5
+
+- name:
+  assert:
+    that:
+      - mask_test_changed_1 is changed
+      - mask_test_changed_2 is changed
+      - mask_test_changed_3 is changed
+      - mask_test_changed_4 is changed
+      - mask_test_not_changed_1 is not changed
+      - mask_test_not_changed_2 is not changed
+      - mask_test_not_changed_3 is not changed
+      - mask_test_not_changed_4 is not changed
+      - mask_test_failed_1 is failed
+      - mask_test_failed_2 is failed
+      - mask_test_failed_3 is failed
+      - mask_test_failed_4 is failed
+      - mask_test_failed_5 is failed
+
+- name: Return ssh to working state
+  systemd:
+    name: "{{ ssh_service }}"
+    state: started
+    enabled: yes
+    masked: no

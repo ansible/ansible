@@ -1,0 +1,2 @@
+bugfixes:
+  - Properly mask systemd service when service is enabled
