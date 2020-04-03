@@ -510,11 +510,24 @@ class ActionBase(with_metaclass(ABCMeta, object)):
           file with chown which only works in case the remote_user is
           privileged or the remote systems allows chown calls by unprivileged
           users (e.g. HP-UX)
-        * If the chown fails we can set the file to be world readable so that
+        * If the chown fails, we check if ansible_common_remote_group is set.
+          If it is, we attempt to chgrp the file to its value. This is useful
+          if the remote_user has a group in common with the become_user. As the
+          remote_user, we can chgrp the file to that group and allow the
+          become_user to read it.
+        * If (the chown fails AND ansible_common_remote_group is not set) OR
+          (ansible_common_remote_group is set AND the chgrp (or following chmod)
+          returned non-zero), we can set the file to be world readable so that
           the second unprivileged user can read the file.
           Since this could allow other users to get access to private
           information we only do this if ansible is configured with
-          "allow_world_readable_tmpfiles" in the ansible.cfg
+          "allow_world_readable_tmpfiles" in the ansible.cfg. Also note that
+          when ansible_common_remote_group is set this final fallback is very
+          unlikely to ever be triggered, so long as chgrp was successful. But
+          just because the chgrp was successful, does not mean Ansible can
+          necessarily access the files (if, for example, the variable was set
+          to a group that remote_user is in, and can chgrp to, but does not have
+          in common with become_user).
         """
         if remote_user is None:
             remote_user = self._get_remote_user()

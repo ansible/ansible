@@ -163,15 +163,16 @@ does in fact share a group with the ``remote_user``; so long as the command
 exits successfully, Ansible considers the result successful and does not proceed
 to check ``allow_world_readable_tmpfiles`` per below.
 
-If ``ansible_common_remote_group`` is **not** set, or is set but the
-:command:`chgrp` (or following group-permissions :command:`chmod`) returns a
-non-successful exit code, Ansible will lastly check the value of
+If ``ansible_common_remote_group`` is **not** set and the chown above it failed,
+or if ``ansible_common_remote_group`` *is* set but the :command:`chgrp` (or
+following group-permissions :command:`chmod`) returned a non-successful exit
+code, Ansible will lastly check the value of
 ``allow_world_readable_tmpfiles``. If this is set, Ansible will place the module
 file in a world-readable temporary directory, with world-readable permissions to
 allow the ``become_user`` (and incidentally any other user on the system) to
 read the contents of the file. **If any of the parameters passed to the module
 are sensitive in nature, and you do not trust the remote machines, then this is
-a potential danger.**
+a potential security risk.**
 
 Once the module is done executing, Ansible deletes the temporary file.
 
