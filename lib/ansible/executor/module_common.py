@@ -38,6 +38,7 @@ from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredE
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.module_utils.compat.importlib import import_module
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.plugins.loader import module_utils_loader
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
@@ -1011,6 +1012,11 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         display.debug('ANSIBALLZ: Could not determine module FQN')
         remote_module_fqn = 'ansible.modules.%s' % module_name
 
+    # decrypted AnsibleVaultEncryptedUnicode befor json.dumps
+    module_args = module_args.copy()
+    for k, v in module_args.items():
+        if isinstance(v, AnsibleVaultEncryptedUnicode):
+            module_args[k] = v.data
     if module_substyle == 'python':
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
         try:
