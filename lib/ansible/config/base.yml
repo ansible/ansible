@@ -372,8 +372,11 @@ COMMON_REMOTE_GROUP:
     - If setfacl and chown both fail and do not let the different user access the module's files, they will be chgrp'd to this group.
     - In order for this to work, the remote_user and become_user must share a common group and this setting must be set to that group.
   env: [{name: ANSIBLE_COMMON_REMOTE_GROUP}]
+  vars:
+    - name: ansible_common_remote_group
   ini:
-  - {key: common_default_group, section: defaults}
+  - {key: common_remote_group, section: defaults}
+  version_added: "2.10"
 CONDITIONAL_BARE_VARS:
   name: Allow bare variable evaluation in conditionals
   default: True
