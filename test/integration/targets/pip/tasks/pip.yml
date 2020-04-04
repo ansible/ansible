@@ -516,3 +516,32 @@
     assert:
       that: "'distribute' in remove_distribute.cmd"
   when: ansible_python.version.major == 2
+
+# https://github.com/ansible/ansible/issues/68592
+# Handle pre-release version numbers in check_mode for already-installed packages
+- block:
+    - name: Install a beta version of a package
+      pip:
+        name: black
+        version: 19.10b0
+        state: present
+
+    - name: Use check_mode and ensure that the package is shown as installed
+      check_mode: true
+      pip:
+        name: black
+        state: present
+      register: pip_prereleases
+
+    - name: Uninstall the beta package if we need to
+      pip:
+        name: black
+        version: 19.10b0
+        state: absent
+      when: pip_prereleases is changed
+
+    - assert:
+        that:
+          - pip_prereleases is successful
+          - pip_prereleases is not changed
+          - '"black==19.10b0" in pip_prereleases.stdout_lines'
