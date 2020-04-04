@@ -64,25 +64,29 @@ class PlaybookCLI(CLI):
 
         return options
 
-    def run(self):
+    def get_passwords(self):
 
-        super(PlaybookCLI, self).run()
+        sshpass, becomepass = None, None
 
-        # Note: slightly wrong, this is written so that implicit localhost
-        # manages passwords
-        sshpass = None
-        becomepass = None
-        passwords = {}
+        if not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or context.CLIARGS['listtags'] or context.CLIARGS['syntax']):
+            (sshpass, becomepass) = self.ask_passwords()
+            passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
-        # initial error check, to make sure all specified playbooks are accessible
-        # before we start running anything through the playbook executor
+        return passwords
+
+    def validate_playbook(self, playbook):
+
+        if not os.path.exists(playbook):
+            raise AnsibleError("the playbook: %s could not be found" % playbook)
+        if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
+            raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
+
+    def check_playbooks(self):
 
         b_playbook_dirs = []
         for playbook in context.CLIARGS['args']:
-            if not os.path.exists(playbook):
-                raise AnsibleError("the playbook: %s could not be found" % playbook)
-            if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
-                raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
+
+            self.validate_playbook(playbook)
 
             b_playbook_dir = os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict')))
             # load plugins from all playbooks in case they add callbacks/inventory/etc
@@ -98,11 +102,105 @@ class PlaybookCLI(CLI):
             display.warning("running playbook inside collection {0}".format(playbook_collection))
             AnsibleCollectionLoader().set_default_collection(playbook_collection)
 
+    def run_pbex(self, playbooks, inv, var_mngr, loader, passwords):
+
+        pbex = PlaybookExecutor(playbooks, inventory=inv, variable_manager=var_mngr, loader=loader, passwords=passwords)
+
+        return pbex.run()
+
+    def set_base_dir(self, included_path, alternative):
+
+        if included_path is not None:
+            self.loader.set_basedir(included_path)
+        else:
+            self.loader.set_basedir(alternative)
+
+    def create_message(self, play, idx, inventory):
+
+        msg = "\n  play #%d (%s): %s" % (idx + 1, ','.join(play.hosts), play.name)
+        mytags = set(play.tags)
+        msg += '\tTAGS: [%s]' % (','.join(mytags))
+
+        if context.CLIARGS['listhosts']:
+            playhosts = set(inventory.get_hosts(play.hosts))
+            msg += "\n    pattern: %s\n    hosts (%d):" % (play.hosts, len(playhosts))
+            for host in playhosts:
+                msg += "\n      %s" % host
+
+        display.display(msg)
+
+    def _process_block(self, b, all_tags, mytags):
+        taskmsg = ''
+        for task in b.block:
+            if isinstance(task, Block):
+                taskmsg += self._process_block(task)
+            else:
+                if task.action == 'meta':
+                    continue
+
+                all_tags.update(task.tags)
+                if context.CLIARGS['listtasks']:
+                    cur_tags = list(mytags.union(set(task.tags)))
+                    cur_tags.sort()
+                    if task.name:
+                        taskmsg += "      %s" % task.get_name()
+                    else:
+                        taskmsg += "      %s" % task.action
+                    taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
+
+        return taskmsg
+
+    def display_task_message(self, play, variable_manager, mytags):
+        all_tags = set()
+        if context.CLIARGS['listtags'] or context.CLIARGS['listtasks']:
+            taskmsg = ''
+            if context.CLIARGS['listtasks']:
+                taskmsg = '    tasks:\n'
+
+            all_vars = variable_manager.get_vars(play=play)
+            for block in play.compile():
+                block = block.filter_tagged_tasks(all_vars)
+                if not block.has_tasks():
+                    continue
+                taskmsg += self._process_block(block, all_tags, mytags)
+
+            if context.CLIARGS['listtags']:
+                cur_tags = list(mytags.union(all_tags))
+                cur_tags.sort()
+                taskmsg += "      TASK TAGS: [%s]\n" % ', '.join(cur_tags)
+
+            display.display(taskmsg)
+
+    def result_iterator(self, results, inventory, variable_manager):
+
+        if isinstance(results, list):
+            for p in results:
+
+                display.display('\nplaybook: %s' % p['playbook'])
+                for idx, play in enumerate(p['plays']):
+
+                    self.set_base_dir(play._included_path, os.path.realpath(os.path.dirname(p['playbook'])))
+
+                    mytags = set(play.tags)
+
+                    self.display_message(play, idx, inventory)
+                    self.display_task_message(play, variable_manager, mytags)
+
+            return 0
+        else:
+            return results
+
+    def run(self):
+
+        super(PlaybookCLI, self).run()
+
+        # Note: slightly wrong, this is written so that implicit localhost
+        # manages passwords
+        # initial error check, to make sure all specified playbooks are accessible
+        # before we start running anything through the playbook executor
+        self.check_playbooks()
         # don't deal with privilege escalation or passwords when we don't need to
-        if not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or
-                context.CLIARGS['listtags'] or context.CLIARGS['syntax']):
-            (sshpass, becomepass) = self.ask_passwords()
-            passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
+        passwords = self.get_passwords()
 
         # create base objects
         loader, inventory, variable_manager = self._play_prereqs()
@@ -120,79 +218,10 @@ class PlaybookCLI(CLI):
             self._flush_cache(inventory, variable_manager)
 
         # create the playbook executor, which manages running the plays via a task queue manager
-        pbex = PlaybookExecutor(playbooks=context.CLIARGS['args'], inventory=inventory,
-                                variable_manager=variable_manager, loader=loader,
-                                passwords=passwords)
 
-        results = pbex.run()
+        results = self.run_pbex(context.CLIARGS['args'], inventory, variable_manager, loader, passwords)
 
-        if isinstance(results, list):
-            for p in results:
-
-                display.display('\nplaybook: %s' % p['playbook'])
-                for idx, play in enumerate(p['plays']):
-                    if play._included_path is not None:
-                        loader.set_basedir(play._included_path)
-                    else:
-                        pb_dir = os.path.realpath(os.path.dirname(p['playbook']))
-                        loader.set_basedir(pb_dir)
-
-                    msg = "\n  play #%d (%s): %s" % (idx + 1, ','.join(play.hosts), play.name)
-                    mytags = set(play.tags)
-                    msg += '\tTAGS: [%s]' % (','.join(mytags))
-
-                    if context.CLIARGS['listhosts']:
-                        playhosts = set(inventory.get_hosts(play.hosts))
-                        msg += "\n    pattern: %s\n    hosts (%d):" % (play.hosts, len(playhosts))
-                        for host in playhosts:
-                            msg += "\n      %s" % host
-
-                    display.display(msg)
-
-                    all_tags = set()
-                    if context.CLIARGS['listtags'] or context.CLIARGS['listtasks']:
-                        taskmsg = ''
-                        if context.CLIARGS['listtasks']:
-                            taskmsg = '    tasks:\n'
-
-                        def _process_block(b):
-                            taskmsg = ''
-                            for task in b.block:
-                                if isinstance(task, Block):
-                                    taskmsg += _process_block(task)
-                                else:
-                                    if task.action == 'meta':
-                                        continue
-
-                                    all_tags.update(task.tags)
-                                    if context.CLIARGS['listtasks']:
-                                        cur_tags = list(mytags.union(set(task.tags)))
-                                        cur_tags.sort()
-                                        if task.name:
-                                            taskmsg += "      %s" % task.get_name()
-                                        else:
-                                            taskmsg += "      %s" % task.action
-                                        taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
-
-                            return taskmsg
-
-                        all_vars = variable_manager.get_vars(play=play)
-                        for block in play.compile():
-                            block = block.filter_tagged_tasks(all_vars)
-                            if not block.has_tasks():
-                                continue
-                            taskmsg += _process_block(block)
-
-                        if context.CLIARGS['listtags']:
-                            cur_tags = list(mytags.union(all_tags))
-                            cur_tags.sort()
-                            taskmsg += "      TASK TAGS: [%s]\n" % ', '.join(cur_tags)
-
-                        display.display(taskmsg)
-
-            return 0
-        else:
-            return results
+        return self.result_iterator(results, inventory, variable_manager)
 
     @staticmethod
     def _flush_cache(inventory, variable_manager):
