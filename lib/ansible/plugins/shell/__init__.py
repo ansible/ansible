@@ -131,7 +131,7 @@ class ShellBase(AnsiblePlugin):
         # other users can read and access the tmp directory.
         # This is because we use system to create tmp dirs for unprivileged users who are
         # sudo'ing to a second unprivileged user.
-        # The 'system_tmpdirs' setting defines dirctories we can use for this purpose
+        # The 'system_tmpdirs' setting defines directories we can use for this purpose
         # the default are, /tmp and /var/tmp.
         # So we only allow one of those locations if system=True, using the
         # passed in tmpdir if it is valid or the first one from the setting if not.
@@ -154,11 +154,19 @@ class ShellBase(AnsiblePlugin):
         cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
         cmd += ' %s echo %s=%s echo %s %s' % (self._SHELL_AND, basefile, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
 
+        # If basetmp directory or it's parent directories doesn't exist, then we will create it
+        # with 0o77 umask, if it does exist & permission is different then we raise an error
+        # If provide mode is 0o000 then let's default it to 0o700
+        if not mode:
+            mode = 0o700
+        tmp_umask = 0o777 & ~mode
+        if os.path.exists(os.path.realpath(basetmp)):
+            if oct(tmp_umask) != oct(0o777 & ~os.stat(basetmp).st_mode):
+                raise AnsibleError('Directory exists but permissions are different than expected')
+
         # change the umask in a subshell to achieve the desired mode
         # also for directories created with `mkdir -p`
-        if mode:
-            tmp_umask = 0o777 & ~mode
-            cmd = '%s umask %o %s %s %s' % (self._SHELL_GROUP_LEFT, tmp_umask, self._SHELL_AND, cmd, self._SHELL_GROUP_RIGHT)
+        cmd = '%s umask %o %s %s %s' % (self._SHELL_GROUP_LEFT, tmp_umask, self._SHELL_AND, cmd, self._SHELL_GROUP_RIGHT)
 
         return cmd
 

@@ -1,0 +1,2 @@
+bugfixes:
+    - "**security_issue** - ensure that tmdir is created with proper permissions (CVE-2020-1733)"

@@ -107,3 +107,5 @@ changelogs/.plugin-cache.yaml
 .ansible-test-timeout.json
 # ansible-test temporary metadata file for use with delgation
 /metadata-*.json
+# ctags file
+tags
