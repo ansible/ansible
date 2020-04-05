@@ -1,3 +1,0 @@
-- name: test
-  command: echo hello
-  delegate_to: "{{ '127.0.0.1' | parse_ip }}"

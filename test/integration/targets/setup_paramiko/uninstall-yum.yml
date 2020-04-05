@@ -1,4 +1,0 @@
-- name: Uninstall Paramiko using yum history undo
-  command: yum history undo last --assumeyes
-  args:
-    warn: no

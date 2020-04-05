@@ -1,4 +1,0 @@
-rpm_repo_packages:
-  - rpm-build
-  - createrepo_c
-  - createrepo

@@ -1,8 +1,0 @@
-- name: Test Include Duplicate Loop Items
-  hosts: testhost
-  tasks:
-    - include_tasks: debug_item.yml
-      loop:
-        - foo
-        - foo
-        - foo

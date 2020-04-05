@@ -1,2 +1,0 @@
-- name: set the nested include fact
-  set_fact: nested_include_var=1

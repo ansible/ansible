@@ -1,3 +1,0 @@
-- name: Install Paramiko for Python 2
-  package:
-    name: python2-paramiko

@@ -1,6 +1,0 @@
-- hosts: nonexistent
-  gather_facts: no
-  tasks:
-    - name: Test task for unreachable host
-      command: echo foo
-      ignore_errors: True

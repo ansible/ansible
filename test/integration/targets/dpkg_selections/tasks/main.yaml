@@ -1,3 +1,0 @@
----
- - include: 'dpkg_selections.yaml'
-   when: ansible_distribution in ('Ubuntu', 'Debian')

@@ -1,9 +1,0 @@
-- hosts: testhost
-  gather_facts: no
-  strategy: free
-  roles:
-    - test_includes_free
-  tasks:
-    - assert:
-        that:
-          - "inner == 'reached'"

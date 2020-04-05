@@ -1,3 +1,0 @@
-cron_pkg: cronie
-cron_service: crond
-list_pkg_files: rpm -ql

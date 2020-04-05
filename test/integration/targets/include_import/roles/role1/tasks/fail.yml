@@ -1,3 +1,0 @@
-- name: EXPECTED FAILURE
-  fail:
-    msg: This command should always fail

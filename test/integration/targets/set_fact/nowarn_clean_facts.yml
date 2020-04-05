@@ -1,7 +1,0 @@
-- name: Test no warnings ref "http://github.com/ansible/ansible/issues/37535"
-  hosts: testhost
-  gather_facts: false
-  tasks:
-    - name: set ssh jump host args
-      set_fact:
-        ansible_ssh_common_args: "-o ProxyCommand='ssh -W %h:%p -q root@localhost'"

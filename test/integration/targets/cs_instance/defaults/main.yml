@@ -1,5 +1,0 @@
----
-instance_number: 1
-test_cs_instance_template: "{{ cs_common_template }}"
-test_cs_instance_offering_1: Small Instance
-test_cs_instance_offering_2: Medium Instance

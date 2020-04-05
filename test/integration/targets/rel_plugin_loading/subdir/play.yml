@@ -1,6 +1,0 @@
-- hosts: all
-  gather_facts: false
-  tasks:
-    - assert:
-        that:
-            - inventory_hostname == 'testhost'

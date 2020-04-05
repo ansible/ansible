@@ -1,6 +1,0 @@
----
-- hosts: localhost
-  gather_facts: no
-
-- hosts: localhost
-  gather_facts: yes

@@ -1,9 +1,0 @@
----
-filter_version: 1.0
-module_blacklist:
-  # A pure action plugin
-  - pause
-  # A hybrid action plugin with module
-  - copy
-  # A pure module
-  - tempfile

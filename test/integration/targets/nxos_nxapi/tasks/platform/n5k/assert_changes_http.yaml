@@ -1,6 +1,0 @@
----
-- name: Assert HTTP configuration changes
-  assert:
-    that:
-      - result.stdout[0].https_port is not defined
-      - result.stdout[0].http_port|string is search("80")

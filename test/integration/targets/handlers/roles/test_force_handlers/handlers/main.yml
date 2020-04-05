@@ -1,2 +1,0 @@
-- name: echoing handler
-  command: echo CALLED_HANDLER_{{ inventory_hostname }}

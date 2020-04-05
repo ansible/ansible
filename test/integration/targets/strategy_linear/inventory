@@ -1,3 +1,0 @@
-[local]
-testhost ansible_connection=local
-testhost2 ansible_connection=local

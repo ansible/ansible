@@ -1,3 +1,0 @@
-- name: check that index var exists inside included tasks file
-  assert:
-    that: my_idx == item|int

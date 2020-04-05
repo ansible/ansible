@@ -1,3 +1,0 @@
-cloud/hcloud
-shippable/hcloud/group1
-disabled # See: https://github.com/ansible/ansible/issues/62414

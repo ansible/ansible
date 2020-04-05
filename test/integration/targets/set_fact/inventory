@@ -1,3 +1,0 @@
-[testgroup]
-testhost ansible_connection=local  # no connection is actually established with this host
-localhost ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"

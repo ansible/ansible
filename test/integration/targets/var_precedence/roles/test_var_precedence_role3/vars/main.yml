@@ -1,3 +1,0 @@
----
-# should override the global vars_files_var since it's local to the role
-vars_files_var_role: "vars_files_var_role3"

@@ -1,3 +1,0 @@
-Function CustomFunction {
-    return "ValueFromCustomFunction"
-}

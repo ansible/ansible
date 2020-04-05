@@ -1,3 +1,0 @@
-- name: runme
-  debug:
-    msg: role3 handler
