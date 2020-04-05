@@ -66,7 +66,7 @@ class PlaybookCLI(CLI):
 
     def get_passwords(self):
 
-        sshpass, becomepass = None, None
+        passwords = {}
 
         if not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or context.CLIARGS['listtags'] or context.CLIARGS['syntax']):
             (sshpass, becomepass) = self.ask_passwords()
@@ -102,18 +102,18 @@ class PlaybookCLI(CLI):
             display.warning("running playbook inside collection {0}".format(playbook_collection))
             AnsibleCollectionLoader().set_default_collection(playbook_collection)
 
-    def run_pbex(self, playbooks, inv, var_mngr, loader, passwords):
+    def run_pbex(self, inv, var_mngr, loader, passwords):
 
-        pbex = PlaybookExecutor(playbooks, inventory=inv, variable_manager=var_mngr, loader=loader, passwords=passwords)
+        pbex = PlaybookExecutor(playbooks=context.CLIARGS['args'], inventory=inv, variable_manager=var_mngr, loader=loader, passwords=passwords)
 
         return pbex.run()
 
-    def set_base_dir(self, included_path, alternative):
+    def set_base_dir(self, play_path, playbook_path):
 
-        if included_path is not None:
-            self.loader.set_basedir(included_path)
+        if play_path is not None:
+            self.loader.set_basedir(play_path)
         else:
-            self.loader.set_basedir(alternative)
+            self.loader.set_basedir(playbook_path)
 
     def create_message(self, play, idx, inventory):
 
@@ -219,7 +219,7 @@ class PlaybookCLI(CLI):
 
         # create the playbook executor, which manages running the plays via a task queue manager
 
-        results = self.run_pbex(context.CLIARGS['args'], inventory, variable_manager, loader, passwords)
+        results = self.run_pbex(inventory, variable_manager, loader, passwords)
 
         return self.result_iterator(results, inventory, variable_manager)
 
