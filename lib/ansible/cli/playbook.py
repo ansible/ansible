@@ -66,6 +66,7 @@ class PlaybookCLI(CLI):
 
     def get_passwords(self):
 
+        sshpass, becomepass = None, None
         passwords = {}
 
         if not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or context.CLIARGS['listtags'] or context.CLIARGS['syntax']):
@@ -104,7 +105,7 @@ class PlaybookCLI(CLI):
 
     def run_pbex(self, inv, var_mngr, loader, passwords):
 
-        pbex = PlaybookExecutor(playbooks=context.CLIARGS['args'], inventory=inv, variable_manager=var_mngr, loader=loader, passwords=passwords)
+        pbex = PlaybookExecutor(context.CLIARGS['args'], inventory=inv, variable_manager=var_mngr, loader=loader, passwords=passwords)
 
         return pbex.run()
 
