@@ -11,26 +11,28 @@ Extreme ERIC_ECCLI Ansible modules only supports CLI connections today. This pag
 Connections Available
 ================================================================================
 
-+---------------------------+-----------------------------------------------+
-|..                         | CLI                                           |
-+===========================+===============================================+
-| **Protocol**              |  SSH                                          |
-+---------------------------+-----------------------------------------------+
-| | **Credentials**         | | uses SSH keys / SSH-agent if present        |
-| |                         | | accepts ``-u myuser -k`` if using password  |
-+---------------------------+-----------------------------------------------+
-| **Indirect Access**       | via a bastion (jump host)                     |
-+---------------------------+-----------------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         |
-| |                         | |                                             |
-| |                         | |                                             |
-+---------------------------+-----------------------------------------------+
-| | **Enable Mode**         | | not supported by ERIC_ECCLI                 |
-| | (Privilege Escalation)  | |                                             |
-| |                         | |                                             |
-+---------------------------+-----------------------------------------------+
-| **Returned Data Format**  | ``stdout[0].``                                |
-+---------------------------+-----------------------------------------------+
+.. table::
+    :class: documentation-table
+
+    ====================  ==========================================
+    ..                    CLI
+    ====================  ==========================================
+    Protocol              SSH
+
+    Credentials           uses SSH keys / SSH-agent if present
+
+                          accepts ``-u myuser -k`` if using password
+
+    Indirect Access       via a bastion (jump host)
+
+    Connection Settings   ``ansible_connection: network_cli``
+
+    |enable_mode|         not supported by ERIC_ECCLI
+
+    Returned Data Format  ``stdout[0].``
+    ====================  ==========================================
+
+.. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
 ERIC_ECCLI does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli``.
 
@@ -64,3 +66,7 @@ Example CLI Task
      when: ansible_network_os == 'eric_eccli'
 
 .. include:: shared_snippets/SSH_warning.txt
+
+.. seealso::
+
+       :ref:`timeout_options`

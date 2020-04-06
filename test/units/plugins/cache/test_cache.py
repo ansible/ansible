@@ -26,24 +26,6 @@ from ansible.plugins.cache.base import BaseCacheModule
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
 from ansible.plugins.loader import cache_loader
 
-HAVE_MEMCACHED = True
-try:
-    import memcache
-except ImportError:
-    HAVE_MEMCACHED = False
-else:
-    # Use an else so that the only reason we skip this is for lack of
-    # memcached, not errors importing the plugin
-    from ansible.plugins.cache.memcached import CacheModule as MemcachedCache
-
-HAVE_REDIS = True
-try:
-    import redis
-except ImportError:
-    HAVE_REDIS = False
-else:
-    from ansible.plugins.cache.redis import CacheModule as RedisCache
-
 import pytest
 
 
@@ -178,25 +160,8 @@ class TestAbstractClass(unittest.TestCase):
 
         self.assertIsInstance(CacheModule3(), CacheModule3)
 
-    @unittest.skipUnless(HAVE_MEMCACHED, 'python-memcached module not installed')
-    def test_memcached_cachemodule(self):
-        self.assertIsInstance(MemcachedCache(), MemcachedCache)
-
-    @unittest.skipUnless(HAVE_MEMCACHED, 'python-memcached module not installed')
-    def test_memcached_cachemodule_with_loader(self):
-        self.assertIsInstance(cache_loader.get('memcached'), MemcachedCache)
-
     def test_memory_cachemodule(self):
         self.assertIsInstance(MemoryCache(), MemoryCache)
 
     def test_memory_cachemodule_with_loader(self):
         self.assertIsInstance(cache_loader.get('memory'), MemoryCache)
-
-    @unittest.skipUnless(HAVE_REDIS, 'Redis python module not installed')
-    def test_redis_cachemodule(self):
-        self.assertIsInstance(RedisCache(), RedisCache)
-
-    @unittest.skipUnless(HAVE_REDIS, 'Redis python module not installed')
-    def test_redis_cachemodule_with_loader(self):
-        # The _uri option is required for the redis plugin
-        self.assertIsInstance(cache_loader.get('redis', **{'_uri': '127.0.0.1:6379:1'}), RedisCache)

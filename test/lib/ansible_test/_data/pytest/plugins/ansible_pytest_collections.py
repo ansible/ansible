@@ -1,4 +1,4 @@
-"""Enable unit testing of Ansible collections."""
+"""Enable unit testing of Ansible collections. PYTEST_DONT_REWRITE"""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -20,6 +20,12 @@ def collection_pypkgpath(self):
 
 def pytest_configure():
     """Configure this pytest plugin."""
+    try:
+        if pytest_configure.executed:
+            return
+    except AttributeError:
+        pytest_configure.executed = True
+
     from ansible.utils.collection_loader import AnsibleCollectionLoader
 
     # allow unit tests to import code from collections
@@ -32,3 +38,6 @@ def pytest_configure():
     # original idea from https://stackoverflow.com/questions/50174130/how-do-i-pytest-a-project-using-pep-420-namespace-packages/50175552#50175552
     # noinspection PyProtectedMember
     py._path.local.LocalPath.pypkgpath = collection_pypkgpath  # pylint: disable=protected-access
+
+
+pytest_configure()

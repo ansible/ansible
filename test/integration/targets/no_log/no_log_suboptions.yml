@@ -1,0 +1,24 @@
+- name: test no log with suboptions
+  hosts: testhost
+  gather_facts: no
+
+  tasks:
+    - name: Task with suboptions
+      module:
+        secret: GLAMOROUS
+        subopt_dict:
+          str_sub_opt1: AFTERMATH
+          str_sub_opt2: otherstring
+          nested_subopt:
+            n_subopt1: MANPOWER
+
+        subopt_list:
+          - subopt1: UNTAPPED
+            subopt2: thridstring
+
+          - subopt1: CONCERNED
+
+    - name: Task with suboptions as string
+      module:
+        secret: MARLIN
+        subopt_dict: str_sub_opt1=FLICK

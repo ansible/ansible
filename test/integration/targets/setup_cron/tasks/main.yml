@@ -1,0 +1,70 @@
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', search) }}"
+  vars:
+    search:
+      files:
+        - '{{ ansible_distribution | lower }}.yml'
+        - '{{ ansible_os_family | lower }}.yml'
+        - '{{ ansible_system | lower }}.yml'
+        - default.yml
+      paths:
+        - vars
+
+- name: install cron package
+  package:
+    name: '{{ cron_pkg }}'
+  when: cron_pkg | default(false, true)
+  register: cron_package_installed
+  until: cron_package_installed is success
+
+- when: faketime_pkg | default(false, true)
+  block:
+    - name: install cron and faketime packages
+      package:
+        name: '{{ faketime_pkg }}'
+      register: faketime_package_installed
+      until: faketime_package_installed is success
+
+    - name: Find libfaketime path
+      shell: '{{ list_pkg_files }} {{ faketime_pkg }} | grep -F libfaketime.so.1'
+      args:
+        warn: false
+      register: libfaketime_path
+
+    - when: ansible_service_mgr == 'systemd'
+      block:
+        - name: create directory for cron drop-in file
+          file:
+            path: '/etc/systemd/system/{{ cron_service }}.service.d'
+            state: directory
+            owner: root
+            group: root
+            mode: 0755
+
+        - name: Use faketime with cron service
+          copy:
+            content: |-
+              [Service]
+              Environment=LD_PRELOAD={{ libfaketime_path.stdout_lines[0].strip() }}
+              Environment="FAKETIME=+0y x10"
+              Environment=RANDOM_DELAY=0
+            dest: '/etc/systemd/system/{{ cron_service }}.service.d/faketime.conf'
+            owner: root
+            group: root
+            mode: 0644
+
+    - when: ansible_system == 'FreeBSD'
+      name: Use faketime with cron service
+      copy:
+        content: |-
+          cron_env='LD_PRELOAD={{ libfaketime_path.stdout_lines[0].strip() }} FAKETIME="+0y x10"'
+        dest: '/etc/rc.conf.d/cron'
+        owner: root
+        group: wheel
+        mode: 0644
+
+- name: enable cron service
+  service:
+    daemon-reload: "{{ (ansible_service_mgr == 'systemd') | ternary(true, omit) }}"
+    name: '{{ cron_service }}'
+    state: restarted

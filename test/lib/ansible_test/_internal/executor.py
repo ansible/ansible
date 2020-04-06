@@ -40,13 +40,20 @@ from .cloud import (
     CloudEnvironmentConfig,
 )
 
+from .io import (
+    make_dirs,
+    open_text_file,
+    read_binary_file,
+    read_text_file,
+    write_text_file,
+)
+
 from .util import (
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
     display,
     remove_tree,
-    make_dirs,
     is_shippable,
     is_binary_file,
     find_executable,
@@ -55,12 +62,17 @@ from .util import (
     generate_pip_command,
     find_python,
     get_docker_completion,
+    get_network_settings,
     get_remote_completion,
-    COVERAGE_OUTPUT_NAME,
     cmd_quote,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_TEST_CONFIG_ROOT,
+    get_ansible_version,
+    tempdir,
+    open_zipfile,
+    SUPPORTED_PYTHON_VERSIONS,
+    str_to_version,
 )
 
 from .util_common import (
@@ -68,6 +80,9 @@ from .util_common import (
     intercept_command,
     named_temporary_file,
     run_command,
+    write_json_test_results,
+    ResultType,
+    handle_layout_messages,
 )
 
 from .docker_util import (
@@ -82,10 +97,6 @@ from .docker_util import (
 from .ansible_util import (
     ansible_environment,
     check_pyyaml,
-)
-
-from .env import (
-    get_ansible_version,
 )
 
 from .target import (
@@ -129,23 +140,13 @@ from .integration import (
     integration_test_environment,
     integration_test_config_file,
     setup_common_temp_dir,
+    get_inventory_relative_path,
+    check_inventory,
+    delegate_inventory,
 )
 
 from .data import (
     data_context,
-)
-
-REMOTE_ONLY_PYTHON_VERSIONS = (
-    '2.6',
-)
-
-SUPPORTED_PYTHON_VERSIONS = (
-    '2.6',
-    '2.7',
-    '3.5',
-    '3.6',
-    '3.7',
-    '3.8',
 )
 
 HTTPTESTER_HOSTS = (
@@ -188,14 +189,48 @@ def create_shell_command(command):
     return cmd
 
 
+def get_setuptools_version(args, python):  # type: (EnvironmentConfig, str) -> t.Tuple[int]
+    """Return the setuptools version for the given python."""
+    try:
+        return str_to_version(raw_command([python, '-c', 'import setuptools; print(setuptools.__version__)'], capture=True)[0])
+    except SubprocessError:
+        if args.explain:
+            return tuple()  # ignore errors in explain mode in case setuptools is not aleady installed
+
+        raise
+
+
+def get_cryptography_requirement(args, python_version):  # type: (EnvironmentConfig, str) -> str
+    """
+    Return the correct cryptography requirement for the given python version.
+    The version of cryptograpy installed depends on the python version and setuptools version.
+    """
+    python = find_python(python_version)
+    setuptools_version = get_setuptools_version(args, python)
+
+    if setuptools_version >= (18, 5):
+        if python_version == '2.6':
+            # cryptography 2.2+ requires python 2.7+
+            # see https://github.com/pyca/cryptography/blob/master/CHANGELOG.rst#22---2018-03-19
+            cryptography = 'cryptography < 2.2'
+        else:
+            cryptography = 'cryptography'
+    else:
+        # cryptography 2.1+ requires setuptools 18.5+
+        # see https://github.com/pyca/cryptography/blob/62287ae18383447585606b9d0765c0f1b8a9777c/setup.py#L26
+        cryptography = 'cryptography < 2.1'
+
+    return cryptography
+
+
 def install_command_requirements(args, python_version=None):
     """
     :type args: EnvironmentConfig
     :type python_version: str | None
     """
     if not args.explain:
-        make_dirs('test/results/coverage')
-        make_dirs('test/results/data')
+        make_dirs(ResultType.COVERAGE.path)
+        make_dirs(ResultType.DATA.path)
 
     if isinstance(args, ShellConfig):
         if args.raw:
@@ -222,6 +257,22 @@ def install_command_requirements(args, python_version=None):
 
     pip = generate_pip_command(find_python(python_version))
 
+    # make sure basic ansible-test requirements are met, including making sure that pip is recent enough to support constraints
+    # virtualenvs created by older distributions may include very old pip versions, such as those created in the centos6 test container (pip 6.0.8)
+    run_command(args, generate_pip_install(pip, 'ansible-test', use_constraints=False))
+
+    # make sure setuptools is available before trying to install cryptography
+    # the installed version of setuptools affects the version of cryptography to install
+    run_command(args, generate_pip_install(pip, 'setuptools', packages=['setuptools']))
+
+    # install the latest cryptography version that the current requirements can support
+    # use a custom constraints file to avoid the normal constraints file overriding the chosen version of cryptography
+    # if not installed here later install commands may try to install an unsupported version due to the presence of older setuptools
+    # this is done instead of upgrading setuptools to allow tests to function with older distribution provided versions of setuptools
+    run_command(args, generate_pip_install(pip, 'cryptography',
+                                           packages=[get_cryptography_requirement(args, python_version)],
+                                           constraints=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'cryptography-constraints.txt')))
+
     commands = [generate_pip_install(pip, args.command, packages=packages)]
 
     if isinstance(args, IntegrationConfig):
@@ -244,14 +295,15 @@ def install_command_requirements(args, python_version=None):
             raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
                                    '\n'.join((' '.join(cmd_quote(c) for c in cmd) for cmd in changes)))
 
-    # ask pip to check for conflicts between installed packages
-    try:
-        run_command(args, pip + ['check', '--disable-pip-version-check'], capture=True)
-    except SubprocessError as ex:
-        if ex.stderr.strip() == 'ERROR: unknown command "check"':
-            display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
-        else:
-            raise
+    if args.pip_check:
+        # ask pip to check for conflicts between installed packages
+        try:
+            run_command(args, pip + ['check', '--disable-pip-version-check'], capture=True)
+        except SubprocessError as ex:
+            if ex.stderr.strip() == 'ERROR: unknown command "check"':
+                display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
+            else:
+                raise
 
 
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
@@ -299,7 +351,16 @@ def generate_egg_info(args):
     if args.explain:
         return
 
-    egg_info_path = ANSIBLE_LIB_ROOT + '.egg-info'
+    ansible_version = get_ansible_version()
+
+    # inclusion of the version number in the path is optional
+    # see: https://setuptools.readthedocs.io/en/latest/formats.html#filename-embedded-metadata
+    egg_info_path = ANSIBLE_LIB_ROOT + '_base-%s.egg-info' % ansible_version
+
+    if os.path.exists(egg_info_path):
+        return
+
+    egg_info_path = ANSIBLE_LIB_ROOT + '_base.egg-info'
 
     if os.path.exists(egg_info_path):
         return
@@ -318,22 +379,21 @@ Author-email: info@ansible.com
 License: GPLv3+
 ''' % get_ansible_version()
 
-    os.mkdir(egg_info_path)
-
     pkg_info_path = os.path.join(egg_info_path, 'PKG-INFO')
 
-    with open(pkg_info_path, 'w') as pkg_info_fd:
-        pkg_info_fd.write(pkg_info.lstrip())
+    write_text_file(pkg_info_path, pkg_info.lstrip(), create_directories=True)
 
 
-def generate_pip_install(pip, command, packages=None):
+def generate_pip_install(pip, command, packages=None, constraints=None, use_constraints=True):
     """
     :type pip: list[str]
     :type command: str
     :type packages: list[str] | None
+    :type constraints: str | None
+    :type use_constraints: bool
     :rtype: list[str] | None
     """
-    constraints = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
+    constraints = constraints or os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
     requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % command)
 
     options = []
@@ -345,13 +405,33 @@ def generate_pip_install(pip, command, packages=None):
         if command == 'sanity':
             options += ['-r', os.path.join(data_context().content.root, 'test', 'sanity', 'requirements.txt')]
 
+    if command == 'units':
+        requirements = os.path.join(data_context().content.unit_path, 'requirements.txt')
+
+        if os.path.exists(requirements) and os.path.getsize(requirements):
+            options += ['-r', requirements]
+
+    if command in ('integration', 'windows-integration', 'network-integration'):
+        requirements = os.path.join(data_context().content.integration_path, 'requirements.txt')
+
+        if os.path.exists(requirements) and os.path.getsize(requirements):
+            options += ['-r', requirements]
+
+        requirements = os.path.join(data_context().content.integration_path, '%s.requirements.txt' % command)
+
+        if os.path.exists(requirements) and os.path.getsize(requirements):
+            options += ['-r', requirements]
+
     if packages:
         options += packages
 
     if not options:
         return None
 
-    return pip + ['install', '--disable-pip-version-check', '-c', constraints] + options
+    if use_constraints:
+        options.extend(['-c', constraints])
+
+    return pip + ['install', '--disable-pip-version-check'] + options
 
 
 def command_shell(args):
@@ -374,35 +454,46 @@ def command_posix_integration(args):
     """
     :type args: PosixIntegrationConfig
     """
-    filename = 'test/integration/inventory'
+    handle_layout_messages(data_context().content.integration_messages)
+
+    inventory_relative_path = get_inventory_relative_path(args)
+    inventory_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, os.path.basename(inventory_relative_path))
 
     all_targets = tuple(walk_posix_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets)
-    command_integration_filtered(args, internal_targets, all_targets, filename)
+    command_integration_filtered(args, internal_targets, all_targets, inventory_path)
 
 
 def command_network_integration(args):
     """
     :type args: NetworkIntegrationConfig
     """
-    default_filename = 'test/integration/inventory.networking'
-    template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(default_filename)) + '.template'
+    handle_layout_messages(data_context().content.integration_messages)
+
+    inventory_relative_path = get_inventory_relative_path(args)
+    template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(inventory_relative_path)) + '.template'
 
     if args.inventory:
-        filename = os.path.join('test/integration', args.inventory)
+        inventory_path = os.path.join(data_context().content.root, data_context().content.integration_path, args.inventory)
     else:
-        filename = default_filename
+        inventory_path = os.path.join(data_context().content.root, inventory_relative_path)
 
-    if not args.explain and not args.platform and not os.path.exists(filename):
-        if args.inventory:
-            filename = os.path.abspath(filename)
+    if args.no_temp_workdir:
+        # temporary solution to keep DCI tests working
+        inventory_exists = os.path.exists(inventory_path)
+    else:
+        inventory_exists = os.path.isfile(inventory_path)
 
+    if not args.explain and not args.platform and not inventory_exists:
         raise ApplicationError(
             'Inventory not found: %s\n'
             'Use --inventory to specify the inventory path.\n'
             'Use --platform to provision resources and generate an inventory file.\n'
-            'See also inventory template: %s' % (filename, template_path)
+            'See also inventory template: %s' % (inventory_path, template_path)
         )
+
+    check_inventory(args, inventory_path)
+    delegate_inventory(args, inventory_path)
 
     all_targets = tuple(walk_network_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=network_init)
@@ -431,16 +522,15 @@ def command_network_integration(args):
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = network_inventory(remotes)
 
-        display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
+        display.info('>>> Inventory: %s\n%s' % (inventory_path, inventory.strip()), verbosity=3)
 
         if not args.explain:
-            with open(filename, 'w') as inventory_fd:
-                inventory_fd.write(inventory)
+            write_text_file(inventory_path, inventory)
 
     success = False
 
     try:
-        command_integration_filtered(args, internal_targets, all_targets, filename)
+        command_integration_filtered(args, internal_targets, all_targets, inventory_path)
         success = True
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
@@ -527,9 +617,11 @@ def network_inventory(remotes):
             ansible_host=remote.connection.hostname,
             ansible_user=remote.connection.username,
             ansible_ssh_private_key_file=os.path.abspath(remote.ssh_key.key),
-            ansible_network_os=remote.platform,
-            ansible_connection='local'
         )
+
+        settings = get_network_settings(remote.args, remote.platform, remote.version)
+
+        options.update(settings.inventory_vars)
 
         groups[remote.platform].append(
             '%s %s' % (
@@ -561,11 +653,26 @@ def command_windows_integration(args):
     """
     :type args: WindowsIntegrationConfig
     """
-    filename = 'test/integration/inventory.winrm'
-    template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(filename)) + '.template'
+    handle_layout_messages(data_context().content.integration_messages)
 
-    if not args.explain and not args.windows and not os.path.isfile(filename):
-        raise ApplicationError('Use the --windows option or provide an inventory file (see %s).' % template_path)
+    inventory_relative_path = get_inventory_relative_path(args)
+    template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(inventory_relative_path)) + '.template'
+
+    if args.inventory:
+        inventory_path = os.path.join(data_context().content.root, data_context().content.integration_path, args.inventory)
+    else:
+        inventory_path = os.path.join(data_context().content.root, inventory_relative_path)
+
+    if not args.explain and not args.windows and not os.path.isfile(inventory_path):
+        raise ApplicationError(
+            'Inventory not found: %s\n'
+            'Use --inventory to specify the inventory path.\n'
+            'Use --windows to provision resources and generate an inventory file.\n'
+            'See also inventory template: %s' % (inventory_path, template_path)
+        )
+
+    check_inventory(args, inventory_path)
+    delegate_inventory(args, inventory_path)
 
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
@@ -593,11 +700,10 @@ def command_windows_integration(args):
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = windows_inventory(remotes)
 
-        display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
+        display.info('>>> Inventory: %s\n%s' % (inventory_path, inventory.strip()), verbosity=3)
 
         if not args.explain:
-            with open(filename, 'w') as inventory_fd:
-                inventory_fd.write(inventory)
+            write_text_file(inventory_path, inventory)
 
         use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in internal_targets)
         # if running under Docker delegation, the httptester may have already been started
@@ -657,15 +763,42 @@ def command_windows_integration(args):
             pre_target = forward_ssh_ports
             post_target = cleanup_ssh_ports
 
+    def run_playbook(playbook, run_playbook_vars):  # type: (str, t.Dict[str, t.Any]) -> None
+        playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)
+        command = ['ansible-playbook', '-i', inventory_path, playbook_path, '-e', json.dumps(run_playbook_vars)]
+        if args.verbosity:
+            command.append('-%s' % ('v' * args.verbosity))
+
+        env = ansible_environment(args)
+        intercept_command(args, command, '', env, disable_coverage=True)
+
+    remote_temp_path = None
+
+    if args.coverage and not args.coverage_check:
+        # Create the remote directory that is writable by everyone. Use Ansible to talk to the remote host.
+        remote_temp_path = 'C:\\ansible_test_coverage_%s' % time.time()
+        playbook_vars = {'remote_temp_path': remote_temp_path}
+        run_playbook('windows_coverage_setup.yml', playbook_vars)
+
     success = False
 
     try:
-        command_integration_filtered(args, internal_targets, all_targets, filename, pre_target=pre_target,
-                                     post_target=post_target)
+        command_integration_filtered(args, internal_targets, all_targets, inventory_path, pre_target=pre_target,
+                                     post_target=post_target, remote_temp_path=remote_temp_path)
         success = True
     finally:
         if httptester_id:
             docker_rm(args, httptester_id)
+
+        if remote_temp_path:
+            # Zip up the coverage files that were generated and fetch it back to localhost.
+            with tempdir() as local_temp_path:
+                playbook_vars = {'remote_temp_path': remote_temp_path, 'local_temp_path': local_temp_path}
+                run_playbook('windows_coverage_teardown.yml', playbook_vars)
+
+                for filename in os.listdir(local_temp_path):
+                    with open_zipfile(os.path.join(local_temp_path, filename)) as coverage_zip:
+                        coverage_zip.extractall(ResultType.COVERAGE.path)
 
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
             for instance in instances:
@@ -746,6 +879,28 @@ def windows_inventory(remotes):
         if remote.ssh_key:
             options["ansible_ssh_private_key_file"] = os.path.abspath(remote.ssh_key.key)
 
+        if remote.name == 'windows-2008':
+            options.update(
+                # force 2008 to use PSRP for the connection plugin
+                ansible_connection='psrp',
+                ansible_psrp_auth='basic',
+                ansible_psrp_cert_validation='ignore',
+            )
+        elif remote.name == 'windows-2016':
+            options.update(
+                # force 2016 to use NTLM + HTTP message encryption
+                ansible_connection='winrm',
+                ansible_winrm_server_cert_validation='ignore',
+                ansible_winrm_transport='ntlm',
+                ansible_winrm_scheme='http',
+                ansible_port='5985',
+            )
+        else:
+            options.update(
+                ansible_connection='winrm',
+                ansible_winrm_server_cert_validation='ignore',
+            )
+
         hosts.append(
             '%s %s' % (
                 remote.name.replace('/', '_'),
@@ -756,14 +911,6 @@ def windows_inventory(remotes):
     template = """
     [windows]
     %s
-
-    [windows:vars]
-    ansible_connection=winrm
-    ansible_winrm_server_cert_validation=ignore
-
-    # support winrm connection tests (temporary solution, does not support testing enable/disable of pipelining)
-    [winrm:children]
-    windows
 
     # support winrm binary module tests (temporary solution)
     [testhost:children]
@@ -817,6 +964,23 @@ def command_integration_filter(args,  # type: TIntegrationConfig
 
     cloud_init(args, internal_targets)
 
+    vars_file_src = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
+
+    if os.path.exists(vars_file_src):
+        def integration_config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+            """
+            Add the integration config vars file to the payload file list.
+            This will preserve the file during delegation even if the file is ignored by source control.
+            """
+            if data_context().content.collection:
+                working_path = data_context().content.collection.directory
+            else:
+                working_path = ''
+
+            files.append((vars_file_src, os.path.join(working_path, data_context().content.integration_vars_path)))
+
+        data_context().register_payload_callback(integration_config_callback)
+
     if args.delegate:
         raise Delegate(require=require, exclude=exclude, integration_targets=internal_targets)
 
@@ -825,7 +989,8 @@ def command_integration_filter(args,  # type: TIntegrationConfig
     return internal_targets
 
 
-def command_integration_filtered(args, targets, all_targets, inventory_path, pre_target=None, post_target=None):
+def command_integration_filtered(args, targets, all_targets, inventory_path, pre_target=None, post_target=None,
+                                 remote_temp_path=None):
     """
     :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget]
@@ -833,6 +998,7 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
     :type inventory_path: str
     :type pre_target: (IntegrationTarget) -> None | None
     :type post_target: (IntegrationTarget) -> None | None
+    :type remote_temp_path: str | None
     """
     found = False
     passed = []
@@ -854,7 +1020,7 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
     check_pyyaml(args, args.python_version)
 
-    test_dir = os.path.expanduser('~/ansible_testing')
+    test_dir = os.path.join(ResultType.TMP.path, 'output_dir')
 
     if not args.explain and any('needs/ssh/' in target.aliases for target in targets):
         max_tries = 20
@@ -933,9 +1099,11 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
                         try:
                             if target.script_path:
-                                command_integration_script(args, target, test_dir, inventory_path, common_temp_path)
+                                command_integration_script(args, target, test_dir, inventory_path, common_temp_path,
+                                                           remote_temp_path=remote_temp_path)
                             else:
-                                command_integration_role(args, target, start_at_task, test_dir, inventory_path, common_temp_path)
+                                command_integration_role(args, target, start_at_task, test_dir, inventory_path,
+                                                         common_temp_path, remote_temp_path=remote_temp_path)
                                 start_at_task = None
                         finally:
                             if post_target:
@@ -1000,22 +1168,22 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
     finally:
         if not args.explain:
             if args.coverage:
-                coverage_temp_path = os.path.join(common_temp_path, COVERAGE_OUTPUT_NAME)
-                coverage_save_path = 'test/results/coverage'
+                coverage_temp_path = os.path.join(common_temp_path, ResultType.COVERAGE.name)
+                coverage_save_path = ResultType.COVERAGE.path
 
                 for filename in os.listdir(coverage_temp_path):
                     shutil.copy(os.path.join(coverage_temp_path, filename), os.path.join(coverage_save_path, filename))
 
             remove_tree(common_temp_path)
 
-            results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+            result_name = '%s-%s.json' % (
+                args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
 
             data = dict(
                 targets=results,
             )
 
-            with open(results_path, 'w') as results_fd:
-                results_fd.write(json.dumps(data, sort_keys=True, indent=4))
+            write_json_test_results(ResultType.DATA, result_name, data)
 
     if failed:
         raise ApplicationError('The %d integration test(s) listed below (out of %d) failed. See error output above for details:\n%s' % (
@@ -1097,12 +1265,12 @@ def inject_httptester(args):
     """
     comment = ' # ansible-test httptester\n'
     append_lines = ['127.0.0.1 %s%s' % (host, comment) for host in HTTPTESTER_HOSTS]
+    hosts_path = '/etc/hosts'
 
-    with open('/etc/hosts', 'r+') as hosts_fd:
-        original_lines = hosts_fd.readlines()
+    original_lines = read_text_file(hosts_path).splitlines(True)
 
-        if not any(line.endswith(comment) for line in original_lines):
-            hosts_fd.writelines(append_lines)
+    if not any(line.endswith(comment) for line in original_lines):
+        write_text_file(hosts_path, ''.join(original_lines + append_lines))
 
     # determine which forwarding mechanism to use
     pfctl = find_executable('pfctl', required=False)
@@ -1199,7 +1367,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
     callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])
 
     integration = dict(
-        JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
+        JUNIT_OUTPUT_DIR=ResultType.JUNIT.path,
         ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
@@ -1221,13 +1389,14 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
     return env
 
 
-def command_integration_script(args, target, test_dir, inventory_path, temp_path):
+def command_integration_script(args, target, test_dir, inventory_path, temp_path, remote_temp_path=None):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type test_dir: str
     :type inventory_path: str
     :type temp_path: str
+    :type remote_temp_path: str | None
     """
     display.info('Running %s integration test script' % target.name)
 
@@ -1246,7 +1415,12 @@ def command_integration_script(args, target, test_dir, inventory_path, temp_path
             cmd.append('-' + ('v' * args.verbosity))
 
         env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
-        cwd = os.path.join(test_env.integration_dir, 'targets', target.name)
+        cwd = os.path.join(test_env.targets_dir, target.relative_path)
+
+        env.update(dict(
+            # support use of adhoc ansible commands in collections without specifying the fully qualified collection name
+            ANSIBLE_PLAYBOOK_DIR=cwd,
+        ))
 
         if env_config and env_config.env_vars:
             env.update(env_config.env_vars)
@@ -1256,10 +1430,11 @@ def command_integration_script(args, target, test_dir, inventory_path, temp_path
                 cmd += ['-e', '@%s' % config_path]
 
             module_coverage = 'non_local/' not in target.aliases
-            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path, module_coverage=module_coverage)
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path,
+                              remote_temp_path=remote_temp_path, module_coverage=module_coverage)
 
 
-def command_integration_role(args, target, start_at_task, test_dir, inventory_path, temp_path):
+def command_integration_role(args, target, start_at_task, test_dir, inventory_path, temp_path, remote_temp_path=None):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
@@ -1267,16 +1442,25 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
     :type test_dir: str
     :type inventory_path: str
     :type temp_path: str
+    :type remote_temp_path: str | None
     """
     display.info('Running %s integration test role' % target.name)
 
     env_config = None
 
+    vars_files = []
+    variables = dict(
+        output_dir=test_dir,
+    )
+
     if isinstance(args, WindowsIntegrationConfig):
         hosts = 'windows'
         gather_facts = False
+        variables.update(dict(
+            win_output_dir=r'C:\ansible_testing',
+        ))
     elif isinstance(args, NetworkIntegrationConfig):
-        hosts = target.name[:target.name.find('_')]
+        hosts = target.network_platform
         gather_facts = False
     else:
         hosts = 'testhost'
@@ -1288,20 +1472,24 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             env_config = cloud_environment.get_environment_config()
 
     with integration_test_environment(args, target, inventory_path) as test_env:
+        if os.path.exists(test_env.vars_file):
+            vars_files.append(os.path.relpath(test_env.vars_file, test_env.integration_dir))
+
         play = dict(
             hosts=hosts,
             gather_facts=gather_facts,
-            vars_files=[
-                os.path.relpath(test_env.vars_file, test_env.integration_dir),
-            ],
+            vars_files=vars_files,
+            vars=variables,
             roles=[
                 target.name,
             ],
         )
 
         if env_config:
+            if env_config.ansible_vars:
+                variables.update(env_config.ansible_vars)
+
             play.update(dict(
-                vars=env_config.ansible_vars,
                 environment=env_config.env_vars,
                 module_defaults=env_config.module_defaults,
             ))
@@ -1337,10 +1525,16 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
             cwd = test_env.integration_dir
 
-            env['ANSIBLE_ROLES_PATH'] = os.path.abspath(os.path.join(test_env.integration_dir, 'targets'))
+            env.update(dict(
+                # support use of adhoc ansible commands in collections without specifying the fully qualified collection name
+                ANSIBLE_PLAYBOOK_DIR=cwd,
+            ))
+
+            env['ANSIBLE_ROLES_PATH'] = test_env.targets_dir
 
             module_coverage = 'non_local/' not in target.aliases
-            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path, module_coverage=module_coverage)
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path,
+                              remote_temp_path=remote_temp_path, module_coverage=module_coverage)
 
 
 def get_changes_filter(args):
@@ -1381,8 +1575,7 @@ def detect_changes(args):
     elif args.changed_from or args.changed_path:
         paths = args.changed_path or []
         if args.changed_from:
-            with open(args.changed_from, 'r') as changes_fd:
-                paths += changes_fd.read().splitlines()
+            paths += read_text_file(args.changed_from).splitlines()
     elif args.changed:
         paths = detect_changes_local(args)
     else:
@@ -1470,8 +1663,7 @@ def detect_changes_local(args):
                 args.metadata.changes[path] = ((0, 0),)
                 continue
 
-            with open(path, 'r') as source_fd:
-                line_count = len(source_fd.read().splitlines())
+            line_count = len(read_text_file(path).splitlines())
 
             args.metadata.changes[path] = ((1, line_count),)
 
@@ -1484,10 +1676,6 @@ def get_integration_filter(args, targets):
     :type targets: tuple[IntegrationTarget]
     :rtype: list[str]
     """
-    if args.tox:
-        # tox has the same exclusions as the local environment
-        return get_integration_local_filter(args, targets)
-
     if args.docker:
         return get_integration_docker_filter(args, targets)
 
@@ -1931,7 +2119,7 @@ class EnvironmentDescription:
         :type path: str
         :rtype: str
         """
-        with open(path) as script_fd:
+        with open_text_file(path) as script_fd:
             return script_fd.readline().strip()
 
     @staticmethod
@@ -1945,8 +2133,7 @@ class EnvironmentDescription:
 
         file_hash = hashlib.md5()
 
-        with open(path, 'rb') as file_fd:
-            file_hash.update(file_fd.read())
+        file_hash.update(read_binary_file(path))
 
         return file_hash.hexdigest()
 

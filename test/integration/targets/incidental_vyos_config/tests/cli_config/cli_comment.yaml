@@ -1,0 +1,30 @@
+---
+- debug: msg="START cli_config/cli_comment.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  ansible.netcommon.cli_config: &rm
+    config: set system host-name {{ inventory_hostname_short }}
+
+- name: configure using comment
+  ansible.netcommon.cli_config:
+    config: set system host-name foo
+    commit_comment: this is a test
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: collect system commits
+  vyos.vyos.vyos_command:
+    commands: show system commit
+  register: result
+
+- assert:
+    that:
+      - "'this is a test' in result.stdout_lines[0][1]"
+
+- name: teardown
+  ansible.netcommon.cli_config: *rm
+
+- debug: msg="END cli_config/cli_comment.yaml on connection={{ ansible_connection }}"

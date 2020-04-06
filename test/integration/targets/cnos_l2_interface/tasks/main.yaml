@@ -1,5 +1,0 @@
----
-- { include: cli.yaml, tags: ['cli'] }
-#- block:
-#    - { include: cli.yaml, tags: ['cli'] }
-#  when: 'switch_type == "L2"'

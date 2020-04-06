@@ -12,7 +12,6 @@
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
 #   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html for requirements)
-#   make pyflakes, make pep8 -- source code checks
 
 ########################################################
 # variable section
@@ -20,6 +19,7 @@
 NAME = ansible
 OS = $(shell uname -s)
 PREFIX ?= '/usr/local'
+SDIST_DIR ?= 'dist'
 
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
@@ -149,17 +149,9 @@ tests:
 tests-py3:
 	$(ANSIBLE_TEST) units -v --python $(PYTHON3_VERSION) $(TEST_FLAGS)
 
-.PHONY: tests-nonet
-tests-nonet:
-	$(ANSIBLE_TEST) units -v --python $(PYTHON_VERSION) $(TEST_FLAGS)  --exclude test/units/modules/network/
-
 .PHONY: integration
 integration:
 	$(ANSIBLE_TEST) integration -v --docker $(IMAGE) $(TARGET) $(TEST_FLAGS)
-
-.PHONY: authors
-authors:
-	sh hacking/authors.sh
 
 # Regenerate %.1.rst if %.1.rst.in has been modified more
 # recently than %.1.rst.
@@ -172,24 +164,12 @@ authors:
 %.1: %.1.rst lib/ansible/release.py
 	$(ASCII2MAN)
 
-.PHONY: loc
-loc:
-	sloccount lib library bin
-
-.PHONY: pep8
-pep8:
-	$(ANSIBLE_TEST) sanity --test pep8 --python $(PYTHON_VERSION) $(TEST_FLAGS)
-
-.PHONY: pyflakes
-pyflakes:
-	pyflakes lib/ansible/*.py lib/ansible/*/*.py bin/*
-
 .PHONY: clean
 clean:
 	@echo "Cleaning up distutils stuff"
 	rm -rf build
 	rm -rf dist
-	rm -rf lib/ansible.egg-info/
+	rm -rf lib/ansible*.egg-info/
 	@echo "Cleaning up byte compiled python stuff"
 	find . -type f -regex ".*\.py[co]$$" -delete
 	find . -type d -name "__pycache__" -delete
@@ -216,8 +196,6 @@ clean:
 	rm -rf deb-build
 	rm -rf docs/json
 	rm -rf docs/js
-	@echo "Cleaning up authors file"
-	rm -f AUTHORS.TXT
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
 
@@ -235,18 +213,19 @@ install_manpages:
 
 .PHONY: sdist_check
 sdist_check:
+	$(PYTHON) -c 'import setuptools, sys; sys.exit(int(not (tuple(map(int, setuptools.__version__.split("."))) > (39, 2, 0))))'
 	$(PYTHON) packaging/sdist/check-link-behavior.py
 
 .PHONY: sdist
 sdist: sdist_check clean docs
-	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist --dist-dir=$(SDIST_DIR)
 
 # Official releases generate the changelog as the last commit before the release.
 # Snapshots shouldn't result in new checkins so the changelog is generated as
 # part of creating the tarball.
 .PHONY: snapshot
 snapshot: sdist_check clean docs changelog
-	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist --dist-dir=$(SDIST_DIR)
 
 .PHONY: sdist_upload
 sdist_upload: clean docs
@@ -313,7 +292,7 @@ rpm: rpmcommon
 	--define "_srcrpmdir %{_topdir}" \
 	--define "_specdir $(RPMSPECDIR)" \
 	--define "_sourcedir %{_topdir}" \
-	--define "_rpmfilename $(RPMNVR).%%{ARCH}.rpm" \
+	--define "_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm" \
 	--define "__python `which $(PYTHON)`" \
 	--define "upstream_version $(VERSION)" \
 	--define "rpmversion $(RPMVERSION)" \

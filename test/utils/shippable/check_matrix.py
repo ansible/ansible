@@ -25,6 +25,13 @@ except ImportError:
 
 def main():  # type: () -> None
     """Main entry point."""
+    repo_full_name = os.environ['REPO_FULL_NAME']
+    required_repo_full_name = 'ansible/ansible'
+
+    if repo_full_name != required_repo_full_name:
+        sys.stderr.write('Skipping matrix check on repo "%s" which is not "%s".\n' % (repo_full_name, required_repo_full_name))
+        return
+
     with open('shippable.yml', 'rb') as yaml_file:
         yaml = yaml_file.read().decode('utf-8').splitlines()
 
@@ -94,7 +101,13 @@ def fail(message, output):  # type: (str, str) -> NoReturn
 </testsuites>
 ''' % (timestamp, message, output)
 
-    with open('test/results/junit/check-matrix.xml', 'w') as junit_fd:
+    path = 'shippable/testresults/check-matrix.xml'
+    dir_path = os.path.dirname(path)
+
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+    with open(path, 'w') as junit_fd:
         junit_fd.write(xml.lstrip())
 
     sys.stderr.write(message + '\n')

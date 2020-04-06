@@ -10,20 +10,26 @@ This page offers details on how the netconf connection works in Ansible and how 
 
 Connections Available
 ================================================================================
+.. table::
+    :class: documentation-table
 
-+----------------------------+----------------------------------------------------------------------------------------------------+
-| |                          | | NETCONF                                                                                          |
-| |                          | | * all modules except ``junos_netconf``, which enables NETCONF                                    |
-+============================+====================================================================================================+
-| **Protocol**               | XML over SSH                                                                                       |
-+----------------------------+----------------------------------------------------------------------------------------------------+
-| | **Credentials**          | | uses SSH keys / SSH-agent if present                                                             |
-| |                          | | accepts ``-u myuser -k`` if using password                                                       |
-+----------------------------+----------------------------------------------------------------------------------------------------+
-| **Indirect Access**        | via a bastion (jump host)                                                                          |
-+----------------------------+----------------------------------------------------------------------------------------------------+
-| **Connection Settings**    |   ``ansible_connection: netconf``                                                                  |
-+----------------------------+----------------------------------------------------------------------------------------------------+
+    ====================  ==========================================
+    ..                    NETCONF
+
+                          all modules except ``junos_netconf``,
+                          which enables NETCONF
+    ====================  ==========================================
+    Protocol              XML over SSH
+
+    Credentials           uses SSH keys / SSH-agent if present
+
+                          accepts ``-u myuser -k`` if using password
+
+    Indirect Access       via a bastion (jump host)
+
+    Connection Settings   ``ansible_connection: netconf``
+    ====================  ==========================================
+
 
 For legacy playbooks, Ansible still supports ``ansible_connection=local`` for the netconf_config module only. We recommend modernizing to use ``ansible_connection=netconf`` as soon as possible.
 
@@ -94,7 +100,7 @@ To use a jump host to connect to a NETCONF enabled device you must set the ``ANS
   - 1 or TRUE (to trigger the use of the default SSH config file ~/.ssh/config)
   - The absolute path to a custom SSH config file.
 
-The SSH config file should look something like: 
+The SSH config file should look something like:
 
 .. code-block:: ini
 
@@ -120,3 +126,7 @@ If ``ansible_network_os`` is not specified for a host, then Ansible will attempt
 ``ansible_network_os`` auto-detection can also be triggered by using ``auto`` as the ``ansible_network_os``. (Note: Previously ``default`` was used instead of ``auto``).
 
 .. include:: shared_snippets/SSH_warning.txt
+
+.. seealso::
+
+       :ref:`timeout_options`

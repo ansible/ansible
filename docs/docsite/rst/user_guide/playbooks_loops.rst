@@ -82,7 +82,7 @@ Either of these examples would be the equivalent of::
         state: present
         groups: "wheel"
 
-You can pass a list directly to a parameter for some plugins. Most of the packaging modules, like :ref:`yum_module` and :ref:`apt_module`, have this capability. When available, passing the list to a parameter is better than looping over the task. For example::
+You can pass a list directly to a parameter for some plugins. Most of the packaging modules, like :ref:`yum <yum_module>` and :ref:`apt <apt_module>`, have this capability. When available, passing the list to a parameter is better than looping over the task. For example::
 
    - name: optimal yum
      yum:
@@ -111,26 +111,26 @@ If you have a list of hashes, you can reference subkeys in a loop. For example::
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
 
-When combining :ref:`playbooks_conditionals` with a loop, the ``when:`` statement is processed separately for each item.
+When combining :ref:`conditionals <playbooks_conditionals>` with a loop, the ``when:`` statement is processed separately for each item.
 See :ref:`the_when_statement` for examples.
 
 Iterating over a dictionary
 ---------------------------
 
-To loop over a dict, use the ``dict2items`` :ref:`dict_filter`::
+To loop over a dict, use the  :ref:`dict2items <dict_filter>`:
 
-    - name: create a tag dictionary of non-empty tags
-      set_fact:
-        tags_dict: "{{ (tags_dict|default({}))|combine({item.key: item.value}) }}"
-      loop: "{{ tags|dict2items }}"
+.. code-block:: yaml
+
+    - name: Using dict2items
+      debug:
+        msg: "{{ item.key }} - {{ item.value }}"
+      loop: "{{ tag_data | dict2items }}"
       vars:
-        tags:
+        tag_data:
           Environment: dev
           Application: payment
-          Another: "{{ doesnotexist|default() }}"
-      when: item.value != ""
 
-Here, we don't want to set empty tags, so we create a dictionary containing only non-empty tags.
+Here, we are iterating over `tag_data` and printing the key and the value from it.
 
 Registering variables with a loop
 =================================
@@ -268,14 +268,14 @@ There is also a specific lookup plugin ``inventory_hostnames`` that can be used 
         msg: "{{ item }}"
       loop: "{{ query('inventory_hostnames', 'all:!www') }}"
 
-More information on the patterns can be found on :ref:`intro_patterns`
+More information on the patterns can be found in :ref:`intro_patterns`.
 
 .. _query_vs_lookup:
 
 Ensuring list input for ``loop``: ``query`` vs. ``lookup``
 ==========================================================
 
-The ``loop`` keyword requires a list as input, but the ``lookup`` keyword returns a string of comma-separated values by default. Ansible 2.5 introduced a new Jinja2 function named :ref:`query` that always returns a list, offering a simpler interface and more predictable output from lookup plugins when using the ``loop`` keyword.
+The ``loop`` keyword requires a list as input, but the ``lookup`` keyword returns a string of comma-separated values by default. Ansible 2.5 introduced a new Jinja2 function named :ref:`query <query>` that always returns a list, offering a simpler interface and more predictable output from lookup plugins when using the ``loop`` keyword.
 
 You can force ``lookup`` to return a list to ``loop`` by using ``wantlist=True``, or you can use ``query`` instead.
 
@@ -316,6 +316,8 @@ When looping over complex data structures, the console output of your task can b
         label: "{{ item.name }}"
 
 The output of this task will display just the ``name`` field for each ``item`` instead of the entire contents of the multi-line ``{{ item }}`` variable.
+
+.. note:: This is for making console output more readable, not protecting sensitive data. If there is sensitive data in ``loop``, set ``no_log: yes`` on the task to prevent disclosure.
 
 Pausing within a loop
 ---------------------

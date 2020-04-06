@@ -1,0 +1,7 @@
+bugfixes:
+- ActionBase - Add new ``cleanup`` method that is explicitly run by the
+  ``TaskExecutor`` to ensure that the shell plugins ``tmpdir`` is always
+  removed. This change means that individual action plugins need not be
+  responsible for removing the temporary directory, which ensures that
+  we don't have code paths that accidentally leave behind the temporary
+  directory.

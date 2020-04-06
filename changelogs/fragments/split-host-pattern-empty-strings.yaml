@@ -1,0 +1,2 @@
+bugfixes:
+  - account for empty strings in when splitting the host pattern (https://github.com/ansible/ansible/issues/61964)

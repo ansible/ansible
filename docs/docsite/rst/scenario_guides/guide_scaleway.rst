@@ -68,8 +68,6 @@ The ``ssh_pub_key`` parameter contains your ssh public key as a string. Here is 
 
 .. code-block:: yaml
 
-    # SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway_ssh_playbook.yml
-
     - name: Test SSH key lifecycle on a Scaleway account
       hosts: localhost
       gather_facts: no
@@ -119,8 +117,6 @@ Here are the parameter details for the example shown above:
 Take a look at this short playbook to see a working example using ``scaleway_compute``:
 
 .. code-block:: yaml
-
-    # SCW_TOKEN='XXX' ansible-playbook ./test/legacy/scaleway_compute.yml
 
     - name: Test compute instance lifecycle on a Scaleway account
       hosts: localhost
@@ -253,7 +249,7 @@ Scaleway S3 object storage
 `Object Storage <https://www.scaleway.com/object-storage>`_ allows you to store any kind of objects (documents, images, videos, etc.).
 As the Scaleway API is S3 compatible, Ansible supports it natively through the modules: :ref:`s3_bucket_module`, :ref:`aws_s3_module`.
 
-You can find many examples in ``./test/legacy/roles/scaleway_s3``
+You can find many examples in the `scaleway_s3 integration tests <https://github.com/ansible/ansible-legacy-tests/tree/devel/test/legacy/roles/scaleway_s3>`_.
 
 .. code-block:: yaml+jinja
 

@@ -1,0 +1,2 @@
+minor_changes:
+    - "ansible-test - Added a ``ansible-test coverage analyze targets`` command to analyze integration test code coverage by test target."

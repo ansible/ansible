@@ -1,0 +1,1 @@
+rpm_repo_python_major_version: "{{ ansible_facts.python_version.split('.')[0] }}"

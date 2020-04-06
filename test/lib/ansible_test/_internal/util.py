@@ -16,7 +16,9 @@ import stat
 import string
 import subprocess
 import sys
+import tempfile
 import time
+import zipfile
 
 from struct import unpack, pack
 from termios import TIOCGWINSZ
@@ -43,6 +45,17 @@ except ImportError:
 
 from . import types as t
 
+from .encoding import (
+    to_bytes,
+    to_optional_bytes,
+    to_optional_text,
+)
+
+from .io import (
+    open_binary_file,
+    read_text_file,
+)
+
 try:
     C = t.TypeVar('C')
 except AttributeError:
@@ -51,6 +64,7 @@ except AttributeError:
 
 DOCKER_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
 REMOTE_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
+NETWORK_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
 PYTHON_PATHS = {}  # type: t.Dict[str, str]
 
 try:
@@ -60,7 +74,6 @@ except AttributeError:
     MAXFD = -1
 
 COVERAGE_CONFIG_NAME = 'coveragerc'
-COVERAGE_OUTPUT_NAME = 'coverage'
 
 ANSIBLE_TEST_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -94,41 +107,19 @@ MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
 MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
 
-ENCODING = 'utf-8'
+REMOTE_ONLY_PYTHON_VERSIONS = (
+    '2.6',
+)
 
-Text = type(u'')
-
-
-def to_optional_bytes(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[bytes]
-    """Return the given value as bytes encoded using UTF-8 if not already bytes, or None if the value is None."""
-    return None if value is None else to_bytes(value, errors)
-
-
-def to_optional_text(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[t.Text]
-    """Return the given value as text decoded using UTF-8 if not already text, or None if the value is None."""
-    return None if value is None else to_text(value, errors)
-
-
-def to_bytes(value, errors='strict'):  # type: (t.AnyStr, str) -> bytes
-    """Return the given value as bytes encoded using UTF-8 if not already bytes."""
-    if isinstance(value, bytes):
-        return value
-
-    if isinstance(value, Text):
-        return value.encode(ENCODING, errors)
-
-    raise Exception('value is not bytes or text: %s' % type(value))
-
-
-def to_text(value, errors='strict'):  # type: (t.AnyStr, str) -> t.Text
-    """Return the given value as text decoded using UTF-8 if not already text."""
-    if isinstance(value, bytes):
-        return value.decode(ENCODING, errors)
-
-    if isinstance(value, Text):
-        return value
-
-    raise Exception('value is not bytes or text: %s' % type(value))
+SUPPORTED_PYTHON_VERSIONS = (
+    '2.6',
+    '2.7',
+    '3.5',
+    '3.6',
+    '3.7',
+    '3.8',
+    '3.9',
+)
 
 
 def get_docker_completion():
@@ -143,6 +134,13 @@ def get_remote_completion():
     :rtype: dict[str, dict[str, str]]
     """
     return get_parameterized_completion(REMOTE_COMPLETION, 'remote')
+
+
+def get_network_completion():
+    """
+    :rtype: dict[str, dict[str, str]]
+    """
+    return get_parameterized_completion(NETWORK_COMPLETION, 'network')
 
 
 def get_parameterized_completion(cache, name):
@@ -199,8 +197,7 @@ def read_lines_without_comments(path, remove_blank_lines=False, optional=False):
     if optional and not os.path.exists(path):
         return []
 
-    with open(path, 'r') as path_fd:
-        lines = path_fd.read().splitlines()
+    lines = read_text_file(path).splitlines()
 
     lines = [re.sub(r' *#.*$', '', line) for line in lines]
 
@@ -279,9 +276,36 @@ def find_python(version, path=None, required=True):
     return python_bin
 
 
-def get_available_python_versions(versions):  # type: (t.List[str]) -> t.Tuple[str, ...]
-    """Return a tuple indicating which of the requested Python versions are available."""
-    return tuple(python_version for python_version in versions if find_python(python_version, required=False))
+def get_ansible_version():  # type: () -> str
+    """Return the Ansible version."""
+    try:
+        return get_ansible_version.version
+    except AttributeError:
+        pass
+
+    # ansible may not be in our sys.path
+    # avoids a symlink to release.py since ansible placement relative to ansible-test may change during delegation
+    load_module(os.path.join(ANSIBLE_LIB_ROOT, 'release.py'), 'ansible_release')
+
+    # noinspection PyUnresolvedReferences
+    from ansible_release import __version__ as ansible_version  # pylint: disable=import-error
+
+    get_ansible_version.version = ansible_version
+
+    return ansible_version
+
+
+def get_available_python_versions(versions):  # type: (t.List[str]) -> t.Dict[str, str]
+    """Return a dictionary indicating which of the requested Python versions are available."""
+    try:
+        return get_available_python_versions.result
+    except AttributeError:
+        pass
+
+    get_available_python_versions.result = dict((version, path) for version, path in
+                                                ((version, find_python(version, required=False)) for version in versions) if path)
+
+    return get_available_python_versions.result
 
 
 def generate_pip_command(python):
@@ -480,17 +504,6 @@ def remove_tree(path):
             raise
 
 
-def make_dirs(path):
-    """
-    :type path: str
-    """
-    try:
-        os.makedirs(to_bytes(path))
-    except OSError as ex:
-        if ex.errno != errno.EEXIST:
-            raise
-
-
 def is_binary_file(path):
     """
     :type path: str
@@ -546,7 +559,8 @@ def is_binary_file(path):
     if ext in assume_binary:
         return True
 
-    with open(path, 'rb') as path_fd:
+    with open_binary_file(path) as path_fd:
+        # noinspection PyTypeChecker
         return b'\0' in path_fd.read(1024)
 
 
@@ -595,7 +609,7 @@ class Display:
         self.rows = 0
         self.columns = 0
         self.truncate = 0
-        self.redact = False
+        self.redact = True
         self.sensitive = set()
 
         if os.isatty(0):
@@ -617,11 +631,15 @@ class Display:
         for warning in self.warnings:
             self.__warning(warning)
 
-    def warning(self, message, unique=False):
+    def warning(self, message, unique=False, verbosity=0):
         """
         :type message: str
         :type unique: bool
+        :type verbosity: int
         """
+        if verbosity > self.verbosity:
+            return
+
         if unique:
             if message in self.warnings_unique:
                 return
@@ -662,6 +680,9 @@ class Display:
         """
         if self.redact and self.sensitive:
             for item in self.sensitive:
+                if not item:
+                    continue
+
                 message = message.replace(item, '*' * len(item))
 
         if truncate:
@@ -713,6 +734,7 @@ class SubprocessError(ApplicationError):
         super(SubprocessError, self).__init__(message)
 
         self.cmd = cmd
+        self.message = message
         self.status = status
         self.stdout = stdout
         self.stderr = stderr
@@ -728,6 +750,30 @@ class MissingEnvironmentVariable(ApplicationError):
         super(MissingEnvironmentVariable, self).__init__('Missing environment variable: %s' % name)
 
         self.name = name
+
+
+class NetworkPlatformSettings:
+    """Settings required for provisioning a network platform."""
+    def __init__(self, collection, inventory_vars):  # type: (str, t.Type[str, str]) -> None
+        self.collection = collection
+        self.inventory_vars = inventory_vars
+
+
+def get_network_settings(args, platform, version):  # type: (NetworkIntegrationConfig, str, str) -> NetworkPlatformSettings
+    """Returns settings for the given network platform and version."""
+    platform_version = '%s/%s' % (platform, version)
+    completion = get_network_completion().get(platform_version, {})
+    collection = args.platform_collection.get(platform, completion.get('collection'))
+
+    settings = NetworkPlatformSettings(
+        collection,
+        dict(
+            ansible_connection=args.platform_connection.get(platform, completion.get('connection')),
+            ansible_network_os='%s.%s' % (collection, platform) if collection else platform,
+        )
+    )
+
+    return settings
 
 
 def docker_qualify_image(name):
@@ -777,8 +823,8 @@ def get_available_port():
 
 def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
     """Returns the set of types that are concrete subclasses of the given type."""
-    subclasses = set()
-    queue = [class_type]
+    subclasses = set()  # type: t.Set[t.Type[C]]
+    queue = [class_type]  # type: t.List[t.Type[C]]
 
     while queue:
         parent = queue.pop()
@@ -794,11 +840,11 @@ def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
 
 def is_subdir(candidate_path, path):  # type: (str, str) -> bool
     """Returns true if candidate_path is path or a subdirectory of path."""
-    if not path.endswith(os.sep):
-        path += os.sep
+    if not path.endswith(os.path.sep):
+        path += os.path.sep
 
-    if not candidate_path.endswith(os.sep):
-        candidate_path += os.sep
+    if not candidate_path.endswith(os.path.sep):
+        candidate_path += os.path.sep
 
     return candidate_path.startswith(path)
 
@@ -819,6 +865,16 @@ def paths_to_dirs(paths):  # type: (t.List[str]) -> t.List[str]
     return sorted(dir_names)
 
 
+def str_to_version(version):  # type: (str) -> t.Tuple[int]
+    """Return a version tuple from a version string."""
+    return tuple(int(n) for n in version.split('.'))
+
+
+def version_to_str(version):  # type: (t.Tuple[int]) -> str
+    """Return a version string from a version tuple."""
+    return '.'.join(str(n) for n in version)
+
+
 def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> None
     """
     Import plugins from the given directory relative to the given root.
@@ -829,10 +885,10 @@ def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> Non
 
     path = os.path.join(root, directory)
     package = __name__.rsplit('.', 1)[0]
-    prefix = '%s.%s.' % (package, directory.replace(os.sep, '.'))
+    prefix = '%s.%s.' % (package, directory.replace(os.path.sep, '.'))
 
     for (_module_loader, name, _ispkg) in pkgutil.iter_modules([path], prefix=prefix):
-        module_path = os.path.join(root, name[len(package) + 1:].replace('.', os.sep) + '.py')
+        module_path = os.path.join(root, name[len(package) + 1:].replace('.', os.path.sep) + '.py')
         load_module(module_path, name)
 
 
@@ -867,9 +923,26 @@ def load_module(path, name):  # type: (str, str) -> None
         # noinspection PyDeprecation
         import imp
 
-        with open(path, 'r') as module_file:
+        # load_source (and thus load_module) require a file opened with `open` in text mode
+        with open(to_bytes(path)) as module_file:
             # noinspection PyDeprecation
             imp.load_module(name, module_file, path, ('.py', 'r', imp.PY_SOURCE))
+
+
+@contextlib.contextmanager
+def tempdir():  # type: () -> str
+    """Creates a temporary directory that is deleted outside the context scope."""
+    temp_path = tempfile.mkdtemp()
+    yield temp_path
+    shutil.rmtree(temp_path)
+
+
+@contextlib.contextmanager
+def open_zipfile(path, mode='r'):
+    """Opens a zip file and closes the file automatically."""
+    zib_obj = zipfile.ZipFile(path, mode=mode)
+    yield zib_obj
+    zib_obj.close()
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

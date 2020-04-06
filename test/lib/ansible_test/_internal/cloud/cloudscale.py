@@ -7,7 +7,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from os.path import isfile
+import os
 
 from . import (
     CloudProvider,
@@ -34,7 +34,7 @@ class CloudscaleCloudProvider(CloudProvider):
         :type targets: tuple[TestTarget]
         :type exclude: list[str]
         """
-        if isfile(self.config_static_path):
+        if os.path.isfile(self.config_static_path):
             return
 
         super(CloudscaleCloudProvider, self).filter(targets, exclude)
@@ -43,7 +43,7 @@ class CloudscaleCloudProvider(CloudProvider):
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super(CloudscaleCloudProvider, self).setup()
 
-        if isfile(self.config_static_path):
+        if os.path.isfile(self.config_static_path):
             display.info('Using existing %s cloud config: %s'
                          % (self.platform, self.config_static_path),
                          verbosity=1)
@@ -65,6 +65,8 @@ class CloudscaleCloudEnvironment(CloudEnvironment):
         env_vars = dict(
             CLOUDSCALE_API_TOKEN=parser.get('default', 'cloudscale_api_token'),
         )
+
+        display.sensitive.add(env_vars['CLOUDSCALE_API_TOKEN'])
 
         ansible_vars = dict(
             cloudscale_resource_prefix=self.resource_prefix,

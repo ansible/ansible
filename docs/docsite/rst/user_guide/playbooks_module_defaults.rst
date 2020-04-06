@@ -85,21 +85,31 @@ Module defaults groups
 Ansible 2.7 adds a preview-status feature to group together modules that share common sets of parameters. This makes
 it easier to author playbooks making heavy use of API-based modules such as cloud modules.
 
-+-------+---------------------------+-----------------+
-| Group | Purpose                   | Ansible Version |
-+=======+===========================+=================+
-| aws   | Amazon Web Services       | 2.7             |
-+-------+---------------------------+-----------------+
-| azure | Azure                     | 2.7             |
-+-------+---------------------------+-----------------+
-| gcp   | Google Cloud Platform     | 2.7             |
-+-------+---------------------------+-----------------+
-| k8s   | Kubernetes                | 2.8             |
-+-------+---------------------------+-----------------+
-| os    | OpenStack                 | 2.8             |
-+-------+---------------------------+-----------------+
++---------+---------------------------+-----------------+
+| Group   | Purpose                   | Ansible Version |
++=========+===========================+=================+
+| aws     | Amazon Web Services       | 2.7             |
++---------+---------------------------+-----------------+
+| azure   | Azure                     | 2.7             |
++---------+---------------------------+-----------------+
+| gcp     | Google Cloud Platform     | 2.7             |
++---------+---------------------------+-----------------+
+| k8s     | Kubernetes                | 2.8             |
++---------+---------------------------+-----------------+
+| os      | OpenStack                 | 2.8             |
++---------+---------------------------+-----------------+
+| acme    | ACME                      | 2.10            |
++---------+---------------------------+-----------------+
+| docker* | Docker                    | 2.10            |
++---------+---------------------------+-----------------+
+| ovirt   | oVirt                     | 2.10            |
++---------+---------------------------+-----------------+
+| vmware  | VMware                    | 2.10            |
++---------+---------------------------+-----------------+
 
-Use the groups with `module_defaults` by prefixing the group name with `group/` - e.g. `group/aws`
+* The `docker_stack <docker_stack_module>`_ module is not included in the ``docker`` defaults group.
+
+Use the groups with ``module_defaults`` by prefixing the group name with ``group/`` - e.g. ``group/aws``.
 
 In a playbook, you can set module defaults for whole groups of modules, such as setting a common AWS region.
 

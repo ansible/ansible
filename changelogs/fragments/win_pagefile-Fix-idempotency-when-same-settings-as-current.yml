@@ -1,2 +1,0 @@
-bugfixes:
-  - "win_pagefile - Fix idempotency when same settings as current (https://github.com/ansible/ansible/issues/57836)"

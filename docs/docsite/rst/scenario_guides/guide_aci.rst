@@ -51,7 +51,7 @@ Using the ACI modules
 ---------------------
 The Ansible ACI modules provide a user-friendly interface to managing your ACI environment using Ansible playbooks.
 
-For instance ensuring that a specific tenant exists, is done using the following Ansible task using module :ref:`aci_tenant <aci_tenant_module>`:
+For instance ensuring that a specific tenant exists, is done using the following Ansible task using the aci_tenant module:
 
 .. code-block:: yaml
 
@@ -60,12 +60,12 @@ For instance ensuring that a specific tenant exists, is done using the following
         host: my-apic-1
         username: admin
         password: my-password
-    
+
         tenant: customer-xyz
         description: Customer XYZ
         state: present
 
-A complete list of existing ACI modules is available for the latest stable release on the :ref:`list of network modules <network_modules>`. You can also view the `current development version <https://docs.ansible.com/ansible/devel/modules/list_of_network_modules.html#aci>`_.
+A complete list of existing ACI modules is available on the content tab of the `ACI collection on Ansible Galaxy <https://galaxy.ansible.com/cisco/aci>`_.
 
 If you want to learn how to write your own ACI modules to contribute, look at the :ref:`Developing Cisco ACI modules <aci_dev_guide>` section.
 
@@ -81,7 +81,7 @@ A module can also be used to query a specific object.
         host: my-apic-1
         username: admin
         password: my-password
-    
+
         tenant: customer-xyz
         state: query
       register: my_tenant
@@ -95,11 +95,11 @@ Or query all objects.
         host: my-apic-1
         username: admin
         password: my-password
-    
+
         state: query
       register: all_tenants
 
-After registering the return values of the :ref:`aci_tenant <aci_tenant_module>` task as shown above, you can access all tenant information from variable ``all_tenants``.
+After registering the return values of the aci_tenant task as shown above, you can access all tenant information from variable ``all_tenants``.
 
 
 Running on the controller locally
@@ -147,7 +147,7 @@ One way to set this up is to add to every task the directive: ``delegate_to: loc
         host: '{{ ansible_host }}'
         username: '{{ ansible_user }}'
         password: '{{ ansible_password }}'
-    
+
         state: query
       delegate_to: localhost
       register: all_tenants
@@ -180,7 +180,7 @@ But used tasks do not need anything special added.
         host: '{{ ansible_host }}'
         username: '{{ ansible_user }}'
         password: '{{ ansible_password }}'
-    
+
         state: query
       register: all_tenants
 
@@ -352,7 +352,7 @@ You can automate this by using the following Ansible task:
         host: my-apic-1
         username: admin
         password: my-password
-    
+
         aaa_user: admin
         certificate_name: admin
         certificate: "{{ lookup('file', 'pki/admin.crt') }}"  # This will read the certificate data from a local file
@@ -406,7 +406,7 @@ Use a text editor to open the private-key. You should have an encrypted cert now
     45641818198456456489479874513215489484843614848456466655432455488484654848489498
     ....
 
-Copy and paste the new encrypted cert into your playbook as a new variable. 
+Copy and paste the new encrypted cert into your playbook as a new variable.
 
 .. code-block:: yaml
 
@@ -443,17 +443,17 @@ Using ACI REST with Ansible
 ---------------------------
 While already a lot of ACI modules exists in the Ansible distribution, and the most common actions can be performed with these existing modules, there's always something that may not be possible with off-the-shelf modules.
 
-The :ref:`aci_rest <aci_rest_module>` module provides you with direct access to the APIC REST API and enables you to perform any task not already covered by the existing modules. This may seem like a complex undertaking, but you can generate the needed REST payload for any action performed in the ACI web interface effortlessly.
+The aci_rest module provides you with direct access to the APIC REST API and enables you to perform any task not already covered by the existing modules. This may seem like a complex undertaking, but you can generate the needed REST payload for any action performed in the ACI web interface effortlessly.
 
 
 Built-in idempotency
 ....................
-Because the APIC REST API is intrinsically idempotent and can report whether a change was made, the :ref:`aci_rest <aci_rest_module>` module automatically inherits both capabilities and is a first-class solution for automating your ACI infrastructure. As a result, users that require more powerful low-level access to their ACI infrastructure don't have to give up on idempotency and don't have to guess whether a change was performed when using the :ref:`aci_rest <aci_rest_module>` module.
+Because the APIC REST API is intrinsically idempotent and can report whether a change was made, the aci_rest module automatically inherits both capabilities and is a first-class solution for automating your ACI infrastructure. As a result, users that require more powerful low-level access to their ACI infrastructure don't have to give up on idempotency and don't have to guess whether a change was performed when using the aci_rest module.
 
 
 Using the aci_rest module
 .........................
-The :ref:`aci_rest <aci_rest_module>` module accepts the native XML and JSON payloads, but additionally accepts inline YAML payload (structured like JSON). The XML payload requires you to use a path ending with ``.xml`` whereas JSON or YAML require the path to end with ``.json``.
+The aci_rest module accepts the native XML and JSON payloads, but additionally accepts inline YAML payload (structured like JSON). The XML payload requires you to use a path ending with ``.xml`` whereas JSON or YAML require the path to end with ``.json``.
 
 When you're making modifications, you can use the POST or DELETE methods, whereas doing just queries require the GET method.
 
@@ -466,7 +466,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
     - aci_rest:
         host: my-apic-1
         private_key: pki/admin.key
-    
+
         method: post
         path: /api/mo/uni.xml
         content: |
@@ -479,7 +479,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
     - aci_rest:
         host: my-apic-1
         private_key: pki/admin.key
-    
+
         method: post
         path: /api/mo/uni.json
         content:
@@ -499,7 +499,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
     - aci_rest:
         host: my-apic-1
         private_key: pki/admin.key
-    
+
         method: post
         path: /api/mo/uni.json
         content:
@@ -515,7 +515,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
     - aci_tenant:
         host: my-apic-1
         private_key: pki/admin.key
-    
+
         tenant: customer-xyz
         description: Customer XYZ
         state: present
@@ -528,7 +528,7 @@ More information
 ................
 Plenty of resources exist to learn about ACI's APIC REST interface, we recommend the links below:
 
-- :ref:`The aci_rest module documentation <aci_rest_module>`
+- `The ACI collection on Ansible Galaxy <https://galaxy.ansible.com/cisco/aci>`_
 - `APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_ -- Detailed guide on how the APIC REST API is designed and used, incl. many examples
 - `APIC Management Information Model reference <https://developer.cisco.com/docs/apic-mim-ref/>`_ -- Complete reference of the APIC object model
 - `Cisco DevNet Learning Labs about ACI and REST <https://learninglabs.cisco.com/labs/tags/ACI,REST>`_
@@ -591,7 +591,7 @@ APIC error messages
 The following error messages may occur and this section can help you understand what exactly is going on and how to fix/avoid them.
 
     APIC Error 122: unknown managed object class 'polUni'
-        In case you receive this error while you are certain your :ref:`aci_rest <aci_rest_module>` payload and object classes are seemingly correct, the issue might be that your payload is not in fact correct JSON (e.g. the sent payload is using single quotes, rather than double quotes), and as a result the APIC is not correctly parsing your object classes from the payload. One way to avoid this is by using a YAML or an XML formatted payload, which are easier to construct correctly and modify later.
+        In case you receive this error while you are certain your aci_rest payload and object classes are seemingly correct, the issue might be that your payload is not in fact correct JSON (e.g. the sent payload is using single quotes, rather than double quotes), and as a result the APIC is not correctly parsing your object classes from the payload. One way to avoid this is by using a YAML or an XML formatted payload, which are easier to construct correctly and modify later.
 
 
     APIC Error 400: invalid data at line '1'. Attributes are missing, tag 'attributes' must be specified first, before any other tag
@@ -606,12 +606,12 @@ The following error messages may occur and this section can help you understand 
 
 Known issues
 ------------
-The :ref:`aci_rest <aci_rest_module>` module is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of this module.
+The aci_rest module is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of this module.
 
 All below issues either have been reported to the vendor, and most can simply be avoided.
 
     Too many consecutive API calls may result in connection throttling
-        Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this threshold within the nginx configuration, but using signature-based authentication is recommended.
+        Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific threshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this threshold within the nginx configuration, but using signature-based authentication is recommended.
 
         **NOTE:** It is advisable to use signature-based authentication with ACI as it not only prevents connection-throttling, but also improves general performance when using the ACI modules.
 
@@ -645,8 +645,8 @@ You will find our roadmap, an overview of open ACI issues and pull-requests, and
 
 .. seealso::
 
-   :ref:`List of ACI modules <aci_network_modules>`
-       A complete list of supported ACI modules.
+   `ACI collection on Ansible Galaxy <https://galaxy.ansible.com/cisco/aci>`_
+       View the content tab for a complete list of supported ACI modules.
    :ref:`Developing Cisco ACI modules <aci_dev_guide>`
        A walkthough on how to develop new Cisco ACI modules to contribute back.
    `ACI community <https://github.com/ansible/community/wiki/Network:-ACI>`_

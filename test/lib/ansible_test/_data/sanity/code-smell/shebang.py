@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import re
 import stat
 import sys
 
@@ -64,6 +65,10 @@ def main():
 
             if path.startswith('lib/ansible/modules/'):
                 is_module = True
+            elif re.search('^test/support/[^/]+/plugins/modules/', path):
+                is_module = True
+            elif re.search('^test/support/[^/]+/collections/ansible_collections/[^/]+/[^/]+/plugins/modules/', path):
+                is_module = True
             elif path.startswith('test/lib/ansible_test/_data/'):
                 pass
             elif path.startswith('lib/') or path.startswith('test/lib/'):
@@ -74,16 +79,16 @@ def main():
                     print('%s:%d:%d: should not have a shebang' % (path, 0, 0))
 
                 continue
-            elif path.startswith('test/integration/targets/'):
+            elif path.startswith('test/integration/targets/') or path.startswith('tests/integration/targets/'):
                 is_integration = True
 
-                if dirname.endswith('/library') or dirname.endswith('/plugins/modules') or dirname in (
+                if dirname.endswith('/library') or '/plugins/modules' in dirname or dirname in (
                         # non-standard module library directories
                         'test/integration/targets/module_precedence/lib_no_extension',
                         'test/integration/targets/module_precedence/lib_with_extension',
                 ):
                     is_module = True
-            elif dirname == 'plugins/modules':
+            elif path.startswith('plugins/modules/'):
                 is_module = True
 
             if is_module:

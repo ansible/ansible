@@ -1,0 +1,60 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Testcase to check #38605
+- name: Deploy VM first VM
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    datacenter: "{{ dc1 }}"
+    state: poweredon
+    folder: "{{ f0 }}"
+    name: test_vm1
+    disk:
+      - size: 10mb
+        datastore: "{{ rw_datastore }}"
+    guest_id: rhel7_64guest
+    hardware:
+      memory_mb: 128
+      num_cpus: 1
+    networks:
+      - name: 'VM Network'
+        device_type: "vmxnet3"
+  register: vm_result
+
+- debug: var=vm_result
+
+- assert:
+    that:
+      - "vm_result.changed"
+
+- name: Deploy VM again
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    datacenter: "{{ dc1 }}"
+    state: poweredon
+    folder: "{{ f0 }}"
+    name: test_vm1
+    disk:
+      - size: 10mb
+        datastore: "{{ rw_datastore }}"
+    guest_id: rhel7_64guest
+    hardware:
+      memory_mb: 128
+      num_cpus: 1
+    networks:
+      - name: 'VM Network'
+        device_type: "vmxnet3"
+  register: vm_result_again
+
+- debug: var=vm_result_again
+
+- assert:
+    that:
+      - not (vm_result_again is changed)

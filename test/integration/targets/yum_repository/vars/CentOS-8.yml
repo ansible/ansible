@@ -1,0 +1,10 @@
+yum_repository_test_package: sshpass
+yum_repository_test_repo:
+  name: epel
+  description: EPEL yum repo
+  baseurl: https://download.fedoraproject.org/pub/epel/$releasever/Everything/$basearch
+
+yum_repository_epel:
+  description: Extra Packages for Enterprise Linux $releasever - $basearch
+  metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-$releasever&arch=$basearch&infra=$infra&content=$contentdir
+  gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-{{ ansible_facts.distribution_major_version }}

@@ -22,7 +22,8 @@ description:
 options:
     name:
         description:
-            - Name of the service. When using in a chroot environment you always need to specify the full name i.e. (crond.service).
+            - Name of the service. This parameter takes the name of exactly one service to work with.
+            - When using in a chroot environment you always need to specify the full name i.e. (crond.service).
         aliases: [ service, unit ]
     state:
         description:
@@ -136,7 +137,7 @@ status:
     description: A dictionary with the key=value pairs returned from `systemctl show`
     returned: success
     type: complex
-    contains: {
+    sample: {
             "ActiveEnterTimestamp": "Sun 2016-05-15 18:28:49 EDT",
             "ActiveEnterTimestampMonotonic": "8135942",
             "ActiveExitTimestampMonotonic": "0",
@@ -270,7 +271,7 @@ from ansible.module_utils._text import to_native
 
 
 def is_running_service(service_status):
-    return service_status['ActiveState'] in set(['active', 'activating', 'deactivating'])
+    return service_status['ActiveState'] in set(['active', 'activating'])
 
 
 def is_deactivating_service(service_status):
@@ -403,14 +404,7 @@ def main():
         # check service data, cannot error out on rc as it changes across versions, assume not found
         (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
 
-        if request_was_ignored(out) or request_was_ignored(err):
-            # fallback list-unit-files as show does not work on some systems (chroot)
-            # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
-            (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
-            if rc == 0:
-                is_systemd = True
-
-        elif rc == 0:
+        if rc == 0 and not (request_was_ignored(out) or request_was_ignored(err)):
             # load return of systemctl show into dictionary for easy access and return
             if out:
                 result['status'] = parse_systemctl_show(to_native(out).split('\n'))
@@ -423,8 +417,32 @@ def main():
                 if is_systemd and not is_masked and 'LoadError' in result['status']:
                     module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
         else:
-            # Check for systemctl command
-            module.run_command(systemctl, check_rc=True)
+            # list taken from man systemctl(1) for systemd 244
+            valid_enabled_states = [
+                "enabled",
+                "enabled-runtime",
+                "linked",
+                "linked-runtime",
+                "masked",
+                "masked-runtime",
+                "static",
+                "indirect",
+                "disabled",
+                "generated",
+                "transient"]
+
+            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+            if out.strip() in valid_enabled_states:
+                is_systemd = True
+            else:
+                # fallback list-unit-files as show does not work on some systems (chroot)
+                # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
+                (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
+                if rc == 0:
+                    is_systemd = True
+                else:
+                    # Check for systemctl command
+                    module.run_command(systemctl, check_rc=True)
 
         # Does service exist?
         found = is_systemd or is_initd
@@ -434,7 +452,8 @@ def main():
         # mask/unmask the service, if requested, can operate on services before they are installed
         if module.params['masked'] is not None:
             # state is not masked unless systemd affirms otherwise
-            masked = ('LoadState' in result['status'] and result['status']['LoadState'] == 'masked')
+            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+            masked = out.strip() == "masked"
 
             if masked != module.params['masked']:
                 result['changed'] = True

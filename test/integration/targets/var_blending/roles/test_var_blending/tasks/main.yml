@@ -18,6 +18,9 @@
 
 - include_vars: more_vars.yml
 
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
 - name: deploy a template that will use variables at various levels
   template: src=foo.j2 dest={{output_dir}}/foo.templated 
   register: template_result

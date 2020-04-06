@@ -31,6 +31,7 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.executor import task_result
 
 from ansible.playbook.included_file import IncludedFile
+from ansible.errors import AnsibleParserError
 
 
 @pytest.fixture
@@ -167,3 +168,24 @@ def test_process_include_simulate_free(mock_iterator, mock_variable_manager):
 
     assert res[0]._vars == {}
     assert res[1]._vars == {}
+
+
+def test_empty_raw_params():
+    parent_task_ds = {'debug': 'msg=foo'}
+    parent_task = Task.load(parent_task_ds)
+    parent_task._play = None
+
+    task_ds_list = [
+        {
+            'include': ''
+        },
+        {
+            'include_tasks': ''
+        },
+        {
+            'import_tasks': ''
+        }
+    ]
+    for task_ds in task_ds_list:
+        with pytest.raises(AnsibleParserError):
+            TaskInclude.load(task_ds, task_include=parent_task)

@@ -1,0 +1,11 @@
+- name: set SELinux security context for SVN folder
+  sefcontext:
+    target: '{{ subversion_server_dir }}(/.*)?'
+    setype: '{{ item }}'
+    state: present
+  with_items:
+  - httpd_sys_content_t
+  - httpd_sys_rw_content_t
+
+- name: apply new SELinux context to filesystem
+  command: restorecon -irv {{ subversion_server_dir | quote }}

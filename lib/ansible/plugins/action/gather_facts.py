@@ -45,6 +45,15 @@ class ActionModule(ActionBase):
 
         return mod_args
 
+    def _combine_task_result(self, result, task_result):
+        filtered_res = {
+            'ansible_facts': task_result.get('ansible_facts', {}),
+            'warnings': task_result.get('warnings', []),
+            'deprecations': task_result.get('deprecations', []),
+        }
+
+        return combine_vars(result, filtered_res)
+
     def run(self, tmp=None, task_vars=None):
 
         self._supports_check_mode = True
@@ -54,10 +63,10 @@ class ActionModule(ActionBase):
 
         modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
-
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
-            modules.extend([connection_map.get(self._connection._load_name, 'setup')])
+            network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
+            modules.extend([connection_map.get(network_os or self._connection._load_name, 'setup')])
             modules.pop(modules.index('smart'))
 
         failed = {}
@@ -73,7 +82,7 @@ class ActionModule(ActionBase):
                 elif res.get('skipped', False):
                     skipped[fact_module] = res
                 else:
-                    result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
+                    result = self._combine_task_result(result, res)
 
             self._remove_tmp_path(self._connection._shell.tmpdir)
         else:
@@ -95,7 +104,7 @@ class ActionModule(ActionBase):
                         elif res.get('skipped', False):
                             skipped[module] = res
                         else:
-                            result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
+                            result = self._combine_task_result(result, res)
                         del jobs[module]
                         break
                     else:

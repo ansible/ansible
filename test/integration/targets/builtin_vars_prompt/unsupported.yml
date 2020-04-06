@@ -1,0 +1,18 @@
+- name: Test vars_prompt unsupported key
+  hosts: testhost
+  become: no
+  gather_facts: no
+  vars_prompt:
+    - name: input
+      prompt: prompting for variable
+      # Unsupported key for vars_prompt
+      when: foo is defined
+
+  tasks:
+    - name:
+      assert:
+        that:
+          - input is not defined
+
+    - debug:
+        var: input

@@ -163,6 +163,12 @@ options:
               all git servers support git archive.
         version_added: "2.4"
 
+    archive_prefix:
+        description:
+            - Specify a prefix to add to each file path in archive. Requires C(archive) to be specified.
+        version_added: "2.10"
+        type: str
+
     separate_git_dir:
         description:
             - The path to place the cloned repository. If specified, Git repository
@@ -363,13 +369,12 @@ def get_submodule_update_params(module, git_path, cwd):
     return params
 
 
-def write_ssh_wrapper():
-    module_dir = get_module_path()
+def write_ssh_wrapper(module_tmpdir):
     try:
         # make sure we have full permission to the module_dir, which
         # may not be the case if we're sudo'ing to a non-root user
-        if os.access(module_dir, os.W_OK | os.R_OK | os.X_OK):
-            fd, wrapper_path = tempfile.mkstemp(prefix=module_dir + '/')
+        if os.access(module_tmpdir, os.W_OK | os.R_OK | os.X_OK):
+            fd, wrapper_path = tempfile.mkstemp(prefix=module_tmpdir + '/')
         else:
             raise OSError
     except (IOError, OSError):
@@ -560,6 +565,8 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
     cwd = None
     tag = False
     if remote == module.params['repo']:
+        cloning = True
+    elif remote == 'file://' + os.path.expanduser(module.params['repo']):
         cloning = True
     else:
         cwd = dest
@@ -970,10 +977,12 @@ def git_version(git_path, module):
     return LooseVersion(rematch.groups()[0])
 
 
-def git_archive(git_path, module, dest, archive, archive_fmt, version):
+def git_archive(git_path, module, dest, archive, archive_fmt, archive_prefix, version):
     """ Create git archive in given source directory """
-    cmd = "%s archive --format=%s --output=%s %s" \
-          % (git_path, archive_fmt, archive, version)
+    cmd = [git_path, 'archive', '--format', archive_fmt, '--output', archive, version]
+    if archive_prefix is not None:
+        cmd.insert(-1, '--prefix')
+        cmd.insert(-1, archive_prefix)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to perform archive operation",
@@ -983,7 +992,7 @@ def git_archive(git_path, module, dest, archive, archive_fmt, version):
     return rc, out, err
 
 
-def create_archive(git_path, module, dest, archive, version, repo, result):
+def create_archive(git_path, module, dest, archive, archive_prefix, version, repo, result):
     """ Helper function for creating archive using git_archive """
     all_archive_fmt = {'.zip': 'zip', '.gz': 'tar.gz', '.tar': 'tar',
                        '.tgz': 'tgz'}
@@ -1005,7 +1014,7 @@ def create_archive(git_path, module, dest, archive, version, repo, result):
         tempdir = tempfile.mkdtemp()
         new_archive_dest = os.path.join(tempdir, repo_name)
         new_archive = new_archive_dest + '.' + archive_fmt
-        git_archive(git_path, module, dest, new_archive, archive_fmt, version)
+        git_archive(git_path, module, dest, new_archive, archive_fmt, archive_prefix, version)
 
         # filecmp is supposed to be efficient than md5sum checksum
         if filecmp.cmp(new_archive, archive):
@@ -1023,11 +1032,11 @@ def create_archive(git_path, module, dest, archive, version, repo, result):
             except OSError as e:
                 module.fail_json(msg="Failed to move %s to %s" %
                                      (new_archive, archive),
-                                 details=u"Error occured while moving : %s"
+                                 details=u"Error occurred while moving : %s"
                                          % to_text(e))
     else:
         # Perform archive from local directory
-        git_archive(git_path, module, dest, archive, archive_fmt, version)
+        git_archive(git_path, module, dest, archive, archive_fmt, archive_prefix, version)
         result.update(changed=True)
 
 
@@ -1057,9 +1066,11 @@ def main():
             track_submodules=dict(default='no', type='bool'),
             umask=dict(default=None, type='raw'),
             archive=dict(type='path'),
+            archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
         ),
         mutually_exclusive=[('separate_git_dir', 'bare')],
+        required_by={'archive_prefix': ['archive']},
         supports_check_mode=True
     )
 
@@ -1081,6 +1092,7 @@ def main():
     ssh_opts = module.params['ssh_opts']
     umask = module.params['umask']
     archive = module.params['archive']
+    archive_prefix = module.params['archive_prefix']
     separate_git_dir = module.params['separate_git_dir']
 
     result = dict(changed=False, warnings=list())
@@ -1105,8 +1117,8 @@ def main():
 
     # Certain features such as depth require a file:/// protocol for path based urls
     # so force a protocol here ...
-    if repo.startswith('/'):
-        repo = 'file://' + repo
+    if os.path.expanduser(repo).startswith('/'):
+        repo = 'file://' + os.path.expanduser(repo)
 
     # We screenscrape a huge amount of git commands so use C locale anytime we
     # call run_command()
@@ -1140,7 +1152,7 @@ def main():
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
     # for git to use the wrapper script
-    ssh_wrapper = write_ssh_wrapper()
+    ssh_wrapper = write_ssh_wrapper(module.tmpdir)
     set_git_ssh(ssh_wrapper, key_file, ssh_opts)
     module.add_cleanup_file(path=ssh_wrapper)
 
@@ -1184,7 +1196,7 @@ def main():
                 result.update(changed=True)
                 module.exit_json(**result)
 
-            create_archive(git_path, module, dest, archive, version, repo, result)
+            create_archive(git_path, module, dest, archive, archive_prefix, version, repo, result)
 
         module.exit_json(**result)
     else:
@@ -1258,7 +1270,7 @@ def main():
             result.update(changed=True)
             module.exit_json(**result)
 
-        create_archive(git_path, module, dest, archive, version, repo, result)
+        create_archive(git_path, module, dest, archive, archive_prefix, version, repo, result)
 
     module.exit_json(**result)
 

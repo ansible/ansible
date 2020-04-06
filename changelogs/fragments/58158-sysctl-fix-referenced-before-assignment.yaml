@@ -1,2 +1,0 @@
-bugfixes:
-  - sysctl - fix err referenced before assignment (https://github.com/ansible/ansible/issues/58158)

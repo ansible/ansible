@@ -1,0 +1,43 @@
+---
+# Beware: most of our tests here are run in parallel.
+# To add new tests you'll need to add a new host to the inventory and a matching
+# '{{ inventory_hostname }}'.yml file in roles/ec2_instance/tasks/
+
+
+# Prepare the VPC and figure out which AMI to use
+- hosts: all
+  gather_facts: no
+  tasks:
+  - module_defaults:
+      group/aws:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token | default(omit) }}"
+        region: "{{ aws_region }}"
+    vars:
+      # We can't just use "run_once" because the facts don't propagate when
+      # running an 'include' that was run_once
+      setup_run_once: yes
+    block:
+    - include_role:
+        name: 'ec2_instance'
+        tasks_from: find_ami.yml
+    - include_role:
+        name: 'ec2_instance'
+        tasks_from: env_setup.yml
+    rescue:
+    - include_role:
+        name: 'ec2_instance'
+        tasks_from: env_cleanup.yml
+      run_once: yes
+    - fail:
+        msg: 'Environment preparation failed'
+      run_once: yes
+
+# VPC should get cleaned up once all hosts have run
+- hosts: all
+  gather_facts: no
+  strategy: free
+  #serial: 10
+  roles:
+    - ec2_instance

@@ -12,24 +12,32 @@ their answers.
 
 Does Ansible work with Windows XP or Server 2003?
 ``````````````````````````````````````````````````
-Ansible does not support managing Windows XP or Server 2003 hosts. The
-supported operating system versions are:
+Ansible does not work with Windows XP or Server 2003 hosts. Ansible does work with these Windows operating system versions:
 
-* Windows Server 2008
-* Windows Server 2008 R2
+* Windows Server 2008 :sup:`1`
+* Windows Server 2008 R2 :sup:`1`
 * Windows Server 2012
 * Windows Server 2012 R2
 * Windows Server 2016
-* Windows 7
+* Windows Server 2019
+* Windows 7 :sup:`1`
 * Windows 8.1
 * Windows 10
+
+1 - See the :ref:`Server 2008 FAQ <windows_faq_server2008>` entry for more details.
 
 Ansible also has minimum PowerShell version requirements - please see
 :ref:`windows_setup` for the latest information.
 
+.. _windows_faq_server2008:
+
+Are Server 2008, 2008 R2 and Windows 7 supported?
+`````````````````````````````````````````````````
+Microsoft ended Extended Support for these versions of Windows on January 14th, 2020, and Ansible deprecated official support in the 2.10 release. No new feature development will occur targeting these operating systems, and automated testing has ceased. However, existing modules and features will likely continue to work, and simple pull requests to resolve issues with these Windows versions may be accepted.
+
 Can I manage Windows Nano Server with Ansible?
 ``````````````````````````````````````````````
-Windows Nano Server is not currently supported by Ansible, since it does
+Ansible does not currently work with Windows Nano Server, since it does
 not have access to the full .NET Framework that is used by the majority of the
 modules and internal components.
 
@@ -48,7 +56,7 @@ can be run in the bash terminal:
 
     sudo apt-get update
     sudo apt-get install python-pip git libffi-dev libssl-dev -y
-    pip install ansible pywinrm
+    pip install --user ansible pywinrm
 
 To run Ansible from source instead of a release on the WSL, simply uninstall the pip
 installed version and then clone the git repo.
@@ -64,16 +72,16 @@ installed version and then clone the git repo.
 
 Can I use SSH keys to authenticate to Windows hosts?
 ````````````````````````````````````````````````````
-SSH keys are not supported when using the WinRM or PSRP connection plugins.
-These connection plugins support X509 certificates for authentication instead
-of the SSH key pairs that SSH supports.
+You cannot use SSH keys with the WinRM or PSRP connection plugins.
+These connection plugins use X509 certificates for authentication instead
+of the SSH key pairs that SSH uses.
 
 The way X509 certificates are generated and mapped to a user is different
 from the SSH implementation; consult the :ref:`windows_winrm` documentation for
 more information.
 
-Ansible 2.8 has added experimental support for using the SSH connection plugin,
-which supports authentication with SSH keys, to connect to Windows servers. See :ref:`this question <windows_faq_ssh>`
+Ansible 2.8 has added an experimental option to use the SSH connection plugin,
+which uses SSH keys for authentication, for Windows servers. See :ref:`this question <windows_faq_ssh>`
 for more information.
 
 .. _windows_faq_winrm:
@@ -109,9 +117,8 @@ Some ways to bypass these restrictions are to:
 * Use ``win_psexec`` to run a command on the host. PSExec does not use WinRM
   and so will bypass any of the restrictions.
 
-* To access network resources without any of these workarounds, an
-  authentication option that supports credential delegation can be used. Both
-  CredSSP and Kerberos with credential delegation enabled can support this.
+* To access network resources without any of these workarounds, you can use
+  CredSSP or Kerberos with credential delegation enabled.
 
 See :ref:`become` more info on how to use become. The limitations section at
 :ref:`windows_winrm` has more details around WinRM limitations.
@@ -165,12 +172,12 @@ and there is no equivalent Windows module available.
 
 Can I connect to Windows hosts over SSH?
 ````````````````````````````````````````
-Ansible 2.8 has added experimental support for using the SSH connection plugin
+Ansible 2.8 has added an experimental option to use the SSH connection plugin
 to manage Windows hosts. To connect to Windows hosts over SSH, you must install and configure the `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_
 fork that is in development with Microsoft on
 the Windows host(s). While most of the basics should work with SSH,
 ``Win32-OpenSSH`` is rapidly changing, with new features added and bugs
-fixed in every release. It is highly recommend you install the latest release
+fixed in every release. It is highly recommend you `install <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_ the latest release
 of ``Win32-OpenSSH`` from the GitHub Releases page when using it with Ansible
 on Windows hosts.
 

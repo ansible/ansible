@@ -1,0 +1,2 @@
+bugfixes:
+- "Module arguments in suboptions which were marked as deprecated with ``removed_in_version`` did not result in a warning."

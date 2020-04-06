@@ -122,7 +122,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         else:
             prompt += "$ "
             color = self.NORMAL_PROMPT
-        self.prompt = stringc(prompt, color)
+        self.prompt = stringc(prompt, color, wrap_nonvisible_chars=True)
 
     def list_modules(self):
         modules = set()

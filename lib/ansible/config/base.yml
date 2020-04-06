@@ -2,10 +2,10 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 ALLOW_WORLD_READABLE_TMPFILES:
-  name: Allow world readable temporary files
+  name: Allow world-readable temporary files
   default: False
   description:
-    - This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task.
+    - This makes the temporary files created on the machine world-readable and will issue a warning instead of failing the task.
     - It is useful when becoming an unprivileged user.
   env: []
   ini:
@@ -342,6 +342,31 @@ CONDITIONAL_BARE_VARS:
   ini:
   - {key: conditional_bare_variables, section: defaults}
   version_added: "2.8"
+COVERAGE_REMOTE_OUTPUT:
+  name: Sets the output directory and filename prefix to generate coverage run info.
+  description:
+    - Sets the output directory on the remote host to generate coverage reports to.
+    - Currently only used for remote coverage on PowerShell modules.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_COVERAGE_REMOTE_OUTPUT}
+  vars:
+  - {name: _ansible_coverage_remote_output}
+  type: str
+  version_added: '2.9'
+COVERAGE_REMOTE_WHITELIST:
+  name: Sets the list of paths to run coverage for.
+  description:
+  - A list of paths for files on the Ansible controller to run coverage for when executing on the remote host.
+  - Only files that match the path glob will have its coverage collected.
+  - Multiple path globs can be specified and are separated by ``:``.
+  - Currently only used for remote coverage on PowerShell modules.
+  - This is for internal use only.
+  default: '*'
+  env:
+  - {name: _ANSIBLE_COVERAGE_REMOTE_WHITELIST}
+  type: str
+  version_added: '2.9'
 ACTION_WARNINGS:
   name: Toggle action warnings
   default: True
@@ -567,7 +592,7 @@ DEFAULT_FACT_PATH:
   env: [{name: ANSIBLE_FACT_PATH}]
   ini:
   - {key: fact_path, section: defaults}
-  type: path
+  type: string
   yaml: {key: facts.gathering.fact_path}
 DEFAULT_FILTER_PLUGIN_PATH:
   name: Jinja2 Filter Plugins Path
@@ -667,6 +692,10 @@ DEFAULT_HASH_BEHAVIOUR:
   env: [{name: ANSIBLE_HASH_BEHAVIOUR}]
   ini:
   - {key: hash_behaviour, section: defaults}
+  deprecated:
+    why: This feature is fragile and not portable, leading to continual confusion and misuse
+    version: "2.13"
+    alternatives: the ``combine`` filter explicitly
 DEFAULT_HOST_LIST:
   name: Inventory Source
   default: /etc/ansible/hosts
@@ -1198,6 +1227,14 @@ DEPRECATION_WARNINGS:
   ini:
   - {key: deprecation_warnings, section: defaults}
   type: boolean
+DEVEL_WARNING:
+  name: Running devel warning
+  default: True
+  description: Toggle to control showing warnings related to running devel
+  env: [{name: ANSIBLE_DEVEL_WARNING}]
+  ini:
+  - {key: devel_warning, section: defaults}
+  type: boolean
 DIFF_ALWAYS:
   name: Show differences
   default: False
@@ -1279,6 +1316,7 @@ ERROR_ON_MISSING_HANDLER:
 CONNECTION_FACTS_MODULES:
   name: Map of connections to fact modules
   default:
+    asa: asa_facts
     eos: eos_facts
     frr: frr_facts
     ios: ios_facts
@@ -1286,6 +1324,10 @@ CONNECTION_FACTS_MODULES:
     junos: junos_facts
     nxos: nxos_facts
     vyos: vyos_facts
+    exos: exos_facts
+    slxos: slxos_facts
+    voss: voss_facts
+    ironware: ironware_facts
   description: "Which modules to run during a play's fact gathering stage based on connection"
   env: [{name: ANSIBLE_CONNECTION_FACTS_MODULES}]
   ini:
@@ -1344,6 +1386,18 @@ GALAXY_SERVER:
   ini:
   - {key: server, section: galaxy}
   yaml: {key: galaxy.server}
+GALAXY_SERVER_LIST:
+  description:
+  - A list of Galaxy servers to use when installing a collection.
+  - The value corresponds to the config ini header ``[galaxy_server.{{item}}]`` which defines the server details.
+  - 'See :ref:`galaxy_server_config` for more details on how to define a Galaxy server.'
+  - The order of servers in this list is used to as the order in which a collection is resolved.
+  - Setting this config option will ignore the :ref:`galaxy_server` config option.
+  env: [{name: ANSIBLE_GALAXY_SERVER_LIST}]
+  ini:
+  - {key: server_list, section: galaxy}
+  type: list
+  version_added: "2.9"
 GALAXY_TOKEN:
   default: null
   description: "GitHub personal access token"
@@ -1351,6 +1405,26 @@ GALAXY_TOKEN:
   ini:
   - {key: token, section: galaxy}
   yaml: {key: galaxy.token}
+GALAXY_TOKEN_PATH:
+  default: ~/.ansible/galaxy_token
+  description: "Local path to galaxy access token file"
+  env: [{name: ANSIBLE_GALAXY_TOKEN_PATH}]
+  ini:
+  - {key: token_path, section: galaxy}
+  type: path
+  version_added: "2.9"
+GALAXY_DISPLAY_PROGRESS:
+  default: ~
+  description:
+  - Some steps in ``ansible-galaxy`` display a progress wheel which can cause issues on certain displays or when
+    outputing the stdout to a file.
+  - This config option controls whether the display wheel is shown or not.
+  - The default is to show the display wheel if stdout has a tty.
+  env: [{name: ANSIBLE_GALAXY_DISPLAY_PROGRESS}]
+  ini:
+  - {key: display_progress, section: galaxy}
+  type: bool
+  version_added: "2.10"
 HOST_KEY_CHECKING:
   name: Check host keys
   default: True
@@ -1393,6 +1467,8 @@ INTERPRETER_PYTHON_DISTRO_MAP:
     centos: &rhelish
       '6': /usr/bin/python
       '8': /usr/libexec/platform-python
+    debian:
+      '10': /usr/bin/python3
     fedora:
       '23': /usr/bin/python3
     redhat: *rhelish
@@ -1424,7 +1500,7 @@ TRANSFORM_INVALID_GROUP_CHARS:
     - Make ansible transform invalid characters in group names supplied by inventory sources.
     - If 'never' it will allow for the group name but warn about the issue.
     - When 'ignore', it does the same as 'never', without issuing a warning.
-    - When 'always' it will replace any invalid charachters with '_' (underscore) and warn the user
+    - When 'always' it will replace any invalid characters with '_' (underscore) and warn the user
     - When 'silently', it does the same as 'always', without issuing a warning.
   env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
   ini:
@@ -1544,7 +1620,7 @@ MAX_FILE_SIZE_FOR_DIFF:
   type: int
 NETWORK_GROUP_MODULES:
   name: Network module families
-  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf]
+  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf, exos, voss, slxos]
   description: 'TODO: write it'
   env:
   - name: NETWORK_GROUP_MODULES
@@ -1610,7 +1686,7 @@ PERSISTENT_CONNECT_TIMEOUT:
 PERSISTENT_CONNECT_RETRY_TIMEOUT:
   name: Persistence connection retry timeout
   default: 15
-  description: This controls the retry timeout for presistent connection to connect to the local domain socket.
+  description: This controls the retry timeout for persistent connection to connect to the local domain socket.
   env: [{name: ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT}]
   ini:
   - {key: connect_retry_timeout, section: persistent_connection}
@@ -1618,11 +1694,19 @@ PERSISTENT_CONNECT_RETRY_TIMEOUT:
 PERSISTENT_COMMAND_TIMEOUT:
   name: Persistence command timeout
   default: 30
-  description: This controls the amount of time to wait for response from remote device before timing out presistent connection.
+  description: This controls the amount of time to wait for response from remote device before timing out persistent connection.
   env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
   ini:
   - {key: command_timeout, section: persistent_connection}
   type: int
+PLAYBOOK_DIR:
+  name: playbook dir override for non-playbook CLIs (ala --playbook-dir)
+  version_added: "2.9"
+  description:
+    - A number of non-playbook CLIs have a ``--playbook-dir`` argument; this sets the default value for it.
+  env: [{name: ANSIBLE_PLAYBOOK_DIR}]
+  ini: [{key: playbook_dir, section: defaults}]
+  type: path
 PLAYBOOK_VARS_ROOT:
   name: playbook vars files root
   default: top
@@ -1679,11 +1763,26 @@ RETRY_FILES_ENABLED:
 RETRY_FILES_SAVE_PATH:
   name: Retry files path
   default: ~
-  description: This sets the path in which Ansible will save .retry files when a playbook fails and retry files are enabled.
+  description:
+    - This sets the path in which Ansible will save .retry files when a playbook fails and retry files are enabled.
+    - This file will be overwritten after each run with the list of failed hosts from all plays.
   env: [{name: ANSIBLE_RETRY_FILES_SAVE_PATH}]
   ini:
   - {key: retry_files_save_path, section: defaults}
   type: path
+RUN_VARS_PLUGINS:
+  name: When should vars plugins run relative to inventory
+  default: demand
+  description:
+    - This setting can be used to optimize vars_plugin usage depending on user's inventory size and play selection.
+    - Setting to C(demand) will run vars_plugins relative to inventory sources anytime vars are 'demanded' by tasks.
+    - Setting to C(start) will run vars_plugins relative to inventory sources after importing that inventory source.
+  env: [{name: ANSIBLE_RUN_VARS_PLUGINS}]
+  ini:
+  - {key: run_vars_plugins, section: defaults}
+  type: str
+  choices: ['demand', 'start']
+  version_added: "2.10"
 SHOW_CUSTOM_STATS:
   name: Display custom stats
   default: False
@@ -1730,6 +1829,25 @@ TAGS_SKIP:
   ini:
   - {key: skip, section: tags}
   version_added: "2.5"
+WORKER_SHUTDOWN_POLL_COUNT:
+  name: Worker Shutdown Poll Count
+  default: 0
+  description:
+    - The maximum number of times to check Task Queue Manager worker processes to verify they have exited cleanly.
+    - After this limit is reached any worker processes still running will be terminated.
+    - This is for internal use only.
+  env: [{name: ANSIBLE_WORKER_SHUTDOWN_POLL_COUNT}]
+  type: integer
+  version_added: '2.10'
+WORKER_SHUTDOWN_POLL_DELAY:
+  name: Worker Shutdown Poll Delay
+  default: 0.1
+  description:
+    - The number of seconds to sleep between polling loops when checking Task Queue Manager worker processes to verify they have exited cleanly.
+    - This is for internal use only.
+  env: [{name: ANSIBLE_WORKER_SHUTDOWN_POLL_DELAY}]
+  type: float
+  version_added: '2.10'
 USE_PERSISTENT_CONNECTIONS:
   name: Persistence
   default: False
@@ -1738,6 +1856,15 @@ USE_PERSISTENT_CONNECTIONS:
   ini:
   - {key: use_persistent_connections, section: defaults}
   type: boolean
+VARIABLE_PLUGINS_ENABLED:
+  name: Vars plugin whitelist
+  default: ['host_group_vars']
+  description: Whitelist for variable plugins that require it.
+  env: [{name: ANSIBLE_VARS_ENABLED}]
+  ini:
+  - {key: vars_plugins_enabled, section: defaults}
+  type: list
+  version_added: "2.10"
 VARIABLE_PRECEDENCE:
   name: Group variable precedence
   default: ['all_inventory', 'groups_inventory', 'all_plugins_inventory', 'all_plugins_play', 'groups_plugins_inventory', 'groups_plugins_play']
@@ -1747,6 +1874,23 @@ VARIABLE_PRECEDENCE:
   - {key: precedence, section: defaults}
   type: list
   version_added: "2.4"
+WIN_ASYNC_STARTUP_TIMEOUT:
+  name: Windows Async Startup Timeout
+  default: 5
+  description:
+    - For asynchronous tasks in Ansible (covered in Asynchronous Actions and Polling),
+      this is how long, in seconds, to wait for the task spawned by Ansible to connect back to the named pipe used
+      on Windows systems. The default is 5 seconds. This can be too low on slower systems, or systems under heavy load.
+    - This is not the total time an async command can run for, but is a separate timeout to wait for an async command to
+      start. The task will only start to be timed against its async_timeout once it has connected to the pipe, so the
+      overall maximum duration the task can take will be extended by the amount specified here.
+  env: [{name: ANSIBLE_WIN_ASYNC_STARTUP_TIMEOUT}]
+  ini:
+    - {key: win_async_startup_timeout, section: defaults}
+  type: integer
+  vars:
+    - {name: ansible_win_async_startup_timeout}
+  version_added: '2.10'
 YAML_FILENAME_EXTENSIONS:
   name: Valid YAML extensions
   default: [".yml", ".yaml", ".json"]

@@ -55,12 +55,6 @@ class TestINILookup(unittest.TestCase):
         ),
     )
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_parse_parameters(self):
         for testcase in self.old_style_params_data:
             # print(testcase)

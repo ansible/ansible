@@ -3,7 +3,7 @@
 # documented, it isn't actually used hence the separate invocation
 ---
 - name: further fetch tests with metachar characters in filename
-  hosts: windows-ssh
+  hosts: windows
   force_handlers: yes
   serial: 1
   gather_facts: no

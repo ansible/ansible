@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Add missing gcp modules to gcp module defaults group

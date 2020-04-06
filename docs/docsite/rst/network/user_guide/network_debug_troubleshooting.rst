@@ -197,13 +197,12 @@ Then review the log file and find the relevant error message in the rest of this
 
 .. _socket_path_issue:
 
-Category "socket_path issue"
-============================
+Troubleshooting socket path issues
+==================================
 
 **Platforms:** Any
 
-The ``socket_path does not exist or cannot be found``  and ``unable to connect to socket`` messages are new in Ansible 2.5. These messages indicate that the socket used to communicate with the remote network device is unavailable or does not exist.
-
+The ``Socket path does not exist or cannot be found``  and ``Unable to connect to socket`` messages are new in Ansible 2.5. These messages indicate that the socket used to communicate with the remote network device is unavailable or does not exist.
 
 For example:
 
@@ -212,7 +211,7 @@ For example:
    fatal: [spine02]: FAILED! => {
        "changed": false,
        "failed": true,
-       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 115, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: socket_path does not exist or cannot be found\n",
+       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 115, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: Socket path XX does not exist or cannot be found. See Troubleshooting socket path issues in the Network Debug and Troubleshooting Guide\n",
        "module_stdout": "",
        "msg": "MODULE FAILURE",
        "rc": 1
@@ -225,7 +224,7 @@ or
    fatal: [spine02]: FAILED! => {
        "changed": false,
        "failed": true,
-       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 123, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: unable to connect to socket\n",
+       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 123, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: Unable to connect to socket XX. See Troubleshooting socket path issues in Network Debug and Troubleshooting Guide\n",
        "module_stdout": "",
        "msg": "MODULE FAILURE",
        "rc": 1
@@ -233,7 +232,9 @@ or
 
 Suggestions to resolve:
 
-Follow the steps detailed in :ref:`enable network logging <enable_network_logging>`.
+#. Verify that you have write access to the socket path described in the error message.
+
+#. Follow the steps detailed in :ref:`enable network logging <enable_network_logging>`.
 
 If the identified error message from the log file is:
 
@@ -561,6 +562,46 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
    connect_retry_timeout = 30
 
 
+Timeout issue due to platform specific login menu with ``network_cli`` connection type
+--------------------------------------------------------------------------------------
+
+In Ansible 2.9 and later, the network_cli connection plugin configuration options are added
+to handle the platform specific login menu. These options can be set as group/host or tasks
+variables.
+
+Example: Handle single login menu prompts with host variables
+
+.. code-block:: console
+
+    $cat host_vars/<hostname>.yaml
+    ---
+    ansible_terminal_initial_prompt:
+      - "Connect to a host"
+    ansible_terminal_initial_answer:
+      - "3"
+
+Example: Handle remote host multiple login menu prompts with host variables
+
+.. code-block:: console
+
+    $cat host_vars/<inventory-hostname>.yaml
+    ---
+    ansible_terminal_initial_prompt:
+      - "Press any key to enter main menu"
+      - "Connect to a host"
+    ansible_terminal_initial_answer:
+      - "\\r"
+      - "3"
+    ansible_terminal_initial_prompt_checkall: True
+
+To handle multiple login menu prompts:
+
+* The values of ``ansible_terminal_initial_prompt`` and ``ansible_terminal_initial_answer`` should be a list.
+* The prompt sequence should match the answer sequence.
+* The value of ``ansible_terminal_initial_prompt_checkall`` should be set to ``True``.
+
+.. note:: If all the prompts in sequence are not received from remote host at the time connection initialization it will result in a timeout.
+
 
 Playbook issues
 ===============
@@ -757,3 +798,68 @@ To make this a global setting, add the following to your ``ansible.cfg`` file:
    buffer_read_timeout = 2
 
 This timer delay per command executed on remote host can be disabled by setting the value to zero.
+
+
+Task failure due to mismatched error regex within command response using ``network_cli`` connection type
+--------------------------------------------------------------------------------------------------------
+
+In Ansible 2.9 and later, the network_cli connection plugin configuration options are added
+to handle the stdout and stderr regex to identify if the command execution response consist
+of a normal response or an error response. These options can be set group/host variables or as
+tasks variables.
+
+Example: For mismatched error response
+
+.. code-block:: yaml
+
+  - name: fetch logs from remote host
+    ios_command:
+      commands:
+        - show logging
+
+
+Playbook run output:
+
+.. code-block:: console
+
+  TASK [first fetch logs] ********************************************************
+  fatal: [ios01]: FAILED! => {
+      "changed": false,
+      "msg": "RF Name:\r\n\r\n <--nsip-->
+             \"IPSEC-3-REPLAY_ERROR: Test log\"\r\n*Aug  1 08:36:18.483: %SYS-7-USERLOG_DEBUG:
+              Message from tty578(user id: ansible): test\r\nan-ios-02#"}
+
+Suggestions to resolve:
+
+Modify the error regex for individual task.
+
+.. code-block:: yaml
+
+  - name: fetch logs from remote host
+    ios_command:
+      commands:
+        - show logging
+    vars:
+      ansible_terminal_stderr_re:
+        - pattern: 'connection timed out'
+          flags: 're.I'
+
+The terminal plugin regex options ``ansible_terminal_stderr_re`` and ``ansible_terminal_stdout_re`` have
+``pattern`` and ``flags`` as keys. The value of the ``flags`` key should be a value that is accepted by
+the ``re.compile`` python method.
+
+
+Intermittent failure while using ``network_cli`` connection type due to slower network or remote target host
+------------------------------------------------------------------------------------------------------------
+
+In Ansible 2.9 and later, the ``network_cli`` connection plugin configuration option is added to control
+the number of attempts to connect to a remote host. The default number of attempts is three.
+After every retry attempt the delay between retries is increased by power of 2 in seconds until either the
+maximum attempts are exhausted or either the ``persistent_command_timeout`` or ``persistent_connect_timeout`` timers are triggered.
+
+To make this a global setting, add the following to your ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [persistent_connection]
+   network_cli_retries = 5

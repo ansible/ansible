@@ -372,7 +372,7 @@ class Constructable(object):
             self.templar.available_variables = variables
             for group_name in groups:
                 conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
-                group_name = self._sanitize_group_name(group_name)
+                group_name = original_safe(group_name, force=True)
                 try:
                     result = boolean(self.templar.template(conditional))
                 except Exception as e:

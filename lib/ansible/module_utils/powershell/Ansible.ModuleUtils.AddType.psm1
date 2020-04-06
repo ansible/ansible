@@ -38,6 +38,33 @@ Function Add-CSharpType {
     [String[]] A list of symbols to be defined during compile time. These are
     added to the existing symbols, 'CORECLR', 'WINDOWS', 'UNIX' that are set
     conditionalls in this cmdlet.
+
+    .NOTES
+    The following features were added to control the compiling options from the
+    code itself.
+
+    * Predefined compiler SYMBOLS
+
+        * CORECLR - Added when running on PowerShell Core.
+        * WINDOWS - Added when running on Windows.
+        * UNIX - Added when running on non-Windows.
+        * X86 - Added when running on a 32-bit process (Ansible 2.10+)
+        * AMD64 - Added when running on a 64-bit process (Ansible 2.10+)
+
+    * Ignore compiler warnings inline with the following comment inline
+
+        //NoWarn -Name <rule code> [-CLR Core|Framework]
+
+    * Specify custom assembly references inline
+
+        //AssemblyReference -Name Dll.Location.dll [-CLR Core|Framework]
+
+        # Added in Ansible 2.10
+        //AssemblyReference -Type System.Type.Name [-CLR Core|Framework]
+
+    * Create automatic type accelerators to simplify long namespace names (Ansible 2.9+)
+
+        //TypeAccelerator -Name <AcceleratorName> -TypeName <Name of compiled type>
     #>
     param(
         [Parameter(Mandatory=$true)][AllowEmptyCollection()][String[]]$References,
@@ -56,6 +83,13 @@ Function Add-CSharpType {
     # the Is* variables are defined on PSCore, if absent we assume an
     # older version of PowerShell under .NET Framework and Windows
     $defined_symbols = [System.Collections.ArrayList]$CompileSymbols
+
+    if ([System.IntPtr]::Size -eq 4) {
+        $defined_symbols.Add('X86') > $null
+    } else {
+        $defined_symbols.Add('AMD64') > $null
+    }
+
     $is_coreclr = Get-Variable -Name IsCoreCLR -ErrorAction SilentlyContinue
     if ($null -ne $is_coreclr) {
         if ($is_coreclr.Value) {
@@ -73,9 +107,13 @@ Function Add-CSharpType {
         $defined_symbols.Add("WINDOWS") > $null
     }
 
+    # Store any TypeAccelerators shortcuts the util wants us to set
+    $type_accelerators = [System.Collections.Generic.List`1[Hashtable]]@()
+
     # pattern used to find referenced assemblies in the code
-    $assembly_pattern = [Regex]"//\s*AssemblyReference\s+-Name\s+(?<Name>[\w.]*)(\s+-CLR\s+(?<CLR>Core|Framework))?"
+    $assembly_pattern = [Regex]"//\s*AssemblyReference\s+-(?<Parameter>(Name)|(Type))\s+(?<Name>[\w.]*)(\s+-CLR\s+(?<CLR>Core|Framework))?"
     $no_warn_pattern = [Regex]"//\s*NoWarn\s+-Name\s+(?<Name>[\w\d]*)(\s+-CLR\s+(?<CLR>Core|Framework))?"
+    $type_pattern = [Regex]"//\s*TypeAccelerator\s+-Name\s+(?<Name>[\w.]*)\s+-TypeName\s+(?<TypeName>[\w.]*)"
 
     # PSCore vs PSDesktop use different methods to compile the code,
     # PSCore uses Roslyn and can compile the code purely in memory
@@ -105,15 +143,22 @@ Function Add-CSharpType {
             # scan through code and add any assemblies that match
             # //AssemblyReference -Name ... [-CLR Core]
             # //NoWarn -Name ... [-CLR Core]
+            # //TypeAccelerator -Name ... -TypeName ...
             $assembly_matches = $assembly_pattern.Matches($reference)
             foreach ($match in $assembly_matches) {
                 $clr = $match.Groups["CLR"].Value
                 if ($clr -and $clr -ne "Core") {
                     continue
                 }
-                $assembly_path = $match.Groups["Name"]
-                if (-not ([System.IO.Path]::IsPathRooted($assembly_path))) {
-                    $assembly_path = Join-Path -Path $lib_assembly_location -ChildPath $assembly_path
+
+                $parameter_type = $match.Groups["Parameter"].Value
+                $assembly_path = $match.Groups["Name"].Value
+                if ($parameter_type -eq "Type") {
+                    $assembly_path = ([Type]$assembly_path).Assembly.Location
+                } else {
+                    if (-not ([System.IO.Path]::IsPathRooted($assembly_path))) {
+                        $assembly_path = Join-Path -Path $lib_assembly_location -ChildPath $assembly_path
+                    }
                 }
                 $assemblies.Add([Microsoft.CodeAnalysis.MetadataReference]::CreateFromFile($assembly_path)) > $null
             }
@@ -126,6 +171,11 @@ Function Add-CSharpType {
                 $ignore_warnings.Add($match.Groups["Name"], [Microsoft.CodeAnalysis.ReportDiagnostic]::Suppress)
             }
             $syntax_trees.Add([Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree]::ParseText($reference, $parse_options)) > $null
+
+            $type_matches = $type_pattern.Matches($reference)
+            foreach ($match in $type_matches) {
+                $type_accelerators.Add(@{Name=$match.Groups["Name"].Value; TypeName=$match.Groups["TypeName"].Value})
+            }
         }
 
         # Release seems to contain the correct line numbers compared to
@@ -239,13 +289,20 @@ Function Add-CSharpType {
             # scan through code and add any assemblies that match
             # //AssemblyReference -Name ... [-CLR Framework]
             # //NoWarn -Name ... [-CLR Framework]
+            # //TypeAccelerator -Name ... -TypeName ...
             $assembly_matches = $assembly_pattern.Matches($reference)
             foreach ($match in $assembly_matches) {
                 $clr = $match.Groups["CLR"].Value
                 if ($clr -and $clr -ne "Framework") {
                     continue
                 }
-                $assemblies.Add($match.Groups["Name"].Value) > $null
+
+                $parameter_type = $match.Groups["Parameter"].Value
+                $assembly_path = $match.Groups["Name"].Value
+                if ($parameter_type -eq "Type") {
+                    $assembly_path = ([Type]$assembly_path).Assembly.Location
+                }
+                $assemblies.Add($assembly_path) > $null
             }
             $warn_matches = $no_warn_pattern.Matches($reference)
             foreach ($match in $warn_matches) {
@@ -261,6 +318,11 @@ Function Add-CSharpType {
                 $ignore_warnings.Add($warning_id) > $null
             }
             $compile_units.Add((New-Object -TypeName System.CodeDom.CodeSnippetCompileUnit -ArgumentList $reference)) > $null
+
+            $type_matches = $type_pattern.Matches($reference)
+            foreach ($match in $type_matches) {
+                $type_accelerators.Add(@{Name=$match.Groups["Name"].Value; TypeName=$match.Groups["TypeName"].Value})
+            }
         }
         if ($ignore_warnings.Count -gt 0) {
             $compiler_options.Add("/nowarn:" + ([String]::Join(",", $ignore_warnings.ToArray()))) > $null
@@ -281,6 +343,23 @@ Function Add-CSharpType {
         $compiled_assembly = $compile.CompiledAssembly
     }
 
+    $type_accelerator = [PSObject].Assembly.GetType("System.Management.Automation.TypeAccelerators")
+    foreach ($accelerator in $type_accelerators) {
+        $type_name = $accelerator.TypeName
+        $found = $false
+
+        foreach ($assembly_type in $compiled_assembly.GetTypes()) {
+            if ($assembly_type.Name -eq $type_name) {
+                $type_accelerator::Add($accelerator.Name, $assembly_type)
+                $found = $true
+                break
+            }
+        }
+        if (-not $found) {
+            throw "Failed to find compiled class '$type_name' for custom TypeAccelerator."
+        }
+    }
+
     # return the compiled assembly if PassThru is set.
     if ($PassThru) {
         return $compiled_assembly
@@ -288,3 +367,4 @@ Function Add-CSharpType {
 }
 
 Export-ModuleMember -Function Add-CSharpType
+

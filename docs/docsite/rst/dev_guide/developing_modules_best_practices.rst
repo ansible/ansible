@@ -16,7 +16,7 @@ Scoping your module(s)
 Especially if you want to contribute your module(s) back to Ansible Core, make sure each module includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
 
 * Each module should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
-* Do not add ``list`` or ``info`` state options to an existing module - create a new ``_info`` or ``_facts`` module.
+* Do not add ``get``, ``list`` or ``info`` state options to an existing module - create a new ``_info`` or ``_facts`` module.
 * Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, the module does not belong in Ansible Core.
 * Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around a complex API forces users to offload too much logic into their playbooks. If you want to connect Ansible to a complex API, :ref:`create multiple modules <developing_modules_in_groups>` that interact with smaller individual pieces of the API.
 * Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. If you are asking 'how can I have a module execute other modules' ... you want to write a role.
@@ -31,7 +31,7 @@ Designing module interfaces
 General guidelines & tips
 =========================
 
-* Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
+* Each module should be self-contained in one file, so it can be auto-transferred by Ansible.
 * Module name MUST use underscores instead of hyphens or spaces as a word separator. Using hyphens and spaces will prevent Ansible from importing your module.
 * Always use the ``hacking/test-module.py`` script when developing modules - it will warn you about common pitfalls.
 * If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
@@ -150,6 +150,7 @@ Ansible conventions offer a predictable user interface across all modules, playb
 
 * Use consistent names across modules (yes, we have many legacy deviations - don't make the problem worse!).
 * Use consistent parameters (arguments) within your module(s).
+* Do not use 'message' or 'syslog_facility' as a parameter name, as this is used internally by Ansible.
 * Normalize parameters with other modules - if Ansible and the API your module connects to use different names for the same parameter, add aliases to your parameters so the user can choose which names to use in tasks and playbooks.
 * Return facts from ``*_facts`` modules in the ``ansible_facts`` field of the :ref:`result dictionary<common_return_values>` so other modules can access them.
 * Implement ``check_mode`` in all ``*_info`` and ``*_facts`` modules. Playbooks which conditionalize based on fact information will only conditionalize correctly in ``check_mode`` if the facts are returned in ``check_mode``. Usually you can add ``supports_check_mode=True`` when instantiating ``AnsibleModule``.
@@ -160,7 +161,8 @@ Ansible conventions offer a predictable user interface across all modules, playb
 * Implement declarative operations (not CRUD) so the user can ignore existing state and focus on final state. For example, use ``started/stopped``, ``present/absent``.
 * Strive for a consistent final state (aka idempotency). If running your module twice in a row against the same system would result in two different states, see if you can redesign or rewrite to achieve consistent final state. If you can't, document the behavior and the reasons for it.
 * Provide consistent return values within the standard Ansible return structure, even if NA/None are used for keys normally returned under other options.
-* Follow additional guidelines that apply to families of modules if applicable. For example, AWS modules should follow `the Amazon guidelines <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_
+* Follow additional guidelines that apply to families of modules if applicable. For example, AWS modules should follow the  :ref:`Amazon development checklist <AWS_module_development>`.
+
 
 Module Security
 ===============

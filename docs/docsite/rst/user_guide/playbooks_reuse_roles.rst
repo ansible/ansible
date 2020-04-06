@@ -1,71 +1,115 @@
 .. _playbooks_reuse_roles:
 
+*****
 Roles
-=====
+*****
 
-.. contents:: Topics
+Roles let you automatically load related vars_files, tasks, handlers, and other Ansible artifacts based on a known file structure. Once you group your content in roles, you can easily re-use them and share them with other users.
 
-.. versionadded:: 1.2
+.. contents::
+   :local:
 
-Roles are ways of automatically loading certain vars_files, tasks, and handlers based on a known file structure.  Grouping content by roles also allows easy sharing of roles with other users.
+Role directory structure
+========================
 
-Role Directory Structure
-````````````````````````
+An Ansible role has a defined directory structure with seven main standard directories. You must include at least one of these directories in each role. You can omit any directories the role does not use. For example:
 
-Example project structure::
+.. code-block:: text
 
+    # playbooks
     site.yml
     webservers.yml
     fooservers.yml
     roles/
-       common/
-         tasks/
-         handlers/
-         files/
-         templates/
-         vars/
-         defaults/
-         meta/
-       webservers/
-         tasks/
-         defaults/
-         meta/
+        common/
+            tasks/
+            handlers/
+            library/
+            files/
+            templates/
+            vars/
+            defaults/
+            meta/
+        webservers/
+            tasks/
+            defaults/
+            meta/
 
-Roles expect files to be in certain directory names. Roles must include at least one of these directories, however it is perfectly fine to exclude any which are not being used. When in use, each directory must contain a ``main.yml`` file, which contains the relevant content:
+Each directory within a role must contain a ``main.yml`` file with relevant content:
 
-- ``tasks`` - contains the main list of tasks to be executed by the role.
-- ``handlers`` - contains handlers, which may be used by this role or even anywhere outside this role.
-- ``defaults`` - default variables for the role (see :ref:`playbooks_variables` for more information).
-- ``vars`` - other variables for the role (see :ref:`playbooks_variables` for more information).
-- ``files`` - contains files which can be deployed via this role.
-- ``templates`` - contains templates which can be deployed via this role.
-- ``meta`` - defines some meta data for this role. See below for more details.
+- ``tasks/main.yml`` - the main list of tasks that the role executes.
+- ``handlers/main.yml`` - handlers, which may be used within or outside this role.
+- ``library/my_module.py`` - modules, which may be used within this role (see :ref:`embedding_modules_and_plugins_in_roles` for more information).
+- ``defaults/main.yml`` - default variables for the role (see :ref:`playbooks_variables` for more information). These variables have the lowest priority of any variables available, and can be easily overridden by any other variable, including inventory variables.
+- ``vars/main.yml`` - other variables for the role (see :ref:`playbooks_variables` for more information).
+- ``files/main.yml`` - files that the role deploys.
+- ``templates/main.yml`` - templates that the role deploys.
+- ``meta/main.yml`` - metadata for the role, including role dependencies.
 
-Other YAML files may be included in certain directories. For example, it is common practice to have platform-specific tasks included from the ``tasks/main.yml`` file::
+You can add other YAML files in some directories. For example, you can place platform-specific tasks in separate files and refer to them in the ``tasks/main.yml`` file:
+
+.. code-block:: yaml
 
     # roles/example/tasks/main.yml
-    - name: added in 2.4, previously you used 'include'
+    - name: install the correct web server for RHEL
       import_tasks: redhat.yml
       when: ansible_facts['os_family']|lower == 'redhat'
-    - import_tasks: debian.yml
+    - name: install the correct web server for debian
+      import_tasks: debian.yml
       when: ansible_facts['os_family']|lower == 'debian'
 
     # roles/example/tasks/redhat.yml
-    - yum:
+    - install web server
+      yum:
         name: "httpd"
         state: present
 
     # roles/example/tasks/debian.yml
-    - apt:
+    - install web server
+      apt:
         name: "apache2"
         state: present
 
-Roles may also include modules and other plugin types. For more information, please refer to the :ref:`embedding_modules_and_plugins_in_roles` section below.
+Roles may also include modules and other plugin types in a directory called ``library``. For more information, please refer to :ref:`embedding_modules_and_plugins_in_roles` below.
 
-Using Roles
-```````````
+.. _role_search_path:
 
-The classic (original) way to use roles is via the ``roles:`` option for a given play::
+Storing and finding roles
+=========================
+
+By default, Ansible looks for roles in two locations:
+
+- in a directory called ``roles/``, relative to the playbook file
+- in ``/etc/ansible/roles``
+
+If you store your roles in a different location, set the :ref:`roles_path <DEFAULT_ROLES_PATH>` configuration option so Ansible can find your roles. Checking shared roles into a single location makes them easier to use in multiple playbooks. See :ref:`intro_configuration` for details about managing settings in ansible.cfg.
+
+Alternatively, you can call a role with a fully qualified path:
+
+.. code-block:: yaml
+
+    ---
+    - hosts: webservers
+      roles:
+        - role: '/path/to/my/roles/common'
+
+Using roles
+===========
+
+You can use roles in three ways:
+
+- at the play level with the ``roles`` option,
+- at the tasks level with ``include_role``, or
+- at the tasks level with ``import_role``
+
+.. _roles_keyword:
+
+Using roles at the play level
+-----------------------------
+
+The classic (original) way to use roles is with the ``roles`` option for a given play:
+
+.. code-block:: yaml
 
     ---
     - hosts: webservers
@@ -73,202 +117,193 @@ The classic (original) way to use roles is via the ``roles:`` option for a given
         - common
         - webservers
 
-This designates the following behaviors, for each role 'x':
+When you use the ``roles`` option at the play level, for each role 'x':
 
-- If roles/x/tasks/main.yml exists, tasks listed therein will be added to the play.
-- If roles/x/handlers/main.yml exists, handlers listed therein will be added to the play.
-- If roles/x/vars/main.yml exists, variables listed therein will be added to the play.
-- If roles/x/defaults/main.yml exists, variables listed therein will be added to the play.
-- If roles/x/meta/main.yml exists, any role dependencies listed therein will be added to the list of roles (1.3 and later).
+- If roles/x/tasks/main.yml exists, Ansible adds the tasks in that file to the play.
+- If roles/x/handlers/main.yml exists, Ansible adds the handlers in that file to the play.
+- If roles/x/vars/main.yml exists, Ansible adds the variables in that file to the play.
+- If roles/x/defaults/main.yml exists, Ansible adds the variables in that file to the play.
+- If roles/x/meta/main.yml exists, Ansible adds any role dependencies in that file to the list of roles.
 - Any copy, script, template or include tasks (in the role) can reference files in roles/x/{files,templates,tasks}/ (dir depends on task) without having to path them relatively or absolutely.
 
-When used in this manner, the order of execution for your playbook is as follows:
+When you use the ``roles`` option at the play level, Ansible treats the roles as static imports and processes them during playbook parsing. Ansible executes your playbook in this order:
 
 - Any ``pre_tasks`` defined in the play.
-- Any handlers triggered so far will be run.
-- Each role listed in ``roles`` will execute in turn. Any role dependencies defined in the roles ``meta/main.yml`` will be run first, subject to tag filtering and conditionals.
+- Any handlers triggered by pre_tasks.
+- Each role listed in ``roles:``, in the order listed. Any role dependencies defined in the roles ``meta/main.yml`` run first, subject to tag filtering and conditionals. See :ref:`role_dependencies` for more details.
 - Any ``tasks`` defined in the play.
-- Any handlers triggered so far will be run.
+- Any handlers triggered by the roles or tasks.
 - Any ``post_tasks`` defined in the play.
-- Any handlers triggered so far will be run.
+- Any handlers triggered by post_tasks.
 
 .. note::
-    See below for more information regarding role dependencies.
+   If using tags with tasks in a role, be sure to also tag your pre_tasks, post_tasks, and role dependencies and pass those along as well, especially if the pre/post tasks and role dependencies are used for monitoring outage window control or load balancing. See :ref:`tags` for details on adding and using tags.
 
-.. note::
-    If using tags with tasks (described later as a means of only running part of a playbook), be sure to also tag your pre_tasks, post_tasks, and role dependencies and pass those along as well, especially if the pre/post tasks and role dependencies are used for monitoring outage window control or load balancing.
+You can pass other keywords to the ``roles`` option:
 
-As of Ansible 2.4, you can now use roles inline with any other tasks using ``import_role`` or ``include_role``::
-
-    ---
-
-    - hosts: webservers
-      tasks:
-      - debug:
-          msg: "before we run our role"
-      - import_role:
-          name: example
-      - include_role:
-          name: example
-      - debug:
-          msg: "after we ran our role"
-
-When roles are defined in the classic manner, they are treated as static imports and processed during playbook parsing.
-
-.. note::
-    The ``include_role`` option was introduced in Ansible 2.3. The usage has changed slightly as of Ansible 2.4 to match the include (dynamic) vs. import (static) usage. See :ref:`dynamic_vs_static` for more details.
-
-The name used for the role can be a simple name (see :ref:`role_search_path` below), or it can be a fully qualified path::
+.. code-block:: yaml
 
     ---
-
-    - hosts: webservers
-      roles:
-        - role: '/path/to/my/roles/common'
-
-Roles can accept other keywords::
-
-    ---
-
     - hosts: webservers
       roles:
         - common
         - role: foo_app_instance
           vars:
-             dir: '/opt/a'
-             app_port: 5000
+            dir: '/opt/a'
+            app_port: 5000
+          tags: typeA
         - role: foo_app_instance
           vars:
-             dir: '/opt/b'
-             app_port: 5001
+            dir: '/opt/b'
+            app_port: 5001
+          tags: typeB
 
-Or, using the newer syntax::
+When you add a tag to the ``role`` option, Ansible applies the tag to ALL tasks within the role.
+
+When using ``vars:`` within the ``roles:`` section of a playbook, the variables are added to the play variables, making them available to all tasks within the play before and after the role. This behavior can be changed by :ref:`DEFAULT_PRIVATE_ROLE_VARS`.
+
+Including roles: dynamic re-use
+-------------------------------
+
+You can re-use roles dynamically anywhere in the ``tasks`` section of a play using ``include_role``. While roles added in a ``roles`` section run before any other tasks in a playbook, included roles run in the order they are defined. If there are other tasks before an ``include_role`` task, the other tasks will run first.
+
+To include a role:
+
+.. code-block:: yaml
 
     ---
-
     - hosts: webservers
       tasks:
-      - include_role:
-          name: foo_app_instance
-        vars:
-          dir: '/opt/a'
-          app_port: 5000
+        - debug:
+            msg: "this task runs before the example role"
+        - include_role:
+            name: example
+        - debug:
+            msg: "this task runs after the example role"
+
+You can pass other keywords, including variables and tags, when including roles:
+
+.. code-block:: yaml
+
+    ---
+    - hosts: webservers
+      tasks:
+        - include_role:
+            name: foo_app_instance
+          vars:
+            dir: '/opt/a'
+            app_port: 5000
+          tags: typeA
       ...
 
-You can conditionally import a role and execute its tasks::
+When you add a :ref:`tag <tags>` to an ``include_role`` task, Ansible applies the tag `only` to the include itself. This means you can pass ``--tags`` to run only selected tasks from the role, if those tasks themselves have the same tag as the include statement. See :ref:`selective_reuse` for details.
+
+You can conditionally include a role:
+
+.. code-block:: yaml
 
     ---
-
     - hosts: webservers
       tasks:
-      - include_role:
-          name: some_role
-        when: "ansible_facts['os_family'] == 'RedHat'"
+        - include_role:
+            name: some_role
+          when: "ansible_facts['os_family'] == 'RedHat'"
 
+Importing roles: static re-use
+------------------------------
 
+You can re-use roles statically anywhere in the ``tasks`` section of a play using ``import_role``. The behavior is the same as using the ``roles`` keyword. For example:
 
-Finally, you may wish to assign tags to the tasks inside the roles you specify. You can do::
+.. code-block:: yaml
 
     ---
+    - hosts: webservers
+      tasks:
+        - debug:
+            msg: "before we run our role"
+        - import_role:
+            name: example
+        - debug:
+            msg: "after we ran our role"
 
+You can pass other keywords, including variables and tags, when importing roles:
+
+.. code-block:: yaml
+
+    ---
+    - hosts: webservers
+      tasks:
+        - import_role:
+            name: foo_app_instance
+          vars:
+            dir: '/opt/a'
+            app_port: 5000
+      ...
+
+When you add a tag to an ``import_role`` statement, Ansible applies the tag to `all` tasks within the role. See :ref:`tag_inheritance` for details.
+
+Running a role multiple times in one playbook
+=============================================
+
+Ansible only executes each role once, even if you define it multiple times, unless the parameters defined on the role are different for each definition. For example, Ansible only runs the role ``foo`` once in a play like this:
+
+.. code-block:: yaml
+
+    ---
+    - hosts: webservers
+      roles:
+        - foo
+        - bar
+        - foo
+
+You have two options to force Ansible to run a role more than once:
+
+  #. Pass different parameters in each role definition.
+  #. Add ``allow_duplicates: true`` to the ``meta/main.yml`` file for the role.
+
+Example 1 - passing different parameters:
+
+.. code-block:: yaml
+
+    ---
     - hosts: webservers
       roles:
         - role: foo
-          tags:
-            - bar
-            - baz
-        # using YAML shorthand, this is equivalent to the above:
-        - { role: foo, tags: ["bar", "baz"] }
+          vars:
+            message: "first"
+        - { role: foo, vars: { message: "second" } }
 
-Or, again, using the newer syntax::
+In this example, because each role definition has different parameters, Ansible runs ``foo`` twice.
 
-    ---
+Example 2 - using ``allow_duplicates: true``:
 
-    - hosts: webservers
-      tasks:
-      - import_role:
-          name: foo
-        tags:
-        - bar
-        - baz
-
-.. note::
-    This *tags all of the tasks in that role with the tags specified*, appending to any tags that are specified inside the role.
-
-On the other hand you might just want to tag the import of the role itself::
-
-    - hosts: webservers
-      tasks:
-      - include_role:
-          name: bar
-        tags:
-         - foo
-
-.. note:: The tags in this example will *not* be added to tasks inside an ``include_role``, you can use a surrounding ``block`` directive to do both.
-
-.. note:: There is no facility to import a role while specifying a subset of tags to execute. If you find yourself building a role with lots of tags and you want to call subsets of the role at different times, you should consider just splitting that role into multiple roles.
-
-Role Duplication and Execution
-``````````````````````````````
-
-Ansible will only allow a role to execute once, even if defined multiple times, if the parameters defined on the role are not different for each definition. For example::
-
-    ---
-    - hosts: webservers
-      roles:
-      - foo
-      - foo
-
-Given the above, the role ``foo`` will only be run once.
-
-To make roles run more than once, there are two options:
-
-1. Pass different parameters in each role definition.
-2. Add ``allow_duplicates: true`` to the ``meta/main.yml`` file for the role.
-
-Example 1 - passing different parameters::
-
-    ---
-    - hosts: webservers
-      roles:
-      - role: foo
-        vars:
-             message: "first"
-      - { role: foo, vars: { message: "second" } }
-
-In this example, because each role definition has different parameters, ``foo`` will run twice.
-
-Example 2 - using ``allow_duplicates: true``::
+.. code-block:: yaml
 
     # playbook.yml
     ---
     - hosts: webservers
       roles:
-      - foo
-      - foo
+        - foo
+        - foo
 
     # roles/foo/meta/main.yml
     ---
     allow_duplicates: true
 
-In this example, ``foo`` will run twice because we have explicitly enabled it to do so.
+In this example, Ansible runs ``foo`` twice because we have explicitly enabled it to do so.
 
-Role Default Variables
-``````````````````````
+.. _role_dependencies:
 
-.. versionadded:: 1.3
+Using role dependencies
+=======================
 
-Role default variables allow you to set default variables for included or dependent roles (see below). To create
-defaults, simply add a ``defaults/main.yml`` file in your role directory. These variables will have the lowest priority
-of any variables available, and can be easily overridden by any other variable, including inventory variables.
+Role dependencies let you automatically pull in other roles when using a role. Ansible does not execute role dependencies when you include or import a role. You must use the ``roles`` keyword if you want Ansible to execute role dependencies.
 
-Role Dependencies
-`````````````````
+Role dependencies are stored in the ``meta/main.yml`` file within the role directory. This file should contain a list of roles and parameters to insert before the specified role. For example:
 
-.. versionadded:: 1.3
+.. code-block:: yaml
 
-Role dependencies allow you to automatically pull in other roles when using a role. Role dependencies are stored in the ``meta/main.yml`` file contained within the role directory, as noted above. This file should contain a list of roles and parameters to insert before the specified role, such as the following in an example ``roles/myapp/meta/main.yml``::
-
+    # roles/myapp/meta/main.yml
     ---
     dependencies:
       - role: common
@@ -282,45 +317,51 @@ Role dependencies allow you to automatically pull in other roles when using a ro
           dbname: blarg
           other_parameter: 12
 
-.. note::
-    Role dependencies must use the classic role definition style.
-    
-Role dependencies are always executed before the role that includes them, and may be recursive. Dependencies also follow the duplication rules specified above. If another role also lists it as a dependency, it will not be run again based on the same rules given above. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
+Ansible always executes role dependencies before the role that includes them. Ansible executes recursive role dependencies as well. If one role depends on a second role, and the second role depends on a third role, Ansible executes the third role, then the second role, then the first role.
 
-.. note::
-    Always remember that when using ``allow_duplicates: true``, it needs to be in the dependent role's ``meta/main.yml``, not the parent.
+Running role dependencies multiple times
+----------------------------------------
 
-For example, a role named ``car`` depends on a role named ``wheel`` as follows::
+Ansible treats duplicate role dependencies like duplicate roles listed under ``roles:``: Ansible only executes role dependencies once, even if defined multiple times, unless the parameters defined on the role are different for each definition. If two roles in a playbook both list a third role as a dependency, Ansible only runs that role dependency once, unless you pass different parameters or use ``allow_duplicates: true`` in the dependent (third) role. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
 
-    ---
-    dependencies:
-    - role: wheel
-      vars:
-         n: 1
-    - role: wheel
-      vars:
-         n: 2
-    - role: wheel
-      vars:
-         n: 3
-    - role: wheel
-      vars:
-         n: 4
+For example, a role named ``car`` depends on a role named ``wheel`` as follows:
 
-And the ``wheel`` role depends on two roles: ``tire`` and ``brake``. The ``meta/main.yml`` for wheel would then contain the following::
+.. code-block:: yaml
 
     ---
     dependencies:
-    - role: tire
-    - role: brake
+      - role: wheel
+        vars:
+          n: 1
+      - role: wheel
+        vars:
+          n: 2
+      - role: wheel
+        vars:
+          n: 3
+      - role: wheel
+        vars:
+          n: 4
 
-And the ``meta/main.yml`` for ``tire`` and ``brake`` would contain the following::
+And the ``wheel`` role depends on two roles: ``tire`` and ``brake``. The ``meta/main.yml`` for wheel would then contain the following:
+
+.. code-block:: yaml
+
+    ---
+    dependencies:
+      - role: tire
+      - role: brake
+
+And the ``meta/main.yml`` for ``tire`` and ``brake`` would contain the following:
+
+.. code-block:: yaml
 
     ---
     allow_duplicates: true
 
+The resulting order of execution would be as follows:
 
-The resulting order of execution would be as follows::
+.. code-block:: text
 
     tire(n=1)
     brake(n=1)
@@ -331,73 +372,61 @@ The resulting order of execution would be as follows::
     ...
     car
 
-Note that we did not have to use ``allow_duplicates: true`` for ``wheel``, because each instance defined by ``car`` uses different parameter values.
+To use ``allow_duplicates: true`` with role dependencies, you must specify it for the dependent role, not for the parent role. In the example above, ``allow_duplicates: true`` appears in the ``meta/main.yml`` of the ``tire`` and ``brake`` roles. The ``wheel`` role does not require ``allow_duplicates: true``, because each instance defined by ``car`` uses different parameter values.
 
 .. note::
-   Variable inheritance and scope are detailed in the :ref:`playbooks_variables`.
+   See :ref:`playbooks_variables` for details on how Ansible chooses among variable values defined in different places (variable inheritance and scope).
 
 .. _embedding_modules_and_plugins_in_roles:
 
-Embedding Modules and Plugins In Roles
-``````````````````````````````````````
+Embedding modules and plugins in roles
+======================================
 
-This is an advanced topic that should not be relevant for most users.
-
-If you write a custom module (see :ref:`developing_modules`) or a plugin (see :ref:`developing_plugins`), you may wish to distribute it as part of a role.
-Generally speaking, Ansible as a project is very interested in taking high-quality modules into ansible core for inclusion, so this shouldn't be the norm, but it's quite easy to do.
-
-A good example for this is if you worked at a company called AcmeWidgets, and wrote an internal module that helped configure your internal software, and you wanted other
-people in your organization to easily use this module -- but you didn't want to tell everyone how to configure their Ansible library path.
+If you write a custom module (see :ref:`developing_modules`) or a plugin (see :ref:`developing_plugins`), you might wish to distribute it as part of a role. For example, if you write a module that helps configure your company's internal software, and you want other people in your organization to use this module, but you do not want to tell everyone how to configure their Ansible library path, you can include the module in your internal_config role.
 
 Alongside the 'tasks' and 'handlers' structure of a role, add a directory named 'library'.  In this 'library' directory, then include the module directly inside of it.
 
-Assuming you had this::
+Assuming you had this:
+
+.. code-block:: text
 
     roles/
-       my_custom_modules/
-           library/
-              module1
-              module2
+        my_custom_modules/
+            library/
+                module1
+                module2
 
-The module will be usable in the role itself, as well as any roles that are called *after* this role, as follows::
+The module will be usable in the role itself, as well as any roles that are called *after* this role, as follows:
 
+.. code-block:: yaml
 
+    ---
     - hosts: webservers
       roles:
         - my_custom_modules
         - some_other_role_using_my_custom_modules
         - yet_another_role_using_my_custom_modules
 
-This can also be used, with some limitations, to modify modules in Ansible's core distribution, such as to use development versions of modules before they are released in production releases.  This is not always advisable as API signatures may change in core components, however, and is not always guaranteed to work.  It can be a handy way of carrying a patch against a core module, however, should you have good reason for this.  Naturally the project prefers that contributions be directed back to github whenever possible via a pull request.
+If necessary, you can also embed a module in a role to modify a module in Ansible's core distribution. For example, you can use the development version of a particular module before it is released in production releases by copying the module and embedding the copy in a role. Use this approach with caution, as API signatures may change in core components, and this workaround is not guaranteed to work.
 
-The same mechanism can be used to embed and distribute plugins in a role, using the same schema. For example, for a filter plugin::
+The same mechanism can be used to embed and distribute plugins in a role, using the same schema. For example, for a filter plugin:
+
+.. code-block:: text
 
     roles/
-       my_custom_filter/
-           filter_plugins
-              filter1
-              filter2
+        my_custom_filter/
+            filter_plugins
+                filter1
+                filter2
 
-They can then be used in a template or a jinja template in any role called after 'my_custom_filter'
+These filters can then be used in a Jinja template in any role called after 'my_custom_filter'.
 
-.. _role_search_path:
+Sharing roles: Ansible Galaxy
+=============================
 
-Role Search Path
-````````````````
+`Ansible Galaxy <https://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community-developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
 
-Ansible will search for roles in the following way:
-
-- A ``roles/`` directory, relative to the playbook file.
-- By default, in ``/etc/ansible/roles``
-
-In Ansible 1.4 and later you can configure an additional roles_path to search for roles.  Use this to check all of your common roles out to one location, and share them easily between multiple playbook projects.  See :ref:`intro_configuration` for details about how to set this up in ansible.cfg.
-
-Ansible Galaxy
-``````````````
-
-`Ansible Galaxy <https://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
-
-The client ``ansible-galaxy`` is included in Ansible. The Galaxy client allows you to download roles from Ansible Galaxy, and also provides an excellent default framework for creating your own roles. 
+The client ``ansible-galaxy`` is included in Ansible. The Galaxy client allows you to download roles from Ansible Galaxy, and also provides an excellent default framework for creating your own roles.
 
 Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page for more information
 
@@ -410,19 +439,20 @@ Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page
    :ref:`working_with_playbooks`
        Review the basic Playbook language features
    :ref:`playbooks_best_practices`
-       Various tips about managing playbooks in the real world
+       Tips for managing playbooks in the real world
    :ref:`playbooks_variables`
-       All about variables in playbooks
+       Variables in playbooks
    :ref:`playbooks_conditionals`
        Conditionals in playbooks
    :ref:`playbooks_loops`
        Loops in playbooks
+   :ref:`tags`
+       Using tags to select or skip roles/tasks in long playbooks
    :ref:`all_modules`
-       Learn about available modules
+       List of available modules
    :ref:`developing_modules`
-       Learn how to extend Ansible by writing your own modules
+       Extending Ansible by writing your own modules
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the GitHub project source
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-

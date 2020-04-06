@@ -1,0 +1,80 @@
+
+
+By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`).
+
+You can use either option below to configure ``ansible-galaxy collection`` to use other servers (such as Red Hat Automation Hub or a custom Galaxy server):
+
+* Set the server list in the :ref:`galaxy_server_list` configuration option in :ref:`ansible_configuration_settings_locations`.
+* Use the ``--server`` command line argument to limit to an individual server.
+
+To configure a Galaxy server list in ``ansible.cfg``:
+
+
+#. Add the ``server_list``  option under the ``[galaxy]`` section to one or more server names.
+#. Create a new section for each server name.
+#. Set the ``url`` option for each server name.
+#. Optionally, set the API token for each server name. See :ref:`API token <collections_installing>` for details.
+
+.. note::
+    The ``url`` option for each server name must end with a forward slash ``/``. If you do not set the API token in your Galaxy server list, use the ``--api-key`` argument to pass in the token to  the ``ansible-galaxy collection publish`` command.
+
+For Automation Hub, you additionally need to:
+
+#. Set the ``auth_url`` option for each server name.
+#. Set the API token for each server name. Go to https://cloud.redhat.com/ansible/automation-hub/token/ and click ::guilabel:`Get API token` from the version dropdown to copy your API token.
+
+The following example shows how to configure multiple servers:
+
+.. code-block:: ini
+
+    [galaxy]
+    server_list = automation_hub, my_org_hub, release_galaxy, test_galaxy
+
+    [galaxy_server.automation_hub]
+    url=https://cloud.redhat.com/api/automation-hub/
+    auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+    token=my_ah_token
+
+    [galaxy_server.my_org_hub]
+    url=https://automation.my_org/
+    username=my_user
+    password=my_pass
+
+    [galaxy_server.release_galaxy]
+    url=https://galaxy.ansible.com/
+    token=my_token
+
+    [galaxy_server.test_galaxy]
+    url=https://galaxy-dev.ansible.com/
+    token=my_test_token
+
+.. note::
+    You can use the ``--server`` command line argument to select an explicit Galaxy server in the ``server_list`` and
+    the value of this argument should match the name of the server. To use a server not in the server list, set the value to the URL to access that server (all servers in the server list will be ignored). Also you cannot use the ``--api-key`` argument for any of the predefined servers. You can only use the ``api_key`` argument if you did not define a server list or if you specify a URL in the
+    ``--server`` argument.
+
+**Galaxy server list configuration options**
+
+The :ref:`galaxy_server_list` option is a list of server identifiers in a prioritized order. When searching for a
+collection, the install process will search in that order, for example, ``automation_hub`` first, then ``my_org_hub``, ``release_galaxy``, and
+finally ``test_galaxy`` until the collection is found. The actual Galaxy instance is then defined under the section
+``[galaxy_server.{{ id }}]`` where ``{{ id }}`` is the server identifier defined in the list. This section can then
+define the following keys:
+
+* ``url``: The URL of the Galaxy instance to connect to. Required.
+* ``token``: An API token key to use for authentication against the Galaxy instance. Mutually exclusive with ``username``.
+* ``username``: The username to use for basic authentication against the Galaxy instance. Mutually exclusive with ``token``.
+* ``password``: The password to use, in conjunction with ``username``, for basic authentication.
+* ``auth_url``: The URL of a Keycloak server 'token_endpoint' if using SSO authentication (for example, Automation Hub). Mutually exclusive with ``username``. Requires ``token``.
+
+As well as defining these server options in the ``ansible.cfg`` file, you can also define them as environment variables.
+The environment variable is in the form ``ANSIBLE_GALAXY_SERVER_{{ id }}_{{ key }}`` where ``{{ id }}`` is the upper
+case form of the server identifier and ``{{ key }}`` is the key to define. For example I can define ``token`` for
+``release_galaxy`` by setting ``ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN=secret_token``.
+
+For operations that use only one Galaxy server (for example, the ``publish``, ``info``, or ``install`` commands). the ``ansible-galaxy collection`` command uses the first entry in the
+``server_list``, unless you pass in an explicit server with the ``--server`` argument.
+
+.. note::
+    Once a collection is found, any of its requirements are only searched within the same Galaxy instance as the parent
+    collection. The install process will not search for a collection requirement in a different Galaxy instance.

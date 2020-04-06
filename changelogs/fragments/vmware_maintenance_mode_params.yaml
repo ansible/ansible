@@ -1,2 +1,0 @@
-minor_changes:
-    - vmware_datastore_maintenancemode - Raise an error if the datastore does not exist.  

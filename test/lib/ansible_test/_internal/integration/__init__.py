@@ -8,32 +8,42 @@ import os
 import shutil
 import tempfile
 
+from .. import types as t
+
+from ..encoding import (
+    to_bytes,
+)
+
 from ..target import (
     analyze_integration_target_dependencies,
     walk_integration_targets,
 )
 
 from ..config import (
+    IntegrationConfig,
     NetworkIntegrationConfig,
     PosixIntegrationConfig,
     WindowsIntegrationConfig,
 )
 
+from ..io import (
+    make_dirs,
+    write_text_file,
+    read_text_file,
+)
+
 from ..util import (
     ApplicationError,
     display,
-    make_dirs,
     COVERAGE_CONFIG_NAME,
-    COVERAGE_OUTPUT_NAME,
     MODE_DIRECTORY,
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
-    ANSIBLE_ROOT,
-    to_bytes,
 )
 
 from ..util_common import (
     named_temporary_file,
+    ResultType,
 )
 
 from ..coverage_util import (
@@ -46,6 +56,10 @@ from ..cache import (
 
 from ..cloud import (
     CloudEnvironmentConfig,
+)
+
+from ..data import (
+    data_context,
 )
 
 
@@ -65,12 +79,11 @@ def setup_common_temp_dir(args, path):
 
         coverage_config = generate_coverage_config(args)
 
-        with open(coverage_config_path, 'w') as coverage_config_fd:
-            coverage_config_fd.write(coverage_config)
+        write_text_file(coverage_config_path, coverage_config)
 
         os.chmod(coverage_config_path, MODE_FILE)
 
-        coverage_output_path = os.path.join(path, COVERAGE_OUTPUT_NAME)
+        coverage_output_path = os.path.join(path, ResultType.COVERAGE.name)
 
         os.mkdir(coverage_output_path)
         os.chmod(coverage_output_path, MODE_DIRECTORY_WRITE)
@@ -126,27 +139,86 @@ def get_files_needed(target_dependencies):
     return files_needed
 
 
+def check_inventory(args, inventory_path):  # type: (IntegrationConfig, str) -> None
+    """Check the given inventory for issues."""
+    if args.docker or args.remote:
+        if os.path.exists(inventory_path):
+            inventory = read_text_file(inventory_path)
+
+            if 'ansible_ssh_private_key_file' in inventory:
+                display.warning('Use of "ansible_ssh_private_key_file" in inventory with the --docker or --remote option is unsupported and will likely fail.')
+
+
+def get_inventory_relative_path(args):  # type: (IntegrationConfig) -> str
+    """Return the inventory path used for the given integration configuration relative to the content root."""
+    inventory_names = {
+        PosixIntegrationConfig: 'inventory',
+        WindowsIntegrationConfig: 'inventory.winrm',
+        NetworkIntegrationConfig: 'inventory.networking',
+    }  # type: t.Dict[t.Type[IntegrationConfig], str]
+
+    return os.path.join(data_context().content.integration_path, inventory_names[type(args)])
+
+
+def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, str) -> None
+    """Make the given inventory available during delegation."""
+    if isinstance(args, PosixIntegrationConfig):
+        return
+
+    def inventory_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+        """
+        Add the inventory file to the payload file list.
+        This will preserve the file during delegation even if it is ignored or is outside the content and install roots.
+        """
+        if data_context().content.collection:
+            working_path = data_context().content.collection.directory
+        else:
+            working_path = ''
+
+        inventory_path = os.path.join(working_path, get_inventory_relative_path(args))
+        inventory_tuple = inventory_path_src, inventory_path
+
+        if os.path.isfile(inventory_path_src) and inventory_tuple not in files:
+            originals = [item for item in files if item[1] == inventory_path]
+
+            if originals:
+                for original in originals:
+                    files.remove(original)
+
+                display.warning('Overriding inventory file "%s" with "%s".' % (inventory_path, inventory_path_src))
+            else:
+                display.notice('Sourcing inventory file "%s" from "%s".' % (inventory_path, inventory_path_src))
+
+            files.append(inventory_tuple)
+
+    data_context().register_payload_callback(inventory_callback)
+
+
 @contextlib.contextmanager
-def integration_test_environment(args, target, inventory_path):
+def integration_test_environment(args, target, inventory_path_src):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
-    :type inventory_path: str
+    :type inventory_path_src: str
     """
-    vars_file = 'integration_config.yml'
+    ansible_config_src = args.get_ansible_config()
+    ansible_config_relative = os.path.join(data_context().content.integration_path, '%s.cfg' % args.command)
 
     if args.no_temp_workdir or 'no/temp_workdir/' in target.aliases:
         display.warning('Disabling the temp work dir is a temporary debugging feature that may be removed in the future without notice.')
 
-        integration_dir = os.path.abspath('test/integration')
-        inventory_path = os.path.abspath(inventory_path)
-        ansible_config = os.path.join(integration_dir, '%s.cfg' % args.command)
-        vars_file = os.path.join(integration_dir, vars_file)
+        integration_dir = os.path.join(data_context().content.root, data_context().content.integration_path)
+        targets_dir = os.path.join(data_context().content.root, data_context().content.integration_targets_path)
+        inventory_path = inventory_path_src
+        ansible_config = ansible_config_src
+        vars_file = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
-        yield IntegrationEnvironment(integration_dir, inventory_path, ansible_config, vars_file)
+        yield IntegrationEnvironment(integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
         return
 
-    root_temp_dir = os.path.expanduser('~/.ansible/test/tmp')
+    # When testing a collection, the temporary directory must reside within the collection.
+    # This is necessary to enable support for the default collection for non-collection content (playbooks and roles).
+    root_temp_dir = os.path.join(ResultType.TMP.path, 'integration')
 
     prefix = '%s-' % target.name
     suffix = u'-\u00c5\u00d1\u015a\u00cc\u03b2\u0141\u00c8'
@@ -164,13 +236,8 @@ def integration_test_environment(args, target, inventory_path):
     try:
         display.info('Preparing temporary directory: %s' % temp_dir, verbosity=2)
 
-        inventory_names = {
-            PosixIntegrationConfig: 'inventory',
-            WindowsIntegrationConfig: 'inventory.winrm',
-            NetworkIntegrationConfig: 'inventory.networking',
-        }
-
-        inventory_name = inventory_names[type(args)]
+        inventory_relative_path = get_inventory_relative_path(args)
+        inventory_path = os.path.join(temp_dir, inventory_relative_path)
 
         cache = IntegrationCache(args)
 
@@ -178,31 +245,32 @@ def integration_test_environment(args, target, inventory_path):
 
         files_needed = get_files_needed(target_dependencies)
 
-        integration_dir = os.path.join(temp_dir, 'test/integration')
-        ansible_config = os.path.join(integration_dir, '%s.cfg' % args.command)
+        integration_dir = os.path.join(temp_dir, data_context().content.integration_path)
+        targets_dir = os.path.join(temp_dir, data_context().content.integration_targets_path)
+        ansible_config = os.path.join(temp_dir, ansible_config_relative)
+
+        vars_file_src = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
+        vars_file = os.path.join(temp_dir, data_context().content.integration_vars_path)
 
         file_copies = [
-            (os.path.join(ANSIBLE_ROOT, 'test/integration/%s.cfg' % args.command), ansible_config),
-            (os.path.join(ANSIBLE_ROOT, 'test/integration/integration_config.yml'), os.path.join(integration_dir, vars_file)),
-            (os.path.join(ANSIBLE_ROOT, inventory_path), os.path.join(integration_dir, inventory_name)),
+            (ansible_config_src, ansible_config),
+            (inventory_path_src, inventory_path),
         ]
+
+        if os.path.exists(vars_file_src):
+            file_copies.append((vars_file_src, vars_file))
 
         file_copies += [(path, os.path.join(temp_dir, path)) for path in files_needed]
 
+        integration_targets_relative_path = data_context().content.integration_targets_path
+
         directory_copies = [
-            (os.path.join('test/integration/targets', target.name), os.path.join(integration_dir, 'targets', target.name)) for target in target_dependencies
+            (
+                os.path.join(integration_targets_relative_path, target.relative_path),
+                os.path.join(temp_dir, integration_targets_relative_path, target.relative_path)
+            )
+            for target in target_dependencies
         ]
-
-        inventory_dir = os.path.dirname(inventory_path)
-
-        host_vars_dir = os.path.join(inventory_dir, 'host_vars')
-        group_vars_dir = os.path.join(inventory_dir, 'group_vars')
-
-        if os.path.isdir(host_vars_dir):
-            directory_copies.append((host_vars_dir, os.path.join(integration_dir, os.path.basename(host_vars_dir))))
-
-        if os.path.isdir(group_vars_dir):
-            directory_copies.append((group_vars_dir, os.path.join(integration_dir, os.path.basename(group_vars_dir))))
 
         directory_copies = sorted(set(directory_copies))
         file_copies = sorted(set(file_copies))
@@ -223,10 +291,7 @@ def integration_test_environment(args, target, inventory_path):
                 make_dirs(os.path.dirname(file_dst))
                 shutil.copy2(file_src, file_dst)
 
-        inventory_path = os.path.join(integration_dir, inventory_name)
-        vars_file = os.path.join(integration_dir, vars_file)
-
-        yield IntegrationEnvironment(integration_dir, inventory_path, ansible_config, vars_file)
+        yield IntegrationEnvironment(integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
     finally:
         if not args.explain:
             shutil.rmtree(temp_dir)
@@ -264,8 +329,9 @@ def integration_test_config_file(args, env_config, integration_dir):
 
 class IntegrationEnvironment:
     """Details about the integration environment."""
-    def __init__(self, integration_dir, inventory_path, ansible_config, vars_file):
+    def __init__(self, integration_dir, targets_dir, inventory_path, ansible_config, vars_file):
         self.integration_dir = integration_dir
+        self.targets_dir = targets_dir
         self.inventory_path = inventory_path
         self.ansible_config = ansible_config
         self.vars_file = vars_file

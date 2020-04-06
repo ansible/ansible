@@ -1,1 +1,0 @@
-ec2_vpc_nat_gateway_info.py

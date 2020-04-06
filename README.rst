@@ -58,6 +58,14 @@ Get Involved
 *  For a list of email lists, IRC channels and Working Groups, see the
    `Communication page <https://docs.ansible.com/ansible/latest/community/communication.html>`_
 
+Coding Guidelines
+=================
+
+We document our Coding Guidelines in the `Developer Guide <https://docs.ansible.com/ansible/devel/dev_guide/>`_. We particularly suggest you review:
+
+* `Contributing your module to Ansible <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_checklist.html>`_
+* `Conventions, tips and pitfalls <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_best_practices.html>`_
+
 Branch Info
 ===========
 
@@ -76,7 +84,7 @@ Authors
 =======
 
 Ansible was created by `Michael DeHaan <https://github.com/mpdehaan>`_
-and has contributions from over 4000 users (and growing). Thanks everyone!
+and has contributions from over 4700 users (and growing). Thanks everyone!
 
 `Ansible <https://www.ansible.com>`_ is sponsored by `Red Hat, Inc.
 <https://www.redhat.com>`_
@@ -84,7 +92,7 @@ and has contributions from over 4000 users (and growing). Thanks everyone!
 License
 =======
 
-GNU General Public License v3.0
+GNU General Public License v3.0 or later
 
 See `COPYING <COPYING>`_ to see the full text.
 

@@ -115,6 +115,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return result
 
+    def cleanup(self, force=False):
+        """Method to perform a clean up at the end of an action plugin execution
+
+        By default this is designed to clean up the shell tmpdir, and is toggled based on whether
+        async is in use
+
+        Action plugins may override this if they deem necessary, but should still call this method
+        via super
+        """
+        if force or not self._task.async_val:
+            self._remove_tmp_path(self._connection._shell.tmpdir)
+
     def get_plugin_option(self, plugin, option, default=None):
         """Helper to get an option from a plugin without having to use
         the try/except dance everywhere to set a default
@@ -153,14 +165,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # Check to determine if PowerShell modules are supported, and apply
             # some fixes (hacks) to module name + args.
             if mod_type == '.ps1':
-                # win_stat, win_file, and win_copy are not just like their
+                # FIXME: This should be temporary and moved to an exec subsystem plugin where we can define the mapping
+                # for each subsystem.
+                win_collection = 'ansible.windows'
+
+                # async_status, win_stat, win_file, win_copy, and win_ping are not just like their
                 # python counterparts but they are compatible enough for our
                 # internal usage
-                if module_name in ('stat', 'file', 'copy') and self._task.action != module_name:
-                    module_name = 'win_%s' % module_name
+                if module_name in ('stat', 'file', 'copy', 'ping') and self._task.action != module_name:
+                    module_name = '%s.win_%s' % (win_collection, module_name)
+                elif module_name in ['async_status']:
+                    module_name = '%s.%s' % (win_collection, module_name)
 
                 # Remove extra quotes surrounding path parameters before sending to module.
-                if module_name in ('win_stat', 'win_file', 'win_copy', 'slurp') and module_args and hasattr(self._connection._shell, '_unquote'):
+                if module_name.split('.')[-1] in ['win_stat', 'win_file', 'win_copy', 'slurp'] and module_args and \
+                        hasattr(self._connection._shell, '_unquote'):
                     for key in ('src', 'dest', 'path'):
                         if key in module_args:
                             module_args[key] = self._connection._shell._unquote(module_args[key])
@@ -169,24 +188,22 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if module_path:
                 break
         else:  # This is a for-else: http://bit.ly/1ElPkyg
-            # Use Windows version of ping module to check module paths when
-            # using a connection that supports .ps1 suffixes. We check specifically
-            # for win_ping here, otherwise the code would look for ping.ps1
-            if '.ps1' in self._connection.module_implementation_preferences:
-                ping_module = 'win_ping'
-            else:
-                ping_module = 'ping'
-            module_path2 = self._shared_loader_obj.module_loader.find_plugin(ping_module, self._connection.module_implementation_preferences)
-            if module_path2 is not None:
-                raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
-            else:
-                raise AnsibleError("The module %s was not found in configured module paths. "
-                                   "Additionally, core modules are missing. If this is a checkout, "
-                                   "run 'git pull --rebase' to correct this problem." % (module_name))
+            raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
 
         # insert shared code and arguments into the module
         final_environment = dict()
         self._compute_environment_string(final_environment)
+
+        become_kwargs = {}
+        if self._connection.become:
+            become_kwargs['become'] = True
+            become_kwargs['become_method'] = self._connection.become.name
+            become_kwargs['become_user'] = self._connection.become.get_option('become_user',
+                                                                              playcontext=self._play_context)
+            become_kwargs['become_password'] = self._connection.become.get_option('become_pass',
+                                                                                  playcontext=self._play_context)
+            become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
+                                                                               playcontext=self._play_context)
 
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for dummy in (1, 2):
@@ -195,12 +212,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                                                             task_vars=task_vars,
                                                                             module_compression=self._play_context.module_compression,
                                                                             async_timeout=self._task.async_val,
-                                                                            become=self._play_context.become,
-                                                                            become_method=self._play_context.become_method,
-                                                                            become_user=self._play_context.become_user,
-                                                                            become_password=self._play_context.become_pass,
-                                                                            become_flags=self._play_context.become_flags,
-                                                                            environment=final_environment)
+                                                                            environment=final_environment,
+                                                                            **become_kwargs)
                 break
             except InterpreterDiscoveryRequiredError as idre:
                 self._discovered_interpreter = AnsibleUnsafeText(discover_interpreter(
@@ -273,7 +286,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_style == "new",                     # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
             not wrap_async or self._connection.always_pipeline_modules,  # async does not normally support pipelining unless it does (eg winrm)
-            self._play_context.become_method != 'su',  # su does not work with pipelining,
+            (self._connection.become.name if self._connection.become else '') != 'su',  # su does not work with pipelining,
             # FIXME: we might need to make become_method exclusion a configurable list
         ]:
             if not condition:
@@ -311,7 +324,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         # if we don't use become then we know we aren't switching to a
         # different unprivileged user
-        if not self._play_context.become:
+        if not self._connection.become:
             return False
 
         # if we use become and the user is not an admin (or same user) then
@@ -647,7 +660,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             become_user = self.get_become_option('become_user')
             if getattr(self._connection, '_remote_is_local', False):
                 pass
-            elif sudoable and self._play_context.become and become_user:
+            elif sudoable and self._connection.become and become_user:
                 expand_path = '~%s' % become_user
             else:
                 # use remote user instead, if none set default to current user
@@ -1042,7 +1055,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         ruser = self._get_remote_user()
         buser = self.get_become_option('become_user')
         if (sudoable and self._connection.become and  # if sudoable and have become
-                self._connection.transport != 'network_cli' and  # if not using network_cli
+                self._connection.transport.split('.')[-1] != 'network_cli' and  # if not using network_cli
                 (C.BECOME_ALLOW_SAME_USER or (buser != ruser or not any((ruser, buser))))):  # if we allow same user PE or users are different and either is set
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._connection.become.build_become_command(cmd, self._connection._shell)
@@ -1104,7 +1117,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug("Going to peek to see if file has changed permissions")
         peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, _diff_peek=True), task_vars=task_vars, persist_files=True)
 
-        if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
+        if peek_result.get('failed', False):
+            display.warning(u"Failed to get diff between '%s' and '%s': %s" % (os.path.basename(source), destination, to_text(peek_result.get(u'msg', u''))))
+            return diff
+
+        if peek_result.get('rc', 0) == 0:
 
             if peek_result.get('state') in (None, 'absent'):
                 diff['before'] = u''

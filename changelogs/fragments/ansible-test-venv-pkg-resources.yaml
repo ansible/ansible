@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Make sure import sanity test virtual environments also remove ``pkg-resources`` if it is not removed by uninstalling ``setuptools``.

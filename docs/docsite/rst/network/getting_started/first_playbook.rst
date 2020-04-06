@@ -65,6 +65,10 @@ The flags in this command set seven values:
 
 NOTE: If you use ``ssh-agent`` with ssh keys, Ansible loads them automatically. You can omit ``-k`` flag.
 
+.. note::
+
+   If you are running Ansible in a virtual environment, you will also need to add the variable ``ansible_python_interpreter=/path/to/venv/bin/python``
+
 
 Create and Run Your First Network Ansible Playbook
 ==================================================
@@ -146,4 +150,50 @@ The extended first playbook has four tasks in a single play. Run it with the sam
    vyos.example.net           : ok=6    changed=1    unreachable=0    failed=0
 
 
-This playbook is useful. However, running it still requires several command-line flags. Also, running a playbook against a single device is not a huge efficiency gain over making the same change manually. The next step to harnessing the full power of Ansible is to use an inventory file to organize your managed nodes into groups with information like the ``ansible_network_os`` and the SSH user.
+
+.. _network_gather_facts:
+
+Gathering facts from network devices
+====================================
+
+The ``gather_facts`` keyword now supports gathering network device facts in standardized key/value pairs. You can feed these network facts into further tasks to manage the network device.
+
+You can also use the new ``gather_network_resources`` parameter with the network ``*_facts`` modules (such as :ref:`eos_facts <eos_facts_module>`) to return just a subset of the device configuration, as shown below.
+
+.. code-block:: yaml
+
+  - hosts: arista
+    gather_facts: True
+    gather_subset: min
+    module_defaults:
+      eos_facts:
+        gather_network_resources: interfaces
+
+The playbook returns the following interface facts:
+
+.. code-block:: yaml
+
+  ansible_facts:
+     ansible_network_resources:
+        interfaces:
+        - enabled: true
+          name: Ethernet1
+          mtu: '1476'
+        - enabled: true
+          name: Loopback0
+        - enabled: true
+          name: Loopback1
+        - enabled: true
+          mtu: '1476'
+          name: Tunnel0
+        - enabled: true
+          name: Ethernet1
+        - enabled: true
+          name: Tunnel1
+        - enabled: true
+          name: Ethernet1
+
+
+Note that this returns a subset of what is returned by just setting ``gather_subset: interfaces``.
+
+You can store these facts and use them directly in another task, such as with the :ref:`eos_interfaces <eos_interfaces_module>` resource module.

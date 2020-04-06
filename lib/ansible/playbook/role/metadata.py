@@ -84,12 +84,27 @@ class RoleMetadata(Base, CollectionSearch):
                     raise AnsibleParserError(to_native(exc), obj=role_def, orig_exc=exc)
 
         current_role_path = None
+        collection_search_list = None
+
         if self._owner:
             current_role_path = os.path.dirname(self._owner._role_path)
 
+            # if the calling role has a collections search path defined, consult it
+            collection_search_list = self._owner.collections[:] or []
+
+            # if the calling role is a collection role, ensure that its containing collection is searched first
+            owner_collection = self._owner._role_collection
+            if owner_collection:
+                collection_search_list = [c for c in collection_search_list if c != owner_collection]
+                collection_search_list.insert(0, owner_collection)
+            # ensure fallback role search works
+            if 'ansible.legacy' not in collection_search_list:
+                collection_search_list.append('ansible.legacy')
+
         try:
-            return load_list_of_roles(roles, play=self._owner._play, current_role_path=current_role_path, variable_manager=self._variable_manager,
-                                      loader=self._loader)
+            return load_list_of_roles(roles, play=self._owner._play, current_role_path=current_role_path,
+                                      variable_manager=self._variable_manager, loader=self._loader,
+                                      collection_search_list=collection_search_list)
         except AssertionError as e:
             raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds, orig_exc=e)
 

@@ -1,0 +1,2 @@
+minor_changes:
+- Ansible.ModuleUtils.WebRequest - Move username and password aliases out of util to avoid option name collision
