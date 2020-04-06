@@ -40,18 +40,20 @@ class CollectionSearch:
                                   always_post_validate=True, static=True)
 
     def _load_collections(self, attr, ds):
-        # This duplicates static attr checking logic from post_validate()
-        # because if the user attempts to template a collection name, it will
-        # error before it ever gets to the post_validate() warning.
-        for collection_name in ds:
-            if is_template(collection_name, Environment()):
-                display.warning('"collections" is not templatable, but we found: %s, '
-                                'it will not be templated and will be used "as is".' % (collection_name))
-
         # this will only be called if someone specified a value; call the shared value
         _ensure_default_collection(collection_list=ds)
 
         if not ds:  # don't return an empty collection list, just return None
             return None
+
+        # This duplicates static attr checking logic from post_validate()
+        # because if the user attempts to template a collection name, it will
+        # error before it ever gets to the post_validate() warning.
+        env = Environment()
+        for collection_name in ds:
+            if is_template(collection_name, env):
+                display.warning('"collections" is not templatable, but we found: %s, '
+                                'it will not be templated and will be used "as is".' % (collection_name))
+
 
         return ds
