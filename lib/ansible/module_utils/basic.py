@@ -2090,12 +2090,11 @@ class AnsibleModule(object):
                                    (filename, algorithm, ', '.join(AVAILABLE_HASH_ALGORITHMS)))
 
         blocksize = 64 * 1024
-        infile = open(os.path.realpath(b_filename), 'rb')
-        block = infile.read(blocksize)
-        while block:
-            digest_method.update(block)
-            block = infile.read(blocksize)
-        infile.close()
+        with open(os.path.realpath(b_filename), 'rb') as f:
+            block = f.read(blocksize)
+            while block:
+                digest_method.update(block)
+                block = f.read(blocksize)
         return digest_method.hexdigest()
 
     def md5(self, filename):

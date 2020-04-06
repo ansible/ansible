@@ -71,15 +71,12 @@ class ActionModule(ActionBase):
             source = self._connection._shell.join_path(source)
             source = self._remote_expand_user(source)
 
-            remote_checksum = None
-            if not self._connection.become:
-                # calculate checksum for the remote file, don't bother if using become as slurp will be used
-                # Force remote_checksum to follow symlinks because fetch always follows symlinks
-                remote_checksum = self._remote_checksum(source, all_vars=task_vars, follow=True)
+            # calculate checksum for the remote file
+            remote_checksum = self._remote_checksum(source, all_vars=task_vars, follow=True)
 
             # use slurp if permissions are lacking or privilege escalation is needed
             remote_data = None
-            if remote_checksum in ('1', '2', None):
+            if remote_checksum in ('1', '2'):
                 slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars)
                 if slurpres.get('failed'):
                     if not fail_on_missing and (slurpres.get('msg').startswith('file not found') or remote_checksum == '1'):
@@ -172,9 +169,8 @@ class ActionModule(ActionBase):
                     self._connection.fetch_file(source, dest)
                 else:
                     try:
-                        f = open(to_bytes(dest, errors='surrogate_or_strict'), 'wb')
-                        f.write(remote_data)
-                        f.close()
+                        with open(to_bytes(dest, errors='surrogate_or_strict'), 'wb') as f:
+                            f.write(remote_data)
                     except (IOError, OSError) as e:
                         raise AnsibleError("Failed to fetch the file: %s" % e)
                 new_checksum = secure_hash(dest)

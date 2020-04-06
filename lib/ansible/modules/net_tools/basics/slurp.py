@@ -60,10 +60,27 @@ EXAMPLES = r'''
 # 2179
 '''
 
-import base64
+import binascii
+import io
 import os
 
+from functools import partial
+
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY3
+
+
+MAXLINESIZE = 76  # Excluding the CRLF
+MAXBINSIZE = (MAXLINESIZE//4)*3
+
+
+def b64encode(filename, output):
+    with open(filename, 'rb') as f:
+        for block in iter(partial(f.read, MAXBINSIZE), b''):
+            output.write(
+                binascii.b2a_base64(block)
+            )
 
 
 def main():
@@ -80,9 +97,9 @@ def main():
     if not os.access(source, os.R_OK):
         module.fail_json(msg="file is not readable: %s" % source)
 
-    with open(source, 'rb') as source_fh:
-        source_content = source_fh.read()
-    data = base64.b64encode(source_content)
+    with io.BytesIO() as f:
+        b64encode(source, f)
+        data = to_native(f.getvalue())
 
     module.exit_json(content=data, source=source, encoding='base64')
 
