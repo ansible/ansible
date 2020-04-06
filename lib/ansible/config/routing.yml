@@ -3260,9 +3260,9 @@ plugin_routing:
     openssl_csr:
       redirect: community.crypto.openssl_csr
     openssl_certificate:
-      redirect: community.crypto.openssl_certificate
+      redirect: community.crypto.x509_certificate
     openssl_certificate_info:
-      redirect: community.crypto.openssl_certificate_info
+      redirect: community.crypto.x509_certificate_info
     x509_crl:
       redirect: community.crypto.x509_crl
     openssl_privatekey_info:
