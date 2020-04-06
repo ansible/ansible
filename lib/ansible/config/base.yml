@@ -1316,6 +1316,7 @@ ERROR_ON_MISSING_HANDLER:
 CONNECTION_FACTS_MODULES:
   name: Map of connections to fact modules
   default:
+    asa: asa_facts
     eos: eos_facts
     frr: frr_facts
     ios: ios_facts
