@@ -105,7 +105,7 @@ class PlaybookCLI(CLI):
 
     def run_pbex(self, inv, var_mngr, loader, passwords):
 
-        pbex = PlaybookExecutor(context.CLIARGS['args'], inventory=inv, variable_manager=var_mngr, loader=loader, passwords=passwords)
+        pbex = PlaybookExecutor(playbooks=context.CLIARGS['args'], inventory=inv, variable_manager=var_mngr, loader=loader, passwords=passwords)
 
         return pbex.run()
 
