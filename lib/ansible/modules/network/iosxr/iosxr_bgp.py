@@ -151,7 +151,7 @@ options:
               - Specify networks to announce via BGP.
               - For operation replace, this option is mutually exclusive with root level networks option.
             suboptions:
-              network:
+              prefix:
                 description:
                   - Network ID to announce via BGP.
                 required: True
@@ -177,30 +177,34 @@ options:
 EXAMPLES = """
 - name: configure global bgp as 65000
   iosxr_bgp:
-    bgp_as: 65000
-    router_id: 1.1.1.1
-    neighbors:
-      - neighbor: 182.168.10.1
-        remote_as: 500
-        description: PEER_1
-      - neighbor: 192.168.20.1
-        remote_as: 500
-        update_source: GigabitEthernet 0/0/0/0
-    address_family:
-      - name: ipv4
-        cast: unicast
-        networks:
-          - network: 192.168.2.0/23
-          - network: 10.0.0.0/8
-        redistribute:
-          - protocol: ospf
-            id: 400
-            metric: 110
+    config:
+      bgp_as: 65000
+      router_id: 1.1.1.1
+      neighbors:
+        - neighbor: 182.168.10.1
+          remote_as: 500
+          description: PEER_1
+        - neighbor: 192.168.20.1
+          remote_as: 500
+          update_source: GigabitEthernet 0/0/0/0
+      address_family:
+        - afi: ipv4
+          safi: unicast
+          networks:
+            - prefix: 192.168.2.0
+              masklen: 23
+            - prefix: 10.0.0.0
+              masklen: 8
+          redistribute:
+            - protocol: ospf
+              id: 400
+              metric: 110
 
 - name: remove bgp as 65000 from config
-  ios_bgp:
-    bgp_as: 65000
-    state: absent
+  iosxr_bgp:
+    config:
+      bgp_as: 65000
+      state: absent
 """
 
 RETURN = """
